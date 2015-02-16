@@ -1,0 +1,131 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Bart2 - Weight chart</title>
+    <style>
+      
+      .highcharts-button {
+         display: none;
+      }
+
+    </style>
+		<%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
+		<script type="text/javascript">
+	
+		var weights = JSON.parse('<%=@weights%>');
+   
+  function getDates() {
+    dates = [];
+    for(var i = 0; i < weights.length; i++) {
+      dates.push(weights[i][0]);
+    }
+    return dates;
+  }
+
+
+$(function () {
+        $('#container').highcharts({
+            chart: {
+                type: 'column',
+                className: 'skies',
+                borderWidth: 0,
+                plotShadow: true,
+                backgroundColor: 'lightyellow',
+                plotBackgroundColor: {
+                   linearGradient: [0, 0, 250, 500],
+                   stops: [
+                      [0, 'rgba(255, 255, 255, 1)'],
+                      [1, 'rgba(255, 255, 255, 0)']
+                   ]
+                },
+                plotBorderWidth: 1
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            },
+            xAxis: {
+                categories:  getDates(),
+                lineColor: '#C0D0E0',
+                tickmarkPlacement: 'on',
+                title: {
+                    enabled: false
+                }
+            },
+            yAxis: {
+                alternateGridColor: 'rgba(255, 255, 255, .5)',
+                lineColor: '#C0D0E0',
+                tickColor: '#C0D0E0',
+                tickWidth: 1,
+                title: {
+                    text: 'Weight (KG)'
+                },
+                labels: {
+                    formatter: function() {
+                        return this.value;
+                    }
+                }
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' (KG)'
+            },
+            plotOptions: {
+               column: {
+                color: "lightblue",
+                dataLabels: {
+                    color: "black",
+                    enabled: true
+                },
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+            },
+            series: dataG()
+        });
+    });
+    
+ function dataG() {
+      var correctedWeights = [];
+      
+      for(var i = 0; i < weights.length; i++) {
+        correctedWeights.push(weights[i][1]);
+      }
+      return [{name: 'Weight', data: correctedWeights}];
+    }
+    </script>
+  </head>
+  <body>
+
+<%= javascript_include_tag "Highcharts/js/highcharts" %>
+<%= javascript_include_tag "Highcharts/js/modules/exporting" %>
+
+<div id="container" style="width: 100%; height: 100%; margin: 0 auto">
+</div>
+
+<script> 
+  function removeHighcharts() { 
+/*    try {
+      document.getElementsByClassName('highcharts-button')[0].innerHTML = null;
+    }catch(e){}
+ */   
+    tspan = document.getElementsByTagName('tspan');
+    for(var i = 0; i < tspan.length; i++){
+      if(tspan[i].innerHTML == 'Highcharts.com'){
+        tspan[i].innerHTML = null;
+        break;
+      }
+    }
+
+  }
+
+  setInterval("removeHighcharts();",300);
+</script>
+
+	</body>
+</html>
+
+
