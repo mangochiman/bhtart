@@ -1236,7 +1236,7 @@ class CohortToolController < GenericCohortToolController
 
   def send_email
           members = GlobalProperty.find_by_property("mailing.members").property_value.split(";") rescue []
-          subject = "Bart Cohort Validation"
+          subject = "NART Cohort Validation"
           file_name = "output-test.pdf"
           (members || []).each { |member|
             fields = member.split(":")

@@ -1418,7 +1418,7 @@ class ApplicationController < GenericApplicationController
         current_user.activities.include?('Manage HIV Status Visits')
       'TB-ART'
     else
-      'BART'
+      'NART'
     end
   end 
 

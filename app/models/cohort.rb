@@ -475,7 +475,7 @@ class Cohort
     #Calculation of No TB has been changed temporarily to match that of BART 1.
     #This might be changed again after thorough discussions on how to pull TB within the last 2 years.
     #In BART1 we do not subtract Current episode of TB from TB within the past 2 years which was the case 
-    #in BART2.
+    #in NART.
     
     #This change has also been implemented in cohort_validation model.
 		current_episode = cohort_report['Current episode of TB']

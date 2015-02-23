@@ -132,9 +132,8 @@ module ApplicationHelper
   end
 
   def version
-    #"Bart Version: #{BART_VERSION}#{' ' + BART_SETTINGS['installation'] if BART_SETTINGS}, #{File.ctime(File.join(RAILS_ROOT, 'config', 'environment.rb')).strftime('%d-%b-%Y')}"
     style = "style='background-color:red;'" unless session[:datetime].blank?
-    "Bart Version: #{BART_VERSION} - <span #{style}>#{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
+    "NART Version: #{NART_VERSION} - <span #{style}>#{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
   end
   
   def welcome_message
@@ -347,7 +346,7 @@ module ApplicationHelper
        current_user.activities.include?('Manage HIV Status Visits')             
       'TB-ART'                                                                  
     else                                                                        
-      'BART'                                                                    
+      'NART'                                                                    
     end                                                                         
   end 
 
