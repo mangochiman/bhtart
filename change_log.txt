@@ -171,3 +171,5 @@ Version (1.0.0)
    KK - Added functionality for running htn application as a plugin from vendor/plugins
 2014-12-11
    DN - Updated batch_flat_table_initialization script to include missing stage defining conditions
+2015-03-05
+   DN - added voided = 0 to all the queries pulling patients in batch_flat_table_initialization
