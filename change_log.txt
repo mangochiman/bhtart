@@ -173,3 +173,6 @@ Version (1.0.0)
    DN - Updated batch_flat_table_initialization script to include missing stage defining conditions
 2015-03-05
    DN - added voided = 0 to all the queries pulling patients in batch_flat_table_initialization
+2015-03-06
+   DN - Added a condition to the query pulling patients from flat_table1 to only pull patients in earliest_start_table
+        in batch_flat_cohort_load.rb
