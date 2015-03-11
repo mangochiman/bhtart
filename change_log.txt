@@ -176,3 +176,7 @@ Version (1.0.0)
 2015-03-06
    DN - Added a condition to the query pulling patients from flat_table1 to only pull patients in earliest_start_table
         in batch_flat_cohort_load.rb
+2015-03-11
+   DN - flat_table_cohort report: updated side_effects and unknown adherence queries in cohort_controller, index 
+        and drill_down views in 
+        app/cohort folder.    
