@@ -72,13 +72,14 @@ class ClinicController < GenericClinicController
         ["Show Lab Results", "/properties/creation?value=show_lab_results"],
         ["Enter Lab Results", "/properties/creation?value=enter_lab_results"],
         ["Set Appointment Limit", "/properties/set_appointment_limit"],
-				["Export Cohort Data", "/properties/export_cohort_data"],
+				    ["Export Cohort Data", "/properties/export_cohort_data"],
         ["Extended Family Planning","/properties/creation?value=extended_family_planning"],
         ["Mailing List", "/properties/mailing_management"],
         ["Activate VL routine check", "/properties/creation?value=activate_viral_load_routine_check"],
         ["Activate Drug Management","/properties/creation?value=activate_drug_management"],
         ["Activate Hypertension Screening","/properties/creation?value=activate_hypertension_enhancement"],
-        ["Set Hypertension Screening Age", "/properties/set_htn_age_threshold"]
+        ["Set Hypertension Screening Age", "/properties/set_htn_age_threshold"],
+        ["Set Hypertension BP Thresholds", "/properties/set_htn_bp_thresholds"]
       ]
     else
       @settings = []

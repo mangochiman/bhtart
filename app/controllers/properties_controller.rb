@@ -48,4 +48,29 @@ class PropertiesController < GenericPropertiesController
    redirect_to "/clinic" and return
   end
  end
+
+ def set_htn_bp_thresholds
+  if request.post?
+     diastolic_threshold = GlobalProperty.find_by_property('htn.diastolic.threshold')
+     systolic_threshold = GlobalProperty.find_by_property('htn.systolic.threshold')
+
+     if diastolic_threshold.blank?
+      diastolic_threshold = GlobalProperty.new()
+      diastolic_threshold.property = 'htn.diastolic.threshold'
+      diastolic_threshold.description = "Defines the measurement at which diastolic blood pressure is considered high"
+     end
+
+     if systolic_threshold.blank?
+      systolic_threshold = GlobalProperty.new()
+      systolic_threshold.property = 'htn.systolic.threshold'
+      systolic_threshold.description = "Defines the measurement at which systolic blood pressure is considered high"
+     end
+
+   diastolic_threshold.property_value = params[:diastolic]
+   diastolic_threshold.save
+   systolic_threshold.property_value = params[:systolic]
+   systolic_threshold.save
+   redirect_to "/clinic" and return
+  end
+ end
 end

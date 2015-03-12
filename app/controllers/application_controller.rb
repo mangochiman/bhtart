@@ -28,6 +28,8 @@ class ApplicationController < GenericApplicationController
 
     session_date = session[:datetime].to_date rescue Date.today
     task = main_next_task(Location.current_location, patient,session_date)
+    sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
+    dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
 
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
 
@@ -38,7 +40,7 @@ class ApplicationController < GenericApplicationController
       session['captureBP'] = nil
      elsif !htn_client?(patient)
       bp = patient.current_bp(session_date)
-      if ((!bp[0].blank? && bp[0] > 140) || (!bp[1].blank?  && bp[1] > 90))
+      if ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold))
        task = Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
                        :encounter_type => "HYPERTENSION MANAGEMENT")
       end
@@ -1462,6 +1464,9 @@ class ApplicationController < GenericApplicationController
 
   todays_encounters = patient.encounters.find_by_date((session[:datetime].to_date rescue Time.now().to_date))
 
+  sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
+  dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
+
   if task.present? && task.url.present?
    #patients eligible for HTN will have their vitals taken with HTN module
    if task.url.match(/VITALS/i)
@@ -1474,9 +1479,9 @@ class ApplicationController < GenericApplicationController
     #Check if latest BP was high for alert
 
     if !bp.blank? && todays_encounters.map{ | e | e.name }.count("VITALS") == 1
-     if !bp_management_done && !medical_history && ((!bp[0].blank? && bp[0] > 140) || (!bp[1].blank?  && bp[1] > 90))
+     if !bp_management_done && !medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold))
       return Task.new(:url => "/htn_encounter/bp_alert?patient_id=#{patient.id}", :encounter_type => "BP Alert")
-     elsif !bp_management_done && medical_history && ((!bp[0].blank? && bp[0] > 140) || (!bp[1].blank?  && bp[1] > 90))
+     elsif !bp_management_done && medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold))
       if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
        return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
                        :encounter_type => "HYPERTENSION MANAGEMENT")
@@ -1489,7 +1494,7 @@ class ApplicationController < GenericApplicationController
       end
      end
     end
-    if !bp.blank? && ((!bp[0].blank? && bp[0] > 140) || (!bp[1].blank?  && bp[1] > 90)) && !bp_management_done
+    if !bp.blank? && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold)) && !bp_management_done
      unless referred_to_anc
       if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
        return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
