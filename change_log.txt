@@ -178,5 +178,6 @@ Version (1.0.0)
         in batch_flat_cohort_load.rb
 2015-03-11
    DN - flat_table_cohort report: updated side_effects and unknown adherence queries in cohort_controller, index 
-        and drill_down views in 
-        app/cohort folder.    
+        and drill_down views in app/cohort folder. 
+2015-03-12
+   DN - Added group by to the query pulling guardians in batch_flat_table_initialization.rb   

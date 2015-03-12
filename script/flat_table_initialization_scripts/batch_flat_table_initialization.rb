@@ -609,12 +609,14 @@ def get_patient_demographics(patient_id)
   guardian_person_ids = Relationship.find_by_sql("SELECT * FROM relationship
                                                   WHERE person_a = #{patient_id}
                                                   AND voided = 0
+                                                  GROUP BY person_b
                                                   LIMIT 5").map(&:person_b) rescue []
 
  #pulling all patients to which this patient is a guardian
  guardian_to_which_patient_ids = Relationship.find_by_sql("SELECT * FROM relationship
                                                   WHERE person_b = #{patient_id}
                                                   AND voided = 0
+                                                  GROUP BY person_a
                                                   LIMIT 5").map(&:person_a) rescue []                                        
 
   a_hash = {:legacy_id2 => 'NULL'}
