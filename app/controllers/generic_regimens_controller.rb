@@ -916,9 +916,10 @@ class GenericRegimensController < ApplicationController
   end
 
   def drug_stock(patient, concept_id)
+		stock = {}
+		if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false)
     regimens = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => concept_id}, :include => :regimen_drug_orders)
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
-    stock = {}
     regimens.each do | r |
       r.regimen_drug_orders.each do | order |
         drug = order.drug
@@ -953,6 +954,7 @@ class GenericRegimensController < ApplicationController
         stock[drug.id]["drug_pack_size"] = drug_pack_size
       end
     end
+		end
     stock
   end
 
