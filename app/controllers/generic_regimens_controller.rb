@@ -137,7 +137,7 @@ class GenericRegimensController < ApplicationController
 
             if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation')
 
-                encounter = Encounter.find(encounter.id, :include => [:observations])
+                encounter = Encounter.find(encounter.id)
 
                 for obs in encounter.observations do
 
