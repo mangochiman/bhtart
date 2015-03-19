@@ -63,7 +63,7 @@ class GenericRegimensController < ApplicationController
 			@hiv_clinic_consultation = true
 		end
 
-		treatment_obs = Patient.hiv_encounter(@patient, 'TREATMEN', session_date)# chunked
+		treatment_obs = Patient.hiv_encounter(@patient, 'TREATMENT', session_date)# chunked
 
 		tb_medication_prescribed = false
 		arvs_prescribed = false
