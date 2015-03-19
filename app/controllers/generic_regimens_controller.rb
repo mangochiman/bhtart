@@ -17,9 +17,9 @@ class GenericRegimensController < ApplicationController
     @allergic_to_sulphur = Observation.find(Observation.find(:first,
       :order => "obs_datetime DESC,date_created DESC",
       :conditions => ["person_id = ? AND concept_id = ?
-      AND DATE(obs_datetime) <= ?",@patient.id,
+      AND obs_datetime <= ?",@patient.id,
       ConceptName.find_by_name("Allergic to sulphur").concept_id,
-      allergic_to_sulphur_session_date])).answer_string.strip.squish rescue ''
+      allergic_to_sulphur_session_date.strftime('%Y-%m-%d 23:59:59')])).answer_string.strip.squish rescue ''
 
     ################################################################################################################
 
@@ -58,10 +58,9 @@ class GenericRegimensController < ApplicationController
                                  :conditions => ["patient_id = ? AND program_id = ? AND location.location_id = ? AND date_completed IS NULL",
                                   @patient.id, Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id, Location.current_health_center]).patient_states.current.first.program_workflow_state.concept.fullname rescue ''
 		session_date = session[:datetime].to_date rescue Date.today
-    #raise Location.current_health_center.id.to_yaml
-
-    #raise PatientProgram.find(:first, :joins => :location,
-    #                          :conditions => ["patient_id = ? AND program_id = ? AND location.location_id = ? AND date_completed IS NULL", @patient.id, Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id, Location.current_health_center.id]).to_yaml
+    
+    
+    
 		pre_hiv_clinic_consultation = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
 		    :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
 		    session_date.to_date, @patient.id, EncounterType.find_by_name('PART_FOLLOWUP').id])
@@ -112,20 +111,6 @@ class GenericRegimensController < ApplicationController
 			@prescribe_tb_drugs = true
 		end
 
-		sulphur_allergy_obs = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
-			:conditions => ["patient_id = ? AND encounter_type IN (?) AND DATE(encounter_datetime) = ?",
-			@patient.id, EncounterType.find(:all,:select => 'encounter_type_id', 
-      :conditions => ["name IN (?)",["HIV CLINIC CONSULTATION", "TB VISIT"]]),session_date.to_date]).observations rescue []
-
-=begin
-		@alergic_to_suphur = false
-		(sulphur_allergy_obs || []).each do | obs |
-			if obs.concept_id == (Concept.find_by_name('sulphur allergy').concept_id rescue nil)
-				@alergic_to_suphur = true if Concept.find(obs.value_coded).fullname.upcase == 'YES'
-			end
-		end
-=end
-
 		hiv_clinic_consultation_obs = Encounter.find(:first,
       :order => "encounter_datetime DESC,date_created DESC",
 			:conditions => ["patient_id = ? AND encounter_type IN (?) AND DATE(encounter_datetime) = ?",
@@ -158,11 +143,13 @@ class GenericRegimensController < ApplicationController
 										inner join regimen r on r.concept_id = c.concept_id
 										where c.concept_id = '#{@hiv_regimen_map}' and  concept_name_type = 'short' limit 1").map{|regimen| regimen.reg_index}
 
-	    session_date = session[:datetime].to_date rescue Date.today
+	      session_date = session[:datetime].to_date rescue Date.today
         current_encounters = @patient.encounters.find_by_date(session_date)
         @family_planning_methods = []
         @is_patient_pregnant_value = 'Unknown'
 
+#................................................................................................................
+    if @patient_bean.sex == 'Female'
         for encounter in current_encounters.reverse do
 
             if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation') 
@@ -172,6 +159,7 @@ class GenericRegimensController < ApplicationController
                 for obs in encounter.observations do
                     if obs.concept_id == ConceptName.find_by_name("IS PATIENT PREGNANT?").concept_id
                         @is_patient_pregnant_value = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}"
+                        break
                     end                    
                 end
 
@@ -192,6 +180,9 @@ class GenericRegimensController < ApplicationController
                 
             end
         end
+
+    end    
+#................................................................................................................
     @vl_result_hash = Patient.vl_result_hash(@patient) rescue nil
     @cpt_drug_stock = cpt_drug_stock
 

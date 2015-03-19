@@ -33,12 +33,13 @@ class ApplicationController < GenericApplicationController
 
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
 
-     if htn_client?(patient)
+     patient_is_htn_client = htn_client?(patient)
+     if patient_is_htn_client
       task = check_htn_workflow(patient, task)
      elsif (session['captureBP'] == "true")
       task = Task.new(:url => "/htn_encounter/vitals_confirmation?patient_id=#{patient.id}", :encounter_type => "BP Vitals")
       session['captureBP'] = nil
-     elsif !htn_client?(patient)
+     else
       bp = patient.current_bp(session_date)
       if ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold))
        task = Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
@@ -1447,22 +1448,29 @@ class ApplicationController < GenericApplicationController
   end
 
  def check_htn_workflow(patient, task)
- #This function is for managing interaction with HTN
-  referred_to_clinician = (Observation.last(:conditions => ["person_id = ? AND voided = 0 AND concept_id = ?
-                                                          AND DATE(obs_datetime) = ?",
-                                                         patient.person.id,
-                                                         ConceptName.find_by_name("REFER PATIENT TO CLINICIAN").concept_id,
-                                                         (session[:datetime].to_date rescue Date.today)
+
+   if not task.url.match(/VITALS/i) and not task.url.match(/REGIMENS/i) and not (task.url.match(/SHOW/i) && task.encounter_type == "NONE")
+     return task
+   end
+ 
+  #This function is for managing interaction with HTN
+  session_date = (session[:datetime].to_date) rescue Date.today
+
+  referred_to_clinician = (Observation.last(:conditions => ["person_id = ? AND voided = 0 
+                          AND concept_id = ? AND obs_datetime BETWEEN ? AND ?",
+                          patient.patient_id,ConceptName.find_by_name("REFER PATIENT TO CLINICIAN").concept_id,
+                          session_date.strftime('%Y-%m-%d 00:00:00'),
+                          session_date.strftime('%Y-%m-%d 23:59:59')
+                          ]).answer_string.downcase.strip rescue nil) == "yes"
+
+  referred_to_anc = (Observation.last(:conditions => ["person_id = ? 
+                    AND voided = 0 AND concept_id = ? AND obs_datetime BETWEEN ? AND ?",
+                    patient.patient_id,ConceptName.find_by_name("REFER TO ANC").concept_id,
+                    session_date.strftime('%Y-%m-%d 00:00:00'),
+                    session_date.strftime('%Y-%m-%d 23:59:59')
   ]).answer_string.downcase.strip rescue nil) == "yes"
 
-  referred_to_anc = (Observation.last(:conditions => ["person_id = ? AND voided = 0 AND concept_id = ?
-                                                          AND DATE(obs_datetime) = ?",
-                                                            patient.person.id,
-                                                            ConceptName.find_by_name("REFER TO ANC").concept_id,
-                                                            (session[:datetime].to_date rescue Date.today)
-  ]).answer_string.downcase.strip rescue nil) == "yes"
-
-  todays_encounters = patient.encounters.find_by_date((session[:datetime].to_date rescue Time.now().to_date))
+  todays_encounters = patient.encounters.find_by_date(session_date)
 
   sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
   dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
@@ -1513,9 +1521,9 @@ class ApplicationController < GenericApplicationController
 
      plan = Observation.find(:last,
                              :conditions => ["person_id = ? AND concept_id = ?
-                                             AND obs_datetime <= ?",patient.id,Concept.find_by_name('Plan').id,
-                                             (session[:datetime].to_date rescue Time.now().to_date).strftime('%Y-%m-%d 23:59:59')],
-                                   :order => "obs_datetime DESC")
+                             AND obs_datetime <= ?",patient.id,Concept.find_by_name('Plan').id,
+                             (session[:datetime].to_date rescue Time.now().to_date).strftime('%Y-%m-%d 23:59:59')],
+                             :order => "obs_datetime DESC")
 
      unless (plan.blank? || plan.value_text.match(/ANNUAL/i)) && !referred_to_anc
       return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
