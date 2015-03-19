@@ -133,7 +133,7 @@ module ApplicationHelper
 
   def version
     style = "style='background-color:red;'" unless session[:datetime].blank?
-    "NART Version: #{NART_VERSION} - <span #{style}>#{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
+    "ART Version: #{ART_VERSION} - <span #{style}>#{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
   end
 
   def welcome_message
@@ -346,7 +346,7 @@ module ApplicationHelper
        current_user.activities.include?('Manage HIV Status Visits')
       'TB-ART'
     else
-      'NART'
+      'ART'
     end
   end
 

@@ -442,7 +442,7 @@ module PatientService
   def self.create_remote_person(received_params)
     #raise known_demographics.to_yaml
 
-    #Format params for NART
+    #Format params for ART
     new_params = received_params[:person]
     known_demographics = Hash.new()
     new_params['gender'] == 'F' ? new_params['gender'] = "Female" : new_params['gender'] = "Male"
