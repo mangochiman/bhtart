@@ -354,8 +354,7 @@ def self.vl_result_hash(patient)
   def tb_encounter(patient)
     return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
     :conditions=>["patient_id = ? AND encounter_type = ?",
-      patient.id, EncounterType.find_by_name("TB visit").id],
-      :include => [:observations]) rescue nil
+      patient.id, EncounterType.find_by_name("TB visit").id]) rescue nil
   end
 
   def current_hiv_program_state(patient)
