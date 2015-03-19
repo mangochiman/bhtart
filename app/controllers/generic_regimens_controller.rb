@@ -957,8 +957,10 @@ class GenericRegimensController < ApplicationController
   end
 
   def cpt_drug_stock
+
+		stock = {}
+		if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false)
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
-    stock = {}
     required_cpt = ["Cotrimoxazole (480mg tablet)", "Cotrimoxazole (960mg)"]
     required_cpt.each do | name |
         drug = Drug.find_by_name(name)
@@ -992,6 +994,7 @@ class GenericRegimensController < ApplicationController
         stock[drug.id]["estimated_stock_out_date"] = estimated_stock_out_date
         stock[drug.id]["drug_pack_size"] = drug_pack_size
     end
+	end
     stock
   end
 
