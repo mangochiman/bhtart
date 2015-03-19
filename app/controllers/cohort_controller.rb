@@ -1559,17 +1559,26 @@ class CohortController < ActionController::Base
 
   def unknown_outcome(start_date=Time.now, end_date=Time.now, section=nil)
     value = []
-    #to be polished
-    @total_registered = cum_total_patients_reg(@@first_registration_date,@@end_date)
+    end_date = @@end_date.to_date.strftime('%Y-%m-%d 23:59:59')                            
+    
+    @total_registered = cum_total_patients_reg(@@first_registration_date,end_date)
     $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
     @defaulted_patients = art_defaulters
-		@died_total = total_patients_died(nil,@@end_date)
-		@stopped_taking_arvs = patients_stopped_treatment(nil,@@end_date)
-    @tranferred_out = patients_transfered_out(nil,@@end_date)
-
-    patients = @total_registered.to_a  - ($total_alive_and_on_art.to_a + @defaulted_patients.to_a + @died_total.to_a + @stopped_taking_arvs.to_a + @tranferred_out.to_a) 
-
-    value = patients unless patients.blank?
+		@died_total = total_patients_died(nil,end_date)
+		@stopped_taking_arvs = patients_stopped_treatment(nil,end_date)
+    @tranferred_out = patients_transfered_out(nil,end_date)
+=begin
+    patients = ((@total_registered.to_a || []) - 
+                 (($total_alive_and_on_art.to_a || [] )+ 
+                  (@defaulted_patients.to_a || []) +
+                  (@died_total.to_a || []) +
+                  (@stopped_taking_arvs.to_a || []) +
+                  (@tranferred_out.to_a || [])))
+=end
+    all_patients = ((@died_total.to_a || []) + (@defaulted_patients.to_a || []) + ($total_alive_and_on_art.to_a || []) + (@stopped_taking_arvs.to_a || []) + (@tranferred_out.to_a || []))
+    
+    patients = ((@total_registered.to_a || []) - (all_patients || []))
+    value = patients.uniq unless patients.blank?
     render :text => value.to_json
   end
 
@@ -2218,7 +2227,7 @@ class CohortController < ActionController::Base
 
   def unk_effects(start_date=Time.now, end_date=Time.now, section=nil)
      $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
-     effects = side_effects(start_date, end_date)
+     effects = check_all_effects(start_date, end_date)
      none = check_no_effects(start_date, end_date)
      value = $total_alive_and_on_art - (effects + none)
      render :text => value.to_json
@@ -2229,10 +2238,148 @@ class CohortController < ActionController::Base
      render :text => value.to_json
   end
 
-  def check_no_effects(start_date=Time.now, end_date=Time.now, section=nil)
-   patient_with_effect = side_effects(start_date, end_date)#.collect{|p| p.patient_id}
-     
+  def check_all_effects(start_date=Time.now, end_date=Time.now, section=nil)
+  value = []
+    patients = []
 
+    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+
+    $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
+
+         per_nue = FlatCohortTable.find_by_sql("
+                SELECT 
+                    ft2.patient_id,
+                    ft2.drug_induced_peripheral_neuropathy_enc_id,
+                    ft2.drug_induced_peripheral_neuropathy
+                FROM
+                    flat_table2 ft2
+                        INNER JOIN
+                    encounter enc ON enc.encounter_id = ft2.drug_induced_peripheral_neuropathy_enc_id
+                        AND enc.encounter_type = 53
+                WHERE
+                    ft2.drug_induced_peripheral_neuropathy IS NOT NULL
+                        AND ft2.patient_id IN (#{$total_alive_and_on_art.join(',')})
+                        AND enc.encounter_datetime = (SELECT 
+                            MAX(e1.encounter_datetime)
+                        FROM
+                            encounter e1
+                        WHERE
+                            e1.patient_id = enc.patient_id
+                                AND e1.encounter_type = enc.encounter_type
+                                AND e1.encounter_datetime <= '#{end_date}'
+                                AND e1.voided = 0)
+                GROUP BY ft2.patient_id").map(&:patient_id)
+
+    leg_pain = FlatCohortTable.find_by_sql("
+                SELECT 
+                    ft2.patient_id,
+                    ft2.drug_induced_leg_pain_numbness_enc_id,
+                    ft2.drug_induced_leg_pain_numbness
+                FROM
+                    flat_table2 ft2
+                        INNER JOIN
+                    encounter enc ON enc.encounter_id = ft2.drug_induced_leg_pain_numbness_enc_id
+                        AND enc.encounter_type = 53
+                WHERE
+                    ft2.drug_induced_leg_pain_numbness IS NOT NULL
+                        AND ft2.patient_id IN (#{$total_alive_and_on_art.join(',')})
+                        AND enc.encounter_datetime = (SELECT 
+                            MAX(e1.encounter_datetime)
+                        FROM
+                            encounter e1
+                        WHERE
+                            e1.patient_id = enc.patient_id
+                                AND e1.encounter_type = enc.encounter_type
+                                AND e1.encounter_datetime <= '#{end_date}'
+                                AND e1.voided = 0)
+                GROUP BY ft2.patient_id").map(&:patient_id)
+
+    hepatitis = FlatCohortTable.find_by_sql("
+                  SELECT 
+                      ft2.patient_id,
+                      ft2.drug_induced_hepatitis_enc_id, 
+                      ft2.drug_induced_hepatitis
+                  FROM
+                      flat_table2 ft2
+                          INNER JOIN
+                      encounter enc ON enc.encounter_id = ft2.drug_induced_hepatitis_enc_id
+                          AND enc.encounter_type = 53
+                  WHERE
+                      ft2.drug_induced_hepatitis IS NOT NULL
+                          AND ft2.patient_id IN (#{$total_alive_and_on_art.join(',')})
+                          AND enc.encounter_datetime = (SELECT 
+                              MAX(e1.encounter_datetime)
+                          FROM
+                              encounter e1
+                          WHERE
+                              e1.patient_id = enc.patient_id
+                                  AND e1.encounter_type = enc.encounter_type
+                                  AND e1.encounter_datetime <= '#{end_date}'
+                                  AND e1.voided = 0)
+                  GROUP BY ft2.patient_id").map(&:patient_id)
+
+    skin_rash = FlatCohortTable.find_by_sql("
+                  SELECT 
+                      ft2.patient_id,
+                      ft2.drug_induced_skin_rash_enc_id, 
+                      ft2.drug_induced_skin_rash
+                  FROM
+                      flat_table2 ft2
+                          INNER JOIN
+                      encounter enc ON enc.encounter_id = ft2.drug_induced_skin_rash_enc_id
+                          AND enc.encounter_type = 53
+                  WHERE
+                      ft2.drug_induced_skin_rash IS NOT NULL
+                          AND ft2.patient_id IN (#{$total_alive_and_on_art.join(',')})
+                          AND enc.encounter_datetime = (SELECT 
+                              MAX(e1.encounter_datetime)
+                          FROM
+                              encounter e1
+                          WHERE
+                              e1.patient_id = enc.patient_id
+                                  AND e1.encounter_type = enc.encounter_type
+                                  AND e1.encounter_datetime <= '#{end_date}'
+                                  AND e1.voided = 0)
+                  GROUP BY ft2.patient_id").map(&:patient_id)
+
+    jaundice = FlatCohortTable.find_by_sql("
+                  SELECT 
+                      ft2.patient_id,
+                      ft2.drug_induced_jaundice_enc_id, 
+                      ft2.drug_induced_jaundice
+                  FROM
+                      flat_table2 ft2
+                          INNER JOIN
+                      encounter enc ON enc.encounter_id = ft2.drug_induced_jaundice_enc_id
+                          AND enc.encounter_type = 53
+                  WHERE
+                      ft2.drug_induced_jaundice IS NOT NULL
+                          AND ft2.patient_id IN (#{$total_alive_and_on_art.join(',')})
+                          AND enc.encounter_datetime = (SELECT 
+                              MAX(e1.encounter_datetime)
+                          FROM
+                              encounter e1
+                          WHERE
+                              e1.patient_id = enc.patient_id
+                                  AND e1.encounter_type = enc.encounter_type
+                                  AND e1.encounter_datetime <= '#{end_date}'
+                                  AND e1.voided = 0)
+                  GROUP BY ft2.patient_id").map(&:patient_id) 
+
+    patients = ((jaundice || []) + 
+                (skin_rash || []) + 
+                (hepatitis || []) + 
+                (leg_pain || []) + 
+                (per_nue || []))
+     
+     patients = patients.uniq unless patients.blank?
+     return patients
+  end
+
+
+  def check_no_effects(start_date=Time.now, end_date=Time.now, section=nil)
+   patient_with_effect = check_all_effects(start_date, end_date)#.collect{|p| p.patient_id}
+     
     hiv_clinic_consultation_encounter_id = EncounterType.find_by_name("HIV CLINIC CONSULTATION").id
 
     drug_induced_side_effect_id = ConceptName.find_by_name('SYMPTOM PRESENT').concept_id
@@ -2257,41 +2404,7 @@ class CohortController < ActionController::Base
 
   def side_effects(start_date=Time.now, end_date=Time.now, section=nil)
     value = []
-    patients = []
-
-    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-
-    if !drug_induced_p_neu(end_date).blank?
-      drug_induced_p_neu(end_date).each do |patient|
-        patients << patient
-      end
-    end
-    
-    if !drug_induced_leg_pain(end_date).blank?
-      drug_induced_leg_pain(end_date).each  do |patient|
-        patients << patient
-      end
-    end
-
-    if !drug_induced_hepatitis(end_date).blank?
-      drug_induced_hepatitis(end_date).each  do |patient|
-        patients << patient
-      end
-    end
-
-    if !drug_induced_skin_rash(end_date).blank?
-      drug_induced_skin_rash(end_date).each  do |patient|
-        patients << patient
-      end
-    end
-    
-    if !drug_induced_jaundice(end_date).blank?
-      drug_induced_jaundice(end_date).each  do |patient|
-        patients << patient
-      end
-    end
-
-    value = patients unless patients.blank?
+    value = check_all_effects(start_date, end_date)
     render :text => value.to_json
   end
 
@@ -2420,7 +2533,132 @@ class CohortController < ActionController::Base
 
     value = patients unless patients.blank?
   end
+  def total_missed_7_plus(start_date=Time.now, end_date=Time.now, section=nil) 
+    value = []
+    patients = []
+    
+    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
 
+    if !missed_7plus_one(end_date).blank?
+      missed_7plus_one(end_date).each do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_two(end_date).blank?
+      missed_7plus_two(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_three(end_date).blank?
+      missed_7plus_three(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_four(end_date).blank?
+      missed_7plus_four(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_five(end_date).blank?
+      missed_7plus_five(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+    
+    return patients.uniq unless patients.blank?
+  end
+ 
+  def missed_7plus(start_date=Time.now, end_date=Time.now, section=nil)
+    patients = []
+    value = []
+    
+    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+    
+    patients = total_missed_7_plus(end_date)
+    value = patients unless patients.blank?
+    render :text => value.to_json
+  end
+
+  def total_missed_0_6(start_date=Time.now, end_date=Time.now, section=nil) 
+
+    value = []
+    patients = []
+
+    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')    
+    $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
+    
+    if !missed_7plus_one(end_date).blank?
+      missed_7plus_one(end_date).each do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_two(end_date).blank?
+      missed_7plus_two(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_three(end_date).blank?
+      missed_7plus_three(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_four(end_date).blank?
+      missed_7plus_four(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+
+    if !missed_7plus_five(end_date).blank?
+      missed_7plus_five(end_date).each  do |patient|
+        patients << patient
+      end
+    end
+
+    patients = patients.uniq unless patients.blank?
+    
+    total_alive = $total_alive_and_on_art.to_a
+    value = ((total_alive || [])  - (patients || []))
+
+    return value
+    
+  end
+
+  def missed_0_6(start_date=Time.now, end_date=Time.now, section=nil)
+    value = []
+
+    patients = total_missed_0_6(end_date)
+
+    value =  patients unless patients.blank?
+    render :text => value.to_json
+  end
+
+  def unknown_adherence(start_date=Time.now, end_date=Time.now, section=nil)
+   value = []
+   end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+
+   $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
+
+   pats_missed_0_6_doses = total_missed_0_6(end_date)
+   pats_missed_7_plus_doses = total_missed_7_plus(end_date)
+
+   value = (($total_alive_and_on_art.to_a || []) - 
+            ((pats_missed_0_6_doses.to_a || []) + 
+            (pats_missed_7_plus_doses.to_a || [])))
+
+   value =  value unless value.blank?
+   render :text => value.to_json
+ end
+ 
+
+
+=begin
   def missed_7plus(start_date=Time.now, end_date=Time.now, section=nil)
     value = []
     patients = []
@@ -2509,7 +2747,7 @@ class CohortController < ActionController::Base
     value =  value unless value.blank?
     render :text => value.to_json
   end
-
+=end
   def cohort_field
     @@start_date = params["start_date"]
     @@end_date = params["end_date"]
@@ -2654,6 +2892,10 @@ class CohortController < ActionController::Base
         transfered(start_date, end_date, params["field"])
       when "unknown_outcome"
         unknown_outcome(start_date, end_date, params["field"])
+      when "n0a"
+        n1a(start_date, end_date, params["field"])
+      when "n0p"
+        n1p(start_date, end_date, params["field"])
       when "n1a"
         n1a(start_date, end_date, params["field"])
       when "n1p"
@@ -2698,6 +2940,10 @@ class CohortController < ActionController::Base
         quarter(start_date, end_date, params["field"])
       when "side_effects"
         side_effects(start_date, end_date, params["field"])
+      when "no_effects"
+        no_effects(start_date, end_date, params["field"])
+      when "unk_effects"
+        unk_effects(start_date, end_date, params["field"])  
       when "missed_0_6"
         missed_0_6(start_date, end_date, params["field"])
       when "missed_7plus"
@@ -2712,6 +2958,8 @@ class CohortController < ActionController::Base
         missed_7plus_four(start_date, end_date, params["field"])
       when "missed_7plus_five"
         missed_7plus_five(start_date, end_date, params["field"])
+      when "unknown_adherence"
+        unknown_adherence(start_date, end_date, params["field"])
       when "drug_induced_p_neu"
         drug_induced_p_neu(start_date, end_date, params["field"])
       when "drug_induced_leg_pain"

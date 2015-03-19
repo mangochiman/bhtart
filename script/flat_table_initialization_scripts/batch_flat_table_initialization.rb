@@ -26,7 +26,7 @@ def initiate_script
     puts "started at #{@started_at}"
 
     threads = []
-    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patient")
+    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patient WHERE voided = 0")
     record_count = patients.first.record_count
     max_patient_id = patients.first.max_patient_id
     thresholds = generate_thresholds(record_count, max_patient_id)
@@ -86,7 +86,7 @@ def initiate_script
     puts "started at #{@started_at}"
 
     threads = []
-    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patient")
+    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patient WHERE voided = 0")
     record_count = patients.first.record_count
     max_patient_id = patients.first.max_patient_id
     thresholds = generate_thresholds(record_count, max_patient_id)
@@ -179,7 +179,7 @@ def get_all_patients(min, max, thread)
       $temp_outfile_10_3 = File.open("./db/flat_tables_init_output/patients_initialized-" + @started_at + "thread_#{thread}" + ".sql", "w")
     end
     
-    patient_list = Patient.find_by_sql("SELECT patient_id FROM #{@source_db}.patient WHERE patient_id >= #{min_patient_id} AND patient_id <= #{max_patient_id}").map(&:patient_id)
+    patient_list = Patient.find_by_sql("SELECT patient_id FROM #{@source_db}.patient WHERE patient_id >= #{min_patient_id} AND patient_id <= #{max_patient_id} AND voided = 0").map(&:patient_id)
 
     (patient_list || []).each do |p| 
 	puts ">>working on patient>>>#{p}<<<<<<<"
@@ -480,6 +480,7 @@ def get_patients_data(patient_id)
   visits = Encounter.find_by_sql("SELECT date(encounter_datetime) AS visit_date FROM #{@source_db}.encounter
 			WHERE patient_id = #{patient_id} AND voided = 0  
 			AND encounter_type IN (6, 7, 9, 25, 51, 52, 53, 54, 68, 119)
+			AND voided = 0
 			group by date(encounter_datetime)").map(&:visit_date)
   
   session_date = @max_dispensing_enc_date #date for calculating defaulters 
@@ -608,12 +609,14 @@ def get_patient_demographics(patient_id)
   guardian_person_ids = Relationship.find_by_sql("SELECT * FROM relationship
                                                   WHERE person_a = #{patient_id}
                                                   AND voided = 0
+                                                  GROUP BY person_b
                                                   LIMIT 5").map(&:person_b) rescue []
 
  #pulling all patients to which this patient is a guardian
  guardian_to_which_patient_ids = Relationship.find_by_sql("SELECT * FROM relationship
                                                   WHERE person_b = #{patient_id}
                                                   AND voided = 0
+                                                  GROUP BY person_a
                                                   LIMIT 5").map(&:person_a) rescue []                                        
 
   a_hash = {:legacy_id2 => 'NULL'}

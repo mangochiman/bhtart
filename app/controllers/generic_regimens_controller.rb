@@ -3,7 +3,7 @@ class GenericRegimensController < ApplicationController
 	def new
 
 		if session[:datetime]
-			@retrospective = true 
+			@retrospective = true
 		else
 			@retrospective = false
 		end
@@ -11,16 +11,10 @@ class GenericRegimensController < ApplicationController
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		@patient_bean = PatientService.get_patient(@patient.person)
 		@programs = @patient.patient_programs.all
-		
+
     ################################################################################################################
 		allergic_to_sulphur_session_date = session[:datetime].to_date rescue Date.today
-    @allergic_to_sulphur = Observation.find(Observation.find(:first,
-      :order => "obs_datetime DESC,date_created DESC",
-      :conditions => ["person_id = ? AND concept_id = ?
-      AND obs_datetime <= ?",@patient.id,
-      ConceptName.find_by_name("Allergic to sulphur").concept_id,
-      allergic_to_sulphur_session_date.strftime('%Y-%m-%d 23:59:59')])).answer_string.strip.squish rescue ''
-
+		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, allergic_to_sulphur_session_date) #chunked
     ################################################################################################################
 
 		@current_regimen = current_regimen(@patient.id) rescue nil
@@ -35,17 +29,15 @@ class GenericRegimensController < ApplicationController
 
 		@reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
 		@current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
-		@tb_encounter = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
-                    :conditions=>["patient_id = ? AND encounter_type = ?", 
-                    @patient.id, EncounterType.find_by_name("TB visit").id], 
-                    :include => [:observations]) rescue nil
+
+		@tb_encounter = Patient.tb_encounter(@patient)  #chunked
 
 		@tb_programs = @patient.patient_programs.in_uncompleted_programs(['TB PROGRAM', 'MDR-TB PROGRAM'])
-		
+
 		@current_regimens_for_programs = current_regimens_for_programs
     @regimen_formulations = []
 		@tb_regimen_formulations = []
-		
+
     (@current_regimens_for_programs || {}).each do |patient_program_id , regimen_id|
       @regimen_formulations = formulation(@patient,regimen_id) if PatientProgram.find(patient_program_id).program.name.match(/HIV PROGRAM/i)
 			@hiv_regimen_map = regimen_id if PatientProgram.find(patient_program_id).program.name.match(/HIV PROGRAM/i)
@@ -53,77 +45,58 @@ class GenericRegimensController < ApplicationController
 			@tb_regimen_formulations = formulation(@patient,regimen_id) if PatientProgram.find(patient_program_id).program.name.match(/TB PROGRAM/i)
     end
 		@current_regimen_names_for_programs = current_regimen_names_for_programs
-		
-		@current_hiv_program_state = PatientProgram.find(:first, :joins => :location, 
-                                 :conditions => ["patient_id = ? AND program_id = ? AND location.location_id = ? AND date_completed IS NULL",
-                                  @patient.id, Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id, Location.current_health_center]).patient_states.current.first.program_workflow_state.concept.fullname rescue ''
+
+		@current_hiv_program_state = Patient.current_hiv_program_state(@patient) #chunked
+
 		session_date = session[:datetime].to_date rescue Date.today
     
-    
-    
-		pre_hiv_clinic_consultation = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
-		    :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
-		    session_date.to_date, @patient.id, EncounterType.find_by_name('PART_FOLLOWUP').id])
+		pre_hiv_clinic_consultation = Patient.hiv_encounter(@patient, 'PART_FOLLOWUP', session_date)# chunked
+		hiv_clinic_consultation = Patient.hiv_encounter(@patient, 'HIV CLINIC CONSULTATION', session_date)# chunked
 
-		hiv_clinic_consultation = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
-            :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
-            session_date.to_date, @patient.id, EncounterType.find_by_name('HIV CLINIC CONSULTATION').id])
 		@hiv_clinic_consultation = false
 
 		if ((not pre_hiv_clinic_consultation.blank?) or (not hiv_clinic_consultation.blank?))
-			@hiv_clinic_consultation = true		
+			@hiv_clinic_consultation = true
 		end
 
-		treatment_obs = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
-		    :conditions => ["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
-		    session_date, @patient.id, EncounterType.find_by_name('TREATMENT').id]).observations rescue []
+		treatment_obs = Patient.hiv_encounter(@patient, 'TREATMENT', session_date)# chunked
 
 		tb_medication_prescribed = false
 		arvs_prescribed = false
-		(treatment_obs || []).each do | obs | 
+		(treatment_obs || []).each do | obs |
 			if obs.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
-				tb_medication_prescribed = true 
+				tb_medication_prescribed = true
 			end
 
 			if obs.concept_id == (Concept.find_by_name('ARV regimen type').concept_id rescue nil)
-				arvs_prescribed = true 
+				arvs_prescribed = true
 			end
 		end
 
-		tb_visit_obs = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
-		    :conditions => ["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
-		    session_date, @patient.id, EncounterType.find_by_name('TB VISIT').id]).observations rescue []
+		tb_visit_obs =  Patient.hiv_encounter(@patient, 'TB VISIT', session_date)# chunked
 
 		prescribe_tb_medication = false
 		@transfer_out_patient = false;
-		(tb_visit_obs || []).each do | obs | 
+		(tb_visit_obs || []).each do | obs |
 			if obs.concept_id == (Concept.find_by_name('Prescribe drugs').concept_id rescue nil)
-				prescribe_tb_medication = true if Concept.find(obs.value_coded).fullname.upcase == 'YES' 
+				prescribe_tb_medication = true if Concept.find(obs.value_coded).fullname.upcase == 'YES'
 			end
 
 			if obs.concept_id == (Concept.find_by_name('Continue treatment').concept_id rescue nil)
-				@transfer_out_patient = true if Concept.find(obs.value_coded).fullname.upcase == 'NO' 
+				@transfer_out_patient = true if Concept.find(obs.value_coded).fullname.upcase == 'NO'
 			end
 		end
-		
-		@prescribe_tb_drugs = false	
+
+		@prescribe_tb_drugs = false
 		if (not @tb_programs.blank?) and prescribe_tb_medication and !tb_medication_prescribed
 			@prescribe_tb_drugs = true
 		end
 
-		hiv_clinic_consultation_obs = Encounter.find(:first,
-      :order => "encounter_datetime DESC,date_created DESC",
-			:conditions => ["patient_id = ? AND encounter_type IN (?) AND DATE(encounter_datetime) = ?",
-			@patient.id, EncounterType.find(:all,:select => 'encounter_type_id', 
-      :conditions => ["name IN (?)",["HIV CLINIC CONSULTATION"]]),session_date.to_date]).observations rescue []
+		sulphur_allergy_obs = Patient.obs_available_in(@patient, ["HIV CLINIC CONSULTATION", "TB VISIT"],  session_date) #chunked
 
-		concept_id = concept_id = ConceptName.find_by_name("COMMON MALAWI ART SYMPTOM SET").concept_id
-    set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
-    hiv_symptoms_ids = set.map{|item|next if item.concept.blank? ; item.concept_id }
-
-		concept_id = concept_id = ConceptName.find_by_name("ADDITIONAL MALAWI ART SYMPTOM SET").concept_id
-    set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
-    hiv_additional_symptoms_ids = set.map{|item|next if item.concept.blank? ; item.concept_id }
+		hiv_clinic_consultation_obs = Patient.obs_available_in(@patient, ["HIV CLINIC CONSULTATION"],  session_date) #chunked
+    hiv_symptoms_ids = Patient.concept_set("COMMON MALAWI ART SYMPTOM SET")#chunked
+    hiv_additional_symptoms_ids = Patient.concept_set("ADDITIONAL MALAWI ART SYMPTOM SET")#chunked
 
 		hiv_symptoms_ids += hiv_additional_symptoms_ids
 		@found_symptoms = []
@@ -139,45 +112,32 @@ class GenericRegimensController < ApplicationController
 		end
 
 		@adverse_events = regimen_options
-		@regimen_index = Regimen.find_by_sql("select distinct(c.name) as name, r.regimen_index as reg_index from concept_name c
-										inner join regimen r on r.concept_id = c.concept_id
-										where c.concept_id = '#{@hiv_regimen_map}' and  concept_name_type = 'short' limit 1").map{|regimen| regimen.reg_index}
+		@regimen_index = Patient.regimen_index(@hiv_regimen_map)
 
-	      session_date = session[:datetime].to_date rescue Date.today
-        current_encounters = @patient.encounters.find_by_date(session_date)
-        @family_planning_methods = []
-        @is_patient_pregnant_value = 'Unknown'
+	  session_date = session[:datetime].to_date rescue Date.today
+    current_encounters = @patient.encounters.find_by_date(session_date)
+    @family_planning_methods = []
+    @is_patient_pregnant_value = 'Unknown'
 
 #................................................................................................................
     if @patient_bean.sex == 'Female'
         for encounter in current_encounters.reverse do
 
-            if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation') 
-             
-                encounter = Encounter.find(encounter.id, :include => [:observations])
+            if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation')
+
+                encounter = Encounter.find(encounter.id)
 
                 for obs in encounter.observations do
+
                     if obs.concept_id == ConceptName.find_by_name("IS PATIENT PREGNANT?").concept_id
                         @is_patient_pregnant_value = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}"
-                        break
-                    end                    
+										elsif obs.concept_id == ConceptName.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id
+											@currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
+										elsif obs.concept_id == ConceptName.find_by_name("FAMILY PLANNING METHOD").concept_id
+											@family_planning_methods << "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish.humanize
+										end
+
                 end
-
-                if encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation')
-
-                    encounter = Encounter.find(encounter.id, :include => [:observations])
-                    for obs in encounter.observations do
-                        if obs.concept_id == ConceptName.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id
-                            @currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
-                        end
-
-                        if obs.concept_id == ConceptName.find_by_name("FAMILY PLANNING METHOD").concept_id
-                            @family_planning_methods << "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish.humanize
-                        end
-                    end
-                    
-                end
-                
             end
         end
 
@@ -415,8 +375,8 @@ class GenericRegimensController < ApplicationController
 
 	def create
 		#raise params[:observation][].to_yaml
-		prescribe_tb_drugs = false   
-		prescribe_tb_continuation_drugs = false   
+		prescribe_tb_drugs = false
+		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
 		prescribe_cpt = false
 		prescribe_ipt = false
@@ -481,17 +441,17 @@ class GenericRegimensController < ApplicationController
 				drug = Drug.find(order.drug_inventory_id)
 				regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
 				DrugOrder.write_order(
-					encounter, 
-					@patient, 
-					obs, 
-					drug, 
-					start_date, 
-					auto_tb_expire_date, 
-					order.dose, 
-					order.frequency, 
+					encounter,
+					@patient,
+					obs,
+					drug,
+					start_date,
+					auto_tb_expire_date,
+					order.dose,
+					order.frequency,
 					order.prn,
   				"#{drug.name}: #{order.instructions} (#{regimen_name})",
-					order.equivalent_daily_dose)  
+					order.equivalent_daily_dose)
 			end if prescribe_tb_drugs
 		end
 
@@ -510,17 +470,17 @@ class GenericRegimensController < ApplicationController
 				drug = Drug.find(order.drug_inventory_id)
 				regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
 				DrugOrder.write_order(
-					encounter, 
-					@patient, 
-					obs, 
-					drug, 
-					start_date, 
-					auto_tb_continuation_expire_date, 
-					order.dose, 
-					order.frequency, 
-					order.prn, 
+					encounter,
+					@patient,
+					obs,
+					drug,
+					start_date,
+					auto_tb_continuation_expire_date,
+					order.dose,
+					order.frequency,
+					order.prn,
 					"#{drug.name}: #{order.instructions} (#{regimen_name})",
-					order.equivalent_daily_dose)  
+					order.equivalent_daily_dose)
 			end if prescribe_tb_continuation_drugs
 		end
 
@@ -574,7 +534,7 @@ class GenericRegimensController < ApplicationController
 			# Specific at the moment and will likely need to have some kind of lookup
 			# or be made generic
 			selected_regimen = Regimen.find(params[:regimen]) if prescribe_arvs
- 
+
 			obs = Observation.create(
 				:concept_name => "REGIMEN CATEGORY",
 				:person_id => @patient.person.person_id,
@@ -599,17 +559,17 @@ class GenericRegimensController < ApplicationController
 				drug = Drug.find(order.drug_inventory_id)
 				regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
 				DrugOrder.write_order(
-				encounter, 
-				@patient, 
-				obs, 
-				drug, 
-				start_date, 
-				auto_expire_date, 
-				order.dose, 
-				order.frequency, 
+				encounter,
+				@patient,
+				obs,
+				drug,
+				start_date,
+				auto_expire_date,
+				order.dose,
+				order.frequency,
 				order.prn,
 				"#{drug.name}: #{order.instructions} (#{regimen_name})",
-				order.equivalent_daily_dose)    
+				order.equivalent_daily_dose)
 			end if prescribe_arvs
 		end
 
@@ -627,7 +587,7 @@ class GenericRegimensController < ApplicationController
 				:person_id => @patient.person.person_id ,
 				:encounter_id => encounter.encounter_id ,
 				:value_coded => yes_no.concept_id ,
-				:obs_datetime => start_date) 
+				:obs_datetime => start_date)
 
 			next if concept == 'NO'
 
@@ -640,14 +600,14 @@ class GenericRegimensController < ApplicationController
 					drug = Drug.find_by_name('Cotrimoxazole (960mg)')
         elsif params[:cpt_mgs] == "120"
           drug = Drug.find_by_name('TMP/SMX (Cotrimoxazole 120mg tablet)')
-        elsif params[:cpt_mgs] == "240"      
-          drug = Drug.find_by_name('TMP/SMX (Cotrimoxazole 240mg tablet)') 
+        elsif params[:cpt_mgs] == "240"
+          drug = Drug.find_by_name('TMP/SMX (Cotrimoxazole 240mg tablet)')
 				else
 					drug = Drug.find_by_name('Cotrimoxazole (480mg tablet)')
 				end
       else
 				if params[:ipt_mgs] == "300"
-						drug = Drug.find_by_name('INH or H (Isoniazid 300mg tablet)')	
+						drug = Drug.find_by_name('INH or H (Isoniazid 300mg tablet)')
         elsif params[:ipt_mgs] == "250"
 						drug = Drug.find_by_name('INH or H (Isoniazid 250mg tablet)')
         elsif params[:ipt_mgs] == "200"
@@ -656,9 +616,9 @@ class GenericRegimensController < ApplicationController
 						drug = Drug.find_by_name('INH or H (Isoniazid 150mg tablet)')
         else
 						drug = Drug.find_by_name('INH or H (Isoniazid 100mg tablet)')
-				end	
+				end
 			end
-		
+
 			weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
 			regimen_id = Regimen.all(:conditions =>  ['min_weight <= ? AND max_weight >= ? AND concept_id = ?', weight, weight, drug.concept_id]).first.regimen_id
 			orders = RegimenDrugOrder.all(:conditions => {:regimen_id => regimen_id, :drug_inventory_id => drug.id})
@@ -709,7 +669,7 @@ class GenericRegimensController < ApplicationController
        end unless params[:pyridoxine_value].blank?
 
        unless params[:pyridoxine_value].blank?
-         
+
           weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
           regimen_id = Regimen.all(:conditions =>  ['min_weight <= ? AND max_weight >= ? AND concept_id = ?', weight, weight, drug.concept_id]).first.regimen_id
           orders = RegimenDrugOrder.all(:conditions => {:regimen_id => regimen_id, :drug_inventory_id => drug.id})
@@ -745,14 +705,14 @@ class GenericRegimensController < ApplicationController
 			:encounter_id => encounter.encounter_id,
 			:value_numeric => condoms,
 			:obs_datetime => start_date) if !condoms.blank?
-		
+
 		if !params[:transfer_data].nil?
 			transfer_out_patient(params[:transfer_data][0])
 		end
-    
+
 		# Send them back to treatment for now, eventually may want to go to workflow
 		redirect_to "/patients/treatment_dashboard?patient_id=#{@patient.id}"
-	end    
+	end
 
 	def suggested
 		session_date = session[:datetime].to_date rescue Date.today
@@ -762,9 +722,9 @@ class GenericRegimensController < ApplicationController
 		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
 		#regimen_concepts = patient_program.regimens(current_weight).uniq
 		@options = MedicationService.regimen_options(current_weight, patient_program.program)
-		
+
 		tmp = []
-		
+
 		@options.each{|i|
 			if i.to_s.include?("2P") && current_weight<25
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
@@ -777,16 +737,16 @@ class GenericRegimensController < ApplicationController
 
 			elsif i.to_s.include?("2A") && (current_weight >= 25 && current_weight <= 35)
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-				
+
 			elsif i.to_s.include?("5A") && current_weight > 35
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 			end
-			
+
 			tmp << i
 		}
-		
+
 		@options = tmp
-		
+
 		render :layout => false
 	end
 
@@ -798,37 +758,37 @@ class GenericRegimensController < ApplicationController
 		#current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
 		#regimen_concepts = patient_program.regimens(current_weight).uniq
 		@options = MedicationService.all_regimen_options(patient_program.program)
-		
+
 		tmp = []
-		
+
 		current_weight = params[:current_weight].to_f
-		
+
 		@options.each{|i|
 			if i.to_s.include?("2P") && current_weight<25.to_f
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-				
+
 			elsif i.to_s.include?("2A") && (current_weight >= 25.to_f && current_weight <= 35.to_f)
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-				
+
 			elsif i.to_s.include?("5A") && current_weight > 35.to_f
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 			end
-			
+
 			tmp << i
 		}
-		
+
 		@options = tmp
-		
+
 		render :layout => false
 	end
 
 	def dosing
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		@criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
-		@options = @criteria.map do |r| 
+		@options = @criteria.map do |r|
 			[r.regimen_id, r.regimen_drug_orders.map(&:to_s).join('; ')]
 		end
-		render :layout => false    
+		render :layout => false
 	end
 
   def dosing_all
@@ -836,7 +796,7 @@ class GenericRegimensController < ApplicationController
     @criteria = Regimen.find(:all,:order => 'regimen_index',:conditions => ['program_id = ? AND concept_id =?', 1, params[:id]],:include => :regimen_drug_orders)
 
 	#	@criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
-    
+
 		@options = @criteria.map do |r|
 			[r.regimen_id, r.regimen_drug_orders.map(&:to_s).join('; ')]
 		end
@@ -852,7 +812,7 @@ class GenericRegimensController < ApplicationController
         [order.drug.name , order.dose, order.frequency , order.units , r.id ]
       end
     end
-    render :text => @options.to_json 
+    render :text => @options.to_json
 	end
 
   	def formulations_all
@@ -878,7 +838,7 @@ class GenericRegimensController < ApplicationController
       days = (((duration.to_i) * 28)) if duration.match(/month/i)
       hash[days] = duration
     end
-    
+
     sorted_durations = hash.sort_by{|k, v| k } #sorting in ascending order by key
     filtered_durations = []
     sorted_durations.each do |k, v|
@@ -895,7 +855,7 @@ class GenericRegimensController < ApplicationController
       insufficient_stock = false
       return v #days/weeks/months
     end
-    
+
     return 'No stock' if insufficient_stock
   end
 
@@ -938,16 +898,17 @@ class GenericRegimensController < ApplicationController
          drug_details[drug_name]["low_stock_warning"] = true
          drug_details[drug_name]["recommended_duration"] = recommend_duration(duration, equivalent_daily_dose, current_stock, drug_pack_size)
        end
-       
+
       end
-     
+
      render :json => drug_details and return
   end
-  
+
   def drug_stock(patient, concept_id)
+		stock = {}
+		if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false)
     regimens = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => concept_id}, :include => :regimen_drug_orders)
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
-    stock = {}
     regimens.each do | r |
       r.regimen_drug_orders.each do | order |
         drug = order.drug
@@ -982,12 +943,15 @@ class GenericRegimensController < ApplicationController
         stock[drug.id]["drug_pack_size"] = drug_pack_size
       end
     end
+		end
     stock
   end
-  
+
   def cpt_drug_stock
+
+		stock = {}
+		if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false)
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
-    stock = {}
     required_cpt = ["Cotrimoxazole (480mg tablet)", "Cotrimoxazole (960mg)"]
     required_cpt.each do | name |
         drug = Drug.find_by_name(name)
@@ -1003,7 +967,7 @@ class GenericRegimensController < ApplicationController
         last_physical_count_date = last_physical_count_enc.encounter_date.to_date rescue Date.today
         drug_pack_size = Pharmacy.pack_size(drug.id)
         current_stock = (Pharmacy.current_stock_after_dispensation(drug.id, last_physical_count_date)/drug_pack_size).to_i
-              
+
         #total_drug_dispensations = Pharmacy.dispensed_drugs_since(drug.id, last_physical_count_date)
         past_ninety_days_date = (Date.today - 90.days)
         total_drug_dispensations_within_ninety_days = Pharmacy.dispensed_drugs_since(drug.id, past_ninety_days_date) #within 90 days
@@ -1021,16 +985,17 @@ class GenericRegimensController < ApplicationController
         stock[drug.id]["estimated_stock_out_date"] = estimated_stock_out_date
         stock[drug.id]["drug_pack_size"] = drug_pack_size
     end
+	end
     stock
   end
-  
+
   def drug_stock_availability
     patient = Patient.find(params[:patient_id])
     #regimens = Regimen.find(:all,:order => 'regimen_index',:conditions => ['concept_id =?',params[:concept_id]],:include => :regimen_drug_orders)
     regimens = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => params[:concept_id]}, :include => :regimen_drug_orders)
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
     stock = {}
-    
+
     regimens.each do | r |
       r.regimen_drug_orders.each do | order |
         drug = order.drug
@@ -1075,16 +1040,16 @@ class GenericRegimensController < ApplicationController
 
 		# Grab the 10 most popular durations for this drug
 		amounts = []
-		orders = DrugOrder.find(:all, 
+		orders = DrugOrder.find(:all,
 			:select => 'DATEDIFF(orders.auto_expire_date, orders.start_date) as duration_days',
 			:joins => 'LEFT JOIN orders ON orders.order_id = drug_order.order_id AND orders.voided = 0',
-			:limit => 10, 
-			:group => 'drug_inventory_id, DATEDIFF(orders.auto_expire_date, orders.start_date)', 
-			:order => 'count(*)', 
-			:conditions => {:drug_inventory_id => @drug_id})      
+			:limit => 10,
+			:group => 'drug_inventory_id, DATEDIFF(orders.auto_expire_date, orders.start_date)',
+			:order => 'count(*)',
+			:conditions => {:drug_inventory_id => @drug_id})
 		orders.each {|order|
 			amounts << "#{order.duration_days.to_f}" unless order.duration_days.blank?
-		}  
+		}
 		amounts = amounts.flatten.compact.uniq
 		render :text => "<li>" + amounts.join("</li><li>") + "</li>"
 	end
@@ -1092,23 +1057,23 @@ class GenericRegimensController < ApplicationController
 	private
 
 	def current_regimens_for_programs
-		@programs.inject({}) do |result, program| 
-			result[program.patient_program_id] = program.current_regimen; result 
+		@programs.inject({}) do |result, program|
+			result[program.patient_program_id] = program.current_regimen; result
 		end
 	end
 
 	def current_regimen_names_for_programs
-		@programs.inject({}) do |result, program| 
-	  		result[program.patient_program_id] = program.current_regimen ? Concept.find_by_concept_id(program.current_regimen).concept_names.tagged(["short"]).map(&:name) : nil; result 
+		@programs.inject({}) do |result, program|
+	  		result[program.patient_program_id] = program.current_regimen ? Concept.find_by_concept_id(program.current_regimen).concept_names.tagged(["short"]).map(&:name) : nil; result
 		end
 	end
-	
-  def transfer_out_patient(params)
-    
-    patient_program = PatientProgram.find(params[:patient_program_id])
-    
 
-    
+  def transfer_out_patient(params)
+
+    patient_program = PatientProgram.find(params[:patient_program_id])
+
+
+
     #we don't want to have more than one open states - so we have to close the current active on before opening/creating a new one
 
     current_active_state = patient_program.patient_states.last
@@ -1126,7 +1091,7 @@ class GenericRegimensController < ApplicationController
       current_active_state.save
 
       if patient_state.program_workflow_state.concept.fullname.upcase == 'PATIENT TRANSFERRED OUT'
-      
+
         encounter = Encounter.new(params[:encounter])
         encounter.encounter_datetime = session[:datetime] unless session[:datetime].blank?
         c = encounter.save
@@ -1134,15 +1099,15 @@ class GenericRegimensController < ApplicationController
         (params[:observations] || [] ).each do |observation|
           #for now i do this
           obs = {}
-          obs[:concept_name] = observation[:concept_name] 
-          obs[:value_coded_or_text] = observation[:value_coded_or_text] 
+          obs[:concept_name] = observation[:concept_name]
+          obs[:value_coded_or_text] = observation[:value_coded_or_text]
           obs[:encounter_id] = encounter.id
           obs[:obs_datetime] = encounter.encounter_datetime || Time.now()
-          obs[:person_id] ||= encounter.patient_id  
+          obs[:person_id] ||= encounter.patient_id
           Observation.create(obs)
         end
 
-        observation = {} 
+        observation = {}
         observation[:concept_name] = 'TRANSFER OUT TO'
         observation[:encounter_id] = encounter.id
         observation[:obs_datetime] = encounter.encounter_datetime || Time.now()
@@ -1152,22 +1117,22 @@ class GenericRegimensController < ApplicationController
       end
 
       date_completed = params[:current_date].to_date rescue Time.now()
-      
+
       PatientProgram.update_all "date_completed = '#{date_completed.strftime('%Y-%m-%d %H:%M:%S')}'",
                                  "patient_program_id = #{patient_program.patient_program_id}"
     end
   end
-  
-  
+
+
   def current_regimen(patient_id)
 	  regimen_category = Concept.find_by_name("Regimen Category")
- 
+
       current_regimen = Observation.find(:first, :conditions => ["concept_id = ? AND
         person_id = ? AND obs_datetime = (SELECT MAX(obs_datetime) FROM obs o
         WHERE o.person_id = #{patient_id} AND o.concept_id =#{regimen_category.id}
         AND o.voided = 0)",regimen_category.id, patient_id]).value_text rescue nil
   end
-  
+
   protected
 
 
@@ -1175,12 +1140,12 @@ class GenericRegimensController < ApplicationController
     #criteria =  Regimen.find(:all,:order => 'regimen_index',:conditions => ['concept_id =?',regimen_id],:include => :regimen_drug_orders)
 		criteria = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => regimen_id}, :include => :regimen_drug_orders)
 		options = []
-    criteria.map do | r | 
+    criteria.map do | r |
 			r.regimen_drug_orders.map do | order |
 				options << [order.drug.name , order.dose, order.frequency , order.units , r.id ]
 			end
 		end
-		return options  
+		return options
 	end
 
 
