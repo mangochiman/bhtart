@@ -96,7 +96,7 @@ class GenericRegimensController < ApplicationController
 			@prescribe_tb_drugs = true
 		end
 
-		sulphur_allergy_obs = Patient.obs_available_in(patient, ["HIV CLINIC CONSULTATION", "TB VISIT"],  session_date) #chunked
+		sulphur_allergy_obs = Patient.obs_available_in(@patient, ["HIV CLINIC CONSULTATION", "TB VISIT"],  session_date) #chunked
 
 =begin
 		@alergic_to_suphur = false
@@ -107,7 +107,7 @@ class GenericRegimensController < ApplicationController
 		end
 =end
 
-		hiv_clinic_consultation_obs = Patient.obs_available_in(patient, ["HIV CLINIC CONSULTATION"],  session_date) #chunked
+		hiv_clinic_consultation_obs = Patient.obs_available_in(@patient, ["HIV CLINIC CONSULTATION"],  session_date) #chunked
 
     hiv_symptoms_ids = Patient.concept_set("COMMON MALAWI ART SYMPTOM SET")#chunked
     hiv_additional_symptoms_ids = Patient.concept_set("ADDITIONAL MALAWI ART SYMPTOM SET")#chunked

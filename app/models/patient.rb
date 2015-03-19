@@ -335,7 +335,7 @@ def self.vl_result_hash(patient)
     return vl_hash.sort_by{|key, value|value["date_of_sample"].to_date}.reverse rescue {}
   end
 
-  def allergic_to_sulpher(patient, date = Date.today)
+  def self.allergic_to_sulpher(patient, date = Date.today)
   return  Observation.find(Observation.find(:first,
     :order => "obs_datetime DESC,date_created DESC",
     :conditions => ["person_id = ? AND concept_id = ?
@@ -344,40 +344,40 @@ def self.vl_result_hash(patient)
       date])).answer_string.strip.squish rescue ''
   end
 
-  def sulphur_allergy_obs(patient, encounter_array, date = Date.today)
+  def self.obs_available_in(patient, encounter_array, date = Date.today)
     return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
     :conditions => ["patient_id = ? AND encounter_type IN (?) AND DATE(encounter_datetime) = ?",
       patient.id, EncounterType.find(:all,:select => 'encounter_type_id',
       :conditions => ["name IN (?)",encounter_array]),date.to_date]).observations rescue []
   end
 
-  def tb_encounter(patient)
+  def self.tb_encounter(patient)
     return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
     :conditions=>["patient_id = ? AND encounter_type = ?",
       patient.id, EncounterType.find_by_name("TB visit").id]) rescue nil
   end
 
-  def current_hiv_program_state(patient)
+  def self.current_hiv_program_state(patient)
     return PatientProgram.find(:first, :joins => :location,
     :conditions => ["patient_id = ? AND program_id = ? AND location.location_id = ? AND date_completed IS NULL",
       patient.id, Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,
        Location.current_health_center]).patient_states.current.first.program_workflow_state.concept.fullname rescue ''
   end
 
-  def hiv_encounter(patient, encounter, date = Date.today)
+  def self.hiv_encounter(patient, encounter, date = Date.today)
     return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
     :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
       date.to_date, patient.id, EncounterType.find_by_name(encounter).id])
   end
 
-  def concept_set(concept)
+  def self.concept_set(concept)
     concept_id = ConceptName.find_by_name(concept).concept_id
     set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
     symptoms_ids = set.map{|item|next if item.concept.blank? ; item.concept_id }
     return symptoms_ids
   end
 
-  def regimen_index(hiv_regimen_map)
+  def self.regimen_index(hiv_regimen_map)
     return Regimen.find_by_sql("select distinct(c.name) as name, r.regimen_index as reg_index from concept_name c
     inner join regimen r on r.concept_id = c.concept_id
     where c.concept_id = '#{hiv_regimen_map}' and  concept_name_type = 'short' limit 1").map{|regimen| regimen.reg_index}
