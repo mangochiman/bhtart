@@ -14,7 +14,7 @@ module ApplicationHelper
     content << "</form>"
     content
   end
-  
+
   def img_button_submit_to_with_confirm(url, image, options = {}, params = {})
     content = ""
     content << "<form " + ((options[:form_id])?("id=#{options[:form_id]}"):"id='frm_general'") + " method='post' action='#{url}'><input type='image' src='#{image}' " +
@@ -25,12 +25,12 @@ module ApplicationHelper
     content << "</form>"
     content
   end
-  
+
   def fancy_or_high_contrast_touch
     fancy = get_global_property_value("interface") == "fancy" rescue false
     fancy ? "touch-fancy.css" : "touch.css"
   end
-  
+
   def show_intro_text
     get_global_property_value("show_intro_text").to_s == "true" rescue false
   end
@@ -42,7 +42,7 @@ module ApplicationHelper
   def drug_management_activated
     get_global_property_value("activate.drug.management").to_s == "true" rescue false
   end
-  
+
   def ask_home_village
     get_global_property_value("demographics.home_village").to_s == "true" rescue false
   end
@@ -55,7 +55,7 @@ module ApplicationHelper
   def ask_mothers_surname
     get_global_property_value("demographics.mothers_surname").to_s == "true" rescue false
   end
-  
+
   def ask_middle_name
     get_global_property_value("demographics.middle_name").to_s == "true" rescue false
   end
@@ -63,7 +63,7 @@ module ApplicationHelper
   def ask_visit_home_for_TB_therapy
     get_global_property_value("demographics.visit_home_for_treatment").to_s == "true" rescue false
   end
-  
+
   def ask_sms_for_TB_therapy
     get_global_property_value("demographics.sms_for_TB_therapy").to_s == "true" rescue false
   end
@@ -78,16 +78,16 @@ module ApplicationHelper
 
   def ask_temperature
     get_global_property_value("vitals.temperature").to_s == "true" rescue false
-  end  
+  end
 
   def ask_standard_art_side_effects
     get_global_property_value("art_visit.standard_art_side_effects").to_s == "true" rescue false
-  end  
+  end
 
   def show_lab_results
     get_global_property_value('show.lab.results').to_s == "true" rescue false
   end
-  
+
   def use_filing_number
     get_global_property_value('use.filing.number').to_s == "true" rescue false
   end
@@ -113,7 +113,7 @@ module ApplicationHelper
 	end
 
 	def get_global_property_value(global_property)
-		property_value = Settings[global_property] 
+		property_value = Settings[global_property]
 		if property_value.nil?
 			property_value = GlobalProperty.find(:first, :conditions => {:property => "#{global_property}"}
 													).property_value rescue nil
@@ -124,9 +124,9 @@ module ApplicationHelper
   def month_name_options(selected_months = [])
     i=0
     options_array = [[]] +Date::ABBR_MONTHNAMES[1..-1].collect{|month|[month,i+=1]} + [["Unknown","Unknown"]]
-    options_for_select(options_array, selected_months)  
+    options_for_select(options_array, selected_months)
   end
-  
+
   def age_limit
     Time.now.year - 1890
   end
@@ -135,11 +135,11 @@ module ApplicationHelper
     style = "style='background-color:red;'" unless session[:datetime].blank?
     "NART Version: #{NART_VERSION} - <span #{style}>#{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
   end
-  
+
   def welcome_message
-    "Muli bwanji, enter your user information or scan your id card. <span style='font-size:0.6em;float:righti;margin-right: 20px;'>(#{version})</span>"  
+    "Muli bwanji, enter your user information or scan your id card. <span style='font-size:0.6em;float:righti;margin-right: 20px;'>(#{version})</span>"
   end
-  
+
   def show_identifiers(location_id, patient)
     content = ""
     idents = get_global_property_value("dashboard.identifiers")
@@ -150,12 +150,12 @@ module ApplicationHelper
       next if ident_type.blank?
       ident = patient.patient_identifiers.find_by_identifier_type(ident_type.id)
       next if ident.blank?
-      content << "<span class='title'>#{name}:</span> #{ident.identifier}"       
+      content << "<span class='title'>#{name}:</span> #{ident.identifier}"
     end
     content
   end
-  
-  def patient_image(patient) 
+
+  def patient_image(patient)
     @patient.person.gender == 'M' ? "<img src='/images/male.gif' alt='Male' height='30px' style='margin-bottom:-4px;'>" : "<img src='/images/female.gif' alt='Female' height='30px' style='margin-bottom:-4px;'>"
   end
 
@@ -177,16 +177,16 @@ module ApplicationHelper
       options_array << ['No', 'No']
     end
     options_array << ['Unknown', 'Unknown']
-    options_for_select(options_array)  
+    options_for_select(options_array)
   end
-  
+
   def program_enrollment_options(patient, filter_program_name=nil)
     progs = @patient.patient_programs.all
     progs.reject!{|prog| prog.program.name != filter_program_name} unless filter_program_name.blank?
     options_array = progs.map{|prog| [prog.program.name + " (started #{prog.date_enrolled.strftime('%d/%b/%Y')} at #{prog.location.name})", prog.id]}
-    options_for_select(options_array)  
+    options_for_select(options_array)
   end
-  
+
   def concept_set_options(concept_name)
     concept_id = concept_id = ConceptName.find_by_name(concept_name).concept_id
     set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
@@ -203,21 +203,21 @@ module ApplicationHelper
 
   def selected_concept_set_options(concept_name, exclude_concept_name)
     concept_id = concept_id = ConceptName.find_by_name(concept_name).concept_id
-    
+
     set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
     options = set.map{|item|next if item.concept.blank? ; [item.concept.fullname, item.concept.fullname] }
 
     exclude_concept_id = ConceptName.find_by_name(exclude_concept_name).concept_id
-    
+
     exclude_set = ConceptSet.find_all_by_concept_set(exclude_concept_id, :order => 'sort_weight')
     exclude_options = exclude_set.map{|item|next if item.concept.blank? ; [item.concept.fullname, item.concept.fullname] }
 
     options_for_select(options - exclude_options)
   end
-  
+
   def concept_set(concept_name)
     concept_id = ConceptName.find_by_name(concept_name).concept_id
-    
+
     set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
     options = set.map{|item|next if item.concept.blank? ; [item.concept.fullname] }
     return options
@@ -239,7 +239,7 @@ module ApplicationHelper
                                  WHERE name = 'Workstation Location'))
              ORDER BY name ASC").collect{|name| name.send(field_name)} rescue []
   end
-  
+
   def concept_sets(concept_name)
 	concept_id = ConceptName.find_by_name(concept_name).concept_id
 
@@ -266,19 +266,19 @@ module ApplicationHelper
 
   def preferred_user_keyboard
     UserProperty.find(:first,
-      :conditions =>["property = ? AND user_id = ?",'preferred.keyboard', 
+      :conditions =>["property = ? AND user_id = ?",'preferred.keyboard',
       current_user.id]).property_value rescue 'abc'
   end
 
-  def create_from_dde_server                                                    
+  def create_from_dde_server
     CoreService.get_global_property_value('create.from.dde.server').to_s == "true" rescue false
-  end 
+  end
 
-  def current_user_roles                                                        
+  def current_user_roles
     user_roles = UserRole.find(:all,:conditions =>["user_id = ?", current_user.id]).collect{|r|r.role}
     RoleRole.find(:all,:conditions => ["child_role IN (?)", user_roles]).collect{|r|user_roles << r.parent_role}
     return user_roles.uniq
-    
+
   end
 
   def suggested_return_date(patient,dispensed_date)
@@ -287,15 +287,15 @@ module ApplicationHelper
     PatientService.drugs_given_on(patient, session_date).uniq.each do |order|
       drug = order.drug_order.drug
       next unless MedicationService.arv(drug)
-      if drugs_given[drug.name].blank? 
+      if drugs_given[drug.name].blank?
         drugs_given[drug.name] = {:quantity => order.drug_order.quantity ,
                                :dose => order.drug_order.equivalent_daily_dose,
-                               :auto_expire_date => order.auto_expire_date 
+                               :auto_expire_date => order.auto_expire_date
                               }
       else
         drugs_given[drug.name] = {:quantity => order.drug_order.quantity + drugs_given[drug.name][:quantity],
                                :dose => order.drug_order.equivalent_daily_dose,
-                               :auto_expire_date => order.auto_expire_date 
+                               :auto_expire_date => order.auto_expire_date
                               }
       end
     end rescue {}
@@ -304,15 +304,15 @@ module ApplicationHelper
 
     min_pills_given_per_drug = 0
     auto_expire_date = nil
-    return_date = nil 
+    return_date = nil
     (drugs_given || {}).each do |name,values|
       if ((values[:quantity] <= min_pills_given_per_drug) || min_pills_given_per_drug == 0)
-        min_pills_given_per_drug = values[:quantity] 
+        min_pills_given_per_drug = values[:quantity]
         return_date = dispensed_date + (values[:quantity]/values[:dose]).days
         auto_expire_date = values[:auto_expire_date].to_date rescue dispensed_date
       end
     end
-   
+
     #here we check if the prescription period is is inline with what was dispensed
     #if not we go with the date when the actual drugs will run out
     if auto_expire_date <= return_date
@@ -321,34 +321,34 @@ module ApplicationHelper
 
     #if the suggested_return_date is available we add a two day buffer by subtracting
     #two days to the suggested_return_date
-    return_date -= 2.day if return_date 
+    return_date -= 2.day if return_date
     return return_date
   end
 
-  def current_program_location                                                  
-    current_user_activities = current_user.activities                      
-    if Location.current_location.name.downcase == 'outpatient'                  
-      return "OPD"                                                              
+  def current_program_location
+    current_user_activities = current_user.activities
+    if Location.current_location.name.downcase == 'outpatient'
+      return "OPD"
     elsif current_user_activities.include?('Manage Lab Orders') or current_user_activities.include?('Manage Lab Results') or
        current_user_activities.include?('Manage Sputum Submissions') or current_user_activities.include?('Manage TB Clinic Visits') or
        current_user_activities.include?('Manage TB Reception Visits') or current_user_activities.include?('Manage TB Registration Visits') or
-       current_user_activities.include?('Manage HIV Status Visits')             
-       return 'TB program'                                                      
-    else #if current_user_activities                                            
-       return 'HIV program'                                                     
-    end                                                                         
+       current_user_activities.include?('Manage HIV Status Visits')
+       return 'TB program'
+    else #if current_user_activities
+       return 'HIV program'
+    end
   end
 
-  def what_app?                                                                 
+  def what_app?
     if current_user.activities.include?('Manage Lab Orders') or current_user.activities.include?('Manage Lab Results') or
        current_user.activities.include?('Manage Sputum Submissions') or current_user.activities.include?('Manage TB Clinic Visits') or
        current_user.activities.include?('Manage TB Reception Visits') or current_user.activities.include?('Manage TB Registration Visits') or
-       current_user.activities.include?('Manage HIV Status Visits')             
-      'TB-ART'                                                                  
-    else                                                                        
-      'NART'                                                                    
-    end                                                                         
-  end 
+       current_user.activities.include?('Manage HIV Status Visits')
+      'TB-ART'
+    else
+      'NART'
+    end
+  end
 
   def require_viral_load_check(patient)
 
@@ -448,7 +448,7 @@ module ApplicationHelper
     results = Lab.latest_result_by_test_type(patient, 'HIV_viral_load', patient_identifiers) rescue nil
     latest_viral_results_date = results[0].sub("::HIV_RNA_PCR",'').to_date rescue nil
     return false if latest_viral_results_date.blank?
-    
+
       milestones.each do |key, value|
 
         if (period_on_art_in_months >= key)
@@ -480,9 +480,9 @@ module ApplicationHelper
         end
 
       end
-   
+
 	end
-  
+
   def modified_viral_load_check(patient)
 
 		arv_start_date = PatientService.patient_art_start_date(patient).to_date rescue nil
@@ -506,10 +506,10 @@ module ApplicationHelper
 >>>>>>> hcc
     identifier_types = PatientIdentifierType.find(:all,
       :conditions=>["name IN (?)",identifier_types]).collect{| type |type.id }
-                                                                                
-    patient_identifiers = PatientIdentifier.find(:all, 
+
+    patient_identifiers = PatientIdentifier.find(:all,
       :conditions=>["patient_id=? AND identifier_type IN (?)",
-      patient.id,identifier_types]).collect{| i | i.identifier }              
+      patient.id,identifier_types]).collect{| i | i.identifier }
 =end
     patient_identifiers = LabController.new.id_identifiers(patient)
     results = Lab.latest_result_by_test_type(patient, 'HIV_viral_load', patient_identifiers) rescue nil
@@ -576,7 +576,7 @@ module ApplicationHelper
           grace_period = value.last - value.first
           mile_stone_date = (arv_start_date + key.months).beginning_of_month
           mile_stone_grace_period = mile_stone_date + grace_period.months
-          
+
           if (viral_load_popup_activated(arv_start_date, patient, period_on_art_in_months) && latest_viral_results_date.blank?)
             milestone_exceeded = false
             return true
@@ -624,7 +624,7 @@ module ApplicationHelper
       if (period_on_art >= key && period_on_art <= value)
         first_date = art_start_date + key.months
         second_date = art_start_date + value.months
-        viral_loads_request = Observation.find(:all, :conditions => ["person_id = ? AND concept_id = ? 
+        viral_loads_request = Observation.find(:all, :conditions => ["person_id = ? AND concept_id = ?
             AND DATE(obs_datetime) >= ? AND DATE(obs_datetime) <= ? AND value_coded IS NOT NULL",
             patient.patient_id, Concept.find_by_name("Viral load").concept_id, first_date, second_date])
         return true unless viral_loads_request.blank?
@@ -755,7 +755,7 @@ module ApplicationHelper
           end
 
           if (period_on_art_in_months >= key && period_on_art_in_months <= value.last)
-            
+
            milestone_exceeded = false
 
             if (today >= mile_stone_date && today <=  mile_stone_grace_period)
@@ -838,7 +838,7 @@ module ApplicationHelper
     return false if vl_lab_sample.blank?
     return false if vl_lab_sample_obs.blank?
     return true unless vl_lab_sample_obs.blank?
-    
+
   end
 
   def repeat_viral_load_requested(patient)
@@ -874,7 +874,7 @@ module ApplicationHelper
         return false if latest_viral_results_date > repeat_vl_obs_date
         return true if latest_viral_results_date <= repeat_vl_obs_date
       end
-      
+
     else
       return false
     end
@@ -893,7 +893,7 @@ module ApplicationHelper
     second_line_art_start_date = PatientService.date_started_second_line_regimen(patient).to_date rescue nil
     return false unless second_line_art_start_date.blank? #Patient already switched to second line
     #return false unless second_line_obs.blank? #Patient already switched to second line
-    
+
     identifier_types = ["Legacy Pediatric id","National id","Legacy National id","Old Identification Number"]
 =begin
 >>>>>>> fcda4e9a2f5d1d0230c2ca75629cf77c1c6ac8b1
@@ -955,4 +955,15 @@ module ApplicationHelper
    return patient_present
   end
 
+  def htn_screening_age
+   get_global_property_value("htn.screening.age.threshold").to_i rescue 0
+  end
+
+  def htn_diastolic_threshold
+   get_global_property_value("htn.diastolic.threshold").to_i rescue 140
+  end
+
+  def htn_systolic_threshold
+   get_global_property_value("htn.systolic.threshold").to_i rescue 90
+  end
 end
