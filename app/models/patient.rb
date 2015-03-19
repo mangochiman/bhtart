@@ -9,12 +9,12 @@ class Patient < ActiveRecord::Base
   has_many :programs, :through => :patient_programs
   has_many :relationships, :foreign_key => :person_a, :dependent => :destroy, :conditions => {:voided => 0}
   has_many :orders, :conditions => {:voided => 0}
-  has_many :encounters, :conditions => {:voided => 0} do 
+  has_many :encounters, :conditions => {:voided => 0} do
 
  def find_by_date(encounter_date)
       encounter_date = Date.today unless encounter_date
-      find(:all, :conditions => ["encounter_datetime BETWEEN ? AND ?", 
-           encounter_date.to_date.strftime('%Y-%m-%d 00:00:00'), 
+      find(:all, :conditions => ["encounter_datetime BETWEEN ? AND ?",
+           encounter_date.to_date.strftime('%Y-%m-%d 00:00:00'),
            encounter_date.to_date.strftime('%Y-%m-%d 23:59:59')
       ]) # Use the SQL DATE function to compare just the date part
     end
@@ -160,7 +160,7 @@ def self.duplicates(attributes)
     end
     hash_to
    end
-   
+
 def self.merge(patient_id, secondary_patient_id)
     patient = Patient.find(patient_id, :include => [:patient_identifiers, :patient_programs, {:person => [:names]}])
     secondary_patient = Patient.find(secondary_patient_id, :include => [:patient_identifiers, :patient_programs, {:person => [:names]}])
@@ -176,7 +176,7 @@ def self.merge(patient_id, secondary_patient_id)
           AND identifier = '#{arv_number}'")
       end
     end
-    
+
   ActiveRecord::Base.transaction do
     secondary_patient.patient_identifiers.each {|r|
       if patient.patient_identifiers.map(&:identifier).each{| i | i.upcase }.include?(r.identifier.upcase)
@@ -293,7 +293,7 @@ def self.vl_result_hash(patient)
       accession_number = result[0]
       vl_result = result[2]
       date_of_sample = result[3].to_date
-      
+
       vl_hash[accession_number] = {} if vl_hash[accession_number].blank?
       vl_hash[accession_number]["result"] = {} if vl_hash[accession_number]["result"].blank?
       vl_hash[accession_number]["result"] = vl_result
@@ -304,7 +304,7 @@ def self.vl_result_hash(patient)
         person_id =? AND encounter_type =? AND concept_id =? AND accession_number =?
         AND value_text LIKE (?)",
         patient.id, encounter_type, viral_load, accession_number.to_i, '%Result given to patient%']) rescue nil
-    
+
       unless vl_lab_sample_obs.blank?
         vl_hash[accession_number]["result_given"] = {} if vl_hash[accession_number]["result_given"].blank?
         vl_hash[accession_number]["result_given"] = "yes"
@@ -321,7 +321,7 @@ def self.vl_result_hash(patient)
         person_id =? AND encounter_type =? AND concept_id =? AND accession_number =?
         AND value_text LIKE (?)",
         patient.id, encounter_type, viral_load, accession_number.to_i, '%Patient switched to second line%']) rescue nil
-    
+
     unless switched_to_second_line_obs.blank?
       vl_hash[accession_number]["second_line_switch"] = {} if vl_hash[accession_number]["second_line_switch"].blank?
       vl_hash[accession_number]["second_line_switch"] = "yes"
@@ -331,7 +331,56 @@ def self.vl_result_hash(patient)
     end
 
     end
-    
+
     return vl_hash.sort_by{|key, value|value["date_of_sample"].to_date}.reverse rescue {}
+  end
+
+  def allergic_to_sulpher(patient, date = Date.today)
+  return  Observation.find(Observation.find(:first,
+    :order => "obs_datetime DESC,date_created DESC",
+    :conditions => ["person_id = ? AND concept_id = ?
+      AND DATE(obs_datetime) <= ?", patient.id,
+      ConceptName.find_by_name("Allergic to sulphur").concept_id,
+      date])).answer_string.strip.squish rescue ''
+  end
+
+  def sulphur_allergy_obs(patient, encounter_array, date = Date.today)
+    return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
+    :conditions => ["patient_id = ? AND encounter_type IN (?) AND DATE(encounter_datetime) = ?",
+      patient.id, EncounterType.find(:all,:select => 'encounter_type_id',
+      :conditions => ["name IN (?)",encounter_array]),date.to_date]).observations rescue []
+  end
+
+  def tb_encounter(patient)
+    return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
+    :conditions=>["patient_id = ? AND encounter_type = ?",
+      patient.id, EncounterType.find_by_name("TB visit").id],
+      :include => [:observations]) rescue nil
+  end
+
+  def current_hiv_program_state(patient)
+    return PatientProgram.find(:first, :joins => :location,
+    :conditions => ["patient_id = ? AND program_id = ? AND location.location_id = ? AND date_completed IS NULL",
+      patient.id, Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,
+       Location.current_health_center]).patient_states.current.first.program_workflow_state.concept.fullname rescue ''
+  end
+
+  def hiv_encounter(patient, encounter, date = Date.today)
+    return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
+    :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
+      date.to_date, patient.id, EncounterType.find_by_name(encounter).id])
+  end
+
+  def concept_set(concept)
+    concept_id = ConceptName.find_by_name(concept).concept_id
+    set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
+    symptoms_ids = set.map{|item|next if item.concept.blank? ; item.concept_id }
+    return symptoms_ids
+  end
+
+  def regimen_index(hiv_regimen_map)
+    return Regimen.find_by_sql("select distinct(c.name) as name, r.regimen_index as reg_index from concept_name c
+    inner join regimen r on r.concept_id = c.concept_id
+    where c.concept_id = '#{hiv_regimen_map}' and  concept_name_type = 'short' limit 1").map{|regimen| regimen.reg_index}
   end
 end
