@@ -28,8 +28,8 @@ class ApplicationController < GenericApplicationController
 
     session_date = session[:datetime].to_date rescue Date.today
     task = main_next_task(Location.current_location, patient,session_date)
-    sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
-    dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
+    sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
+    dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
 
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
 
@@ -1472,8 +1472,8 @@ class ApplicationController < GenericApplicationController
 
   todays_encounters = patient.encounters.find_by_date(session_date)
 
-  sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
-  dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
+  sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
+  dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
 
   if task.present? && task.url.present?
    #patients eligible for HTN will have their vitals taken with HTN module
