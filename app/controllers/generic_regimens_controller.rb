@@ -66,11 +66,10 @@ class GenericRegimensController < ApplicationController
 		tb_visit_obs = Encounter.find(:all,:order => "encounter_datetime DESC,date_created DESC",
 		:conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
 			session_date.to_date, @patient.id, EncounterType.find_by_name("TB VISIT").id],
-			:include => [:observations]) #rescue []
+			:include => [:observations])
 
 		prescribe_tb_medication = false
 		@transfer_out_patient = false;
-		#raise tb_visit_obs.observation.to_yaml
 		(tb_visit_obs || []).each do | obs |
 			(obs.observations.each || []).each do |observation|
 			if observation.concept_id == (Concept.find_by_name('Prescribe drugs').concept_id rescue nil)
@@ -84,11 +83,10 @@ class GenericRegimensController < ApplicationController
 		end
 
 		treatment_obs = Patient.hiv_encounter(@patient, 'TREATMENT', session_date)# chunked
-
 		tb_medication_prescribed = false
 		arvs_prescribed = false
 
-		(treatment_obs || []).each do | obs |
+		(treatment_obs.observations || []).each do | obs |
 			if obs.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
 				tb_medication_prescribed = true
 			end
