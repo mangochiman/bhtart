@@ -1495,7 +1495,7 @@ class ApplicationController < GenericApplicationController
     #Check if latest BP was high for alert
     
     bp_alert_shown = false
-    bp_alert_shown = true if (session[:bp_alert])
+    bp_alert_shown = true if (session[:bp_alert] == patient.id)
 
     unless bp_drugs_started.blank?
       unless bp_initial_visit_enc.blank?

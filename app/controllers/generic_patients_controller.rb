@@ -2,11 +2,11 @@ class GenericPatientsController < ApplicationController
   before_filter :find_patient, :except => [:void]
 
   def show
-
     current_state = tb_status(@patient).downcase
     @show_period = false
     @show_period = true if current_state.match(/currently in treatment/i)
     session[:mastercard_ids] = []
+    session.delete(:bp_alert) if session[:bp_alert]
     session[:datetime] = params[:session] if params[:session]
     session_date = session[:datetime].to_date rescue Date.today
     @patient_bean = PatientService.get_patient(@patient.person)
