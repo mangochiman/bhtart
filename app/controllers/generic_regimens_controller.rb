@@ -86,14 +86,16 @@ class GenericRegimensController < ApplicationController
 		tb_medication_prescribed = false
 		arvs_prescribed = false
 
-		(treatment_obs.observations || []).each do | obs |
-			if obs.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
+		(treatment_obs || []).each do | obs |
+			(obs.observations.each || []).each do |observation|
+			if observation.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
 				tb_medication_prescribed = true
 			end
 
-			if obs.concept_id == (Concept.find_by_name('ARV regimen type').concept_id rescue nil)
+			if observation.concept_id == (Concept.find_by_name('ARV regimen type').concept_id rescue nil)
 				arvs_prescribed = true
 			end
+		 end
 		end
 
 		@prescribe_tb_drugs = false
