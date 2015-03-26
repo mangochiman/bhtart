@@ -1448,11 +1448,9 @@ class ApplicationController < GenericApplicationController
   end
 
  def check_htn_workflow(patient, task)
-
    if not task.url.match(/VITALS/i) and not task.url.match(/REGIMENS/i) and not (task.url.match(/SHOW/i) && task.encounter_type == "NONE")
      return task
    end
- 
   #This function is for managing interaction with HTN
   session_date = (session[:datetime].to_date) rescue Date.today
 
@@ -1479,10 +1477,8 @@ class ApplicationController < GenericApplicationController
   #>>>>>>>>>>>>>>>>>END>>>>>>>>>>>>>>>>>>>>>>>
     
   todays_encounters = patient.encounters.find_by_date(session_date)
-
   sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
   dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
-
   if task.present? && task.url.present?
    #patients eligible for HTN will have their vitals taken with HTN module
    if task.url.match(/VITALS/i)
@@ -1498,12 +1494,14 @@ class ApplicationController < GenericApplicationController
     bp_alert_shown = true if (session[:bp_alert] == patient.id)
 
     unless bp_drugs_started.blank?
-      unless bp_initial_visit_enc.blank?
-        if !bp_management_done
-          if ((!bp[0].blank? && bp[0] <= sbp_threshold) && (!bp[1].blank?  && bp[1] <= dbp_threshold)) #Normal BP
-            return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
-              :encounter_type => "HYPERTENSION MANAGEMENT")
-          end if bp_initial_visit_enc.encounter_datetime.to_date == (session[:datetime].to_date rescue Date.today) #Even if the BP is normal go to BP management screen
+      if ((!bp[0].blank? && bp[0] <= sbp_threshold) && (!bp[1].blank?  && bp[1] <= dbp_threshold)) #Normal BP
+        return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+                  :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+        unless bp_initial_visit_enc.blank?
+          if !bp_management_done
+              return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+                :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.encounter_datetime.to_date == (session[:datetime].to_date rescue Date.today) #Even if the BP is normal go to BP management screen            
+          end
         end
       end
     end
