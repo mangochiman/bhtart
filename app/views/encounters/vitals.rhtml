@@ -11,13 +11,13 @@
     overflow: hide;
 
   }
-  
-#charts {
+
+  #charts {
     position: absolute;
     width: 95% ! important;
     height: 60% ! important;
- }
-  
+  }
+
   #char {
     display: none;
   }
@@ -55,6 +55,7 @@
 <script language="javascript" type="text/javascript" src="/javascripts/jquery.js"></script>
 <script language="javascript" type="text/javascript" src="/javascripts/jquery.flot.js"></script>
 <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
+<%= javascript_include_tag "Highcharts/js/highcharts" %>
 <script language="javascript">
   jQuery.noConflict();
 
@@ -108,10 +109,98 @@ dateToday = session[:datetime].to_date rescue Date.today
 
     }else{
       jQuery('#keyboard').empty();
-      jQuery('#charts').empty().load('/patients/graphs/<%= @patient.id -%>?data=weight&currentWeight=' + currentWeight);
+      //jQuery('#charts').empty().load('/patients/graphs/<%= @patient.id -%>?data=weight&currentWeight=' + currentWeight);
+      jQuery.ajax({
+        method: "POST",
+        url: "/patients/render_graph_data",
+        data: { patient_id: "<%= @patient.id -%>", data: "weight", currentWeight:currentWeight },
+        success: function(results){
+          obs = eval(results)
+          plotGraph(obs);
+        }
+      })
     }
   }
 
+  function plotGraph(obs){
+    jQuery('#charts').highcharts({
+      chart: {
+        type: 'column',
+        className: 'skies',
+        borderWidth: 0,
+        plotShadow: true,
+        backgroundColor: 'lightyellow',
+        plotBackgroundColor: {
+          linearGradient: [0, 0, 250, 500],
+          stops: [
+            [0, 'rgba(255, 255, 255, 1)'],
+            [1, 'rgba(255, 255, 255, 0)']
+          ]
+        },
+        plotBorderWidth: 1
+      },
+      title: {
+        text: "Weight Chart"
+      },
+      xAxis: {
+        categories:  getDates(obs),
+        title: {
+          text: 'Visit Date'
+        }
+      },
+      yAxis: {
+        alternateGridColor: 'rgba(255, 255, 255, .5)',
+        lineColor: '#C0D0E0',
+        tickColor: '#C0D0E0',
+        tickWidth: 1,
+        title: {
+          text: 'Kg'
+        },
+        labels: {
+          formatter: function() {
+            return this.value;
+          }
+        }
+      },
+      tooltip: {
+        shared: true,
+        valueSuffix: ' Kg'
+      },
+      plotOptions: {
+        column: {
+          color: "lightblue",
+          dataLabels: {
+            color: "black",
+            enabled: true
+          },
+          pointPadding: 0.2,
+          borderWidth: 0
+        }
+      },
+      series: dataG(obs)
+    });
+  }
+
+  function getDates(obs) {
+    dates = [];
+    for(var i = 0; i < obs.length; i++) {
+      dates.push(obs[i][0]);
+
+    }
+    return dates;
+  }
+
+  function dataG(obs) {
+    var correctedWeights = [];
+
+    for(var i = 0; i < obs.length; i++) {
+      correctedWeights.push(obs[i][1]);
+    }
+    start_point = obs[0][0].split('/')
+    //alert(correctedWeights)
+    return [{name: 'Weight', data: correctedWeights}];
+  }
+  
   function hookKeyboard(){
 
     __$("nextButton").onclick = function(){

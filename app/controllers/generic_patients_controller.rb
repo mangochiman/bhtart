@@ -289,6 +289,24 @@ The following block of code should be replaced by a more cleaner function
     render :template => "graphs/weight_chart", :layout => false
   end
 
+  def render_graph_data
+    current_weight = params[:currentWeight]
+    patient = Patient.find(params[:patient_id])
+    concept_id = ConceptName.find_by_name("Weight (Kg)").concept_id
+    session_date = (session[:datetime].to_date rescue Date.today).strftime('%Y-%m-%d 23:59:59')
+    obs = []
+
+    Observation.find_by_sql("
+          SELECT * FROM obs WHERE person_id = #{patient.id}
+          AND concept_id = #{concept_id} AND voided = 0 AND obs_datetime <= '#{session_date}' LIMIT 10").each {|weight|
+      obs <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
+    }
+
+    obs << [session_date.to_date, current_weight.to_f]
+    obs = obs.sort_by{|atr| atr[0]}.to_json
+    render :text => obs and return
+  end
+  
   def void
     @encounter = Encounter.find(params[:encounter_id])
     @encounter.void
