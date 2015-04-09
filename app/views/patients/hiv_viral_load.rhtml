@@ -4,171 +4,167 @@
     <script type="text/javascript">
       function changeAttributes(){
         document.getElementById("btnNext").innerHTML = "<span>Continue</span>"
-    <% if vl_routine_check_activated %>
-      <% if repeat_viral_load_requested(@person.patient) == true &&
+<% if vl_routine_check_activated %>
+  <% if repeat_viral_load_requested(@person.patient) == true &&  show_lab_results &&
+      (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
+        document.getElementById("btnNext").setAttribute("onclick","showVlRepeatPopup();")
+  <% else %>
+    <% unless @repeat_vl_obs_date == Date.today %>
+      <% if improved_viral_load_check(@person.patient) == true &&
           (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") &&  show_lab_results &&
           (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
-            document.getElementById("btnNext").setAttribute("onclick","showVlRepeatPopup();")
-      <% else %>
-        <% unless @repeat_vl_obs_date == Date.today %>
-          <% if improved_viral_load_check(@person.patient) == true &&
-              (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") &&  show_lab_results &&
-              (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
-                document.getElementById("btnNext").setAttribute("onclick","showPopup();")
-          <% end %>
-        <% end %>
-      <% end %>
-
-      <% if repeat_viral_load_requested(@person.patient) == true &&
-          (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") &&
-          !show_lab_results &&
-          (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
-            document.getElementById("btnNext").setAttribute("onclick","showVlRepeatPopup();")
-      <% else %>
-        <% unless @repeat_vl_obs_date == Date.today %>
-          <% if viral_load_check_without_lab_results_modified(@person.patient) == true &&
-              (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") &&
-              !show_lab_results &&
-              (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
-                document.getElementById("btnNext").setAttribute("onclick","showPopup();")
-          <% end %>
-        <% end %>
+            document.getElementById("btnNext").setAttribute("onclick","showPopup();")
       <% end %>
     <% end %>
-      }
+  <% end %>
 
-      function showPopup(){
-        popup = document.getElementById('popup')
-        content = document.getElementById('content')
-        content.appendChild(popup)
-        if (typeof popup != 'undefined'){
-          document.getElementById('popup').style.display='inline'
-          document.getElementById('cover').style.display='inline'
-        }
-      }
+  <% if repeat_viral_load_requested(@person.patient) == true && !show_lab_results &&
+      (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
+        document.getElementById("btnNext").setAttribute("onclick","showVlRepeatPopup();")
+  <% else %>
+    <% unless @repeat_vl_obs_date == Date.today %>
+      <% if viral_load_check_without_lab_results_modified(@person.patient) == true &&
+          !show_lab_results &&
+          (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
+            document.getElementById("btnNext").setAttribute("onclick","showPopup();")
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
+  }
 
-      function showVlRepeatPopup(){
-        popup = document.getElementById('vl_repeat_popup')
-        content = document.getElementById('content')
-        content.appendChild(popup)
-        if (typeof popup != 'undefined'){
-          document.getElementById('vl_repeat_popup').style.display='inline'
-          document.getElementById('cover').style.display='inline'
-        }
-      }
+  function showPopup(){
+    popup = document.getElementById('popup')
+    content = document.getElementById('content')
+    content.appendChild(popup)
+    if (typeof popup != 'undefined'){
+      document.getElementById('popup').style.display='inline'
+      document.getElementById('cover').style.display='inline'
+    }
+  }
+
+  function showVlRepeatPopup(){
+    popup = document.getElementById('vl_repeat_popup')
+    content = document.getElementById('content')
+    content.appendChild(popup)
+    if (typeof popup != 'undefined'){
+      document.getElementById('vl_repeat_popup').style.display='inline'
+      document.getElementById('cover').style.display='inline'
+    }
+  }
 
 
-      function updateVl(){
-        content = document.getElementById('content');
-        vl_menu = document.getElementById('new_vl_menu');
-        content.appendChild(vl_menu);
-        vl_menu.style.display = 'inline';
-        document.getElementById('vl_lab_trail_cover').style.display='inline';
-        //document.getElementById('cover').style.display='inline'
-      }
+  function updateVl(){
+    content = document.getElementById('content');
+    vl_menu = document.getElementById('new_vl_menu');
+    content.appendChild(vl_menu);
+    vl_menu.style.display = 'inline';
+    document.getElementById('vl_lab_trail_cover').style.display='inline';
+    //document.getElementById('cover').style.display='inline'
+  }
 
-      function removeUpdateVlMenu(){
-        vl_menu = document.getElementById('new_vl_menu');
-        vl_menu.style.display='none';
-        cover = document.getElementById('vl_lab_trail_cover');
-        cover.style.display='none'
-      }
+  function removeUpdateVlMenu(){
+    vl_menu = document.getElementById('new_vl_menu');
+    vl_menu.style.display='none';
+    cover = document.getElementById('vl_lab_trail_cover');
+    cover.style.display='none'
+  }
 
-      function newVlResultPath(){
-    <%  person_id =  params[:found_person_id] %>
-        window.location = "/lab/viral_load_result?patient_id=<%= person_id %>"
-      }
+  function newVlResultPath(){
+<%  person_id =  params[:found_person_id] %>
+    window.location = "/lab/viral_load_result?patient_id=<%= person_id %>"
+  }
 
-      function newVlResultPathWithParam(){
-    <%  person_id =  params[:found_person_id] %>
-        window.location = "/lab/viral_load_result?patient_id=<%= person_id %>&go_to_next_task=true"
-      }
+  function newVlResultPathWithParam(){
+<%  person_id =  params[:found_person_id] %>
+    window.location = "/lab/viral_load_result?patient_id=<%= person_id %>&go_to_next_task=true"
+  }
 
-      function giveResultPath(){
-    <%  person_id =  params[:found_person_id] %>
-        window.location = "/lab/give_result?patient_id=<%= person_id %>"
-      }
+  function giveResultPath(){
+<%  person_id =  params[:found_person_id] %>
+    window.location = "/lab/give_result?patient_id=<%= person_id %>"
+  }
 
-      function secondlineSwitchPath(){
-    <%  person_id =  params[:found_person_id] %>
-        window.location = "/lab/second_line_switch?patient_id=<%= person_id %>"
-      }
+  function secondlineSwitchPath(){
+<%  person_id =  params[:found_person_id] %>
+    window.location = "/lab/second_line_switch?patient_id=<%= person_id %>"
+  }
 
-      function viral_load_requested_today(){
-        jQuery.ajax({
-          type: "POST",
-          url: "/patients/viral_load_request",
-          data: "patient_id="+<%=@person.patient.id %> + "&requested_today=true",
-          success: function(){
-            window.location="<%= next_task(@person.patient)%>"
-          }
-        });
-      }
-
-      function viral_load_not_requested_today(){
-        jQuery.ajax({
-          type: "POST",
-          url: "/patients/viral_load_request",
-          data: "patient_id="+<%=@person.patient.id %>,
-          success: function(){
-            window.location="<%= next_task(@person.patient)%>"
-          }
-        });
-      }
-
-      function repeat_vl_requested(){
-        jQuery.ajax({
-          type: "POST",
-          url: "/patients/repeat_viral_load_request",
-          data: "patient_id="+<%=@person.patient.id %>,
-          success: function(){
-            window.location="/people/confirm?found_person_id=<%=@person.id%>"
-          }
-        });
-      }
-
-      function vl_already_done(){
-        jQuery.ajax({
-          type: "POST",
-          url: "/patients/viral_load_already_done",
-          data: "patient_id="+<%=@person.patient.id %>,
-          success: function(){
-            window.location="<%= next_task(@person.patient)%>"
-          }
-        });
-      }
-
-      function vl_adherence_issue(){
-        jQuery.ajax({
-          type: "POST",
-          url: "/patients/vl_not_done_due_to_adherence",
-          data: "patient_id="+<%=@person.patient.id %>,
-          success: function(){
-            window.location="<%= next_task(@person.patient)%>"
-          }
-        });
-      }
-
-      function hidePopup(){
+  function viral_load_requested_today(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/viral_load_request",
+      data: "patient_id="+<%=@person.patient.id %> + "&requested_today=true",
+      success: function(){
         window.location="<%= next_task(@person.patient)%>"
       }
+    });
+  }
 
-      function captureVl(){
-        window.location="/lab/new?patient_id=<%= @person.patient.id %>&viral_load=true"
+  function viral_load_not_requested_today(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/viral_load_request",
+      data: "patient_id="+<%=@person.patient.id %>,
+      success: function(){
+        window.location="<%= next_task(@person.patient)%>"
       }
+    });
+  }
 
-      function showVlLabTrail(){
-        c = document.getElementById('content');
-        v = document.getElementById('vl_lab_trail');
-        c.appendChild(v);
-        document.getElementById('vl_lab_trail_cover').style.display='inline';
-        document.getElementById('vl_lab_trail').style.display='inline';
+  function repeat_vl_requested(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/repeat_viral_load_request",
+      data: "patient_id="+<%=@person.patient.id %>,
+      success: function(){
+        window.location="/people/confirm?found_person_id=<%=@person.id%>"
       }
+    });
+  }
 
-      function hideVlLabTrail(){
-        document.getElementById('vl_lab_trail_cover').style.display='none';
-        document.getElementById('vl_lab_trail').style.display='none';
+  function vl_already_done(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/viral_load_already_done",
+      data: "patient_id="+<%=@person.patient.id %>,
+      success: function(){
+        window.location="<%= next_task(@person.patient)%>"
       }
+    });
+  }
+
+  function vl_adherence_issue(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/vl_not_done_due_to_adherence",
+      data: "patient_id="+<%=@person.patient.id %>,
+      success: function(){
+        window.location="<%= next_task(@person.patient)%>"
+      }
+    });
+  }
+
+  function hidePopup(){
+    window.location="<%= next_task(@person.patient)%>"
+  }
+
+  function captureVl(){
+    window.location="/lab/new?patient_id=<%= @person.patient.id %>&viral_load=true"
+  }
+
+  function showVlLabTrail(){
+    c = document.getElementById('content');
+    v = document.getElementById('vl_lab_trail');
+    c.appendChild(v);
+    document.getElementById('vl_lab_trail_cover').style.display='inline';
+    document.getElementById('vl_lab_trail').style.display='inline';
+  }
+
+  function hideVlLabTrail(){
+    document.getElementById('vl_lab_trail_cover').style.display='none';
+    document.getElementById('vl_lab_trail').style.display='none';
+  }
       
     </script>
     <style>
@@ -305,17 +301,17 @@
       #popup{
         -moz-user-select: none;
         background-color: white;
-        border: 4px solid #C6C6C6;
+        border: 3px solid #C6C6C6;
         border-radius: 15px 15px 15px 15px;
         color: black;
         font-size: 28px;
-        height: 579px;
-        left: 2%;
+        height: 466px;
+        left: 10px;
         padding: 5px;
         position: absolute;
         text-align: center;
-        top: 5%;
-        width: 94%;
+        top: 10%;
+        width: 97%;
         z-index: 991;
       }
       #cover{
@@ -342,7 +338,7 @@
         text-align: center;
         text-decoration: none;
         cursor: pointer;
-        bottom: 0px;
+        bottom: 7px;
         left: 54px;
         font-weight: bold;
         font-size: 18pt;
@@ -445,10 +441,10 @@
         text-align: center;
         text-decoration: none;
         cursor: pointer;
-        bottom: 0px;
+        bottom: 7px;
         right: 4%;
         font-weight: bold;
-        font-size: 14pt;
+        font-size: 18pt;
       }
 
       #viral_load_adherence_issues {
@@ -597,17 +593,89 @@
         background-color: #FEE0C6;
         border-radius: 15px;
       }
+
+      #patient_details {
+        -moz-user-select: none;
+        background-color: #fff;
+        border: 1px solid #999;
+        border-radius: 5px;
+        display: table;
+        float: left;
+        margin: 5px;
+        overflow: hidden;
+        padding: 10px;
+        width: 97%;
+      }
+
+      .well {
+        position: fixed;
+        background-color: #f5f5f5;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) inset;     
+        min-height: 20px;
+        padding: 19px;
+        bottom: 5px;
+        width: 94%;
+      }
+
+      .btn-primary {
+        background-color: #006dcc;
+        background-image: linear-gradient(to bottom, #08c, #04c);
+        background-repeat: repeat-x;
+        border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+        color: #fff;
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+      }
+
+      .btn-block {
+        box-sizing: border-box;
+        padding-left: 0;
+        padding-right: 0;
+        width: 30%;
+      }
+
+      .btn-large {
+        border-radius: 6px;
+        font-size: 17.5px;
+        padding: 11px 19px;
+      }
+
+      .btn {
+        border-radius: 4px;
+        border-style: solid;
+        border-width: 1px;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+        color: #333;
+        cursor: pointer;
+        display: inline-block;
+        font-size: 18pt;
+        color: white;
+        line-height: 20px;
+        margin-bottom: 0;
+        padding: 9px 16px 16px 19px;
+        text-align: center;
+        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+        vertical-align: middle;
+      }
+
+      .btn:hover, .btn:focus, .btn:active, .btn.active, .btn.disabled, .btn[disabled] {
+        background-color: #e6e6e6;
+      }
     </style>
   </head>
-  <body onload = "setTimeout('changeAttributes()',500);">
-    <% if improved_viral_load_check(@person.patient) == true &&
-        (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") &&
-        show_lab_results &&
+  <body onload = "">
+    <div id="patient_details">
+      <span style="margin-left:5%;">Patient Name: <i style="font-weight:bold;"><%= @patient_bean.name.to_s + ' (' + @patient_bean.sex.first.to_s +  ')' %></i></span>
+      <span style="margin-left:10%;">National ID: <i style="font-weight:bold;"><%= @patient_bean.national_id_with_dashes %></i></span>
+      <span style="margin-left:10%;">Age: <i style="font-weight:bold;"><%= @patient_bean.age %></i></span>
+      <span style="margin-left:10%;">Residence: <i style="font-weight:bold;"><%= @patient_bean.address %></i></span>
+    </div>
+    <% if improved_viral_load_check(@person.patient) == true && show_lab_results &&
         (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
-
       <!-------------------------------------------->
       <% if @vl_request == "YES" %>
-        <div id="popup" style="display:none; border:0px; width: 0px; height: 0px; padding: 0px;">
+        <div id="popup" style="border:0px; width: 0px; height: 0px; padding: 0px;">
 
           <div class="new_vl_menu" style="position:fixed; width:40%; height: 45%; left:30%;">
             <div class="new_vl_menu_header">
@@ -630,8 +698,7 @@
         <!-------------------------------------------->
       <% else %>
 
-        <div id="popup" style="display:none">
-
+        <div id="popup" style="">
           <div class="art_container">
             <div class="header" style="position: absolute; left: 20%">
               <div id="viral_header">
@@ -684,10 +751,15 @@
             </table>
           </div>
 
-          <hr class="popup_hr"></hr>
-          <a id='viral_load_done' onclick = "viral_load_requested_today();" ><span>VL Requested Today</span></a>
-                      <!--<a id='lab_trail' onclick="window.location='/lab/results/<%=@person.id%>'"><span>View Lab Trail</span></a>-->
-          <a id='viral_load_already_done' onclick="removePopup();"><span>VL Not Requested Today</span></a>
+          <!--<hr class="popup_hr"></hr>-->
+          <div class="well">
+            <button style="float:left;" onclick = "viral_load_requested_today();" class="btn btn-large btn-block btn-primary" type="button">VL Requested Today</button>
+            <button style="float:right;" onclick="removePopup();" class="btn btn-large btn-block btn-primary" type="button">VL Not Requested Today</button>
+          </div>
+
+          <!--<a id='viral_load_done' onclick = "viral_load_requested_today();" ><span>VL Requested Today</span></a>
+
+          <a id='viral_load_already_done' onclick="removePopup();"><span>VL Not Requested Today</span></a>-->
         </div>
       <% end %>
       <div id="cover">
