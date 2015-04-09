@@ -343,7 +343,10 @@ class PatientsController < GenericPatientsController
 
   def hiv_viral_load
     @person = Patient.find(params[:patient_id]).person
-
+    #@template variable is used to access helper method in a controller.
+    if !(@template.improved_viral_load_check(@person.patient) == true)
+      redirect_to (next_task(@person.patient)) and return
+    end
     session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
 		patient = @person.patient
 		@outcome = patient.patient_programs.last.patient_states.last.program_workflow_state.concept.fullname rescue nil
