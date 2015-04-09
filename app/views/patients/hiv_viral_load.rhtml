@@ -1,6 +1,7 @@
 <html>
   <head>
     <title>HIV Viral Load</title>
+    <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
     <script type="text/javascript">
       function changeAttributes(){
         document.getElementById("btnNext").innerHTML = "<span>Continue</span>"
@@ -675,24 +676,60 @@
         (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
       <!-------------------------------------------->
       <% if @vl_request == "YES" %>
-        <div id="popup" style="border:0px; width: 0px; height: 0px; padding: 0px;">
+        <div id="popup">
+          <div class="art_container">
+            <div class="header" style="position: absolute; left: 20%">
+              <div id="viral_header">
+                Routine Viral Load Screening: <i style="color:#da4f49;">Viral load result available?</i>
+              </div>
+            </div>
+            <table  border=0.5 style = "border-radius:10px; top:78px;">
+              <tr>
+                <td><span>ART start date</span></td>
+                <td style='text-align:left'><span><%= @art_start_date.strftime("%A, %d %B %Y") rescue '' %></span></td>
+              </tr>
+              <tr><td colspan =2><hr/></td></tr>
+              <tr>
+                <td><span>Duration on ART (Months)</span></td>
+                <td style='text-align:left'><span><%= @duration_in_months %></span></td>
+              </tr>
+              <tr><td colspan =2><hr/></td></tr>
 
-          <div class="new_vl_menu" style="position:fixed; width:40%; height: 45%; left:30%;">
-            <div class="new_vl_menu_header">
-              <span style="font-size: 15pt;">Routine Viral Load Screening<br/>
-                Viral load result available?</span>
-            </div>
-            <div class="new_vl_menu_content">
-              <table cellspacing="0" style="position:absolute; width: 100%; height:75%;">
-                <tr onclick="newVlResultPathWithParam();" style="line-height: 3em;"><td><span>Enter VL result</span></td></tr>
-                <tr onclick="hidePopup();" style="line-height: 3em;"><td><span>No VL result available</span></td></tr>
-              </table>
-            </div>
-            <div class="new_vl_menu_footer" style="height: 0px;">
+              <% unless @second_line_treatment_start_date.blank? %>
+                <tr>
+                  <td><span>Duration on 2<sup>nd</sup>Line ART (Months)</span></td>
+                  <td style='text-align:left'><span><%= @second_line_duration_in_months %></span></td>
+                </tr>
+                <tr><td colspan =2><hr/></td></tr>
+              <% end  %>
 
-            </div>
+              <% unless @results.blank?%>
+                <tr>
+                  <td><span>Latest viral load (<%= @latest_date.strftime("%A, %d %B %Y")%>)</span></td>
+                  <td style='text-align:left'><span><%= @modifier + ' ' + @latest_result.to_s %></span></td>
+                </tr>
+                <tr><td colspan =2><hr/></td></tr>
+              <% end %>
+
+              <tr>
+                <td><span>Outcome</span></td>
+                <td style='text-align:left'><span><%= @outcome %></span></td>
+              </tr>
+              <tr><td colspan =2><hr/></td></tr>
+              <tr>
+                <td><span>Reason for starting</span></td>
+                <td style='text-align:left'><span><%=@reason_for_art%></span></td>
+              </tr>
+
+            </table>
           </div>
 
+
+
+          <div class="well">
+            <button style="float:left;" onclick = "newVlResultPathWithParam();" class="btn btn-large btn-block btn-primary" type="button">Enter VL result</button>
+            <button style="float:right;" onclick="hidePopup();" class="btn btn-large btn-block btn-primary" type="button">No VL result available</button>
+          </div>
 
         </div>
         <!-------------------------------------------->
