@@ -2,7 +2,6 @@ class EncountersController < GenericEncountersController
 	def new
 		#raise params.to_yaml
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
-
 		@patient_bean = PatientService.get_patient(@patient.person)
 		session_date = session[:datetime].to_date rescue Date.today
 
@@ -14,7 +13,7 @@ class EncountersController < GenericEncountersController
       render :action => params[:encounter_type] and return
 		end
 
-    session[:return_uri] = params[:return_ip] if !params[:return_ip].blank?
+    session[:return_uri] = params[:return_ip] if ! params[:return_ip].blank?
     
     @hiv_status = tb_art_patient(@patient,"hiv program") rescue ""
     @tb_status = tb_art_patient(@patient,"TB program") rescue ""
@@ -68,14 +67,6 @@ class EncountersController < GenericEncountersController
         end
      end
     
-    @patient_has_hiv_staging_enc = false
-    hiv_staging_enc_id = EncounterType.find_by_name("HIV STAGING").encounter_type_id
-    hiv_staging_enc = @patient.encounters.find(:last, :conditions => ["encounter_type =?", hiv_staging_enc_id])
-    @patient_has_hiv_staging_enc = true unless hiv_staging_enc.blank?
-    
-    @patient_hcc_number = PatientIdentifier.find(:last,:conditions => ["patient_id = ? AND identifier_type = ?",
-         @patient.id, PatientIdentifierType.find_by_name("HCC Number").id])
-
 		if (params[:from_anc] == 'true')
       bart_activities = ['Manage Vitals','Manage HIV clinic consultations',
         'Manage ART adherence','Manage HIV staging visits','Manage HIV first visits',
@@ -130,7 +121,7 @@ class EncountersController < GenericEncountersController
           :order => "obs_datetime DESC,date_created DESC",
           :conditions => ["person_id = ? AND concept_id = ?
                             AND DATE(obs_datetime) <= ?",@patient.id,
-            ConceptName.find_by_name("Allergic to sulphur").concept_id,session_date])).answer_string.strip.squish rescue ''
+            ConceptName.find_by_name("Allergic to sulphur").concept_id,session_date])).to_s.strip.squish rescue ''
 
       @use_extended_family_planning = CoreService.get_global_property_value('extended.family.planning') rescue false
 
@@ -375,24 +366,6 @@ class EncountersController < GenericEncountersController
 				end
 			end
     end
-
-    #### checking for termin family_planning_methods ############
-    family_planning_methods_concept_id = ConceptName.find_by_name("FAMILY PLANNING METHOD").concept_id
-    reason_for_no_family_planning_concept_id = ConceptName.find_by_name("Reason for no family planning").concept_id
-    past_family_planning_methods = Observation.find(:all,
-      :conditions => ["concept_id IN(?) AND voided = 0
-      AND person_id = ? AND obs_datetime <= ?",
-      [family_planning_methods_concept_id,reason_for_no_family_planning_concept_id],
-      @patient.patient_id,session_date.strftime('%Y-%m-%d 23:59:59')])
-
-    @ter_family_planning_method_done = false
-    (past_family_planning_methods || []).each do |met|
-      if met.to_s.match(/Tubal ligation/i) || met.to_s.match(/Not needed for medical reasons/i)
-        @ter_family_planning_method_done = true 
-        break
-      end
-    end
-    ###########################################################
 
 		if CoreService.get_global_property_value('use.normal.staging.questions').to_s == "true"
 			@who_stage_peds_i = concept_set('WHO STAGE I PEDS')
@@ -1538,10 +1511,14 @@ class EncountersController < GenericEncountersController
     @patient_ids = []
     b4_visit_one = []
     no_art = []
-    PatientProgram.find_by_sql("SELECT e.patient_id, f.identifier, e.earliest_start_date, current_state_for_program(e.patient_id, 1, '#{@end_date}') AS state
+    
+    PatientProgram.find_by_sql("SELECT e.patient_id, f.identifier, e.earliest_start_date,
+      current_state_for_program(e.patient_id, 1, '#{@end_date}') AS state
 			FROM earliest_start_date e
 			JOIN person p ON p.person_id = e.patient_id
-            JOIN patient_identifier f ON f.patient_id = p.person_id AND f.identifier_type = (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'National id') AND f.identifier IN (#{@id_string})
+            JOIN patient_identifier f ON f.patient_id = p.person_id
+      AND f.identifier_type = (SELECT patient_identifier_type_id FROM patient_identifier_type
+      WHERE name = 'National id') AND f.identifier IN (#{@id_string})
 			WHERE p.gender regexp 'F'
 			HAVING state = 7").each do | patient |
       @patient_ids << patient.patient_id
@@ -1563,13 +1540,27 @@ class EncountersController < GenericEncountersController
                                :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
                                                e.patient_id, PatientIdentifierType.find_by_name("National id").id,
                                                @ids]).identifier}.uniq rescue []
+
+      nvp_ids = Order.find(:all, :joins => [[:drug_order => :drug], :encounter],
+               :select => ["encounter.patient_id, count(*) encounter_id, drug.name instructions, " +
+                               "SUM(DATEDIFF(auto_expire_date, start_date)) orderer"], :group => [:patient_id],
+               :conditions => ["drug.name REGEXP ? OR drug.name REGEXP ?  OR drug.name REGEXP ? AND (DATE(encounter_datetime) >= ? " +
+                                   "AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", "NVP", "Nevirapine", "ml",
+                               @start_date.to_date, @end_date.to_date, @patient_ids.join(',')]).collect{|e|
+        PatientIdentifier.find(:last,
+                               :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
+                                               e.patient_id, PatientIdentifierType.find_by_name("National id").id,
+                                               @ids]).identifier}.uniq rescue []
     else
       cpt_ids = []
+      nvp_ids = []
     end
 
     result["on_cpt"] = cpt_ids.join(",")
     result["arv_before_visit_one"] = b4_visit_one.join(",")
     result["no_art"] = no_art.join(",")
+    result["on_nvp"] = nvp_ids.join(",")
+    #raise result.to_yaml
     render :text => result.to_json
   end
 
