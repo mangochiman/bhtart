@@ -98,6 +98,7 @@ class GenericRegimensController < ApplicationController
 		 end
 		end
 
+
 		@prescribe_tb_drugs = false
 		if (not @tb_programs.blank?) and prescribe_tb_medication and !tb_medication_prescribed
 			@prescribe_tb_drugs = true
