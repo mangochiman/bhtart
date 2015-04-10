@@ -31,6 +31,13 @@ class ApplicationController < GenericApplicationController
     sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
     dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
 
+    if vl_routine_check_activated
+      if (@template.improved_viral_load_check(patient) == true)
+        #WORKFLOW FOR HIV VIRAL LOAD GOES HERE
+        #This is the path "/patients/hiv_viral_load?patient_id=patient_id"
+      end
+    end
+
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
 
      patient_is_htn_client = htn_client?(patient)
