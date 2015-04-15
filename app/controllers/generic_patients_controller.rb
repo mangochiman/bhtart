@@ -8,6 +8,7 @@ class GenericPatientsController < ApplicationController
     session[:mastercard_ids] = []
     session.delete(:bp_alert) if session[:bp_alert]
     session[:datetime] = params[:session] if params[:session]
+    session.delete(:hiv_viral_load_today_patient) if session[:hiv_viral_load_today_patient]
     session_date = session[:datetime].to_date rescue Date.today
     @patient_bean = PatientService.get_patient(@patient.person)
     @encounters = @patient.encounters.find_by_date(session_date)

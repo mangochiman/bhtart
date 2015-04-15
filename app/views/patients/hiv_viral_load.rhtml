@@ -72,22 +72,22 @@
   }
 
   function newVlResultPath(){
-<%  person_id =  params[:found_person_id] %>
+<%  person_id =  params[:patient_id] %>
     window.location = "/lab/viral_load_result?patient_id=<%= person_id %>"
   }
 
   function newVlResultPathWithParam(){
-<%  person_id =  params[:found_person_id] %>
+<%  person_id =  params[:patient_id] %>
     window.location = "/lab/viral_load_result?patient_id=<%= person_id %>&go_to_next_task=true"
   }
 
   function giveResultPath(){
-<%  person_id =  params[:found_person_id] %>
+<%  person_id =  params[:patient_id] %>
     window.location = "/lab/give_result?patient_id=<%= person_id %>"
   }
 
   function secondlineSwitchPath(){
-<%  person_id =  params[:found_person_id] %>
+<%  person_id =  params[:patient_id] %>
     window.location = "/lab/second_line_switch?patient_id=<%= person_id %>"
   }
 
@@ -147,7 +147,14 @@
   }
 
   function hidePopup(){
-    window.location="<%= next_task(@person.patient)%>"
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/set_hiv_viral_load_session_variable",
+      data: "patient_id="+<%=@person.patient.id %>,
+      success: function(nextUrl){
+        window.location = nextUrl;
+      }
+    });
   }
 
   function captureVl(){

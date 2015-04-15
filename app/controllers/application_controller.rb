@@ -35,6 +35,27 @@ class ApplicationController < GenericApplicationController
       if (@template.improved_viral_load_check(patient) == true)
         #WORKFLOW FOR HIV VIRAL LOAD GOES HERE
         #This is the path "/patients/hiv_viral_load?patient_id=patient_id"
+        concept_id = ConceptName.find_by_name("Prescribe drugs").concept_id
+        prescribe_drugs_obs = Observation.find(:first,:conditions =>["person_id=? AND concept_id =? AND
+              DATE(obs_datetime) =?", patient.id, concept_id, session_date])
+
+        unless prescribe_drugs_obs.blank?
+          if (prescribe_drugs_obs.answer_string.squish.upcase == 'YES')
+            if task.encounter_type.match(/TREATMENT/i)
+                #Do viral load just before treatment
+                if !(session[:hiv_viral_load_today_patient].to_i == patient.id)
+                  task.url = "/patients/hiv_viral_load?patient_id=#{patient.id}"
+                end
+            end
+          end
+          
+          if (prescribe_drugs_obs.answer_string.squish.upcase == 'NO')
+              #Still do viral load if treatment is not required
+              if !(session[:hiv_viral_load_today_patient].to_i == patient.id)
+                task.url = "/patients/hiv_viral_load?patient_id=#{patient.id}"
+              end
+          end
+        end
       end
     end
 

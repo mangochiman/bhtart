@@ -388,4 +388,12 @@ class PatientsController < GenericPatientsController
     @vl_result_hash = Patient.vl_result_hash(patient)
 		render :layout => false
   end
+
+  def set_hiv_viral_load_session_variable
+    patient = Patient.find(params[:patient_id])
+    session[:hiv_viral_load_today_patient] = params[:patient_id]
+    next_url = (next_task(patient))
+    render :text => next_url and return
+  end
+
 end
