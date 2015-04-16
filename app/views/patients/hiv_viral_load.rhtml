@@ -96,8 +96,8 @@
       type: "POST",
       url: "/patients/viral_load_request",
       data: "patient_id="+<%=@person.patient.id %> + "&requested_today=true",
-      success: function(){
-        window.location="<%= next_task(@person.patient)%>"
+      success: function(nextUrl){
+        window.location = nextUrl;
       }
     });
   }

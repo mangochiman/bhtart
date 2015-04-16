@@ -3576,6 +3576,8 @@ The following block of code should be replaced by a more cleaner function
 
     patient_id = params[:patient_id]
     requested_today = params[:requested_today]
+    session[:hiv_viral_load_today_patient] = params[:patient_id]
+    next_url = next_task(Patient.find(patient_id))
     enc = Encounter.new()
 
     enc.encounter_type = EncounterType.find_by_name("REQUEST").id
@@ -3600,7 +3602,7 @@ The following block of code should be replaced by a more cleaner function
 
     obs.save()
 
-    render :text => "true" and return
+    render :text => next_url and return
 
   end
 
