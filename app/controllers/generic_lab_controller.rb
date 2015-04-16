@@ -122,6 +122,7 @@ class GenericLabController < ApplicationController
 
   def viral_load_result
     person_id = params[:person_id] || params[:patient_id]
+    session[:hiv_viral_load_today_patient] = (params[:person_id] || params[:patient_id])
     @patient = Patient.find(person_id)
   end
 

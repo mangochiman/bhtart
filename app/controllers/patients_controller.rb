@@ -340,4 +340,60 @@ class PatientsController < GenericPatientsController
     next_url = (next_task(patient))
     render :text => next_url and return
   end
+
+  def hiv_viral_load
+    @person = Patient.find(params[:patient_id]).person
+    #@template variable is used to access helper method in a controller.
+    if !(@template.improved_viral_load_check(@person.patient) == true)
+      redirect_to (next_task(@person.patient)) and return
+    end
+    session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
+		patient = @person.patient
+		@outcome = patient.patient_programs.last.patient_states.last.program_workflow_state.concept.fullname rescue nil
+
+		@current_hiv_program_state = PatientProgram.find(:first, :joins => :location, :conditions => ["program_id = ? AND patient_id = ? AND location.location_id = ?", Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,@person.id, Location.current_health_center.location_id]).patient_states.last.program_workflow_state.concept.fullname rescue ''
+
+		@task = main_next_task(Location.current_location, @person.patient, session_date)
+		@patient_bean = PatientService.get_patient(@person)
+
+		@art_start_date = PatientService.date_antiretrovirals_started(@person.patient)
+    @second_line_treatment_start_date = PatientService.date_started_second_line_regimen(@person.patient) rescue nil
+    @duration_in_months = PatientService.period_on_treatment(@art_start_date) rescue nil
+
+		@second_line_duration_in_months = PatientService.period_on_treatment(@second_line_treatment_start_date) rescue nil
+    @patient_identifiers = LabController.new.id_identifiers(patient)
+ 
+    @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
+    @latest_date = @results[0].split('::')[0].to_date rescue nil
+    @latest_result = @results[1]["TestValue"] rescue nil
+    @modifier = @results[1]["Range"] rescue nil
+    @reason_for_art = PatientService.reason_for_art_eligibility(patient)
+    @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
+        patient.patient_id, Concept.find_by_name("Viral load").concept_id]
+    ).answer_string.squish.upcase rescue nil
+
+    @repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
+                AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
+        "Repeat"]).answer_string.squish.upcase rescue nil
+
+    @repeat_vl_obs_date = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
+              AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
+        "Repeat"]).obs_datetime.to_date rescue nil
+
+    @date_vl_result_given = Observation.find(:last, :conditions => ["
+          person_id =? AND concept_id =? AND value_text REGEXP ?", @person.id,
+        Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
+    @enter_lab_results = GlobalProperty.find_by_property('enter.lab.results').property_value == 'true' rescue false
+
+    @vl_result_hash = Patient.vl_result_hash(patient)
+		render :layout => false
+  end
+
+  def set_hiv_viral_load_session_variable
+    patient = Patient.find(params[:patient_id])
+    session[:hiv_viral_load_today_patient] = params[:patient_id]
+    next_url = (next_task(patient))
+    render :text => next_url and return
+  end
+
 end

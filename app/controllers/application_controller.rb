@@ -28,8 +28,36 @@ class ApplicationController < GenericApplicationController
 
     session_date = session[:datetime].to_date rescue Date.today
     task = main_next_task(Location.current_location, patient,session_date)
-    sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
-    dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
+    sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
+    dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
+
+    if vl_routine_check_activated
+      if (@template.improved_viral_load_check(patient) == true)
+        #WORKFLOW FOR HIV VIRAL LOAD GOES HERE
+        #This is the path "/patients/hiv_viral_load?patient_id=patient_id"
+        concept_id = ConceptName.find_by_name("Prescribe drugs").concept_id
+        prescribe_drugs_obs = Observation.find(:first,:conditions =>["person_id=? AND concept_id =? AND
+              DATE(obs_datetime) =?", patient.id, concept_id, session_date])
+
+        unless prescribe_drugs_obs.blank?
+          if (prescribe_drugs_obs.answer_string.squish.upcase == 'YES')
+            if task.encounter_type.match(/TREATMENT/i)
+                #Do viral load just before treatment
+                if !(session[:hiv_viral_load_today_patient].to_i == patient.id)
+                  task.url = "/patients/hiv_viral_load?patient_id=#{patient.id}"
+                end
+            end
+          end
+          
+          if (prescribe_drugs_obs.answer_string.squish.upcase == 'NO')
+              #Still do viral load if treatment is not required
+              if !(session[:hiv_viral_load_today_patient].to_i == patient.id)
+                task.url = "/patients/hiv_viral_load?patient_id=#{patient.id}"
+              end
+          end
+        end
+      end
+    end
 
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
 
@@ -1448,11 +1476,9 @@ class ApplicationController < GenericApplicationController
   end
 
  def check_htn_workflow(patient, task)
-
    if not task.url.match(/VITALS/i) and not task.url.match(/REGIMENS/i) and not (task.url.match(/SHOW/i) && task.encounter_type == "NONE")
      return task
    end
- 
   #This function is for managing interaction with HTN
   session_date = (session[:datetime].to_date) rescue Date.today
 
@@ -1470,11 +1496,17 @@ class ApplicationController < GenericApplicationController
                     session_date.strftime('%Y-%m-%d 23:59:59')
   ]).answer_string.downcase.strip rescue nil) == "yes"
 
+ #>>>>>>>>>>>>>>>>>BP INITIAL VISIT ENCOUNTER>>>>>>>>>>>>>>>>>>>>
+  treatment_status_concept_id = Concept.find_by_name("TREATMENT STATUS").id
+  bp_drugs_started = Observation.find(:last, :conditions => ["person_id =? AND concept_id =? AND
+    value_text REGEXP ?", patient.id, treatment_status_concept_id, "BP Drugs started"])
+  bp_initial_visit_enc = patient.encounters.find(:last, :conditions => ["encounter_type =?",
+      EncounterType.find_by_name("DIABETES HYPERTENSION INITIAL VISIT").id])
+  #>>>>>>>>>>>>>>>>>END>>>>>>>>>>>>>>>>>>>>>>>
+    
   todays_encounters = patient.encounters.find_by_date(session_date)
-
-  sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
-  dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
-
+  sbp_threshold = CoreService.get_global_property_value("htn_systolic_threshold").to_i
+  dbp_threshold = CoreService.get_global_property_value("htn_diastolic_threshold").to_i
   if task.present? && task.url.present?
    #patients eligible for HTN will have their vitals taken with HTN module
    if task.url.match(/VITALS/i)
@@ -1485,17 +1517,50 @@ class ApplicationController < GenericApplicationController
     bp_management_done = todays_encounters.map{ | e | e.name }.include?("HYPERTENSION MANAGEMENT")
     medical_history = todays_encounters.map{ | e | e.name }.include?("MEDICAL HISTORY")
     #Check if latest BP was high for alert
+    
+    bp_alert_shown = false
+    bp_alert_shown = true if (session[:bp_alert] == patient.id)
 
+    unless bp_drugs_started.blank?
+      if ((!bp[0].blank? && bp[0] <= sbp_threshold) && (!bp[1].blank?  && bp[1] <= dbp_threshold)) #Normal BP
+        return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+                  :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+        unless bp_initial_visit_enc.blank?
+          if !bp_management_done
+              return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+                :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.encounter_datetime.to_date == (session[:datetime].to_date rescue Date.today) #Even if the BP is normal go to BP management screen            
+          end
+        end
+      end
+    end
+    
     if !bp.blank? && todays_encounters.map{ | e | e.name }.count("VITALS") == 1
      if !bp_management_done && !medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold))
-      return Task.new(:url => "/htn_encounter/bp_alert?patient_id=#{patient.id}", :encounter_type => "BP Alert")
+        if (bp_alert_shown == true)
+            unless bp_drugs_started.blank?
+              return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+                :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+            end
+            return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+              :encounter_type => "HYPERTENSION MANAGEMENT")
+        else
+            return Task.new(:url => "/htn_encounter/bp_alert?patient_id=#{patient.id}", :encounter_type => "BP Alert")
+        end
      elsif !bp_management_done && medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold))
       if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
-       return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
-                       :encounter_type => "HYPERTENSION MANAGEMENT")
+        unless bp_drugs_started.blank?
+          return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+            :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+        end
+        return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+          :encounter_type => "HYPERTENSION MANAGEMENT")
 			elsif !referred_to_clinician 
-       return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
-                       :encounter_type => "HYPERTENSION MANAGEMENT")
+        unless bp_drugs_started.blank?
+          return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+              :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+        end
+        return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+          :encounter_type => "HYPERTENSION MANAGEMENT")
       else
        return Task.new(:url => "/patients/show/#{patient.id}",
                        :encounter_type => "HYPERTENSION MANAGEMENT")
@@ -1505,11 +1570,19 @@ class ApplicationController < GenericApplicationController
     if !bp.blank? && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank?  && bp[1] > dbp_threshold)) && !bp_management_done
      unless referred_to_anc
       if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
-       return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
-                       :encounter_type => "HYPERTENSION MANAGEMENT")
+        unless bp_drugs_started.blank?
+            return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+              :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+        end
+        return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+          :encounter_type => "HYPERTENSION MANAGEMENT")
 			elsif !referred_to_clinician 
-       return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
-                       :encounter_type => "HYPERTENSION MANAGEMENT")
+        unless bp_drugs_started.blank?
+          return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+            :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+        end
+        return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+          :encounter_type => "HYPERTENSION MANAGEMENT")
       else
        return Task.new(:url => "/patients/show/#{patient.id}",
                        :encounter_type => "HYPERTENSION MANAGEMENT")
@@ -1526,8 +1599,12 @@ class ApplicationController < GenericApplicationController
                              :order => "obs_datetime DESC")
 
      unless (plan.blank? || plan.value_text.match(/ANNUAL/i)) && !referred_to_anc
-      return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
-                      :encounter_type => "HYPERTENSION MANAGEMENT")
+        unless bp_drugs_started.blank?
+          return Task.new(:url => "/htn_encounter/diabetes_initial_visit?patient_id=#{patient.id}",
+            :encounter_type => "HYPERTENSION MANAGEMENT") if bp_initial_visit_enc.blank?
+        end
+        return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
+          :encounter_type => "HYPERTENSION MANAGEMENT")
      end
     end
 

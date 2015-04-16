@@ -2,12 +2,13 @@ class GenericPatientsController < ApplicationController
   before_filter :find_patient, :except => [:void]
 
   def show
-
     current_state = tb_status(@patient).downcase
     @show_period = false
     @show_period = true if current_state.match(/currently in treatment/i)
     session[:mastercard_ids] = []
+    session.delete(:bp_alert) if session[:bp_alert]
     session[:datetime] = params[:session] if params[:session]
+    session.delete(:hiv_viral_load_today_patient) if session[:hiv_viral_load_today_patient]
     session_date = session[:datetime].to_date rescue Date.today
     @patient_bean = PatientService.get_patient(@patient.person)
     @encounters = @patient.encounters.find_by_date(session_date)
@@ -289,6 +290,24 @@ The following block of code should be replaced by a more cleaner function
     render :template => "graphs/weight_chart", :layout => false
   end
 
+  def render_graph_data
+    current_weight = params[:currentWeight]
+    patient = Patient.find(params[:patient_id])
+    concept_id = ConceptName.find_by_name("Weight (Kg)").concept_id
+    session_date = (session[:datetime].to_date rescue Date.today).strftime('%Y-%m-%d 23:59:59')
+    obs = []
+
+    Observation.find_by_sql("
+          SELECT * FROM obs WHERE person_id = #{patient.id}
+          AND concept_id = #{concept_id} AND voided = 0 AND obs_datetime <= '#{session_date}' LIMIT 10").each {|weight|
+      obs <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
+    }
+
+    obs << [session_date.to_date, current_weight.to_f]
+    obs = obs.sort_by{|atr| atr[0]}.to_json
+    render :text => obs and return
+  end
+  
   def void
     @encounter = Encounter.find(params[:encounter_id])
     @encounter.void
@@ -3557,6 +3576,8 @@ The following block of code should be replaced by a more cleaner function
 
     patient_id = params[:patient_id]
     requested_today = params[:requested_today]
+    session[:hiv_viral_load_today_patient] = params[:patient_id]
+    next_url = next_task(Patient.find(patient_id))
     enc = Encounter.new()
 
     enc.encounter_type = EncounterType.find_by_name("REQUEST").id
@@ -3581,7 +3602,7 @@ The following block of code should be replaced by a more cleaner function
 
     obs.save()
 
-    render :text => "true" and return
+    render :text => next_url and return
 
   end
 
