@@ -186,7 +186,8 @@
 
   function changeAttributes(){
     document.getElementById("btnNext").innerHTML = "<span>Continue</span>"
-    <% if vl_routine_check_activated %>
+    /* BELOW CODE IS COMMENTED OUT. TAKE NOTE. VIRAL LOAD IS NOW PART OF WORKFLOW!!
+      <% if vl_routine_check_activated %>
         <% if repeat_viral_load_requested(@person.patient) == true &&
             (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") &&  show_lab_results &&
             (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
@@ -217,6 +218,7 @@
            <% end %>
         <% end %>
         <% end %>
+     END OF COMMENT*/
   }
 			
   function showPopup(){
