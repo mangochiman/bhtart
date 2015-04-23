@@ -2178,8 +2178,7 @@ element.setAttribute("onmousedown", "gotoNextPage()")
               <td><span><center>Result given?</center></span></td>
               <td><span><center>Date result given</center></span></td>
             </tr>
-
-          <% @vl_result_hash.each do |sample_id, result| %>
+          <% (@vl_result_hash || {}).each do |sample_id, result| %>
             <tr style="line-height: 3em;" class="vl_tbody">
               <td style="border-left: 1px solid black;">
                   <span><center>  <%= result["date_of_sample"].strftime("%d-%b-%Y") %></center></span>
