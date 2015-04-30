@@ -553,7 +553,7 @@ module ApplicationHelper
     today = Date.today
 
     milestones = {
-                  6 => [6,8], 24 => [24,27], 48 => [48,51],
+                  6 => [6,9], 24 => [24,27], 48 => [48,51],
                   72 => [72,75], 96 => [96,99], 120 => [120,123],
                   144 => [144,147], 168 => [168,171], 192 => [192,195],
                   216 => [216,219], 240 => [240,243], 260 => [260,263]
@@ -575,7 +575,7 @@ module ApplicationHelper
     milestones.each do |key, value|
           grace_period = value.last - value.first
           mile_stone_date = (arv_start_date + key.months).beginning_of_month
-          mile_stone_grace_period = mile_stone_date + grace_period.months
+          mile_stone_grace_period = mile_stone_date + grace_period.months + 1.month #Added an extra month for each milestone
 
           if (viral_load_popup_activated(arv_start_date, patient, period_on_art_in_months) && latest_viral_results_date.blank?)
             milestone_exceeded = false
