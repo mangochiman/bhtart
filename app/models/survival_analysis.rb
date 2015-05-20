@@ -105,8 +105,8 @@ class SurvivalAnalysis
 				"defaulted" => defaulted,
 				"unknown" => unknown
 			}
-			
-			break if ((i + 1)*12) == 60
+			#PB - commented out the line below as per request from Support and HIV Unit
+			# break if ((i + 1)*12) == 60
 		end
 
     return survival_analysis_outcomes.sort{|a,b| (a[0].to_i == b[0].to_i) ? a[1].to_i <=> b[1].to_i : a[0].to_i <=> b[0].to_i }, views
