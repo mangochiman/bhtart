@@ -383,7 +383,7 @@ EOF
             WHERE drug_id =#{drug_id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id}
           ) LIMIT 1;"
       ).last.pack_size rescue 60 #if the pack size is not recorded then assume 60 is the pack size. Most drugs come in 60s
-      
+      drug_pack_size = 60 if drug_pack_size.blank?
       return drug_pack_size
   end
   
