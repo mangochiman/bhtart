@@ -333,6 +333,39 @@ FROM
 WHERE
     `o`.`concept_id` = 2540 AND `o`.`voided` = 0;
 
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `reason_for_eligibility_obs` AS
+SELECT 
+    `e`.`patient_id`, `n`.`name` AS `reason_for_eligibility`, `o`.`obs_datetime`, `e`.`earliest_start_date`
+FROM
+    `earliest_start_date` `e`
+        LEFT JOIN
+    `obs` `o` ON `e`.`patient_id` = `o`.`person_id`
+        AND `o`.`concept_id` = 7563
+        AND `o`.`voided` = 0
+        LEFT JOIN
+    `concept_name` `n` ON `n`.`concept_id` = `o`.`value_coded`
+        AND `n`.`concept_name_type` = 'FULLY_SPECIFIED'
+        AND `n`.`voided` = 0
+ORDER BY `e`.`patient_id` , `o`.`obs_datetime` DESC;
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `patients_with_has_transfer_letter_yes` AS
+SELECT 
+    `o`.`person_id`, `p`.`gender`, `o`.`obs_datetime`, `o`.`date_created`, `e`.`earliest_start_date`
+FROM
+    `obs` `o`
+        INNER JOIN
+    `person` `p` ON `p`.`person_id` = `o`.`person_id`
+        AND `p`.`voided` = 0
+        AND `o`.`voided` = 0
+        INNER JOIN
+    `earliest_start_date` `e` ON `e`.`patient_id` = `o`.`person_id`
+WHERE
+    `o`.`concept_id` = 6393
+        AND `o`.`value_coded` = 1065
+        AND `o`.`voided` = 0;
+
 DROP FUNCTION IF EXISTS earliest_start_date_at_clinic;                                          
                                                                                 
 DELIMITER $$                                                                     
