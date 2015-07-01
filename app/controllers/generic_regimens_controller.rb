@@ -59,33 +59,41 @@ class GenericRegimensController < ApplicationController
 			@hiv_clinic_consultation = true
 		end
 
-		treatment_obs = Patient.hiv_encounter(@patient, 'TREATMENT', session_date)# chunked
-
-		tb_medication_prescribed = false
-		arvs_prescribed = false
-		(treatment_obs || []).each do | obs |
-			if obs.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
-				tb_medication_prescribed = true
-			end
-
-			if obs.concept_id == (Concept.find_by_name('ARV regimen type').concept_id rescue nil)
-				arvs_prescribed = true
-			end
-		end
-
-		tb_visit_obs =  Patient.hiv_encounter(@patient, 'TB VISIT', session_date)# chunked
+		tb_visit_obs = Encounter.find(:all,:order => "encounter_datetime DESC,date_created DESC",
+		:conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
+			session_date.to_date, @patient.id, EncounterType.find_by_name("TB VISIT").id],
+			:include => [:observations])
 
 		prescribe_tb_medication = false
 		@transfer_out_patient = false;
 		(tb_visit_obs || []).each do | obs |
-			if obs.concept_id == (Concept.find_by_name('Prescribe drugs').concept_id rescue nil)
-				prescribe_tb_medication = true if Concept.find(obs.value_coded).fullname.upcase == 'YES'
+			(obs.observations.each || []).each do |observation|
+			if observation.concept_id == (Concept.find_by_name('Prescribe drugs').concept_id rescue nil)
+				prescribe_tb_medication = true if Concept.find(observation.value_coded).fullname.upcase == 'YES'
 			end
 
-			if obs.concept_id == (Concept.find_by_name('Continue treatment').concept_id rescue nil)
-				@transfer_out_patient = true if Concept.find(obs.value_coded).fullname.upcase == 'NO'
+			if observation.concept_id == (Concept.find_by_name('Continue treatment').concept_id rescue nil)
+				@transfer_out_patient = true if Concept.find(observation.value_coded).fullname.upcase == 'NO'
 			end
 		end
+		end
+
+		treatment_obs = Patient.hiv_encounter(@patient, 'TREATMENT', session_date)# chunked
+		tb_medication_prescribed = false
+		arvs_prescribed = false
+
+		(treatment_obs || []).each do | obs |
+			(obs.observations.each || []).each do |observation|
+			if observation.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
+				tb_medication_prescribed = true
+			end
+
+			if observation.concept_id == (Concept.find_by_name('ARV regimen type').concept_id rescue nil)
+				arvs_prescribed = true
+			end
+		 end
+		end
+
 
 		@prescribe_tb_drugs = false
 		if (not @tb_programs.blank?) and prescribe_tb_medication and !tb_medication_prescribed

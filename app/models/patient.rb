@@ -365,9 +365,10 @@ def self.vl_result_hash(patient)
   end
 
   def self.hiv_encounter(patient, encounter, date = Date.today)
-    return Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
+    return Encounter.find(:all,:order => "encounter_datetime DESC,date_created DESC",
     :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
-      date.to_date, patient.id, EncounterType.find_by_name(encounter).id])
+    date.to_date, patient.id, EncounterType.find_by_name(encounter).id],
+    :include => [:observations])
   end
 
   def self.concept_set(concept)
