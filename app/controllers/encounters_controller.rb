@@ -1540,27 +1540,13 @@ class EncountersController < GenericEncountersController
                                :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
                                                e.patient_id, PatientIdentifierType.find_by_name("National id").id,
                                                @ids]).identifier}.uniq rescue []
-
-      nvp_ids = Order.find(:all, :joins => [[:drug_order => :drug], :encounter],
-               :select => ["encounter.patient_id, count(*) encounter_id, drug.name instructions, " +
-                               "SUM(DATEDIFF(auto_expire_date, start_date)) orderer"], :group => [:patient_id],
-               :conditions => ["drug.name REGEXP ? OR drug.name REGEXP ?  OR drug.name REGEXP ? AND (DATE(encounter_datetime) >= ? " +
-                                   "AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", "NVP", "Nevirapine", "ml",
-                               @start_date.to_date, @end_date.to_date, @patient_ids.join(',')]).collect{|e|
-        PatientIdentifier.find(:last,
-                               :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
-                                               e.patient_id, PatientIdentifierType.find_by_name("National id").id,
-                                               @ids]).identifier}.uniq rescue []
     else
       cpt_ids = []
-      nvp_ids = []
     end
 
     result["on_cpt"] = cpt_ids.join(",")
     result["arv_before_visit_one"] = b4_visit_one.join(",")
     result["no_art"] = no_art.join(",")
-    result["on_nvp"] = nvp_ids.join(",")
-    #raise result.to_yaml
     render :text => result.to_json
   end
 

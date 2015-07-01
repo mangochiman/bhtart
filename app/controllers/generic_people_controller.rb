@@ -1,7 +1,7 @@
 class GenericPeopleController < ApplicationController
-   
+
   @@test  = nil
- 
+
 	def index
 		redirect_to "/clinic"
 	end
@@ -12,57 +12,57 @@ class GenericPeopleController < ApplicationController
 
 	def identifiers
 	end
-  
+
   def create_confirm
-    @search_results = {}                                                        
+    @search_results = {}
     @patients = []
-     
-    (PatientService.search_demographics_from_remote(params[:user_entered_params]) || []).each do |data|            
+
+    (PatientService.search_demographics_from_remote(params[:user_entered_params]) || []).each do |data|
       national_id = data["person"]["data"]["patient"]["identifiers"]["National id"] rescue nil
-      national_id = data["person"]["value"] if national_id.blank? rescue nil    
-      national_id = data["npid"]["value"] if national_id.blank? rescue nil      
+      national_id = data["person"]["value"] if national_id.blank? rescue nil
+      national_id = data["npid"]["value"] if national_id.blank? rescue nil
       national_id = data["person"]["data"]["patient"]["identifiers"]["old_identification_number"] if national_id.blank? rescue nil
-                                                                              
-      next if national_id.blank?                                                
-      results = PersonSearch.new(national_id)                                   
-      results.national_id = national_id                                         
+
+      next if national_id.blank?
+      results = PersonSearch.new(national_id)
+      results.national_id = national_id
       results.current_residence = data["person"]["data"]["addresses"]["city_village"]
-      results.person_id = 0                                                     
-      results.home_district = data["person"]["data"]["addresses"]["address2"]   
-      results.neighborhood_cell = data["person"]["data"]["addresses"]["neighborhood_cell"]   
+      results.person_id = 0
+      results.home_district = data["person"]["data"]["addresses"]["address2"]
+      results.neighborhood_cell = data["person"]["data"]["addresses"]["neighborhood_cell"]
       results.traditional_authority =  data["person"]["data"]["addresses"]["county_district"]
       results.name = data["person"]["data"]["names"]["given_name"] + " " + data["person"]["data"]["names"]["family_name"]
-      gender = data["person"]["data"]["gender"]                                 
-      results.occupation = data["person"]["data"]["occupation"]                 
-      results.sex = (gender == 'M' ? 'Male' : 'Female')                         
+      gender = data["person"]["data"]["gender"]
+      results.occupation = data["person"]["data"]["occupation"]
+      results.sex = (gender == 'M' ? 'Male' : 'Female')
       results.birthdate_estimated = (data["person"]["data"]["birthdate_estimated"]).to_i
       results.birth_date = birthdate_formatted((data["person"]["data"]["birthdate"]).to_date , results.birthdate_estimated)
-      results.birthdate = (data["person"]["data"]["birthdate"]).to_date         
+      results.birthdate = (data["person"]["data"]["birthdate"]).to_date
       results.age = cul_age(results.birthdate.to_date , results.birthdate_estimated)
-      @search_results[results.national_id] = results                            
+      @search_results[results.national_id] = results
     end if create_from_dde_server
 
     (params[:people_ids] || []).each do |person_id|
       patient = PatientService.get_patient(Person.find(person_id))
 
-      results = PersonSearch.new(patient.national_id || patient.patient_id)     
-      results.national_id = patient.national_id                                 
-      results.birth_date = patient.birth_date                                   
-      results.current_residence = patient.current_residence                     
-      results.guardian = patient.guardian                                       
-      results.person_id = patient.person_id                                     
-      results.home_district = patient.home_district                             
-      results.neighborhood_cell = patient.home_village                            
-      results.current_district = patient.current_district                       
-      results.traditional_authority = patient.traditional_authority             
-      results.mothers_surname = patient.mothers_surname                         
-      results.dead = patient.dead                                               
-      results.arv_number = patient.arv_number                                   
-      results.eid_number = patient.eid_number                                   
-      results.pre_art_number = patient.pre_art_number                           
-      results.name = patient.name                                               
-      results.sex = patient.sex                                                 
-      results.age = patient.age                                                 
+      results = PersonSearch.new(patient.national_id || patient.patient_id)
+      results.national_id = patient.national_id
+      results.birth_date = patient.birth_date
+      results.current_residence = patient.current_residence
+      results.guardian = patient.guardian
+      results.person_id = patient.person_id
+      results.home_district = patient.home_district
+      results.neighborhood_cell = patient.home_village
+      results.current_district = patient.current_district
+      results.traditional_authority = patient.traditional_authority
+      results.mothers_surname = patient.mothers_surname
+      results.dead = patient.dead
+      results.arv_number = patient.arv_number
+      results.eid_number = patient.eid_number
+      results.pre_art_number = patient.pre_art_number
+      results.name = patient.name
+      results.sex = patient.sex
+      results.age = patient.age
       @search_results.delete_if{|x,y| x == results.national_id }
       @patients << results
     end
@@ -76,20 +76,20 @@ class GenericPeopleController < ApplicationController
   end
 
 	def create_remote
- 	  
+
 		if current_user.blank?
 		  user = User.authenticate('admin', 'test')
 		  sign_in(:user, user) if !user.blank?
-      set_current_user	  
+      set_current_user
 		end rescue []
 
 		if Location.current_location.blank?
 			Location.current_location = Location.find(CoreService.get_global_property_value('current_health_center_id'))
 		end rescue []
-    
+
     patient = nil
-    if create_from_dde_server                                                
-       
+    if create_from_dde_server
+
       passed_params = {"region" => "" ,
 				"person"=>{"occupation"=> params["occupation"] ,
 					"age_estimate"=> params["patient_age"]["age_estimate"] ,
@@ -103,7 +103,7 @@ class GenericPeopleController < ApplicationController
             "address1"=> params["addresses"]["address1"],
             "neighborhood_cell"=> params["addresses"]["neighborhood_cell"],
             "city_village"=> params["addresses"]["city_village"],
-            "county_district"=> params["addresses"]["county_district"]},   
+            "county_district"=> params["addresses"]["county_district"]},
 					"gender"=>  params["patient"]["gender"],
 					"patient"=>"",
 					"birth_day"=>  params["patient_day"] ,
@@ -121,8 +121,8 @@ class GenericPeopleController < ApplicationController
 					"addresses"=>{"county_district_a"=>"",
 						"city_village_a"=>""}},
 				"identifier"=>""}
-             
-      person = PatientService.create_patient_from_dde(passed_params) 
+
+      person = PatientService.create_patient_from_dde(passed_params)
     else
       #raise params["addresses"].to_yaml
       state = params["addresses"]["state_province"] rescue nil
@@ -143,14 +143,14 @@ class GenericPeopleController < ApplicationController
             "address1"=> address1,
             "neighborhood_cell"=> address,
             "city_village"=> city_village,
-            "county_district"=> district},   
+            "county_district"=> district},
         "gender" => params['patient']['gender'],
         "birth_day" => params[:patient_day],
         "names"=> {"family_name2"=>"Unknown",
 					"family_name"=> params['patient_name']['family_name'],
 					"given_name"=> params['patient_name']['given_name'] },
         "birth_year"=> params[:patient_year] }
-        
+
       person = PatientService.create_from_form(person_params)
 
       if person
@@ -175,7 +175,7 @@ class GenericPeopleController < ApplicationController
 		result = people.empty? ? {} : PatientService.demographics(people.first)
 		render :text => result.to_json
 	end
-  
+
 	def art_information
 		national_id = params["person"]["patient"]["identifiers"]["National id"] rescue nil
     national_id = params["person"]["value"] if national_id.blank? rescue nil
@@ -183,12 +183,12 @@ class GenericPeopleController < ApplicationController
 		art_info = art_info_for_remote(national_id)
 		render :text => art_info.to_json
 	end
- 
+
 	def search
     found_person = nil
     if params[:identifier]
       local_results = PatientService.search_by_identifier(params[:identifier])
-      
+
 			if local_results.blank? and (params[:identifier].match(/#{Location.current_health_center.neighborhood_cell}-ARV/i) || params[:identifier].match(/-TB/i))
 				flash[:notice] = "No matching person found with number #{params[:identifier]}"
 				redirect_to :action => 'find_by_tb_number' if params[:identifier].match(/-TB/i)
@@ -245,7 +245,7 @@ class GenericPeopleController < ApplicationController
         end
       end
     end
-		
+
     @relation = params[:relation]
     @people = PatientService.person_search(params)
     @search_results = {}
@@ -319,53 +319,53 @@ class GenericPeopleController < ApplicationController
 			@patients << data
 		end
 	end
-  
+
   def search_from_dde
 		found_person = PatientService.person_search_from_dde(params)
     if found_person
       if params[:relation]
         redirect_to search_complete_url(found_person.id, params[:relation]) and return
       else
-        redirect_to :action => 'confirm', 
-          :found_person_id => found_person.id, 
+        redirect_to :action => 'confirm',
+          :found_person_id => found_person.id,
           :relation => params[:relation] and return
       end
     else
-      redirect_to :action => 'search' and return 
+      redirect_to :action => 'search' and return
     end
   end
-   
+
 	def confirm
 		session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
 
 		if request.post?
 			redirect_to search_complete_url(params[:found_person_id], params[:relation]) and return
 		end
-		@found_person_id = params[:found_person_id] 
+		@found_person_id = params[:found_person_id]
 		@relation = params[:relation]
 		@person = Person.find(@found_person_id) rescue nil
 		patient = @person.patient
 		@outcome = patient.patient_programs.last.patient_states.last.program_workflow_state.concept.fullname rescue nil
 
 		@pp = PatientProgram.find(:first, :joins => :location, :conditions => ["program_id = ? AND patient_id = ?", Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,@person.id]).patient_states.last.program_workflow_state.concept.fullname	rescue ""
-		
+
 		@current_hiv_program_state = PatientProgram.find(:first, :joins => :location, :conditions => ["program_id = ? AND patient_id = ? AND location.location_id = ?", Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,@person.id, Location.current_health_center.location_id]).patient_states.last.program_workflow_state.concept.fullname rescue ''
 		@transferred_out = @current_hiv_program_state.upcase == "PATIENT TRANSFERRED OUT"? true : nil
-		defaulter = Patient.find_by_sql("SELECT current_defaulter(#{@person.patient.patient_id}, '#{session_date}') 
-                                     AS defaulter 
+		defaulter = Patient.find_by_sql("SELECT current_defaulter(#{@person.patient.patient_id}, '#{session_date}')
+                                     AS defaulter
                                      FROM patient_program LIMIT 1")[0].defaulter rescue 0
 		@defaulted = "#{defaulter}" == "0" ? nil : true if ! @pp.match(/patient\sdied/i)
-		@task = main_next_task(Location.current_location, @person.patient, session_date)		
+		@task = main_next_task(Location.current_location, @person.patient, session_date)
 		@arv_number = PatientService.get_patient_identifier(@person, 'ARV Number')
     @tb_number = PatientService.get_patient_identifier(@person, 'District TB Number')
-		@patient_bean = PatientService.get_patient(@person)  
-		
-		
+		@patient_bean = PatientService.get_patient(@person)
+
+
 		@art_start_date = PatientService.date_antiretrovirals_started(@person.patient)
     @second_line_treatment_start_date = PatientService.date_started_second_line_regimen(@person.patient) rescue nil
     @duration_in_months = PatientService.period_on_treatment(@art_start_date) rescue nil
 		#@duration_in_months = ((Time.now.to_date - @art_start_date.to_date).to_i/28) unless @art_start_date.blank?
-   
+
 
 
 		@second_line_duration_in_months = PatientService.period_on_treatment(@second_line_treatment_start_date) rescue nil
@@ -375,7 +375,7 @@ class GenericPeopleController < ApplicationController
     ).collect{| type |type.id }
 
     @patient_identifiers = LabController.new.id_identifiers(patient)
-    
+
    if vl_routine_check_activated && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
       @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
       @latest_date = @results[0].split('::')[0].to_date rescue nil
@@ -402,9 +402,9 @@ class GenericPeopleController < ApplicationController
       @vl_result_hash = Patient.vl_result_hash(patient)
 
    end
-   
+
     regimen_category = Concept.find_by_name("Regimen Category")
-    
+
     @current_regimen = Observation.find(:first, :conditions => ["concept_id = ? AND
         person_id = ? AND obs_datetime = (SELECT MAX(obs_datetime) FROM obs o
         WHERE o.person_id = #{patient.id} AND o.concept_id =#{regimen_category.id}
@@ -508,9 +508,9 @@ class GenericPeopleController < ApplicationController
       end
       redirect_to search_complete_url(params[:person][:id], params[:relation]) and return unless params[:person][:id].blank? || params[:person][:id] == '0'
 
-      redirect_to :action => :new, :gender => params[:gender], 
-        :given_name => params[:given_name], :family_name => params[:family_name], 
-        :family_name2 => params[:family_name2], :address2 => params[:address2], 
+      redirect_to :action => :new, :gender => params[:gender],
+        :given_name => params[:given_name], :family_name => params[:family_name],
+        :family_name2 => params[:family_name2], :address2 => params[:address2],
         :identifier => params[:identifier], :relation => params[:relation]
     end
 	end
@@ -530,7 +530,7 @@ class GenericPeopleController < ApplicationController
           month_i = (month || 0).to_i
           month_i = Date::MONTHNAMES.index(month) if month_i == 0 || month_i.blank?
           month_i = Date::ABBR_MONTHNAMES.index(month) if month_i == 0 || month_i.blank?
-                                                     
+
           if month_i == 0 || month == "Unknown"
             birthdate = Date.new(year.to_i,7,1)
           elsif day.blank? || day == "Unknown" || day == 0
@@ -540,7 +540,7 @@ class GenericPeopleController < ApplicationController
           end
         end
       end
-     
+
       start_birthdate = (birthdate - 5.year)
       end_birthdate   = (birthdate + 5.year)
 
@@ -569,7 +569,7 @@ class GenericPeopleController < ApplicationController
         end
       end
 
-    
+
       #............................................................................
       @dde_search_results = {}
       (PatientService.search_demographics_from_remote(params) || []).each do |data|
@@ -577,7 +577,7 @@ class GenericPeopleController < ApplicationController
         national_id = data["person"]["value"] if national_id.blank? rescue nil
         national_id = data["npid"]["value"] if national_id.blank? rescue nil
         national_id = data["person"]["data"]["patient"]["identifiers"]["old_identification_number"] if national_id.blank? rescue nil
-                                                                                
+
         next if national_id.blank?
         results = PersonSearch.new(national_id)
         results.national_id = national_id
@@ -635,7 +635,7 @@ class GenericPeopleController < ApplicationController
       #If we are creating from DDE then we must create a footprint of the just created patient to
       #enable future
       DDEService.create_footprint(PatientService.get_patient(person).national_id, "NART - #{NART_VERSION}")
-    
+
 
       #for now NART will use BART1 for patient/person creation until we upgrade BART1 to NART
       #if GlobalProperty.find_by_property('create.from.remote') and property_value == 'yes'
@@ -691,7 +691,7 @@ class GenericPeopleController < ApplicationController
       redirect_to "/people/redirections?person_id=#{person.id}" and return
      end
         #raise use_filing_number.to_yaml
-       
+
       end
     else
       # Does this ever get hit?
@@ -731,7 +731,7 @@ class GenericPeopleController < ApplicationController
       end
       session[:stage_patient] = ""
       unless params[:id].blank?
-        redirect_to next_task(Patient.find(params[:id])) 
+        redirect_to next_task(Patient.find(params[:id]))
       else
         redirect_to :action => "index"
       end
@@ -762,7 +762,7 @@ class GenericPeopleController < ApplicationController
         :identifier => "#{PatientIdentifier.site_prefix}-HCC-#{params[:hcc_number]}" and return
     end
   end
-  
+
   def find_by_tb_number
     if request.post?
       numbers_array = params[:tb_number].gsub(/\s+/, "").chars.each_slice(4).map(&:join)
@@ -796,7 +796,7 @@ class GenericPeopleController < ApplicationController
       patient_exists = PatientIdentifier.find(:all,
         :conditions => ['identifier_type = ?
                                          AND patient_id = ? AND voided = 0', params[:identifiers][0][:identifier_type].to_i , params[:patient_id]]).first
-       
+
         if ! patient_exists.blank?
           patient_exists.voided = 1
           patient_exists.save
@@ -851,7 +851,7 @@ class GenericPeopleController < ApplicationController
       redirect_to "/patients/tb_treatment_card?patient_id=#{params[:patient_id]}" and return
     end
   end
-  
+
   # List traditional authority containing the string given in params[:value]
   def traditional_authority
     district_id = District.find_by_name("#{params[:filter_value]}").id
@@ -874,7 +874,7 @@ class GenericPeopleController < ApplicationController
     end
     render :text => regions.join('')  and return
   end
-  
+
   def region
     region_conditions = ["name LIKE (?)", "#{params[:value]}%"]
 
@@ -925,7 +925,7 @@ class GenericPeopleController < ApplicationController
     end
     render :text => villages.join('') + "<li value='Other'>Other</li>" and return
   end
-  
+
   # Landmark containing the string given in params[:value]
   def landmark
     landmarks = PersonAddress.find(:all, :select => "DISTINCT address1" , :conditions => ["city_village = (?) AND address1 LIKE (?)", "#{params[:filter_value]}", "#{params[:search_string]}%"])
@@ -1012,15 +1012,15 @@ class GenericPeopleController < ApplicationController
 
     results = {}
     result_hash = {}
-    
+
     if PatientService.art_patient?(patient)
       clinic_encounters = ["APPOINTMENT","HIV CLINIC CONSULTATION","VITALS","HIV STAGING",'ART ADHERENCE','DISPENSING','HIV CLINIC REGISTRATION']
       clinic_encounter_ids = EncounterType.find(:all,:conditions => ["name IN (?)",clinic_encounters]).collect{| e | e.id }
-      first_encounter_date = patient.encounters.find(:first, 
+      first_encounter_date = patient.encounters.find(:first,
         :order => 'encounter_datetime',
         :conditions => ['encounter_type IN (?)',clinic_encounter_ids]).encounter_datetime.strftime("%d-%b-%Y") rescue 'Uknown'
 
-      last_encounter_date = patient.encounters.find(:first, 
+      last_encounter_date = patient.encounters.find(:first,
         :order => 'encounter_datetime DESC',
         :conditions => ['encounter_type IN (?)',clinic_encounter_ids]).encounter_datetime.strftime("%d-%b-%Y") rescue 'Uknown'
 
@@ -1034,7 +1034,7 @@ class GenericPeopleController < ApplicationController
 
       date_tested_positive = patient.person.observations.recent(1).question("FIRST POSITIVE HIV TEST DATE").last rescue nil
       date_tested_positive = date_tested_positive.to_s.split(':')[1].strip.to_date.strftime("%d-%b-%Y") rescue 'Uknown'
-      
+
       cd4_info = patient.person.observations.recent(1).question("CD4 COUNT").all rescue []
       cd4_data_and_date_hash = {}
 
@@ -1057,7 +1057,7 @@ class GenericPeopleController < ApplicationController
     results["person"] = result_hash
     return results
   end
-  
+
   def occupations
     ['','Driver','Housewife','Messenger','Business','Farmer','Salesperson','Teacher',
 			'Student','Security guard','Domestic worker', 'Police','Office worker',
@@ -1094,20 +1094,20 @@ class GenericPeopleController < ApplicationController
       @field_value = @person.send(@field)
     end
   end
-  
+
   def dde_search
     # result = '[{"person":{"created_at":"2012-01-06T10:08:37Z","data":{"addresses":{"state_province":"Balaka","address2":"Hospital","city_village":"New Lines Houses","county_district":"Kalembo"},"birthdate":"1989-11-02","attributes":{"occupation":"Police","cell_phone_number":"0999925666"},"birthdate_estimated":"0","patient":{"identifiers":{"diabetes_number":""}},"gender":"M","names":{"family_name":"Banda","given_name":"Laz"}},"birthdate":"1989-11-02","creator_site_id":"1","birthdate_estimated":false,"updated_at":"2012-01-06T10:08:37Z","creator_id":"1","gender":"M","id":1,"family_name":"Banda","given_name":"Laz","remote_version_number":null,"version_number":"0","national_id":null}}]'
-    
+
     @dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
-    
+
     @dde_server_username = GlobalProperty.find_by_property("dde_server_username").property_value rescue ""
-    
+
     @dde_server_password = GlobalProperty.find_by_property("dde_server_password").property_value rescue ""
-    
-    url = "http://#{@dde_server_username}:#{@dde_server_password}@#{@dde_server}" + 
-      "/people/find.json?given_name=#{params[:given_name]}" + 
+
+    url = "http://#{@dde_server_username}:#{@dde_server_password}@#{@dde_server}" +
+      "/people/find.json?given_name=#{params[:given_name]}" +
       "&family_name=#{params[:family_name]}&gender=#{params[:gender]}"
-    
+
     result = RestClient.get(url)
     render :text => result, :layout => false
   end
@@ -1209,14 +1209,14 @@ class GenericPeopleController < ApplicationController
         ConceptName.find_by_name('WEIGHT (KG)').concept_id],
       :group =>"Date(encounter_datetime)",
       :order =>"encounter_datetime DESC")
-    
+
     @start_date = weight_obs.last.obs_datetime.to_date rescue Date.today
     @weights = [] ; weights = {} ; count = 1
     (weight_obs || []).each do |weight|
       next if weight.value_numeric.blank?
       weights[weight.obs_datetime] = weight.value_numeric
-      break if count > 12  
-      count+=1  
+      break if count > 12
+      count+=1
     end
     (weights || {}).sort{|a,b|a[0].to_date <=> b[0].to_date}.each do |date,weight|
       @weights << [date.to_date.strftime('%d.%b.%y') , weight]
@@ -1227,7 +1227,7 @@ class GenericPeopleController < ApplicationController
   end
 
 	private
-  
+
 	def search_complete_url(found_person_id, primary_person_id)
 		unless (primary_person_id.blank?)
 			# Notice this swaps them!
@@ -1250,30 +1250,29 @@ class GenericPeopleController < ApplicationController
 	end
 
   def cul_age(birthdate , birthdate_estimated , date_created = Date.today, today = Date.today)
-                                                                                
-    # This code which better accounts for leap years                            
+
+    # This code which better accounts for leap years
     patient_age = (today.year - birthdate.year) + ((today.month - birthdate.month) + ((today.day - birthdate.day) < 0 ? -1 : 0) < 0 ? -1 : 0)
-                                                                                
+
     # If the birthdate was estimated this year, we round up the age, that way if
     # it is March and the patient says they are 25, they stay 25 (not become 24)
-    birth_date = birthdate                                                      
-    estimate = birthdate_estimated == 1                                         
+    birth_date = birthdate
+    estimate = birthdate_estimated == 1
     patient_age += (estimate && birth_date.month == 7 && birth_date.day == 1  &&
         today.month < birth_date.month && date_created.year == today.year) ? 1 : 0
-  end                                                                           
-                                                                                
-  def birthdate_formatted(birthdate,birthdate_estimated)                        
-    if birthdate_estimated == 1                                                 
-      if birthdate.day == 1 and birthdate.month == 7                            
-        birthdate.strftime("??/???/%Y")                                         
-      elsif birthdate.day == 15                                                 
-        birthdate.strftime("??/%b/%Y")                                          
-      elsif birthdate.day == 1 and birthdate.month == 1                         
-        birthdate.strftime("??/???/%Y")                                         
-      end                                                                       
-    else                                                                        
-      birthdate.strftime("%d/%b/%Y")                                            
-    end                                                                         
+  end
+
+  def birthdate_formatted(birthdate,birthdate_estimated)
+    if birthdate_estimated == 1
+      if birthdate.day == 1 and birthdate.month == 7
+        birthdate.strftime("??/???/%Y")
+      elsif birthdate.day == 15
+        birthdate.strftime("??/%b/%Y")
+      elsif birthdate.day == 1 and birthdate.month == 1
+        birthdate.strftime("??/???/%Y")
+      end
+    else
+      birthdate.strftime("%d/%b/%Y")
+    end
   end
 end
- 
