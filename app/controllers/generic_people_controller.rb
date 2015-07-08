@@ -860,7 +860,7 @@ class GenericPeopleController < ApplicationController
 
     traditional_authorities = TraditionalAuthority.find(:all,:conditions => traditional_authority_conditions, :order => 'name')
     traditional_authorities = traditional_authorities.map do |t_a|
-      "<li value='#{t_a.name}'>#{t_a.name}</li>"
+      "<li value=\"#{t_a.name}\">#{t_a.name}</li>"
     end
     render :text => traditional_authorities.join('') + "<li value='Other'>Other</li>" and return
   end
@@ -871,7 +871,7 @@ class GenericPeopleController < ApplicationController
 
     regions = Region.find(:all,:conditions => region_conditions, :order => 'region_id')
     regions = regions.map do |r|
-      "<li value='#{r.name}'>#{r.name}</li>"
+      "<li value=\"#{r.name}\">#{r.name}</li>"
     end
     render :text => regions.join('')  and return
   end
@@ -882,7 +882,7 @@ class GenericPeopleController < ApplicationController
     regions = Region.find(:all,:conditions => region_conditions, :order => 'region_id')
     regions = regions.map do |r|
       if r.name != "Foreign"
-        "<li value='#{r.name}'>#{r.name}</li>"
+        "<li value=\"#{r.name}\">#{r.name}</li>"
       end
     end
     render :text => regions.join('')  and return
@@ -895,7 +895,7 @@ class GenericPeopleController < ApplicationController
 
     districts = District.find(:all,:conditions => region_conditions, :order => 'name')
     districts = districts.map do |d|
-      "<li value='#{d.name}'>#{d.name}</li>"
+      "<li value=\"#{d.name}\">#{d.name}</li>"
     end
     render :text => districts.join('') + "<li value='Other'>Other</li>" and return
   end
@@ -903,7 +903,7 @@ class GenericPeopleController < ApplicationController
   def tb_initialization_district
     districts = District.find(:all, :order => 'name')
     districts = districts.map do |d|
-      "<li value='#{d.name}'>#{d.name}</li>"
+      "<li value=\"#{d.name}\">#{d.name}</li>"
     end
     render :text => districts.join('') + "<li value='Other'>Other</li>" and return
   end
@@ -911,7 +911,7 @@ class GenericPeopleController < ApplicationController
 	def tb_initialization_location
     locations = Location.find_by_sql("SELECT name FROM location WHERE description like '%Health Facility' AND name LIKE '#{params[:search_string]}%'order by name LIMIT 10")
     locations = locations.map do |d|
-      "<li value='#{d.name}'>#{d.name}</li>"
+      "<li value=\"#{d.name}\">#{d.name}</li>"
     end
     render :text => locations.join('') + "<li value='Other'>Other</li>" and return
   end
@@ -922,7 +922,7 @@ class GenericPeopleController < ApplicationController
 
     villages = Village.find(:all,:conditions => village_conditions, :order => 'name')
     villages = villages.map do |v|
-      "<li value='" + v.name + "'>" + v.name + "</li>"
+      "<li value=\"" + v.name + "\">" + v.name + "</li>"
     end
     render :text => villages.join('') + "<li value='Other'>Other</li>" and return
   end
@@ -931,7 +931,7 @@ class GenericPeopleController < ApplicationController
   def landmark
     landmarks = PersonAddress.find(:all, :select => "DISTINCT address1" , :conditions => ["city_village = (?) AND address1 LIKE (?)", "#{params[:filter_value]}", "#{params[:search_string]}%"])
     landmarks = landmarks.map do |v|
-      "<li value='#{v.address1}'>#{v.address1}</li>"
+      "<li value=\"#{v.address1}\">#{v.address1}</li>"
     end
     render :text => landmarks.join('') + "<li value='Other'>Other</li>" and return
   end
