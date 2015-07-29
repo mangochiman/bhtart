@@ -333,6 +333,146 @@ FROM
 WHERE
     `o`.`concept_id` = 2540 AND `o`.`voided` = 0;
 
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `reason_for_eligibility_obs` AS
+SELECT 
+    `e`.`patient_id`, `n`.`name` AS `reason_for_eligibility`, `o`.`obs_datetime`, `e`.`earliest_start_date`
+FROM
+    `earliest_start_date` `e`
+        LEFT JOIN
+    `obs` `o` ON `e`.`patient_id` = `o`.`person_id`
+        AND `o`.`concept_id` = 7563
+        AND `o`.`voided` = 0
+        LEFT JOIN
+    `concept_name` `n` ON `n`.`concept_id` = `o`.`value_coded`
+        AND `n`.`concept_name_type` = 'FULLY_SPECIFIED'
+        AND `n`.`voided` = 0
+ORDER BY `e`.`patient_id` , `o`.`obs_datetime` DESC;
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `patients_with_has_transfer_letter_yes` AS
+SELECT 
+    `o`.`person_id`, `p`.`gender`, `o`.`obs_datetime`, `o`.`date_created`, `e`.`earliest_start_date`
+FROM
+    `obs` `o`
+        INNER JOIN
+    `person` `p` ON `p`.`person_id` = `o`.`person_id`
+        AND `p`.`voided` = 0
+        AND `o`.`voided` = 0
+        INNER JOIN
+    `earliest_start_date` `e` ON `e`.`patient_id` = `o`.`person_id`
+WHERE
+    `o`.`concept_id` = 6393
+        AND `o`.`value_coded` = 1065
+        AND `o`.`voided` = 0;    
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `all_patients_attributes` AS
+SELECT 
+    `person_id`,
+    MAX(CASE WHEN `person_attribute_type_id` = 13 THEN `value` END) AS `occupation`,
+    MAX(CASE WHEN `person_attribute_type_id` = 12 THEN `value` END) AS `cell_phone`,
+    MAX(CASE WHEN `person_attribute_type_id` = 14 THEN `value` END) AS `home_phone`,
+    MAX(CASE WHEN `person_attribute_type_id` = 15 THEN `value` END) AS `office_phone`
+FROM
+    `person_attribute`
+WHERE `voided` = 0
+GROUP BY `person_id`;
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `all_patient_identifiers` AS
+SELECT 
+    `patient_id`,
+    MAX(CASE WHEN `identifier_type` = 1 THEN `identifier` END) AS `openmrs_ident_type`,
+    MAX(CASE WHEN `identifier_type` = 3 THEN `identifier` END) AS `national_id`,
+    MAX(CASE WHEN `identifier_type` = 4 THEN `identifier` END) AS `arv_number`,
+    MAX(CASE WHEN `identifier_type` = 2 THEN `identifier` END) AS `legacy_id`,
+    MAX(CASE WHEN `identifier_type` = 5 THEN `identifier` END) AS `prev_art_number`,
+    MAX(CASE WHEN `identifier_type` = 7 THEN `identifier` END) AS `tb_number`,
+    MAX(CASE WHEN `identifier_type` = 17 THEN `identifier` END) AS `filing_number`,
+    MAX(CASE WHEN `identifier_type` = 18 THEN `identifier` END) AS `archived_filing_number`,
+    MAX(CASE WHEN `identifier_type` = 22 THEN `identifier` END) AS `pre_art_number`
+FROM
+    `patient_identifier`
+WHERE `voided` = 0
+GROUP BY `patient_id`;
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `all_person_addresses` AS
+SELECT 
+    `p`. *
+FROM
+    `person_address` `p`
+WHERE
+    `p`.`person_address_id` = (SELECT 
+            MAX(`pad`.`person_address_id`)
+        FROM
+            `person_address` `pad`
+        WHERE
+            `pad`.`person_id` = `p`.`person_id`
+                AND `pad`.`voided` = 0)
+        AND `p`.`voided` = 0;
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `guardians` AS
+SELECT 
+    `person_a` AS `patient_id`,
+    `person_b` AS `guardian_id`,
+    `per`.`gender` AS `gender`,    
+    `p`.`given_name` AS `given_name`,
+    `p`.`family_name` AS `family_name`,
+    `p`.`middle_name` AS `middle_name`,
+    `per`.`birthdate_estimated` AS `birthdate_estimated`,
+    `per`.`birthdate` AS `birthdate`,    
+    `pa`.`address2` AS `home_district`,
+    `pa`.`state_province` AS `current_district`,
+    `pa`.`address1` AS `landmark`,
+    `pa`.`city_village` AS `current_residence`,
+    `pa`.`county_district` AS `traditional_authority`
+FROM
+    `relationship` `r`
+        INNER JOIN
+    `person_name` `p` ON `p`.`person_id` = `r`.`person_b`
+        LEFT JOIN
+    `all_person_addresses` `pa` ON `pa`.`person_id` = `p`.`person_id`
+        INNER JOIN
+    `person` `per` ON `per`.`person_id` = `p`.`person_id` AND `p`.`voided` = 0 
+WHERE
+    `r`.`voided` = 0
+AND `r`.`person_a` IN (SELECT `e`.`patient_id` FROM `earliest_start_date` `e`)    
+ORDER BY `patient_id`;
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  VIEW `patients_demographics` AS
+SELECT 
+    `esd`.`patient_id`,
+    `p`.`given_name` AS `given_name`,
+    `p`.`family_name` AS `family_name`,
+    `p`.`middle_name` AS `middle_name`,
+    `per`.`gender` AS `gender`,
+    `per`.`birthdate_estimated`,
+    `per`.`birthdate` AS `birthdate`,
+    `pa`.`address2` AS `home_district`,
+    `pa`.`state_province` AS `current_district`,
+    `pa`.`address1` AS `landmark`,
+    `pa`.`city_village` AS `current_residence`,
+    `pa`.`county_district` AS `traditional_authority`,
+    `esd`.`date_enrolled`,
+    `esd`.`earliest_start_date`,
+    `esd`.`death_date`,
+    `esd`.`age_at_initiation`,
+    `esd`.`age_in_days`
+FROM
+    `earliest_start_date` `esd`
+        INNER JOIN
+    `person_name` `p` ON `p`.`person_id` = `esd`.`patient_id` and `p`.`voided` = 0
+        LEFT JOIN
+    `all_person_addresses` `pa` ON `pa`.`person_id` = `p`.`person_id` and `pa`.`voided` = 0
+        INNER JOIN
+    `person` `per` ON `per`.`person_id` = `p`.`person_id` and `per`.`voided` = 0
+GROUP BY `esd`.`patient_id`
+ORDER BY `patient_id`;
+
 DROP FUNCTION IF EXISTS earliest_start_date_at_clinic;                                          
                                                                                 
 DELIMITER $$                                                                     
