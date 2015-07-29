@@ -1155,6 +1155,21 @@ class GenericPeopleController < ApplicationController
     render :layout => 'menu'
   end
 
+  def filter_duplicates
+    hash = {}
+    hash["1"] = {"national_id" => 'P000000000001', "first_name" => 'Ernest',
+            "last_name" => "Matola 1", "dob" => "01/Jan/2000", "gender" => "Male", "age" => "24"
+            } if (params[:value].match(/er|ne|st/i) || params[:value] == "")
+    hash["2"] = {"national_id" => 'P000000000001', "first_name" => 'John',
+      "last_name" => "Chabwera", "dob" => "01/Jan/1988", "gender" => "Male", "age" => "40"
+      } if (params[:value].match(/jo|hn|/i) || params[:value] == "")
+    hash["3"] = {"national_id" => 'P000000000001', "first_name" => 'Mathews',
+      "last_name" => "Gogani", "dob" => "01/Jan/1988", "gender" => "Male", "age" => "30"
+      } if (params[:value].match(/ma|th|ews/i) || params[:value] == "")
+
+    render :text => hash.to_json
+  end
+  
   def reassign_dde_national_id
     person = DDEService.reassign_dde_identification(params[:dde_person_id],params[:local_person_id])
     print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
@@ -1294,5 +1309,65 @@ class GenericPeopleController < ApplicationController
       birthdate.strftime("%d/%b/%Y")                                            
     end                                                                         
   end
+=begin
+  def create_person_from_anc
+    #ActiveRecord::Base.transaction do
+        birth_day = params["person"]["birth_day"].to_i
+        birth_month = params["person"]["birth_month"].to_i
+        birthdate_estimated = 0
+      if (birth_day == 0)
+        birth_day = 1
+        birthdate_estimated = 1
+      end
+
+      if (birth_month == 0)
+        birth_month = 7
+      end
+
+      birthdate = Date.new(params["person"]["birth_year"].to_i,birth_month , birth_day)
+      person = Person.create({
+        :gender => params["person"]["gender"],
+        :birthdate => birthdate,
+        :birthdate_estimated => birthdate_estimated
+      })
+
+      person.names.create({
+        :given_name => params["person"]["names"]["given_name"],
+        :family_name => params["person"]["names"]["family_name"],
+        :family_name2 => params["person"]["names"]["family_name2"]
+      })
+
+      person.addresses.create({
+        :address1 => params["person"]["addresses"]["address1"],
+        :address2 => params["person"]["addresses"]["address2"],
+        :city_village => params["person"]["addresses"]["city_village"],
+        :county_district => params["person"]["addresses"]["county_district"]
+        })
+
+      person.person_attributes.create(
+		  :person_attribute_type_id => PersonAttributeType.find_by_name("Occupation").person_attribute_type_id,
+		  :value => params["person"]["attributes"]["occupation"])
+
+      person.person_attributes.create(
+		  :person_attribute_type_id => PersonAttributeType.find_by_name("Cell Phone Number").person_attribute_type_id,
+		  :value => params["person"]["attributes"]["cell_phone_number"])
+
+      person.person_attributes.create(
+        :person_attribute_type_id => PersonAttributeType.find_by_name("Office Phone Number").person_attribute_type_id,
+        :value => params["person"]["attributes"]["office_phone_number"])
+
+      person.person_attributes.create(
+        :person_attribute_type_id => PersonAttributeType.find_by_name("Home Phone Number").person_attribute_type_id,
+        :value => params["person"]["attributes"]["home_phone_number"])
+
+      patient = person.create_patient
+      patient.patient_identifiers.create({
+          "identifier" => params["person"]["patient"]["identifiers"]["National id"],
+          "identifier_type" => PatientIdentifierType.find_by_name("NATIONAL ID").patient_identifier_type_id
+       })
+    #end
+    render :text => "true" and return
+  end
+=end
 end
  
