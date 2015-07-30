@@ -1,4 +1,5 @@
 <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
+
 <script>
   tt_cancel_destination = "/clinic";
 
@@ -104,11 +105,12 @@
   }
 
   function filterDuplicates(value){
+    passed_params = "name=" + value + "&identifier=" + document.getElementById("duplicate_identifier").value;;
 
     jQuery.ajax({
       type: "POST",
       url: "/people/filter_duplicates",
-      data: "value="+ value,
+      data: passed_params,
       success: function(results){
         results = eval("(" + results  + ")");
         color = 'white'
@@ -136,7 +138,7 @@
           html += "<td class='color_" + color + "  row_number_" + row_number + "'>" + dob + "</td>";
           html += "<td class='color_" + color + "  row_number_" + row_number + "'>" + gender + "</td>";
           html += "<td class='color_" + color + "  row_number_" + row_number + "'>" + age + "</td>";
-          html += "<td class ='merge button_row_" + row_number +"'><a href='#' id = '" + patientID + "' class ='merge button_row_" + row_number + "'  onmousedown='newID(" + patientID + ", " + national_id + ");'>Select</a></td>";
+          html += "<td class ='merge button_row_" + row_number +"'><a href='#' id = '" + patientID + "' class ='merge button_row_" + row_number + "'  onmousedown='newID(" + patientID + ", \"" + national_id + "\");'>Select</a></td>";
           html += "</tr>";
 
         }
@@ -304,7 +306,7 @@
       end
 
       row_number = 0
-      ( @remote_duplicates || {} ).each do | patient |
+      ( @remote_duplicates || {} ).each do | patient | 
         if color == 'white'
           color = 'blue'
         else
@@ -331,6 +333,19 @@
       <%end%>
     </tbody>
   </table>
+
+      <%( @remote_duplicates || {} ).each do | patient | %>
+        <input type="hidden" value="<%=patient.national_id%>" id="duplicate_identifier" />
+      <%
+        break
+      end%>
+
+      <%( @duplicates || {} ).each do | patient | %>
+        <input type="hidden" value="<%=patient.national_id%>" id="duplicate_identifier" />
+      <%
+        break
+      end%>
+
 
   <div id="keypad">
     <span class="keypad">

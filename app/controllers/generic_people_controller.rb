@@ -1157,17 +1157,17 @@ class GenericPeopleController < ApplicationController
   end
 
   def filter_duplicates
+    people = PatientService.person_search_by_identifier_and_name(params)
     hash = {}
-    hash["1"] = {"national_id" => 'P000000000001', "first_name" => 'Ernest',
-            "last_name" => "Matola 1", "dob" => "01/Jan/2000", "gender" => "Male", "age" => "24"
-            } if (params[:value].match(/er|ne|st/i) || params[:value] == "")
-    hash["2"] = {"national_id" => 'P000000000001', "first_name" => 'John',
-      "last_name" => "Chabwera", "dob" => "01/Jan/1988", "gender" => "Male", "age" => "40"
-      } if (params[:value].match(/jo|hn|/i) || params[:value] == "")
-    hash["3"] = {"national_id" => 'P000000000001', "first_name" => 'Mathews',
-      "last_name" => "Gogani", "dob" => "01/Jan/1988", "gender" => "Male", "age" => "30"
-      } if (params[:value].match(/ma|th|ews/i) || params[:value] == "")
-
+    (people || []).each do |person|
+      patient = PatientService.get_patient(person)
+      first_name =  patient.name.split[0] rescue ''
+      last_name =  patient.name.split[1] rescue ''
+      hash[person.person_id] = {"national_id" => params[:identifier], 
+        "first_name" => first_name,
+        "last_name" => last_name, "dob" => patient.birth_date, 
+        "gender" => patient.sex, "age" => patient.age } 
+    end
     render :text => hash.to_json
   end
   
