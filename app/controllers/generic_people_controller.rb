@@ -199,6 +199,25 @@ class GenericPeopleController < ApplicationController
         redirect_to :action => 'duplicates' ,:search_params => params
         return
       elsif local_results.length == 1
+        ####################################################hack to handle duplicates ########################################################
+        person_to_be_chcked = PatientService.demographics(Person.find(local_results.first[:person_id].to_i))
+        if CoreService.get_global_property_value('search.from.remote.app').to_s == 'true'
+          remote_app_address = CoreService.get_global_property_value('remote.app.address').to_s
+          uri = "http://#{remote_app_address}/check_for_duplicates/remote_app_search"
+          search_from_remote_params =  {"identifier" => params[:identifier],
+            "given_name" => person_to_be_chcked['person']['names']['given_name'],
+            "family_name" => person_to_be_chcked['person']['names']['family_name'],
+            "gender" => person_to_be_chcked['person']['gender'] }
+
+          output = RestClient.post(uri,search_from_remote_params) rescue []
+          remote_result = JSON.parse(output) rescue []
+          unless remote_result.blank?
+            redirect_to :controller =>'check_for_duplicates', :action => 'view',
+              :identifier => params[:identifier] and return
+          end
+        end
+        #################################################### end of: hack to handle duplicates ########################################################
+
         if create_from_dde_server
           dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
           dde_server_username = GlobalProperty.find_by_property("dde_server_username").property_value rescue ""
@@ -1137,6 +1156,21 @@ class GenericPeopleController < ApplicationController
     render :layout => 'menu'
   end
 
+  def filter_duplicates
+    people = PatientService.person_search_by_identifier_and_name(params)
+    hash = {}
+    (people || []).each do |person|
+      patient = PatientService.get_patient(person)
+      first_name =  patient.name.split[0] rescue ''
+      last_name =  patient.name.split[1] rescue ''
+      hash[person.person_id] = {"national_id" => params[:identifier], 
+        "first_name" => first_name,
+        "last_name" => last_name, "dob" => patient.birth_date, 
+        "gender" => patient.sex, "age" => patient.age } 
+    end
+    render :text => hash.to_json
+  end
+  
   def reassign_dde_national_id
     person = DDEService.reassign_dde_identification(params[:dde_person_id],params[:local_person_id])
     print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
@@ -1276,4 +1310,64 @@ class GenericPeopleController < ApplicationController
       birthdate.strftime("%d/%b/%Y")
     end
   end
+=begin
+  def create_person_from_anc
+    #ActiveRecord::Base.transaction do
+        birth_day = params["person"]["birth_day"].to_i
+        birth_month = params["person"]["birth_month"].to_i
+        birthdate_estimated = 0
+      if (birth_day == 0)
+        birth_day = 1
+        birthdate_estimated = 1
+      end
+
+      if (birth_month == 0)
+        birth_month = 7
+      end
+
+      birthdate = Date.new(params["person"]["birth_year"].to_i,birth_month , birth_day)
+      person = Person.create({
+        :gender => params["person"]["gender"],
+        :birthdate => birthdate,
+        :birthdate_estimated => birthdate_estimated
+      })
+
+      person.names.create({
+        :given_name => params["person"]["names"]["given_name"],
+        :family_name => params["person"]["names"]["family_name"],
+        :family_name2 => params["person"]["names"]["family_name2"]
+      })
+
+      person.addresses.create({
+        :address1 => params["person"]["addresses"]["address1"],
+        :address2 => params["person"]["addresses"]["address2"],
+        :city_village => params["person"]["addresses"]["city_village"],
+        :county_district => params["person"]["addresses"]["county_district"]
+        })
+
+      person.person_attributes.create(
+		  :person_attribute_type_id => PersonAttributeType.find_by_name("Occupation").person_attribute_type_id,
+		  :value => params["person"]["attributes"]["occupation"])
+
+      person.person_attributes.create(
+		  :person_attribute_type_id => PersonAttributeType.find_by_name("Cell Phone Number").person_attribute_type_id,
+		  :value => params["person"]["attributes"]["cell_phone_number"])
+
+      person.person_attributes.create(
+        :person_attribute_type_id => PersonAttributeType.find_by_name("Office Phone Number").person_attribute_type_id,
+        :value => params["person"]["attributes"]["office_phone_number"])
+
+      person.person_attributes.create(
+        :person_attribute_type_id => PersonAttributeType.find_by_name("Home Phone Number").person_attribute_type_id,
+        :value => params["person"]["attributes"]["home_phone_number"])
+
+      patient = person.create_patient
+      patient.patient_identifiers.create({
+          "identifier" => params["person"]["patient"]["identifiers"]["National id"],
+          "identifier_type" => PatientIdentifierType.find_by_name("NATIONAL ID").patient_identifier_type_id
+       })
+    #end
+    render :text => "true" and return
+  end
+=end
 end

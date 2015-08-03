@@ -1613,6 +1613,39 @@ EOF
     value
   end
 
+  def self.person_search_by_identifier_and_name(params)
+    people = []
+    given_name = params[:name].squish.split(' ')[0]
+    family_name = params[:name].squish.split(' ')[1] rescue ''
+    identifier = params[:identifier]
+
+    people = Person.find(:all, :limit => 15, :joins =>"INNER JOIN person_name USING(person_id)
+     INNER JOIN patient_identifier i ON i.patient_id = person.person_id", :conditions => [
+     "identifier = ? AND \
+     person_name.given_name LIKE (?) AND \
+     person_name.family_name LIKE (?)",
+        identifier,
+        "%#{given_name}%",
+        "%#{family_name}%"
+      ],:limit => 10,:order => "birthdate DESC") 
+
+    if people.length < 15
+      people_like = Person.find(:all, :limit => 15, 
+      :joins =>"INNER JOIN person_name_code ON person_name_code.person_name_id = person.person_id
+      INNER JOIN patient_identifier i ON i.patient_id = person.person_id", 
+      :conditions => ["identifier = ? AND \
+     ((person_name_code.given_name_code LIKE ? AND \
+     person_name_code.family_name_code LIKE ?))",
+        identifier,
+        (given_name || '').soundex,
+        (family_name || '').soundex
+      ], :order => "birthdate DESC")
+      people = (people + people_like).uniq rescue people
+    end
+
+    return people.uniq[0..9] rescue people
+  end
+
   def self.person_search(params)
     people = []
     people = search_by_identifier(params[:identifier]) if params[:identifier]
