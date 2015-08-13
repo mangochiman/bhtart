@@ -1620,7 +1620,7 @@ EOF
     identifier = params[:identifier]
 
     people = Person.find(:all, :limit => 15, :joins =>"INNER JOIN person_name USING(person_id)
-     INNER JOIN patient_identifier i ON i.patient_id = person.person_id", :conditions => [
+     INNER JOIN patient_identifier i ON i.patient_id = person.person_id AND i.voided = 0", :conditions => [
      "identifier = ? AND \
      person_name.given_name LIKE (?) AND \
      person_name.family_name LIKE (?)",
@@ -1632,7 +1632,7 @@ EOF
     if people.length < 15
       people_like = Person.find(:all, :limit => 15, 
       :joins =>"INNER JOIN person_name_code ON person_name_code.person_name_id = person.person_id
-      INNER JOIN patient_identifier i ON i.patient_id = person.person_id", 
+      INNER JOIN patient_identifier i ON i.patient_id = person.person_id AND i.voided = 0", 
       :conditions => ["identifier = ? AND \
      ((person_name_code.given_name_code LIKE ? AND \
      person_name_code.family_name_code LIKE ?))",
