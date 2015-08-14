@@ -4,6 +4,7 @@ default: &default
   dde_username: admin
   dde_password: password
   site_code: TST
+  secure_connection: false
 
 development:
   <<: *default
