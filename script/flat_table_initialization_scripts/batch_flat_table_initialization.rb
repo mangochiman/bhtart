@@ -2310,16 +2310,16 @@ def process_patient_orders(orders, visit, type = 0)
       drug_equivalent_daily_dose_hash[drug_name] = ord.equivalent_daily_dose
       drug_inventory_ids_hash[drug_name] = ord.drug_inventory_id
     else
-      patient_orders[drug_name] += drug_name
-      drug_order_ids_hash[drug_name] += ord.order_id
-      drug_enc_ids_hash[drug_name] += ord.encounter_id
-      drug_start_date_hash[drug_name] += ord.start_date.strftime("%Y-%m-%d")  rescue nil
-      drug_auto_expire_date_hash[drug_name] += ord.auto_expire_date.strftime("%Y-%m-%d")  rescue nil
-      drug_quantity_hash[drug_name] += ord.quantity rescue nil
-      drug_dose_hash[drug_name] += ord.dose
-      drug_frequency_hash[drug_name] += ord.frequency
-      drug_equivalent_daily_dose_hash[drug_name] += ord.equivalent_daily_dose
-      drug_inventory_ids_hash[drug_name] += ord.drug_inventory_id
+      patient_orders[drug_name] = drug_name
+      drug_order_ids_hash[drug_name] = ord.order_id
+      drug_enc_ids_hash[drug_name] = ord.encounter_id
+      drug_start_date_hash[drug_name] = ord.start_date.strftime("%Y-%m-%d")  rescue nil
+      drug_auto_expire_date_hash[drug_name] = ord.auto_expire_date.strftime("%Y-%m-%d")  rescue nil
+      drug_quantity_hash[drug_name] = ord.quantity rescue nil
+      drug_dose_hash[drug_name] = ord.dose
+      drug_frequency_hash[drug_name] = ord.frequency
+      drug_equivalent_daily_dose_hash[drug_name] = ord.equivalent_daily_dose
+      drug_inventory_ids_hash[drug_name] = ord.drug_inventory_id
     end
   end
  
@@ -2393,27 +2393,39 @@ def process_patient_orders(orders, visit, type = 0)
 end
 
 def process_patient_state(patient_id,visit)
-	#initialize field and values variables
+  #initialize field and values variables
   fields = ""
   values = ""
 
-	a_hash = {:current_hiv_program_start_date => 'NULL'}
+  a_hash = {:current_hiv_program_start_date => 'NULL'}
 
-	program_id = PatientProgram.find_by_sql("SELECT patient_program_id 
-				FROM #{@source_db}.patient_program 
-				WHERE patient_id = #{patient_id} 
-				AND program_id = 1 AND voided = 0 
-				ORDER BY patient_program_id DESC LIMIT 1").first.patient_program_id rescue nil
+  program_id = PatientProgram.find_by_sql("SELECT patient_program_id 
+                         		   FROM #{@source_db}.patient_program 
+				           WHERE patient_id = #{patient_id} 
+				           AND program_id = 1 AND voided = 0 
+				           ORDER BY patient_program_id DESC LIMIT 1").first.patient_program_id rescue nil
 				
   if ! program_id.nil?   
-      patient_state = PatientProgram.find_by_sql("SELECT 
+     @patient_state = PatientProgram.find_by_sql("SELECT 
   	                        IFNULL(#{@source_db}.current_state_for_program(#{patient_id},1,'#{visit} 23:59:59'), 'Unknown') AS state").first.state  
   	  
-  	   if !patient_state.blank?
-  	    if patient_state == 'Unknown'
+  	   if !@patient_state.blank?
+  	    if @patient_state == 'Unknown'
   	      state_name = 'Unknown'
   	    else
-          state_name = ProgramWorkflowState.find_by_sql("SELECT 
+              @patient_died_concept_id = ConceptName.find_by_name("Patient died").concept_id
+              
+              @patient_died_state_ids =  ProgramWorkflowState.find_by_sql("SELECT #{@source_db}.current_state_for_program(#{patient_id}, 1, '#{visit} 23:59:59') IN (SELECT program_workflow_state_id FROM program_workflow_state
+                                                WHERE concept_id = #{@patient_died_concept_id}
+                                                AND retired = 0) AS state").first.state
+              if @patient_died_state_ids.include?("1")
+                 state_id = 3
+              else
+                state_id = @patient_state
+              end
+               
+              if state_id != 'Unknown'
+                state_name = ProgramWorkflowState.find_by_sql("SELECT 
                                                  c.name AS name
                                                FROM
                                                    #{@source_db}. program_workflow_state pws
@@ -2422,9 +2434,12 @@ def process_patient_state(patient_id,visit)
                                                         AND c.voided = 0
                                                         AND pws.retired = 0
                                                WHERE
-                                                    program_workflow_state_id = #{patient_state}
+                                                    program_workflow_state_id = #{state_id}
                                                         and program_workflow_id = 1
-                                                LIMIT 1").map(&:name) #rescue nil
+                                                  LIMIT 1").map(&:name) #rescue nil
+           else
+             state_name = @patient_state
+           end
         end
       end
 
@@ -2615,7 +2630,7 @@ def start
  specify_patients_list = []
  specify_patients_list = specify_patients_list.join(',') rescue specify_patients_list
 
- patients_list = []
+ patients_list = []  
  patients_list = $patient_demographics.collect{|p| p.patient_id} if !specify_patients_list.blank?
         
  if (!specify_patients_list.blank?) && (patients_list.blank?)
