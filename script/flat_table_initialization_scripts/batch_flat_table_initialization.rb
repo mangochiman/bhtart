@@ -642,7 +642,7 @@ def get_patient_demographics(patient_id)
      a_hash[:gender] = gender  rescue nil #this_patient.gender  rescue nil
      a_hash[:dob] = this_patient.first.birthdate rescue nil 
      a_hash[:dob_estimated] = this_patient.first.birthdate_estimated rescue nil  
-     a_hash[:death_date] =  this_patient.first.death_date.strftime('%Y-%m-%d') rescue nil
+     a_hash[:death_date] =  this_patient.first.death_date rescue nil
                  
      a_hash[:ta] = this_patient.first.traditional_authority  rescue nil
      a_hash[:current_address] = this_patient.first.current_residence  rescue nil
