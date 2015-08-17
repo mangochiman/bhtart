@@ -1243,6 +1243,9 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       end
       a_hash[:taken_art_in_last_two_months] = ans_registration rescue nil
 
+    elsif obs.concept_id == 7880 #Confirmatory HIV Test Type
+      a_hash[:type_of_confirmatory_hiv_test] = obs.to_s.split(':')[1] rescue nil
+
     elsif obs.concept_id == 6394 #HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS
       ans_registration = ""
       if obs.value_coded 
@@ -2630,7 +2633,8 @@ def start
  specify_patients_list = []
  specify_patients_list = specify_patients_list.join(',') rescue specify_patients_list
 
- patients_list = []  
+ patients_list = []
+  
  patients_list = $patient_demographics.collect{|p| p.patient_id} if !specify_patients_list.blank?
         
  if (!specify_patients_list.blank?) && (patients_list.blank?)
