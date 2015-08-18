@@ -21,14 +21,14 @@ class GenericLabController < ApplicationController
 
     @all = {}
     (@results || []).map do |key,values|
-     date = key.split("::")[0].to_date rescue "1900-01-01".to_date
-     name = key.split("::")[1].strip
-     value = values["TestValue"]
-     next if date == "1900-01-01".to_date and value.blank?
-     next if ((Date.today - 2.year) > date)
-     @all[name] = [] if @all[name].blank?
-     @all[name] << [date,value]
-     @all[name] = @all[name].sort
+      date = key.split("::")[0].to_date rescue "1900-01-01".to_date
+      name = key.split("::")[1].strip
+      value = values["TestValue"]
+      next if date == "1900-01-01".to_date and value.blank?
+      next if ((Date.today - 2.year) > date)
+      @all[name] = [] if @all[name].blank?
+      @all[name] << [date,value]
+      @all[name] = @all[name].sort
     end
 
     @table_th = build_table(@results) unless @results.blank?
@@ -214,32 +214,32 @@ class GenericLabController < ApplicationController
         AND s.deleteyn = 0
         AND s.attribute = 'pass'
         ORDER BY DATE(TESTDATE) DESC",national_ids,'HIV_viral_load'
-    ]).first rescue nil
+      ]).first rescue nil
 
     vl_lab_sample_obs = Observation.find(:last, :readonly => false, :joins => [:encounter], :conditions => ["
         person_id =? AND encounter_type =? AND concept_id =? AND accession_number =?",
         patient.id, encounter_type, viral_load, vl_lab_sample.Sample_ID.to_i]) rescue nil
     #raise (vl_lab_sample.Sample_ID.to_s + ' : ' + vl_lab_sample_obs.accession_number).inspect
-        unless vl_lab_sample.blank?
-              enc = patient.encounters.current.find_by_encounter_type(encounter_type)
-              enc ||= patient.encounters.create(:encounter_type => encounter_type)
-              obs = nil
-              unless vl_lab_sample_obs.blank?
+    unless vl_lab_sample.blank?
+      enc = patient.encounters.current.find_by_encounter_type(encounter_type)
+      enc ||= patient.encounters.create(:encounter_type => encounter_type)
+      obs = nil
+      unless vl_lab_sample_obs.blank?
 
-                  obs = vl_lab_sample_obs
-              else
-                obs = Observation.new
-              end
+        obs = vl_lab_sample_obs
+      else
+        obs = Observation.new
+      end
 
-              obs.person_id = patient_id
-              obs.concept_id = Concept.find_by_name("Hiv viral load").concept_id
-              obs.value_text = "Result given to patient"
-              obs.value_datetime = date_given_result
-              obs.accession_number = vl_lab_sample.Sample_ID
-              obs.encounter_id = enc.id
-              obs.obs_datetime = Time.now
-              obs.save
-        end
+      obs.person_id = patient_id
+      obs.concept_id = Concept.find_by_name("Hiv viral load").concept_id
+      obs.value_text = "Result given to patient"
+      obs.value_datetime = date_given_result
+      obs.accession_number = vl_lab_sample.Sample_ID
+      obs.encounter_id = enc.id
+      obs.obs_datetime = Time.now
+      obs.save
+    end
 
     counselling_done = params[:counselling_done]
     unless counselling_done.blank?
@@ -290,7 +290,7 @@ class GenericLabController < ApplicationController
         AND s.deleteyn = 0
         AND s.attribute = 'pass'
         ORDER BY DATE(TESTDATE) DESC",national_ids,'HIV_viral_load'
-    ]).first rescue nil
+      ]).first rescue nil
 
     second_line_obs = Observation.find(:last, :readonly => false, :joins => [:encounter], :conditions => ["
         person_id =? AND encounter_type =? AND concept_id =? AND accession_number =?
@@ -320,15 +320,15 @@ class GenericLabController < ApplicationController
     obs.obs_datetime = Time.now
     obs.save
 =end
-  redirect_to("/people/confirm?found_person_id=#{params[:patient_id]}")
+    redirect_to("/people/confirm?found_person_id=#{params[:patient_id]}")
   end
 
   def new
     @available_test = LabTestType.available_test
     @lab_test = ['']
     LabTestType.find(:all,
-    :conditions =>["REPLACE(TestName,'_',' ') LIKE ?","%#{params[:name]}%"],
-    :order =>"TestName ASC").map{|test|
+      :conditions =>["REPLACE(TestName,'_',' ') LIKE ?","%#{params[:name]}%"],
+      :order =>"TestName ASC").map{|test|
       @lab_test << [test.TestName.gsub('_',' '),test.TestName]
     }
     @patient_id = params[:patient_id]
@@ -382,8 +382,8 @@ class GenericLabController < ApplicationController
     lab_parameter.TimeStamp = Time.now()
     lab_parameter.Range = test_modifier
     lab_parameter.save
-#This is for viral load feature
-#Needs to be reworked
+    #This is for viral load feature
+    #Needs to be reworked
 =begin
     unless params[:result_given].blank?
       patient = Patient.find(params[:patient_id])
@@ -404,4 +404,53 @@ class GenericLabController < ApplicationController
     redirect_to :action => "results" , :id => patient_bean.patient_id
   end
 
+  def edit_lab_results
+    @patient = Patient.find(params[:patient_id])
+    patient_ids = id_identifiers(@patient)
+    @patient_bean = PatientService.get_patient(@patient.person)
+    
+    results = Lab.find_by_sql(["
+        SELECT * FROM Lab_Sample s
+        INNER JOIN Lab_Parameter p ON p.sample_id = s.sample_id
+        INNER JOIN codes_TestType c ON p.testtype = c.testtype
+        INNER JOIN (SELECT DISTINCT rec_id, short_name FROM map_lab_panel) m ON c.panel_id = m.rec_id
+        WHERE s.patientid IN (?)
+        AND short_name = ?
+        AND s.deleteyn = 0
+        AND s.attribute = 'pass'
+        ORDER BY DATE(TESTDATE) DESC",patient_ids,'HIV_viral_load'
+      ])
+
+    @hash = {}
+    count = 1
+    results.each do |result|
+      @hash[count] = {}
+      lab_sample_id = result.Sample_ID
+      test_type = result.TESTTYPE
+      test_name = result.TestName
+      range = result.Range
+      test_value = result.TESTVALUE
+      test_date = result.TESTDATE
+      @hash[count] = {
+        "lab_sample_id" => lab_sample_id,
+        "test_type" => test_type,
+        "test_name" => test_name,
+        "range" => range,
+        "test_value" => test_value,
+        "test_date" => (test_date.to_date.strftime("%d/%b/%Y") rescue test_date)
+      }
+      count = count + 1
+    end
+    render :layout => 'menu'
+  end
+
+  def edit_specific_result
+    @patient = Patient.find(params[:patient_id])
+    lab_sample_id = params[:lab_sample_id]
+    test_type = params[:test_type]
+    lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
+    @test_result = lab_parameter.Range.to_s + '' + lab_parameter.TESTVALUE.to_s
+    lab_sample = LabSample.find(lab_sample_id)
+    @test_date = lab_sample.TESTDATE.to_date
+  end
 end

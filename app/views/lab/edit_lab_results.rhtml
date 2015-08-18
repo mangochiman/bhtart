@@ -1,0 +1,77 @@
+<style>
+  body {
+    -moz-user-select:none;
+  }
+
+  table {
+    vertical-align:center;
+    width: 100%;
+    -moz-user-select:none;
+  }
+
+  .container {
+    height: 92%;
+
+    margin: 20px 20px 20px 20px;
+    overflow: auto;
+  }
+
+  .data {
+    padding-left: 5px;
+  }
+
+  td {
+    text-align: left;
+    border-style: solid;
+    border-width: 1px;
+    text-align: left;
+    word-wrap: break-word;
+  }
+
+  th {
+    text-align: left;
+    border-style: solid;
+    border-width: 1px;
+    padding-left: 5px;
+    text-align: left;
+  }
+
+  a {
+    background-color: grey;
+    border-bottom: 1px outset #EEEEEE;
+    border-style: outset;
+    border-top: 1px outset #EEEEEE;
+    color: white;
+    display: block;
+    padding: 10px 16px 10px 10px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .red a{
+    background-color: red !important;
+}
+</style>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:center; line-height: 2em;">Date of Sample</th>
+        <th style="text-align:center;">Test Type</th>
+        <th style="text-align:center;">Value</th>
+        <th>&nbsp;</th>
+        <th>&nbsp;</th>
+      </tr>
+    </thead>
+    <% @hash.each do |key, values| %>
+      <tr>
+        <th><%= values["test_date"] %></th>
+        <th><%= values["test_name"].gsub('_', ' ') %></th>
+        <th><%= values["range"].to_s + ' ' + values["test_value"].to_s %></th>
+        <td class='anchor_class'><a href="/lab/edit_specific_result?lab_sample_id=<%=values["lab_sample_id"]%>&test_type=<%=values["test_type"]%>&patient_id=<%=params[:patient_id]%>">Edit</a></td>
+        <td class='anchor_class red'><a href="#">Delete</a></td>
+      </tr>
+    <% end %>
+  </table>
+</div>
