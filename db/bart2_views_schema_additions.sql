@@ -64,6 +64,14 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	SELECT `drug_id` FROM `drug` 
 	WHERE `concept_id` IN (SELECT `concept_id` FROM `concept_set` WHERE `concept_set` = 1085);
 
+-- ARV drugs orders
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+   VIEW `arv_drugs_orders` AS
+   SELECT `ord`.`patient_id`, `ord`.`encounter_id`, `ord`.`concept_id`, `ord`.`start_date`
+   FROM `orders` `ord`
+   WHERE `ord`.`voided` = 0
+   AND `ord`.`concept_id` IN (SELECT `concept_id` FROM `concept_set` WHERE `concept_set` = 1085);
+
 -- Non-voided HIV Clinic Registration encounters
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	VIEW `clinic_registration_encounter` AS 

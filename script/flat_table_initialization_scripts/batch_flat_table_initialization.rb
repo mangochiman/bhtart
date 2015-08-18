@@ -923,8 +923,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:family_planning_method_female_condoms] = 'Yes'
           a_hash[:family_planning_method_female_condoms_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7860 && obs.value_coded_name_id == 10741
-          a_hash[:family_planning_method__rythm_method] = 'Yes'
-          a_hash[:family_planning_method__rythm_method_enc_id] = encounter.encounter_id
+          a_hash[:family_planning_method_rythm_method] = 'Yes'
+          a_hash[:family_planning_method_rythm_method_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7861 && obs.value_coded_name_id == 10743
           a_hash[:family_planning_method_withdrawal] = 'Yes'
           a_hash[:family_planning_method_withdrawal_enc_id] = encounter.encounter_id
@@ -938,8 +938,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:family_planning_method_vasectomy] = 'Yes'
           a_hash[:family_planning_method_vasectomy_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7862 && obs.value_coded_name_id == 10744
-          a_hash[:family_planning_method_emergency__contraception] = 'Yes'
-          a_hash[:family_planning_method_emergency__contraception_enc_id] = encounter.encounter_id
+          a_hash[:family_planning_method_emergency_contraception] = 'Yes'
+          a_hash[:family_planning_method_emergency_contraception_enc_id] = encounter.encounter_id
         end
      elsif obs.concept_id == 1293 #symptoms present
         if obs.value_coded == 2148 && obs.value_coded_name_id == 2325

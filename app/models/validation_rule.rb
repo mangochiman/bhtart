@@ -20,35 +20,42 @@ class ValidationRule < ActiveRecord::Base
     data_consistency_checks['Patients with pills remaining greater than dispensed'] = "self.pills_remaining_over_dispensed(date)"
     data_consistency_checks['Patients without reason for starting'] = "self.validate_presence_of_start_reason(date)"
     data_consistency_checks['Patients with missing dispensations'] = "self.prescrition_without_dispensation(date)"
-		data_consistency_checks['Patients with missing prescriptions'] = "self.dispensation_without_prescription(date)"
-		data_consistency_checks['Patients with dispensation without appointment'] = "self.dispensation_without_appointment(date)"
-		data_consistency_checks['Patients with vitals without weight'] = "self.validate_presence_of_vitals_without_weight(date)"
-		data_consistency_checks['Patients with encounters before birth or after death'] = "self.death_date_less_than_last_encounter_date_and_less_than_date_of_birth(date)"
-		data_consistency_checks['Patients with encounters without obs or orders'] = "self.encounters_without_obs_or_orders(date)"
-		data_consistency_checks['Patients with ART start date before birth'] = "self.start_date_before_birth(date)"
-		data_consistency_checks['Dead patients with follow up visits'] = "self.visit_after_death(date)"
-		data_consistency_checks['Male patients with pregnant observations'] = "self.male_patients_with_pregnant_observation(date)"
-		data_consistency_checks['Male patients with breastfeeding observations'] = "self.male_patients_with_breastfeeding_obs(date)"
-		data_consistency_checks['Male patients with family planning methods obs'] = "self.male_patients_with_family_planning_methods_obs(date)"
-		data_consistency_checks['ART patients without HIV clinic registration encounter'] = "self.check_every_ART_patient_has_HIV_Clinical_Registration(date)"
-		data_consistency_checks['Under 18 patients without height and weight in visit'] = "self.every_visit_of_patients_who_are_under_18_should_have_height_and_weight(date)"
-		data_consistency_checks['Patients with outcomes without date'] = "self.every_outcome_needs_a_date(date)"
+    data_consistency_checks['Patients with missing prescriptions'] = "self.dispensation_without_prescription(date)"
+    data_consistency_checks['Patients with dispensation without appointment'] = "self.dispensation_without_appointment(date)"
+    data_consistency_checks['Patients with vitals without weight'] = "self.validate_presence_of_vitals_without_weight(date)"
+    data_consistency_checks['Patients with encounters before birth or after death'] = "self.death_date_less_than_last_encounter_date_and_less_than_date_of_birth(date)"
+    data_consistency_checks['Patients with encounters without obs or orders'] = "self.encounters_without_obs_or_orders(date)"
+    data_consistency_checks['Patients with ART start date before birth'] = "self.start_date_before_birth(date)"
+    data_consistency_checks['Dead patients with follow up visits'] = "self.visit_after_death(date)"
+    data_consistency_checks['Male patients with pregnant observations'] = "self.male_patients_with_pregnant_observation(date)"
+    data_consistency_checks['Male patients with breastfeeding observations'] = "self.male_patients_with_breastfeeding_obs(date)"
+    data_consistency_checks['Male patients with family planning methods obs'] = "self.male_patients_with_family_planning_methods_obs(date)"
+    data_consistency_checks['ART patients without HIV clinic registration encounter'] = "self.check_every_ART_patient_has_HIV_Clinical_Registration(date)"
+    data_consistency_checks['Under 18 patients without height and weight in visit'] = "self.every_visit_of_patients_who_are_under_18_should_have_height_and_weight(date)"
+    data_consistency_checks['Patients with outcomes without date'] = "self.every_outcome_needs_a_date(date)"
+    data_consistency_checks['Patients without gender'] = "self.patients_without_gender(date)"
+    data_consistency_checks['Pre-ART patients with ARV drugs'] = "self.pre_art_patients_with_arv_drugs(date)"
+    data_consistency_checks['Patients with treatment encounters without orders'] = "self.patients_with_treatment_encounter_without_orders(date)"
+    data_consistency_checks['Patients with encounters without observations'] = "self.patients_with_encounters_without_observations(date)"
+    data_consistency_checks['Patients without birthdate'] = "self.patients_without_birthdate(date)"
+    data_consistency_checks['Patients with first visit greater than birthdate'] = "self.first_visit_date_greater_than_birthdate(date)"
+    data_consistency_checks['Patients with death_date less than last visit date'] = "self.death_date_less_than_last_visit_date(date)"
 		
-		data_consistency_checks = data_consistency_checks.keys.inject({}){|hash, key| 
-		time = Time.now
-		puts "Running query for #{key}"
-		hash[key] = eval(data_consistency_checks[key])
-		period = (Time.now - time).to_i
-    color = hash[key].length > 0 ? "red" : "green"
-		eval("puts 'Time taken  :  #{(period/60).to_i} min  and #{(period % 60)} sec  --> #{hash[key].length} patient(s) found'.#{color}")
-		puts ""	
-		hash}
+    data_consistency_checks = data_consistency_checks.keys.inject({}){|hash, key| 
+      time = Time.now
+      puts "Running query for #{key}"
+      hash[key] = eval(data_consistency_checks[key])
+      period = (Time.now - time).to_i
+     
+      color = hash[key].length > 0 ? "red" : "green"
+      eval("puts 'Time taken  :  #{(period/60).to_i} min  and #{(period % 60)} sec  --> #{hash[key].length} patient(s) found'.#{color}")
+      puts ""	
+      hash}
 		
-		
-    set_rules = self.find(:all,:conditions =>['type_id = 2'])                   
-    (set_rules || []).each do |rule|                                            
-      unless data_consistency_checks[rule.desc].blank?                          
-        create_update_validation_result(rule, date, data_consistency_checks[rule.desc])
+      set_rules = self.find(:all,:conditions =>['type_id = 2'])                   
+      (set_rules || []).each do |rule|                                            
+         unless data_consistency_checks[rule.desc].blank?                          
+           create_update_validation_result(rule, date, data_consistency_checks[rule.desc])
       end                                                                       
     end                                                                         
                                                                                 
@@ -355,8 +362,45 @@ class ValidationRule < ActiveRecord::Base
 
   end
 
-  def self.death_date_less_than_last_encounter_date_and_less_than_date_of_birth(date = Date.today)
+  def self.death_date_less_than_last_visit_date(end_date = Date.today)
+    #patients with visits after death    
 
+    return ValidationRule.find_by_sql("SELECT 
+				    ft2.patient_id,
+				    fct.earliest_start_date,
+				    fct.birthdate,
+				    fct.death_date,
+				    ft2.visit_date,
+				    DATEDIFF(ft2.visit_date, fct.death_date)
+				  FROM
+    				    flat_table2 ft2
+				        INNER JOIN
+				    flat_cohort_table fct ON ft2.patient_id = fct.patient_id
+				  WHERE DATEDIFF(ft2.visit_date, fct.death_date) > 0
+				  AND DATE(ft2.visit_date) <= '#{end_date.to_date}'
+				  GROUP BY ft2.patient_id").map(&:patient_id)
+  end
+
+  def self.first_visit_date_greater_than_birthdate(end_date = Date.today)
+    #patients with visit_date before birth_date    
+
+    return ValidationRule.find_by_sql("SELECT 
+                                    ft2.patient_id,
+                                    fct.earliest_start_date,
+                                    fct.birthdate,
+                                    fct.death_date,
+                                    ft2.visit_date,
+                                    DATEDIFF(fct.birthdate, ft2.visit_date)
+                                  FROM
+                                    flat_table2 ft2
+                                        INNER JOIN
+                                    flat_cohort_table fct ON ft2.patient_id = fct.patient_id
+                                  WHERE DATEDIFF(fct.birthdate, ft2.visit_date) > 0
+                                  AND DATE(ft2.visit_date) <= '#{end_date.to_date}'
+                                  GROUP BY ft2.patient_id").map(&:patient_id)
+  end
+
+  def self.death_date_less_than_last_encounter_date_and_less_than_date_of_birth(date = Date.today)
 
     return FlatTable2.find_by_sql(["
 			(SELECT DISTINCT (ft2.patient_id) FROM flat_table2 ft2
@@ -371,44 +415,62 @@ class ValidationRule < ActiveRecord::Base
 			  AND DATE(ft2.visit_date) <= ?)
     ", date.to_date, date.to_date]).map(&:patient_id).uniq
 
-
 =begin
     #Task 41
     patient_ids =  ValidationRule.find_by_sql("SELECT DISTINCT(esd.patient_id)
-																FROM earliest_start_date esd
-																INNER JOIN person p 
-																ON p.person_id = esd.patient_id
-																WHERE p.birthdate IS NOT NULL 
-																AND esd.death_date IS NOT NULL 
-																AND esd.death_date < (SELECT MAX(encounter_datetime)
-                       																 FROM encounter e 
-                       																 WHERE e.patient_id = esd.patient_id 
-																											 AND e.voided = 0) 
-                                AND (SELECT MAX(encounter_datetime)
-                       							 FROM encounter e 
-                       							 WHERE e.patient_id = esd.patient_id 
-																		 AND e.voided = 0) < p.birthdate;").map(&:patient_id)
+					       FROM earliest_start_date esd
+					         INNER JOIN person p ON p.person_id = esd.patient_id
+					       WHERE p.birthdate IS NOT NULL 
+					       AND esd.death_date IS NOT NULL 
+					       AND esd.death_date < (SELECT MAX(encounter_datetime)
+                       			                             FROM encounter e 
+                       						     WHERE e.patient_id = esd.patient_id 
+								     AND e.voided = 0) 
+                                              AND (SELECT MAX(encounter_datetime)
+                       		                   FROM encounter e 
+                       				   WHERE e.patient_id = esd.patient_id 
+						   AND e.voided = 0) < p.birthdate;").map(&:patient_id)
     return patient_ids
 
 =end
   end
 
-  
-  
-  def self.encounters_without_obs_or_orders(end_date = Date.today)
+  def self.patients_with_treatment_encounter_without_orders(end_date = Date.today)
+    #Query pulling all treatment encounters without orders
+    ValidationRule.find_by_sql("SELECT e.patient_id, e.encounter_id, e.encounter_type, e.encounter_datetime
+				FROM earliest_start_date esd
+			          INNER JOIN encounter e ON e.patient_id = esd.patient_id AND e.voided = 0
+				WHERE e.encounter_type IN (25)
+				AND e.encounter_id NOT IN (SELECT encounter_id FROM orders WHERE voided = 0 AND DATE(start_date) <= '#{end_date.to_date}')
+                                AND DATE(encounter_datetime) <= '#{end_date.to_date}'
+				GROUP BY e.patient_id").map(&:patient_id)
+  end 
 
-		# Query for encounters without obs or orders ~ Kenneth
-		ValidationRule.find_by_sql(["
-			SELECT DISTINCT (enc.patient_id) FROM encounter enc
-    			LEFT JOIN obs o ON o.encounter_id = enc.encounter_id
-    			LEFT JOIN orders od ON od.encounter_id = enc.encounter_id
-			WHERE enc.voided = 0 AND (o.encounter_id IS NULL OR o.voided = 1) AND (od.encounter_id IS NULL OR od.voided = 1)
-			AND DATE(enc.encounter_datetime) <= ?", end_date.to_date
-			]).map(&:patient_id)		
-		
-	end
+  def self.patients_with_encounters_without_observations(end_date = Date.today)
+   #Query pulling all encounters without observations 
+   ValidationRule.find_by_sql("SELECT e.patient_id, e.encounter_id, e.encounter_type, e.encounter_datetime
+			       FROM earliest_start_date esd
+			         INNER JOIN encounter e ON e.patient_id = esd.patient_id AND e.voided = 0
+			       WHERE e.encounter_id NOT IN (SELECT encounter_id FROM obs 
+                                                            WHERE voided = 0 
+                                                            AND DATE(obs_datetime) <= '#{end_date.to_date}')
+                               AND DATE(encounter_datetime) <= '#{end_date.to_date}'
+		               GROUP BY e.patient_id").map(&:patient_id)
+  end
+
+  def self.encounters_without_obs_or_orders(end_date = Date.today)
+    #Query for encounters without obs or orders ~ Kenneth
+    ValidationRule.find_by_sql(["
+         			 SELECT DISTINCT (enc.patient_id) FROM encounter enc
+    			           LEFT JOIN obs o ON o.encounter_id = enc.encounter_id
+    			           LEFT JOIN orders od ON od.encounter_id = enc.encounter_id
+			         WHERE enc.voided = 0 AND (o.encounter_id IS NULL OR o.voided = 1) AND (od.encounter_id IS NULL OR od.voided = 1)
+			         AND DATE(enc.encounter_datetime) <= ?", end_date.to_date
+			       ]).map(&:patient_id)		
+
+  end
 	
-	def self.start_date_before_birth(date = Date.today)
+  def self.start_date_before_birth(date = Date.today)
 
     #begin Query for patients whose earliest start date is less that date of birth ~ Kenneth
     return FlatTable2.find_by_sql(["
@@ -427,12 +489,12 @@ class ValidationRule < ActiveRecord::Base
 			]).map(&:patient_id)
 =end
 
-	end
+  end
 	
-	def self.visit_after_death(date = Date.today)
+  def self.visit_after_death(date = Date.today)
 
-		#  Query for patients with followup visit after death ~ Kenneth
-    return FlatTable2.find_by_sql(["
+   # Query for patients with followup visit after death ~ Kenneth
+   return FlatTable2.find_by_sql(["
 			SELECT DISTINCT (ft2.patient_id) FROM flat_table2 ft2
         INNER JOIN flat_cohort_table fct ON ft2.patient_id = fct.patient_id
 			WHERE DATEDIFF(ft2.visit_date, fct.death_date) > 0
@@ -447,7 +509,7 @@ class ValidationRule < ActiveRecord::Base
 			]).map(&:patient_id)
 =end
 
-	end	
+  end	
 
   def self.male_patients_with_pregnant_observation(date = Date.today)
 
@@ -527,7 +589,7 @@ class ValidationRule < ActiveRecord::Base
     #Query pulling all male patients with family planning methods observations
     male_pats_with_family_planning_obs = FlatTable2.find_by_sql(["SELECT ft2.patient_id FROM flat_table2 ft2
                               INNER JOIN flat_cohort_table fct ON fct.patient_id = ft2.patient_id
-                 WHERE IN ('Male', 'M') AND COALESCE(#{family_planning_fields.join(',')}) IS NOT NULL
+                 WHERE fct.gender IN ('Male', 'M') AND COALESCE(#{family_planning_fields.join(',')}) IS NOT NULL
                               AND DATE(ft2.visit_date) <= ?", date.to_date]).map(&:patient_id)
 
 =begin
@@ -541,7 +603,7 @@ class ValidationRule < ActiveRecord::Base
                                             INNER JOIN obs o ON o.person_id = p.person_id
                                              AND o.voided = 0
                                           WHERE p.gender = 'M'
-                                          AND (o.concept_id IN (#{family_planing_ids.join(',')})
+                               i           AND (o.concept_id IN (#{family_planing_ids.join(',')})
                                             OR o.value_coded IN (#{family_planing_ids.join(',')}))
                                           AND o.obs_datetime <= '#{@end_date}'
                                           GROUP BY esd.patient_id").collect{|p| p.patient_id}
@@ -556,14 +618,34 @@ class ValidationRule < ActiveRecord::Base
 			date = date.to_date.strftime('%Y-%m-%d 23:59:59')
 
       eligible_patients = Patient.find_by_sql("SELECT patient_id FROM flat_cohort_table").collect { |x| x.patient_id }
-
-      return FlatTable1.find_by_sql("SELECT patient_id from flat_table1 WHERE patient_id in (#{eligible_patients.join(',')})
+      
+      return FlatCohortTable.find_by_sql("SELECT 
+                                              fct.patient_id,
+                                              fct.earliest_start_date,
+                                              ft1.ever_received_art,
+                                              ft1.type_of_confirmatory_hiv_test,
+                                              ft1.confirmatory_hiv_test_location,
+                                              ft1.ever_registered_at_art_clinic,
+                                              ft1.agrees_to_followup
+                                          FROM
+                                              flat_cohort_table fct
+                                                  INNER JOIN
+                                              flat_table1 ft1 ON ft1.patient_id = fct.patient_id
+                                          WHERE
+                                              fct.earliest_start_date <= DATE('#{date}')
+                                                  AND ft1.type_of_confirmatory_hiv_test IS NULL
+                                                  AND ft1.confirmatory_hiv_test_location IS NULL
+                                                  AND ft1.agrees_to_followup IS NULL
+                                                  AND ft1.ever_received_art IS NULL
+                                          GROUP BY fct.patient_id").map(&:patient_id)                                          
+  
+=begin
+      return FlatTable1.find_by_sql("SELECT patient_id FROM flat_table1 WHERE patient_id in (#{eligible_patients.join(',')})
                                     AND (type_of_confirmatory_hiv_test IS NULL OR confirmatory_hiv_test_location IS NULL
                                     OR ever_received_art IS NULL OR agrees_to_followup IS NULL)
                                     AND earliest_start_date <= DATE('#{date}')").map(&:patient_id)
 
 
-=begin
 			encounter_type_id = EncounterType.find_by_name("HIV CLINIC REGISTRATION").encounter_type_id
 
 			Patient.find_by_sql("
@@ -574,7 +656,6 @@ class ValidationRule < ActiveRecord::Base
 			").map(&:patient_id)
 =end
 	end
-
 
   def self.deliver_validation_results(rules_date = Date.today)
      sent_to_mail = {}
@@ -589,22 +670,44 @@ class ValidationRule < ActiveRecord::Base
     return sent_to_mail
   end
 
-	def self.every_visit_of_patients_who_are_under_18_should_have_height_and_weight(date = Date.today)
-		#Task 31
-		#SQL for every visit of patients who are under 18 should have height and weight
+  def self.every_visit_of_patients_who_are_under_18_should_have_height_and_weight(date = Date.today)
+    #Task 31
+    #SQL for every visit of patients who are under 18 should have height and weight
 
-		date = date.to_date.strftime('%Y-%m-%d 23:59:59')
+    date = date.to_date.strftime('%Y-%m-%d 23:59:59')
 
     eligible_patients = Patient.find_by_sql("SELECT patient_id, FLOOR(DATEDIFF(DATE('#{date}'), birthdate)/365) AS age
  FROM flat_cohort_table HAVING age < 18").collect { |x| x.patient_id }
 
     eligible_patients = [-10] if eligible_patients.blank? #to avoid mysql crash
 
+    return Patient.find_by_sql("SELECT 
+                                  ft2.visit_date,
+                                  ftc.patient_id,
+                                  ftc.birthdate,
+                                  FLOOR(DATEDIFF(DATE(NOW()), ftc.birthdate) / 365.25) AS patient_age,
+                                  ft2.guardian_present_yes,
+	                                ft2.guardian_present_no,
+                                  ft2.patient_present_no,
+                                  ft2.patient_present_yes,
+                                  ft2.weight,
+                                  ft2.height
+                              FROM
+                                  flat_cohort_table ftc
+                                      INNER JOIN
+                                  flat_table2 ft2 ON ft2.patient_id = ftc.patient_id
+                              WHERE
+                                  (ft2.weight IS NULL
+                                      OR ft2.height IS NULL) 
+                              HAVING patient_age <= 18 AND ft2.patient_present_yes = 'Yes' 
+                               AND (ft2.guardian_present_yes = 'Yes' Or ft2.guardian_present_no = 'No')").map(&:patient_id)
+
+=begin
     return Patient.find_by_sql("SELECT patient_id FROM flat_table2 WHERE DATE(visit_date) <= DATE('#{date}') AND
                               patient_id in (#{eligible_patients.join(',')}) AND patient_present_yes = 'Yes'
                               AND (Weight IS NULL OR Height IS NULL)").map(&:patient_id)
 
-=begin
+
 		encounter_type_id = EncounterType.find_by_name("VITALS").encounter_type_id
 		height_id = ConceptName.find_by_name("HT").concept_id
 		weight_id = ConceptName.find_by_name("WT").concept_id
@@ -612,7 +715,7 @@ class ValidationRule < ActiveRecord::Base
 		Patient.find_by_sql("
 			SELECT Weight_and_Height, patient_id, encounter_datetime, concept_id
 			FROM(
-					SELECT COUNT(*) AS Weight_and_Height, visit.* , e.encounter_type, o.concept_id, value_numeric
+					SELECT COUNT(*) AS Weight_and_Height, visit.* , e.encounter_type, o.concept_id, lue_numeric
 						  FROM (
 						      SELECT e.patient_id, DATE(e.encounter_datetime) AS encounter_datetime, birthdate,
 						          FLOOR(DATEDIFF(DATE(e.encounter_datetime), birthdate)/365) AS age
@@ -629,24 +732,77 @@ class ValidationRule < ActiveRecord::Base
 	end
 
 	def self.every_outcome_needs_a_date(date = Date.today)
+          #Task 40
+	  #Every outcome needs a date
 
-		#Task 40
-		#Every outcome needs a date
+          date = date.to_date.strftime('%Y-%m-%d 23:59:59')
 
-    date = date.to_date.strftime('%Y-%m-%d 23:59:59')
-
-    FlatTable2.find_by_sql("SELECT patient_id FROM flat_table2 WHERE COALESCE(TRIM(current_hiv_program_state),'') != ''
-                            AND DATE(current_hiv_program_start_date) IS NULL AND DATE(visit_date) <= DATE('#{date}')
-                            AND patient_id in (SELECT patient_id FROM flat_cohort_table)").map(&:patient_id)
+          FlatTable2.find_by_sql("SELECT patient_id FROM flat_table2 WHERE COALESCE(TRIM(current_hiv_program_state),'') != ''
+                                  AND DATE(current_hiv_program_start_date) IS NULL AND DATE(visit_date) <= DATE('#{date}')
+                                  AND patient_id in (SELECT patient_id FROM flat_cohort_table)").map(&:patient_id)
 =begin
-		date = date.to_date.strftime('%Y-%m-%d 23:59:59')
-
-		PatientState.find_by_sql("
-			SELECT pp.patient_id,p.patient_program_id, state, p.date_created
-			FROM patient_state p LEFT JOIN patient_program pp
-					ON p.patient_program_id = pp.patient_program_id
-			WHERE start_date IS NULL AND p.date_created <= '#{date}'").map(&:patient_id)
+           date = date.to_date.strftime('%Y-%m-%d 23:59:59')
+           PatientState.find_by_sql("
+	   SELECT pp.patient_id,p.patient_program_id, state, p.date_created
+	   FROM patient_state p LEFT JOIN patient_program pp
+	      ON p.patient_program_id = pp.patient_program_id
+	   WHERE start_date IS NULL AND p.date_created <= '#{date}'").map(&:patient_id)
 =end
   end
+ 
+  def self.patients_without_gender(end_date = Date.today)
+   #pulling out without gender
+   ValidationRule.find_by_sql("SELECT fct.patient_id, fct.gender, fct.earliest_start_date
+                               FROM flat_cohort_table fct
+                               WHERE (fct.gender IS NULL OR fct.gender = '')
+                               AND fct.earliest_start_date <= '#{end_date.to_date}'").map(&:patient_id)
+  end
+  
+  def self.pre_art_patients_with_arv_drugs(end_date = Date.today)
+   #pulling all pre-art patients with ARV drugs
+   ValidationRule.find_by_sql("SELECT 
+                                 fct.patient_id,
+                                 fct.gender,
+                                 fct.earliest_start_date,
+                                 fct.hiv_program_state,
+                                 fct.hiv_program_start_date
+                               FROM
+                                   flat_cohort_table fct
+                                 INNER JOIN
+                                   arv_drugs_orders ado ON ado.patient_id = fct.patient_id
+                               WHERE
+                                 fct.hiv_program_state = 'Pre-ART (Continue)'
+                                 AND fct.earliest_start_date <= '#{end_date.to_date}'
+                                 AND DATE(ado.start_date) <= '#{end_date.to_date}'
+                               GROUP BY fct.patient_id").map(&:patient_id)
+  end
 
+  def self.patients_without_birthdate(end_date = Date.today)
+    #pulling all patients without birthdate
+    ValidationRule.find_by_sql("SELECT fct.patient_id, fct.birthdate, fct.earliest_start_date
+                               FROM flat_cohort_table fct
+                               WHERE (fct.birthdate IS NULL OR fct.birthdate = '' OR fct.birthdate = '0000-00-00')
+                               AND fct.earliest_start_date <= '#{end_date.to_date}'").map(&:patient_id)
+
+  end
+ 
+  def self.patients_with_birthdate_less_than_death_date(end_date = Date.today)
+    #pulling all patients with bithdate less than death_date
+    ValidationRule.find_by_sql("SELECT fct.patient_id, fct.birthdate, fct.death_date, fct.earliest_start_date
+                               FROM flat_cohort_table fct
+                               WHERE Date(fct.birthdate) < DATE(fct.death_date)
+                               AND fct.earliest_start_date <= '#{end_date.to_date}'").map(&:patient_id)
+
+  end
+
+  def self.patients_with_earliest_start_date_greater_than_first_received_drug_date(end_date = Date.today)
+   #pulling all patients with earliest_start_date greater than first received drug date
+   ValidationRule.find_by_sql("SELECT fct.patient_id, fct.earliest_start_date
+			       FROM flat_cohort_table fct
+			       WHERE fct.earliest_start_date < (SELECT min(DATE(start_date)) FROM amount_dispensed_obs
+                               				         WHERE person_id = fct.patient_id
+				                                 AND DATE(start_date) < '#{end_date.to_date}')
+			       AND fct.earliest_start_date < '#{end_date.to_date}'
+			       GROUP BY fct.patient_id").map(&:patient_id) 
+  end
 end
