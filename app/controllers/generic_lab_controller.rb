@@ -453,4 +453,26 @@ class GenericLabController < ApplicationController
     lab_sample = LabSample.find(lab_sample_id)
     @test_date = lab_sample.TESTDATE.to_date
   end
+
+  def update_specific_result
+    lab_sample_id = params[:lab_sample_id]
+    test_type = params[:test_type]
+    test_modifier = params[:test_value].to_s.match(/=|>|</)[0]
+    test_value = params[:test_value].to_s.gsub('>','').gsub('<','').gsub('=','')
+    test_date = params[:test_date].to_date
+    
+    ActiveRecord::Base.transaction do
+      lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
+      lab_parameter.Range = test_modifier
+      lab_parameter.TESTVALUE = test_value
+      lab_parameter.save
+
+      lab_sample = LabSample.find(lab_sample_id)
+      lab_sample.TESTDATE = test_date
+      lab_sample.save
+    end
+    
+    redirect_to :action => "edit_lab_results", :patient_id => params[:patient_id] and return
+  end
+  
 end
