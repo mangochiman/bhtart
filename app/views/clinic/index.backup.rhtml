@@ -210,10 +210,12 @@
               <th colspan=2>Home Page</th>
             </tr>
             <h1 id='project_name'>
-              <div style="font-size: 0.8em; margin-top: 28px;">
+              <div style="font-size: 0.8em; margin-top: 28px; margin-bottom: -15px;">
                 <%location_name = (@location.downcase == "outpatient" ? "OPD" : "ART") %>
                 <span style="font-size: 55px;"><%=what_app?%></span>
 <%#= location_name %>
+                <br />
+                <span style="font-size: 12px; font-style: italic; color: #333;"><%= ART_VERSION %></span>
               </div>
             </h1>
 
