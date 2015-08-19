@@ -55,7 +55,8 @@ module DDE
 
     # Check if this patient exists locally
     result = PatientIdentifier.find_by_identifier((person["national_id"] || person["_id"]))
-
+    national_patient_identifier_type_id = PatientIdentifierType.find_by_name("National id").id
+    
     if result.blank?
       # if patient does not exist locally, first verify if the patient is similar
       # to an existing one by national_id so you can update else create one
@@ -64,7 +65,7 @@ module DDE
 
         result = PatientIdentifier.find_by_identifier(identifier[identifier.keys[0]],
                                                       :conditions => ["identifier_type = ?",
-                                                                      PatientIdentifierType.find_by_name("National id").id]) rescue nil
+                                                                      national_patient_identifier_type_id]) rescue nil
 
         break if !result.blank?
 
@@ -78,7 +79,7 @@ module DDE
         self.set_identifier("National id", (person["national_id"] || person["_id"]), result.patient_id)
         self.set_identifier("Old Identification Number", current_national_id.identifier, result.patient_id)
         current_national_id.void("National ID version change")
-
+        
       elsif person["patient_id"].blank?
 
         self.create_from_form(passed["person"])
@@ -162,12 +163,12 @@ module DDE
       defidtype = PatientIdentifierType.find_by_name("Unknown ID").id rescue nil
 
       (person["patient"]["identifiers"] rescue []).each do |identifier|
-
+      
         if !local["patient"]["identifiers"].include?(identifier)
-
+         
           idtype = PatientIdentifierType.find_by_name(identifier.keys[0]).id rescue nil
-
-          if !defidtype.blank?
+  
+          if !idtype.blank?
 
             uuid = PatientIdentifier.find_by_sql("SELECT UUID() uuid")
 
