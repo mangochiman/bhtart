@@ -1,7 +1,12 @@
 <script type="text/javascript">
   var tt_cancel_destination = '/patients/show/<%= @patient.id %>'
 
-  function showPopup(){
+  var lab_sample_id = '';
+  var test_type = '';
+
+  function showPopup(obj){
+    lab_sample_id = obj.getAttribute("lab_sample_id");
+    test_type = obj.getAttribute("test_type");
     document.getElementById('cover').style.display = '';
     document.getElementsByClassName('stock_level_message')[0].style.display = '';
   }
@@ -12,7 +17,8 @@
   }
 
   function deleteLabResult(){
-  
+    patient_id = '<%= params[:patient_id] %>'
+    window.location = '/lab/delete_lab_results?lab_sample_id=' + lab_sample_id + '&test_type=' + test_type + '&patient_id=' + patient_id;
   }
 </script>
 <style>
@@ -185,7 +191,7 @@
         <th><%= values["test_name"].gsub('_', ' ') %></th>
         <th><%= values["range"].to_s + ' ' + values["test_value"].to_s %></th>
         <td class='anchor_class'><a href="/lab/edit_specific_result?lab_sample_id=<%=values["lab_sample_id"]%>&test_type=<%=values["test_type"]%>&patient_id=<%=params[:patient_id]%>">Edit</a></td>
-        <td class='anchor_class red' onclick="showPopup();"><a href="#">Delete</a></td>
+        <td class='anchor_class red' lab_sample_id="<%= values["lab_sample_id"] %>" test_type="<%= values["test_type"] %>" onclick="showPopup(this);"><a href="#">Delete</a></td>
       </tr>
     <% end %>
   </table>

@@ -474,5 +474,13 @@ class GenericLabController < ApplicationController
     
     redirect_to :action => "edit_lab_results", :patient_id => params[:patient_id] and return
   end
+
+  def delete_lab_results
+    lab_sample_id = params[:lab_sample_id]
+    test_type = params[:test_type]
+    lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
+    lab_parameter.delete
+    redirect_to :action => "edit_lab_results", :patient_id => params[:patient_id] and return
+  end
   
 end
