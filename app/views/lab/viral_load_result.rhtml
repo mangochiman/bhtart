@@ -131,6 +131,58 @@
       }
     }
   }
+
+  function validateDate() {
+    selectYear = parseInt(document.getElementsByName('test_year')[0].value);
+    selectDay = parseInt(document.getElementsByName('test_month')[0].value);
+    date = new Date
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if (selectYear == currYear){
+      currentMonth = [];
+      numOfloops = ((new Date).getMonth() + 1);
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+    if (selectYear != currYear) {
+      rule = availableMonths.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+  }
+
+  function validateDay(){
+    date = new Date
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    currMonth = date.getMonth() + 1;
+    selected_month = parseInt(document.getElementsByName('test_month')[0].value)
+    selectYear = parseInt(document.getElementsByName('test_year')[0].value);
+    if (selectYear == currYear) {
+      if (selected_month == currMonth){
+        start = parseInt(currDay) + 1
+        for (var i = start; i<= 31; i++) {
+          if (document.getElementById(i)){
+            document.getElementById(i).style.display = 'none'
+          }
+        }
+      }
+    }
+  }
+
+  function resetKeyBoard(){
+    for (var i = 1; i<= 31; i++) {
+      if (document.getElementById(i)){
+        document.getElementById(i).style.display = ''
+      }
+    }
+  }
 </script>
 
 <% form_tag 'create_viral_load_result', :method => :post do %>
@@ -175,7 +227,7 @@
       :condition => "tested_today == false",
       :tt_requireNextClick => false,
       :helpText => "Test Month",
-      :tt_onLoad => "$('nextButton').style.display = 'none';$('keyboard').style.display='none'",
+      :tt_onLoad => "$('nextButton').style.display = 'none';$('keyboard').style.display='none'; validateDate();",
       :tt_onUnLoad => "$('nextButton').style.display = 'inline';"
     })%>
 
@@ -183,7 +235,9 @@
     {
       :field_type => 'number',
       :condition => "tested_today == false",
-      :helpText => 'Test Day'
+      :helpText => 'Test Day',
+      :tt_onLoad => "validateDay()",
+      :tt_onUnLoad => "resetKeyBoard()"
     })  %>
 
   <%= select_tag 'result_given',options_for_select(["","Yes","No"]),
