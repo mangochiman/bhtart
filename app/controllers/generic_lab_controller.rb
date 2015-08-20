@@ -479,14 +479,15 @@ class GenericLabController < ApplicationController
     lab_sample_id = params[:lab_sample_id]
     test_type = params[:test_type]
     lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
-    lab_observations = Observation.find(:all, :conditions => ["accession_number =?", lab_parameter.Sample_ID])
+    sample_id = lab_parameter.Sample_ID rescue ""
+    lab_observations = Observation.find(:all, :conditions => ["accession_number IS NOT NULL AND accession_number=?", sample_id])
     encounter = ""
     ActiveRecord::Base.transaction do
-      lab_observations.each do |observation|
+      (lab_observations || []).each do |observation|
         encounter = observation.encounter if encounter.blank?
         observation.void("Lab Result deleted in health data")
       end
-      encounter.void("Lab Result deleted in health data")
+      encounter.void("Lab Result deleted in health data") unless encounter.blank?
       lab_parameter.delete
     end
     
