@@ -479,7 +479,17 @@ class GenericLabController < ApplicationController
     lab_sample_id = params[:lab_sample_id]
     test_type = params[:test_type]
     lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
-    lab_parameter.delete
+    lab_observations = Observation.find(:all, :conditions => ["accession_number =?", lab_parameter.Sample_ID])
+    encounter = ""
+    ActiveRecord::Base.transaction do
+      lab_observations.each do |observation|
+        encounter = observation.encounter if encounter.blank?
+        observation.void("Lab Result deleted in health data")
+      end
+      encounter.void("Lab Result deleted in health data")
+      lab_parameter.delete
+    end
+    
     redirect_to :action => "edit_lab_results", :patient_id => params[:patient_id] and return
   end
   
