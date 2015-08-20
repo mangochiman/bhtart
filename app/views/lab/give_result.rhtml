@@ -76,6 +76,57 @@ latest_result = results[1]["TestValue"] rescue nil
     }
   }
 
+  function validateDate() {
+    selectYear = parseInt(document.getElementsByName('set_year')[0].value);
+    selectDay = parseInt(document.getElementsByName('set_month')[0].value);
+    date = new Date
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if (selectYear == currYear){
+      currentMonth = [];
+      numOfloops = ((new Date).getMonth() + 1);
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+    if (selectYear != currYear) {
+      rule = availableMonths.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+  }
+
+  function validateDay(){
+    date = new Date
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    currMonth = date.getMonth() + 1;
+    selected_month = parseInt(document.getElementsByName('set_month')[0].value)
+    selectYear = parseInt(document.getElementsByName('set_year')[0].value);
+    if (selectYear == currYear) {
+      if (selected_month == currMonth){
+        start = parseInt(currDay) + 1
+        for (var i = start; i<= 31; i++) {
+          if (document.getElementById(i)){
+            document.getElementById(i).style.display = 'none'
+          }
+        }
+      }
+    }
+  }
+
+  function resetKeyBoard(){
+    for (var i = 1; i<= 31; i++) {
+      if (document.getElementById(i)){
+        document.getElementById(i).style.display = ''
+      }
+    }
+  }
 </script>
 
 <% form_tag 'result_given_to_patient', :method => :post do %>
@@ -114,7 +165,7 @@ latest_result = results[1]["TestValue"] rescue nil
       :condition => "result_given_today == false",
       :tt_requireNextClick => false,
       :tt_pageStyleClass => "NoKeyboard",
-      :tt_onLoad => "$('nextButton').style.display = 'none';",
+      :tt_onLoad => "$('nextButton').style.display = 'none'; validateDate();",
       :tt_onUnLoad => "$('nextButton').style.display = 'inline';"
     })%>
 
@@ -122,7 +173,9 @@ latest_result = results[1]["TestValue"] rescue nil
     { :field_type => 'number',
       :condition => "result_given_today == false",
       :id => 'set_day',
-      :helpText => 'Day result given to patient'
+      :helpText => 'Day result given to patient',
+      :tt_onLoad => "validateDay();",
+      :tt_onUnLoad => "resetKeyBoard();"
     })  %>
   <% if latest_result.to_i >= 1000 %>
     <%= select_tag(:counselling_done, options_for_select(['', 'Yes', 'No']),
