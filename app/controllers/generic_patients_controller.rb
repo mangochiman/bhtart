@@ -237,7 +237,7 @@ The following block of code should be replaced by a more cleaner function
 
     if show_lab_results
       @links << ["Lab trail", "/lab/results/#{patient.id}"]
-      @links << ["Edit Lab Results","/lab/edit_lab_results/?patient_id=#{patient.id}"]
+      #@links << ["Edit Lab Results","/lab/edit_lab_results/?patient_id=#{patient.id}"]
     end
     
     @links << ["Recent Lab Orders Label","/patients/recent_lab_orders?patient_id=#{patient.id}"]
