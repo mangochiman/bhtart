@@ -560,7 +560,7 @@ class ValidationRule < ActiveRecord::Base
     #Query pulling all male patients with breastfeeding observations
     male_pats_with_breastfeed_obs = FlatTable2.find_by_sql(["SELECT ft2.patient_id FROM flat_table2 ft2
                                   INNER JOIN flat_cohort_table fct ON fct.patient_id = ft2.patient_id
-                   WHERE IN ('Male', 'M') AND COALESCE(#{breastfeeding_fields.join(',')}) IS NOT NULL
+                   WHERE gender IN ('Male', 'M') AND COALESCE(#{breastfeeding_fields.join(',')}) IS NOT NULL
                                   AND DATE(ft2.visit_date) <= ?", date.to_date]).map(&:patient_id)
 =begin
     male_pats_with_breastfeed_obs = PatientProgram.find_by_sql("
