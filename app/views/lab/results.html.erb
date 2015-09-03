@@ -31,6 +31,9 @@
     width: 310px;
   }
 
+  #vlResultsButton{
+    float: left;
+}
 </style>
 
 <script>
@@ -51,7 +54,12 @@
     <%#if @enter_lab_results %>
     divBtn = document.getElementById('buttons');
     divBtn.innerHTML += "<button onclick='newResults();' class='left button navButton' id='newResultsButton'><span>Enter results</span></button>"
+    divBtn.innerHTML += "<button onclick='editViralLoadResults();' class='left button navButton' id='vlResultsButton'><span>Edit Viral Load results</span></button>"
     <%#end%>
+  }
+
+  function editViralLoadResults(){
+    window.location = "/lab/edit_lab_results/?patient_id=<%= params[:id] %>"
   }
 </script>
 
