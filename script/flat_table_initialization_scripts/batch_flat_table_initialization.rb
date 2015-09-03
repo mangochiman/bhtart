@@ -642,7 +642,7 @@ def get_patient_demographics(patient_id)
      a_hash[:gender] = gender  rescue nil #this_patient.gender  rescue nil
      a_hash[:dob] = this_patient.first.birthdate rescue nil 
      a_hash[:dob_estimated] = this_patient.first.birthdate_estimated rescue nil  
-     a_hash[:death_date] =  this_patient.first.death_date.strftime('%Y-%m-%d') rescue nil
+     a_hash[:death_date] =  this_patient.first.death_date rescue nil
                  
      a_hash[:ta] = this_patient.first.traditional_authority  rescue nil
      a_hash[:current_address] = this_patient.first.current_residence  rescue nil
@@ -923,8 +923,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:family_planning_method_female_condoms] = 'Yes'
           a_hash[:family_planning_method_female_condoms_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7860 && obs.value_coded_name_id == 10741
-          a_hash[:family_planning_method__rythm_method] = 'Yes'
-          a_hash[:family_planning_method__rythm_method_enc_id] = encounter.encounter_id
+          a_hash[:family_planning_method_rythm_method] = 'Yes'
+          a_hash[:family_planning_method_rythm_method_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7861 && obs.value_coded_name_id == 10743
           a_hash[:family_planning_method_withdrawal] = 'Yes'
           a_hash[:family_planning_method_withdrawal_enc_id] = encounter.encounter_id
@@ -938,8 +938,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:family_planning_method_vasectomy] = 'Yes'
           a_hash[:family_planning_method_vasectomy_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7862 && obs.value_coded_name_id == 10744
-          a_hash[:family_planning_method_emergency__contraception] = 'Yes'
-          a_hash[:family_planning_method_emergency__contraception_enc_id] = encounter.encounter_id
+          a_hash[:family_planning_method_emergency_contraception] = 'Yes'
+          a_hash[:family_planning_method_emergency_contraception_enc_id] = encounter.encounter_id
         end
      elsif obs.concept_id == 1293 #symptoms present
         if obs.value_coded == 2148 && obs.value_coded_name_id == 2325
@@ -1242,6 +1242,9 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         end
       end
       a_hash[:taken_art_in_last_two_months] = ans_registration rescue nil
+
+    elsif obs.concept_id == 7880 #Confirmatory HIV Test Type
+      a_hash[:type_of_confirmatory_hiv_test] = obs.to_s.split(':')[1] rescue nil
 
     elsif obs.concept_id == 6394 #HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS
       ans_registration = ""
@@ -2310,16 +2313,16 @@ def process_patient_orders(orders, visit, type = 0)
       drug_equivalent_daily_dose_hash[drug_name] = ord.equivalent_daily_dose
       drug_inventory_ids_hash[drug_name] = ord.drug_inventory_id
     else
-      patient_orders[drug_name] += drug_name
-      drug_order_ids_hash[drug_name] += ord.order_id
-      drug_enc_ids_hash[drug_name] += ord.encounter_id
-      drug_start_date_hash[drug_name] += ord.start_date.strftime("%Y-%m-%d")  rescue nil
-      drug_auto_expire_date_hash[drug_name] += ord.auto_expire_date.strftime("%Y-%m-%d")  rescue nil
-      drug_quantity_hash[drug_name] += ord.quantity rescue nil
-      drug_dose_hash[drug_name] += ord.dose
-      drug_frequency_hash[drug_name] += ord.frequency
-      drug_equivalent_daily_dose_hash[drug_name] += ord.equivalent_daily_dose
-      drug_inventory_ids_hash[drug_name] += ord.drug_inventory_id
+      patient_orders[drug_name] = drug_name
+      drug_order_ids_hash[drug_name] = ord.order_id
+      drug_enc_ids_hash[drug_name] = ord.encounter_id
+      drug_start_date_hash[drug_name] = ord.start_date.strftime("%Y-%m-%d")  rescue nil
+      drug_auto_expire_date_hash[drug_name] = ord.auto_expire_date.strftime("%Y-%m-%d")  rescue nil
+      drug_quantity_hash[drug_name] = ord.quantity rescue nil
+      drug_dose_hash[drug_name] = ord.dose
+      drug_frequency_hash[drug_name] = ord.frequency
+      drug_equivalent_daily_dose_hash[drug_name] = ord.equivalent_daily_dose
+      drug_inventory_ids_hash[drug_name] = ord.drug_inventory_id
     end
   end
  
@@ -2393,27 +2396,39 @@ def process_patient_orders(orders, visit, type = 0)
 end
 
 def process_patient_state(patient_id,visit)
-	#initialize field and values variables
+  #initialize field and values variables
   fields = ""
   values = ""
 
-	a_hash = {:current_hiv_program_start_date => 'NULL'}
+  a_hash = {:current_hiv_program_start_date => 'NULL'}
 
-	program_id = PatientProgram.find_by_sql("SELECT patient_program_id 
-				FROM #{@source_db}.patient_program 
-				WHERE patient_id = #{patient_id} 
-				AND program_id = 1 AND voided = 0 
-				ORDER BY patient_program_id DESC LIMIT 1").first.patient_program_id rescue nil
+  program_id = PatientProgram.find_by_sql("SELECT patient_program_id 
+                         		   FROM #{@source_db}.patient_program 
+				           WHERE patient_id = #{patient_id} 
+				           AND program_id = 1 AND voided = 0 
+				           ORDER BY patient_program_id DESC LIMIT 1").first.patient_program_id rescue nil
 				
   if ! program_id.nil?   
-      patient_state = PatientProgram.find_by_sql("SELECT 
+     @patient_state = PatientProgram.find_by_sql("SELECT 
   	                        IFNULL(#{@source_db}.current_state_for_program(#{patient_id},1,'#{visit} 23:59:59'), 'Unknown') AS state").first.state  
   	  
-  	   if !patient_state.blank?
-  	    if patient_state == 'Unknown'
+  	   if !@patient_state.blank?
+  	    if @patient_state == 'Unknown'
   	      state_name = 'Unknown'
   	    else
-          state_name = ProgramWorkflowState.find_by_sql("SELECT 
+              @patient_died_concept_id = ConceptName.find_by_name("Patient died").concept_id
+              
+              @patient_died_state_ids =  ProgramWorkflowState.find_by_sql("SELECT #{@source_db}.current_state_for_program(#{patient_id}, 1, '#{visit} 23:59:59') IN (SELECT program_workflow_state_id FROM program_workflow_state
+                                                WHERE concept_id = #{@patient_died_concept_id}
+                                                AND retired = 0) AS state").first.state
+              if @patient_died_state_ids.include?("1")
+                 state_id = 3
+              else
+                state_id = @patient_state
+              end
+               
+              if state_id != 'Unknown'
+                state_name = ProgramWorkflowState.find_by_sql("SELECT 
                                                  c.name AS name
                                                FROM
                                                    #{@source_db}. program_workflow_state pws
@@ -2422,9 +2437,12 @@ def process_patient_state(patient_id,visit)
                                                         AND c.voided = 0
                                                         AND pws.retired = 0
                                                WHERE
-                                                    program_workflow_state_id = #{patient_state}
+                                                    program_workflow_state_id = #{state_id}
                                                         and program_workflow_id = 1
-                                                LIMIT 1").map(&:name) #rescue nil
+                                                  LIMIT 1").map(&:name) #rescue nil
+           else
+             state_name = @patient_state
+           end
         end
       end
 
@@ -2616,6 +2634,7 @@ def start
  specify_patients_list = specify_patients_list.join(',') rescue specify_patients_list
 
  patients_list = []
+  
  patients_list = $patient_demographics.collect{|p| p.patient_id} if !specify_patients_list.blank?
         
  if (!specify_patients_list.blank?) && (patients_list.blank?)
