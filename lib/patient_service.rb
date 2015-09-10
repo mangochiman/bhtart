@@ -1315,16 +1315,17 @@ EOF
 
 			if (next_filing_number[5..-1].to_i >= global_property_value.to_i)
 				all_filing_numbers = PatientIdentifier.find(:all, :conditions =>["identifier_type = ?",
-            PatientIdentifierType.find_by_name("Filing Number").id],:group=>"patient_id")
+            PatientIdentifierType.find_by_name("Filing Number").id],:group=>"identifier")
 				patient_ids = all_filing_numbers.collect{|i|i.patient_id}
 
         patient_to_be_archived = Person.find_by_sql(["
-          SELECT * FROM person WHERE person_id IN(?) AND dead = 1 LIMIT 1
+          SELECT * FROM person WHERE person_id IN(?) AND dead = 1 AND voided = 0 LIMIT 1
         ", patient_ids]).first.patient rescue nil
 
 
         if patient_to_be_archived.blank?
-          patient_to_be_archived = self.get_patient_to_be_archived_that_has_transfered_out(patient_ids)
+          #patient_to_be_archived = self.get_patient_to_be_archived_that_has_transfered_out(patient_ids)
+          patient_to_be_archived = self.get_patient_to_be_archived_based_on_waste_state(patient_ids)
 
           if (!patient_to_be_archived.blank?)
             patient_to_be_archived = Patient.find(patient_to_be_archived)
@@ -1359,12 +1360,12 @@ EOF
 				#void current filing number
 				current_filing_numbers =  PatientIdentifier.find(:all,:conditions=>["patient_id=? AND identifier_type = ?",
             patient_to_be_archived.id,PatientIdentifierType.find_by_name("Filing Number").id])
-				current_filing_numbers.each do | filing_number |
-					filing_number.voided = 1
-					filing_number.voided_by = User.current.id
-					filing_number.void_reason = "Archived - filing number given to:#{current_patient.id}"
-					filing_number.date_voided = Time.now()
-					filing_number.save
+				current_filing_numbers.each do | f_number |
+					f_number.voided = 1
+					f_number.voided_by = User.current.id
+					f_number.void_reason = "Archived - filing number given to:#{current_patient.id}"
+					f_number.date_voided = Time.now()
+					f_number.save
 				end
 			else
 				filing_number = PatientIdentifier.new()
@@ -1398,8 +1399,41 @@ EOF
     AND (outcome LIKE '%transferred out%');
 EOF
 
-   return nil if transfers.blank?
-   transfers.sort_by { |k, v| k['start_date'].to_date }.first['patient_id'].to_i
+    return nil if transfers.blank?
+    transfers.sort_by { |k, v| k['start_date'].to_date }.first['patient_id'].to_i
+  end
+
+
+
+  def self.get_patient_to_be_archived_based_on_waste_state(patient_ids = [])
+    #The following function will get all transferred out patients
+    #with active filling numbers and select one to be archived
+    return nil if patient_ids.blank?
+
+    outcomes = ActiveRecord::Base.connection.select_all <<EOF
+select patient_id,state,start_date,end_date from patient_state s
+INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
+AND p.patient_id IN(#{patient_ids.join(',')})
+WHERE start_date = (SELECT max(start_date) FROM patient_state t 
+WHERE t.patient_program_id = s.patient_program_id);
+EOF
+
+
+   return nil if outcomes.blank?
+   selected_patient_states = {}
+   
+   outcomes.each do |state|  
+    selected_patient_states[state['patient_id'].to_i] = [] if selected_patient_states[state['patient_id'].to_i].blank?
+    selected_patient_states[state['patient_id'].to_i] << state['state'].to_i
+   end
+
+   (selected_patient_states || {}).each do |patient_id, states|
+     if states.include?(2) || states.include?(3) || states.include?(4) || states.include?(5) || states.include?(6) || states.include?(8)
+       return patient_id
+     end
+   end
+
+   return nil
   end
 
   def self.patients_with_the_least_encounter_datetime(patient_ids = [])
