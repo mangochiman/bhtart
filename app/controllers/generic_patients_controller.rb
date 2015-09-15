@@ -608,10 +608,28 @@ The following block of code should be replaced by a more cleaner function
 
   def set_new_filing_number
     patient = Patient.find(params[:id])
+    PatientService.set_patient_filing_number(patient)
+
+    ActiveRecord::Base.transaction do
+      archive_identifier_type = PatientIdentifierType.find_by_name("Archived filing number")
+      current_filing_numbers =  PatientIdentifier.find(:all,:conditions=>["voided = 0 AND patient_id=? AND identifier_type = ?",
+            patient.id, archive_identifier_type.id])
+      (current_filing_numbers || []).each do | f_number |
+        f_number.voided = 1
+        f_number.voided_by = User.current.id
+        f_number.void_reason = "Activted - Given new filing number"
+        f_number.date_voided = Time.now()
+        f_number.save
+      end
+    end
+    archived_patient = PatientService.patient_to_be_archived(patient)
+    message = PatientService.patient_printing_message(patient,archived_patient)
+=begin
     old = PatientService.get_patient_identifier(patient, 'Archived filing number') rescue ""
     set_new_patient_filing_number(patient)
     archived_patient = PatientService.patient_to_be_archived(patient)
     message = PatientService.patient_printing_message(patient, archived_patient)
+=end
     unless message.blank?
       print_and_redirect("/patients/filing_number_label/#{patient.id}" , "/people/confirm?found_person_id=#{patient.id}",message,true,patient.id)
     else
