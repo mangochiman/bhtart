@@ -21,3 +21,4 @@ public/touchscreentoolkit/*
 db/flat_tables_init_output/backup/*.sql
 db/flat_tables_init_output/*.sql
 vendor/plugins/htn/*
+config/*yml
