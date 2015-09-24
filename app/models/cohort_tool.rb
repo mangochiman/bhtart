@@ -120,13 +120,14 @@ class CohortTool < ActiveRecord::Base
   end
   
   def self.defaulted_patients(end_date, regimen_ids=[])
+    #PB 2015-09-24 : added e.voided = 0 to exclude voided patients
 		patients = []
     unless regimen_ids.blank?
        conditions = "AND e.patient_id IN (#{regimen_ids})"
     end
 		PatientProgram.find_by_sql("SELECT e.patient_id, current_defaulter(e.patient_id, '#{end_date}') AS def
 											FROM patient_program e LEFT JOIN person p ON p.person_id = e.patient_id
-											WHERE DATE(date_enrolled) <=  '#{end_date}' AND p.dead=0
+											WHERE DATE(date_enrolled) <=  '#{end_date}' AND p.dead=0 AND e.voided = 0
 											HAVING def = 1 #{conditions}").each do | patient |
       patients << patient.patient_id
     end
