@@ -400,6 +400,18 @@ class GenericPeopleController < ApplicationController
       @latest_date = @results[0].split('::')[0].to_date rescue nil
       @latest_result = @results[1]["TestValue"] rescue nil
       @modifier = @results[1]["Range"] rescue nil
+
+      @high_vl = true
+      if (@latest_result.to_i < 1000)
+        @high_vl = false
+      end
+
+      if (@latest_result.to_i == 1000)
+        if (@modifier == '<')
+          @high_vl = false
+        end
+      end
+
       @reason_for_art = PatientService.reason_for_art_eligibility(patient)
       @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
               patient.patient_id, Concept.find_by_name("Viral load").concept_id]
