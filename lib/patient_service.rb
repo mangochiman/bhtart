@@ -1410,6 +1410,11 @@ EOF
     #with active filling numbers and select one to be archived
     return nil if patient_ids.blank?
 
+    #here we remove all ids that have any encounter today.
+    patient_ids_with_todays_encounters = Encounter.find(:all,:conditions => ["
+      encounter_datetime BETWEEN (?) AND (?)",Date.today.strftime('%Y-%m-%d 00:00:00'),
+      Date.today.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
+
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
 select patient_id,state,start_date,end_date from patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
