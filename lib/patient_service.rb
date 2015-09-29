@@ -1415,7 +1415,14 @@ EOF
       encounter_datetime BETWEEN (?) AND (?)",Date.today.strftime('%Y-%m-%d 00:00:00'),
       Date.today.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
 
+    patient_ids_with_todays_active_filing_numbers = PatientIdentifier.find(:all,:conditions => ["
+      (date_created BETWEEN (?) AND (?)) AND identifier_type = ?",Date.today.strftime('%Y-%m-%d 00:00:00'),
+      Date.today.strftime('%Y-%m-%d 23:59:59'),
+      PatientIdentifierType.find_by_name('Filing number').id]).map(&:patient_id)
+
+
     patient_ids = (patient_ids - patient_ids_with_todays_encounters)
+    patient_ids = (patient_ids - patient_ids_with_todays_active_filing_numbers)
     patient_ids = [0] if patient_ids.blank?
 
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
