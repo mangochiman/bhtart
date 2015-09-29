@@ -3807,6 +3807,17 @@ The following block of code should be replaced by a more cleaner function
       patient.patient_id, Concept.find_by_name("Viral load").concept_id]
     ).answer_string.squish.upcase rescue nil
 
+    @high_vl = true
+    if (@latest_result.to_i < 1000)
+      @high_vl = false
+    end
+
+    if (@latest_result.to_i == 1000)
+      if (@modifier == '<')
+        @high_vl = false
+      end
+    end
+
     @repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
         AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
         "Repeat"]).answer_string.squish.upcase rescue nil
