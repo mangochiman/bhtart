@@ -1415,10 +1415,13 @@ EOF
       encounter_datetime BETWEEN (?) AND (?)",Date.today.strftime('%Y-%m-%d 00:00:00'),
       Date.today.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
 
+    patient_ids = (patient_ids - patient_ids_with_todays_encounters)
+    patient_ids = [0] if patient_ids.blank?
+
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
 select patient_id,state,start_date,end_date from patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
-AND p.patient_id IN(#{(patient_ids - patient_ids_with_todays_encounters).join(',')})
+AND p.patient_id IN(#{patient_ids.join(',')})
 WHERE start_date = (SELECT max(start_date) FROM patient_state t 
 WHERE t.patient_program_id = s.patient_program_id);
 EOF
