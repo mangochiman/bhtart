@@ -890,6 +890,8 @@ module ApplicationHelper
         AND value_text LIKE (?)", patient.id, encounter_type, viral_load,
         '%Patient switched to second line%']) rescue nil
 
+    return false unless second_line_obs.blank? #Already switched to second line. No need for reminder
+    
     second_line_art_start_date = PatientService.date_started_second_line_regimen(patient).to_date rescue nil
     return false unless second_line_art_start_date.blank? #Patient already switched to second line
     #return false unless second_line_obs.blank? #Patient already switched to second line
