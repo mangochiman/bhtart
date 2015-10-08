@@ -224,7 +224,7 @@ class ReportController < GenericReportController
 
     @end_date = (params[:end_month].to_s + "/" + params[:end_day].to_s + "/" + params[:end_year].to_s).to_date
 
-    report = CohortTool.defaulted_patients(@end_date)
+    report = CohortTool.defaulted_patients(@end_date).uniq
 
     report.each do |person_id|
       patient = Patient.find(person_id)
@@ -235,18 +235,18 @@ class ReportController < GenericReportController
                                 AND concept_id = #{appoinment} AND DATE(value_datetime) <= DATE('#{@end_date}') AND voided = 0
                                 ORDER BY obs_datetime LIMIT 1").first
 
-     
-       first_obs = Observation.find_by_sql("SELECT person_id, obs_datetime FROM obs
+      first_obs = Observation.find_by_sql("SELECT person_id, obs_datetime FROM obs
                                             WHERE person_id = #{person_id}
                                             AND voided = 0 order by obs_datetime ASC LIMIT 1").first
-       next_visit = Observation.find(:first, :conditions =>  ["person_id = ? AND obs_datetime > ?",
-                                                               person_id, last_appointment.value_datetime])
 
-       next_visit = next_visit.nil? ? "No" : next_visit.obs_datetime.to_date
-        unless last_appointment.blank?
-              result = adherence(last_appointment.person_id, last_appointment.value_datetime) rescue []
-        
-          details ={
+      next_visit = last_appointment.nil? ? nil : Observation.find(:first, :conditions =>  ["person_id = ? AND obs_datetime > ?",
+                                                                                           person_id, last_appointment.value_datetime])
+
+      next_visit = next_visit.nil? ? "No" : next_visit.obs_datetime.to_date
+      unless last_appointment.blank?
+        result = adherence(last_appointment.person_id, last_appointment.value_datetime) rescue []
+
+        details ={
             'patient_id' => person_id,
             'name' => patient.name,
             'age' => PatientService.cul_age(patient.person.birthdate , patient.person.birthdate_estimated ),
@@ -256,11 +256,11 @@ class ReportController < GenericReportController
             'phone_number' => get_phone(person_id),
             'overdue' => (@end_date.to_date - last_appointment.value_datetime.to_date).to_i,
             'came_late' => next_visit,
-            'date_registered' => first_obs.obs_datetime.to_date,
+            'date_registered' => first_obs.nil? ? '' : first_obs.obs_datetime.to_date,
             'last_visit_date' => last_appointment.obs_datetime.to_date
-        }  
+        }
         @data << details
-        end
+      end
     end
 
     render "missed_appointment_report"

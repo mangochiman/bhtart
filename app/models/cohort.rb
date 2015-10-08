@@ -1416,6 +1416,7 @@ class Cohort
     symptom_concept = ConceptName.find_by_name('SYMPTOM PRESENT').concept_id
     drug_induced = ConceptName.find_by_name('DRUG INDUCED').concept_id
     side_effects = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+		no_side_effects = ConceptName.find_by_name('No').concept_id
 
     @patients_alive_and_on_art ||= self.total_alive_and_on_art
     patient_ids = @patients_alive_and_on_art
@@ -1429,8 +1430,9 @@ class Cohort
                                           AND o.concept_id = #{symptom_concept}
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-                                          AND e.patient_id IN (select o.person_id from obs os where os.voided = 0
+                                          AND e.patient_id IN (select os.person_id from obs os where os.voided = 0
                                           AND os.person_id = e.patient_id AND os.concept_id = #{drug_induced})
+																					AND o.value_coded NOT IN (#{no_side_effects})
                                           GROUP BY e.patient_id"
                                               )
 
@@ -1439,6 +1441,7 @@ class Cohort
                                           AND o.person_id IN (#{patient_ids.join(',')})
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+																					AND o.value_coded NOT IN (#{no_side_effects})
                                           GROUP BY o.person_id"
                                               ).each{|patient| side_effects_patients << patient}
 
@@ -1476,7 +1479,8 @@ class Cohort
     hiv_clinic_consultation_encounter_id = EncounterType.find_by_name("HIV CLINIC CONSULTATION").id
     symptom_concept = ConceptName.find_by_name('SYMPTOM PRESENT').concept_id
     drug_induced = ConceptName.find_by_name('DRUG INDUCED').concept_id
-     side_effects = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+    side_effects = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+		no_side_effects = ConceptName.find_by_name('No').concept_id
 
     @patients_alive_and_on_art ||= self.total_alive_and_on_art
     patient_ids = @patients_alive_and_on_art
@@ -1490,8 +1494,9 @@ class Cohort
                                           AND o.concept_id = #{symptom_concept}
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-                                          AND e.patient_id NOT IN (select o.person_id from obs os where os.voided = 0
+                                          AND e.patient_id NOT IN (select os.person_id from obs os where os.voided = 0
                                           AND os.person_id = e.patient_id AND os.concept_id = #{drug_induced})
+																					AND o.value_coded in (#{no_side_effects})
                                           GROUP BY e.patient_id"
                                               ).collect{|patient| patient.patient_id} rescue []
 
@@ -1500,10 +1505,11 @@ class Cohort
                                           AND o.person_id IN (#{patient_ids.join(',')})
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+																					AND o.value_coded IN (#{no_side_effects})
                                           GROUP BY o.person_id"
                                               ).collect{|patient| patient.patient_id} rescue []
 
-    no_effects = side_effects_patients - other_effect
+    no_effects = side_effects_patients + other_effect
 		no_effects.uniq
 
 	end
