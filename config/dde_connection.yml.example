@@ -4,6 +4,8 @@ default: &default
   dde_username: admin
   dde_password: password
   site_code: TST
+  secure_connection: false
+  help_base_url: http://127.0.0.1:3001/
 
 development:
   <<: *default
