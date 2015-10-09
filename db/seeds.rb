@@ -10,7 +10,7 @@
 require 'fastercsv'
 puts "Adding validation rules for cohort reports"
 FasterCSV.foreach('db/validation_rules.csv',
-                  :col_sep => '	', :headers => :first_row) do |row|
+                  :col_sep => ',', :headers => :first_row) do |row|
                 
   expr = row['expr'] || ''
   desc = row['desc'].to_s
