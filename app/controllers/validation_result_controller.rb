@@ -16,6 +16,7 @@ class ValidationResultController < ActionController::Base
     end_date = params[:end_date]
     resp = []
     (start_date..end_date).each do |date|
+      ValidationRule.data_consistency_checks(date)
       resp << ValidationRule.find_by_sql("SELECT validation_rules.id as rule_id, `desc` as description,
                                   COALESCE((SELECT failures FROM validation_results WHERE rule_id = validation_rules.id
                                   AND date_checked = '#{date}') ,0) AS failures, '#{date}' as date_checked from
