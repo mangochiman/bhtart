@@ -12,8 +12,8 @@ class ValidationResultController < ActionController::Base
 	end
 
   def list
-    start_date = params[:start_date]
-    end_date = params[:end_date]
+    start_date = params[:start_date].to_date
+    end_date = params[:end_date].to_date
     resp = []
     (start_date..end_date).each do |date|
       ValidationRule.data_consistency_checks(date)

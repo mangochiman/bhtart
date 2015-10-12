@@ -80,6 +80,7 @@ class ValidationRule < ActiveRecord::Base
     connection = ActiveRecord::Base.connection
     art_patient_ids = connection.select_all("SELECT patient_id FROM flat_cohort_table
       WHERE DATE(earliest_start_date) <= '#{visit_date}'").collect{|p|p["patient_id"]}
+    art_patient_ids = [-999] if art_patient_ids.blank?
 
     patient_ids = connection.select_all("SELECT patient_id FROM flat_table2 WHERE
       DATE(visit_date) <= '#{visit_date}' AND patient_id in (#{art_patient_ids.join(',')})
@@ -239,6 +240,7 @@ class ValidationRule < ActiveRecord::Base
     connection = ActiveRecord::Base.connection
     art_patient_ids = connection.select_all("SELECT patient_id FROM flat_cohort_table
       WHERE DATE(earliest_start_date) <= '#{visit_date}'").collect{|p|p["patient_id"]}
+    art_patient_ids = [-999] if art_patient_ids.blank?
 
     patient_ids = connection.select_all("SELECT patient_id FROM flat_table2 WHERE
       DATE(visit_date) <= '#{visit_date}' AND patient_id in (#{art_patient_ids.join(',')})
@@ -269,6 +271,7 @@ class ValidationRule < ActiveRecord::Base
     connection = ActiveRecord::Base.connection
     art_patient_ids = connection.select_all("SELECT patient_id FROM flat_cohort_table
       WHERE DATE(earliest_start_date) <= '#{visit_date}'").collect{|p|p["patient_id"]}
+    art_patient_ids = [-999] if art_patient_ids.blank?
 
     patient_ids = connection.select_all("SELECT patient_id FROM flat_table2 WHERE
       DATE(visit_date) <= '#{visit_date}' AND patient_id in (#{art_patient_ids.join(',')})
@@ -300,6 +303,7 @@ class ValidationRule < ActiveRecord::Base
     connection = ActiveRecord::Base.connection
     art_patient_ids = connection.select_all("SELECT patient_id FROM flat_cohort_table
       WHERE DATE(earliest_start_date) <= '#{visit_date}'").collect{|p|p["patient_id"]}
+    art_patient_ids = [-999] if art_patient_ids.blank?
 
     patient_ids = connection.select_all("SELECT patient_id FROM flat_table2 WHERE
       DATE(visit_date) <= '#{visit_date}' AND patient_id in (#{art_patient_ids.join(',')})
