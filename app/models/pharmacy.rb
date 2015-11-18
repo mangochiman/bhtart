@@ -336,7 +336,7 @@ EOF
   end
 
   def self.current_stock_after_dispensation(drug_id, start_date, end_date = Date.today)
-    total_physical_count = self.total_physically_counted(drug_id, start_date, end_date)
+    total_physical_count = self.latest_physical_counted(drug_id, start_date)#self.total_physically_counted(drug_id, start_date, end_date)
     total_dispensed = self.dispensed_drugs_since(drug_id, start_date, end_date)
     total_removed = self.total_removed(drug_id, start_date, end_date)
     (total_physical_count - (total_dispensed + total_removed))
@@ -345,11 +345,49 @@ EOF
   def self.total_physically_counted(drug_id, start_date ,end_date = Date.today)
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
 
+    latest_supervision_type = Pharmacy.find_by_sql(
+        "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
+        AND p.pharmacy_module_id = (
+              SELECT MAX(pharmacy_module_id) FROM pharmacy_obs t
+              WHERE t.encounter_date = p.encounter_date AND t.drug_id = p.drug_id
+              AND t.pharmacy_encounter_type = p.pharmacy_encounter_type
+              AND t.encounter_date >= '#{start_date}' AND t.encounter_date <= '#{end_date}'
+            )
+        AND p.encounter_date = (
+            SELECT max(encounter_date) from pharmacy_obs t2
+            where t2.encounter_date = p.encounter_date AND t2.drug_id = p.drug_id
+            AND t2.pharmacy_encounter_type = p.pharmacy_encounter_type
+            AND t2.encounter_date >= '#{start_date}' AND t2.encounter_date <= '#{end_date}'
+          ) LIMIT 1;"
+    ).last.value_text rescue nil #To avoid double count of clinic and supervision data
+
     self.active.find(:first,:select => "SUM(value_numeric) total_physical_count",
       :conditions => ["pharmacy_encounter_type = ? AND drug_id = ?
-                      AND encounter_date >= ? AND encounter_date <= ?",
+                      AND encounter_date >= ? AND encounter_date <= ? AND value_text = '#{latest_supervision_type}'",
         pharmacy_encounter_type.id , drug_id , start_date , end_date],
       :group => "drug_id").total_physical_count.to_f rescue 0
+  end
+
+  def self.latest_physical_counted(drug_id, latest_date)
+    pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
+
+    latest_physical_count = Pharmacy.find_by_sql(
+        "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
+        AND p.pharmacy_module_id = (
+              SELECT MAX(pharmacy_module_id) FROM pharmacy_obs t
+              WHERE t.encounter_date = p.encounter_date AND t.drug_id = p.drug_id
+              AND t.pharmacy_encounter_type = #{pharmacy_encounter_type.id}
+              AND t.encounter_date >= '#{latest_date}' AND t.encounter_date <= '#{latest_date}'
+            )
+        AND p.encounter_date = (
+            SELECT max(encounter_date) from pharmacy_obs t2
+            where t2.encounter_date = p.encounter_date AND t2.drug_id = p.drug_id
+            AND t2.pharmacy_encounter_type = #{pharmacy_encounter_type.id}
+            AND t2.encounter_date >= '#{latest_date}' AND t2.encounter_date <= '#{latest_date}'
+          ) LIMIT 1;"
+    ).last.value_numeric rescue 0 #To avoid double count of clinic and supervision data
+    
+    return latest_physical_count
   end
 
   def self.current_drug_stock(drug_id)
@@ -367,7 +405,8 @@ EOF
           ) LIMIT 1;"
       ).last.encounter_date rescue nil
 
-    total_physical_count = self.total_physically_counted(drug_id, last_physical_count_enc_date)
+    #total_physical_count = self.total_physically_counted(drug_id, last_physical_count_enc_date)
+    total_physical_count = self.latest_physical_counted(drug_id, last_physical_count_enc_date) #Created a method for pulling latest drug total supervised
     total_dispensed = self.dispensed_drugs_since(drug_id, last_physical_count_enc_date)
     total_removed = self.total_removed(drug_id, last_physical_count_enc_date)
     (total_physical_count - (total_dispensed + total_removed))
