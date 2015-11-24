@@ -436,6 +436,7 @@ EOF
   end
 
   def self.update_stock_record(drug_id, encounter_date)
+    #Added these methods for the purpose of speed
     edited_stock_encounter_id = PharmacyEncounterType.find_by_name('Edited stock').pharmacy_encounter_type_id
     current_drug_stock = Pharmacy.current_drug_stock(drug_id)
 
@@ -456,6 +457,7 @@ EOF
   end
 
   def self.update_average_drug_consumption(drug_id)
+    #Added these methods for the purpose of speed
     past_ninety_days_date = (Date.today - 90.days)
     total_drug_dispensations_within_ninety_days = Pharmacy.dispensed_drugs_since(drug_id, past_ninety_days_date) #within 90 days
     total_days = (Date.today - past_ninety_days_date).to_i #Difference in days between two dates.
@@ -478,9 +480,19 @@ EOF
   end
 
   def self.average_drug_consumption(drug_id)
+    #Added these methods for the purpose of speed
     edited_stock_encounter_id = PharmacyEncounterType.find_by_name('Edited stock').pharmacy_encounter_type_id
     pharmacy_obs = Pharmacy.find(:last, :conditions => ["pharmacy_encounter_type =? AND drug_id =? AND
         value_text = ?", edited_stock_encounter_id, drug_id, 'Drug Rate'])
+    return pharmacy_obs.value_numeric unless pharmacy_obs.blank?
+    return 0
+  end
+
+  def self.latest_drug_stock(drug_id)
+    #Added these methods for the purpose of speed
+    edited_stock_encounter_id = PharmacyEncounterType.find_by_name('Edited stock').pharmacy_encounter_type_id
+    pharmacy_obs = Pharmacy.find(:last, :conditions => ["pharmacy_encounter_type =? AND drug_id =? AND
+        value_text = ?", edited_stock_encounter_id, drug_id, 'Current Stock'])
     return pharmacy_obs.value_numeric unless pharmacy_obs.blank?
     return 0
   end
