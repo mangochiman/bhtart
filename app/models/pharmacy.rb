@@ -2,7 +2,8 @@ class Pharmacy < ActiveRecord::Base
   set_table_name "pharmacy_obs"
   set_primary_key "pharmacy_module_id"
   include Openmrs
-
+  #before_create :update_stock_record
+  
   named_scope :active, :conditions => ['voided = 0']
 
   def self.total_removed(drug_id , start_date = Date.today , end_date = Date.today)
@@ -25,6 +26,8 @@ class Pharmacy < ActiveRecord::Base
     encounter.expiring_units = expiring_units unless expiring_units.blank?
     encounter.value_text = reason unless reason.blank?
     encounter.save
+    self.update_stock_record(drug_id, encounter_date)
+    self.update_average_drug_consumption(drug_id)
   end
 
   def self.date_ranges(date)    
@@ -107,6 +110,8 @@ class Pharmacy < ActiveRecord::Base
       end  
     end
     delivery.save
+    self.update_stock_record(drug_id, date) #Update stock record
+    self.update_average_drug_consumption(drug_id)
     # raise delivery.to_yaml
   end
 
@@ -239,7 +244,9 @@ class Pharmacy < ActiveRecord::Base
     current_stock.encounter_date = date                                         
     current_stock.value_numeric = quantity.to_f                                 
     current_stock.value_text = reason                                           
-    current_stock.save                                                          
+    current_stock.save
+    self.update_stock_record(drug.id, date)
+    self.update_average_drug_consumption(drug.id)
   end
 
   def self.relocated(drug_id,start_date,end_date = Date.today)                  
@@ -333,6 +340,8 @@ EOF
       encounter.value_text = type
     end
     encounter.save
+    self.update_stock_record(drug_id, date)
+    self.update_average_drug_consumption(drug_id)
   end
 
   def self.current_stock_after_dispensation(drug_id, start_date, end_date = Date.today)
@@ -346,7 +355,7 @@ EOF
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
 
     latest_supervision_type = Pharmacy.find_by_sql(
-        "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
+      "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
         AND p.pharmacy_module_id = (
               SELECT MAX(pharmacy_module_id) FROM pharmacy_obs t
               WHERE t.encounter_date = p.encounter_date AND t.drug_id = p.drug_id
@@ -372,7 +381,7 @@ EOF
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
 
     latest_physical_count = Pharmacy.find_by_sql(
-        "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
+      "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
         AND p.pharmacy_module_id = (
               SELECT MAX(pharmacy_module_id) FROM pharmacy_obs t
               WHERE t.encounter_date = p.encounter_date AND t.drug_id = p.drug_id
@@ -397,13 +406,13 @@ EOF
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
 
     last_physical_count_enc_date = Pharmacy.find_by_sql(
-          "SELECT * from pharmacy_obs WHERE
+      "SELECT * from pharmacy_obs WHERE
            drug_id = #{drug_id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id} AND
            DATE(encounter_date) = (
             SELECT MAX(DATE(encounter_date)) FROM pharmacy_obs
             WHERE drug_id =#{drug_id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id}
           ) LIMIT 1;"
-      ).last.encounter_date rescue nil
+    ).last.encounter_date rescue nil
 
     #total_physical_count = self.total_physically_counted(drug_id, last_physical_count_enc_date)
     total_physical_count = self.latest_physical_counted(drug_id, last_physical_count_enc_date) #Created a method for pulling latest drug total supervised
@@ -413,17 +422,67 @@ EOF
   end
 
   def self.pack_size(drug_id)
-      pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
-      drug_pack_size = Pharmacy.find_by_sql(
-          "SELECT * from pharmacy_obs WHERE drug_id = #{drug_id} AND
+    pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
+    drug_pack_size = Pharmacy.find_by_sql(
+      "SELECT * from pharmacy_obs WHERE drug_id = #{drug_id} AND
           pharmacy_encounter_type = #{pharmacy_encounter_type.id} AND
            DATE(encounter_date) = (
             SELECT MAX(DATE(encounter_date)) FROM pharmacy_obs
             WHERE drug_id =#{drug_id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id}
           ) LIMIT 1;"
-      ).last.pack_size rescue 60 #if the pack size is not recorded then assume 60 is the pack size. Most drugs come in 60s
-      drug_pack_size = 60 if drug_pack_size.blank?
-      return drug_pack_size
+    ).last.pack_size rescue 60 #if the pack size is not recorded then assume 60 is the pack size. Most drugs come in 60s
+    drug_pack_size = 60 if drug_pack_size.blank?
+    return drug_pack_size
   end
-  
+
+  def self.update_stock_record(drug_id, encounter_date)
+    edited_stock_encounter_id = PharmacyEncounterType.find_by_name('Edited stock').pharmacy_encounter_type_id
+    current_drug_stock = Pharmacy.current_drug_stock(drug_id)
+
+    pharmacy_obs = Pharmacy.find(:last, :conditions => ["pharmacy_encounter_type =? AND drug_id =? AND 
+        value_text = ?", edited_stock_encounter_id, drug_id, 'Current Stock'])
+
+    if pharmacy_obs.blank?
+      pharmacy_obs =  Pharmacy.new()
+      pharmacy_obs.pharmacy_encounter_type = edited_stock_encounter_id
+      pharmacy_obs.drug_id = drug_id
+      pharmacy_obs.value_text = 'Current Stock'
+    end
+    
+    pharmacy_obs.encounter_date = encounter_date
+    pharmacy_obs.value_numeric = current_drug_stock.to_i
+    pharmacy_obs.save
+    
+  end
+
+  def self.update_average_drug_consumption(drug_id)
+    past_ninety_days_date = (Date.today - 90.days)
+    total_drug_dispensations_within_ninety_days = Pharmacy.dispensed_drugs_since(drug_id, past_ninety_days_date) #within 90 days
+    total_days = (Date.today - past_ninety_days_date).to_i #Difference in days between two dates.
+    consumption_rate = (total_drug_dispensations_within_ninety_days/total_days)#Three months average consumption
+
+    edited_stock_encounter_id = PharmacyEncounterType.find_by_name('Edited stock').pharmacy_encounter_type_id
+    pharmacy_obs = Pharmacy.find(:last, :conditions => ["pharmacy_encounter_type =? AND drug_id =? AND
+        value_text = ?", edited_stock_encounter_id, drug_id, 'Drug Rate'])
+
+    if pharmacy_obs.blank?
+      pharmacy_obs =  Pharmacy.new()
+      pharmacy_obs.pharmacy_encounter_type = edited_stock_encounter_id
+      pharmacy_obs.drug_id = drug_id
+      pharmacy_obs.value_text = 'Drug Rate'
+    end
+
+    pharmacy_obs.encounter_date = Date.today
+    pharmacy_obs.value_numeric = consumption_rate
+    pharmacy_obs.save
+  end
+
+  def self.average_drug_consumption(drug_id)
+    edited_stock_encounter_id = PharmacyEncounterType.find_by_name('Edited stock').pharmacy_encounter_type_id
+    pharmacy_obs = Pharmacy.find(:last, :conditions => ["pharmacy_encounter_type =? AND drug_id =? AND
+        value_text = ?", edited_stock_encounter_id, drug_id, 'Drug Rate'])
+    return pharmacy_obs.value_numeric unless pharmacy_obs.blank?
+    return 0
+  end
+
 end
