@@ -138,7 +138,7 @@
                               <td style="text-align:right;">
                                 <% if (preformat_regimens.include?(drug_name))
                                     drug_pack_size = Pharmacy.pack_size(order.drug_order.drug.id) %>
-                                    <%= (Pharmacy.current_drug_stock(order.drug_order.drug.id)/drug_pack_size).to_i %>
+                                    <%= (Pharmacy.latest_drug_stock(order.drug_order.drug.id)/drug_pack_size).to_i %>
                                 <% else %>
                                     <%= '(N/A)' %>
                                 <% end %>

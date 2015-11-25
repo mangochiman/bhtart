@@ -38,27 +38,12 @@ class GenericSessionsController < ApplicationController
     if (@activate_drug_management)
       @stock = {}
       drug_names = GenericDrugController.new.preformat_regimen
-      pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
       drug_names.each do |drug_name|
-       drug = Drug.find_by_name(drug_name)
-        last_physical_count_enc = Pharmacy.find_by_sql(
-            "SELECT * from pharmacy_obs WHERE
-             drug_id = #{drug.id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id} AND
-             DATE(encounter_date) = (
-              SELECT MAX(DATE(encounter_date)) FROM pharmacy_obs
-              WHERE drug_id =#{drug.id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id}
-            ) LIMIT 1;"
-        ).last
-
-        last_physical_count_date = last_physical_count_enc.encounter_date.to_date rescue nil
+        drug = Drug.find_by_name(drug_name)
         drug_pack_size = Pharmacy.pack_size(drug.id)
-        current_stock = (Pharmacy.current_stock_after_dispensation(drug.id, last_physical_count_date)/drug_pack_size).to_i
+        current_stock = (Pharmacy.latest_drug_stock(drug.id)/drug_pack_size).to_i #In tins
         next unless (current_stock.to_i == 0)
-        #total_drug_dispensations = Pharmacy.dispensed_drugs_since(drug.id, last_physical_count_date)
-        past_ninety_days_date = (Date.today - 90.days)
-        total_drug_dispensations_within_ninety_days = Pharmacy.dispensed_drugs_since(drug.id, past_ninety_days_date) #within 90 days
-        total_days = (Date.today - past_ninety_days_date).to_i #Difference in days between two dates.
-        consumption_rate = (total_drug_dispensations_within_ninety_days/total_days)
+        consumption_rate = Pharmacy.average_drug_consumption(drug.id)
         stock_out_days = ((current_stock * drug_pack_size)/consumption_rate).to_i rescue 0 #To avoid division by zero error when consumption_rate is zero
         estimated_stock_out_date = (Date.today + stock_out_days).strftime('%d-%b-%Y')
         estimated_stock_out_date = "(N/A)" if (consumption_rate.to_i <= 0)
@@ -110,9 +95,9 @@ class GenericSessionsController < ApplicationController
 	end
 
 	protected
-		# Track failed login attempts
-		def note_failed_signin
-			flash[:error] = "Invalid user name or password"
-			logger.warn "Failed login for '#{params[:login]}' from #{request.remote_ip} at #{Time.now.utc}"
-		end
+  # Track failed login attempts
+  def note_failed_signin
+    flash[:error] = "Invalid user name or password"
+    logger.warn "Failed login for '#{params[:login]}' from #{request.remote_ip} at #{Time.now.utc}"
+  end
 end
