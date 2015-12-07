@@ -22,6 +22,11 @@ class Order < ActiveRecord::Base
   named_scope :labs, :conditions => ['drug_order.drug_inventory_id is NULL'], :include => :drug_order
   named_scope :prescriptions, :conditions => ['drug_order.drug_inventory_id is NOT NULL'], :include => :drug_order
   
+  after_save do |o|
+    drug_order = DrugOrder.find(:last, :conditions => ["order_id =?", o.order_id])
+    Pharmacy.update_stock_record(drug_order.drug_inventory_id, Date.today) unless drug_order.blank?
+  end
+
   def after_void(reason = nil)
     # TODO Should we be voiding the associated meta obs that point back to this?
   end

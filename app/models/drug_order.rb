@@ -4,6 +4,10 @@ class DrugOrder < ActiveRecord::Base
   include Openmrs
   belongs_to :drug, :foreign_key => :drug_inventory_id, :conditions => {:retired => 0}
 
+  after_save do |record|
+    Pharmacy.update_stock_record(record.drug_inventory_id, Date.today)
+  end
+
   def order
     @order ||= Order.find(order_id)
   end

@@ -24,7 +24,7 @@
   .stock_level_message_header{
     height: 18%;
     color:white;
-    background-color: tomato;
+    background-color: gray;
     border-radius: 15px 15px 0px 0px;
     font-size: 14pt;
     opacity: 0.8;   
@@ -42,7 +42,7 @@
     width: 100%;
     height: 33%;
     color:white;
-    background-color: tomato;
+    background-color: gray;
     border-radius: 0px 0px 15px 15px;
     font-size: 14pt;
     bottom: 0%;
@@ -153,7 +153,7 @@
             missing_quantity = quantity - current_stock
             html="<div id='cover'></div>";
             html+= "<div class='stock_level_message'>";
-            html+="<div class='stock_level_message_header'><span style='margin-left:9.5%; font-weight:bold; color:white;'>Low stock</span></div>"
+            html+="<div class='stock_level_message_header'><span style='font-weight:bold; color:white; padding-left: 20px;'>Low stock</span></div>"
 
             html+="<div class='stock_level_message_content'>"
             html+="<span>Insufficient stock by <b><i>" + missing_quantity + " "+  drug_units + "</i></b>. Only <b><i>" + current_stock + " " + drug_units + "</i></b> will be dispensed. <br />Continue?<br /></span>"
