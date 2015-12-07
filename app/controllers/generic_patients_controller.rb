@@ -608,10 +608,28 @@ The following block of code should be replaced by a more cleaner function
 
   def set_new_filing_number
     patient = Patient.find(params[:id])
+    PatientService.set_patient_filing_number(patient)
+
+    ActiveRecord::Base.transaction do
+      archive_identifier_type = PatientIdentifierType.find_by_name("Archived filing number")
+      current_filing_numbers =  PatientIdentifier.find(:all,:conditions=>["voided = 0 AND patient_id=? AND identifier_type = ?",
+            patient.id, archive_identifier_type.id])
+      (current_filing_numbers || []).each do | f_number |
+        f_number.voided = 1
+        f_number.voided_by = User.current.id
+        f_number.void_reason = "Activted - Given new filing number"
+        f_number.date_voided = Time.now()
+        f_number.save
+      end
+    end
+    archived_patient = PatientService.patient_to_be_archived(patient)
+    message = PatientService.patient_printing_message(patient,archived_patient)
+=begin
     old = PatientService.get_patient_identifier(patient, 'Archived filing number') rescue ""
     set_new_patient_filing_number(patient)
     archived_patient = PatientService.patient_to_be_archived(patient)
     message = PatientService.patient_printing_message(patient, archived_patient)
+=end
     unless message.blank?
       print_and_redirect("/patients/filing_number_label/#{patient.id}" , "/people/confirm?found_person_id=#{patient.id}",message,true,patient.id)
     else
@@ -1907,6 +1925,98 @@ The following block of code should be replaced by a more cleaner function
     end
 
     ans = ["Extrapulmonary tuberculosis (EPTB)","Pulmonary tuberculosis within the last 2 years","Pulmonary tuberculosis (current)","Kaposis sarcoma","Pulmonary tuberculosis"]
+
+    staging_ans = patient_obj.person.observations.recent(1).question("WHO STAGES CRITERIA PRESENT").all
+
+    if !staging_ans.blank?
+      staging_ans = patient_obj.person.observations.recent(1).question("WHO STG CRIT").all
+    end
+
+    hiv_staging_obs = Encounter.find(:last, :conditions =>["encounter_type = ? and patient_id = ?",
+                                     EncounterType.find_by_name("HIV Staging").id,patient_obj.id]).observations rescue []  
+
+
+    if !staging_ans.blank?
+      #ks
+      if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[3])
+        visits.ks = 'Yes'
+      end
+
+      #tb_within_last_two_yrs
+      if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[1])
+        visits.tb_within_last_two_yrs = 'Yes'
+      end
+
+      #eptb
+      if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[0])
+        visits.eptb = 'Yes'
+      end
+
+      #pulmonary_tb
+      if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[2])
+        visits.pulmonary_tb = 'Yes'
+      end
+
+      #pulmonary_tb
+      if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[4])
+        visits.pulmonary_tb = 'Yes'
+      end
+    else
+     if !hiv_staging_obs.blank?
+       tb_within_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
+       ks_concept_id = ConceptName.find_by_name('Kaposis sarcoma').concept_id
+       pulm_tuber_cur_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis (current)').concept_id
+       pulm_tuber_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis').concept_id
+       eptb_concept_id = ConceptName.find_by_name('Extrapulmonary tuberculosis (EPTB)').concept_id
+       
+       (hiv_staging_obs || []).each do |obs|
+         #checking if answer is 'Yes'
+         if obs.value_coded == 1065
+           if obs.concept_id == tb_within_2yrs_concept_id
+             visits.tb_within_last_two_yrs = 'Yes'     
+           end
+         
+           if obs.concept_id == eptb_concept_id
+             visits.eptb = 'Yes'     
+           end
+         
+           if obs.concept_id == ks_concept_id
+             visits.ks = 'Yes'     
+           end
+         
+           if obs.concept_id == pulm_tuber_cur_concept_id
+             visits.pulmonary_tb = 'Yes'          
+           end
+         
+           if obs.concept_id == pulm_tuber_concept_id
+             visits.pulmonary_tb = 'Yes'     
+           end
+         elsif obs.value_coded == 1066
+           if obs.concept_id == tb_within_2yrs_concept_id
+             visits.tb_within_last_two_yrs = 'No'
+           end
+
+           if obs.concept_id == eptb_concept_id
+             visits.eptb = 'No'
+           end
+
+           if obs.concept_id == ks_concept_id
+             visits.ks = 'No'
+           end
+
+           if obs.concept_id == pulm_tuber_cur_concept_id
+             visits.pulmonary_tb = 'No'
+           end
+
+           if obs.concept_id == pulm_tuber_concept_id
+             visits.pulmonary_tb = 'No'
+           end
+         end
+       end
+     end
+    end
+  
+=begin
     staging_ans = patient_obj.person.observations.recent(1).question("WHO STAGES CRITERIA PRESENT").all
 
     hiv_staging_obs = Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
@@ -1950,7 +2060,7 @@ The following block of code should be replaced by a more cleaner function
       pulm_tuber_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis').concept_id
       visits.pulmonary_tb = 'Yes' if hiv_staging_obs.include?(pulm_tuber_concept_id)
     end
-
+=end
     hiv_staging = Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
                                                       EncounterType.find_by_name("HIV Staging").id,patient_obj.id])
 
@@ -3696,6 +3806,17 @@ The following block of code should be replaced by a more cleaner function
     @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
       patient.patient_id, Concept.find_by_name("Viral load").concept_id]
     ).answer_string.squish.upcase rescue nil
+
+    @high_vl = true
+    if (@latest_result.to_i < 1000)
+      @high_vl = false
+    end
+
+    if (@latest_result.to_i == 1000)
+      if (@modifier == '<')
+        @high_vl = false
+      end
+    end
 
     @repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
         AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,

@@ -238,7 +238,7 @@
 		  :helpText  => "Total #{order.drug_order.units} of #{order.drug_order.drug.name} brought to clinic"} %>
 
 		<%if  ask_pills_remaining_at_home %>
-		  <%= touch_text_field_tag "AMOUNT OF DRUG REMAINING AT HOME", @patient, nil,
+		  <%= touch_numeric_tag "AMOUNT OF DRUG REMAINING AT HOME", @patient, nil,
 			{	:id        => "amount_other_#{order.order_id}",
 			:units     => "#{order.drug_order.units}",
 			:field_type=> "number",
@@ -260,7 +260,7 @@
 		  :helpText  => "Total #{order.drug_order.units} of #{order.drug_order.drug.name} brought to clinic"} %>
 
 		<%if  ask_pills_remaining_at_home %>
-		  <%= touch_text_field_tag "AMOUNT OF DRUG REMAINING AT HOME", @patient, nil,
+		  <%= touch_numeric_tag "AMOUNT OF DRUG REMAINING AT HOME", @patient, nil,
 			{	:id        => "amount_other_#{order.order_id}",
 			:field_type=> "number",
 			:units     => "#{order.drug_order.units}",

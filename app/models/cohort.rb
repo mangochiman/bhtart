@@ -475,7 +475,7 @@ class Cohort
     #Calculation of No TB has been changed temporarily to match that of BART 1.
     #This might be changed again after thorough discussions on how to pull TB within the last 2 years.
     #In BART1 we do not subtract Current episode of TB from TB within the past 2 years which was the case 
-    #in ART.
+    #in NART.
     
     #This change has also been implemented in cohort_validation model.
 		current_episode = cohort_report['Current episode of TB']
@@ -644,6 +644,21 @@ class Cohort
 	end
 
 	def pregnant_women(start_date = @start_date, end_date = @end_date)
+		transfer_ins_preg_women = []
+		
+		PatientProgram.find_by_sql("select 
+                                    rfe.patient_id, rfe.earliest_start_date, p.obs_datetime, p.date_created
+                                from
+                                    reason_for_eligibility_obs rfe
+                                 inner join patients_with_has_transfer_letter_yes p on p.person_id = rfe.patient_id
+                                where
+                                    rfe.reason_for_eligibility = 'Patient pregnant'
+                                        and rfe.earliest_start_date >= '#{start_date}'
+                                        AND rfe.earliest_start_date <= '#{end_date}'
+                                Group by rfe.patient_id").each do | patient |
+                                        transfer_ins_preg_women << patient.patient_id
+                                end
+		
 		patients = []
 		PatientProgram.find_by_sql("SELECT patient_id, earliest_start_date, o.obs_datetime 
 				FROM earliest_start_date p
@@ -655,6 +670,8 @@ class Cohort
         GROUP BY patient_id").each do | patient | 
 			patients << patient.patient_id
 		end
+		
+		patients = (patients + transfer_ins_preg_women).uniq
 		return patients
 
 	end
@@ -664,12 +681,12 @@ class Cohort
 		reason_concept_id = ConceptName.find_by_name("REASON FOR ART ELIGIBILITY").concept_id
 
 		 PatientProgram.find_by_sql("SELECT e.patient_id, name, o.obs_datetime FROM earliest_start_date e
-											LEFT JOIN obs o ON e.patient_id = o.person_id AND o.concept_id = #{reason_concept_id} AND o.voided = 0
-														AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime <= '#{end_date}'
-											LEFT JOIN concept_name n ON n.concept_id = o.value_coded AND n.concept_name_type = 'FULLY_SPECIFIED' AND n.voided = 0
-										WHERE earliest_start_date >= '#{start_date}'
-											AND earliest_start_date <= '#{end_date}'
-										ORDER BY o.obs_datetime DESC")
+				 LEFT JOIN obs o ON e.patient_id = o.person_id AND o.concept_id = #{reason_concept_id} AND o.voided = 0
+				  AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime <= '#{end_date}'
+				LEFT JOIN concept_name n ON n.concept_id = o.value_coded AND n.concept_name_type = 'FULLY_SPECIFIED' AND n.voided = 0
+				WHERE earliest_start_date >= '#{start_date}'
+				AND earliest_start_date <= '#{end_date}'
+				ORDER BY o.obs_datetime DESC")
 		
 	end
 
@@ -1399,6 +1416,7 @@ class Cohort
     symptom_concept = ConceptName.find_by_name('SYMPTOM PRESENT').concept_id
     drug_induced = ConceptName.find_by_name('DRUG INDUCED').concept_id
     side_effects = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+		no_side_effects = ConceptName.find_by_name('No').concept_id
 
     @patients_alive_and_on_art ||= self.total_alive_and_on_art
     patient_ids = @patients_alive_and_on_art
@@ -1412,8 +1430,9 @@ class Cohort
                                           AND o.concept_id = #{symptom_concept}
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-                                          AND e.patient_id IN (select o.person_id from obs os where os.voided = 0
+                                          AND e.patient_id IN (select os.person_id from obs os where os.voided = 0
                                           AND os.person_id = e.patient_id AND os.concept_id = #{drug_induced})
+																					AND o.value_coded NOT IN (#{no_side_effects})
                                           GROUP BY e.patient_id"
                                               )
 
@@ -1422,6 +1441,7 @@ class Cohort
                                           AND o.person_id IN (#{patient_ids.join(',')})
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+																					AND o.value_coded NOT IN (#{no_side_effects})
                                           GROUP BY o.person_id"
                                               ).each{|patient| side_effects_patients << patient}
 
@@ -1459,7 +1479,8 @@ class Cohort
     hiv_clinic_consultation_encounter_id = EncounterType.find_by_name("HIV CLINIC CONSULTATION").id
     symptom_concept = ConceptName.find_by_name('SYMPTOM PRESENT').concept_id
     drug_induced = ConceptName.find_by_name('DRUG INDUCED').concept_id
-     side_effects = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+    side_effects = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+		no_side_effects = ConceptName.find_by_name('No').concept_id
 
     @patients_alive_and_on_art ||= self.total_alive_and_on_art
     patient_ids = @patients_alive_and_on_art
@@ -1473,8 +1494,9 @@ class Cohort
                                           AND o.concept_id = #{symptom_concept}
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-                                          AND e.patient_id NOT IN (select o.person_id from obs os where os.voided = 0
+                                          AND e.patient_id NOT IN (select os.person_id from obs os where os.voided = 0
                                           AND os.person_id = e.patient_id AND os.concept_id = #{drug_induced})
+																					AND o.value_coded in (#{no_side_effects})
                                           GROUP BY e.patient_id"
                                               ).collect{|patient| patient.patient_id} rescue []
 
@@ -1483,10 +1505,11 @@ class Cohort
                                           AND o.person_id IN (#{patient_ids.join(',')})
                                           AND o.voided = 0
                                           AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+																					AND o.value_coded IN (#{no_side_effects})
                                           GROUP BY o.person_id"
                                               ).collect{|patient| patient.patient_id} rescue []
 
-    no_effects = side_effects_patients - other_effect
+    no_effects = side_effects_patients + other_effect
 		no_effects.uniq
 
 	end

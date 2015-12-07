@@ -16,6 +16,18 @@ def initialize_variables
                                                     FROM #{@source_db}.encounter
                                                     WHERE encounter_type = 54
                                                     AND voided = 0").map(&:adate)
+  
+  $guardians = []
+  $guardians = Patient.find_by_sql("SELECT patient_id, guardian_id FROM guardians")
+
+  $patient_demographics = []                                              
+  $patient_demographics = Patient.find_by_sql("SELECT * FROM #{@source_db}.patients_demographics").each{|pat| pat}
+
+  $patient_identifiers = []
+  $patient_identifiers =  Patient.find_by_sql("SELECT * FROM #{@source_db}.all_patient_identifiers").each{|patient| patient}
+
+  $patient_attributes = []
+  $patient_attributes = Patient.find_by_sql("SELECT * FROM #{@source_db}.all_patients_attributes").each{|patient| patient}
 end
 
 def pre_export_check
@@ -26,7 +38,8 @@ def initiate_script
     puts "started at #{@started_at}"
 
     threads = []
-    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patient WHERE voided = 0")
+    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patients_demographics")
+    
     record_count = patients.first.record_count
     max_patient_id = patients.first.max_patient_id
     thresholds = generate_thresholds(record_count, max_patient_id)
@@ -48,10 +61,7 @@ def initiate_special_script(patients_list)
     puts "started at #{@started_at}"
 
     threads = []
-#    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.earliest_start_date")
     record_count = patients_list.length
- #   max_patient_id = patients.first.max_patient_id
- #   thresholds = generate_thresholds(record_count, max_patient_id)
     if record_count < 200
         thread_number = 1
     else
@@ -86,7 +96,7 @@ def initiate_script
     puts "started at #{@started_at}"
 
     threads = []
-    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patient WHERE voided = 0")
+    patients = Patient.find_by_sql("SELECT max(patient_id) as max_patient_id, count(*) record_count FROM #{@source_db}.patients_demographics")
     record_count = patients.first.record_count
     max_patient_id = patients.first.max_patient_id
     thresholds = generate_thresholds(record_count, max_patient_id)
@@ -103,7 +113,6 @@ def initiate_script
     
     puts "ended at #{Time.now.strftime("%Y-%m-%d-%H%M%S")}"
 end
-
 
 def generate_thresholds(records, patient_id)
    number_iterations = patient_id.to_i / records.to_i
@@ -123,7 +132,11 @@ def generate_thresholds(records, patient_id)
 	   item = ["1", "#{threshold}"]
 	else
 	   last_item_index = threshold_array.length - 1
-	   item = ["#{(threshold_array[last_item_index][1].to_i + 1)}","#{(threshold_array[last_item_index][1].to_i + threshold.to_i)}"]
+	   if (count + 1) == number_iterations
+		   item = ["#{(threshold_array[last_item_index][1].to_i + 1)}","#{patient_id}"]   
+	   else
+        	   item = ["#{(threshold_array[last_item_index][1].to_i + 1)}","#{(threshold_array[last_item_index][1].to_i + threshold.to_i)}"]
+	   end
 	end
 	threshold_array << item
 	count += 1
@@ -179,7 +192,10 @@ def get_all_patients(min, max, thread)
       $temp_outfile_10_3 = File.open("./db/flat_tables_init_output/patients_initialized-" + @started_at + "thread_#{thread}" + ".sql", "w")
     end
     
-    patient_list = Patient.find_by_sql("SELECT patient_id FROM #{@source_db}.patient WHERE patient_id >= #{min_patient_id} AND patient_id <= #{max_patient_id} AND voided = 0").map(&:patient_id)
+    patient_list = Patient.find_by_sql("SELECT patient_id 
+                                        FROM #{@source_db}.patients_demographics 
+                                        WHERE patient_id >= #{min_patient_id} 
+                                        AND patient_id <= #{max_patient_id}").map(&:patient_id)
 
     (patient_list || []).each do |p| 
 	puts ">>working on patient>>>#{p}<<<<<<<"
@@ -323,7 +339,7 @@ def get_specific_patients(patients_list, thread)
       $temp_outfile_10_3 = File.open("./db/flat_tables_init_output/patients_initialized-" + @started_at + "thread_#{thread}" + ".sql", "w")
     end
     
-    patient_list = patients_list#Patient.find_by_sql("SELECT patient_id FROM #{@source_db}.earliest_start_date WHERE patient_id >= #{min_patient_id} AND patient_id <= #{max_patient_id}").map(&:patient_id)
+    patient_list = patients_list
 
     (patient_list || []).each do |p| 
        puts ">>working on patient>>>#{p}<<<<<<<"
@@ -485,7 +501,7 @@ def get_patients_data(patient_id)
   
   session_date = @max_dispensing_enc_date #date for calculating defaulters 
 
- states_dates  = PatientProgram.find_by_sql("SELECT 
+  states_dates  = PatientProgram.find_by_sql("SELECT 
                                                   ps.start_date
                                               FROM
                                                   #{@source_db}.patient_program pp
@@ -592,99 +608,84 @@ end
 
 def get_patient_demographics(patient_id)
   pat = Patient.find(patient_id)
-  patient_obj = PatientService.get_patient(pat.person) rescue nil
+  @initialized_patients = []
 
   current_location = Location.find(GlobalProperty.find_by_property("current_health_center_id").property_value).name
 
-  patient_details = []
-  PatientProgram.find_by_sql("SELECT *
-                              FROM #{@source_db}.earliest_start_date
-                              WHERE patient_id = #{patient_id}").each do |patient| 
-                                @earliest_start_date = patient.earliest_start_date
-                                @age_at_initiation = patient.age_at_initiation
-                                @age_in_days = patient.age_in_days
-                              end
-
-  #pulling all guardians to this patient
-  guardian_person_ids = Relationship.find_by_sql("SELECT * FROM relationship
-                                                  WHERE person_a = #{patient_id}
-                                                  AND voided = 0
-                                                  GROUP BY person_b
-                                                  LIMIT 5").map(&:person_b) rescue []
-
- #pulling all patients to which this patient is a guardian
- guardian_to_which_patient_ids = Relationship.find_by_sql("SELECT * FROM relationship
-                                                  WHERE person_b = #{patient_id}
-                                                  AND voided = 0
-                                                  GROUP BY person_a
-                                                  LIMIT 5").map(&:person_a) rescue []                                        
-
-  a_hash = {:legacy_id2 => 'NULL'}
-
-  pat_attributes = {}; pat_identifier = {}
-
-  PersonAttribute.find(:all, :conditions => ['person_id = ?', patient_id]).each do |attribute|
-    pat_attributes[attribute.person_attribute_type_id] = attribute.value
-  end
-
-  PatientIdentifier.find(:all, :conditions => ['patient_id = ?', patient_id]).each do |identifier|
-    pat_identifier[identifier.identifier_type] = identifier.identifier
-  end
-
-  @death_date = Person.find(:all, :conditions => ['person_id = ?', patient_id])#.map(&:death_date)
-
-  gender = pat.person.gender
-  if gender == 'M'
-    gender = 'Male'
-  elsif gender == 'F'
-    gender = 'Female'
-  end
-
-  a_hash[:patient_id] = patient_id rescue nil
-  a_hash[:given_name] = pat.person.names.first.given_name  rescue nil
-  a_hash[:middle_name] = pat.person.names.first.middle_name  rescue nil
-  a_hash[:family_name] = pat.person.names.first.family_name  rescue nil
-  a_hash[:gender] = gender rescue nil#patient_obj.sex  rescue nil
-  a_hash[:dob] = pat.person.birthdate  rescue nil
-  a_hash[:dob_estimated] = patient_obj.birthdate_estimated  rescue nil
-  a_hash[:death_date] =  pat.person.death_date.strftime('%Y-%m-%d') rescue nil
-  a_hash[:ta] = pat.person.addresses.first.county_district  rescue nil
-  a_hash[:current_address] = pat.person.addresses.first.city_village  rescue nil
-  a_hash[:home_district] = pat.person.addresses.first.address2  rescue nil
-  a_hash[:landmark] = pat.person.addresses.first.address1  rescue nil
-  a_hash[:cellphone_number] = pat_attributes[12]  rescue nil #cell phone
-  a_hash[:home_phone_number] = pat_attributes[14]  rescue nil #home phone number
-  a_hash[:office_phone_number] = pat_identifier[15]  rescue nil #office_phone_number
-  a_hash[:occupation] = pat_attributes[13]  rescue nil #occupation
-  a_hash[:nat_id] = pat_identifier[3]  rescue nil #national_id
-  a_hash[:arv_number]  = pat_identifier[4]  rescue nil #arv_number
-  a_hash[:pre_art_number] = pat_identifier[22]  rescue nil #pre_art_number
-  a_hash[:tb_number]  = pat_identifier[7]  rescue nil #tb_number
-  a_hash[:legacy_id]  = pat_identifier[2]  rescue nil #legacy 1
-  a_hash[:prev_art_number]  = pat_identifier[5]  rescue nil #prev_arv_number
-  a_hash[:filing_number]  = pat_identifier[17]  rescue nil #filing_number
-  a_hash[:archived_filing_number]  = pat_identifier[18]  rescue nil #archived_filing_number
-  a_hash[:earliest_start_date]  = @earliest_start_date  rescue nil
-  a_hash[:age_at_initiation] = @age_at_initiation rescue nil
-  a_hash[:age_in_days] = @age_in_days rescue nil  
-  a_hash[:current_location] = current_location rescue nil
+  this_patient = []
+  this_identifiers = []
+  this_attributes = []
   
-  if guardian_person_ids
-    a_hash[:guardian_person_id1] = guardian_person_ids[0]
-    a_hash[:guardian_person_id2] = guardian_person_ids[1]
-    a_hash[:guardian_person_id3] = guardian_person_ids[2]
-    a_hash[:guardian_person_id4] = guardian_person_ids[3]
-    a_hash[:guardian_person_id5] = guardian_person_ids[4]                
-  end
+  if @initialized_patients.include?(patient_id)
+     puts"patient already initialized>>>>>>#{patient_id}"
+  else
+     this_patient = $patient_demographics.select{|patient| patient.patient_id == patient_id}
+     the_identifiers = $patient_identifiers.select{|patient| patient.patient_id == patient_id} rescue []
+     the_attributes = $patient_attributes.select{|patient| patient.person_id == patient_id} rescue []
+     
+     guardian_person_ids = $guardians.select{|person| person.patient_id == patient_id}.map(&:guardian_id) rescue []
+     guardian_to_which_patient_ids = $guardians.select{|person| person.guardian_id == patient_id}.map(&:patient_id) rescue []
 
-  if guardian_person_ids
-    a_hash[:guardian_to_which_patient1] = guardian_to_which_patient_ids[0]
-    a_hash[:guardian_to_which_patient2] = guardian_to_which_patient_ids[1]
-    a_hash[:guardian_to_which_patient3] = guardian_to_which_patient_ids[2]
-    a_hash[:guardian_to_which_patient4] = guardian_to_which_patient_ids[3]
-    a_hash[:guardian_to_which_patient5] = guardian_to_which_patient_ids[4]                
-  end
+     a_hash = {:legacy_id2 => 'NULL'}
 
+     gender = pat.person.gender
+     if gender == 'M'
+        gender = 'Male'
+     elsif gender == 'F'
+        gender = 'Female'
+     end
+
+     a_hash[:patient_id] = patient_id 
+     a_hash[:given_name] = this_patient.first.given_name rescue nil
+     a_hash[:middle_name] = this_patient.first.middle_name rescue nil
+     a_hash[:family_name] = this_patient.first.family_name rescue nil 
+     a_hash[:gender] = gender  rescue nil #this_patient.gender  rescue nil
+     a_hash[:dob] = this_patient.first.birthdate rescue nil 
+     a_hash[:dob_estimated] = this_patient.first.birthdate_estimated rescue nil  
+     a_hash[:death_date] =  this_patient.first.death_date rescue nil
+                 
+     a_hash[:ta] = this_patient.first.traditional_authority  rescue nil
+     a_hash[:current_address] = this_patient.first.current_residence  rescue nil
+     a_hash[:home_district] = this_patient.first.home_district  rescue nil
+     a_hash[:landmark] = this_patient.first.landmark  rescue nil
+                  
+     a_hash[:cellphone_number] = the_attributes.first.cell_phone  rescue nil
+     a_hash[:home_phone_number] = the_attributes.first.home_phone  rescue nil 
+     a_hash[:office_phone_number] = the_attributes.first.office_phone  rescue nil
+     a_hash[:occupation] = the_attributes.first.occupation  rescue nil
+                  
+     a_hash[:nat_id] = the_identifiers.first.national_id  rescue nil
+     a_hash[:arv_number]  = the_identifiers.first.arv_number  rescue nil
+     a_hash[:pre_art_number] = the_identifiers.first.pre_art_number  rescue nil
+     a_hash[:tb_number]  = the_identifiers.first.tb_number  rescue nil
+     a_hash[:legacy_id]  = the_identifiers.first.legacy_id  rescue nil
+     a_hash[:prev_art_number]  = the_identifiers.first.prev_art_number rescue nil
+     a_hash[:filing_number]  = the_identifiers.first.filing_number  rescue nil
+     a_hash[:archived_filing_number]  = the_identifiers.first.archived_filing_number rescue nil
+                  
+     a_hash[:earliest_start_date]  = this_patient.first.earliest_start_date  rescue nil
+     a_hash[:age_at_initiation] = this_patient.first.age_at_initiation rescue nil
+     a_hash[:age_in_days] = this_patient.first.age_in_days rescue nil  
+     a_hash[:current_location] = current_location rescue nil 
+
+     if guardian_person_ids
+       a_hash[:guardian_person_id1] = guardian_person_ids[0]
+       a_hash[:guardian_person_id2] = guardian_person_ids[1]
+       a_hash[:guardian_person_id3] = guardian_person_ids[2]
+       a_hash[:guardian_person_id4] = guardian_person_ids[3]
+       a_hash[:guardian_person_id5] = guardian_person_ids[4]                
+    end
+
+     if guardian_to_which_patient_ids
+      a_hash[:guardian_to_which_patient1] = guardian_to_which_patient_ids[0]
+      a_hash[:guardian_to_which_patient2] = guardian_to_which_patient_ids[1]
+      a_hash[:guardian_to_which_patient3] = guardian_to_which_patient_ids[2]
+      a_hash[:guardian_to_which_patient4] = guardian_to_which_patient_ids[3]
+      a_hash[:guardian_to_which_patient5] = guardian_to_which_patient_ids[4]                
+     end
+     
+     @initialized_patients << patient_id
+  end
   return generate_sql_string(a_hash)
 end
 
@@ -802,6 +803,7 @@ def process_treatment_obs(encounter, type = 0) #type 0 normal encounter, 1 gener
     		elsif obs.value_coded == 1066 #&& obs.value_coded_name_id == 1103
     			a_hash[:ipt_given_no] = 'No'
     			a_hash[:ipt_given_no_enc_id] = encounter.encounter_id
+    	  
     		end		
       elsif obs.concept_id == 7024 #CPT given
         if obs.value_coded == 1065 #&& obs.value_coded_name_id == 1102
@@ -921,8 +923,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:family_planning_method_female_condoms] = 'Yes'
           a_hash[:family_planning_method_female_condoms_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7860 && obs.value_coded_name_id == 10741
-          a_hash[:family_planning_method__rythm_method] = 'Yes'
-          a_hash[:family_planning_method__rythm_method_enc_id] = encounter.encounter_id
+          a_hash[:family_planning_method_rythm_method] = 'Yes'
+          a_hash[:family_planning_method_rythm_method_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7861 && obs.value_coded_name_id == 10743
           a_hash[:family_planning_method_withdrawal] = 'Yes'
           a_hash[:family_planning_method_withdrawal_enc_id] = encounter.encounter_id
@@ -936,8 +938,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:family_planning_method_vasectomy] = 'Yes'
           a_hash[:family_planning_method_vasectomy_enc_id] = encounter.encounter_id
         elsif obs.value_coded == 7862 && obs.value_coded_name_id == 10744
-          a_hash[:family_planning_method_emergency__contraception] = 'Yes'
-          a_hash[:family_planning_method_emergency__contraception_enc_id] = encounter.encounter_id
+          a_hash[:family_planning_method_emergency_contraception] = 'Yes'
+          a_hash[:family_planning_method_emergency_contraception_enc_id] = encounter.encounter_id
         end
      elsif obs.concept_id == 1293 #symptoms present
         if obs.value_coded == 2148 && obs.value_coded_name_id == 2325
@@ -1046,6 +1048,14 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
         elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
           a_hash[:allergic_to_sulphur_no] = 'No'
           a_hash[:allergic_to_sulphur_no_enc_id] = encounter.encounter_id
+        elsif obs.value_text
+          if obs.value_text == 1065
+            a_hash[:allergic_to_sulphur_yes] = 'Yes'
+            a_hash[:allergic_to_sulphur_yes_enc_id] = encounter.encounter_id
+          elsif obs.value_text == 1066
+            a_hash[:allergic_to_sulphur_no] = 'No'
+            a_hash[:allergic_to_sulphur_no_enc_id] = encounter.encounter_id
+          end          
         end
       elsif obs.concept_id == 7874 #prescribe arvs
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
@@ -1054,6 +1064,14 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
         elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
           a_hash[:prescribe_arvs_no] = 'No'
           a_hash[:prescribe_arvs_no_enc_id] = encounter.encounter_id
+        elsif obs.value_text
+          if obs.value_text == 1065
+            a_hash[:prescribe_arvs_yes] = 'Yes'
+            a_hash[:prescribe_arvs_yes_enc_id] = encounter.encounter_id
+          elsif obs.value_text == 1066
+            a_hash[:prescribe_arvs_no] = 'No'
+            a_hash[:prescribe_arvs_no_enc_id] = encounter.encounter_id
+          end
         end
       elsif obs.concept_id == 656 #prescribe ipt
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
@@ -1062,6 +1080,14 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
         elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
           a_hash[:prescribe_ipt_no] = 'No'
           a_hash[:prescribe_ipt_no_enc_id] = encounter.encounter_id
+       elsif obs.value_text
+          if obs.value_text == 1065
+            a_hash[:prescribe_ipt_yes] = 'Yes'
+            a_hash[:prescribe_ipt_yes_enc_id] = encounter.encounter_id
+          elsif obs.value_text == 1066
+            a_hash[:prescribe_ipt_no] = 'No'
+            a_hash[:prescribe_ipt_no_enc_id] = encounter.encounter_id
+          end
         end
       elsif obs.concept_id == 8259 #routine tb screening
 	      if obs.value_coded == 5945 && obs.value_coded_name_id == 4315
@@ -1077,25 +1103,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
 		      a_hash[:routine_tb_screening_weight_loss_failure] = 'Yes'
           a_hash[:routine_tb_screening_weight_loss_failure_enc_id] = encounter.encounter_id
 	      end
-=begin
-     	elsif obs.concept_id == 2146 #side effects
-	      if obs.value_coded == 821 && obs.value_coded_name_id == 838
-		      a_hash[:side_effects_peripheral_neuropathy] = 'Yes'
-		      a_hash[:side_effects_peripheral_neuropathy_enc_id] = encounter.encounter_id
-	      elsif obs.value_coded == 29 && obs.value_coded_name_id == 30
-		      a_hash[:side_effects_hepatitis] = 'Yes'
-          a_hash[:side_effects_hepatitis_enc_id] = encounter.encounter_id
-	      elsif obs.value_coded == 512 && obs.value_coded_name_id == 524
-		      a_hash[:side_effects_skin_rash] = 'Yes'
-          a_hash[:side_effects_skin_rash_enc_id] = encounter.encounter_id
-	      elsif obs.value_coded == 2148 && obs.value_coded_name_id == 2325
-		      a_hash[:side_effects_lipodystrophy] = 'Yes'
-          a_hash[:side_effects_lipodystrophy_enc_id] = encounter.encounter_id
-	      elsif obs.value_coded == 6408 && obs.value_coded_name_id == 8873
-		      a_hash[:side_effects_other] = 'Yes'
-          a_hash[:side_effects_other_enc_id] = encounter.encounter_id
-	      end
-=end      
+      
       elsif obs.concept_id == 7567 #drug induced symptoms
         if obs.value_coded == 2148 && obs.value_coded_name_id == 2325
           a_hash[:drug_induced_lipodystrophy] = 'Yes'
@@ -1178,27 +1186,137 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
 
   (encounter || []).each do | obs |
     if obs.concept_id == 2552 #FOLLOW UP AGREEMENT
-      a_hash[:agrees_to_followup] = obs.to_s.split(':')[1].strip rescue nil
+      ans_registration = ""
+      if obs.value_coded 
+        ans_registration = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_registration = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_registration = 'No'  
+        elsif obs.value_text == '1067'
+          ans_registration = 'Unknown'  
+        end
+      end
+      a_hash[:agrees_to_followup] = ans_registration rescue nil
+
     elsif obs.concept_id == 7882 #CONFIRMATORY HIV TEST DATE
       a_hash[:confirmatory_hiv_test_date] = obs.value_datetime.to_date rescue nil
+
     elsif obs.concept_id == 7881 #CONFIRMATORY HIV TEST LOCATION
-      a_hash[:confirmatory_hiv_test_location] = obs.to_s.split(':')[1].strip rescue nil
+     if obs.value_text
+       conf_loc_name = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
+       if conf_loc_name
+         a_hash[:confirmatory_hiv_test_location] = conf_loc_name rescue nil
+       else
+         a_hash[:confirmatory_hiv_test_location] = obs.value_text.to_s rescue nil
+       end
+     else
+      hiv_location = Location.find_by_location_id(obs.value_numeric).name rescue nil
+      a_hash[:confirmatory_hiv_test_location] = hiv_location rescue nil
+     end
     elsif obs.concept_id == 7750 #LOCATION OF ART INITIATION
-      a_hash[:location_of_art_initialization] = obs.to_s.split(':')[1].strip rescue nil
+      if obs.value_text
+        loc_of_art = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
+        if loc_of_art
+         a_hash[:location_of_art_initialization] = loc_of_art rescue nil
+        else
+         a_hash[:location_of_art_initialization] = obs.value_text.to_s rescue nil
+        end
+       else
+        art_location = Location.find_by_location_id(obs.value_numeric).name rescue nil
+        a_hash[:confirmatory_hiv_test_location] = art_location rescue nil
+      end
+
     elsif obs.concept_id == 7752 #HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS
-      a_hash[:taken_art_in_last_two_months] = obs.to_s.split(':')[1].strip rescue nil
+      ans_registration = ""
+      if obs.value_coded 
+        ans_registration = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_registration = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_registration = 'No'  
+        elsif obs.value_text == '1067'
+          ans_registration = 'Unknown'  
+        end
+      end
+      a_hash[:taken_art_in_last_two_months] = ans_registration rescue nil
+
+    elsif obs.concept_id == 7880 #Confirmatory HIV Test Type
+      a_hash[:type_of_confirmatory_hiv_test] = obs.to_s.split(':')[1] rescue nil
+
     elsif obs.concept_id == 6394 #HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS
-      a_hash[:taken_art_in_last_two_weeks] = obs.to_s.split(':')[1].strip rescue nil
+      ans_registration = ""
+      if obs.value_coded 
+        ans_registration = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_registration = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_registration = 'No'  
+        elsif obs.value_text == '1067'
+          ans_registration = 'Unknown'  
+        end
+      end
+      a_hash[:taken_art_in_last_two_weeks] = ans_registration rescue nil
+
     elsif obs.concept_id == 6393 #HAS TRANSFER LETTER
-      a_hash[:has_transfer_letter] = obs.to_s.split(':')[1].strip rescue nil
+      ans_registration = ""
+      if obs.value_coded 
+        ans_registration = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_registration = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_registration = 'No'  
+        elsif obs.value_text == '1067'
+          ans_registration = 'Unknown'  
+        end
+      end
+      a_hash[:has_transfer_letter] = ans_registration rescue nil
+
     elsif obs.concept_id == 2516 #DATE ANTIRETROVIRALS STARTED
       a_hash[:date_started_art] = obs.value_datetime.to_date rescue nil
+
     elsif obs.concept_id == 7937 #EVER REGISTERED AT ART CLINIC
-      a_hash[:ever_registered_at_art_clinic] = obs.to_s.split(':')[1].strip rescue nil
+      ans_registration = ""
+      if obs.value_coded 
+        ans_registration = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_registration = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_registration = 'No'  
+        elsif obs.value_text == '1067'
+          ans_registration = 'Unknown'  
+        end
+      end
+      a_hash[:ever_registered_at_art_clinic] = ans_registration rescue nil
+
     elsif obs.concept_id == 7754 #EVER RECEIVED ART?
-      a_hash[:ever_received_art] = obs.to_s.split(':')[1].strip rescue nil
+      ans_registration = ""
+      if obs.value_coded 
+        ans_registration = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_registration = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_registration = 'No'  
+        elsif obs.value_text == '1067'
+          ans_registration = 'Unknown'  
+        end
+      end
+      a_hash[:ever_received_art] = ans_registration rescue nil
+
     elsif obs.concept_id == 7753 #LAST ART DRUGS TAKEN
-      a_hash[:last_art_drugs_taken] = obs.to_s.split(':')[1].strip rescue nil
+      last_drug = ""
+      if obs.value_coded
+        last_drug = obs.to_s.split(':')[1].strip rescue nil
+      elsif obs.value_text
+        last_drug = Drug.find_by_concept_id(obs.value_text).name rescue nil
+      end
+      a_hash[:last_art_drugs_taken] = last_drug rescue nil
     elsif obs.concept_id == 7751 #DATE ART LAST TAKEN
       a_hash[:date_art_last_taken] = obs.value_datetime.to_date rescue nil
       a_hash[:date_art_last_taken_v_date] = obs.obs_datetime.to_date rescue nil      
@@ -1221,8 +1339,11 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
 
   return generate_sql_string(a_hash) if type == 1
 
-  (encounter || []).each do | obs |    
+  (encounter || []).each do | obs |
+    
+    
     if obs.concept_id == 6131 #Patient Pregnant
+      if !obs.value_coded.blank?
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:pregnant_yes] = 'Yes'
           a_hash[:pregnant_yes_enc_id] = obs.encounter_id
@@ -1234,9 +1355,25 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
           a_hash[:pregnant_unknown] = 'Unknown'
           a_hash[:pregnant_unknown_enc_id] = obs.encounter_id
-          a_hash[:pregnant_unknown_v_date] = obs.obs_datetime.to_date          
+          a_hash[:pregnant_unknown_v_date] = obs.obs_datetime.to_date 
         end
+      else
+        if obs.value_text == '1065'
+          a_hash[:pregnant_yes] = 'Yes'
+          a_hash[:pregnant_yes_enc_id] = obs.encounter_id
+          a_hash[:pregnant_yes_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1066'
+          a_hash[:pregnant_no] = 'No'
+          a_hash[:pregnant_no_enc_id] = obs.encounter_id
+          a_hash[:pregnant_no_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1067'
+          a_hash[:pregnant_unknown] = 'Unknown'
+          a_hash[:pregnant_unknown_enc_id] = obs.encounter_id
+          a_hash[:pregnant_unknown_v_date] = obs.obs_datetime.to_date        
+        end
+      end
     elsif obs.concept_id == 1755 #Patient Pregnant
+      if !obs.value_coded.blank?
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:pregnant_yes] = 'Yes'
           a_hash[:pregnant_yes_enc_id] = obs.encounter_id
@@ -1248,9 +1385,25 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
           a_hash[:pregnant_unknown] = 'Unknown'
           a_hash[:pregnant_unknown_enc_id] = obs.encounter_id
-          a_hash[:pregnant_unknown_v_date] = obs.obs_datetime.to_date               
+          a_hash[:pregnant_unknown_v_date] = obs.obs_datetime.to_date 
         end
+      else
+        if obs.value_text == '1065'
+          a_hash[:pregnant_yes] = 'Yes'
+          a_hash[:pregnant_yes_enc_id] = obs.encounter_id
+          a_hash[:pregnant_yes_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1066'
+          a_hash[:pregnant_no] = 'No'
+          a_hash[:pregnant_no_enc_id] = obs.encounter_id
+          a_hash[:pregnant_no_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1067'
+          a_hash[:pregnant_unknown] = 'Unknown'
+          a_hash[:pregnant_unknown_enc_id] = obs.encounter_id
+          a_hash[:pregnant_unknown_v_date] = obs.obs_datetime.to_date        
+        end
+      end
     elsif obs.concept_id == 7965 #breastfeeding
+      if !obs.value_coded.blank?    
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:breastfeeding_yes] = 'Yes'
           a_hash[:breastfeeding_yes_enc_id] = obs.encounter_id
@@ -1264,126 +1417,829 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:breastfeeding_unknown_enc_id] = obs.encounter_id
           a_hash[:breastfeeding_unknown_v_date]  = obs.obs_datetime.to_date                             
         end
+      else
+        if obs.value_text == '1065'
+          a_hash[:breastfeeding_yes] = 'Yes'
+          a_hash[:breastfeeding_yes_enc_id] = obs.encounter_id
+          a_hash[:breastfeeding_yes_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1066'
+          a_hash[:breastfeeding_no] = 'No'
+          a_hash[:breastfeeding_no_enc_id] = obs.encounter_id
+          a_hash[:breastfeeding_no_v_date]  = obs.obs_datetime.to_date
+        elsif obs.value_text == '1067'
+          a_hash[:breastfeeding_unknown] = 'Unknown'
+          a_hash[:breastfeeding_unknown_enc_id] = obs.encounter_id
+          a_hash[:breastfeeding_unknown_v_date]  = obs.obs_datetime.to_date                             
+        end        
+      end
     elsif obs.concept_id == 9099 #cd4 count location
-      a_hash[:cd4_count_location] = obs.to_s.split(':')[1].strip rescue nil
+      if obs.value_text
+        cd4_count_loc = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
+       if cd4_count_loc 
+         a_hash[:cd4_count_location] = cd4_count_loc rescue nil
+       else
+         a_hash[:cd4_count_location] = obs.value_text.to_s rescue nil
+       end
+      else
+        cd4_location = Location.find_by_location_id(obs.value_numeric).name rescue nil
+        a_hash[:cd4_count_location] = cd4_location rescue nil
+      end
+
+
     elsif obs.concept_id == 5497 #cd4_count
-      a_hash[:cd4_count] = obs.to_s.split(':')[1].strip rescue nil
+      a_hash[:cd4_count] = obs.value_numeric.to_i rescue nil
     elsif obs.concept_id == 9098 #cd4_count_modifier
       a_hash[:cd4_count_modifier] = obs.to_s.split(':')[1].strip rescue nil
     elsif obs.concept_id == 730 #cd4_count_percent
       a_hash[:cd4_count_percent] = obs.to_s.split(':')[1].strip rescue nil
     elsif obs.concept_id == 6831 #cd4_count_datetime
       a_hash[:cd4_count_datetime] = obs.value_datetime.to_date rescue nil
+
     elsif obs.concept_id == 5006 #asymptomatic
-      a_hash[:asymptomatic] = obs.to_s.split(':')[1].strip rescue nil
+      if obs.value_coded
+        a_hash[:asymptomatic] = obs.to_s.split(':')[1].strip rescue nil
+      else
+      
+      end
+
     elsif obs.concept_id == 5328 #persistent_generalized_lymphadenopathy
-      a_hash[:persistent_generalized_lymphadenopathy] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:persistent_generalized_lymphadenopathy] = ans_staging rescue nil
+
     elsif obs.concept_id == 6757 #unspecified_stage_1_cond
-      a_hash[:unspecified_stage_1_cond] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:unspecified_stage_1_cond] = ans_staging rescue nil
+
     elsif obs.concept_id == 1212 #molluscumm_contagiosum
-      a_hash[:molluscumm_contagiosum] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end      
+      a_hash[:molluscumm_contagiosum] = ans_staging rescue nil
+
     elsif obs.concept_id == 6775 #wart_virus_infection_extensive
-      a_hash[:wart_virus_infection_extensive] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:wart_virus_infection_extensive] = ans_staging rescue nil
+
     elsif obs.concept_id == 2576 #oral_ulcerations_recurrent
-      a_hash[:oral_ulcerations_recurrent] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:oral_ulcerations_recurrent] = ans_staging rescue nil
+
     elsif obs.concept_id == 1210 #parotid_enlargement_persistent_unexplained
-      a_hash[:parotid_enlargement_persistent_unexplained] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:parotid_enlargement_persistent_unexplained] = ans_staging rescue nil
+
     elsif obs.concept_id == 2891 #lineal_gingival_erythema
-      a_hash[:lineal_gingival_erythema] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:lineal_gingival_erythema] = ans_staging rescue nil
+
     elsif obs.concept_id == 836 #herpes_zoster
-      a_hash[:herpes_zoster] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:herpes_zoster] = ans_staging rescue nil
+
     elsif obs.concept_id == 5012 #respiratory_tract_infections_recurrent
-      a_hash[:respiratory_tract_infections_recurrent] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:respiratory_tract_infections_recurrent] = ans_staging rescue nil
+
     elsif obs.concept_id == 6758 #unspecified_stage2_condition
-      a_hash[:unspecified_stage2_condition] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:unspecified_stage2_condition] = ans_staging rescue nil
+
     elsif obs.concept_id == 2575 #angular_chelitis
-      a_hash[:angular_chelitis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:angular_chelitis] = ans_staging rescue nil
+
     elsif obs.concept_id == 2577 #papular_pruritic_eruptions
-      a_hash[:papular_pruritic_eruptions] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:papular_pruritic_eruptions] = ans_staging rescue nil
+
     elsif obs.concept_id == 7537 #hepatosplenomegaly_unexplained
-      a_hash[:hepatosplenomegaly_unexplained] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:hepatosplenomegaly_unexplained] = ans_staging rescue nil
+
     elsif obs.concept_id == 5337 #oral_hairy_leukoplakia
-      a_hash[:oral_hairy_leukoplakia] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:oral_hairy_leukoplakia] = ans_staging rescue nil
+
     elsif obs.concept_id == 7540 #severe_weight_loss
-      a_hash[:severe_weight_loss] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:severe_weight_loss] = ans_staging rescue nil
+
     elsif obs.concept_id == 5027 #fever_persistent_unexplained
-      a_hash[:fever_persistent_unexplained] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:fever_persistent_unexplained] = ans_staging rescue nil
+
     elsif obs.concept_id == 8206 #pulmonary_tuberculosis
-      a_hash[:pulmonary_tuberculosis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:pulmonary_tuberculosis] = ans_staging rescue nil
       a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
+
     elsif obs.concept_id == 7539 #pulmonary_tuberculosis_last_2_years
-      a_hash[:pulmonary_tuberculosis_last_2_years] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:pulmonary_tuberculosis_last_2_years] = ans_staging rescue nil
       a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
+
     elsif obs.concept_id == 5333 #severe_bacterial_infection
-      a_hash[:severe_bacterial_infection] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:severe_bacterial_infection] = ans_staging rescue nil
+
     elsif obs.concept_id == 1215 #bacterial_pnuemonia
-      a_hash[:bacterial_pnuemonia] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:bacterial_pnuemonia] = ans_staging rescue nil
+
     elsif obs.concept_id == 5024 #symptomatic_lymphoid_interstitial_pnuemonitis
-      a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = ans_staging rescue nil
+
     elsif obs.concept_id == 2889 #chronic_hiv_assoc_lung_disease
-      a_hash[:chronic_hiv_assoc_lung_disease] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:chronic_hiv_assoc_lung_disease] = ans_staging rescue nil
+
     elsif obs.concept_id == 6759 #unspecified_stage3_condition
-      a_hash[:unspecified_stage3_condition] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:unspecified_stage3_condition] = ans_staging rescue nil
+
     elsif obs.concept_id == 3 #aneamia
-      a_hash[:aneamia] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:aneamia] = ans_staging rescue nil
+
     elsif obs.concept_id == 7954 #neutropaenia
-      a_hash[:neutropaenia] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:neutropaenia] = ans_staging rescue nil
+
     elsif obs.concept_id == 7955 #thrombocytopaenia_chronic
-      a_hash[:thrombocytopaenia_chronic] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:thrombocytopaenia_chronic] = ans_staging rescue nil
+
     elsif obs.concept_id == 16 #diarhoea
-      a_hash[:diarhoea] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:diarhoea] = ans_staging rescue nil
+
     elsif obs.concept_id == 5334 #oral_candidiasis
-      a_hash[:oral_candidiasis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:oral_candidiasis] = ans_staging rescue nil
+
     elsif obs.concept_id == 7546 #acute_necrotizing_ulcerative_gingivitis
-      a_hash[:acute_necrotizing_ulcerative_gingivitis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:acute_necrotizing_ulcerative_gingivitis] = ans_staging rescue nil
+
     elsif obs.concept_id == 7547 #lymph_node_tuberculosis
-      a_hash[:lymph_node_tuberculosis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:lymph_node_tuberculosis] = ans_staging rescue nil
+
     elsif obs.concept_id == 2583 #toxoplasmosis_of_the_brain
-      a_hash[:toxoplasmosis_of_the_brain] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:toxoplasmosis_of_the_brain] = ans_staging rescue nil
+
     elsif obs.concept_id == 1359 #cryptococcal_meningitis
-      a_hash[:cryptococcal_meningitis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:cryptococcal_meningitis] = ans_staging rescue nil
+
     elsif obs.concept_id == 5046 #progressive_multifocal_leukoencephalopathy
-      a_hash[:progressive_multifocal_leukoencephalopathy] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:progressive_multifocal_leukoencephalopathy] = ans_staging rescue nil
+
     elsif obs.concept_id == 7550 #disseminated_mycosis
-      a_hash[:disseminated_mycosis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:disseminated_mycosis] = ans_staging rescue nil
+
     elsif obs.concept_id == 7553 #candidiasis_of_oesophagus
-      a_hash[:candidiasis_of_oesophagus] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:candidiasis_of_oesophagus] = ans_staging rescue nil
+
     elsif obs.concept_id == 1547 #extrapulmonary_tuberculosis
-      a_hash[:extrapulmonary_tuberculosis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:extrapulmonary_tuberculosis] = ans_staging rescue nil
       a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
+
     elsif obs.concept_id == 2587 #cerebral_non_hodgkin_lymphoma
-      a_hash[:cerebral_non_hodgkin_lymphoma] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:cerebral_non_hodgkin_lymphoma] = ans_staging rescue nil
+
     elsif obs.concept_id == 507 #kaposis
-      a_hash[:kaposis_sarcoma] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:kaposis_sarcoma] = ans_staging rescue nil
       a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
+
     elsif obs.concept_id == 1362 #hiv_encephalopathy
-      a_hash[:hiv_encephalopathy] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:hiv_encephalopathy] = ans_staging rescue nil
+
     elsif obs.concept_id == 2894 #bacterial_infections_severe_recurrent
-      a_hash[:bacterial_infections_severe_recurrent] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:bacterial_infections_severe_recurrent] = ans_staging rescue nil
+
     elsif obs.concept_id == 6763 #unspecified_stage_4_condition
-      a_hash[:unspecified_stage_4_condition] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:unspecified_stage_4_condition] = ans_staging rescue nil
+
     elsif obs.concept_id == 882 #pnuemocystis_pnuemonia
-      a_hash[:pnuemocystis_pnuemonia] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:pnuemocystis_pnuemonia] = ans_staging rescue nil
+
     elsif obs.concept_id == 2585 #disseminated_non_tuberculosis_mycobacterial_infection
-      a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = ans_staging rescue nil
+
     elsif obs.concept_id == 5034 #cryptosporidiosis
-      a_hash[:cryptosporidiosis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:cryptosporidiosis] = ans_staging rescue nil
+
     elsif obs.concept_id == 2858 #isosporiasis
-      a_hash[:isosporiasis] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:isosporiasis] = ans_staging rescue nil
+
     elsif obs.concept_id == 7957 #symptomatic_hiv_associated_nephropathy
-      a_hash[:symptomatic_hiv_associated_nephropathy] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:symptomatic_hiv_associated_nephropathy] = ans_staging rescue nil
+
     elsif obs.concept_id == 5344 #chronic_herpes_simplex_infection
-      a_hash[:chronic_herpes_simplex_infection] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:chronic_herpes_simplex_infection] = ans_staging rescue nil
+
     elsif obs.concept_id == 7551 #cytomegalovirus_infection
-      a_hash[:cytomegalovirus_infection] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:cytomegalovirus_infection] = ans_staging rescue nil
+
     elsif obs.concept_id == 5048 #toxoplasomis_of_the_brain_1month
-      a_hash[:toxoplasomis_of_the_brain_1month] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:toxoplasomis_of_the_brain_1month] = ans_staging rescue nil
+
     elsif obs.concept_id == 7961 #recto_vaginal_fitsula
-      a_hash[:recto_vaginal_fitsula] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:recto_vaginal_fitsula] = ans_staging rescue nil
+    
     elsif obs.concept_id == 823 #moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl
-      a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = obs.to_s.split(':')[1].strip rescue nil
+      ans_staging = ""
+      if obs.value_coded 
+        ans_staging = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_staging = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_staging = 'No'  
+        elsif obs.value_text == '1067'
+          ans_staging = 'Unknown'  
+        end
+      end
+      a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = ans_staging rescue nil
+
     elsif obs.concept_id == 7563 #reason_for_starting_art
-      a_hash[:reason_for_eligibility] = obs.to_s.split(':')[1].strip rescue nil
+      reason_for_starting = ""
+      if obs.value_coded
+        reason_for_starting = ConceptName.find_by_concept_name_id(obs.value_coded_name_id).name rescue nil
+      elsif obs.value_text
+        reason_for_starting = ConceptName.find_by_concept_id(obs.value_text) rescue nil
+      end
+
+      a_hash[:reason_for_eligibility] = reason_for_starting rescue nil
       a_hash[:reason_for_starting_v_date] = obs.obs_datetime.to_date rescue nil
       a_hash[:reason_for_eligibility_enc_id] = obs.encounter_id rescue nil
     elsif obs.concept_id == 7562 #who_stage
@@ -1457,16 +2313,16 @@ def process_patient_orders(orders, visit, type = 0)
       drug_equivalent_daily_dose_hash[drug_name] = ord.equivalent_daily_dose
       drug_inventory_ids_hash[drug_name] = ord.drug_inventory_id
     else
-      patient_orders[drug_name] += drug_name
-      drug_order_ids_hash[drug_name] += ord.order_id
-      drug_enc_ids_hash[drug_name] += ord.encounter_id
-      drug_start_date_hash[drug_name] += ord.start_date.strftime("%Y-%m-%d")  rescue nil
-      drug_auto_expire_date_hash[drug_name] += ord.auto_expire_date.strftime("%Y-%m-%d")  rescue nil
-      drug_quantity_hash[drug_name] += ord.quantity rescue nil
-      drug_dose_hash[drug_name] += ord.dose
-      drug_frequency_hash[drug_name] += ord.frequency
-      drug_equivalent_daily_dose_hash[drug_name] += ord.equivalent_daily_dose
-      drug_inventory_ids_hash[drug_name] += ord.drug_inventory_id
+      patient_orders[drug_name] = drug_name
+      drug_order_ids_hash[drug_name] = ord.order_id
+      drug_enc_ids_hash[drug_name] = ord.encounter_id
+      drug_start_date_hash[drug_name] = ord.start_date.strftime("%Y-%m-%d")  rescue nil
+      drug_auto_expire_date_hash[drug_name] = ord.auto_expire_date.strftime("%Y-%m-%d")  rescue nil
+      drug_quantity_hash[drug_name] = ord.quantity rescue nil
+      drug_dose_hash[drug_name] = ord.dose
+      drug_frequency_hash[drug_name] = ord.frequency
+      drug_equivalent_daily_dose_hash[drug_name] = ord.equivalent_daily_dose
+      drug_inventory_ids_hash[drug_name] = ord.drug_inventory_id
     end
   end
  
@@ -1540,27 +2396,39 @@ def process_patient_orders(orders, visit, type = 0)
 end
 
 def process_patient_state(patient_id,visit)
-	#initialize field and values variables
+  #initialize field and values variables
   fields = ""
   values = ""
 
-	a_hash = {:current_hiv_program_start_date => 'NULL'}
+  a_hash = {:current_hiv_program_start_date => 'NULL'}
 
-	program_id = PatientProgram.find_by_sql("SELECT patient_program_id 
-				FROM #{@source_db}.patient_program 
-				WHERE patient_id = #{patient_id} 
-				AND program_id = 1 AND voided = 0 
-				ORDER BY patient_program_id DESC LIMIT 1").first.patient_program_id rescue nil
+  program_id = PatientProgram.find_by_sql("SELECT patient_program_id 
+                         		   FROM #{@source_db}.patient_program 
+				           WHERE patient_id = #{patient_id} 
+				           AND program_id = 1 AND voided = 0 
+				           ORDER BY patient_program_id DESC LIMIT 1").first.patient_program_id rescue nil
 				
   if ! program_id.nil?   
-      patient_state = PatientProgram.find_by_sql("SELECT 
+     @patient_state = PatientProgram.find_by_sql("SELECT 
   	                        IFNULL(#{@source_db}.current_state_for_program(#{patient_id},1,'#{visit} 23:59:59'), 'Unknown') AS state").first.state  
   	  
-  	   if !patient_state.blank?
-  	    if patient_state == 'Unknown'
+  	   if !@patient_state.blank?
+  	    if @patient_state == 'Unknown'
   	      state_name = 'Unknown'
   	    else
-          state_name = ProgramWorkflowState.find_by_sql("SELECT 
+              @patient_died_concept_id = ConceptName.find_by_name("Patient died").concept_id
+              
+              @patient_died_state_ids =  ProgramWorkflowState.find_by_sql("SELECT #{@source_db}.current_state_for_program(#{patient_id}, 1, '#{visit} 23:59:59') IN (SELECT program_workflow_state_id FROM program_workflow_state
+                                                WHERE concept_id = #{@patient_died_concept_id}
+                                                AND retired = 0) AS state").first.state
+              if @patient_died_state_ids.include?("1")
+                 state_id = 3
+              else
+                state_id = @patient_state
+              end
+               
+              if state_id != 'Unknown'
+                state_name = ProgramWorkflowState.find_by_sql("SELECT 
                                                  c.name AS name
                                                FROM
                                                    #{@source_db}. program_workflow_state pws
@@ -1569,9 +2437,12 @@ def process_patient_state(patient_id,visit)
                                                         AND c.voided = 0
                                                         AND pws.retired = 0
                                                WHERE
-                                                    program_workflow_state_id = #{patient_state}
+                                                    program_workflow_state_id = #{state_id}
                                                         and program_workflow_id = 1
-                                                LIMIT 1").map(&:name) #rescue nil
+                                                  LIMIT 1").map(&:name) #rescue nil
+           else
+             state_name = @patient_state
+           end
         end
       end
 
@@ -1674,6 +2545,74 @@ end
   return generate_sql_string(a_hash)
 end
 
+def process_all_guardians_not_on_arvs
+    a_hash = {:legacy_id2 => 'NULL'}
+
+    guardian_list = Patient.find_by_sql("SELECT 
+                                            guardian_id,
+                                            gender,
+                                            given_name,
+                                            family_name,
+                                            middle_name,
+                                            birthdate_estimated,
+                                            birthdate,
+                                            home_district,
+                                            current_district,
+                                            landmark,
+                                            current_residence,
+                                            traditional_authority,
+                                            date_enrolled,
+                                            earliest_start_date,
+                                            death_date,
+                                            age_at_initiation,
+                                            age_in_days
+                                        FROM
+                                            guardians
+                                        WHERE
+                                            guardian_id NOT IN (SELECT 
+                                                                  patient_id
+                                                                FROM
+                                                                 earliest_start_date)
+                                        GROUP BY guardian_id").each{|guardian| guardian}
+     guardian_list.each do |guardian|
+       a_hash[:patient_id] = patient_id 
+       a_hash[:given_name] = this_patient.first.given_name rescue nil
+       a_hash[:middle_name] = this_patient.first.middle_name rescue nil
+       a_hash[:family_name] = this_patient.first.family_name rescue nil 
+       a_hash[:gender] = gender  rescue nil #this_patient.gender  rescue nil
+       a_hash[:dob] = this_patient.first.birthdate rescue nil 
+       a_hash[:dob_estimated] = this_patient.first.birthdate_estimated rescue nil  
+       a_hash[:death_date] =  this_patient.first.death_date.strftime('%Y-%m-%d') rescue nil
+                   
+       a_hash[:ta] = this_patient.first.traditional_authority  rescue nil
+       a_hash[:current_address] = this_patient.first.current_residence  rescue nil
+       a_hash[:home_district] = this_patient.first.home_district  rescue nil
+       a_hash[:landmark] = this_patient.first.landmark  rescue nil
+                    
+       a_hash[:cellphone_number] = the_attributes.first.cell_phone  rescue nil
+       a_hash[:home_phone_number] = the_attributes.first.home_phone  rescue nil 
+       a_hash[:office_phone_number] = the_attributes.first.office_phone  rescue nil
+       a_hash[:occupation] = the_attributes.first.occupation  rescue nil
+                    
+       a_hash[:nat_id] = the_identifiers.first.national_id  rescue nil
+       a_hash[:arv_number]  = the_identifiers.first.arv_number  rescue nil
+       a_hash[:pre_art_number] = the_identifiers.first.pre_art_number  rescue nil
+       a_hash[:tb_number]  = the_identifiers.first.tb_number  rescue nil
+       a_hash[:legacy_id]  = the_identifiers.first.legacy_id  rescue nil
+       a_hash[:prev_art_number]  = the_identifiers.first.prev_art_number rescue nil
+       a_hash[:filing_number]  = the_identifiers.first.filing_number  rescue nil
+       a_hash[:archived_filing_number]  = the_identifiers.first.archived_filing_number rescue nil
+                    
+       a_hash[:earliest_start_date]  = this_patient.first.earliest_start_date  rescue nil
+       a_hash[:age_at_initiation] = this_patient.first.age_at_initiation rescue nil
+       a_hash[:age_in_days] = this_patient.first.age_in_days rescue nil  
+       a_hash[:current_location] = current_location rescue nil
+       
+       puts"<<<<<<<<<<<<<<Working on #{guardian.guardian_id}>>>>>>>>>>>>>>>>>>>"
+      return generate_sql_string(a_hash)
+    end
+end
+
 def generate_sql_string(a_hash)
    fields = ""
    values = ""
@@ -1690,14 +2629,23 @@ end
 def start
  initialize_variables
  #get_all_patients
- #specify patients_list, if you want to debug a list of patients
-	patients_list = []
+ #specify patients_list, if you want to debug a list of patients	
+ specify_patients_list = []
+ specify_patients_list = specify_patients_list.join(',') rescue specify_patients_list
 
-	if patients_list.length != 0
-	  initiate_special_script(patients_list)
-	else
-	  initiate_script
-	end
+ patients_list = []
+  
+ patients_list = $patient_demographics.collect{|p| p.patient_id} if !specify_patients_list.blank?
+        
+ if (!specify_patients_list.blank?) && (patients_list.blank?)
+  puts"<<<<<<<<<<<<<<These patients are voided: #{specify_patients_list}>>>>>>>>>>>>>>>>>>>"
+ else
+    if patients_list.length != 0
+      initiate_special_script(patients_list)
+    else
+      initiate_script
+    end
+  end
 end
 
 def get_drug_list

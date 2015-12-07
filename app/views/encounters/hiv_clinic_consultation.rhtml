@@ -24,20 +24,20 @@
   #notes{background-color:red;}
 
   .tt_controls_clinical_notes_optional #space { display:inline; }
-  
+
   .custom-helptext{
     position: absolute;
     left:36%;
     top: 30%;
   }
-  
+
 </style>
 
 <script>
- 
+
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>"
   var consultation_tb_status = '<%= @consultation_tb_status %>'
-	
+
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
     var symptoms = 0;
@@ -72,7 +72,7 @@
 
     <% @side_effects = concept_set('MALAWI ART DRUG INDUCED SYMPTOM SET') %>
     var myArray = "<%= @side_effects.to_a %>";
-	
+
 	var x = -1;
 	var css = "even";
     for (var i=0; i < options.length; i++) {
@@ -80,9 +80,9 @@
 			if (myArray.indexOf(options[i].value) != -1) {
 				x = x + 1;
         		symptoms +=  '<li id="' + x + '" class="' + css + '" onclick="null; updateTouchscreenInputForSelect(__$(\'optionValue\' + this.id));" onmousedown="" tag="odd" tstvalue="' + options[i].value + '" style="">'
-				+ "<div style='display: table; border-spacing: 0px;' <div style='display: table-row'><div style='display: table-cell;'><img id='img" + x + "' alt='[ ]' src='/touchscreentoolkit/lib/images/unticked.jpg'></div><div id='optionValue" + x + "' style='display: table-cell; vertical-align: middle; text-align: left; padding-left: 15px;'>" 
-				+ options[i].value 
-				+ "</div></div>"				
+				+ "<div style='display: table; border-spacing: 0px;' <div style='display: table-row'><div style='display: table-cell;'><img id='img" + x + "' alt='[ ]' src='/touchscreentoolkit/lib/images/unticked.jpg'></div><div id='optionValue" + x + "' style='display: table-cell; vertical-align: middle; text-align: left; padding-left: 15px;'>"
+				+ options[i].value
+				+ "</div></div>"
 				 + "</li>";
 			if(css == "odd") {
 				css = "even";
@@ -102,9 +102,9 @@
 			if (myArray.indexOf(options[i].value) != -1) {
 				x = x + 1;
         		symptoms +=  '<li id="' + x + '" class="' + css + '" onclick="null; updateTouchscreenInputForSelect(__$(\'optionValue\' + this.id));" onmousedown="" tag="odd" tstvalue="' + options[i].value + '" style="">'
-				+ "<div style='display: table; border-spacing: 0px;' <div style='display: table-row'><div style='display: table-cell;'><img id='img" + x + "' alt='[ ]' src='/touchscreentoolkit/lib/images/unticked.jpg'></div><div id='optionValue" + x + "' style='display: table-cell; vertical-align: middle; text-align: left; padding-left: 15px;'>" 
-				+ options[i].value 
-				+ "</div></div>"				
+				+ "<div style='display: table; border-spacing: 0px;' <div style='display: table-row'><div style='display: table-cell;'><img id='img" + x + "' alt='[ ]' src='/touchscreentoolkit/lib/images/unticked.jpg'></div><div id='optionValue" + x + "' style='display: table-cell; vertical-align: middle; text-align: left; padding-left: 15px;'>"
+				+ options[i].value
+				+ "</div></div>"
 				 + "</li>";
 			if(css == "odd") {
 				css = "even";
@@ -150,7 +150,7 @@
 			select.remove(i);
 		  }
 		}
-	  
+
 	  options = document.getElementsByTagName('li');
 				  for (i = 0 ; i < options.length ; i++) {
 				   if ((options[i].getAttribute('tstvalue') == consultation_tb_status) && (consultation_tb_status.toLowerCase() != 'unknown')) {
@@ -210,7 +210,7 @@
   }
 
   function addButton() {
-      
+
       if (<%= htn_activated && !htn_client?(@patient) && patient_present(@patient.id, (session[:datetime] || Time.now()))%>)
       {
           var bp = document.createElement("button");
@@ -221,6 +221,9 @@
       }
   }
 
+  function updatePregnancy(value){
+    alert(value)
+  }
 
 </script>
 
@@ -229,7 +232,6 @@
   <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
   <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
   <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
-	<%= touch_hidden_tag "IS PATIENT PREGNANT?" , @patient, "NO" , :id => "pregnant" %>
 
   <% if @patient_is_child_bearing_female && !@ter_family_planning_method_done %>
 		<% if @currently_using_family_planning_methods.nil? %>
@@ -239,7 +241,7 @@
             {:id => "pregnant",
              :validationCode => "checkPregnancyAndAge() == 'false'",
              :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she pregnant?",
-             :helpText => "Is patient pregnant?" } %>
+             :helpText => "Is patient pregnant?"} %>
 
         <%else%>
             <%= touch_hidden_tag "IS PATIENT PREGNANT?" , @patient, @is_patient_pregnant_value.strip , :id => "pregnant" %>
@@ -257,14 +259,16 @@
             <%= touch_hidden_tag "IS PATIENT BREAST FEEDING?" , @patient, @is_patient_breast_feeding_value.strip , :id => "breast_feeding" %>
         <%end%>
 		<% end %>
-  <% end %>    
+  <% else %>
+    <%= touch_hidden_tag "IS PATIENT PREGNANT?" , @patient, "NO" , :id => "pregnant" %>
+  <% end %>
 
   <% if @patient_is_child_bearing_female && !@ter_family_planning_method_done %>
 
-   <% patient_pregnant =  @is_patient_pregnant_value.upcase.squish rescue 'NO' 
+   <% patient_pregnant =  @is_patient_pregnant_value.upcase.squish rescue 'NO'
       if patient_pregnant == 'NO' || patient_pregnant == 'UNKNOWN'
    %>
-    <% #currently_using_family_planning_methods = @currently_using_family_planning_methods.upcase.squish rescue 'NO' 
+    <% #currently_using_family_planning_methods = @currently_using_family_planning_methods.upcase.squish rescue 'NO'
        #if (currently_using_family_planning_methods == 'NO'
 
     %>
@@ -277,7 +281,7 @@
 
         <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
         {:id => "fpm_used",
-         :condition => "$('on_fpm').value == 'YES'",
+         :condition => "$('on_fpm').value == 'YES' && $('pregnant').value != 'YES'",
          :tt_onLoad => "fpm_used=false",
          :multiple => true,
          :tt_pageStyleClass => "NoKeyboard",
@@ -361,7 +365,6 @@
   <% if ask_standard_art_side_effects == false %>
     <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, concept_set_options('MALAWI ART SIDE EFFECTS'),
       {:id => 'side_effects',
-       :optional => true,
        :multiple => true,
        :conditions => @art_first_visit == false,
        :helpText => "Side effects (select all that apply)" } %>
@@ -411,26 +414,26 @@
 
 
 <%date = session[:datetime].to_date rescue Date.today
-  start_date = date.strftime("%Y-%m-%d 00:00:00")                       
-  end_date = date.strftime("%Y-%m-%d 23:59:59")                       
+  start_date = date.strftime("%Y-%m-%d 00:00:00")
+  end_date = date.strftime("%Y-%m-%d 23:59:59")
   reception = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
   :conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?
   AND encounter_datetime >= ? AND encounter_datetime <=?",@patient.id,date,
   EncounterType.find_by_name('HIV RECEPTION').id,start_date,end_date])
 
   reception = reception.observations.collect{|r|r.to_s.squish}.join(',') rescue ''
-  patient_present = reception.match(/PATIENT PRESENT FOR CONSULTATION: YES/i) 
+  patient_present = reception.match(/PATIENT PRESENT FOR CONSULTATION: YES/i)
 %>
 
 
   <%
   art_adherence_to_be_done = false
-  (PatientService.art_drug_given_before(@patient,date) || []).uniq.each do |order|  
+  (PatientService.art_drug_given_before(@patient,date) || []).uniq.each do |order|
       #next unless MedicationService.arv(order.drug_order.drug)
       art_adherence_to_be_done = true
       break
   end
- 
+
   if art_adherence_to_be_done
     e = EncounterType.find_by_name("ART ADHERENCE")
     art_adherence_to_be_done = Encounter.find(:first,
@@ -438,8 +441,8 @@
     AND encounter_datetime >= ? AND encounter_datetime <=?",@patient.id,e.id,
     start_date,end_date]).blank?
   end
-  
-  
+
+
   %>
 
   <% if !current_user_roles.include?('Clinician') and patient_present %>
@@ -478,16 +481,16 @@
   <%end unless art_adherence_to_be_done %>
 
 
-  <% session_date = session[:datetime].to_date rescue nil                       
+  <% session_date = session[:datetime].to_date rescue nil
     if session_date %>
 
     <p><label for="filter_provider">Staff who provided the information (Provider)</label></br>
-<%= text_field "filter" , 'provider', :helpText => 'Staff who provided the information (Provider)', 
+<%= text_field "filter" , 'provider', :helpText => 'Staff who provided the information (Provider)',
   :ajaxURL => '/user/username?username=' %></p>
     <% else %>
       <%= hidden_field_tag "filter[provider]", nil %>
     <%end%>
-  <%= submit_tag "Finish" %>    
+  <%= submit_tag "Finish" %>
 </form>
 
 <% if !art_adherence_to_be_done %>
