@@ -199,18 +199,26 @@ class GenericClinicController < ApplicationController
   end
 
   def administration_tab
-    @reports =  [
-                  ['/clinic/users_tab','User Accounts/Settings'],
-                  ['/clinic/location_management_tab','Location Management'],
-                  ['/people/tranfer_patient_in','Transfer Patient in'],
-                  #['/patients/patient_merge','Merge Patients'],
-                  ['/patients/merge_menu','Merge Patients'],
-                  ['/patients/duplicate_menu','Possible patient duplicates']
 
-                ]
-    if current_user.admin?
-      @reports << ['/clinic/management_tab','Drug Management']
+    role = current_user.user_roles.map{|r|r.role}
+
+    if role.include?("Pharmacist")
+      @reports = [['/clinic/management_tab','Drug Management']]
+    else
+      @reports =  [
+          ['/clinic/users_tab','User Accounts/Settings'],
+          ['/clinic/location_management_tab','Location Management'],
+          ['/people/tranfer_patient_in','Transfer Patient in'],
+          #['/patients/patient_merge','Merge Patients'],
+          ['/patients/merge_menu','Merge Patients'],
+          ['/patients/duplicate_menu','Possible patient duplicates']
+
+      ]
+      if current_user.admin?
+        @reports << ['/clinic/management_tab','Drug Management']
+      end
     end
+
     @landing_dashboard = 'clinic_administration'
     render :layout => false
   end
@@ -251,13 +259,14 @@ class GenericClinicController < ApplicationController
   end
 
   def management_tab
+    #PB - Removed (from warehouse) From Enter Receipts ....and also deactivated reports from this .
     @reports = [
-      ["Enter receipts<br />(from warehouse)","delivery"],
+      ["Enter <br /> receipts","delivery"],
       ["Enter verified stock count<br />(supervision)","delivery?id=verification"],
       ["Print<br />Barcode","print_barcode"],
       #["Expiring<br />drugs","date_select"],
       ["Enter drug relocation<br />(in or out) / disposal","delivery?id=relocation"],
-      ["Stock<br />report","date_select"],
+      #["Stock<br />report","date_select"],
       ["Stock <br />Charts","stock_movement_menu?goto=stoke_movement"]
     ]
     render :layout => false
