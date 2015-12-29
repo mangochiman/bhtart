@@ -67,5 +67,35 @@ class PeopleController < GenericPeopleController
     render :text => "true" and return
   end
 
+  def create_person_from_dmht
+    User.current = User.first
+
+    if create_from_dde_server
+      national_id = DDEService.create_patient_from_dde(params, true)
+      params["person"]["identifiers"] = {"national id" => national_id}
+      PatientService.create_from_form(params["person"])
+    else
+      health_center_id = Location.current_health_center.location_id.to_s
+      national_id_version = "1"
+      national_id_prefix = "P#{national_id_version}#{health_center_id.rjust(3,"0")}"
+
+      last_national_id = PatientIdentifier.find(:first,:order=>"identifier desc", :conditions => ["identifier_type = ? AND left(identifier,5)= ?", 
+          PatientIdentifierType.find_by_name("NATIONAL ID").patient_identifier_type_id, national_id_prefix]
+      )
+      
+      last_national_id_number = last_national_id.identifier rescue "0"
+
+      next_number = (last_national_id_number[5..-2].to_i+1).to_s.rjust(7,"0")
+      new_national_id_no_check_digit = "#{national_id_prefix}#{next_number}"
+      check_digit = PatientIdentifier.calculate_checkdigit(new_national_id_no_check_digit[1..-1])
+      national_id = "#{new_national_id_no_check_digit}#{check_digit}"
+
+      params["person"]["identifiers"] = {"national id" => "#{national_id}"}
+      PatientService.create_from_form(params["person"])
+    end
+
+    render :text => national_id and return
+  end
+
 end
  
