@@ -190,8 +190,13 @@
 		float:left
 	}
 
+	#table_id th{
+      text-align: left;
+    }
+
 	#table_id {
     	width: 100%;
+      text-align: left;
     }
 
     #table_id_filter{
@@ -243,39 +248,27 @@
 <div style = "margin-top: 30px; background-color:beige">
   <table  id="table_id" class="display" >
     <thead>
-    <th>Name</th><th>Age</th>
-    <th>Date registered </th>
-    <th>Phone Number</th>
-    <th>Last Visit Date</th>
-    <th>Appointment date</th><th>Overdue Days</th>
-    <th>Expected Remaining Tabs.</th><th>Dosses Missed</th>
-    <%# unless @report == "defaulted" %>
-        <th>Came Late</th>
-    <%# end %>
+    <th>Name</th>
+    <th>Gender </th>
+    <th>Age</th>
+    <th style="text-align: right; padding-right: 10px;">Phone Number</th>
+    <th style="text-align: right; padding-right: 10px;">Date appointment made</th>
+    <th style="text-align: right; padding-right: 10px;">Appointment date</th>
+    <th style="text-align: right; padding-right: 10px;">Date came</th>
     </thead>
     <tbody>
 
-        <% @data.each do |datum|%>
-           <tr>
-             <td><%=datum['name']%></td><td><%= datum['age'] %></td>
-             <td>
-             <%= link_to "<span class='clinic_data_value' >#{datum['date_registered']}</span>", "/patients/show/#{datum['patient_id']}?session=#{datum['date_registered']}" -%>
-
-             </td>
-             
-             <td><%= datum['phone_number']%></td>
-             <td>
-             <%= link_to "<span class='clinic_data_value' >#{datum['last_visit_date']}</span>", "/patients/show/#{datum['patient_id']}?session=#{datum['last_visit_date']}" -%>
-
-             </td>
-             <td><%= datum['booked_date'] %></td><td><%= datum['overdue']  %></td>
-             <td><%= datum['exp_tab_remaining']%></td>
-             <td><%= datum['dosses_missed']%></td>
-             <%# unless @report == "defaulted" %>
-                <td><%= datum['came_late']%></td>
-             <%# end %>
-           </tr>
-        <% end %>
+    <% @data.each do |datum|%>
+       <tr>
+          <td><%=datum['name']%></td>
+          <td style="text-align: center;"><%=datum['gender']%></td>
+          <td style="text-align: center;"><%=datum['age']%></td>
+          <td style="text-align: right;"><%=datum['phone_number']%></td>
+          <td style="text-align: right;"><%=datum['date_appointment_made'].to_date.strftime('%a %d %b, %Y')%></td>
+          <td style="text-align: right;"><%=datum['appointment_date'].to_date.strftime('%a %d %b, %Y')%></td>
+          <td style="text-align: right; padding-right: 10px;"><%=datum['date_came'].to_date.strftime('%a %d %b, %Y') rescue 'No' %></td>
+       </tr>
+    <% end %>
 
     </tbody>
   </table>
