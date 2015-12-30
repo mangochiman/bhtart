@@ -28,14 +28,14 @@ class GenericApplicationController < ActionController::Base
 		                                      'create_remote', 'mastercard_printable', 'get_token',
 		                                      'cohort','demographics_remote', 'export_on_art_patients', 'art_summary',
                                           'art_summary_dispensation', 'print_rules', 'rule_variables', 'print','new_prescription',
-                                          'search_for_drugs','mastercard_printable', 'remote_app_search','remotely_reassign_new_identifier', 'create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht'
+                                          'search_for_drugs','mastercard_printable', 'remote_app_search','remotely_reassign_new_identifier', 'create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht', 'reassign_remote_identifier'
                                           ]
 
     before_filter :set_current_user, :except => ['login', 'logout','remote_demographics',
 		                                      'create_remote', 'mastercard_printable', 'get_token',
                                           'cohort','demographics_remote', 'export_on_art_patients', 'art_summary',
                                           'art_summary_dispensation', 'print_rules', 'rule_variables', 'print','new_prescription',
-                                          'search_for_drugs','mastercard_printable', 'remote_app_search','remotely_reassign_new_identifier', 'create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht'
+                                          'search_for_drugs','mastercard_printable', 'remote_app_search','remotely_reassign_new_identifier', 'create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht', 'reassign_remote_identifier'
                                           ]
 
 	before_filter :location_required, :except => ['login', 'logout', 'location',
@@ -44,10 +44,10 @@ class GenericApplicationController < ActionController::Base
 		                                        'remote_demographics', 'get_token',
                                             'cohort','demographics_remote', 'export_on_art_patients', 'art_summary',
                                             'art_summary_dispensation', 'print_rules', 'rule_variables', 'print','new_prescription',
-                                            'search_for_drugs','mastercard_printable','remote_app_search', 'remotely_reassign_new_identifier', 'create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht'
+                                            'search_for_drugs','mastercard_printable','remote_app_search', 'remotely_reassign_new_identifier', 'create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht', 'reassign_remote_identifier'
                                             ]
 
-	before_filter :set_return_uri, :except => ['create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht']
+	before_filter :set_return_uri, :except => ['create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht', 'reassign_remote_identifier']
   
 	def rescue_action_in_public(exception)
 		@message = exception.message

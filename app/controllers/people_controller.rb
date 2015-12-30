@@ -100,15 +100,56 @@ class PeopleController < GenericPeopleController
   def find_person_from_dmht
     people = PatientService.search_by_identifier(params["identifier"])
     demographics = []
+    
     if (people.length == 1)
-      demographics << PatientService.demographics(people.first)
+      patient_demographics = PatientService.demographics(people.first)
+      patient_demographics["person"]["attributes"].delete_if{|k, v|v.blank?}
+      demographics << patient_demographics
     elsif (people.length > 1)
       people.each do |person|
-        demographics << PatientService.demographics(person)
+        patient_demographics = PatientService.demographics(person)
+        patient_demographics["person"]["attributes"].delete_if{|k, v|v.blank?}
+        demographics << patient_demographics
       end
     end
+
     render :json => demographics and return
   end
-  
+
+  def reassign_remote_identifier
+    person = Person.find(:first,:joins => "INNER JOIN patient_identifier i
+      ON i.patient_id = person.person_id AND i.voided = 0 AND person.voided=0
+      INNER JOIN person_name n ON n.person_id=person.person_id AND n.voided = 0",
+      :conditions => ["identifier = ? AND n.given_name = ? AND n.family_name = ? AND gender = ?",
+        params[:national_id],params[:given_name],params[:family_name],params[:gender]])
+
+    patient = person.patient
+    
+    if create_from_dde_server
+      passed_params = PatientService.demographics(patient.person)
+      new_npid = PatientService.create_from_dde_server_only(passed_params)
+      npid = PatientIdentifier.new()
+      npid.patient_id = patient.id
+      npid.identifier_type = PatientIdentifierType.find_by_name('National ID')
+      npid.identifier = new_npid
+      npid.save
+    else
+      PatientIdentifierType.find_by_name('National ID').next_identifier({:patient => patient})
+    end
+    npid = PatientIdentifier.find(:first,
+      :conditions => ["patient_id = ? AND identifier = ?
+           AND voided = 0", patient.id,params[:national_id]])
+    npid.voided = 1
+    npid.void_reason = "Given another national ID"
+    npid.date_voided = Time.now()
+    npid.voided_by = current_user.id
+    npid.save
+
+    patient_demographics = PatientService.demographics(person)
+    patient_demographics["person"]["attributes"].delete_if{|k, v|v.blank?}
+    
+    render :json => demographics and return
+
+  end
 end
  
