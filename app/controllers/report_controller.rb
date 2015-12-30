@@ -166,58 +166,38 @@ class ReportController < GenericReportController
     @data = []
     @report = "Missed appointments"
     @start_date = (params[:start_month].to_s + "/" + params[:start_day].to_s + "/" + params[:start_year].to_s).to_date
-
     @end_date = (params[:end_month].to_s + "/" + params[:end_day].to_s + "/" + params[:end_year].to_s).to_date
+    appointment = Concept.find_by_name('appointment date').concept_id
 
+    records = Observation.find_by_sql("SELECT t.person_id, t.value_datetime appointment_date,t.obs_datetime visit_date,
+(SELECT min(obs_datetime) FROM obs t1 where t1.person_id = t.person_id AND DATE(t1.obs_datetime) > DATE(t.value_datetime))
+date_came FROM obs t WHERE t.value_datetime IS NOT NULL AND t.concept_id = #{appointment} 
+AND t.value_datetime BETWEEN '#{@start_date.strftime('%Y-%m-%d 00:00:00')}' 
+AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.obs_datetime);")
 
-    appoinment = Concept.find_by_name('appointment date').concept_id
-
-    last_appointments = Observation.find_by_sql("SELECT person_id, obs_datetime ,value_datetime FROM obs
-                                WHERE concept_id = #{appoinment} AND DATE(value_datetime) BETWEEN DATE('#{@start_date }')
-                                AND DATE('#{@end_date}') AND voided = 0")
     
-    last_appointments.each do |last_app|
+    
+    (records || []).each do |record|
+      patient = Patient.find(record.person_id)
+      #patient_obj = PatientService.get_patient(patient.person)
+      result = adherence(record.person_id, record.visit_date)
 
-      last_obs = Observation.find_by_sql("SELECT * FROM obs WHERE person_id = #{last_app.person_id}
-                                          AND DATE(obs_datetime) = DATE('#{last_app.value_datetime.to_date}')  LIMIT 1")
-
-       first_obs = Observation.find_by_sql("SELECT person_id, obs_datetime FROM obs
-                                            WHERE person_id = #{last_app.person_id}
-                                            AND voided = 0 order by obs_datetime ASC LIMIT 1").first
-      patient = Patient.find(last_app.person_id)
-
-      
-      unless last_obs.blank?
-        result = adherence(last_app.person_id, last_app.value_datetime)
-        next_visit = Observation.find(:first, :conditions =>  ["person_id = ? AND obs_datetime > ?",
-                                                               last_app.person_id, last_app.value_datetime])
-
-        next_visit = next_visit.obs_datetime rescue []
-				
-				if ! next_visit.blank?
-        		next if next_visit.to_date <= last_app.value_datetime.to_date
-        end  
-
-        details ={
-            'patient_id' => last_app.person_id,
-            'name' => patient.name,
-            'age' => PatientService.cul_age(patient.person.birthdate , patient.person.birthdate_estimated ),
-            'dosses_missed' => result['missed_dosses'],
-            'exp_tab_remaining' => result['expected_remaining'] ,
-            'booked_date' => last_app.value_datetime.to_date.strftime('%d/%b/%Y') ,
-            'phone_number' => get_phone(last_app.person_id),
-            'overdue' => ((next_visit.to_date rescue Date.today.to_date) - last_app.value_datetime.to_date).to_i,
-            'came_late' => (next_visit.to_date.strftime('%d/%b/%Y') rescue "No"),
-            'date_registered' => first_obs.obs_datetime.to_date,
-            'last_visit_date' => last_app.obs_datetime.to_date
-        }
-        @data << details
-      end
-
+      details ={
+        'patient_id' => record.person_id,
+        'name' => patient.name,
+        'gender' => patient.person.gender,
+        'age' => PatientService.cul_age(patient.person.birthdate , patient.person.birthdate_estimated),
+        'phone_number' => get_phone(record.person_id),
+        'date_came' => record.date_came,
+        'date_appointment_made' => record.visit_date,
+        'appointment_date' => record.appointment_date
+      }
+      @data << details
     end
 
-
   end
+
+
   def defaulted_patients_report
     @data = []
     @report = "defaulted"
