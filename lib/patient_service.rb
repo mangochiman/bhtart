@@ -1429,15 +1429,15 @@ EOF
 select patient_id,state,start_date,end_date from patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
 AND p.patient_id IN(#{patient_ids.join(',')})
-WHERE start_date = (SELECT max(start_date) FROM patient_state t 
+WHERE start_date = (SELECT max(start_date) FROM patient_state t
 WHERE t.patient_program_id = s.patient_program_id);
 EOF
 
 
    return nil if outcomes.blank?
    selected_patient_states = {}
-   
-   outcomes.each do |state|  
+
+   outcomes.each do |state|
     selected_patient_states[state['patient_id'].to_i] = [] if selected_patient_states[state['patient_id'].to_i].blank?
     selected_patient_states[state['patient_id'].to_i] << state['state'].to_i
    end
@@ -1676,12 +1676,12 @@ EOF
         identifier,
         "%#{given_name}%",
         "%#{family_name}%"
-      ],:limit => 10,:order => "birthdate DESC") 
+      ],:limit => 10,:order => "birthdate DESC")
 
     if people.length < 15
-      people_like = Person.find(:all, :limit => 15, 
+      people_like = Person.find(:all, :limit => 15,
       :joins =>"INNER JOIN person_name_code ON person_name_code.person_name_id = person.person_id
-      INNER JOIN patient_identifier i ON i.patient_id = person.person_id AND i.voided = 0", 
+      INNER JOIN patient_identifier i ON i.patient_id = person.person_id AND i.voided = 0",
       :conditions => ["identifier = ? AND \
      ((person_name_code.given_name_code LIKE ? AND \
      person_name_code.family_name_code LIKE ?))",
@@ -1863,14 +1863,18 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
 
   def self.birthdate_formatted(person)
     if person.birthdate_estimated==1
-      if person.birthdate.day == 1 and person.birthdate.month == 7
-        person.birthdate.strftime("??/???/%Y")
-      elsif person.birthdate.day == 15
-        person.birthdate.strftime("??/%b/%Y")
-      elsif person.birthdate.day == 1 and person.birthdate.month == 1
-        person.birthdate.strftime("??/???/%Y")
+      if person.birthdate.nil?
+				return '00/00/0000'
       else
-        person.birthdate.strftime("%d/%b/%Y") unless person.birthdate.blank? rescue " "
+		    if person.birthdate.day == 1 and person.birthdate.month == 7
+		      person.birthdate.strftime("??/???/%Y")
+		    elsif person.birthdate.day == 15
+		      person.birthdate.strftime("??/%b/%Y")
+		    elsif person.birthdate.day == 1 and person.birthdate.month == 1
+		      person.birthdate.strftime("??/???/%Y")
+		    else
+		      person.birthdate.strftime("%d/%b/%Y") unless person.birthdate.blank? rescue " "
+		    end
       end
     else
       if !person.birthdate.blank?
