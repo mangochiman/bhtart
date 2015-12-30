@@ -117,12 +117,14 @@ class PeopleController < GenericPeopleController
   end
 
   def reassign_remote_identifier
+    User.current = User.first
+    Location.current_location = Location.current_health_center
+    
     person = Person.find(:first,:joins => "INNER JOIN patient_identifier i
       ON i.patient_id = person.person_id AND i.voided = 0 AND person.voided=0
       INNER JOIN person_name n ON n.person_id=person.person_id AND n.voided = 0",
       :conditions => ["identifier = ? AND n.given_name = ? AND n.family_name = ? AND gender = ?",
         params[:national_id],params[:given_name],params[:family_name],params[:gender]])
-
     patient = person.patient
     
     if create_from_dde_server
@@ -142,13 +144,13 @@ class PeopleController < GenericPeopleController
     npid.voided = 1
     npid.void_reason = "Given another national ID"
     npid.date_voided = Time.now()
-    npid.voided_by = current_user.id
+    npid.voided_by = 1
     npid.save
 
     patient_demographics = PatientService.demographics(person)
     patient_demographics["person"]["attributes"].delete_if{|k, v|v.blank?}
     
-    render :json => demographics and return
+    render :json => patient_demographics and return
 
   end
 end
