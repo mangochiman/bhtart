@@ -97,5 +97,18 @@ class PeopleController < GenericPeopleController
     render :text => national_id and return
   end
 
+  def find_person_from_dmht
+    people = PatientService.search_by_identifier(params["identifier"])
+    demographics = []
+    if (people.length == 1)
+      demographics << PatientService.demographics(people.first)
+    elsif (people.length > 1)
+      people.each do |person|
+        demographics << PatientService.demographics(person)
+      end
+    end
+    render :json => demographics and return
+  end
+  
 end
  
