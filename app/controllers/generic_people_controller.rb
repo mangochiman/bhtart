@@ -1,5 +1,4 @@
 class GenericPeopleController < ApplicationController
-
   @@test  = nil
 
 	def index
@@ -77,11 +76,12 @@ class GenericPeopleController < ApplicationController
 
 	def create_remote
 
-		if current_user.blank?
-		  user = User.authenticate('admin', 'test')
-		  sign_in(:user, user) if !user.blank?
+    authenticate_or_request_with_http_basic do |username, password|
+      user = User.authenticate(username, password)
+      raise "Wrong user credentials" if user.blank?
+      sign_in(:user, user)
       set_current_user
-		end rescue []
+    end
 
 		if Location.current_location.blank?
 			Location.current_location = Location.find(CoreService.get_global_property_value('current_health_center_id'))
