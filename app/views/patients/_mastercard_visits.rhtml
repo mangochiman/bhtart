@@ -1,11 +1,11 @@
 <html>
 <head>
 <style>
-  
+
  .dataTable {
    padding-left:10px;
    padding-right:10px;
- } 
+ }
 
  .dataTable td , .dataTable th {
     border-style: solid;
@@ -127,15 +127,19 @@ background-position: 0% -30px;
 <tr>
   <% date = Date.today
   previous_outcome = ""
-  #raise @visits.to_yaml
-   (@visits || []).sort.map{|date,data|
+
+   (@visits || []).sort_by{|k,v| k.to_date}.map{|date,data|
+
     unless data.reg.blank?
-      outcome = 'ON ART' 
+      outcome = 'ON ART'
     end
-    outcome = data.outcome if data.outcome != 'ON ANTIRETROVIRALS' and !data.outcome.blank?
+
+    outcome = data.outcome if not data.outcome.blank?
+    outcome = 'ON ART' if outcome.match(/On ant/i) rescue ""
+    outcome = 'ON ART' if outcome.blank?
 	 #next if data.tb_status == "tb medical"
-    previous_outcome = outcome if !data.outcome.blank?
-    
+#    previous_outcome = outcome if !data.outcome.blank?
+
    %>
     <tr>
       <td><a href='/patients/specific_patient_visit_date_label?session_date=<%=date%>&patient_id=<%=@patient_id%>' class='rounded' style='text-decoration:none;'><span><%=date.to_date.strftime('%d-%b-%Y')%></span></a></td>
