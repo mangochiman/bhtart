@@ -1279,7 +1279,7 @@
         header.style.display = "table";
         header.style.width = "100%";
 
-        var r = document.createElement("div")
+        var r = document.createElement("div");
         r.style.display = "table-row";
         header.appendChild(r);
         var label = document.createElement("div");
@@ -1360,7 +1360,7 @@
                 row.appendChild(label);
 
                 var amount = document.createElement("div");
-                amount.className = "drug-value scell";
+                amount.className = "drug-value scell editable";
                 amount.style.display = "table-cell";
                 amount.innerHTML = amount_value;
                 amount.setAttribute("drug", drugs[i]);
@@ -1376,7 +1376,7 @@
 
                 var expire_amount = document.createElement("div");
                 expire_amount.style.display = "table-cell";
-                expire_amount.className = "drug-value scell";
+                expire_amount.className = "drug-value scell editable";
                 expire_amount.innerHTML = expire_amount_value;
                 expire_amount.setAttribute("drug", drugs[i]);
                 expire_amount.setAttribute("pos", c);
@@ -1391,7 +1391,7 @@
 
                 var expire_date = document.createElement("div");
                 expire_date.style.display = "table-cell";
-                expire_date.className = "drug-label scell";
+                expire_date.className = "drug-label scell editable";
                 expire_date.innerHTML = date_value;
                 expire_date.setAttribute("drug", drugs[i]);
                 expire_date.setAttribute("pos", c);
@@ -1471,7 +1471,7 @@
 
                 var expire_amount = document.createElement("div");
                 expire_amount.style.display = "table-cell";
-                expire_amount.className = "drug-value scell";
+                expire_amount.className = "drug-value scell editable";
                 expire_amount.innerHTML = expire_amount_value;
                 expire_amount.setAttribute("drug", sievable[i]);
                 expire_amount.setAttribute("pos", c);
@@ -1485,7 +1485,7 @@
                 row.appendChild(expire_amount);
 
                 var amount = document.createElement("div");
-                amount.className = "drug-value scell";
+                amount.className = "drug-value scell editable";
                 amount.setAttribute("drug", sievable[i]);
                 amount.setAttribute("pos", c);
                 amount.onmousedown = function () {
@@ -1501,7 +1501,7 @@
 
                 var expire_date = document.createElement("div");
                 expire_date.style.display = "table-cell";
-                expire_date.className = "drug-label scell";
+                expire_date.className = "drug-label scell editable";
                 expire_date.innerHTML = date_value;
                 expire_date.setAttribute("drug", sievable[i]);
                 expire_date.setAttribute("pos", c);
@@ -1519,8 +1519,21 @@
 
         __$("heada").style.width = (table.offsetWidth) + "px";
         r.style.width = (table.offsetWidth) + "px";
+
+        __$("nextButton").innerHTML = "<span>Save</span>";
     }
 
+    function enableSaveDialogBox(){
+        __$('nextButton').onmousedown = function(){
+            dispatchMessage("Are you sure you want to save these drugs", tstMessageBoxType.YesNo)
+        }
+    }
+
+    function disableSaveDialogBox(){
+        __$('nextButton').onmousedown = function(){
+            gotoNextPage();
+        }
+    }
     function navigate(drug, pos, field) {
 
         if (__$("backButton"))
@@ -1746,6 +1759,13 @@
         font-size: 0.7em;
         margin: 5px;
     }
+    .editable{
+        border-style: outset;
+        border-left: 1px solid gray;
+        border-top: 1px solid gray;
+        background-color: #d3d3d3;
+        border-radius: 3px;
+    }
 </style>
 </head>
 <div id="container">
@@ -1765,10 +1785,10 @@
 
     <%= text_field_tag :showSummary, nil,
                        {
-                               :tt_onLoad => "showSummary();",
+                               :tt_onLoad => "showSummary();enableSaveDialogBox();",
                                :optional => "true",
                                :id => "summary",
-                               :helpText => "Summary",
+                               :helpText => "<span style='color: red;background: white;'>Verify values entered - You can edit a value by clicking its field</span>",
                                :tt_pageStyleClass => "NoKeyboard"
                        } %>
   </form>
