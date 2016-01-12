@@ -21,16 +21,6 @@ if params[:from] == 'clinic'%>
     $('infoBar'+tstCurrentPage).innerHTML = "<%= welcome_message %>";
   }
 
-  var activateDrugManagement = '<%= @activate_drug_management %>';
-  function displayStocks(){
-    if (activateDrugManagement == 'true'){
-      stock = document.getElementById('stock')
-      if (stock){
-        stock.style.display='inline';
-      }
-    }
-
-  }
 
 </script>
 
@@ -52,7 +42,7 @@ if params[:from] == 'clinic'%>
     top: 150px;
     height: 460px;
     border: none;
-}
+  }
 
 </style>
 
@@ -64,4 +54,6 @@ if params[:from] == 'clinic'%>
   <%= submit_tag :value => "Submit" %>
 </form>
 
+<% if @activate_drug_management %>
   <iframe  src="/sessions/stock_levels_graph"></iframe>
+<% end %>
