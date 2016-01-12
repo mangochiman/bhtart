@@ -607,7 +607,8 @@
             clear.setAttribute("target", node.id)
             clear.appendChild(img);
             clear.onmousedown = function () {
-                __$(this.getAttribute("target")).value = "";
+                if (__$(this.getAttribute("target")).disabled != true)
+                    __$(this.getAttribute("target")).value = "";
             };
 
             row.appendChild(clear);
