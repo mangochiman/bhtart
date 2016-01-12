@@ -66,8 +66,14 @@ class GenericSessionsController < ApplicationController
     @current_heath_center_name = Location.current_health_center.name rescue '?'
     @list = {}
     drug_names = GenericDrugController.new.preformat_regimen
+    drug_cms_hash = {}
+    DrugCms.all.each do |drug_cms|
+      drug_cms_hash[drug_cms.drug_inventory_id] = drug_cms.name
+    end
     drug_names.each do |drug_name|
+
       drug = Drug.find_by_name(drug_name)
+      next if drug_cms_hash[drug.id].blank?
       drug_pack_size = Pharmacy.pack_size(drug.id)
       current_stock = (Pharmacy.latest_drug_stock(drug.id)/drug_pack_size).to_i #In tins
       consumption_rate = Pharmacy.average_drug_consumption(drug.id)
@@ -82,8 +88,8 @@ class GenericSessionsController < ApplicationController
       stocked_out = (disp_rate.to_i != 0 && month_of_stock.to_f.round(3) == 0.00)
 
       active = (disp_rate.to_i == 0 && stock_level.to_i != 0)? false : true
-      
-      @list[drug.name] = {
+      drug_cms_name = drug_cms_hash[drug.id]
+      @list[drug_cms_name] = {
         "month_of_stock" => month_of_stock,
         "stock_level" => stock_level,
         "consumption_rate" => disp_rate.round(3),
