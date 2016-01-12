@@ -123,7 +123,7 @@ class Pharmacy < ActiveRecord::Base
       auto_verified_encounter.expiring_units = expiring_units
     end
     if expiry_date
-      auto_verified_encounter.expiring_units = expiry_date
+      auto_verified_encounter.expiry_date = expiry_date
     end
 
     delivery.save
