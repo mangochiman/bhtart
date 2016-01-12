@@ -199,6 +199,20 @@ class GenericDrugController < ApplicationController
     drug_cms.save
     redirect_to "/clinic" and return
   end
+
+  def drug_stock_report
+    @drugs = preformat_regimen
+    @stock_hash = {}
+    @drugs.each do |drug_name|
+      drug_id = Drug.find_by_name(drug_name).drug_id
+      latest_drug_stock = Pharmacy.latest_drug_stock(drug_id)
+      @stock_hash[drug_id] = {}
+      @stock_hash[drug_id]["name"] = drug_name
+      @stock_hash[drug_id]["latest_drug_stock"] = latest_drug_stock.to_i
+    end
+    
+    @stock_hash = @stock_hash.sort_by{|drug_id, values|values["latest_drug_stock"].to_i}.reverse
+  end
   
   def calculate_dispensed(drug_name, delivery_date)
 
