@@ -188,7 +188,7 @@ class GenericDrugController < ApplicationController
   def create_cms_drug_packs
     drug_inventory_id = Drug.find_by_name(params[:drug_name]).drug_id
     drug_code = params[:drug_code]
-    drug_name = params[:drug_name].to_s + " tin of #{params[:pack_size]} tablets"
+    drug_name = params[:cms_name]
     pack_size = params[:pack_size].to_i
     
     drug_cms = DrugCms.new

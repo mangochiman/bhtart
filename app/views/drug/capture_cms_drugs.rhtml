@@ -21,6 +21,12 @@
     :tt_pageStyleClass => "NoKeyboard NoInput small"}
 %>
 
+  <%= text_field_tag "cms_name", "",
+                     {
+                             :field_type => 'alpha',
+                             :helpText => 'CMS Full Name'
+                     } %>
+
   <%= text_field_tag "drug_code", "",
     {
     :field_type => 'alpha',
