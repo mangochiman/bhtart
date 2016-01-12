@@ -181,8 +181,8 @@ class GenericDrugController < ApplicationController
   def capture_cms_drugs
     @drugs = preformat_regimen
 
-    drug_inventory_ids = DrugCms.all.map(&:drug_inventory_id)
-    @drugs.delete_if{|drug_name|drug_inventory_ids.include?(Drug.find_by_name(drug_name).drug_id)}
+    #drug_inventory_ids = DrugCms.all.map(&:drug_inventory_id)
+    #@drugs.delete_if{|drug_name|drug_inventory_ids.include?(Drug.find_by_name(drug_name).drug_id)}
   end
 
   def create_cms_drug_packs
@@ -190,8 +190,9 @@ class GenericDrugController < ApplicationController
     drug_code = params[:drug_code]
     drug_name = params[:cms_name]
     pack_size = params[:pack_size].to_i
-    
-    drug_cms = DrugCms.new
+
+    drug_cms = DrugCms.find_by_drug_inventory_id(drug_inventory_id)
+    drug_cms = DrugCms.new if drug_cms.blank?
     drug_cms.drug_inventory_id = drug_inventory_id
     drug_cms.name = drug_name
     drug_cms.code = drug_code
