@@ -768,8 +768,7 @@ class GenericDrugController < ApplicationController
 
         end
       end
-      redirect_to :action => 'stock_report', :start_date => params[:start_date],
-                  :end_date => params[:end_date], :delivery_date => params[:delivery_date]
+      redirect_to '/'
     else
       @edit_reason = params[:edit_reason]
       @drug_id = params[:drug_id]
