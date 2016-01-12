@@ -100,6 +100,14 @@ class GenericDrugController < ApplicationController
     @formatted = preformat_regimen
     @drug_short_names = regimen_name_map
 
+    @drug_cms_names = {}
+    @drug_cms_packsizes = {}
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @drug_cms_names[drug_name] = drug.name
+      @drug_cms_packsizes[drug_name] = drug.pack_size
+    end
+
   end
 
   def set_receipts
@@ -108,6 +116,13 @@ class GenericDrugController < ApplicationController
     @drugs = params[:drug_name]
     @formatted = preformat_regimen
     @drug_short_names = regimen_name_map
+    @drug_cms_names = {}
+    @drug_cms_packsizes = {}
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @drug_cms_names[drug_name] = drug.name
+      @drug_cms_packsizes[drug_name] = drug.pack_size
+    end
     @list = []
     @expiring = {}
     @formatted.each { |drug|
@@ -155,6 +170,12 @@ class GenericDrugController < ApplicationController
   def delivery
     @formatted = preformat_regimen
     @drugs = regimen_name_map
+    @cms_drugs = {}
+
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @cms_drugs[drug_name] = drug.name
+    end
   end
 
   def calculate_dispensed(drug_name, delivery_date)

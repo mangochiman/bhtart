@@ -13,8 +13,9 @@
     var drugs = <%= @drugs.to_json %>;
     var formatted_drugs = <%= @formatted.to_json %>;
     var drug_short_names = <%= @drug_short_names.to_json %>;
-    var selected =
-    <%= params[:drug_name].to_json %>
+    var selected = <%= params[:drug_name].to_json %>;
+    var drug_cms_names = <%= @drug_cms_names.to_json %>;
+    var drug_cms_packsizes = <%= @drug_cms_packsizes.to_json %>;
     var unfinished_drugs = [];
     var sieved = [];
     var sievable = [];
@@ -207,6 +208,7 @@
             var all_drugs = data["selected_drugs"];
             var short_names = data["drug_short_names"];
             all_drugs = filter_drugs(all_drugs);
+            var cms_names = data["drug_cms_names"];
 
             __$("drug-list").style.display = "table";
 
@@ -234,6 +236,8 @@
                 li.id = all_drugs[k];
 
                 li.setAttribute("value", all_drugs[k]);
+                li.setAttribute("cms_name", drug_cms_names[all_drugs[k]]);
+
                 li.style.background = (k % 2 == 0) ? "rgb(245, 250, 253)" : "white";
                 li.className = (k % 2 == 0) ? "even" : "odd";
                 li.onmousedown = function () {
@@ -269,7 +273,8 @@
             header.style.textAlign = "center";
             header.style.height = "40px";
             header.style.paddingTop = "10px";
-            header.innerHTML = item.getAttribute("value");
+            header.setAttribute('value', item.getAttribute("value"));
+            header.innerHTML = drug_cms_names[item.getAttribute("value")];
             __$("data-pane").appendChild(header);
             __$("data-pane").appendChild(table);
 
@@ -280,12 +285,10 @@
 
                 textField.className = "input-field";
 
-                if (__$(item.getAttribute("value") + "_pills_per_tin") &&
-                        __$(item.getAttribute("value") + "_pills_per_tin").value.length > 0) {
-                    textField.value = __$(item.getAttribute("value") + "_pills_per_tin").value;
-                }else {
-                    textField.value = 60;
-                }
+                textField.value = drug_cms_packsizes[item.getAttribute("value")];
+
+                textField.disabled = true;
+
                 textField.onmousedown = function () {
                     target = this;
                     jQ(".input-field").attr("class", "input-field");
@@ -668,7 +671,7 @@
             var node = __$("data-pane").childNodes[0]
 
             if (node)
-                updateParams(node.innerHTML);
+                updateParams(node.getAttribute('value'));
 
             if (nodes.length > 0) {
 
@@ -985,7 +988,7 @@
         label.className = "drug-label scell hvalue";
         label.style.display = "table-cell";
         label.innerHTML = "Drug";
-        label.style.minWidth = "30%";
+        label.style.minWidth = "40%";
         r.appendChild(label);
 
         var label = document.createElement("div");
@@ -1034,7 +1037,7 @@
 
         for (var i in drugs) {
 
-            if (sievable.indexOf(drugs[i]) >= 0) continue;
+            if (sievable.indexOf(drugs[i]) >= 0  || !drug_cms_names[drugs[i]]) continue;
             var pills_per_tin = 0;
             var amount_value = 0;
             var expire_amount_value = 0;
@@ -1058,14 +1061,14 @@
             var label = document.createElement("div");
             label.className = "drug-label scell";
             label.style.display = "table-cell";
-            label.innerHTML = drug_short_names[drugs[i]];
-            label.style.minWidth = "30%";
+            label.innerHTML = drug_cms_names[drugs[i]];
+            label.style.minWidth = "40%";
             if (i == 0)
                 label.style.borderTop = "0.4px solid gray";
             row.appendChild(label);
 
             var ptin = document.createElement("div");
-            ptin.className = "drug-value scell";
+            ptin.className = "drug-value scell editable";
             ptin.style.display = "table-cell";
             ptin.innerHTML = pills_per_tin;
             ptin.setAttribute("drug", drugs[i]);
@@ -1079,7 +1082,7 @@
             row.appendChild(ptin);
 
             var amount = document.createElement("div");
-            amount.className = "drug-value scell";
+            amount.className = "drug-value scell editable";
             amount.style.display = "table-cell";
             amount.innerHTML = amount_value;
             amount.setAttribute("drug", drugs[i]);
@@ -1094,7 +1097,7 @@
 
             var expire_amount = document.createElement("div");
             expire_amount.style.display = "table-cell";
-            expire_amount.className = "drug-value scell";
+            expire_amount.className = "drug-value scell editable";
             expire_amount.innerHTML = expire_amount_value;
             expire_amount.setAttribute("drug", drugs[i]);
             expire_amount.onmousedown = function(){
@@ -1108,7 +1111,7 @@
 
             var expire_date = document.createElement("div");
             expire_date.style.display = "table-cell";
-            expire_date.className = "drug-label scell";
+            expire_date.className = "drug-label scell editable";
             expire_date.innerHTML = date_value;
             expire_date.setAttribute("drug", drugs[i]);
             expire_date.onmousedown = function(){
@@ -1132,6 +1135,8 @@
             label.className = "drug-label scell hvalue";
             label.style.display = "table-cell";
             label.innerHTML = "Drug";
+            label.style.minWidth = "40%";
+
             header.appendChild(label);
 
             var label = document.createElement("div");
@@ -1156,6 +1161,7 @@
 
         for (var i in sievable) {
 
+            if (!drug_cms_names[drugs[i]]) continue;
             var amount_value = 0;
             var expire_amount_value = 0;
             var date_value = "N/A";
@@ -1177,14 +1183,15 @@
             var label = document.createElement("div");
             label.className = "drug-label scell";
             label.style.display = "table-cell";
-            label.innerHTML = drug_short_names[sievable[i]];
+            label.style.minWidth = "40%";
+            label.innerHTML = drug_cms_names[sievable[i]];
             if (i == 0)
                 label.style.borderTop = "0.4px solid gray";
             row.appendChild(label);
 
             var expire_amount = document.createElement("div");
             expire_amount.style.display = "table-cell";
-            expire_amount.className = "drug-value scell";
+            expire_amount.className = "drug-value scell editable";
             expire_amount.innerHTML = expire_amount_value;
             expire_amount.setAttribute("drug", sievable[i]);
             expire_amount.onmousedown = function(){
@@ -1197,7 +1204,7 @@
             row.appendChild(expire_amount);
 
             var amount = document.createElement("div");
-            amount.className = "drug-value scell";
+            amount.className = "drug-value scell editable";
             amount.setAttribute("drug", sievable[i]);
             amount.onmousedown = function(){
                 if (this.innerHTML.length > 0){
@@ -1212,7 +1219,7 @@
 
             var expire_date = document.createElement("div");
             expire_date.style.display = "table-cell";
-            expire_date.className = "drug-label scell";
+            expire_date.className = "drug-label scell editable";
             expire_date.innerHTML = date_value;
             expire_date.setAttribute("drug", sievable[i]);
             expire_date.onmousedown = function(){
@@ -1248,6 +1255,18 @@
             Entries.initialize();
         } else {
             setTimeout("checkContainer()", 150);
+        }
+    }
+
+    function enableSaveDialogBox(){
+        __$('nextButton').onmousedown = function(){
+            dispatchMessage("Are you sure you want to save these drugs", tstMessageBoxType.YesNo)
+        }
+    }
+
+    function disableSaveDialogBox(){
+        __$('nextButton').onmousedown = function(){
+            gotoNextPage();
         }
     }
 
@@ -1396,6 +1415,13 @@
         text-shadow: 1px 1px black;
         vertical-align: middle;
     }
+    .editable{
+        border-style: outset;
+        border-left: 1px solid gray;
+        border-top: 1px solid gray;
+        background-color: #d3d3d3;
+        border-radius: 3px;
+    }
 
 </style>
 </head>
@@ -1416,10 +1442,10 @@
 
     <%= text_field_tag :showSummary, nil,
                        {
-                               :tt_onLoad => "showSummary();",
+                               :tt_onLoad => "showSummary();enableSaveDialogBox();",
                                :optional => "true",
                                :id => "summary",
-                               :helpText => "Summary",
+                               :helpText => "<span style='color: red;background: white;'>Verify values entered - You can edit a value by clicking its field</span>",
                                :tt_pageStyleClass => "NoKeyboard"
                        } %>
   </form>

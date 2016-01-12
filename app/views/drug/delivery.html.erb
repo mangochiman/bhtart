@@ -540,7 +540,8 @@
       #raise @drugs.to_yaml
       @formatted.each{|drug|
         #raise drug[0].to_yaml
-        options += "<option value = '#{drug}'>#{@drugs[drug]}</option>"
+        next if @cms_drugs[drug].blank?
+        options += "<option value = '#{drug}'>#{@cms_drugs[drug] || @drugs[drug]}</option>"
       }
   %>
 </script>
