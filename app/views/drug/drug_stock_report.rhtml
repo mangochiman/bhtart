@@ -87,15 +87,15 @@
   <table style="padding-left: 5%; width: 96%;">
     <thead>
       <tr>
-        <th class="theader">Drug Name</th>
-        <th class="theader">Current Drug Stock(Tabs)</th>
+        <th style="text-align: left;" class="theader">Drug Name</th>
+        <th style="text-align: right;" class="theader">Current Drug Stock(Tabs)</th>
       </tr>
     </thead>
     <tbody>
       <% @stock_hash.each do |drug_id, values| %>
         <tr>
           <td class="drug-name"><%= values["name"] %></td>
-          <td class="drug-stock"><center><%= values["latest_drug_stock"] %></center></td>
+          <td style="text-align: right;" class="drug-stock"><%= values["latest_drug_stock"] %></td>
         </tr>
       <% end %>
     </tbody>
