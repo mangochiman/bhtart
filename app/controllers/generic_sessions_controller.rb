@@ -73,9 +73,9 @@ class GenericSessionsController < ApplicationController
       consumption_rate = Pharmacy.average_drug_consumption(drug.id)
 
       stock_level = current_stock # stock level comes in pills/day here we convert it to tins/month
-      disp_rate = (consumption_rate.to_f * 0.5).round #rate is an avg of pills dispensed per day. here we convert it to tins per month
+      disp_rate = (consumption_rate.to_f * 0.5) #rate is an avg of pills dispensed per day. here we convert it to tins per month
 
-      consumption_rate = (consumption_rate.to_f * 0.5).round
+      consumption_rate = (consumption_rate.to_f * 0.5)
       expected = stock_level.round
       month_of_stock = (expected/consumption_rate) rescue 0
 
@@ -86,7 +86,7 @@ class GenericSessionsController < ApplicationController
       @list[drug.name] = {
         "month_of_stock" => month_of_stock,
         "stock_level" => stock_level,
-        "consumption_rate" => disp_rate,
+        "consumption_rate" => disp_rate.round(3),
         "stocked_out" => stocked_out,
         "active" => active
       }
