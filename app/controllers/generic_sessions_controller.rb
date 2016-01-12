@@ -35,6 +35,7 @@ class GenericSessionsController < ApplicationController
 		end
     
     @activate_drug_management = CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false
+=begin
     if (@activate_drug_management)
       @stock = {}
       drug_names = GenericDrugController.new.preformat_regimen
@@ -58,7 +59,40 @@ class GenericSessionsController < ApplicationController
       end
       @stock = @stock.sort_by{|drug_id, values|values["drug_name"]}
     end
+=end
 	end
+
+  def stock_levels_graph
+    @current_heath_center_name = Location.current_health_center.name rescue '?'
+    @list = {}
+    drug_names = GenericDrugController.new.preformat_regimen
+    drug_names.each do |drug_name|
+      drug = Drug.find_by_name(drug_name)
+      drug_pack_size = Pharmacy.pack_size(drug.id)
+      current_stock = (Pharmacy.latest_drug_stock(drug.id)/drug_pack_size).to_i #In tins
+      consumption_rate = Pharmacy.average_drug_consumption(drug.id)
+
+      stock_level = current_stock # stock level comes in pills/day here we convert it to tins/month
+      disp_rate = (consumption_rate.to_f * 0.5) #rate is an avg of pills dispensed per day. here we convert it to tins per month
+
+      consumption_rate = (consumption_rate.to_f * 0.5)
+      expected = stock_level.round
+      month_of_stock = (expected/consumption_rate) rescue 0
+
+      stocked_out = (disp_rate.to_i != 0 && month_of_stock.to_f.round(3) == 0.00)
+
+      active = (disp_rate.to_i == 0 && stock_level.to_i != 0)? false : true
+      
+      @list[drug.name] = {
+        "month_of_stock" => month_of_stock,
+        "stock_level" => stock_level,
+        "consumption_rate" => disp_rate.round(3),
+        "stocked_out" => stocked_out,
+        "active" => active
+      }
+
+    end
+  end
 
 	# Update the session with the location information
 	def update    

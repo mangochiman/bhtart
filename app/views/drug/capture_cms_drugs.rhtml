@@ -1,0 +1,36 @@
+<style type="text/css">
+
+</style>
+<%= javascript_include_tag 'jquery' %>
+
+<script type="text/javacript">
+
+  <% options = "<option>" "" "</option>"
+  @drugs.each do |drug|
+    options += "<option value = '#{drug}'>#{drug}</option>"
+  end
+%>
+</script>
+<form id="create_stoke" action="/drug/create_cms_drug_packs" method="POST">
+  <%= select_tag "drug_name", options,
+    {
+    :id => "select_drugs",
+    :field_type => 'alpha',
+    :optional => true,
+    :helpText => "Select Drug to create pack size",
+    :tt_pageStyleClass => "NoKeyboard NoInput small"}
+%>
+
+  <%= text_field_tag "drug_code", "",
+    {
+    :field_type => 'alpha',
+    :helpText => 'Drug Code'
+  } %>
+
+  <%= text_field_tag "pack_size", nil,
+    {
+    :helpText => 'Pack Size',
+    :field_type => 'number',
+    :tt_pageStyleClass => "Numeric NumbersOnly"}
+%>
+</form>

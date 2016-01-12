@@ -2,11 +2,11 @@ class GenericDrugController < ApplicationController
 
   def name
     drug_list = ['Triomune baby', 'Stavudine', 'Lamivudine', 'Zidovudine', 'and', 'Nevirapine', 'Tenofavir',
-                 'Atazanavir', 'Ritonavir', 'Abacavir', '(', ')'
+      'Atazanavir', 'Ritonavir', 'Abacavir', '(', ')'
     ]
     regimen = Regimen.find(:all, :order => 'regimen_index',
-                           :conditions => ['program_id = ?', 1],
-                           :include => :regimen_drug_orders) #.to_yaml
+      :conditions => ['program_id = ?', 1],
+      :include => :regimen_drug_orders) #.to_yaml
     regimen = regimen.map do |r|
       [r.regimen_drug_orders.map(&:to_s)[0].split(':')[0]]
     end
@@ -39,13 +39,13 @@ class GenericDrugController < ApplicationController
 
   def regimen_name_map
     drug_list = ['Triomune baby', 'Stavudine', 'Lamivudine', 'Zidovudine', 'and', 'Nevirapine', 'Tenofavir',
-                 'Atazanavir', 'Ritonavir', 'Abacavir', '(', ')', 'Lopinavir', 'Efavirenz', 'Isoniazid'
+      'Atazanavir', 'Ritonavir', 'Abacavir', '(', ')', 'Lopinavir', 'Efavirenz', 'Isoniazid'
     ]
     more_regimen = ["LPV/r (Lopinavir and Ritonavir syrup)", "LPV/r (Lopinavir and Ritonavir 200/50mg tablet)", "LPV/r (Lopinavir and Ritonavir 100/25mg tablet)", "EFV (Efavirenz 600mg tablet)", "EFV (Efavirenz 200mg tablet)"]
     other = ["Cotrimoxazole (960mg)", "Cotrimoxazole (480mg tablet)", "INH or H (Isoniazid 300mg tablet)", "INH or H (Isoniazid 100mg tablet)"]
     regimen = Regimen.find(:all, :order => 'regimen_index',
-                           :conditions => ['program_id = ?', 1],
-                           :include => :regimen_drug_orders) #.to_yaml
+      :conditions => ['program_id = ?', 1],
+      :include => :regimen_drug_orders) #.to_yaml
     #raise regimen.to_yaml
     regimen = regimen.map do |r|
       if !r.regimen_drug_orders.blank?
@@ -89,7 +89,7 @@ class GenericDrugController < ApplicationController
   def verified_stock
     @delivery_date = params[:observations].first["value_datetime"]
     @drugs = Regimen.find_by_sql(
-        "select distinct(d.name) from regimen r
+      "select distinct(d.name) from regimen r
     inner join regimen_drug_order rd on rd.regimen_id = r.regimen_id
     inner join drug d on d.drug_id = rd.drug_inventory_id
     where r.regimen_index is not null
@@ -100,6 +100,14 @@ class GenericDrugController < ApplicationController
     @formatted = preformat_regimen
     @drug_short_names = regimen_name_map
 
+    @drug_cms_names = {}
+    @drug_cms_packsizes = {}
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @drug_cms_names[drug_name] = drug.name
+      @drug_cms_packsizes[drug_name] = drug.pack_size
+    end
+
   end
 
   def set_receipts
@@ -108,6 +116,13 @@ class GenericDrugController < ApplicationController
     @drugs = params[:drug_name]
     @formatted = preformat_regimen
     @drug_short_names = regimen_name_map
+    @drug_cms_names = {}
+    @drug_cms_packsizes = {}
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @drug_cms_names[drug_name] = drug.name
+      @drug_cms_packsizes[drug_name] = drug.pack_size
+    end
     @list = []
     @expiring = {}
     @formatted.each { |drug|
@@ -155,8 +170,36 @@ class GenericDrugController < ApplicationController
   def delivery
     @formatted = preformat_regimen
     @drugs = regimen_name_map
+    @cms_drugs = {}
+
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @cms_drugs[drug_name] = drug.name
+    end
   end
 
+  def capture_cms_drugs
+    @drugs = preformat_regimen
+
+    drug_inventory_ids = DrugCms.all.map(&:drug_inventory_id)
+    @drugs.delete_if{|drug_name|drug_inventory_ids.include?(Drug.find_by_name(drug_name).drug_id)}
+  end
+
+  def create_cms_drug_packs
+    drug_inventory_id = Drug.find_by_name(params[:drug_name]).drug_id
+    drug_code = params[:drug_code]
+    drug_name = params[:drug_name].to_s + " tin of #{params[:pack_size]} tablets"
+    pack_size = params[:pack_size].to_i
+    
+    drug_cms = DrugCms.new
+    drug_cms.drug_inventory_id = drug_inventory_id
+    drug_cms.name = drug_name
+    drug_cms.code = drug_code
+    drug_cms.pack_size = pack_size
+    drug_cms.save
+    redirect_to "/clinic" and return
+  end
+  
   def calculate_dispensed(drug_name, delivery_date)
 
     drug_id = Drug.find_by_name(drug_name).id
@@ -200,7 +243,7 @@ class GenericDrugController < ApplicationController
         end
 
         expiry_date = delivered["date"].sub(/^\d+/, "01").to_date.end_of_month rescue
-            (raise "Invalid Date #{delivered["date"]}".to_s) rescue Date.today
+        (raise "Invalid Date #{delivered["date"]}".to_s) rescue Date.today
         number_of_pills = (number_of_tins * number_of_pills_per_tin)
         next if number_of_pills == 0
 
@@ -409,7 +452,7 @@ class GenericDrugController < ApplicationController
       @start_date = Pharmacy.find_by_sql("SELECT * FROM pharmacy_obs
                                      WHERE pharmacy_encounter_type = #{encounter_type}
                                      AND DATE(encounter_date) <= '#{@end_date}' AND vaue_text = '#{type}'
-                                    ").first.encounter_date rescue []
+        ").first.encounter_date rescue []
       if @start_date.blank?
         @start_date = @end_date - 3.months
         @start_date = @start_date.beginning_of_month
@@ -431,7 +474,7 @@ class GenericDrugController < ApplicationController
     current_stock.each { |delivery|
       drug = Drug.find_by_name("#{delivery}")
       first_date = Pharmacy.active.find(:first, :conditions => ["drug_id =?",
-                                                                drug.id], :order => "encounter_date").encounter_date.to_date rescue nil
+          drug.id], :order => "encounter_date").encounter_date.to_date rescue nil
       next if first_date.blank?
       next if first_date > @end_date
 
@@ -446,22 +489,22 @@ class GenericDrugController < ApplicationController
       end
 
       obs = Pharmacy.active.find(:first,
-                                 :conditions => ["pharmacy_encounter_type = ? AND  encounter_date > ? AND encounter_date <= ?
+        :conditions => ["pharmacy_encounter_type = ? AND  encounter_date > ? AND encounter_date <= ?
                         AND drug_id = ? AND value_text = '#{type}'",
-                                                 encounter_type_id, @start_date, @end_date, drug.id],
-                                 :order => 'encounter_date DESC,date_created DESC') #.id rescue 0
+          encounter_type_id, @start_date, @end_date, drug.id],
+        :order => 'encounter_date DESC,date_created DESC') #.id rescue 0
       end_pharmacy_id = obs.id rescue 0
       expiring_units = obs.expiring_units rescue "Not <br>Available"
       expiry_date = obs.expiry_date rescue "Not <>"
       start_pharmacy_id = Pharmacy.active.find(:first,
-                                               :conditions => ["pharmacy_encounter_type = ? AND encounter_date <= ? AND drug_id = ? AND value_text = 'Supervision'",
-                                                               encounter_type_id, start_date, drug.id],
-                                               :order => 'encounter_date DESC,date_created DESC').id rescue 0
+        :conditions => ["pharmacy_encounter_type = ? AND encounter_date <= ? AND drug_id = ? AND value_text = 'Supervision'",
+          encounter_type_id, start_date, drug.id],
+        :order => 'encounter_date DESC,date_created DESC').id rescue 0
 
       #Pharmacy.verify_stock_count(drug.id,start_date,end_date)
       @stock[drug_name] = {"confirmed_closing" => 0, "dispensed" => 0, "current_stock" => 0,
-                           "confirmed_opening" => 0, "start_date" => start_date, "end_date" => end_date,
-                           "relocated" => 0, "receipts" => 0, "expected" => 0, "drug_id" => drug.id}
+        "confirmed_opening" => 0, "start_date" => start_date, "end_date" => end_date,
+        "relocated" => 0, "receipts" => 0, "expected" => 0, "drug_id" => drug.id}
       @stock[drug_name]["dispensed"] = Pharmacy.dispensed_drugs_since(drug.id, start_date, end_date)
       @stock[drug_name]["confirmed_opening"] = Pharmacy.verify_stock_count(drug.id, start_date, start_date, type)
       @stock[drug_name]["confirmed_closing"] = Pharmacy.verify_closing_stock_count(drug.id, start_date, end_date, type)
@@ -529,24 +572,24 @@ class GenericDrugController < ApplicationController
 
   def preformat_regimen
     formatted = ["ABC/3TC (Abacavir and Lamivudine 60/30mg tablet)",
-                 "AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)",
-                 "AZT/3TC (Zidovudine and Lamivudine 300/150mg)",
-                 "AZT/3TC/NVP (60/30/50mg tablet)",
-                 "AZT/3TC/NVP (300/150/200mg tablet)",
-                 "d4T/3TC (Stavudine Lamivudine 6/30mg tablet)",
-                 "d4T/3TC (Stavudine Lamivudine 30/150 tablet)",
-                 "Triomune baby (d4T/3TC/NVP 6/30/50mg tablet)",
-                 "d4T/3TC/NVP (30/150/200mg tablet)",
-                 "EFV (Efavirenz 200mg tablet)",
-                 "EFV (Efavirenz 600mg tablet)",
-                 "LPV/r (Lopinavir and Ritonavir 100/25mg tablet)",
-                 "LPV/r (Lopinavir and Ritonavir 200/50mg tablet)",
-                 "LPV/r (Lopinavir and Ritonavir syrup)",
-                 "ATV/r (Atazanavir 300mg/Ritonavir 100mg)",
-                 "NVP (Nevirapine 200 mg tablet)",
-                 "TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet", "TDF/3TC/EFV (300/300/600mg tablet)",
-                 "Cotrimoxazole (480mg tablet)",
-                 "Cotrimoxazole (960mg)", "INH or H (Isoniazid 100mg tablet)", "INH or H (Isoniazid 300mg tablet)"]
+      "AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)",
+      "AZT/3TC (Zidovudine and Lamivudine 300/150mg)",
+      "AZT/3TC/NVP (60/30/50mg tablet)",
+      "AZT/3TC/NVP (300/150/200mg tablet)",
+      "d4T/3TC (Stavudine Lamivudine 6/30mg tablet)",
+      "d4T/3TC (Stavudine Lamivudine 30/150 tablet)",
+      "Triomune baby (d4T/3TC/NVP 6/30/50mg tablet)",
+      "d4T/3TC/NVP (30/150/200mg tablet)",
+      "EFV (Efavirenz 200mg tablet)",
+      "EFV (Efavirenz 600mg tablet)",
+      "LPV/r (Lopinavir and Ritonavir 100/25mg tablet)",
+      "LPV/r (Lopinavir and Ritonavir 200/50mg tablet)",
+      "LPV/r (Lopinavir and Ritonavir syrup)",
+      "ATV/r (Atazanavir 300mg/Ritonavir 100mg)",
+      "NVP (Nevirapine 200 mg tablet)",
+      "TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet", "TDF/3TC/EFV (300/300/600mg tablet)",
+      "Cotrimoxazole (480mg tablet)",
+      "Cotrimoxazole (960mg)", "INH or H (Isoniazid 100mg tablet)", "INH or H (Isoniazid 300mg tablet)"]
     return formatted
   end
 
@@ -582,7 +625,7 @@ class GenericDrugController < ApplicationController
     @goto = params[:goto]
     @goto = 'stock_report' if @goto.blank?
     @drugs = Regimen.find_by_sql(
-        "select distinct(d.name) from regimen r
+      "select distinct(d.name) from regimen r
     inner join regimen_drug_order rd on rd.regimen_id = r.regimen_id
     inner join drug d on d.drug_id = rd.drug_inventory_id
     where r.regimen_index is not null
@@ -640,10 +683,10 @@ class GenericDrugController < ApplicationController
 
   def create_drug_tins(drug_id, pill_count)
     drug_order_barcode = DrugOrderBarcode.find(:first, :conditions => ["drug_id =? AND tabs =?",
-                                                                       drug_id, pill_count])
+        drug_id, pill_count])
     DrugOrderBarcode.create(
-        :drug_id => drug_id,
-        :tabs => pill_count
+      :drug_id => drug_id,
+      :tabs => pill_count
     ) if drug_order_barcode.blank? #We don't want to create duplicates of drug vs tins
 
   end
@@ -666,7 +709,7 @@ class GenericDrugController < ApplicationController
   def available_name
     ids = Pharmacy.active.find(:all).collect { |p| p.drug_id } rescue []
     @names = Drug.find(:all, :conditions => ["name LIKE ? AND drug_id IN (?)", "%" +
-        params[:search_string] + "%", ids]).collect { |drug| drug.name }
+          params[:search_string] + "%", ids]).collect { |drug| drug.name }
     render :text => "<li>" + @names.map { |n| n }.join("</li><li>") + "</li>"
   end
 
@@ -747,8 +790,7 @@ class GenericDrugController < ApplicationController
 
         end
       end
-      redirect_to :action => 'stock_report', :start_date => params[:start_date],
-                  :end_date => params[:end_date], :delivery_date => params[:delivery_date]
+      redirect_to '/'
     else
       @edit_reason = params[:edit_reason]
       @drug_id = params[:drug_id]

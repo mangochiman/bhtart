@@ -107,9 +107,28 @@ class Pharmacy < ActiveRecord::Base
       if expiry_date.to_date < Date.today
         delivery.voided = 1
         return delivery.save
-      end  
+      end
     end
+
+    encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock').id
+    auto_verified_encounter =  self.new()
+    auto_verified_encounter.pharmacy_encounter_type = encounter_type
+    auto_verified_encounter.drug_id = drug_id
+    auto_verified_encounter.encounter_date = date
+    auto_verified_encounter.pack_size = pack_size
+    auto_verified_encounter.value_numeric = Pharmacy.latest_drug_stock(drug_id).to_f + pills.to_f
+    auto_verified_encounter.value_text = 'Clinic'
+
+    if expiring_units
+      auto_verified_encounter.expiring_units = expiring_units
+    end
+    if expiry_date
+      auto_verified_encounter.expiry_date = expiry_date
+    end
+
     delivery.save
+    auto_verified_encounter.save
+
     self.update_stock_record(drug_id, date) #Update stock record
     self.update_average_drug_consumption(drug_id)
     # raise delivery.to_yaml
