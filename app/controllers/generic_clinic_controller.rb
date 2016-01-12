@@ -268,7 +268,8 @@ class GenericClinicController < ApplicationController
       ["Enter drug relocation<br />(in or out) / disposal","delivery?id=relocation"],
       #["Stock<br />report","date_select"],
       #["Stock <br />Charts","stock_movement_menu?goto=stoke_movement"]
-      ["Enter <br /> CMS Drugs","capture_cms_drugs"]
+      ["Enter <br /> CMS Drugs","capture_cms_drugs"],
+      ["Drug Stock <br /> Report","drug_stock_report"]
     ]
     render :layout => false
   end
