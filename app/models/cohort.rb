@@ -461,8 +461,8 @@ class Cohort
 				(cohort_report['Total Patients initiated on ART'] || []))
                                                       
 		cohort_report['Newly transferred in patients'] = (cohort_report['Newly total registered'] - 
-				(cohort_report['Total Patients reinitiated on ART'] || [])-
-				(cohort_report['Total Patients initiated on ART'] || []))
+				(cohort_report['Patients reinitiated on ART'] || [])-
+				(cohort_report['Patients initiated on ART'] || []))
         #raise cohort_report['Total registered'].to_yaml
 		cohort_report['Total Unknown age'] = cohort_report['Total registered'] - (cohort_report['Total registered adults'] +
 				cohort_report['Total registered children'] +
