@@ -314,6 +314,16 @@ class GenericDrugController < ApplicationController
       redirect_to "/clinic" # /management"
     else
       # @delivery_date = params[:observations].first["value_datetime"]
+      if params[:relocation_or_disposal].match(/RELOCATIONS/i)
+        @mode = 'RELOCATIONS'
+        @relocation_date = params[:relocation_date].to_date
+        @relocation_facility = Location.find(params[:relocation_facility]).name
+      else
+        @mode = 'DISPOSAL'
+        @disposal_date = params[:disposal_date].to_date
+        @disposal_reason = params[:disposal_reason]
+      end
+      
       @drugs = params[:drug_name]
       @formatted = preformat_regimen
       @drug_short_names = regimen_name_map
