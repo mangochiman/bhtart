@@ -1,525 +1,1849 @@
+<!doctype html>
 
-<html>
-  <head>
-    <%= javascript_include_tag "prototype" %>
-    <%= javascript_include_tag 'jquery' %>
-    <%= stylesheet_link_tag 'extra_buttons' %>
-    <%= javascript_include_tag 'jquery_data_table.js' %>
-    <%= stylesheet_link_tag 'jquery.dataTables' %>
-    <%=javascript_include_tag "jquery.table2CSV.min" %>
-    <script type="text/css" charset="utf8" src="/stylesheets/keyboard.css"></script>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<title>Stock Verification</title>
+<%= javascript_include_tag 'jquery' %>
+
+<script>
+    var target;
+    var disposal_date = <%= @disposal_date.to_json %>;
+    var drugs = <%= @drugs.to_json %>;
+    var formatted_drugs = <%= @formatted.to_json %>;
+    var drug_short_names = <%= @drug_short_names.to_json %>;
+    var drug_cms_names = <%= @drug_cms_names.to_json %>;
+    var drug_cms_packsizes = <%= @drug_cms_packsizes.to_json %>;
+
+    var selected = <%= params[:drug_name].to_json %>
+    var unfinished_drugs = [];
+    var sieved = [];
+    var sievable = [];
+    var activeField = "";
+    var activePos = 0;
+    var counts = {};
+    var lockParams = false;
+
+    var imgBlank = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAhHpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4aWYAAHjadY7LCYBADAXvW4Ul5Lf5lCOiYAeWb8Kqe3IOyeMRhrT9Oo+2FAjUpJtrqEIiIUFrBocBAyAB1s45eDZjJpp1YxpBww1kHsrTv3RW18PETLtuulHaaWdkz1miskK9EVPyOfinf7+4AUCRLBT7Z5tUAAAKAmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNC40LjAtRXhpdjIiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjMyIgogICBleGlmOlBpeGVsWURpbWVuc2lvbj0iMzIiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMzIiCiAgIHRpZmY6SW1hZ2VIZWlnaHQ9IjMyIgogICB0aWZmOk9yaWVudGF0aW9uPSIxIi8+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgCjw/eHBhY2tldCBlbmQ9InciPz4NhXU1AAAABHNCSVQICAgIfAhkiAAAAeZJREFUWMPt1j1rVEEUxvH/3Nddb9ZEC4sIFhpFgiFiULATrCwEC4soamU6Se+XEKz9ABFSWFgIlpZCrCxc1kLzVmQ17EtudvfOnDkWG9nCJsWFFN7TzBQD58fDGWZMwCwnWQEnXBWgAlSAChAd92Dr6w4agAim1+HuqZSHUcx1wI+GbAxGrGcNPqFgFBZuni8XoAE4x/Swz6vFBZ5YQ9I9QL1gzqXcjjzPvzV5Eya8DEPy0hMQIRj2eb24xLPNPczBAFwBzoEXSELSS3O8aDUxWmMV0FJnoNfh3vw1Hv/cg/4hagvUObAWLUZopwfft+DKZVYGOXdKH8LTGU9HSpwPQCxGHMba8d45jLPQ7WO6OWlWZ7l0QFzjVqc3if2oOc6BsyAyXtv7EIYslT4D6gmsm8Qu9gjh0L/NvXj1EkBIWHoCg5yNqRQjbhK7uPG1dBbjxeNFzEwDI8KX0gEjy9ssRkLzb+xePM4J9TTmTAPbz1kvHZCkvNv8wfuLs5BEqDh0jPDqRTSrxczPoTu7rKU1PpY+A3GEyw9Z2d3CXb3Ag98dovY+igZmphFwdhq7vc1a4VlNInzpAKNQS/lVFDxqtrg/VWc5S7iBosWAz802a0nChzTGB+b4b4GpfsUVoAJUgP8e8Ad1/Pn3B4MjXwAAAABJRU5ErkJggg=='
+    var imgCancel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAG9AAABvQBc+sgmgAAAAd0SU1FB9oEEwoaHRbh2IwAAAHxSURBVEjHvZbPSutAFMa/XotQSiELyUYXroQsCgXvFVz5AOLGhdCNPkkR3ErpE/gAIkJx4U7cCf57gi4EKQWvCEUQiR39uUjKNGaSyL3UgUOSOTPfd+bMN2dSApTV3kslX9IfSb8lLcdPSbqRdBs/r2fgbyYIkDIjlY3UMtKbkSiwt3hs2YXlAg+MdPUN4K92ZaQgl8BI20Z6/Qfwsb0aadtJEEf+P+CTJEGCIM55Ii0fEtTrUKlkglGtQr3Ohztd5UmCVmpytwujETw9wepqGnxtDYbDaMzRkSuAFiAZyXephYODaPJoBI+PsLRkfUEQEY/93W6WunwZad25/Pl56PctyN0d+D54HvR6tv/+Hnw/K43rMtJuZo5XVuD52YJdXMD5uf0eDqHRyNvwXRnpJE8VbG5CGFrQsYUhbGwUKepERhoUSY/9/TTB3t53JDsoJMDzovx/Jej1oFYrJPgVFyxnm5Gk42NpYSHqCEPp5SV6X1yUDg+jMdntJn+TO51k1Ds7sLWV7Gu3CzfZLdNmMwnU6Vhfu530NZu5Mk0dNCoVGAwswOkpTPolODuz/n7fVVKig+YqFXgePDxY7Ver6RXWanB5acvJ3Jy7VGQVO2ZnodFIRJ4ikaIx6eiTxW7q5fpHLpwfuTKncemXpv3b8gkOTrvXD5TdSQAAAABJRU5ErkJggg=='
+    var imgTick = 'data:image/png;base64,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';
+    var styles = "div { -moz-user-select: none;} .dbutton {font-size: 1em;padding: 10px;min-width: 120px;cursor: pointer;min-height: 55px;border-radius: 10px !important;margin: 3px;} .input_cell {font-size: 1.2em;padding:10px;border: 1px solid #3465a4;border-radius: 10px;width: 80% !important;} .buttttton {font-size: 1em;padding: 15px;min-width: 100px;  cursor: pointer;  min-height: 60px;border-radius: 10px !important;margin: 3px;} #add-button{border:1px solid #7eb9d0; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:28px;font-family:arial, helvetica, sans-serif; padding: 10px 10px 10px 10px; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;background-color: #a7cfdf; background-image: -webkit-gradient(linear, left top, left bottom, from(#a7cfdf), to(#23538a));background-image: -webkit-linear-gradient(top, #a7cfdf, #23538a);background-image: -moz-linear-gradient(top, #a7cfdf, #23538a);background-image: -ms-linear-gradient(top, #a7cfdf, #23538a);background-image: -o-linear-gradient(top, #a7cfdf, #23538a);background-image: linear-gradient(to bottom, #a7cfdf, #23538a);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#a7cfdf, endColorstr=#23538a);} .bluee{border:1px solid #7eb9d0; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:28px;font-family:arial, helvetica, sans-serif; padding: 10px 10px 10px 10px; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;background-color: #a7cfdf; background-image: -webkit-gradient(linear, left top, left bottom, from(#a7cfdf), to(#23538a));background-image: -webkit-linear-gradient(top, #a7cfdf, #23538a);background-image: -moz-linear-gradient(top, #a7cfdf, #23538a);background-image: -ms-linear-gradient(top, #a7cfdf, #23538a);background-image: -o-linear-gradient(top, #a7cfdf, #23538a);background-image: linear-gradient(to bottom, #a7cfdf, #23538a);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#a7cfdf, endColorstr=#23538a);} #add-button:active {border:1px solid #5ca6c4 !important;background-color: #82bbd1 !important; background-image: -webkit-gradient(linear, left top, left bottom, from(#82bbd1), to(#cd8912)) !important;background-image: -webkit-linear-gradient(top, #82bbd1, #cd8912) !important;background-image: -moz-linear-gradient(top, #efb144, #cd8912) !important;background-image: -ms-linear-gradient(top, #efb144, #cd8912) !important;background-image: -o-linear-gradient(top, #efb144, #cd8912) !important;background-image: linear-gradient(to bottom, #efb144, #cd8912) !important;filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#efb144, endColorstr=#cd8912) !important;} .butt {  font-size: 26px;  padding: 15px 15px 6px 10px !important; text-align: center; max-width: 40px;  cursor: pointer;  max-height: 40px !important;  border-radius: 10px !important;  margin: 3px;} .butt:active {background-color: #f3e7c0;} .bluee{   border:1px solid #7eb9d0; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:28px;font-family:arial, helvetica, sans-serif; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;   background-color: #a7cfdf; background-image: -webkit-gradient(linear, left top, left bottom, from(#a7cfdf), to(#23538a));   background-image: -webkit-linear-gradient(top, #a7cfdf, #23538a);   background-image: -moz-linear-gradient(top, #a7cfdf, #23538a);   background-image: -ms-linear-gradient(top, #a7cfdf, #23538a);   background-image: -o-linear-gradient(top, #a7cfdf, #23538a);   background-image: linear-gradient(to bottom, #a7cfdf, #23538a);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#a7cfdf, endColorstr=#23538a);}.bluee:hover{   border:1px solid #5ca6c4;   background-color: #82bbd1; background-image: -webkit-gradient(linear, left top, left bottom, from(#82bbd1), to(#193b61));   background-image: -webkit-linear-gradient(top, #82bbd1, #193b61);   background-image: -moz-linear-gradient(top, #82bbd1, #193b61);   background-image: -ms-linear-gradient(top, #82bbd1, #193b61);   background-image: -o-linear-gradient(top, #82bbd1, #193b61);   background-image: linear-gradient(to bottom, #82bbd1, #193b61);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#82bbd1, endColorstr=#193b61);}.gray{   border:1px solid #ccc; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:28px;font-family:arial, helvetica, sans-serif; padding: 10px 10px 10px 10px; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;   background-color: #ccc; background-image: -webkit-gradient(linear, left top, left bottom, from(#ccc), to(#999));   background-image: -webkit-linear-gradient(top, #ccc, #999);   background-image: -moz-linear-gradient(top, #ccc, #999);   background-image: -ms-linear-gradient(top, #ccc, #999);   background-image: -o-linear-gradient(top, #ccc, #999);   background-image: linear-gradient(to bottom, #ccc, #999);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#ccc, endColorstr=#999);}.gray:hover{   border:1px solid #ccc;   background-color: #ddd; background-image: -webkit-gradient(linear, left top, left bottom, from(#333), to(#ccc));   background-image: -webkit-linear-gradient(top, #333, #ccc);   background-image: -moz-linear-gradient(top, #333, #ccc);   background-image: -ms-linear-gradient(top, #333, #ccc);   background-image: -o-linear-gradient(top, #333, #ccc);   background-image: linear-gradient(to bottom, #333, #ccc);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#333, endColorstr=#ccc);}.layer1 {position: absolute; top: 0px; left: 0px; border: 0px solid #000; width: 115%; height: 50%; z-index: 101; background-color: #4a7ced;}.layer2 {position: absolute; top: 40px; left: 0px; border: 0px solid #000; width: 115%; height: 50%; border:0px solid; border-top-right-radius: 1000px; z-index: 102; background-color: #fff;}.layer3 {position: absolute; top: 0px; left: 0px; border: 0px solid #000; width: 134%; height: 95%; border:0px solid; border-bottom-right-radius: 1000px; z-index: 99; background-color: #ff8010;}.layer4 {position: absolute; top: -4px; left: 0px; border: 0px solid #000; width: 130%; height: 95%; border:0px solid; border-bottom-right-radius: 1000px; z-index: 100; background-color: #fff;}.layer5 {position: absolute; top: 0px; left: 0px; border: 1px solid #000; width: 100%; height: 100%; overflow: hidden; background-color: rgba(255,255,255,0.2); z-index: 105;}.table1 {display: table; width: 100%; border-spacing: 10px;}.table2 {display: table; width: 95%; margin-left: 15px; border-spacing: 0px; margin-top: 10px;}.table3 {display: table; border-spacing: 5px; width: 100%;}.table4 {display: table; width: 98%; border-spacing: 1px; margin: 15px; height: 68%;}.table5 {display: table-cell; border-radius: 5px; border: 2px inset rgb(73,93,135); background-color: rgba(255,255,255,0.85); height: 100%;}.table6 {display: table; width: 215px;}.row {display: table-row;}.cell1 {display: table-cell; width: 520px; border-radius: 10px; border: 2px inset #495d87; border-bottom-left-radius: 150px; background-color: rgba(255,255,255,0.85); height: 120px;}.cellGender {display: table-cell; background-color: #c9d4ec; border-radius: 30px; padding: 5px; border: 2px solid #495d87; width: 30px; height: 30px;}.cell2 {display: table-cell; font-weight: bold; font-size: 24px; vertical-align: middle; border-bottom: 1px solid #999; padding-left: 10px;}.cell {display: table-cell;}.cell3 {display: table-cell; font-weight: bold; font-size: 12px; width: 120px;}.cell4 {display: table-cell; font-size: 12px;}.cell5 {display: table-cell; font-weight: bold; font-size: 12px; width: 100px;}.cell6 {display: table-cell; font-weight: bold; font-size: 12px;}.cell7 {display: table-cell; font-weight: bold; font-size: 12px;}.cell8 {display: table-cell; border-radius: 10px; border: 2px inset #495d87; background-color: rgba(255,255,255,0.85); border-top-right-radius: 150px;}.cell9 {display: table-cell; border: 1px ridge #eee; border-bottom-left-radius: 150px; border-top-right-radius: 150px; background-color: rgba(73,93,135,0.95); width: 200px; vertical-align: middle; text-align: center;}.div1 {font-size: 18px; color: #fff; font-family: Arial; margin: auto; }.div2 {width: 100%; height: 80px; position: absolute; bottom: 2px; left: 0px; z-index: 120; background-color: rgba(73,93,135,0.3); border-radius: 60px;}.frame1 {width: 100%; height: 100%; border: 0px solid #000;}.cell10 {display: table-cell; width: 220px; border: 0px ridge #ccc; border-bottom-right-radius: 60px; vertical-align: top;} .butt:active {border:1px solid #5ca6c4 !important;background-color: #82bbd1 !important; background-image: -webkit-gradient(linear, left top, left bottom, from(#82bbd1), to(#cd8912)) !important;background-image: -webkit-linear-gradient(top, #82bbd1, #cd8912) !important;background-image: -moz-linear-gradient(top, #efb144, #cd8912) !important;background-image: -ms-linear-gradient(top, #efb144, #cd8912) !important;background-image: -o-linear-gradient(top, #efb144, #cd8912) !important;background-image: linear-gradient(to bottom, #efb144, #cd8912) !important;filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#efb144, endColorstr=#cd8912) !important;} .empty {border: 1px solid #ccc;border-radius: 15px;width: 180px;height: 150px;float: left;margin: 10px;}.menubutton {border: 1px solid #3465a4;border-radius: 15px;width: 180px;height: 150px;float: left;margin: 10px;cursor: pointer;vertical-align: middle; text-align: center;}.menubutton:hover {background-color: #c2d3f4;color: #0e2a64;text-decoration: underline;}.menubutton:active {background-color: #f3e7c0;}#pageTitle:hover {color: #999 !important;} .base {width: 100%; height: 100%; border: 1px solid #000; position: absolute; left: 0px; top: 0px; background-color: #fff; } ";
+    var imgUnTick = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAIX0lEQVR4nO2dXagd1RXH10nMvWdmbe89H7O2SQiNEigVtc2LJaU+BPoU1JeQlkKjoIXaFynFFB98OSgWi6V9CSRYKiIIISKVoG/BGCRY5FIpcvEjxhtzL+fM3lJCEQmXGK4PM/d6zmVmznyePR/rB/OWj7X3f8+amX3+a20AhmEYhmEYhmEYhmEYhmEYhmEYhmEYhmGYEC4A3GY6BsYww057PwC0TMdRY1qXAeZNBxHJyLEf5GyQP18uQtftintNxxELl+xnLvdgwXQcdUFJ66gm8UvTccRmALBDE54Zddp3mo6lyqwCWEqKfykHf2M6lsScBdippHh/5IjDpmOpIm7POqRJXFeO/XvTsaRmBaCtJH6hSTxpOpaqcBZgp3LwL1qKjVrM25UuLGoS15UUpwcAO0zHU2aGnfZ+JfGqlmLDJfsZ0/HkhibcrSTe0ITvLAPMmY6nhLSUYz+hpdjQUmwoKQamA8qdYX/ubm9w+MWXi9A1HU9ZuNKFRUXive/Fx7+ZjqkwRo447A/yxqgn7jEdj2lGZB9REte3xCf7pOmYCkeTdez71W4dNR2PCZYB5hThK5vz4ImPr0BTdlGVg0+Npbw/mY5nlmjCg0qK/02IL/E1aIr4m2x96kixoQnPnAXYaTqmIhkA7NAknhsX3h/7uUFDv45amvDM2ET8Zwhgmw6qCBTiHUqK5QDx3x40VHwA8Dc9Jt+AXU2423RceTL+eTcpvrhY96wXiyWAXUriR2OLYN3tWYdMx5WVIYCtCd8OFh+XlgB2mY6xNLgAqCS6216MHjEdV1pGjjisJN4IEl8RfsjiB7C6AD1F4uttk/UCVOjteAlglybxj8C73kv7n64AtE3HWVpGnfadmvDmZCYQb1bBYDLsz92tCdfCxFckPl8FsEzHWXpGffv+gDvnsytdWDQdWwit8X2NkGf+UBMI04FWBtexHw5YBP93F9t3mY5tnJEAUhL/GyW+kuh+4sDtpmOtHC7Zvw24k26VxWDi2bTwVvSdL66vLkDPdKyVRUnxbNDEuoR/MBWTb9N6M1J4P2MNbwfHVJy1QUlxOji1ipcGM95F27RpTRNfSbxxzbH3zjK22jLwDKYhGyri3Vn45H2b1otT73pf/LWeta/omBqFZzDFf4dMeKEGE//T9Foc8TXhTSXnDxQVS6PZMpiG3HUFFE20XAf/GEt4/wV1zZn/Yc4xMONsGkzD028+BhPfpnUptvjeAjiYx//NTGHLYBq6CMSzkGH7WJP1gJL4TRLx3T7+IschMtPYNJiGLgISryf9qXUZYE45+Gqiu57FN8emwTQiJcc2mATZtOJcI7KPFD1OJoJxg2nIy6GKMpicBdipSTyfVHhPfPGrWY6VCSHGDzGB28eacLcm8XEa8StZrFlnJgym4dngUf+Pt0JtWrHEr3CxZo2ZNJiGZ4O/axIX04pfi2LNurLdYJr3Vatizbqy3WCa11XLYs26EmQwzSZ+jYs168pVx96jCb/NLH4TijXrhm/TyvwYaFSxZl1QfTw+1aYVL+03r1izyqwCWJrwXC7PfcK3Bk2u16sabhfvS7OPH7EAhq4Q0vS4mCn4LqG/5v3J5z8C1t0u3md6jEwI7mL7rtg2rUwLoZkdTMpMMptWLo8E8RzwC6F5VjrQUVK8P1PxNzMBiderUJ9YW2JV4SR/2Uu0UaRIXOLK3hmzAtBWJN7IP63j8Jpj741T5DH5ToDqqmPvMT0vjUATHkwqUEwRt4o1h13rB9vL0WP8/XXVxR+bnp/a4v2siy8U8jwPKNacZjCNyCKPmZqj2uL9iJPOphVD/NBizakG07Bs4OCLwF8I+aDJOpb7i95Y2p52eMU0g2nEv32eG2Bn4HIPFjLZtKYLFLtYc6rBNOz/IPH5Sgc6Rc9V7fCbJYdW+WRP+8mLNeMYTEMWwddcGBqTJYBdLuHLhQnviZ+2WDOewTQ04/D2cSR+Fc5XhYrvLYDUxZpZDabKwafynLNaMPAaPTxduPDeXfjzrPFmNpgS/nPAvgIPr1ly/m7doCvPYs3MBlPCDxrfGzAvm1acq4hizaAOpsmyEboK8Y684yo9frPkt2YhvCd+ccWaQR1MEy6CdSXxJ0XFVzr8ZsmJmixkuWZRrBnYwTRpnH08XnScRvFenMRLsxLeE392xZqBHUyTXiSehzpuHys5fyCqWXIhl4FizcAOpkkXLYk3amcwURLPz1J8l/DP5sYa3ME02SLAD10ANDWG3HEd+6GZpf0SFGuGdTBNmMGuDzvt/abHkgtXurA4G/HLUaw5iOpgmmgRlKcBdmY0iU8LFb9kxZpRHUyTXi7Zj5seT2aUY/+uOPHLWawZ1cE0eXYTpwZV3j5e61n7Ckr7pS7WnNbBNOFYK20waeVu5KzIyZrTOpgmy3YVNpgEHo+aXvxKnayZ2mAavAiqaTBxu+LefMSv5smaaQ2m4Y+EihlMvO6bGX/9q/jJmmkNpuGLAE+YHlMilMTX0qe+epysmdZgGna5hC8PqvI4TJ0Ga3ayZlqDaVRmrITBZAhgJ7/za3myZiaDacjjoBoGE034QYKVXduTNS8A3JZoLuItgm+G/bkfmR5bJK4jfh13Rdf9ZM28dgs9Z5E4pXrWz0r/qBwJoBjP/MacrJnaYEq4pPp4vBJpfzuacBghfuNO1oxlMCW8qaQ45fasQ7M4E7FQlMQTIamssSdrBhpMCa8px35irWftG1TlUy8OSs4fCBK/6Sdrjvr2/Zrw3IjsI5d7sGA6niJpTfxAwidrNg9F9klffD5Zs4mM+tZP/QXAJ2s2kWWAuTyKNRmGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYZhJvgMnR/wug6Qz4gAAAABJRU5ErkJggg==';
+
+    var mappedData = {
+        "disposal_date": disposal_date,
+        "drugs": drugs,
+        "formatted_drugs": formatted_drugs,
+        "drug_short_names": drug_short_names,
+        "drug_cms_names": drug_cms_names,
+        "selected_drugs": selected
+    }
+
+    var check = false;
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    monthNames = {
+        "Jan": 0,
+        "Feb": 1,
+        "Mar": 2,
+        "Apr": 3,
+        "May": 4,
+        "Jun": 5,
+        "Jul": 6,
+        "Aug": 7,
+        "Sep": 8,
+        "Oct": 9,
+        "Nov": 10,
+        "Dec": 11
+    };
+
+    function filter_drugs(drugs, varr) {
+
+        var name;
+        var splitted;
+
+        for (var d = 0; d < formatted_drugs.length; d++) {
+
+            splitted = drug_short_names[formatted_drugs[d]].replace(/\(|\)/, "").split(" ");
+            var i = 1;
+            while (i < splitted.length) {
+
+                if (splitted[i].toUpperCase() != "ISONIAZID" && (splitted[i].toUpperCase() == "OR" ||
+                        splitted[i].toUpperCase() == "H"))
+                    splitted[0] = splitted[0] + " " + splitted[i];
+                i += 1;
+            }
+
+            if (drugs.indexOf(formatted_drugs[d]) >= 0 && (splitted[0] == 'INH or H' ||
+                    splitted[0].trim() == "Cotrimoxazole")) {
+
+                if (varr) {
+                    varr.push(formatted_drugs[d]);
+                } else {
+                    sieved.push(formatted_drugs[d]);
+                }
+            }
+        }
+
+        if (varr) {
+            varr = varr.filter(function (elem, pos) {
+                return varr.indexOf(elem) == pos;
+            });
+            return varr;
+        }
+
+        var all = sieved.concat(drugs);
+        sieved = sieved.filter(function (elem, pos) {
+            return sieved.indexOf(elem) == pos;
+        });
+        var uniq = all.filter(function (elem, pos) {
+            return all.indexOf(elem) == pos;
+        });
+
+        return uniq;
+    }
+
+    var Entries = (function (jQ, data) {
+
+        function guiSetup() {
+
+            var style = document.createElement("style");
+            style.innerHTML = styles;
+
+            document.head.appendChild(style);
+
+            var table = document.createElement("div");
+            var headerTable = document.createElement("div");
+            var header = document.createElement("div");
+            var contentRow = document.createElement("div");
+            var leftPane = document.createElement("div");
+            var rightPane = document.createElement("div");
+            var headerTitle1 = document.createElement("div");
+            var headerTitle2 = document.createElement("div");
+            var div = document.createElement("div");
+            var div2 = document.createElement("div");
+
+            headerTable.id = "h-table";
+            headerTitle1.id = "ht1";
+            headerTitle2.id = "ht2";
+
+            headerTitle1.innerHTML = "Drug";
+            headerTitle2.innerHTML = "Drug Stock Details";
+
+            table.id = "table";
+            contentRow.id = "c-row";
+            header.className = "h-row";
+
+            contentRow.className = "c-row t-row";
+            leftPane.id = "left";
+
+            div.id = "drug-pane";
+            div.innerHTML = "<div id = 'drug-list'></div>";
+            leftPane.appendChild(div);
+            div2.id = "data-pane";
+            rightPane.appendChild(div2);
+
+            rightPane.id = "right";
+            leftPane.className = "t-data";
+            rightPane.className = "t-data";
+            headerTitle1.className = "h-data";
+            headerTitle2.className = "h-data";
+
+            header.appendChild(headerTitle1);
+            header.appendChild(headerTitle2);
+
+            contentRow.appendChild(leftPane);
+            contentRow.appendChild(rightPane);
+
+            headerTable.appendChild(header);
+            table.appendChild(contentRow);
+
+            jQ("#inputFrame" + tstCurrentPage).empty();
+            __$("inputFrame" + tstCurrentPage).appendChild(headerTable);
+            __$("inputFrame" + tstCurrentPage).appendChild(table);
+
+            loadCSS();
+        }
+
+        function loadCSS() {
+
+            jQ(".h-row").css({
+                background: "#999",
+                "border-radius": "5px",
+                width: "100%"
+            })
+
+            jQ("#drug-pane").css({
+                position: "absolute",
+                "top": "122px",
+                height: "520px",
+                "max-height": "520px",
+                border: "1px solid lightgray",
+                "border-right": "2.25px solid lightblue",
+                "box-shadow": "inset 0 0 30px lightblue, 0 0 8px black",
+                width: (0.33 * window.innerWidth) + "px"
+            })
+
+            jQ("#data-pane").css({
+                position: "absolute",
+                background: "rgb(250, 250, 250)",
+                "top": "122px",
+                height: "520px",
+                "box-shadow": "inset 0 0 30px lightgray, 0 0 10px white",
+                "max-height": "520px",
+                "overflow": "auto",
+                border: "1px solid lightgray",
+                "border-left": "2.25px solid lightblue",
+                width: (0.576 * window.innerWidth) + "px",
+                left: (0.372 * window.innerWidth) + "px"
+            })
+
+            jQ("#drug-pane, #ht1, #left").css({
+                width: (0.33 * window.innerWidth) + "px"
+            })
+
+            var width = __$("c-row").offsetWidth + "px";
+
+            __$("h-table").style.width = width;
+
+        }
+
+        function loadDrugs() {
+
+            var all_drugs = data["selected_drugs"];
+            var short_names = data["drug_short_names"];
+            var cms_names = data["drug_cms_names"];
+
+            all_drugs = filter_drugs(all_drugs);
+
+            __$("drug-list").style.display = "table";
+
+            for (var k in all_drugs) {
+
+                if (counts[all_drugs[k]] == undefined) {
+                    counts[all_drugs[k]] = 1;
+                }
+                var r = document.createElement("div");
+                r.className = "drug-row";
+                r.style.display = "table-row";
+
+                var div = document.createElement("div");
+                div.style.display = "table-cell";
+                var img = document.createElement("img");
+                img.id = all_drugs[k] + "_img";
+                img.className = "img";
+                div.style.minWidth = "35px";
+                img.src = imgBlank;
+                div.appendChild(img);
+
+                img.style.maxHeight = "35px";
+                r.appendChild(div);
+                var pli = document.createElement("div");
+                var li = document.createElement("div");
+                li.id = all_drugs[k];
+                li.style.display = "table-cell";
+                li.innerHTML = short_names[all_drugs[k]];
+
+                li.setAttribute("value", all_drugs[k]);
+                li.setAttribute("cms_name", drug_cms_names[all_drugs[k]]);
+
+                li.style.background = (k % 2 == 0) ? "rgb(245, 250, 253)" : "white";
+                li.className = (k % 2 == 0) ? "even" : "odd";
+                li.onmousedown = function () {
+                    clickUpdate(this, "drug-list");
+                    var n = this.getElementsByTagName("span")[0];
+                    if (n && n != undefined) {
+                        n.onmousedown.apply(n);
+                    }
+                }
+                pli.appendChild(li);
+                r.appendChild(pli);
+                __$("drug-list").appendChild(r);
+            }
+
+            for (var j in drugs) {
+
+                for (var i = 1; i <= counts[drugs[j]]; i++) {
+                    buildParams(drugs[j], i);
+                }
+            }
+        }
+
+        function loadControls(item, pos) {
+
+            __$("data-pane").setAttribute("pos", pos);
+            __$("data-pane").setAttribute("drug", item.getAttribute("value"));
+
+            var table = document.createElement("div");
+            table.style.paddingLeft = "25px";
+            var header = document.createElement("div");
+            var rowA = document.createElement("div");
+            table.style.display = 'table';
+            table.id = "input-table";
+            table.style.width = "90%";
+            table.style.borderRadius = "8px";
+            table.style.marginLeft = "25px";
+            table.style.marginBottom = "7px";
+            table.style.border = '1.5px solid #5ca6c4';
+            table.style.borderRadius = '10px';
+
+            header.id = "input-header";
+            header.style.width = "98%";
+            header.style.textAlign = "center";
+            header.style.height = "32px";
+            header.style.paddingTop = "1px";
+            header.setAttribute("drug", item.getAttribute("value"));
+            header.innerHTML = pos + (pos == 1 ? "<sup>st</sup>" : (pos == 2 ? "<sup>nd</sup>" : (pos == 3 ? "<sup>rd</sup>" : "th"))) +
+                    " - " + item.getAttribute("cms_name");
+            __$("data-pane").appendChild(header);
+            __$("data-pane").appendChild(table);
+
+            if (!(sieved.indexOf(item.getAttribute("value")) >= 0)) {
+                var textField1 = document.createElement("input");
+                textField1.id = "Number of tins";
+                textField1.setAttribute("label", "Pack size");
+                textField1.className = "input-field input-field-active";
+                textField1.value = drug_cms_packsizes[item.getAttribute("value")];
+                textField1.disabled = true;
+                textField1.onmousedown = function () {
+                    target = this;
+                    jQ(".input-field").attr("class", "input-field");
+                    this.className += " input-field-active";
+
+                    if (__$('popupkeyboard'))
+                        __$('data-pane').removeChild(__$('popupkeyboard'));
+                    showKeyboard(this);
+                }
+
+                table.appendChild(wrap(textField1));
+            } else {
+                var textField1 = document.createElement("select");
+                textField1.id = "Number of expiring tins";
+                textField1.setAttribute("label", "Pack size");
+                textField1.innerHTML = "<option>" + drug_cms_packsizes[item.getAttribute("value")] + "</option>";
+                textField1.disabled = true;
+                textField1.style.background = "white";
+                textField1.className = "input-field input-field-active";
+                textField1.value = __$(item.getAttribute("value") + "_units_" + pos).value;
+                textField1.onmousedown = function () {
+                    target = this;
+                    jQ(".input-field").attr("class", "input-field");
+                    this.className += " input-field-active";
+                    if (__$('popupkeyboard'))
+                        __$('data-pane').removeChild(__$('popupkeyboard'));
+                }
+
+                table.appendChild(wrap(textField1));
+            }
+
+            if (!(sieved.indexOf(item.getAttribute("value")) >= 0)) {
+                var textField2 = document.createElement("input");
+                textField2.id = "Number of expiring tins";
+                textField2.setAttribute("label", "Total units");
+                textField2.className = "input-field";
+                textField2.value = __$(item.getAttribute("value") + "_units_" + pos).value;
+                textField2.onmousedown = function () {
+                    target = this;
+                    jQ(".input-field").attr("class", "input-field");
+                    this.className += " input-field-active";
+
+                    if (__$('popupkeyboard'))
+                        __$('data-pane').removeChild(__$('popupkeyboard'));
+                    showKeyboard(this);
+                }
+            } else {
+
+                var textField2 = document.createElement("input");
+                textField2.id = "Number of tins";
+                textField2.setAttribute("label", "Total units");
+                textField2.className = "input-field";
+                textField2.value = __$(item.getAttribute("value") + "_packsize_" + pos).value;
+                textField2.onmousedown = function () {
+                    target = this;
+                    jQ(".input-field").attr("class", "input-field");
+                    this.className += " input-field-active";
+
+                    if (__$('popupkeyboard'))
+                        __$('data-pane').removeChild(__$('popupkeyboard'));
+                    showKeyboard(this);
+                }
+
+            }
+            table.appendChild(wrap(textField2));
 
 
-    <script>
-      var keyboard
-      var search
-      var date = '<%= Date.today.strftime("%m/%Y") %>'
-      var response;
-      var response1;
-      var response2;
-      var shortNames = '<%= @drug_short_names %>';
+            var textField3 = document.createElement("select");
+            textField3.id = "Reason for disposal";
+            textField3.setAttribute("label", "Reason for disposal");
+            textField3.innerHTML = "<option></option><option>Damaged</option><option>Expired</option><option>Missing</option>";
+            textField3.style.background = "white";
+            textField3.className = "input-field";
+            textField3.style.height = "40px";
+            textField3.value = __$(item.getAttribute("value") + "_reason_" + pos).value;
+            textField3.onmousedown = function () {
+                target = this;
+                jQ(".input-field").attr("class", "input-field");
+                this.className += " input-field-active";
+                if (__$('popupkeyboard'))
+                    __$('data-pane').removeChild(__$('popupkeyboard'));
+            }
+            table.appendChild(wrap(textField3));
 
-      function getName(td) {
-        var aUrl = "/drug/get_name?value=" + td;
 
-        var httpRequest = new XMLHttpRequest();
-        httpRequest.onreadystatechange = function() {
-          set_name(httpRequest);
+            var textField4 = document.createElement("input");
+            textField4.id = "Authorisation code";
+            textField4.setAttribute("label", "Authorisation code");
+            textField4.className = "input-field";
+            textField4.value = __$(item.getAttribute("value") + "_authcode_" + pos).value;
+            textField4.onmousedown = function () {
+
+                jQ(".input-field").attr("class", "input-field");
+                if (__$('popupkeyboard'))
+                    __$('data-pane').removeChild(__$('popupkeyboard'));
+                showKeyboard(this, true);
+            }
+            table.appendChild(wrap(textField4));
+
+            if (!(sieved.indexOf(item.getAttribute("value")) >= 0))
+                showKeyboard(textField1);
+
+            var button = document.createElement("div");
+            button.id = "add-button";
+            button.innerHTML = "<span>+</span>";
+            button.setAttribute("drug", item.getAttribute("value"));
+            button.onmousedown = function () {
+
+                if (unfinished_drugs.indexOf(this.getAttribute("drug")) >= 0) {
+
+                    showMessage(("Finish entries for drug: " + this.getAttribute("drug")), false, false);
+                } else {
+
+                    jQ("#data-pane").slideToggle();
+
+                    buildParams(this.getAttribute("drug"), (counts[this.getAttribute("drug")] + 1))
+                    counts[this.getAttribute("drug")] += 1;
+                    jQ("#data-pane").empty();
+
+                    loadControls(__$(this.getAttribute("drug")), counts[this.getAttribute("drug")]);
+                    __$("add-button").style.display = "none";
+                    jQ("#data-pane").slideToggle();
+                    __$("add-button").style.display = "block";
+                    refresh(this.getAttribute("drug"));
+                }
+            }
+            __$("data-pane").appendChild(button);
+            if (activeField.length > 0) {
+                __$(activeField).onmousedown.apply(__$(activeField));
+                activeField = "";
+            }
+        }
+
+        function showDate(parent, target) {
+
+            date = new Date();
+            date = new Date(date.getFullYear(), (date.getMonth() + 1), 0);
+
+            months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            monthNames = {
+                "Jan": 0,
+                "Feb": 1,
+                "Mar": 2,
+                "Apr": 3,
+                "May": 4,
+                "Jun": 5,
+                "Jul": 6,
+                "Aug": 7,
+                "Sep": 8,
+                "Oct": 9,
+                "Nov": 10,
+                "Dec": 11
+            };
+
+            var tbl = document.createElement("div");
+            tbl.style.display = "table";
+            tbl.id = "popupkeyboard";
+            tbl.style.marginTop = "25px";
+            tbl.style.marginLeft = "33%";
+            tbl.style.borderSpacing = "5px";
+
+            parent.appendChild(tbl);
+
+            var cells = [
+                [
+                    {
+                        "type": "button",
+                        "id": "btnAddYearFor" + target.id,
+                        "target": target.id,
+                        "value": "+",
+                        "onmousedown": "incrementYear(this.getAttribute('target'))",
+                        "class": "dbutton bluee",
+                        "style": "height: 60px; margin: auto; width: 100%;"
+                    },
+                    {
+                        "type": "button",
+                        "id": "btnAddMonthFor" + target.id,
+                        "target": target.id,
+                        "value": "+",
+                        "onmousedown": "incrementMonth(this.getAttribute('target'))",
+                        "class": "dbutton bluee",
+                        "style": "height: 60px; margin: auto; width: 100%; margin-left: 20px;"
+                    },
+                    {
+                        "type": "button",
+                        "id": "btnAddDateFor" + target.id,
+                        "target": target.id,
+                        "value": "+",
+                        "onmousedown": "incrementDate(this.getAttribute('target'))",
+                        "class": "dbutton bluee",
+                        "style": "display: none; height: 60px; margin: auto; width: 100%;"
+                    }
+                ],
+                [
+                    {
+                        "type": "input",
+                        "id": "txtYearFor" + target.id,
+                        "target": target.id,
+                        "value": date.getFullYear(),
+                        "onmousedown": "overwriteNumber = true; if(__$('keyboard')){document.body.removeChild(__$('keyboard'));} else {showShield(\"checkDate('\" + this.getAttribute('target') + \"', false)\"); showKeyboard(__$('txtYearFor' + this.getAttribute('target')),{':':':','/':'/','.':'.','abc':'abc'},true);} checkDate(this.getAttribute('target'));",
+                        "class": "input_cell",
+                        "style": "font-size: 24px; text-align: center; width: 100%;"
+                    },
+                    {
+                        "type": "input",
+                        "id": "txtMonthFor" + target.id,
+                        "target": target.id,
+                        "value": months[date.getMonth()],
+                        "onmousedown": "showShield(); addList(__$('txtMonthFor' + this.getAttribute('target')),{'Jan':'January','Feb':'February','Mar':'March','Apr':'April','May':'May','Jun':'June','Jul':'July','Aug':'August','Sep':'September','Oct':'October','Nov':'November','Dec':'December','?':'Unknown'},'single',__$('txtMonthFor' + this.getAttribute('target')),__$('txtMonthFor' + this.getAttribute('target')), 'checkDate(\"' + this.getAttribute('target') + '\")'); checkDate(this.getAttribute('target'));",
+                        "class": "input_cell",
+                        "style": "font-size: 24px; text-align: center; width: 100%; margin-left: 23px; "
+                    },
+                    {
+                        "type": "input",
+                        "id": "txtDateFor" + target.id,
+                        "target": target.id,
+                        "value": date.getDate(),
+                        "onmousedown": "overwriteNumber = true; if(__$('keyboard')){document.body.removeChild(__$('keyboard'));} else {showShield(\"checkDate('\" + this.getAttribute('target') + \"', false)\"); showKeyboard(__$('txtDateFor' + this.getAttribute('target')),{':':':','/':'/','.':'.','abc':'abc'},true);} checkDate(this.getAttribute('target'));",
+                        "class": "input_cell",
+                        "style": "display: none; font-size: 24px; text-align: center; width: 100%;"
+                    }
+                ],
+                [
+                    {
+                        "type": "button",
+                        "id": "btnSubtractYearFor" + target.id,
+                        "target": target.id,
+                        "value": "-",
+                        "onmousedown": "decrementYear(this.getAttribute('target'))",
+                        "class": "dbutton bluee",
+                        "style": "height: 60px; margin: auto; width: 100%;"
+                    },
+                    {
+                        "type": "button",
+                        "id": "btnSubtractMonthFor" + target.id,
+                        "target": target.id,
+                        "value": "-",
+                        "onmousedown": "decrementMonth(this.getAttribute('target'))",
+                        "class": "dbutton bluee",
+                        "style": "height: 60px; margin: auto; width: 100%; margin-left: 20px;"
+                    },
+                    {
+                        "type": "button",
+                        "id": "btnSubtractDateFor" + target.id,
+                        "target": target.id,
+                        "value": "-",
+                        "onmousedown": "decrementDate(this.getAttribute('target'))",
+                        "class": "dbutton bluee",
+                        "style": "display: none; height: 60px; margin: auto; width: 100%;"
+                    }
+                ]
+            ];
+
+            for (var i = 0; i < cells.length; i++) {
+                var row = document.createElement("div");
+                row.style.display = "table-row";
+
+                tbl.appendChild(row);
+
+                for (var j = 0; j < cells[i].length; j++) {
+                    var cell = document.createElement("div");
+                    cell.style.display = "table-cell";
+                    cell.style.width = "140px";
+                    cell.style.textAlign = "center";
+
+                    row.appendChild(cell);
+
+                    var input = document.createElement("input");
+
+                    for (var key in cells[i][j]) {
+                        input.setAttribute(key, cells[i][j][key]);
+                    }
+
+                    cell.appendChild(input);
+                }
+            }
+
+            return tbl;
+        }
+
+        function wrap(node) {
+
+            var row = document.createElement("div");
+            row.style.display = "table-row";
+
+            var label = document.createElement("label");
+            label.className = "label";
+            label.innerHTML = node.getAttribute("label") ? node.getAttribute("label") : node.id;
+            var tdLabel = document.createElement("div");
+            tdLabel.className = "td";
+            tdLabel.style.padding = "7px";
+            tdLabel.style.height = "38px";
+            tdLabel.style.display = "table-cell";
+            tdLabel.appendChild(label);
+            row.appendChild(tdLabel);
+
+            var input = document.createElement("div");
+            input.className = "td";
+            input.style.display = "table-cell";
+            node.style.fontSize = "22.5px";
+            node.style.textAlign = "center";
+            node.style.width = "275px";
+            node.style.height = "34px";
+            input.appendChild(node);
+            row.appendChild(input);
+
+            var img = document.createElement("img");
+            img.style.height = "35px";
+            img.src = imgUnTick;
+            var clear = document.createElement("div");
+            clear.className = "td";
+            clear.style.width = "42px";
+            clear.style.paddingRight = "20px";
+            clear.style.cursor = "pointer";
+            clear.style.display = "table-cell";
+            clear.setAttribute("target", node.id)
+            clear.appendChild(img);
+            clear.onmousedown = function () {
+                if (__$(this.getAttribute("target")).disabled != true)
+                    __$(this.getAttribute("target")).value = "";
+            };
+
+            row.appendChild(clear);
+
+            return row;
+        }
+
+        function clickUpdate(node, id) {
+
+            var evens = document.getElementsByClassName("even");
+            var odds = document.getElementsByClassName("odd");
+
+            for (var i = 0; i < evens.length; i++) {
+                evens[i].style.background = "rgb(245, 250, 253)";
+            }
+
+            for (var i = 0; i < odds.length; i++) {
+                odds[i].style.background = "white";
+            }
+
+            node.style.background = "lightblue";
+
+            jQ("#data-pane").empty();
+            setTimeout(function () {
+                if (activePos != 0) {
+                    loadControls(node, activePos);
+                } else {
+                    var p = 1;
+                    var dg = node.getAttribute("value");
+                    for (var v = 1; v <= counts[dg]; v++) {
+                        var sd = (sieved.indexOf(dg) >= 0);
+                        var am = __$(dg + "_packsize_" + v).value;
+                        var ex_am = __$(dg + "_units_" + v).value;
+                        var dt = __$(dg + "_reason_" + v).value;
+                        var at = __$(dg + "_authcode_" + v).value;
+
+                        if (!((am.length > 0 && ex_am.length > 0 && dt.length > 0 && at.length > 0) ||
+                                (!sd && (am.length > 0 && ex_am.length == 0 && dt.length == 0 && dt.length == 0)))) {
+                            p = v;
+                            break;
+                        }
+                    }
+
+                    loadControls(node, p);
+                }
+                activePos = 0;
+            }, 100);
+        }
+
+        function buildParams(drug, pos) {
+
+            if (!__$(drug + "_packsize_" + pos)) {
+                var input = document.createElement("input");
+                input.id = drug + "_packsize_" + pos;
+                input.setAttribute("type", "hidden");
+                input.setAttribute("name", "obs[" + drug + "][][packsize]");
+                var input2 = document.createElement("input");
+                input2.id = drug + "_units_" + pos;
+                input2.setAttribute("name", "obs[" + drug + "][][units]");
+                var input3 = document.createElement("input");
+                input3.id = drug + "_reason_" + pos;
+                input3.setAttribute("name", "obs[" + drug + "][][reason]");
+                var input4 = document.createElement("input");
+                input4.id = drug + "_authcode_" + pos;
+                input4.setAttribute("name", "obs[" + drug + "][][authcode]");
+
+                var form = document.forms[0];
+                form.appendChild(input);
+                form.appendChild(input2);
+                form.appendChild(input3);
+                form.appendChild(input4);
+            }
+        }
+
+        function cleanParams(drug, pos) {
+
+            __$(drug + "_packsize_" + pos).value = "";
+            __$(drug + "_units_" + pos).value = "";
+            __$(drug + "_reason_" + pos).value = "";
+            __$(drug + "_authcode_" + pos).value = ""
+
+            jQ(drug + "_packsize_" + pos).remove();
+            jQ(drug + "_units_" + pos).remove();
+            jQ(drug + "_reason_" + pos).remove();
+            jQ(drug + "_authcode_" + pos).remove();
+        }
+
+        function feedParams(drug, pos, arr) {
+
+            __$(drug + "_packsize_" + pos).value = arr[0];
+            __$(drug + "_units_" + pos).value = arr[1];
+            __$(drug + "_reason_" + pos).value = arr[2];
+            __$(drug + "_authcode_" + pos).value = arr[3];
+        }
+
+        function removeParams(drug, pos) {
+
+            pos = parseInt(pos);
+            lockParams = true;
+
+            var c = counts[drug];
+            counts[drug] = counts[drug] - 1;
+            cleanParams(drug, pos);
+            var start = pos + 1;
+
+            for (var i = start; i <= c; i++) {
+
+                var amount = __$(drug + "_packsize_" + i).value;
+                var ex_amount = __$(drug + "_units_" + i).value;
+                var date = __$(drug + "_reason_" + i).value;
+                var authcode = __$(drug + "_authcode_" + i).value;
+
+                cleanParams(drug, i);
+                buildParams(drug, (i - 1));
+                feedParams(drug, (i - 1), [amount, ex_amount, date, authcode]);
+            }
+
+            lockParams = false;
+            refresh(drug, pos);
+            jQ("#data-pane").empty();
+            loadControls(__$(drug), 1);
+        }
+
+        function refresh(drug, pos) {
+
+            if (counts[drug] > 1) {
+
+                jQ(".small").empty();
+                __$(drug).innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[drug] + "&nbsp</span> " + drug_short_names[drug]
+                __$(drug).innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[drug] + "&nbsp</span> " + drug
+                __$(drug).innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[drug] + "&nbsp</span> " + drug_short_names[drug]
+                __$(drug).getElementsByTagName("span")[0].onmousedown = function () {
+                    collapse(this.parentNode);
+                }
+                collapse(__$(drug), true);
+
+            } else if (counts[drug] == 1) {
+
+                jQ(".small").empty();
+                __$(drug).innerHTML = drug_short_names[drug];
+                __$(drug).innerHTML = drug;
+                __$(drug).innerHTML = drug_short_names[drug];
+            }
+        }
+
+        function updateParams(drug_name, pos) {
+
+            if (lockParams == true)
+                return;
+
+            try {
+
+                __$(drug_name + "_packsize_" + pos).value = __$("Number of tins").value;
+            } catch (x) {
+            }
+
+            try {
+                __$(drug_name + "_units_" + pos).value = __$("Number of expiring tins").value;
+            } catch (x) {
+            }
+
+            try {
+                __$(drug_name + "_reason_" + pos).value = __$("Reason for disposal").value;
+            } catch (x) {
+            }
+            try {
+                __$(drug_name + "_authcode_" + pos).value = __$("Authorisation code").value;
+            } catch (x) {
+            }
+        }
+
+        function collapse(node, update) {
+
+            var count = counts[node.id];
+            coll_nodes = node.parentNode.getElementsByClassName("small");
+
+            if (coll_nodes.length == 0 || update) {
+
+                jQ(".small").remove();
+                var table = document.createElement("div");
+                table.style.display = "table";
+                table.style.width = "100%";
+                table.style.marginLeft = "10px";
+
+                node.parentNode.appendChild(table);
+
+                for (var i = 1; i <= count; i++) {
+                    var row = document.createElement("div");
+                    row.style.display = "table-row";
+                    row.className = "small";
+
+                    var dt1 = document.createElement("div");
+                    dt1.style.display = "table-cell";
+                    dt1.className = (i % 2 == 0) ? "even-small" : "odd-small";
+                    dt1.setAttribute("drug-name", node.id);
+                    dt1.setAttribute("pos", i);
+                    dt1.id = i;
+
+                    var amount = __$(node.id + "_packsize_" + i).value;
+                    var units = __$(node.id + "_units_" + i).value;
+                    var date = __$(node.id + "_reason_" + i).value;
+                    var authcode = __$(node.id + "_authcode_" + i).value;
+
+
+                    if (amount.length == 0)
+                        amount = " ? ";
+                    if (units.length == 0)
+                        units = " ? ";
+                    if (date.length == 0)
+                        date = " ? ";
+                    if (authcode.length == 0)
+                        authcode = " ? ";
+
+                    if (sieved.indexOf(node.id) >= 0) {
+
+                        dt1.innerHTML = amount + " units, " + units + " per unit, reason. " + date + ", authcode=" + authcode;
+                    } else {
+                        dt1.innerHTML = units + " units, " + amount + " per unit, reason. " + date + ", authcode=" + authcode;
+                    }
+
+                    var dt2 = document.createElement("div");
+                    dt2.style.display = "table-cell";
+                    dt2.style.width = "15%";
+                    dt2.id = "void_" + node.id + i;
+                    dt2.setAttribute("drug-name", node.id);
+                    dt2.setAttribute("pos", i);
+                    dt2.innerHTML = "<img style='padding-left: 15px' height='29'></img>";
+
+                    dt2.onmousedown = function () {
+
+                        confirmDeletion('Do you really want to delete this batch?', this);
+                    }
+
+                    row.appendChild(dt1);
+                    row.appendChild(dt2);
+
+                    dt2.getElementsByTagName("img")[0].src = imgCancel;
+                    dt1.id = "c_" + node.id + i;
+                    dt1.setAttribute("i", i);
+                    dt1.setAttribute("drug", node.id);
+                    dt1.onmousedown = function () {
+
+                        jQ("#data-pane").fadeOut(50);
+                        jQ("#data-pane").empty();
+                        var evens = document.getElementsByClassName("even-small");
+                        var odds = document.getElementsByClassName("odd-small");
+                        for (var i = 0; i < evens.length; i++) {
+                            evens[i].style.background = "rgb(245, 250, 253)";
+                        }
+                        for (var i = 0; i < odds.length; i++) {
+                            odds[i].style.background = "white";
+                        }
+                        this.style.background = "#E6E6DC";
+
+                        loadControls(__$(this.getAttribute('drug')), this.getAttribute("i"));
+                        jQ("#data-pane").fadeIn(400);
+                    }
+
+                    table.parentNode.appendChild(row);
+                }
+            } else {
+
+                jQ(".small").remove();
+                node.innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[node.id] + "&nbsp</span> " + drug_short_names[node.id];
+                node.innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[node.id] + "&nbsp</span> " + node.id;
+                node.innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[node.id] + "&nbsp</span> " + drug_short_names[node.id];
+                node.getElementsByTagName("span")[0].onmousedown = function () {
+                    collapse(this.parentNode);
+                }
+            }
+        }
+
+        function confirmDeletion(message, node) {
+
+            if (__$("bar")) {
+                jQuery("#bar").remove();
+            }
+            var bar = document.createElement("div");
+            bar.id = "bar";
+            bar.className = "bar";
+            bar.setAttribute("drug", node.getAttribute("drug-name"));
+            bar.setAttribute("iddd", node.id);
+            bar.setAttribute("pos", node.getAttribute("pos"));
+
+            bar.innerHTML = message + "<br/>" +
+                    "<button id = 'no'><span>No</span></button><button id = 'yes'><span>Yes</span></button>";
+
+            bar.style.display = "block";
+            __$("content").appendChild(bar);
+
+            __$('no').onmousedown = function () {
+                clearMessage();
+            }
+
+            __$('yes').onmousedown = function () {
+
+                var drug = __$("bar").getAttribute("drug");
+                var pos = __$("bar").getAttribute("pos");
+                removeParams(drug, pos);
+                clearMessage();
+            }
+        }
+
+        function clearMessage() {
+
+            __$("bar").style.display = "none";
+            jQuery("#bar").remove();
+            console.log("removed message bar");
+        }
+
+        function checkValidations() {
+
+            if (!__$("data-pane"))
+                return;
+
+            var all_drugs = data["selected_drugs"];
+            var nodes = document.getElementsByClassName("butt");
+            var node = __$("data-pane").childNodes[0];
+
+            if (node) {
+                var drg = node.getAttribute("drug");
+                var pos = __$("data-pane").getAttribute("pos");
+                updateParams(drg, pos);
+            }
+
+            if (nodes.length > 0) {
+
+                if (target.value.match(/\./) || target.value.trim().length == 0) {
+
+                    jQ(".butt").attr("class", "butt bluee");
+                    if (__$("."))
+                        __$(".").className = "butt gray";
+                } else {
+                    if (__$("."))
+                        __$(".").className = "butt bluee";
+
+                    if (target.value == "0") {
+
+                        jQ(".butt").attr("class", "butt gray");
+                        __$("&larr;").className = "butt bluee";
+                        __$(".").className = "butt bluee";
+                    } else {
+
+                        jQ(".butt").attr("class", "butt bluee");
+                    }
+
+                }
+
+            }
+
+            unfinished_drugs = [];
+            for (var i in all_drugs) {
+
+                var dname = all_drugs[i];
+                backgroundc = __$(all_drugs[i]).style.background;
+                coll_nodes = __$(all_drugs[i]).parentNode.getElementsByClassName("small");
+
+                if (counts[all_drugs[i]] > 1 && (coll_nodes.length == 0 ||
+                        (coll_nodes.length > 0 && !backgroundc.match("lightblue")))) {
+
+                    if (coll_nodes.length > 0)
+                        jQ(".small").remove();
+
+                    __$(all_drugs[i]).innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[all_drugs[i]] +
+                            "&nbsp</span> " + drug_short_names[all_drugs[i]];
+                    __$(all_drugs[i]).innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[all_drugs[i]] + "&nbsp</span> " + all_drugs[i];
+                    __$(all_drugs[i]).innerHTML = "<span class = 'red' style='color: red'>&nbsp" + counts[all_drugs[i]] +
+                            "&nbsp</span> " + drug_short_names[all_drugs[i]];
+                    __$(all_drugs[i]).getElementsByTagName("span")[0].onmousedown = function () {
+                        collapse(this.parentNode);
+                    }
+                }
+
+                for (var pos = 1; pos <= counts[all_drugs[i]]; pos++) {
+
+
+                    var packsize = __$(dname + "_packsize_" + pos).value.trim();
+                    var unitsqty = __$(dname + "_units_" + pos).value.trim();
+                    var reason = __$(dname + "_reason_" + pos).value.trim();
+                    var authcode = __$(dname + "_authcode_" + pos).value.trim();
+
+                    if (packsize.length > 0 && unitsqty.length > 0 && reason.length > 0 && authcode.length > 0) {
+
+                    } else {
+                        if (unfinished_drugs.indexOf(dname) < 0)
+                            unfinished_drugs.push(dname);
+                    }
+                }
+
+                if (unfinished_drugs.indexOf(dname) >= 0) {
+                    __$(dname + "_img").src = imgBlank;
+                } else {
+                    __$(dname + "_img").src = imgTick;
+                }
+            }
+
+            updateCollapseList();
+
+            setTimeout(function () {
+                checkValidations();
+            }, 250);
+        }
+
+        function updateCollapseList() {
+
+            if (target) {
+
+                var pos = __$("data-pane").getAttribute("pos");
+                var drug = __$("data-pane").getAttribute("drug");
+
+                if (counts[drug] > 1) {
+                    var id = "c_" + drug + pos;
+                    var node = __$(id);
+
+                    if (node) {
+                        var packsize = __$(drug + "_packsize_" + pos).value;
+                        var units = __$(drug + "_units_" + pos).value;
+                        var reason = __$(drug + "_reason_" + pos).value;
+
+                        if (packsize.length == 0)
+                            packsize = " ? ";
+                        if (units.length == 0)
+                            units = " ? ";
+                        if (reason.length == 0)
+                            reason = " ? ";
+
+                        if (sieved.indexOf(drug) >= 0) {
+
+                            node.innerHTML = packsize + " units, " + units + " pills per tin, exp. " + reason;
+                        } else {
+                            node.innerHTML = units + " units, " + packsize + " pills per tin, exp. " + reason;
+                        }
+                    }
+                }
+            }
+        }
+
+        function showKeyboard(ctrl) {
+
+            target = ctrl;
+            if (target.disabled){
+                return;
+            }
+
+            if (__$('popupkeyboard'))
+                __$('popupkeyboard').parentNode.removeChild(__$("popupkeyboard"));
+            var pos;
+            numbers = true;
+            var div = document.createElement('div');
+
+            div.id = 'popupkeyboard';
+
+            div.borderTop = "20px";
+            div.style.zIndex = '1000';
+
+            __$("data-pane").appendChild(div);
+
+            var keys = [
+                [1, 2, 3, '&larr;'],
+                [4, 5, 6, 0],
+                [7, 8, 9, '.']
+            ];
+
+            var table = document.createElement('div');
+            table.style.display = 'table';
+            table.style.margin = 'auto';
+
+            div.appendChild(table);
+
+            var ctrl;
+
+            for (var i = 0; i < keys.length; i++) {
+                var row = document.createElement('div');
+                row.style.display = 'table-row';
+
+                table.appendChild(row);
+
+                for (var j = 0; j < keys[i].length; j++) {
+                    var cell = document.createElement('div');
+                    cell.style.display = 'table-cell';
+
+                    row.appendChild(cell);
+
+                    if (String(keys[i][j]).trim().length == 0) {
+                        cell.innerHTML = "&nbsp;";
+
+                        continue;
+                    }
+
+                    var button = document.createElement('div');
+                    button.style.width = '65px';
+                    button.style.height = '60px';
+                    button.style.minWidth = '40px';
+                    button.style.minHeight = '40px';
+                    button.style.margin = '2px';
+                    button.style.fontSize = "24px";
+
+                    button.id = keys[i][j];
+
+                    if (target && keys[i][j] == '.') {
+                        if (target.value.trim().match(/\./) || target.value.trim().length == 0) {
+                            button.setAttribute('class', 'butt gray');
+                        } else {
+                            button.setAttribute('class', 'butt bluee');
+                        }
+                    }
+
+                    button.innerHTML = keys[i][j];
+
+                    button.setAttribute('class', 'butt bluee');
+
+                    button.onmousedown = function () {
+
+                        if (!this.className.match(/gray/)  && target.disabled != true) {
+                            if (this.innerHTML.trim().charCodeAt(0) == 8592) {
+                                if (target) {
+                                    target.value = target.value.trim().substring(0, (target.value.trim().length - 1));
+                                }
+                            } else {
+
+                                target.value += this.innerHTML.trim();
+
+                            }
+                        }
+                    }
+
+                    cell.appendChild(button);
+                }
+            }
+
+        }
+
+        return{
+            initialize: function () {
+
+                guiSetup();
+                loadDrugs();
+                checkValidations();
+            }
         };
 
-        httpRequest.open('GET', aUrl, false);
-        httpRequest.send(null);
-       // if (response == "true")
-          return response;
-     // if (response == "false")
-         // return false;
-      }
+    })(jQuery, mappedData);
 
-     function getShortName(td) {
-        var aUrl = "/drug/get_name?short=" + td;
-       var httpRequest = new XMLHttpRequest();
-        httpRequest.onreadystatechange = function() {
-          set_name(httpRequest);
-        };
+    //*********************************** End of Module ****************************
 
-        httpRequest.open('GET', aUrl, false);
-        httpRequest.send(null);
-          return response;
-      }
 
-      function getSize(td) {
-        var aUrl = "/drug/get_name?pack_size=" + td;
+    function incrementYear(id) {
+        if (__$("txtYearFor" + id)) {
+            var yr = parseInt(__$("txtYearFor" + id).value.trim());
 
-        var httpRequest = new XMLHttpRequest();
-        httpRequest.onreadystatechange = function() {
-          set_name(httpRequest);
-        };
+            yr++;
 
-        httpRequest.open('GET', aUrl, false);
-        httpRequest.send(null);
-          return response;
-      }
+            __$("txtYearFor" + id).value = yr;
 
-      function set_name(req) {
-        if (req.readyState == 4 && req.status == 200) {
-          response = req.responseText;
+            checkDate(id);
         }
-      }
-
-      function addRow(td){
-        fullname = getName(td)
-        shortname = getShortName(td)
-        packsize = getSize(td)
-       // alert(shortname)
-
-        var table = document.getElementsByClassName('stocks')[0];
-        var newTr = document.createElement('tr');
-        var newTd = document.createElement('td');
-        newTd.setAttribute("width", "20%");
-        newTd.innerHTML = shortname;
-        newTr.appendChild(newTd);
-
-        var newTd = document.createElement('td');
-        newTd.setAttribute("width", "20%");
-        newTd.innerHTML = packsize;
-        newTd.setAttribute("align", "right");
-        newTd.setAttribute("width", "20%");
-        newTr.appendChild(newTd);
-
-        if (shortname == 'INH or H' || shortname == 'Cotrimoxazole'){
-              var newTd1 = document.createElement('td');
-              var newField = document.createElement('select');
-              newField.setAttribute('name', 'obs[' + fullname + '][expire_amount]');
-              newTd1.setAttribute("align", "center");
-              newField.setAttribute('class', 'selects');
-              newField.innerHTML = "<option></option><option value='30'>30 tabs</option><option value='60'>60 tabs</option><option value='90'>90 tabs</option><option value='100'>100 tabs</option><<option value='1000'>1000 tabs</option>"
-              newTd1.appendChild(newField)
-              newTr.appendChild(newTd1);
-        }
-        else{
-              var newTd1 = document.createElement('td');
-              var newField = document.createElement('input');
-              newField.setAttribute('type', 'text');
-              newField.setAttribute('name', 'obs[' + fullname + '][expire_amount]');
-              newTd1.setAttribute("align", "center");
-              newField.setAttribute("width", "20%");
-              newField.setAttribute('onClick', 'showMe(this)');
-              newField.setAttribute('class', 'inputs');
-              newTd1.appendChild(newField)
-              newTr.appendChild(newTd1);
-        }
-
-        var newTd1 = document.createElement('td');
-        var newField = document.createElement('input');
-        newField.setAttribute('type', 'text');
-        newField.setAttribute('name', 'obs[' + fullname + '][date]');
-        newField.setAttribute('onClick', 'showMe(this)')
-        newField.setAttribute('class', 'dates');
-        newTd1.appendChild(newField)
-
-
-        newTr.appendChild(newTd1);
-
-        var newTd1 = document.createElement('td');
-        var newField = document.createElement('input');
-        newField.setAttribute('type', 'text');
-        newField.setAttribute('name', 'obs[' + fullname + '][amount]');
-        newField.setAttribute('onClick', 'showMe(this)')
-        newField.setAttribute('class', 'inputs');
-        newTd1.appendChild(newField)
-        newTr.appendChild(newTd1);
-
-
-
-        var newTd1 = document.createElement('td');
-        newTd1.innerHTML = "<a href='#'><img src='/images/add.png' onclick='addRow(" + td +")'></a>"
-        newTr.appendChild(newTd1);
-
-        var newTr1 = document.createElement('tr');
-        var newTd1 = document.createElement('td');
-        var newHr = document.createElement('hr');
-        newTd1.setAttribute('colspan', 6)
-        newTd1.appendChild(newHr)
-        newTr1.appendChild(newTd1)
-
-        table.appendChild(newTr);
-        table.appendChild(newTr1);
-      }
-
-      function showDrugs(){
-        html = "<form id='stock' name='stock' action='edit_stock' method='post'><table width='98%' align= 'center' class='stocks'><th colspan=6 >Relocation/Disposing</th>";
-        html += '<tr><td colspan=3>Relocation/Disposal Reason<br><select name="reason" class="selects"><option value="Expired/Damaged">Expired/Damaged</option>'
-        html += '<option value="Given to other clinics">Given to other clinics</option><option value="Receipt from other clinics">Receipt from other clinics</option>'
-        html += '</select></td>'
-        html += "<td colspan=4><span align='center' width='100%'>Date</span><br><span><select name='[year]' class='years' onchange='daysInMonth();'></select><select name='month' class='months'  onchange='daysInMonth();'></select><select name='[day]' class='day'></select></span> </td></tr>"
-        html += '<tr class="header"><td width="54%" colspan=2><b>Drug</b></td><td width="40%"><b>Total Usable Tins</b></td ><td colspan=3 >Earliest Expiry<br> <span style="float:left">Date MM/YY</span><span style="float:right">Units expiring that date</span></td></tr>'
-        html +="<input type='hidden' name='delivery_date' value='<%= @delivery_date %>'>";
-        html +="<input type='hidden' name='type' value='<%= params["verification type"] %>'>";
-  <%  h = 0
-  @list.each {|drug|
-  name = @drug_short_names[drug]
-   name = name.gsub("(", "")
-     name = name.gsub(")", "")
-     splitted = name.split(" ")
-      i = 1
-      letters = " "
-       while (i < splitted.length) do
-        if splitted[i].upcase == "ISONIAZID"
-          i += 1
-          next
-        end
-        if splitted[i].upcase == "OR" or splitted[i].upcase == "H"
-           splitted[0] = "#{splitted[0]} #{splitted[i]}"
-         else
-         letters = "#{letters} #{splitted[i]}"
-         end
-         i += 1
-       end
-       drud_string = Drug.find_by_name("#{drug}").id
-  if splitted[0] == 'INH or H' || splitted[0] == 'Cotrimoxazole'
-   
-    if h < 1
-    %>
-          html += '<tr><td width="20%" colspan=2>&nbsp;</td><td align="center"  width="32%">Pack Size</td><td align="center"> Expiry Date</td><td colspan=3 align="center"> Total Units</td></tr>'
-    <% end %>
-       html += '<tr><td width="20%%"><%= splitted[0] %></td><td align="right"  width="32%"><%= letters %></td><td class="newIunputs">'
-        html += "<select name='obs[" + '<%=  drug %>' + "][amount]'  class='selects'>"
-        html += "<option></option><option value='30'>30 tabs</option><option value='60'>60 tabs</option><option value='90'>90 tabs</option><option value='100'>100 tabs</option><<option value='1000'>1000 tabs</option></select>"
-       html += "</td><td><input name='obs[<%=  drug %>][date]' type='text' onclick='showMe(this)' class='dates'></td>";
-       html += "</td><td align='right'><input name='obs[<%=  drug %>][expire_amount]' type='text' onclick='showMe(this)' class='inputs'><td id='addrow'><a href='#'><img src='/images/add.png' onclick='addRow(<%= drud_string %>);'></a></td></tr>";
-       html += "<tr><td colspan =6 ><hr></td></tr>"
-    <% h += 1
-    else%>
-       html += '<tr><td width="20%%"><%= splitted[0] %></td><td align="right"  width="32%"><%= letters %></td><td class="newIunputs">'
-       html += "<input name='obs[<%= drug %>][amount]' type='text' onclick='showMe(this)' class='inputs' />"
-       html += "</td><td><input name='obs[<%=  drug %>][date]' type='text' onclick='showMe(this)' class='dates'></td>";
-       html += "</td><td align='right'><input name='obs[<%=  drug %>][expire_amount]' type='text' onclick='showMe(this)' class='inputs'><td id='addrow'><a href='#'><img src='/images/add.png' onclick='addRow(<%= drud_string %>);'></a></td></tr>";
-       html += "<tr><td colspan =6 ><hr></td></tr>"
-    <% 
-    end
-    
-    %>
-
-  <%  } %>
-      html += '</table></form>';
-      document.getElementById('inputFrame'+tstCurrentPage).innerHTML = '<div id="summary">' + html + '</div>';
-      document.getElementById('nextButton').setAttribute("onmousedown", "submitMe();")
     }
 
-    function submitMe(){
-      drug_form = document.getElementById('stock')
-      input = document.getElementsByClassName('inputs')
-      value = 0;
-      for (i = 0; i < input.length; i++){
-        if (input[i].value == ""){
-          input[i].value = 0
+    function decrementYear(id) {
+        if (__$("txtYearFor" + id)) {
+            var yr = parseInt(__$("txtYearFor" + id).value.trim());
+
+            yr--;
+
+            __$("txtYearFor" + id).value = yr;
+
+            checkDate(id);
         }
-      }
-      drug_form.submit()
     }
-      function daysInMonth(){
-       select_yr = document.getElementsByClassName('years')[0].options
-       select_yr = select_yr[select_yr.selectedIndex].value
 
-       select_mn = document.getElementsByClassName('months')[0].options
-       select_mn = select_mn[select_mn.selectedIndex].value
-       days = new Date(select_yr, select_mn, 0).getDate();
+    function incrementMonth(id) {
+        if (__$("txtMonthFor" + id)) {
+            var month = monthNames[__$("txtMonthFor" + id).value.trim()];
 
-       select_obs = document.getElementsByClassName('day')
-       for (var i = 1; i <= days; i++){
-            select_obs[0].options[i - 1] = new Option(i, i)
+            if (month + 1 < 12) {
+                month++;
+            } else {
+                month = 0;
+            }
+
+            __$("txtMonthFor" + id).value = months[month];
+
+            checkDate(id);
         }
-      }
+    }
 
-      function createYear(){
-        var mts = ["01","02","03","04","05","06","07","06","09","10","11","12"]
-        var dt = new Date();
-        select_obs = document.getElementsByClassName('years')
-        //alert(yrs)
-        for (var i=0; i < select_obs.length; i++){
-          var yr = dt.getFullYear() - 10;
-          for (var x=0; x <=40;x++){
-            select_obs[i].options[x] = new Option(yr, yr)
-            yr++
-          }
+    function decrementMonth(id) {
+        if (__$("txtMonthFor" + id)) {
+            var month = monthNames[__$("txtMonthFor" + id).value.trim()];
 
+            if (month - 1 >= 0) {
+                month--;
+            } else {
+                month = 11;
+            }
+
+            __$("txtMonthFor" + id).value = months[month];
+
+            checkDate(id);
         }
-        select_obs = document.getElementsByClassName('months')
-        for (var i = 0; i < select_obs.length; i++){
-          for (var x=0; x < mts.length; x++ ){
-            select_obs[i].options[x] = new Option(mts[x], mts[x])
-          }
-        }
-      }
-
-
-    function showMe(td){
-      search = td
-      keyboard = document.getElementById('keyboard');
-
-      if(keyboard.style.display == 'none' || keyboard.style.display == ""){
-        keyboard.style.display = "inline";
-      }
-      keyboard.setAttribute("tt_pageStyleClass", "Numeric NumbersWithUnknownAndDecimal");
-      //else
-      //{
-      // keyboard.style.display = "none";
-      //}
-      document.body.appendChild(keyboard);
-      showNumericKeypad()
     }
 
-    function getCharButtonSetIDs(character,id){
-      return '<button onMouseDown="pressed(\''+character+'\');" class="keyboardButton" id="'+id+'">' +"<span style='width:32px'>"+character+"</span>"+ "</button>";
-    }
-    function getButtonStrings(id,string){
-      return "<button \
-                              onMouseDown='pressed(this.id);' \
-                              class='keyboardButton' \
-                              id='"+id+"'>"+
-        string +
-        "</button>";
-    }
+    function checkDate(id) {
 
-    function getButtons1(chars){
-      var buttonLine = "";
-      for(var i=0; i<chars.length; i++){
-        character = chars.substring(i,i+1)
-        buttonLine += getCharButtonSetIDs(character,character)
-      }
-      return buttonLine;
-    }
+        if (__$("txtDateFor" + id) && __$("txtYearFor" + id) && __$("txtMonthFor" + id)) {
 
-    function showAlphaKeypad(){
-      //document.getElementById("keypad").style.height = "280";
-      keyboard.innerHTML= getButtons("0123456789") + "</br>"
-      keyboard.innerHTML+= getButtons("QWERTYUIOP") + "</br>"
-      keyboard.innerHTML+= getButtons("ASDFGHJKL:") + "</br>"
-      keyboard.innerHTML+= getButtons("ZXCVBNM,.?")
-      keyboard.innerHTML+= getButtonString('backspace','<span>Bksp</span>')
-      keyboard.innerHTML+= getButtonString('Space','<span>Space</span>')
-      keyboard.innerHTML+= getButtonString('clear','<span>Clear</span>')
-    }
 
-    function showNumericKeypad(){
-      //document.getElementById("keypad").style.height = "145";
-      keyboard.innerHTML = getButtons1("123")
-      keyboard.innerHTML+= getButtons1("456")
-      keyboard.innerHTML+= getButtons1("7890")
-      if (search.name == 'delivery_time'){
-        keyboard.innerHTML+= getButtonStrings('/','<span>/</span>')
-      }
-     // keyboard.innerHTML+= getButtonStrings('/','<span>/</span>')
-     // keyboard.innerHTML+= getButtonStrings(':','<span>:</span>')
-     // keyboard.innerHTML+= getButtonStrings('-','<span>-</span>')
-      // keyboard.innerHTML+= getButtonString('space','<span>Space</span>')
-      keyboard.innerHTML+= getButtonStrings('clear','<span>Clear</span>')
-      keyboard.innerHTML+= getButtonStrings('backspace','<span>Bksp</span>')
-      keyboard.innerHTML+= getButtonStrings('enter','<span>Enter</span>')
+            if (__$("txtMonthFor" + id).value.trim() == "?") {
 
-      // keyboard.innerHTML+= getButtonStrings('dash','<span>-</span>')
-      // keyboard.innerHTML+= getButtonString('slash','<span>/</span>')
-    }
+                __$("txtMonthFor" + id).value = "?";
 
-   function pressed(pressedChar){
-      if (search.name.match(/date/i)){
+                __$("txtDateFor" + id).value = "?";
 
-        if (search.value.length == 5 && pressedChar != 'enter' &&   pressedChar != 'splash' && pressedChar != 'backspace' && pressedChar != 'space' && pressedChar != 'clear'){
-          var names = "obs[" + search.name.split(']')[0].split('[')[1] + "][expire_amount]"
-          document.getElementsByName(names)[0].next().focus()
-          return
-        }
-        if (search.value.length == 2){
-          if (search.value <= 12 && pressedChar != 'enter' &&  pressedChar != 'splash' && pressedChar != 'backspace' && pressedChar != 'space' && pressedChar != 'clear') {
-            search.value += "/"
-            search.value+= pressedChar
-             return
-          }
-          else if (search.value <= 12 && pressedChar != 'enter' &&  pressedChar == 'splash' && pressedChar != 'backspace' && pressedChar != 'space' && pressedChar != 'clear'){
-            search.value+= pressedChar
-             return
-          }
-          else if (pressedChar != 'enter' && pressedChar != 'splash' && pressedChar != 'backspace' && pressedChar != 'space' && pressedChar != 'clear'){
-            search.value = search.value.substring(0,search.value.length-1);
-            return
-          }
+                if (__$(id)) {
+
+                    __$(id).value = __$("txtDateFor" + id).value.trim() + "/" + __$("txtMonthFor" + id).value.trim() + "/" + __$("txtYearFor" + id).value.trim();
+
+                }
+
+                return;
+
+            }
+
+            var value = parseInt(__$("txtDateFor" + id).value.trim());
+
+            var month = monthNames[__$("txtMonthFor" + id).value.trim()];
+
+            if (month + 1 < 12) {
+                month += 2;
+            } else {
+                month = 1;
+            }
+
+            var date = new Date(__$("txtYearFor" + id).value.trim(), padZeros((month - 1), 2), 0);
+
+            date.setDate(date.getDate());
+
+            __$("txtDateFor" + id).value = date.getDate();
+
+            if (__$(id)) {
+
+                __$(id).value = __$("txtDateFor" + id).value.trim() + "/" + __$("txtMonthFor" + id).value.trim() + "/" + __$("txtYearFor" + id).value.trim();
+
+            }
+
+        } else {
+
+            if (__$(id)) {
+
+                var value = parseInt(__$("txtDateFor" + id).value.trim());
+
+                var month = monthNames[__$("txtMonthFor" + id).value.trim()];
+
+                if (month + 1 < 12) {
+                    month += 2;
+                } else {
+                    month = 1;
+                }
+
+                var date = new Date(__$("txtYearFor" + id).value.trim(), padZeros(month, 2), 0)
+
+                date.setDate(date.getDate());
+
+                __$("txtDateFor" + id).value = date.getDate();
+
+                if (__$(id)) {
+
+                    __$(id).value = __$("txtDateFor" + id).value.trim() + "/" + __$("txtMonthFor" + id).value.trim() + "/" + __$("txtYearFor" + id).value.trim();
+
+                }
+
+                __$(id).value = __$("txtDateFor" + id).value.trim() + "/" + __$("txtMonthFor" + id).value.trim() + "/" + __$("txtYearFor" + id).value.trim();
+
+            }
 
         }
-      }
-      switch (pressedChar) {
-        case 'backspace':
-          search.value = search.value.substring(0,search.value.length-1);
-          //search_box.fnFilter(search.value)
-          return;
-        case 'Space':
-          search.value+= " "
-          //search_box.fnFilter(search.value)
-          return
-        case 'clear':
-          search.value = ""
-          //search_box.fnFilter(search.value)
-          return
-        case 'num':
-          showNumericKeypad();
-          return
-        case 'slash':
-          if (search.name.match(/date/i)){
-            return
-          }
-          search.value+= "/"
-          //search_box.fnFilter(search.value)
-          return
-        case 'dash':
-          search.value+= "-"
-          //search_box.fnFilter(search.value)
-          return
-        case 'abc':
-          showAlphaKeypad();
-          return
-        case 'enter':
-          keyboard.style.display = "none";
-          return
-      }
-      search.value+= pressedChar
-      //search_box.fnFilter(search.value)
     }
-    //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    </script>
-    <style>
-      #keyboard {
-        position: absolute;
-        background-color: black;
-        width: 253px;
-        height: 47%;
-        left: 20%;
-        top: 12%;
-        z-index: 500;
-        opacity: 0.98;
-        align: center;
-        display:none;
-      }
-     .inputs {
-        height: 37px;
-        font-size: 18px;
-        text-align: right;
-      }
-      .dates {
-        height: 37px;
-        font-size: 18px;
+
+    function updateNextButton() {
+        __$("nextButton").onmousedown = function () {
+
+            var message = "";
+            for (var i in unfinished_drugs) {
+                message += ("<br /> - " + drug_short_names[unfinished_drugs[i]] + (i < (unfinished_drugs.length - 1) ? "," : ""));
+            }
+
+            if (message.length > 0) {
+                showMessage(("Incomplete entries for:" + message), false, false);
+            } else {
+                gotoNextPage();
+            }
+        }
+    }
+
+    function showSummary() {
+
+        __$("inputFrame" + tstCurrentPage).style.background = "rgba(235, 240, 240, 0.3)";
+
+        var header = document.createElement("div");
+        header.id = 'heada'
+        header.style.display = "table";
+        header.style.width = "100%";
+
+        var r = document.createElement("div");
+        r.style.display = "table-row";
+        header.appendChild(r);
+        var label = document.createElement("div");
+        label.className = "drug-label scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Drug";
+        r.appendChild(label);
+
+        var label = document.createElement("div");
+        label.className = "drug-value scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Pills per unit";
+        r.appendChild(label);
+
+        var label = document.createElement("div");
+        label.className = "drug-value scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Total units";
+        r.appendChild(label);
+
+        var label = document.createElement("div");
+        label.className = "drug-value scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Expiry date";
+        r.appendChild(label);
+
+        __$("inputFrame" + tstCurrentPage).appendChild(header);
+
+        if (sieved.length == drugs.length)
+            header.style.display = "none"
+
+        var table = document.createElement("div");
+        table.id = "summary";
+        table.style.display = "table";
+        table.style.width = "100%";
+
+        var div = document.createElement("div");
+        div.style.height = "530px";
+        div.style.paddingTOp = "10px";
+        div.style.marginTop = "10px";
+        div.style.overflowY = "auto";
+        div.style.width = "100%";
+        div.appendChild(table);
+
+        __$("inputFrame" + tstCurrentPage).appendChild(div);
+
+        sievable = filter_drugs(drugs, sievable);
+        var ii = -1
+        for (var i in drugs) {
+
+            if (sievable.indexOf(drugs[i]) >= 0) continue;
+
+            for (var c = 1; c <= counts[drugs[i]]; c++) {
+                var amount_value = "";
+                var expire_packsize_value = "";
+                var date_value = "";
+                var authcode = "";
+                ii += 1;
+                try {
+                    if (__$(drugs[i] + "_packsize_" + c)) {
+                        amount_value = __$(drugs[i] + "_packsize_" + c).value;
+                        expire_packsize_value = __$(drugs[i] + "_units_" + c).value;
+                        date_value = __$(drugs[i] + "_reason_" + c).value;
+                        authcode = __$(drugs[i] + "_authcode_" + c).value;
+                    }
+                } catch (e) {
+                }
+
+                var row = document.createElement("div");
+                row.style.display = "table-row";
+                row.style.background = (ii % 2 == 0) ? "rgb(240, 240, 250)" : "white";
+                table.appendChild(row);
+
+                var label = document.createElement("div");
+                label.className = "drug-label scell";
+                label.style.display = "table-cell";
+                label.innerHTML = drug_cms_names[drugs[i]];
+                if (i == 0)
+                    label.style.borderTop = "0.4px solid gray";
+                row.appendChild(label);
+
+                var amount = document.createElement("div");
+                amount.className = "drug-value scell editable";
+                amount.style.display = "table-cell";
+                amount.innerHTML = amount_value;
+                amount.setAttribute("drug", drugs[i]);
+                amount.setAttribute("pos", c);
+                amount.onmousedown = function () {
+                    if (this.innerHTML.length > 0) {
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of tins");
+                    }
+                }
+                if (i == 0)
+                    amount.style.borderTop = "0.4px solid gray";
+                row.appendChild(amount);
+
+                var expire_amount = document.createElement("div");
+                expire_amount.style.display = "table-cell";
+                expire_amount.className = "drug-value scell editable";
+                expire_amount.innerHTML = expire_packsize_value;
+                expire_amount.setAttribute("drug", drugs[i]);
+                expire_amount.setAttribute("pos", c);
+                expire_amount.onmousedown = function () {
+                    if (this.innerHTML.length > 0) {
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of expiring tins");
+                    }
+                }
+                if (i == 0)
+                    expire_amount.style.borderTop = "0.4px solid gray";
+                row.appendChild(expire_amount);
+
+                var expire_date = document.createElement("div");
+                expire_date.style.display = "table-cell";
+                expire_date.className = "drug-label scell editable";
+                expire_date.innerHTML = date_value;
+                expire_date.setAttribute("drug", drugs[i]);
+                expire_date.setAttribute("pos", c);
+                expire_date.onmousedown = function () {
+                    if (this.innerHTML.length > 0) {
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Reason for disposal");
+                    }
+                }
+                if (i == 0)
+                    expire_date.style.borderTop = "0.4px solid gray";
+                row.appendChild(expire_date);
+            }
+        }
+
+        if (sievable.length > 0) {
+
+            var header = document.createElement("div");
+            header.style.display = "table-row";
+            header.style.width = "100%";
+            header.id = "heada2";
+
+            var label = document.createElement("div");
+            label.className = "drug-label scell hvalue";
+            label.style.display = "table-cell";
+            label.innerHTML = "Drug";
+            header.appendChild(label);
+
+            var label = document.createElement("div");
+            label.className = "drug-value scell hvalue";
+            label.style.display = "table-cell";
+            label.innerHTML = "Pack Size";
+            header.appendChild(label);
+
+            var label = document.createElement("div");
+            label.className = "drug-value scell hvalue";
+            label.style.display = "table-cell";
+            label.innerHTML = "Total Units";
+            header.appendChild(label);
+
+            var label = document.createElement("div");
+            label.className = "drug-value scell hvalue";
+            label.style.display = "table-cell";
+            label.innerHTML = "Expiry date";
+            header.appendChild(label);
+            table.appendChild(header);
+        }
+        var ii = -1;
+        for (var i in sievable) {
+
+            for (var c = 1; c <= counts[sievable[i]]; c++) {
+                var amount_value = "";
+                var expire_packsize_value = "";
+                var date_value = "";
+                ii += 1;
+
+                try {
+                    if (__$(sievable[i] + "_packsize_" + c)) {
+                        amount_value = __$(sievable[i] + "_packsize_" + c).value;
+                        expire_packsize_value = __$(sievable[i] + "_units_" + c).value;
+                        date_value = __$(sievable[i] + "_reason_" + c).value;
+                    }
+                } catch (e) {
+                }
+
+                var row = document.createElement("div");
+                row.style.display = "table-row";
+                row.style.background = (ii % 2 == 0) ? "rgb(240, 240, 250)" : "white";
+                table.appendChild(row);
+
+                var label = document.createElement("div");
+                label.className = "drug-label scell";
+                label.style.display = "table-cell";
+                label.innerHTML = drug_cms_names[sievable[i]];
+                if (i == 0)
+                    label.style.borderTop = "0.4px solid gray";
+                row.appendChild(label);
+
+                var expire_amount = document.createElement("div");
+                expire_amount.style.display = "table-cell";
+                expire_amount.className = "drug-value scell editable";
+                expire_amount.innerHTML = expire_packsize_value;
+                expire_amount.setAttribute("drug", sievable[i]);
+                expire_amount.setAttribute("pos", c);
+                expire_amount.onmousedown = function () {
+                    if (this.innerHTML.length > 0) {
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of expiring tins");
+                    }
+                }
+                if (i == 0)
+                    expire_amount.style.borderTop = "0.4px solid gray";
+                row.appendChild(expire_amount);
+
+                var amount = document.createElement("div");
+                amount.className = "drug-value scell editable";
+                amount.setAttribute("drug", sievable[i]);
+                amount.setAttribute("pos", c);
+                amount.onmousedown = function () {
+                    if (this.innerHTML.length > 0) {
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of tins");
+                    }
+                }
+                amount.style.display = "table-cell";
+                amount.innerHTML = amount_value;
+                if (i == 0)
+                    amount.style.borderTop = "0.4px solid gray";
+                row.appendChild(amount);
+
+                var expire_date = document.createElement("div");
+                expire_date.style.display = "table-cell";
+                expire_date.className = "drug-label scell editable";
+                expire_date.innerHTML = date_value;
+                expire_date.setAttribute("drug", sievable[i]);
+                expire_date.setAttribute("pos", c);
+                expire_date.onmousedown = function () {
+                    if (this.innerHTML.length > 0) {
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Reason for disposal");
+                    }
+                }
+                if (i == 0)
+                    expire_date.style.borderTop = "0.4px solid gray";
+                row.appendChild(expire_date);
+            }
+        }
+
+
+        __$("heada").style.width = (table.offsetWidth) + "px";
+        r.style.width = (table.offsetWidth) + "px";
+
+        __$("nextButton").innerHTML = "<span>Save</span>";
+    }
+
+    function enableSaveDialogBox(){
+        __$('nextButton').onmousedown = function(){
+            dispatchMessage("Are you sure you want to save these drugs", tstMessageBoxType.YesNo)
+        }
+    }
+
+    function disableSaveDialogBox(){
+        __$('nextButton').onmousedown = function(){
+            gotoNextPage();
+        }
+    }
+    function navigate(drug, pos, field) {
+
+        if (__$("backButton"))
+            __$("backButton").onmousedown.apply(__$("backButton"));
+
+        if (__$(drug)) {
+
+            activeField = field;
+            activePos = pos;
+            __$(drug).onmousedown.apply(__$(drug))
+        }
+    }
+
+    function checkContainer() {
+        if (__$("inputFrame" + tstCurrentPage) && __$("inputFrame" + tstCurrentPage) != undefined) {
+
+            Entries.initialize();
+        } else {
+            setTimeout("checkContainer()", 150);
+        }
+    }
+
+    window.onresize = function () {
+        loadCSS();
+    }
+
+</script>
+
+<style>
+
+
+    .touchscreenTextInput {
+        display: none;
+    }
+
+    #table, #h-table {
+        display: table;
+        width: 99%;
+        padding-left: 0.7%;
+        border-radius: 3px;
+        border-spacing: 3px;
+        font-size: 26px;
+        border-collapse: separate;
+    }
+
+    .t-data, .h-data {
+        display: table-cell;
+    }
+
+    .t-row {
+        display: table-row;
+    }
+
+    .h-data {
+        border-radius: 5px;
+        height: 56px;
+        color: white;
+        font-size: 30px;
+        font-family: sans-serif;
+        font-weight: bold;
+        text-shadow: 1px 1px black;
+        vertical-align: middle;
         text-align: center;
-      }
-      .scrollTable {
-        height: 700px ! important;
-        overflow:scroll ! important;
-      }
-      #addrow{
-       /* background-color: #33FF00; */
-        -moz-border-radius: 15px;
-        -webkit-border-radius: 15px;
-        border: 5px solid #AAA;
-        border-collapse: collapse;
-        padding: 5px;
-      }
-      #addrow:hover {opacity: 0.6; }
-      .selects{
-        height: 45px;
+    }
+
+    #ht1 {
+        border-right: 2.25px solid white;
+    }
+
+    #ht2 {
+        border-left: 2.25px solid white;
+        min-width: 350px;
+    }
+
+    #drug-pane, #data-pane {
+        background: white;
+        padding-left: 0px;
+        border-radius: 5px;
+    }
+
+    #drug-pane {
+        padding-left: 0px;
+        overflow: auto;
+        overflow-X: hidden;
+    }
+
+    #drug-list {
+        list-style-type: none;
+        font-size: 16px;
+    }
+
+    .even, .odd {
+        font-size: 24px;
+        padding-left: 10px;
+        cursor: pointer;
+        height: 43px;
+        min-height: 43px !important;
+        vertical-align: middle;
+        font-weight: normal;
+        -moz-user-select: none;
+        border-bottom: 1px dotted;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+    }
+
+    .input-field {
+        -webkit-transition: all 0.30s ease-in-out;
+        -moz-transition: all 0.30s ease-in-out;
+        -ms-transition: all 0.30s ease-in-out;
+        -o-transition: all 0.30s ease-in-out;
+        outline: none;
+        padding: 3px 0px 3px 3px;
+        margin: 3px 1px 3px 0px;
+        border: 1px solid #DDDDDD;
+    }
+
+    .input-field-active {
+        box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+        padding: 3px 0px 3px 3px;
+        margin: 5px 1px 3px 0px;
+        border: 1px solid rgba(81, 203, 238, 1);
+    }
+
+    option {
+        background: #E3E4FA;
+        padding-bottom: 10px;
+        border-radius: 4px;
+        margin: 1px;
+        text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    .scell {
+        height: 35px;
         font-size: 20px;
-        width: 40%;
-      }
-
-      .selects option {
-        width: 100%;
-        height: 37px;
-      }
-
-
-      .years, .months, .day{
-        height: 45px;
-        font-size: 20px;
-        width: 185px;;
-      }
-
-      .scrollTable {
-        height: 700px ! important;
-        overflow:scroll ! important;
-      }
-
-      #stock {
-        height: 596px ! important;
-        overflow:auto ! important;
-      }
-      #summary {
-        padding: 0px;
-        font-size:1.2em;
-        margin-left: 60px;
-        height: 70px;
-        max-height: 70px;
-
-      }
-
-      #backspace, #clear {
-        position: static ! important;
-      }
-      th, .header {
+        border-bottom: 0.4px solid gray;
+        border-right: 0.4px solid gray;
+        border-radius: 4px;
         text-align: center;
         vertical-align: middle;
-        background-color: grey;
-        color: white;
-        height: 10%;
-        border-radius: 10px 10px 10px 10px;
-      }
-      .newIunputs {
-        text-align: center;
-        width: 45%;
-      }
-      #backspace{
-        position:absolute;
-        left:100px;
-        bottom:2px;
-      }
+    }
 
-      #Space{
-        position:absolute;
-        left:220px;
-        bottom:2px;
-        width:200px;
-      }
+    .drug-label {
+        min-width: 40%;
+        text-align: left;
+        padding-left: 2%;
+        overflow-X: hidden;
+    }
 
-      #clear{
-        position:absolute;
-        left:470px;
-        bottom:2px;
-      }
-      #num{
-        position:absolute;
-        left:470px;
-        bottom:2px;
-        width:200px;
-      }
-      #keypad{
-        background-color: #FFFFFF;
-        border: 2px solid #9999FF;
-        border-radius: 15px 15px 15px 15px;
-        display: none;
-        height: 304px;
-        padding: 5px;
+    .drug-value {
+        min-width: 20%;
+        cursor: pointer;
+    }
+
+    .hvalue {
+        border: hidden;
+        background: white;
+        font-size: 22px;
+        font-family: sans-serif;
+        font-weight: bold;
+        cursor: auto;
+        color: gray;
+        text-align: left;
+        padding-left: 9px;
+        text-shadow: 1px 1px black;
+        vertical-align: middle;
+    }
+
+    #add-button {
         position: absolute;
-        right: 13px;
-        top: 194px;
-        width: 672px;
-      }
-    </style>
-  <div id="container">
-    <form>
+        bottom: 40px;
+        right: 25px;
+        font-size: 2em;
+        font-weight: bold;
+        border-radius: 20px;
+        height: auto;
+        padding-bottom: 8px;
+        width: 75px;
+        text-align: center;
+    }
 
-      <%= text_field_tag :showSummary, nil,
-        {
-        :tt_onLoad => "showDrugs();$('clearButton').style.display = 'none';createYear();",
-        :tt_onUnLoad => " $('clearButton').style.display = 'inline';",
-        :optional => "true",
-        :id => "input",
-        :tt_pageStyleClass => "NoKeyboard"
-      } %>
-    </form>
-  </div>
+    .red {
+        background: white;
+        border-radius: 10px;
+        border-left: 2px solid black;
+        border-right: 2px solid black box-shadow : inset 0 0 10 px black, 0 0 15 px black;
+    }
+
+    .even-small, .odd-small {
+        font-size: 14px;
+        width: 85%;
+        padding-left: 20px;
+        cursor: pointer;
+        height: 28px;
+        min-height: 28px !important;
+        vertical-align: middle;
+        font-weight: normal;
+        -moz-user-select: none;
+        border-bottom: 1px gray dotted;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+    }
+
+    .bar {
+        left: 31%;
+        width: 450px;
+        position: absolute;
+        top: 23%;
+        font-size: 1.9em;
+        text-align: center;
+        background-color: tomato;
+        padding: 10px;
+        z-index: 999;
+        border: 5px outset tomato;
+        display: none;
+        border-radius: 15px;
+    }
+
+    .bar button {
+        font-size: 0.7em;
+        margin: 5px;
+    }
+    .editable{
+        border-style: outset;
+        border-left: 1px solid gray;
+        border-top: 1px solid gray;
+        background-color: #d3d3d3;
+        border-radius: 3px;
+    }
+</style>
+</head>
+<div id="container">
+  <form action="create_stock" method="post">
+
+    <input type="hidden" name="disposal_date" value="<%= @disposal_date %>">
+    <input type="hidden" name="identifier" value="<%= params[:identifier] %>">
+
+    <%= text_field_tag :information, nil,
+                       {
+                               :tt_onLoad => "$('clearButton').style.display = 'none'; checkContainer(); updateNextButton() ",
+                               :optional => "true",
+                               :id => "input",
+                               :helpText => "Disposal Details",
+                               :tt_pageStyleClass => "NoKeyboard"
+                       } %>
+
+    <%= text_field_tag :showSummary, nil,
+                       {
+                               :tt_onLoad => "showSummary();enableSaveDialogBox();",
+                               :optional => "true",
+                               :id => "summary",
+                               :helpText => "<span style='color: red;background: white;'>Verify values entered - You can edit a value by clicking its field</span>",
+                               :tt_pageStyleClass => "NoKeyboard"
+                       } %>
+  </form>
+</div>
 </html>

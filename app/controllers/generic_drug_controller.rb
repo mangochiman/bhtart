@@ -315,19 +315,19 @@ class GenericDrugController < ApplicationController
       redirect_to "/clinic" # /management"
     else
       # @delivery_date = params[:observations].first["value_datetime"]
+
+      @disposal_date = params[:observations].first["value_datetime"] rescue Date.today
       @drugs = params[:drug_name]
       @formatted = preformat_regimen
       @drug_short_names = regimen_name_map
-      @list = []
-      @expiring = {}
-      @formatted.each { |drug|
-        @drugs.each { |received|
-          if drug == received
-            @list << drug
-          end
-        }
-      }
-      @names = @drugs
+      @drug_cms_names = {}
+      @drug_cms_packsizes = {}
+      (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+        drug_name = Drug.find(drug.drug_inventory_id).name
+        @drug_cms_names[drug_name] = drug.name
+        @drug_cms_packsizes[drug_name] = drug.pack_size
+      end
+
     end
   end
 
