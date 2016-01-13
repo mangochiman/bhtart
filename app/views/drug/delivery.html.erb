@@ -580,7 +580,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
       :tt_pageStyleClass => "Date DatesOnly"}
   %>
 
-    <%= select_tag "disposal_reason", options_for_select(disposal_reasons),
+    <%#= select_tag "disposal_reason", options_for_select(disposal_reasons),
       {
       :id => "disposal_reason",
       :field_type => 'alpha',
@@ -588,7 +588,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
       :condition => "$('relocation_or_disposal').value.toUpperCase() == 'DISPOSAL'",
       :tt_pageStyleClass => "NoKeyboard"}
   %>
-
+  
     <%= text_field_tag 'disposal_date', '',
       {
       :id => 'disposal_date',
