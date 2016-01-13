@@ -549,6 +549,18 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
 
 %>
 </script>
+
+<style>
+     #tt_page_select_drugs_received #viewport{
+        height: 520px;
+    }
+     #tt_page_select_drugs_to_verify #viewport{
+         height: 520px;
+     }
+     #tt_page_select_drugs #viewport{
+         height: 520px;
+     }
+</style>
 <% if params[:id] == 'relocation' %>
   <form id="create_stoke" name="create_stoke" action="edit_stock">
 
@@ -605,9 +617,10 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
       :field_type => 'alpha',
       :multiple => true,
       :optional => true,
+      :selectAll => true,
       :tt_onUnLoad => 'selectedDrugs()',
-      :helpText => "Select received/relocated Drugs",
-      :tt_pageStyleClass => "NoKeyboard NoInput small"}
+      :helpText => "Select Drugs",
+      :tt_pageStyleClass => "longSelectList"}
   %>
     
   </form>
@@ -639,8 +652,9 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
         :optional => true,
         :tt_onUnLoad => 'selectedDrugs()',
         :helpText => "Select drugs received",
-        :tt_onLoad => "returning = true; hidePreviousDrugs()",
-        :tt_pageStyleClass => "NoKeyboard NoInput small"} %>
+        :selectAll => true,
+        :tt_onLoad => "returning = true; hidePreviousDrugs();",
+        :tt_pageStyleClass => "longSelectList"} %>
 
       <%= touch_date_tag "delivery_date", 'delivery_date', nil,
         {
@@ -699,7 +713,8 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
             :optional => true,
             :tt_onUnLoad => 'selectedDrugs()',
             :helpText => "Select drugs to verify",
-            :tt_pageStyleClass => "NoKeyboard NoInput small"} %>
+            :selectAll => true,
+            :tt_pageStyleClass => "longSelectList"} %>
 
         <% end %>
         <% unless params[:id] == 'verification' %>
