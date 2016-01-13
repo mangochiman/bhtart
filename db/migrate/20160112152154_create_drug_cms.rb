@@ -4,6 +4,8 @@ class CreateDrugCms < ActiveRecord::Migration
       t.integer :drug_inventory_id, :null => false
       t.string :name, :null => false
       t.string :code, :null => false
+      t.string :short_name, :limit => 225
+      t.string :tins, :limit => 225
       t.integer :pack_size
       t.integer :voided, :default => 0, :limit => 1
       t.integer :voided_by , :limit => 11

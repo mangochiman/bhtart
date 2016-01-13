@@ -35,11 +35,15 @@ def load_cms_drugs
       drug_name = row[0]
       drug_code = row[1]
       drug_inventory_id = row[2]
+      drug_short_name = row[3]
+      drug_tins = row[4]
       pack_size = drug_name.split(/[^\d]/).last
       next if drug_inventory_id.blank?
       drug_cms = DrugCms.new
       drug_cms.drug_inventory_id = drug_inventory_id
       drug_cms.name = drug_name
+      drug_cms.short_name = drug_short_name
+      drug_cms.tins = drug_tins
       drug_cms.code = drug_code
       drug_cms.pack_size = pack_size
       drug_cms.save
