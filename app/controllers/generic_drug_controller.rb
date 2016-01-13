@@ -314,13 +314,12 @@ class GenericDrugController < ApplicationController
       #flash[:notice] = "#{params[:drug_name]} successfully edited"
       redirect_to "/clinic" # /management"
     else
-      # @delivery_date = params[:observations].first["value_datetime"]
 
-      @disposal_date = params[:observations].first["value_datetime"] rescue Date.today
       @drugs = params[:drug_name]
       @formatted = preformat_regimen
       @drug_short_names = regimen_name_map
       @drug_cms_names = {}
+
       @drug_cms_packsizes = {}
       (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
         drug_name = Drug.find(drug.drug_inventory_id).name
@@ -328,6 +327,16 @@ class GenericDrugController < ApplicationController
         @drug_cms_packsizes[drug_name] = drug.pack_size
       end
 
+      if params[:relocation_or_disposal].match(/RELOCATIONS/i)
+        @mode = 'RELOCATIONS'
+        @relocation_date = params[:relocation_date].to_date
+        @relocation_facility = Location.find(params[:relocation_facility]).name
+      else
+        @mode = 'DISPOSAL'
+        @disposal_date = params[:disposal_date].to_date
+        #@disposal_reason = params[:disposal_reason]
+        render :template => "/drug/edit_stock" and return
+      end
     end
   end
 

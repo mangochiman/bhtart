@@ -372,7 +372,6 @@
             }
             table.appendChild(wrap(textField2));
 
-
             var textField3 = document.createElement("select");
             textField3.id = "Reason for disposal";
             textField3.setAttribute("label", "Reason for disposal");
@@ -1321,12 +1320,13 @@
         }
     }
 
+
     function showSummary() {
 
         __$("inputFrame" + tstCurrentPage).style.background = "rgba(235, 240, 240, 0.3)";
 
         var header = document.createElement("div");
-        header.id = 'heada'
+        header.id = 'heada';
         header.style.display = "table";
         header.style.width = "100%";
 
@@ -1342,19 +1342,20 @@
         var label = document.createElement("div");
         label.className = "drug-value scell hvalue";
         label.style.display = "table-cell";
-        label.innerHTML = "Pills per unit";
-        r.appendChild(label);
-
-        var label = document.createElement("div");
-        label.className = "drug-value scell hvalue";
-        label.style.display = "table-cell";
         label.innerHTML = "Total units";
         r.appendChild(label);
 
         var label = document.createElement("div");
         label.className = "drug-value scell hvalue";
         label.style.display = "table-cell";
-        label.innerHTML = "Expiry date";
+        label.innerHTML = "Reason for disposal";
+        r.appendChild(label);
+
+
+        var label = document.createElement("div");
+        label.className = "drug-value scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Authorisation code";
         r.appendChild(label);
 
         __$("inputFrame" + tstCurrentPage).appendChild(header);
@@ -1385,14 +1386,14 @@
 
             for (var c = 1; c <= counts[drugs[i]]; c++) {
                 var amount_value = "";
-                var expire_packsize_value = "";
+                var expire_amount_value = "";
                 var date_value = "";
                 var authcode = "";
                 ii += 1;
                 try {
                     if (__$(drugs[i] + "_packsize_" + c)) {
                         amount_value = __$(drugs[i] + "_packsize_" + c).value;
-                        expire_packsize_value = __$(drugs[i] + "_units_" + c).value;
+                        expire_amount_value = __$(drugs[i] + "_units_" + c).value;
                         date_value = __$(drugs[i] + "_reason_" + c).value;
                         authcode = __$(drugs[i] + "_authcode_" + c).value;
                     }
@@ -1415,12 +1416,12 @@
                 var amount = document.createElement("div");
                 amount.className = "drug-value scell editable";
                 amount.style.display = "table-cell";
-                amount.innerHTML = amount_value;
+                amount.innerHTML = expire_amount_value;
                 amount.setAttribute("drug", drugs[i]);
                 amount.setAttribute("pos", c);
                 amount.onmousedown = function () {
                     if (this.innerHTML.length > 0) {
-                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of tins");
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of expiring tins");
                     }
                 }
                 if (i == 0)
@@ -1430,12 +1431,12 @@
                 var expire_amount = document.createElement("div");
                 expire_amount.style.display = "table-cell";
                 expire_amount.className = "drug-value scell editable";
-                expire_amount.innerHTML = expire_packsize_value;
+                expire_amount.innerHTML = date_value;
                 expire_amount.setAttribute("drug", drugs[i]);
                 expire_amount.setAttribute("pos", c);
                 expire_amount.onmousedown = function () {
                     if (this.innerHTML.length > 0) {
-                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of expiring tins");
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Date of expiry");
                     }
                 }
                 if (i == 0)
@@ -1445,12 +1446,12 @@
                 var expire_date = document.createElement("div");
                 expire_date.style.display = "table-cell";
                 expire_date.className = "drug-label scell editable";
-                expire_date.innerHTML = date_value;
+                expire_date.innerHTML = authcode;
                 expire_date.setAttribute("drug", drugs[i]);
                 expire_date.setAttribute("pos", c);
                 expire_date.onmousedown = function () {
                     if (this.innerHTML.length > 0) {
-                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Reason for disposal");
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Authorisation code");
                     }
                 }
                 if (i == 0)
@@ -1459,52 +1460,21 @@
             }
         }
 
-        if (sievable.length > 0) {
-
-            var header = document.createElement("div");
-            header.style.display = "table-row";
-            header.style.width = "100%";
-            header.id = "heada2";
-
-            var label = document.createElement("div");
-            label.className = "drug-label scell hvalue";
-            label.style.display = "table-cell";
-            label.innerHTML = "Drug";
-            header.appendChild(label);
-
-            var label = document.createElement("div");
-            label.className = "drug-value scell hvalue";
-            label.style.display = "table-cell";
-            label.innerHTML = "Pack Size";
-            header.appendChild(label);
-
-            var label = document.createElement("div");
-            label.className = "drug-value scell hvalue";
-            label.style.display = "table-cell";
-            label.innerHTML = "Total Units";
-            header.appendChild(label);
-
-            var label = document.createElement("div");
-            label.className = "drug-value scell hvalue";
-            label.style.display = "table-cell";
-            label.innerHTML = "Expiry date";
-            header.appendChild(label);
-            table.appendChild(header);
-        }
         var ii = -1;
         for (var i in sievable) {
 
             for (var c = 1; c <= counts[sievable[i]]; c++) {
                 var amount_value = "";
-                var expire_packsize_value = "";
+                var expire_amount_value = "";
                 var date_value = "";
                 ii += 1;
 
                 try {
                     if (__$(sievable[i] + "_packsize_" + c)) {
                         amount_value = __$(sievable[i] + "_packsize_" + c).value;
-                        expire_packsize_value = __$(sievable[i] + "_units_" + c).value;
+                        expire_amount_value = __$(sievable[i] + "_units_" + c).value;
                         date_value = __$(sievable[i] + "_reason_" + c).value;
+                        authcode = __$(sievable[i] + "_authcode_" + c).value;
                     }
                 } catch (e) {
                 }
@@ -1525,7 +1495,7 @@
                 var expire_amount = document.createElement("div");
                 expire_amount.style.display = "table-cell";
                 expire_amount.className = "drug-value scell editable";
-                expire_amount.innerHTML = expire_packsize_value;
+                expire_amount.innerHTML = expire_amount_value;
                 expire_amount.setAttribute("drug", sievable[i]);
                 expire_amount.setAttribute("pos", c);
                 expire_amount.onmousedown = function () {
@@ -1547,7 +1517,7 @@
                     }
                 }
                 amount.style.display = "table-cell";
-                amount.innerHTML = amount_value;
+                amount.innerHTML = date_value;
                 if (i == 0)
                     amount.style.borderTop = "0.4px solid gray";
                 row.appendChild(amount);
@@ -1555,12 +1525,12 @@
                 var expire_date = document.createElement("div");
                 expire_date.style.display = "table-cell";
                 expire_date.className = "drug-label scell editable";
-                expire_date.innerHTML = date_value;
+                expire_date.innerHTML = authcode;
                 expire_date.setAttribute("drug", sievable[i]);
                 expire_date.setAttribute("pos", c);
                 expire_date.onmousedown = function () {
                     if (this.innerHTML.length > 0) {
-                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Reason for disposal");
+                        navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Date of expiry");
                     }
                 }
                 if (i == 0)
@@ -1755,6 +1725,7 @@
         text-shadow: 1px 1px black;
         vertical-align: middle;
     }
+
 
     #add-button {
         position: absolute;
