@@ -255,14 +255,15 @@ class Pharmacy < ActiveRecord::Base
 
   #new code from Bart 10.2 
 
-  def self.alter(drug, quantity, date = nil , reason = nil)                     
+  def self.alter(drug, quantity, date = nil , reason = nil, auth_code = nil, receiving_facility=nil)
     encounter_type = PharmacyEncounterType.find_by_name("Tins removed").id      
     current_stock =  Pharmacy.new()                                             
     current_stock.pharmacy_encounter_type = encounter_type                      
     current_stock.drug_id = drug.id                                             
     current_stock.encounter_date = date                                         
     current_stock.value_numeric = quantity.to_f                                 
-    current_stock.value_text = reason                                           
+    current_stock.value_text = reason
+    current_stock.void_reason = "auth_code:" + auth_code + (receiving_facility.blank? ? "" : ("|relocated_to:"+receiving_facility))
     current_stock.save
     self.update_stock_record(drug.id, date)
     self.update_average_drug_consumption(drug.id)

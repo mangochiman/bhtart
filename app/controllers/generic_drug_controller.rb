@@ -279,56 +279,84 @@ class GenericDrugController < ApplicationController
 
   def edit_stock
     if request.method == :post
+      disposal_date = params[:disposal_date].to_date
+      params[:obs].each { |ob_variations|
+        drug_id = Drug.find_by_name(ob_variations[0]).id rescue (raise "Missing drug #{ob_variations[0]}".to_s)
 
-      edit_reason = params[:reason] rescue ""
-      encounter_datetime = params[:delivery_time].to_date rescue []
+        ob_variations[1].each { |ob|
+          reason = ob[:reason]
+          authorisation_code = ob[:authcode]
+          #barcode = params[:identifier]
+          drug_short_names = regimen_name_map
 
-      if encounter_datetime.blank?
-        encounter_datetime = "#{params[:year]}-#{params[:month]}-#{params[:day]}".to_date rescue Date.today
-      end
+          if (drug_comes_in_packs(ob_variations[0], drug_short_names))
+            number_of_tins = ob["packsize"].to_f
+            number_of_pills_per_tin = ob["units"].to_f
+          else
+            number_of_tins = ob["units"].to_f
+            number_of_pills_per_tin = ob["packsize"].to_f
+          end
 
-      params[:obs].each { |delivered|
-
-        next if delivered[1]["amount"].to_i == 0
-        drug_id = Drug.find_by_name(delivered[0]).id rescue []
-        #encounter_datetime = params[:delivery_time].to_date rescue Date.today
-        date_value = delivered[1]['date'].split("/")
-        current_century = Date.today.year.to_s.chars.each_slice(2).map(&:join)[0].to_i
-
-        year = date_value[1]
-        month = date_value[0]
-        expiry_date = "#{current_century}#{year}-#{month}-#{01}".to_date
-        expiry_date += 1.months
-        expiry_date -= 1.days
-
-        number_of_tins = delivered[1]["amount"].to_i.to_f
-        expiring_units = delivered[1]["expire_amount"].to_i.to_f
-        number_of_pills = (number_of_tins * 60)
-        if edit_reason == 'Receipts from other clinics'
-          Pharmacy.new_delivery(drug_id, number_of_pills, encounter_datetime, nil, expiry_date, edit_reason, expiring_units)
-        else
-          #raise number_of_pills.to_yaml
-          Pharmacy.drug_dispensed_stock_adjustment(drug_id, number_of_pills, encounter_datetime, edit_reason, expiring_units)
-        end
+          number_of_pills = (number_of_tins * number_of_pills_per_tin)
+          next if number_of_pills == 0
+          Pharmacy.alter(drug_id, number_of_pills, disposal_date, reason, authorisation_code)
+        }
       }
-      #flash[:notice] = "#{params[:drug_name]} successfully edited"
       redirect_to "/clinic" # /management"
     else
-      # @delivery_date = params[:observations].first["value_datetime"]
+
       @drugs = params[:drug_name]
       @formatted = preformat_regimen
       @drug_short_names = regimen_name_map
-      @list = []
-      @expiring = {}
-      @formatted.each { |drug|
-        @drugs.each { |received|
-          if drug == received
-            @list << drug
-          end
-        }
-      }
-      @names = @drugs
+      @drug_cms_names = {}
+
+      @drug_cms_packsizes = {}
+      (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+        drug_name = Drug.find(drug.drug_inventory_id).name
+        @drug_cms_names[drug_name] = drug.name
+        @drug_cms_packsizes[drug_name] = drug.pack_size
+      end
+
+      if params[:relocation_or_disposal].match(/RELOCATIONS/i)
+        @mode = 'RELOCATIONS'
+        @relocation_date = params[:relocation_date].to_date
+        @relocation_facility = Location.find(params[:relocation_facility]).name
+        render :template => "/drug/relocations" and return
+      else
+        @mode = 'DISPOSAL'
+        @disposal_date = params[:disposal_date].to_date
+        #@disposal_reason = params[:disposal_reason]
+        render :template => "/drug/edit_stock" and return
+      end
     end
+  end
+
+  def create_relocation
+    relocation_date = params[:relocation_date].to_date
+    relocation_facility = params[:relocation_facility]
+    params[:obs].each { |ob_variations|
+      drug_id = Drug.find_by_name(ob_variations[0]).id rescue (raise "Missing drug #{ob_variations[0]}".to_s)
+
+      ob_variations[1].each { |ob|
+        reason = ob[:reason]
+        authorisation_code = ob[:authcode]
+        #barcode = params[:identifier]
+        drug_short_names = regimen_name_map
+
+        if (drug_comes_in_packs(ob_variations[0], drug_short_names))
+          number_of_tins = ob["packsize"].to_f
+          number_of_pills_per_tin = ob["units"].to_f
+        else
+          number_of_tins = ob["units"].to_f
+          number_of_pills_per_tin = ob["packsize"].to_f
+        end
+
+        number_of_pills = (number_of_tins * number_of_pills_per_tin)
+        next if number_of_pills == 0
+        Pharmacy.alter(drug_id, number_of_pills, relocation_date, 'Relocation', authorisation_code, relocation_facility)
+      }
+    }
+    redirect_to "/clinic"
   end
 
   def set_quantity
