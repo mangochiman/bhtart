@@ -530,7 +530,7 @@
   }
 
   function hidePreviousDrugs() {
-
+    return;
     for (var i = 0; i < specialDrugs.length; i++) {
       jQuery("[tstValue=" + specialDrugs[i] + "]").remove();
     }
@@ -551,13 +551,13 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
 </script>
 
 <style>
-     #tt_page_select_drugs_received #viewport{
+     #tt_page_select_products_received #viewport{
         height: 520px;
     }
-     #tt_page_select_drugs_to_verify #viewport{
+     #tt_page_select_products_to_verify #viewport{
          height: 520px;
      }
-     #tt_page_select_drugs #viewport{
+     #tt_page_select_products #viewport{
          height: 520px;
      }
 </style>
@@ -619,7 +619,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
       :optional => true,
       :selectAll => true,
       :tt_onUnLoad => 'selectedDrugs()',
-      :helpText => "Select Drugs",
+      :helpText => "Select products",
       :tt_pageStyleClass => "longSelectList"}
   %>
     
@@ -651,7 +651,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
         :multiple => true,
         :optional => true,
         :tt_onUnLoad => 'selectedDrugs()',
-        :helpText => "Select drugs received",
+        :helpText => "Select products received",
         :selectAll => true,
         :tt_onLoad => "returning = true; hidePreviousDrugs();",
         :tt_pageStyleClass => "longSelectList"} %>
@@ -712,7 +712,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
             :multiple => true,
             :optional => true,
             :tt_onUnLoad => 'selectedDrugs()',
-            :helpText => "Select drugs to verify",
+            :helpText => "Select products to verify",
             :selectAll => true,
             :tt_pageStyleClass => "longSelectList"} %>
 
