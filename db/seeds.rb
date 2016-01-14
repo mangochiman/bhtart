@@ -31,7 +31,7 @@ def load_cms_drugs
   sheet1 = cms_drugs.worksheet 0
 
   ActiveRecord::Base.transaction do
-    sheet1.each 2 do |row|
+    sheet1.each 1 do |row|
       drug_name = row[0]
       drug_code = row[1]
       drug_inventory_id = row[2]
