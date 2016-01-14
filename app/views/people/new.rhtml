@@ -97,6 +97,44 @@
     return true
   }
 
+  function validateDate() {
+      selectYear = parseInt(document.getElementsByName('person[birth_year]')[0].value);
+      selectDay = parseInt(document.getElementsByName('person[birth_day]')[0].value);
+      date = new Date
+      currYear = date.getFullYear();
+      currDay = date.getDate();
+      availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      if (selectYear == currYear){
+          currentMonth = [];
+          numOfloops = ((new Date).getMonth() + 1);
+          for(var i = 0; i < numOfloops; i++){
+              currentMonth.push(availableMonths[i]);
+          }
+          rule = currentMonth.join("|");
+          rule = rule + "|Unknown";
+          return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }
+      if (selectYear != currYear) {
+          rule = availableMonths.join("|");
+          rule = rule + "|Unknown";
+          return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }
+  }
+  function validateDay(){
+      date = new Date
+      currYear = date.getFullYear();
+      currDay = date.getDate();
+      currMonth = date.getMonth() + 1;
+      selected_month = parseInt(document.getElementsByName('person[birth_month]')[0].value)
+      selectYear = parseInt(document.getElementsByName('person[birth_year]')[0].value);
+      if (selectYear == currYear) {
+          if (selected_month == currMonth){
+              return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+          }
+      }
+  }
+
   function validateDOB() {
     setDOB();
     curr_date = new Date();
@@ -174,11 +212,11 @@
 
   <%= text_field_tag "person[birth_year]", nil, {:helpText => 'Year of Birth', :field_type => 'number', :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year, :tt_pageStyleClass => "Numeric NumbersOnly", :tt_onLoad => 'seen(tstCurrentPage);',:validationJS => "setDOB();" }  %>
 
-  <%= select_tag "person[birth_month]", month_name_options, {:helpText => 'Month of Birth', :condition => '$("person_birth_year").value.toLowerCase() != "unknown"',:validationJS => "validateDOB();",:validationMessage => 'Please enter a valid date', :tt_onLoad => "__$('keyboard').style.display = 'none'"}%>
+  <%= select_tag "person[birth_month]", month_name_options, {:helpText => 'Month of Birth', :condition => '$("person_birth_year").value.toLowerCase() != "unknown"',:validationJS => "validateDOB();",:validationMessage => 'Please enter a valid date', :tt_onLoad =>"validateDate(); __$('keyboard').style.display = 'none'"}%>
 
   <%= text_field_tag "person[age_estimate]", nil, {:helpText => 'Age Estimate', :absoluteMin => 1, :absoluteMax => age_limit, :field_type => 'number', :condition => '$("person_birth_year").value == "Unknown"', :tt_onLoad => "$('nextButton').style.display = 'block';", :tt_pageStyleClass => "Numeric NumbersOnly"} %> 
 
-  <%= text_field_tag "person[birth_day]",  nil, :field_type => 'number', :helpText => 'Birth Day', :condition => '($("person_birth_year").value != "Unknown") && ($("person_birth_month").value != "Unknown")', :tt_onLoad => "getDayOfMonthPicker($('person_birth_year').value, $('person_birth_month').value);$('nextButton').style.display = 'block';" ,:validationJS => "validateDOB()",:validationMessage => 'Please enter a valid date'%>
+  <%= text_field_tag "person[birth_day]",  nil, :field_type => 'number', :helpText => 'Birth Day', :condition => '($("person_birth_year").value != "Unknown") && ($("person_birth_month").value != "Unknown")', :tt_onLoad =>  "validateDay(); getDayOfMonthPicker($('person_birth_year').value, $('person_birth_month').value);$('nextButton').style.display = 'block';" ,:validationJS => "validateDOB()",:validationMessage => 'Please enter a valid date'%>
 
   <p><label for="region_region_name">Region of Origin</label></br>
   <%= text_field "region" , 'region_name', :xhelpText => 'Region',:tt_requireNextClick => false, :ajaxURL => '/people/region/Region?field=role&value=', :tt_onLoad => "$('nextButton').style.display = 'none';"%></p>
