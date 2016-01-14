@@ -1443,7 +1443,7 @@
 
     <%= text_field_tag :showSummary, nil,
                        {
-                               :tt_onLoad => "showSummary();enableSaveDialogBox();",
+                               :tt_onLoad => "showSummaryX();enableSaveDialogBox();",
                                :optional => "true",
                                :id => "summary",
                                :helpText => "<span style='color: red;background: white;'>Verify values entered - You can edit a value by clicking its field</span>",
@@ -1452,3 +1452,125 @@
   </form>
 </div>
 </html>
+
+<script>
+
+function showSummaryX() {
+
+  buildTable();
+
+}
+
+function buildTable() {
+  table = document.createElement('table');
+  table.setAttribute('class','summary-table');
+  thead = document.createElement('thead');
+  tr = document.createElement('tr');
+  thead.appendChild(tr);
+ 
+  ths = [
+    ["text-align:left;","Items counted as"],
+    ["text-align:right;","Tins"],
+    ["","&nbsp"],
+    ["text-align:right;","Previous stock"],
+    ["text-align:right;","Total usable tins"],
+    ["text-align:center;","Date&nbsp;MM/YY"],
+    ["text-align:right;","Units expiring that date"]
+  ] 
+  
+  for(var i = 0; i < ths.length; i++) {
+    th = document.createElement('th');
+    th.setAttribute('style',ths[i][0]);
+    th.innerHTML = ths[i][1];
+    tr.appendChild(th);
+  }
+  table.appendChild(thead);
+
+
+  tbody = document.createElement('tbody');
+  tbody.setAttribute('id','section_one');
+  section_one = 18; x = 0;
+  while(x < section_one) {
+    tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
+    x++;
+  }
+  table.appendChild(tbody);
+  table.appendChild(tBodySeparator());
+
+
+  tbody = document.createElement('tbody');
+  tbody.setAttribute('id','section_two');
+  section_two = 2; x = 0;
+  while(x < section_two) {
+    tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
+    x++;
+  }
+  table.appendChild(tbody);
+  table.appendChild(tBodySeparator());
+  
+
+  tbody = document.createElement('tbody');
+  tbody.setAttribute('id','section_three');
+  section_three = 7; x = 0;
+  while(x < section_three) {
+    tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
+    x++;
+  }
+  table.appendChild(tbody);
+
+
+  inputFrame = document.getElementById('inputFrame1');
+  inputFrame.setAttribute('style','overflow: auto')
+  inputFrame.appendChild(table);
+}
+
+function buildRows(item, item_desc, unit, previous_stock, total_usable_tins, expiry_date, units_expiring) {
+  t = document.createElement('tr');
+  tds = [
+    ['text-align:left',item],
+    ['text-align:right',item_desc],
+    ['text-align:center',unit],
+    ['text-align:right',previous_stock],
+    ['text-align:right',total_usable_tins],
+    ['text-align:center',expiry_date],
+    ['text-align:right',units_expiring]
+  ]
+
+  for(var z = 0; z < tds.length; z++) {
+    std = document.createElement('td');
+    std.setAttribute('style', tds[z][0]);
+    std.innerHTML = tds[z][1];
+    if (z >= 4) {
+      std.setAttribute('class', 'borders');
+    }
+    t.appendChild(std);
+  }
+
+  return t;
+}
+
+function tBodySeparator() {
+  t = document.createElement('tr');
+  sd = document.createElement('td');
+  sd.setAttribute('colspan','7');
+  sd.innerHTML = '&nbsp;';
+  return t.appendChild(sd);
+}
+
+
+
+</script>
+
+
+<style>
+.summary-table {
+  width: 100%
+}
+
+.borders {
+  border-style: solid;
+  border-width: 1px;
+  width: 130px;
+}
+
+</style>
