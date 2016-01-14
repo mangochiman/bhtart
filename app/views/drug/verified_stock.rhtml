@@ -1169,7 +1169,9 @@ function buildTable() {
   tbody = document.createElement('tbody');
   tbody.setAttribute('id','section_two');
   tbody.appendChild(rowHeading('BOTTLES', 'BOTTLES'));
-  
+  amount = '';
+  total_usable_tins = '';
+
   section_two = 2; min = 18; max=18
   while(min <= max) {
       var index = min;
@@ -1177,7 +1179,7 @@ function buildTable() {
       var expiry_date = "N/A";
       var units_expiring = "0";
       var date_value = "N/A";
-
+      
       if (__$(drug_weights[index][1] + "_pills_per_tin")) {
           var total_usable_tins = (__$(drug_weights[index][1] + "_pills_per_tin").value || 0)
           var amount = (__$(drug_weights[index][1] + "_amount").value || 0);
