@@ -322,7 +322,8 @@ console.log(drug_weights);
                 var textField1 = document.createElement("select");
                 textField1.id = "Number of expiring tins";
                 textField1.setAttribute("label", "Pack size");
-                textField1.innerHTML = "<option style='display:none'></option><option>30</option><option>60</option><option>90</option><option>100</option><option>1000</option>";
+                textField1.innerHTML = "<option>" + drug_cms_packsizes[item.getAttribute("value")] + "</option>";
+                textField1.disabled = true;
                 textField1.style.background = "white";
                 textField1.className = "input-field input-field-active";
                 textField1.value = __$(item.getAttribute("value") + "_expire_amount").value;
@@ -1491,7 +1492,8 @@ function buildTable() {
   tbody = document.createElement('tbody');
   tbody.setAttribute('id','section_one');
   section_one = 18; x = 1;
-  while(x <= section_one) {
+
+  while(x < section_one) {
     var total_usable_tins = "0";
     var expiry_date = "0";
     var units_expiring = "0";
@@ -1503,9 +1505,9 @@ function buildTable() {
         var units_expiring = (__$(drug_weights[x][1] + "_expire_amount").value || 0);
         var expiry_date = (__$(drug_weights[x][1] + "_date").value || "N/A");
     }
-
-    tbody.appendChild(buildRows(drug_weights[x][2],drug_weights[x][3],("tabs"),drug_weights[x][5],
-            amount, expiry_date, units_expiring));
+        var index = x
+      tbody.appendChild(buildRows(drug_weights[index][2], drug_weights[index][6], drug_weights[index][3], drug_weights[index][5],
+              amount, expiry_date,units_expiring));
     x++;
   }
   table.appendChild(tbody);
@@ -1516,10 +1518,25 @@ function buildTable() {
   tbody.setAttribute('id','section_two');
   tbody.appendChild(rowHeading('Items counted as', 'BOTTLES'));
   
-  section_two = 2; x = 0;
-  while(x < section_two) {
-    tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
-    x++;
+  section_two = 2; min = 18; max=18
+  while(min <= max) {
+      var index = min;
+      var total_usable_tins = "0";
+      var expiry_date = "0";
+      var units_expiring = "0";
+      var date_value = "N/A";
+
+      if (__$(drug_weights[index][1] + "_pills_per_tin")) {
+          var total_usable_tins = (__$(drug_weights[index][1] + "_pills_per_tin").value || 0)
+          var amount = (__$(drug_weights[index][1] + "_amount").value || 0);
+          var units_expiring = (__$(drug_weights[index][1] + "_expire_amount").value || 0);
+          var expiry_date = (__$(drug_weights[index][1] + "_date").value || "N/A");
+      }
+
+      tbody.appendChild(buildRows(drug_weights[index][2], drug_weights[index][6], drug_weights[index][3], drug_weights[index][5],
+              amount, expiry_date,units_expiring));
+
+      min++;
   }
   table.appendChild(tbody);
   table.appendChild(tBodySeparator());
@@ -1529,10 +1546,27 @@ function buildTable() {
   tbody.setAttribute('id','section_three');
   tbody.appendChild(rowHeading('Items counted as', 'TABS'));
   
-  section_three = 7; x = 0;
-  while(x < section_three) {
-    tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
-    x++;
+  section_three = 7; min = 20; max = 26;
+
+  while(min <= max) {
+      var index = min;
+      var total_usable_tins = "0";
+      var expiry_date = "0";
+      var units_expiring = "0";
+      var date_value = "N/A";
+      if (__$(drug_weights[index][1] + "_pills_per_tin")) {
+          var total_usable_tins = (__$(drug_weights[index][1] + "_pills_per_tin").value || 0)
+          var amount = (__$(drug_weights[index][1] + "_amount").value || 0);
+          var units_expiring = (__$(drug_weights[index][1] + "_expire_amount").value || 0);
+          var expiry_date = (__$(drug_weights[index][1] + "_date").value || "N/A");
+      }
+
+      tbody.appendChild(buildRows(drug_weights[index][2], drug_weights[index][6], drug_weights[index][3], drug_weights[index][5],
+              amount, expiry_date,units_expiring));
+
+      min++;
+      if (min == 22 )
+          min++
   }
   table.appendChild(tbody);
 

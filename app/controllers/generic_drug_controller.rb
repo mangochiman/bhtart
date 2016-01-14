@@ -107,7 +107,8 @@ class GenericDrugController < ApplicationController
       drug_name = Drug.find(drug.drug_inventory_id).name
       @drug_cms_names[drug_name] = drug.name
       @drug_cms_packsizes[drug_name] = drug.pack_size
-      @drug_weights[drug.weight] =  [drug.name, drug_name, drug.short_name, drug.tins, drug.pack_size, Pharmacy.last_physical_count(drug.drug_inventory_id)]
+      @drug_weights[drug.weight] =  [drug.name, drug_name, drug.short_name, drug.tabs, drug.pack_size,
+                                     Pharmacy.last_physical_count(drug.drug_inventory_id), drug.strength]
     end
 
   end
