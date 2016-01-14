@@ -1472,7 +1472,7 @@ function buildTable() {
  
   ths = [
     ["text-align:left;","Items counted as"],
-    ["text-align:right;","Tins"],
+    ["text-align:right;","TINS"],
     ["","&nbsp"],
     ["text-align:right;","Previous stock"],
     ["text-align:right;","Total usable tins"],
@@ -1502,6 +1502,8 @@ function buildTable() {
 
   tbody = document.createElement('tbody');
   tbody.setAttribute('id','section_two');
+  tbody.appendChild(rowHeading('Items counted as', 'BOTTLES'));
+  
   section_two = 2; x = 0;
   while(x < section_two) {
     tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
@@ -1513,6 +1515,8 @@ function buildTable() {
 
   tbody = document.createElement('tbody');
   tbody.setAttribute('id','section_three');
+  tbody.appendChild(rowHeading('Items counted as', 'TABS'));
+  
   section_three = 7; x = 0;
   while(x < section_three) {
     tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
@@ -1560,7 +1564,20 @@ function tBodySeparator() {
 }
 
 
+function rowHeading(heading, second_heading) {
+  t = document.createElement('tr');
+  d = document.createElement('td');
+  d.innerHTML = heading
+  d.setAttribute('style','font-weight:bold');
+  t.appendChild(d);
 
+  d = document.createElement('td');
+  d.innerHTML = second_heading
+  d.setAttribute('style','font-weight:bold');
+  t.appendChild(d);
+
+  return t;
+}
 </script>
 
 
