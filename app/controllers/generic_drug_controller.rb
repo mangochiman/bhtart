@@ -825,7 +825,7 @@ class GenericDrugController < ApplicationController
           expiry_date = nil if (tins == 0)
 
           if tins != 0
-            expiry_date = obs[1]['date'].to_date.end_of_month
+            expiry_date = obs[1]['date'].to_date.end_of_month rescue ("01/" + obs[1]['date']).to_date.end_of_month
           end
 
           if tins.to_i == 0 && expiring_units.to_i == 0
