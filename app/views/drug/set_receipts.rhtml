@@ -1808,3 +1808,18 @@
   </form>
 </div>
 </html>
+
+<script>
+
+function trimDate() {
+  field = document.getElementById('Date of expiry');
+  try {
+    if(field.value.length > 8) {
+      field.value = field.value.slice(3,11);
+    }
+  }catch(e){}
+}
+
+setInterval("trimDate();",10);
+
+</script>

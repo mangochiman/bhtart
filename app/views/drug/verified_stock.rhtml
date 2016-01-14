@@ -17,7 +17,6 @@
     var drug_cms_names = <%= @drug_cms_names.to_json %>;
     var drug_cms_packsizes = <%= @drug_cms_packsizes.to_json %>;
     var drug_weights = <%= @drug_weights.to_json %>;
-console.log(drug_weights);
     var unfinished_drugs = [];
     var sieved = [];
     var sievable = [];
@@ -1624,6 +1623,17 @@ function rowHeading(heading, second_heading) {
 
   return t;
 }
+
+function trimDate() {
+  field = document.getElementById('Date of expiry');
+  try {
+    if(field.value.length > 8) {
+      field.value = field.value.slice(3,11);
+    }
+  }catch(e){}
+}
+
+setInterval("trimDate();",10);
 </script>
 
 
