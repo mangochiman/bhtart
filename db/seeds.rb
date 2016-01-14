@@ -31,12 +31,13 @@ def load_cms_drugs
   sheet1 = cms_drugs.worksheet 0
 
   ActiveRecord::Base.transaction do
-    sheet1.each 2 do |row|
+    sheet1.each 1 do |row|
       drug_name = row[0]
       drug_code = row[1]
       drug_inventory_id = row[2]
       drug_short_name = row[3]
       drug_tins = row[4]
+      weight = row[5]
       pack_size = drug_name.split(/[^\d]/).last
       next if drug_inventory_id.blank?
       drug_cms = DrugCms.new
@@ -46,6 +47,7 @@ def load_cms_drugs
       drug_cms.tins = drug_tins
       drug_cms.code = drug_code
       drug_cms.pack_size = pack_size
+      drug_cms.weight = weight
       drug_cms.save
     end
   end

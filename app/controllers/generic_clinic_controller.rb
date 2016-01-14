@@ -261,15 +261,15 @@ class GenericClinicController < ApplicationController
   def management_tab
     #PB - Removed (from warehouse) From Enter Receipts ....and also deactivated reports from this .
     @reports = [
-      ["Enter <br /> receipts","delivery"],
-      ["Enter Verified <br /> Physical Stock Count","delivery?id=verification"],
-      ["Print<br />Barcode","print_barcode"],
-      #["Expiring<br />drugs","date_select"],
-      ["Enter Product <br /> Relocation / Disposal","delivery?id=relocation"],
-      #["Stock<br />report","date_select"],
-      #["Stock <br />Charts","stock_movement_menu?goto=stoke_movement"]
-      ["Edit <br /> Product Display Names","capture_cms_drugs"],
-      ["HIV Product <br /> Stock Report","drug_stock_report"]
+        ["Enter <br /> Receipts","delivery"],
+        ["Enter Verified <br /> Physical Stock Count","delivery?id=verification"],
+        ["Print<br />Barcode","print_barcode"],
+        #["Expiring<br />drugs","date_select"],
+        ["Enter Product <br /> Relocation / Disposal","delivery?id=relocation"],
+        #["Stock<br />report","date_select"],
+        #["Stock <br />Charts","stock_movement_menu?goto=stoke_movement"]
+        ["Edit <br /> Product Display Names","capture_cms_drugs"],
+        ["HIV Product <br /> Stock Report","drug_stock_report"]
     ]
     render :layout => false
   end
