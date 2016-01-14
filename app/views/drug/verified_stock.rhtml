@@ -1488,12 +1488,15 @@ function buildTable() {
   }
   table.appendChild(thead);
 
-
   tbody = document.createElement('tbody');
   tbody.setAttribute('id','section_one');
-  section_one = 18; x = 0;
-  while(x < section_one) {
-    tbody.appendChild(buildRows("XXXX","11111","tabs","211","2333","03/18","19"));
+  section_one = 18; x = 1;
+  while(x <= section_one) {
+    var total_usable_tins = (__$(drug_weights[x][1] + "_pills_per_tin").value || 0)
+    var expiry_date = (__$(drugs[i] + "_amount").value || 0);
+    var units_expiring = (__$(drugs[i] + "_expire_amount").value || 0);
+    var date_value = (__$(drugs[i] + "_date").value || "N/A");
+    tbody.appendChild(buildRows(drug_weights[x][2],drug_weights[x][3],("tabs"),"211","2333","03/18","19"));
     x++;
   }
   table.appendChild(tbody);
