@@ -107,8 +107,9 @@ class GenericDrugController < ApplicationController
       drug_name = Drug.find(drug.drug_inventory_id).name
       @drug_cms_names[drug_name] = drug.name
       @drug_cms_packsizes[drug_name] = drug.pack_size
+      current_stock = Pharmacy.last_physical_count(drug.drug_inventory_id)/drug.pack_size
       @drug_weights[drug.weight] =  [drug.name, drug_name, drug.short_name, drug.tabs, drug.pack_size,
-                                     Pharmacy.last_physical_count(drug.drug_inventory_id), drug.strength]
+                                     current_stock, drug.strength] 
     end
 
   end
@@ -804,6 +805,7 @@ class GenericDrugController < ApplicationController
   def stock_report_edit
 
     if request.post?
+
       drug_short_names = regimen_name_map
       unless params[:obs].blank?
         params[:obs].each { |obs|
@@ -816,16 +818,11 @@ class GenericDrugController < ApplicationController
           expiring_units = obs[1]['expire_amount']
           expiry_date = nil
 
-          if (drug_comes_in_packs(obs[0], drug_short_names))
-            expiring_units = obs[1]['amount'].to_i
-            pack_size = obs[1]['expire_amount'].to_i
-          end
-
           expiring_units = nil if (tins == 0)
           expiry_date = nil if (tins == 0)
 
           if tins != 0
-            expiry_date = obs[1]['date'].to_date.end_of_month rescue ("01/" + obs[1]['date']).to_date.end_of_month
+            expiry_date = obs[1]['date'].to_date.end_of_month
           end
 
           if tins.to_i == 0 && expiring_units.to_i == 0
