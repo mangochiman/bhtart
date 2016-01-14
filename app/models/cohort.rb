@@ -461,8 +461,8 @@ class Cohort
 				(cohort_report['Total Patients initiated on ART'] || []))
                                                       
 		cohort_report['Newly transferred in patients'] = (cohort_report['Newly total registered'] - 
-				(cohort_report['Total Patients reinitiated on ART'] || [])-
-				(cohort_report['Total Patients initiated on ART'] || []))
+				(cohort_report['Patients reinitiated on ART'] || [])-
+				(cohort_report['Patients initiated on ART'] || []))
         #raise cohort_report['Total registered'].to_yaml
 		cohort_report['Total Unknown age'] = cohort_report['Total registered'] - (cohort_report['Total registered adults'] +
 				cohort_report['Total registered children'] +
@@ -527,7 +527,7 @@ class Cohort
 	def total_registered(start_date = @start_date, end_date = @end_date)
 		patients = []
 	  PatientProgram.find_by_sql("SELECT * FROM earliest_start_date 
-	    WHERE earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}'").each do | patient |
+	    WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'").each do | patient |
 	    @patient_earliest_start_date[patient.patient_id]= patient.earliest_start_date
 			patients << patient.patient_id
 		end
@@ -553,7 +553,7 @@ class Cohort
       FROM earliest_start_date esd
       LEFT JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id
       LEFT JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id
-      WHERE esd.earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}' AND
+      WHERE esd.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' AND
               (ero.obs_id IS NULL)
       GROUP BY esd.patient_id").each do | patient | 
 			patients << patient.patient_id
@@ -631,7 +631,7 @@ class Cohort
       "SELECT esd.patient_id, esd.earliest_start_date
 	    FROM earliest_start_date esd
 	    INNER JOIN person ON person.person_id = esd.patient_id
-	    WHERE esd.earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}' #{conditions}").each do | patient |
+	    WHERE esd.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' #{conditions}").each do | patient |
 			patients << patient.patient_id
 		end
 		return patients
@@ -653,8 +653,8 @@ class Cohort
                                  inner join patients_with_has_transfer_letter_yes p on p.person_id = rfe.patient_id
                                 where
                                     rfe.reason_for_eligibility = 'Patient pregnant'
-                                        and rfe.earliest_start_date >= '#{start_date}'
-                                        AND rfe.earliest_start_date <= '#{end_date}'
+                                        and rfe.date_enrolled >= '#{start_date}'
+                                        AND rfe.date_enrolled <= '#{end_date}'
                                 Group by rfe.patient_id").each do | patient |
                                         transfer_ins_preg_women << patient.patient_id
                                 end
@@ -663,10 +663,10 @@ class Cohort
 		PatientProgram.find_by_sql("SELECT patient_id, earliest_start_date, o.obs_datetime 
 				FROM earliest_start_date p
 					INNER JOIN patient_pregnant_obs o ON p.patient_id = o.person_id
-				WHERE earliest_start_date >= '#{start_date}'
-					AND earliest_start_date <= '#{end_date}'
-					AND DATEDIFF(o.obs_datetime, earliest_start_date) <= 30
-					AND DATEDIFF(o.obs_datetime, earliest_start_date) > -1
+				WHERE date_enrolled >= '#{start_date}'
+					AND date_enrolled <= '#{end_date}'
+					AND DATEDIFF(o.obs_datetime, date_enrolled) <= 30
+					AND DATEDIFF(o.obs_datetime, date_enrolled) > -1
         GROUP BY patient_id").each do | patient | 
 			patients << patient.patient_id
 		end
@@ -684,8 +684,8 @@ class Cohort
 				 LEFT JOIN obs o ON e.patient_id = o.person_id AND o.concept_id = #{reason_concept_id} AND o.voided = 0
 				  AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime <= '#{end_date}'
 				LEFT JOIN concept_name n ON n.concept_id = o.value_coded AND n.concept_name_type = 'FULLY_SPECIFIED' AND n.voided = 0
-				WHERE earliest_start_date >= '#{start_date}'
-				AND earliest_start_date <= '#{end_date}'
+				WHERE date_enrolled >= '#{start_date}'
+				AND date_enrolled <= '#{end_date}'
 				ORDER BY o.obs_datetime DESC")
 		
 	end
@@ -704,16 +704,16 @@ class Cohort
 			concept_ids = [concept_ids] if concept_ids.class != Array
       
       concept_ids.each do | concept |
-        Observation.find_by_sql("SELECT DISTINCT patient_id, earliest_start_date, current_value_for_obs_at_initiation(patient_id, earliest_start_date, 52, '#{concept}', '#{end_date}') AS obs_value FROM earliest_start_date e  
-              WHERE earliest_start_date >= '#{start_date}'
-              AND earliest_start_date <= '#{end_date}'
+        Observation.find_by_sql("SELECT DISTINCT patient_id, earliest_start_date, current_value_for_obs_at_initiation(patient_id, date_enrolled, 52, '#{concept}', '#{end_date}') AS obs_value FROM earliest_start_date e
+              WHERE date_enrolled >= '#{start_date}'
+              AND date_enrolled <= '#{end_date}'
               HAVING obs_value = 1065").each do | patient | 
           patients << patient.patient_id.to_i
         end
 
-        Observation.find_by_sql("SELECT DISTINCT patient_id, earliest_start_date, current_value_for_obs_at_initiation(patient_id, earliest_start_date, 52, '#{who_stg_crit_concept_id}', '#{end_date}') AS obs_value FROM earliest_start_date e  
-              WHERE earliest_start_date >= '#{start_date}'
-              AND earliest_start_date <= '#{end_date}'
+        Observation.find_by_sql("SELECT DISTINCT patient_id, earliest_start_date, current_value_for_obs_at_initiation(patient_id, date_enrolled, 52, '#{who_stg_crit_concept_id}', '#{end_date}') AS obs_value FROM earliest_start_date e
+              WHERE date_enrolled >= '#{start_date}'
+              AND date_enrolled <= '#{end_date}'
               HAVING obs_value = '#{concept}'").each do | patient |
           patients << patient.patient_id.to_i
         end
@@ -762,7 +762,7 @@ class Cohort
 		if @total_alive_and_on_art.blank?
 			PatientProgram.find_by_sql("SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{@end_date}') AS state
 		 									FROM earliest_start_date e
-											WHERE earliest_start_date <=  '#{@end_date}'
+											WHERE date_enrolled <=  '#{@end_date}'
 											HAVING state = 7").reject{|t| defaulted_patients.include?(t.patient_id) }.each do | patient | 
 				patients << patient.patient_id
 			end
@@ -799,10 +799,10 @@ class Cohort
       INNER JOIN  program_workflow_state pw ON pw.program_workflow_state_id = current_state_for_program(p.patient_id, 1, '#{@end_date}')
       INNER join earliest_start_date e ON e.patient_id = p.patient_id
       INNER JOIN concept_name c ON c.concept_id = pw.concept_id
-      WHERE earliest_start_date <= '#{@end_date}'
+      WHERE date_enrolled <= '#{@end_date}'
       AND  name = '#{concept_name}'
       AND death_date IS NOT NULL
-      AND DATEDIFF(death_date, earliest_start_date) BETWEEN #{min_days} AND #{max_days}").each do | patient |
+      AND DATEDIFF(death_date, date_enrolled) BETWEEN #{min_days} AND #{max_days}").each do | patient |
 							patients << patient.patient_id
 					end
 
@@ -848,7 +848,7 @@ class Cohort
 		if @art_defaulters.blank?
 			@art_defaulters ||= PatientProgram.find_by_sql("SELECT e.patient_id, current_defaulter(e.patient_id, '#{@end_date}') AS def
 											FROM earliest_start_date e LEFT JOIN person p ON p.person_id = e.patient_id
-											WHERE e.earliest_start_date <=  '#{@end_date}' AND p.dead=0
+											WHERE e.date_enrolled <=  '#{@end_date}' AND p.dead=0
 											HAVING def = 1 AND current_state_for_program(patient_id, 1, '#{@end_date}') NOT IN (6, 2, 3)").each do | patient |
 				patients << patient.patient_id
 			end
@@ -940,7 +940,7 @@ class Cohort
                                 INNER JOIN  program_workflow_state pw ON pw.program_workflow_state_id = current_state_for_program(p.patient_id, 1, '#{end_date}')
                                 INNER join earliest_start_date e ON e.patient_id = p.patient_id
                                 INNER JOIN concept_name c ON c.concept_id = pw.concept_id
-                                WHERE earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}' #{condition}
+                                WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' #{condition}
                                 AND  name = '#{outcome}'").each do | patient |
 			patients << patient.patient_id.to_i
 		end
@@ -1105,7 +1105,7 @@ class Cohort
                           last_text_for_obs(e.patient_id, #{dispensing_encounter_id}, #{regimen_category}, '#{end_date}') AS regimen_category
                           FROM earliest_start_date e
                           WHERE patient_id IN(#{patient_ids.join(',')}) AND
-                          earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}'
+                          date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
                           ")
 
                       (earliest_start_dates || []).each do | value |
@@ -1198,7 +1198,7 @@ class Cohort
       WHERE  ((o.concept_id = #{date_art_last_taken_concept} AND
                (DATEDIFF(o.obs_datetime,o.value_datetime)) > 56))
             AND
-            esd.earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}'
+            esd.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       GROUP BY esd.patient_id").each do | patient | 
 			patients_with_date_last_taken_obs << patient.patient_id.to_i
 			end

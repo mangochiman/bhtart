@@ -117,7 +117,7 @@ DELIMITER ;
 -- The date of the first On ARVs state for each patient
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `earliest_start_date` AS
-  SELECT `p`.`patient_id` AS `patient_id`,`p`.`date_enrolled`,
+  SELECT `p`.`patient_id` AS `patient_id`, patient_start_date(`p`.`patient_id`) AS `date_enrolled`,
          date_antiretrovirals_started(`p`.`patient_id`, MIN(`s`.`start_date`)) AS `earliest_start_date`, `person`.`death_date` AS death_date,
          (DATEDIFF(date_antiretrovirals_started(`p`.`patient_id`, MIN(`s`.`start_date`)), `person`.`birthdate`)/365.25) AS age_at_initiation,
          DATEDIFF(MIN(`s`.`start_date`), `person`.`birthdate`) AS age_in_days
@@ -344,7 +344,7 @@ WHERE
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `reason_for_eligibility_obs` AS
 SELECT 
-    `e`.`patient_id`, `n`.`name` AS `reason_for_eligibility`, `o`.`obs_datetime`, `e`.`earliest_start_date`
+    `e`.`patient_id`, `n`.`name` AS `reason_for_eligibility`, `o`.`obs_datetime`, `e`.`earliest_start_date`, `e`.`date_enrolled` AS `date_enrolled`
 FROM
     `earliest_start_date` `e`
         LEFT JOIN
