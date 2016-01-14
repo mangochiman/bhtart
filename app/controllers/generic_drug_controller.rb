@@ -99,13 +99,15 @@ class GenericDrugController < ApplicationController
     @drugs += other
     @formatted = preformat_regimen
     @drug_short_names = regimen_name_map
+    @drug_weights = {}
 
     @drug_cms_names = {}
     @drug_cms_packsizes = {}
-    (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+    (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
       drug_name = Drug.find(drug.drug_inventory_id).name
       @drug_cms_names[drug_name] = drug.name
       @drug_cms_packsizes[drug_name] = drug.pack_size
+      @drug_weights[drug.weight] =  [drug.name, drug_name, drug.short_name, drug.tins]
     end
 
   end

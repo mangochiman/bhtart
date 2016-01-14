@@ -16,6 +16,8 @@
     var selected = <%= params[:drug_name].to_json %>;
     var drug_cms_names = <%= @drug_cms_names.to_json %>;
     var drug_cms_packsizes = <%= @drug_cms_packsizes.to_json %>;
+    var drug_weights = <%= @drug_weights.to_json %>;
+console.log(drug_weights);
     var unfinished_drugs = [];
     var sieved = [];
     var sievable = [];
