@@ -419,14 +419,17 @@ EOF
     return latest_physical_count
   end
 
-  def self.last_physical_count(drug_id)
+  def self.last_physical_count(drug_id, value_text='Supervision')
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
     last_physical_count = Pharmacy.find_by_sql(
       "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
-        AND p.pharmacy_encounter_type = #{pharmacy_encounter_type.id} AND DATE(p.encounter_date) = (
+        AND p.pharmacy_encounter_type = #{pharmacy_encounter_type.id} AND 
+        p.value_text = '#{value_text}' AND
+      DATE(p.encounter_date) = (
               SELECT MAX(DATE(t.encounter_date)) FROM pharmacy_obs t
               WHERE t.encounter_date = p.encounter_date AND t.drug_id = p.drug_id
               AND t.pharmacy_encounter_type = #{pharmacy_encounter_type.id}
+              AND t.value_text = '#{value_text}'
             )"
     ).last.value_numeric rescue 0
 
