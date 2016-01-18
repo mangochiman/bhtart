@@ -638,25 +638,12 @@ class GenericDrugController < ApplicationController
   end
 
   def preformat_regimen
-    formatted = ["ABC/3TC (Abacavir and Lamivudine 60/30mg tablet)",
-      "AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)",
-      "AZT/3TC (Zidovudine and Lamivudine 300/150mg)",
-      "AZT/3TC/NVP (60/30/50mg tablet)",
-      "AZT/3TC/NVP (300/150/200mg tablet)",
-      "d4T/3TC (Stavudine Lamivudine 6/30mg tablet)",
-      "d4T/3TC (Stavudine Lamivudine 30/150 tablet)",
-      "Triomune baby (d4T/3TC/NVP 6/30/50mg tablet)",
-      "d4T/3TC/NVP (30/150/200mg tablet)",
-      "EFV (Efavirenz 200mg tablet)",
-      "EFV (Efavirenz 600mg tablet)",
-      "LPV/r (Lopinavir and Ritonavir 100/25mg tablet)",
-      "LPV/r (Lopinavir and Ritonavir 200/50mg tablet)",
-      "LPV/r (Lopinavir and Ritonavir syrup)",
-      "ATV/r (Atazanavir 300mg/Ritonavir 100mg)",
-      "NVP (Nevirapine 200 mg tablet)",
-      "TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet", "TDF/3TC/EFV (300/300/600mg tablet)",
-      "Cotrimoxazole (480mg tablet)",
-      "Cotrimoxazole (960mg)", "INH or H (Isoniazid 100mg tablet)", "INH or H (Isoniazid 300mg tablet)"]
+
+    formatted = []
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id FROM drug_cms") rescue []).each do |drug|
+      formatted << Drug.find(drug.drug_inventory_id).name
+    end
+
     return formatted
   end
 
