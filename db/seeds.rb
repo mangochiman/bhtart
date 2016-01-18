@@ -43,7 +43,8 @@ def load_cms_drugs
       pack_size = drug_name.split(/[^\d]/).last rescue nil
       next if drug_inventory_id.blank?
       next if pack_size.blank?
-      drug_cms = DrugCms.new
+      drug_cms = DrugCms.find(drug_inventory_id) rescue nil
+      drug_cms = DrugCms.new if drug_cms.blank?
       drug_cms.drug_inventory_id = drug_inventory_id
       drug_cms.name = drug_name
       drug_cms.short_name = drug_short_name
