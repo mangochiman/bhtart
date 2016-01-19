@@ -127,4 +127,66 @@ class DrugController < GenericDrugController
 
     render :text => drug_summary.to_json and return    
   end
+
+  def art_stock_info
+    dispensation_date = params[:date] rescue "2016-01-13".to_date
+    moh_products = DrugCms.find(:all)
+    drug_order_type = OrderType.find_by_name('Drug Order') 
+    dispensing_encounter_type = EncounterType.find_by_name("DISPENSING")
+    treatment_encounter_type = EncounterType.find_by_name("TREATMENT")
+    amount_dispensed_concept = Concept.find_by_name('Amount dispensed')
+
+
+
+    drug_summary = {}
+    drug_summary["dispensations"] =  get_dispensations(date, dispensing_encounter_type, amount_dispensed_concept)
+    drug_summary["prescriptions"] = get_prescriptions(date, treatment_encounter_type)
+    drug_summary["stock_level"] = stocks(date, dispensing_encounter_type, amount_dispensed_concept)
+    drug_summary["relocations"] = relocations(date, dispensing_encounter_type, amount_dispensed_concept)
+
+    render :text => drug_summary.to_json and return    
+  end
+
+  private
+
+  def get_dispensations(date, encounter_type, concept)
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
+
+    return ActiveRecord::Base.connection.select_all("SELECT value_drug,name,
+sum(value_numeric) total_dispensed FROM encounter e 
+INNER JOIN obs ON obs.encounter_id = e.encounter_id
+INNER JOIN drug_order d ON d.order_id = obs.order_id
+INNER JOIN drug ON drug.drug_id = obs.value_drug 
+WHERE encounter_type = #{encounter_type.id} AND encounter_datetime 
+BETWEEN '#{start_date}' AND '#{end_date}' AND e.voided = 0
+AND obs.voided = 0 AND obs.concept_id = #{concept.id} 
+GROUP BY value_drug;") 
+    
+  end
+
+  def get_prescriptions(date, encounter_type)
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
+
+    return ActiveRecord::Base.connection.select_all("SELECT do.drug_inventory_id,
+SUM((ABS(DATEDIFF(o.auto_expire_date, o.start_date)) * do.equivalent_daily_dose)) as total
+FROM encounter e INNER JOIN orders o
+ON e.encounter_id = o.encounter_id 
+INNER JOIN drug_order do ON o.order_id = do.order_id
+INNER JOIN drug d ON do.drug_inventory_id = d.drug_id
+WHERE e.encounter_type = #{encounter_type.id}
+AND e.encounter_datetime BETWEEN '#{start_date}'
+AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
+
+  end
+
+  def get_stock_level(date, encounter_type, concept)
+  end
+
+  def get_relocations(date, encounter_type, concept)
+  end
+
+
+
 end
