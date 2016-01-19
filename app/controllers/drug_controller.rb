@@ -129,20 +129,19 @@ class DrugController < GenericDrugController
   end
 
   def art_stock_info
-    dispensation_date = params[:date] rescue "2016-01-13".to_date
+    date = params[:date].to_date rescue "2016-01-13".to_date
     moh_products = DrugCms.find(:all)
     drug_order_type = OrderType.find_by_name('Drug Order') 
     dispensing_encounter_type = EncounterType.find_by_name("DISPENSING")
     treatment_encounter_type = EncounterType.find_by_name("TREATMENT")
     amount_dispensed_concept = Concept.find_by_name('Amount dispensed')
 
-
-
     drug_summary = {}
     drug_summary["dispensations"] =  get_dispensations(date, dispensing_encounter_type, amount_dispensed_concept)
     drug_summary["prescriptions"] = get_prescriptions(date, treatment_encounter_type)
-    drug_summary["stock_level"] = stocks(date, dispensing_encounter_type, amount_dispensed_concept)
-    drug_summary["relocations"] = relocations(date, dispensing_encounter_type, amount_dispensed_concept)
+    drug_summary["stock_level"] = get_stock_level(date,moh_products)
+    drug_summary["relocations"] = get_relocations(date, moh_products)
+    drug_summary["receipts"] = get_receipts(date, moh_products)
 
     render :text => drug_summary.to_json and return    
   end
@@ -153,11 +152,11 @@ class DrugController < GenericDrugController
     start_date = date.strftime('%Y-%m-%d 00:00:00')
     end_date = date.strftime('%Y-%m-%d 23:59:59')
 
-    return ActiveRecord::Base.connection.select_all("SELECT value_drug,name,
-sum(value_numeric) total_dispensed FROM encounter e 
+    return ActiveRecord::Base.connection.select_all("SELECT count(e.patient_id) total_patients,
+value_drug,name,sum(value_numeric) total FROM encounter e 
 INNER JOIN obs ON obs.encounter_id = e.encounter_id
 INNER JOIN drug_order d ON d.order_id = obs.order_id
-INNER JOIN drug ON drug.drug_id = obs.value_drug 
+INNER JOIN drug_cms c ON c.drug_inventory_id = obs.value_drug 
 WHERE encounter_type = #{encounter_type.id} AND encounter_datetime 
 BETWEEN '#{start_date}' AND '#{end_date}' AND e.voided = 0
 AND obs.voided = 0 AND obs.concept_id = #{concept.id} 
@@ -169,22 +168,43 @@ GROUP BY value_drug;")
     start_date = date.strftime('%Y-%m-%d 00:00:00')
     end_date = date.strftime('%Y-%m-%d 23:59:59')
 
-    return ActiveRecord::Base.connection.select_all("SELECT do.drug_inventory_id,
+    return ActiveRecord::Base.connection.select_all("SELECT count(e.patient_id) total_patients,do.drug_inventory_id,
 SUM((ABS(DATEDIFF(o.auto_expire_date, o.start_date)) * do.equivalent_daily_dose)) as total
 FROM encounter e INNER JOIN orders o
 ON e.encounter_id = o.encounter_id 
 INNER JOIN drug_order do ON o.order_id = do.order_id
-INNER JOIN drug d ON do.drug_inventory_id = d.drug_id
+INNER JOIN drug_cms d ON do.drug_inventory_id = d.drug_inventory_id
 WHERE e.encounter_type = #{encounter_type.id}
 AND e.encounter_datetime BETWEEN '#{start_date}'
 AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
 
   end
 
-  def get_stock_level(date, encounter_type, concept)
+  def get_stock_level(date, drugs)
+    stock_levels = {}
+    (drugs || []).each do |drug|
+      stock_levels[drug.drug_inventory_id] = Pharmacy.latest_drug_stock(drug.drug_inventory_id, date)
+    end
+    
+    return stock_levels
   end
 
-  def get_relocations(date, encounter_type, concept)
+  def get_relocations(date, drugs)
+    drug_relocations = {}
+    (drugs || []).each do |drug|
+      drug_relocations[drug.drug_inventory_id] = Pharmacy.relocated(drug.drug_inventory_id, date, date)
+    end
+    
+    return drug_relocations
+  end
+
+  def get_receipts(date, drugs)
+    drug_receipts = {}
+    (drugs || []).each do |drug|
+      drug_receipts[drug.drug_inventory_id] = Pharmacy.receipts(drug.drug_inventory_id, date, date)
+    end
+    
+    return drug_receipts
   end
 
 
