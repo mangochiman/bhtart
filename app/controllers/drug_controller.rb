@@ -142,6 +142,8 @@ class DrugController < GenericDrugController
     drug_summary["stock_level"] = get_stock_level(date,moh_products)
     drug_summary["relocations"] = get_relocations(date, moh_products)
     drug_summary["receipts"] = get_receipts(date, moh_products)
+    drug_summary["supervision_verification"] = get_supervision_verification(date, moh_products)
+    drug_summary["clinic_verification"] = get_clinic_verification(date, moh_products)
 
     render :text => drug_summary.to_json and return    
   end
@@ -207,6 +209,22 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
     return drug_receipts
   end
 
+  def get_supervision_verification(date, drugs)
+    drug_supervision_verification = {}
+    (drugs || []).each do |drug|
+      drug_supervision_verification[drug.drug_inventory_id] = Pharmacy.verify_closing_stock_count(drug.drug_id,(date.to_date - 1.day ),date, type="supervision", true)
+    end
 
+    return drug_supervision_verification
+  end
+
+  def get_clinic_verification(date, drugs)
+    drug_clinic_verification = {}
+    (drugs || []).each do |drug|
+      drug_clinic_verification[drug.drug_inventory_id] = Pharmacy.verify_clinic_stock_count(drug.drug_id,(date.to_date - 1.day),date, type="clinic", true)
+    end
+
+    return drug_clinic_verification
+  end
 
 end
