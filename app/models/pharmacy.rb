@@ -534,4 +534,13 @@ EOF
     return 0
   end
 
+  def self.latest_drug_rate(drug_id, date=Date.today)
+    #Added these methods for the purpose of speed
+    edited_stock_encounter_id = PharmacyEncounterType.find_by_name('Edited stock').pharmacy_encounter_type_id
+    pharmacy_obs = Pharmacy.find(:last, :conditions => ["pharmacy_encounter_type =? AND drug_id =? AND
+        value_text = ? AND encounter_date <= ?", edited_stock_encounter_id, drug_id, 'Drug Rate', date.to_date])
+    return pharmacy_obs.value_numeric unless pharmacy_obs.blank?
+    return 0
+  end
+
 end
