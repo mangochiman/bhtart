@@ -140,6 +140,7 @@ class DrugController < GenericDrugController
     drug_summary["dispensations"] =  get_dispensations(date, dispensing_encounter_type, amount_dispensed_concept)
     drug_summary["prescriptions"] = get_prescriptions(date, treatment_encounter_type)
     drug_summary["stock_level"] = get_stock_level(date,moh_products)
+    drug_summary["consumption_rate"] = get_drug_consumption_rate(date,moh_products)
     drug_summary["relocations"] = get_relocations(date, moh_products)
     drug_summary["receipts"] = get_receipts(date, moh_products)
     drug_summary["supervision_verification"] = get_supervision_verification(date, moh_products)
@@ -155,7 +156,7 @@ class DrugController < GenericDrugController
     end_date = date.strftime('%Y-%m-%d 23:59:59')
 
     return ActiveRecord::Base.connection.select_all("SELECT count(e.patient_id) total_patients,
-value_drug,name,sum(value_numeric) total FROM encounter e 
+c.drug_inventory_id,sum(value_numeric) total FROM encounter e 
 INNER JOIN obs ON obs.encounter_id = e.encounter_id
 INNER JOIN drug_order d ON d.order_id = obs.order_id
 INNER JOIN drug_cms c ON c.drug_inventory_id = obs.value_drug 
@@ -191,6 +192,15 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
     return stock_levels
   end
 
+  def get_drug_consumption_rate(date, drugs)
+    consumption_rate = {}
+    (drugs || []).each do |drug|
+      consumption_rate[drug.drug_inventory_id] = Pharmacy.latest_drug_rate(drug.drug_inventory_id, date)
+    end
+    
+    return consumption_rate
+  end
+
   def get_relocations(date, drugs)
     drug_relocations = {}
     (drugs || []).each do |drug|
@@ -212,7 +222,7 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
   def get_supervision_verification(date, drugs)
     drug_supervision_verification = {}
     (drugs || []).each do |drug|
-      drug_supervision_verification[drug.drug_inventory_id] = Pharmacy.verify_closing_stock_count(drug.drug_id,(date.to_date - 1.day ),date, type="supervision", true)
+      drug_supervision_verification[drug.drug_inventory_id] = Pharmacy.verify_closing_stock_count(drug.drug_inventory_id,(date - 1.day ),date,"supervision", false)
     end
 
     return drug_supervision_verification
@@ -221,7 +231,7 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
   def get_clinic_verification(date, drugs)
     drug_clinic_verification = {}
     (drugs || []).each do |drug|
-      drug_clinic_verification[drug.drug_inventory_id] = Pharmacy.verify_clinic_stock_count(drug.drug_id,(date.to_date - 1.day),date, type="clinic", true)
+      drug_clinic_verification[drug.drug_inventory_id] = Pharmacy.verify_closing_stock_count(drug.drug_inventory_id,(date - 1.day),date, "clinic", false)
     end
 
     return drug_clinic_verification
