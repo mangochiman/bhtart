@@ -190,7 +190,7 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
   def get_stock_level(date, drugs)
     stock_levels = {}
     (drugs || []).each do |drug|
-      stock_levels[drug.drug_inventory_id] = Pharmacy.latest_drug_stock(drug.drug_inventory_id)
+      stock_levels[drug.drug_inventory_id] = Pharmacy.drug_stock_on(drug.drug_inventory_id, date)
     end
     
     return stock_levels

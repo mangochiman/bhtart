@@ -575,4 +575,36 @@ EOF
             :previous_verified_stock => previous_verified_stock}
   end
 
+  def self.drug_stock_on(drug_id, date = Date.today)
+    #This method gives the current drug stock after latest date of physical count
+    # and all dispensation of that particular drug from the latest date of physical count
+
+    #total_physical_count = self.total_physically_counted(drug_id, last_physical_count_enc_date)
+    physical_count = self.latest_physical_count(drug_id) #Created a method for pulling latest drug total supervised
+    return 0 if physical_count.blank?
+    total_physical_count = physical_count.first 
+    start_date = physical_count.last
+    return 0 if start_date > date
+
+    total_dispensed = self.dispensed_drugs_since(drug_id, start_date, date)
+    total_removed = self.total_removed(drug_id, start_date, date)
+    count = (total_physical_count - (total_dispensed + total_removed))
+    return count if count >= 0
+    return 0
+  end
+
+  # ............................... New code to cal latest_physical_counted (meant for ART stock management app).................................#
+  def self.latest_physical_count(drug_id)
+    encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock').id
+    verified_stock = self.find_by_sql("SELECT * FROM pharmacy_obs t
+      WHERE t.encounter_date <= current_date() AND drug_id = #{drug_id} AND t.value_text = 'Supervision'
+      AND pharmacy_encounter_type = #{encounter_type} AND t.voided = 0
+      AND date_created = (SELECT MAX(t2.date_created) FROM pharmacy_obs t2
+      WHERE t2.encounter_date <= current_date() AND t2.drug_id = #{drug_id} AND t2.value_text = 'Supervision' 
+      AND t2.pharmacy_encounter_type = #{encounter_type} AND t2.voided = 0) LIMIT 1").first 
+    
+    return [] if verified_stock.blank?
+    return [verified_stock.value_numeric, verified_stock.encounter_date]
+  end
+  # ............................... New code to cal latest_physical_counted (meant for ART stock management app) ends .................................#
 end
