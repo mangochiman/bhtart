@@ -139,8 +139,8 @@ class DrugController < GenericDrugController
     drug_summary = {}
     drug_summary["dispensations"] =  get_dispensations(date, dispensing_encounter_type, amount_dispensed_concept)
     drug_summary["prescriptions"] = get_prescriptions(date, treatment_encounter_type)
-    drug_summary["stock_level"] = get_stock_level(date,moh_products)
-    drug_summary["consumption_rate"] = get_drug_consumption_rate(date,moh_products)
+    drug_summary["stock_level"] = get_stock_level(date, moh_products)
+    drug_summary["consumption_rate"] = get_drug_consumption_rate(moh_products)
     drug_summary["relocations"] = get_relocations(date, moh_products)
     drug_summary["receipts"] = get_receipts(date, moh_products)
     drug_summary["supervision_verification"] = get_supervision_verification(date, moh_products)
@@ -186,16 +186,16 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
   def get_stock_level(date, drugs)
     stock_levels = {}
     (drugs || []).each do |drug|
-      stock_levels[drug.drug_inventory_id] = Pharmacy.latest_drug_stock(drug.drug_inventory_id, date)
+      stock_levels[drug.drug_inventory_id] = Pharmacy.latest_drug_stock(drug.drug_inventory_id)
     end
     
     return stock_levels
   end
 
-  def get_drug_consumption_rate(date, drugs)
+  def get_drug_consumption_rate(drugs)
     consumption_rate = {}
     (drugs || []).each do |drug|
-      consumption_rate[drug.drug_inventory_id] = Pharmacy.latest_drug_rate(drug.drug_inventory_id, date)
+      consumption_rate[drug.drug_inventory_id] = Pharmacy.latest_drug_rate(drug.drug_inventory_id)
     end
     
     return consumption_rate
