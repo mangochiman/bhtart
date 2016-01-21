@@ -543,4 +543,36 @@ EOF
     return 0
   end
 
+  def self.physical_verified_stock(drug_id,date)
+    encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock').id
+    verified_stock = self.find_by_sql("SELECT * FROM pharmacy_obs t
+      WHERE t.encounter_date = '#{date}' AND drug_id = #{drug_id} AND t.value_text = 'Supervision'
+      AND pharmacy_encounter_type = #{encounter_type} AND t.voided = 0
+      AND date_created = (SELECT MAX(t2.date_created) FROM pharmacy_obs t2
+      WHERE t2.encounter_date = '#{date}' AND t2.drug_id = #{drug_id} AND t2.value_text = 'Supervision' 
+      AND t2.pharmacy_encounter_type = #{encounter_type} AND t2.voided = 0) LIMIT 1").first 
+    
+    return [] if verified_stock.blank?
+
+
+    previous_verified_stock = 0
+
+    unless verified_stock.date_created.blank?
+      previous_verified_stock = self.find_by_sql("SELECT t.value_numeric FROM pharmacy_obs t
+      WHERE t.encounter_date = '#{date}' AND drug_id = #{drug_id} AND t.value_text = 'Supervision'
+      AND pharmacy_encounter_type = #{encounter_type} AND t.voided = 0
+      AND date_created = (SELECT MAX(t2.date_created) FROM pharmacy_obs t2
+      WHERE t2.encounter_date = '#{date}' AND t2.drug_id = #{drug_id} AND t2.value_text = 'Supervision'
+      AND t2.pharmacy_encounter_type = #{encounter_type} AND t2.voided = 0
+      AND t2.date_created < '#{verified_stock.date_created.to_time.strftime('%Y-%m-%d %H:%M:%S')}')")
+
+      previous_verified_stock = previous_verified_stock.value_numeric.to_f rescue 0
+    end
+
+    return {:verified_stock => verified_stock.value_numeric, 
+            :expiring_units => verified_stock.expiring_units,
+            :earliest_expiry_date => verified_stock.expiry_date,
+            :previous_verified_stock => previous_verified_stock}
+  end
+
 end

@@ -145,6 +145,10 @@ class DrugController < GenericDrugController
     drug_summary["receipts"] = get_receipts(date, moh_products)
     drug_summary["supervision_verification"] = get_supervision_verification(date, moh_products)
     drug_summary["clinic_verification"] = get_clinic_verification(date, moh_products)
+    supervision_verification_in_details = get_supervision_verification_in_details(date, moh_products)
+    unless supervision_verification_in_details.blank?
+      drug_summary["supervision_verification_in_details"] = supervision_verification_in_details
+    end
 
     render :text => drug_summary.to_json and return    
   end
@@ -235,6 +239,15 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
     end
 
     return drug_clinic_verification
+  end
+
+  def get_supervision_verification_in_details(date, drugs)
+    drug_supervision_verification = {}
+    (drugs || []).each do |drug|
+      drug_supervision_verification[drug.drug_inventory_id] = Pharmacy.physical_verified_stock(drug.drug_inventory_id,date)
+    end
+
+    return drug_supervision_verification
   end
 
 end
