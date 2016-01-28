@@ -459,6 +459,7 @@ EOF
   end
 
   def self.pack_size(drug_id)
+    return DrugCms.find(drug_id).pack_size rescue 60
     pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
     drug_pack_size = Pharmacy.find_by_sql(
       "SELECT * from pharmacy_obs WHERE drug_id = #{drug_id} AND
