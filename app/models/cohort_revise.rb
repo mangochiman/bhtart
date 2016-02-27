@@ -1106,6 +1106,7 @@ EOF
     reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
     reason3_concept_id = ConceptName.find_by_name('LYMPHOCYTES').concept_id
     reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+    reason2_concept_id = ConceptName.find_by_name('ASYMPTOMATIC').concept_id
 
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
@@ -1113,7 +1114,9 @@ EOF
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND concept_id = #{reason_for_art}
-      AND (value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}) AND voided = 0 GROUP BY patient_id;
+      AND (value_coded = #{reason3_concept_id} 
+      OR value_coded = #{reason4_concept_id} OR value_coded = #{reason2_concept_id}) 
+      AND voided = 0 GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
