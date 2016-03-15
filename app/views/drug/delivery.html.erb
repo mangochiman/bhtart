@@ -541,9 +541,8 @@
 @formatted.each{|drug|
   #raise drug[0].to_yaml
   next if @cms_drugs[drug].blank?
-  options += "<option value = '#{drug}'>#{@cms_drugs[drug] || @drugs[drug]}</option>"
+  options += "<option value = '#{drug}'>#{@cms_drugs[drug]}</option>"
 }
-
 relocations_or_disposal = ["", "Relocations", "Disposal"]
 disposal_reasons = ["", "Expired", "Damaged", "Missing"]
 

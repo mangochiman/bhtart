@@ -88,27 +88,22 @@ class GenericDrugController < ApplicationController
 
   def verified_stock
     @delivery_date = params[:observations].first["value_datetime"]
-    @drugs = Regimen.find_by_sql(
-      "select distinct(d.name) from regimen r
-    inner join regimen_drug_order rd on rd.regimen_id = r.regimen_id
-    inner join drug d on d.drug_id = rd.drug_inventory_id
-    where r.regimen_index is not null
-    and r.regimen_index != 0
-      ").collect { |drug| drug.name }.compact.sort.uniq rescue []
-    other = ["Cotrimoxazole (960mg)", "Cotrimoxazole (480mg tablet)", "INH or H (Isoniazid 300mg tablet)", "INH or H (Isoniazid 100mg tablet)"]
-    @drugs += other
-    @formatted = preformat_regimen
-    @drug_short_names = regimen_name_map
-    @drug_weights = {}
 
+    @formatted = preformat_regimen
+    @drug_short_names = {} #regimen_name_map
+    @drug_weights = {}
+    @drugs = []
     @drug_cms_names = {}
     @drug_cms_packsizes = {}
     (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
       drug_name = Drug.find(drug.drug_inventory_id).name
       @drug_cms_names[drug_name] = drug.name
       @drug_cms_packsizes[drug_name] = drug.pack_size
+      @drug_short_names[drug_name] = "#{drug.short_name} #{drug.strength} #{drug.tabs}"
+      current_stock = Pharmacy.last_physical_count(drug.drug_inventory_id)/drug.pack_size
       @drug_weights[drug.weight] =  [drug.name, drug_name, drug.short_name, drug.tabs, drug.pack_size,
-                                     Pharmacy.last_physical_count(drug.drug_inventory_id), drug.strength]
+                                     current_stock, drug.strength]
+      @drugs << drug_name
     end
 
   end
@@ -118,13 +113,14 @@ class GenericDrugController < ApplicationController
     @delivery_date = params[:observations].first["value_datetime"]
     @drugs = params[:drug_name]
     @formatted = preformat_regimen
-    @drug_short_names = regimen_name_map
+    @drug_short_names = {} #regimen_name_map
     @drug_cms_names = {}
     @drug_cms_packsizes = {}
-    (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+    (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
       drug_name = Drug.find(drug.drug_inventory_id).name
       @drug_cms_names[drug_name] = drug.name
       @drug_cms_packsizes[drug_name] = drug.pack_size
+      @drug_short_names[drug_name] = "#{drug.short_name} #{drug.strength} #{drug.tabs}"
     end
     @list = []
     @expiring = {}
@@ -172,12 +168,13 @@ class GenericDrugController < ApplicationController
 
   def delivery
     @formatted = preformat_regimen
-    @drugs = regimen_name_map
+    @drugs = {} #regimen_name_map
     @cms_drugs = {}
 
-    (DrugCms.find_by_sql("SELECT name, drug_inventory_id FROM drug_cms") rescue []).each do |drug|
+    (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
       drug_name = Drug.find(drug.drug_inventory_id).name
       @cms_drugs[drug_name] = drug.name
+      @drugs[drug_name] = "#{drug.short_name} #{drug.strength} "
     end
   end
 
@@ -322,14 +319,15 @@ class GenericDrugController < ApplicationController
 
       @drugs = params[:drug_name]
       @formatted = preformat_regimen
-      @drug_short_names = regimen_name_map
+      @drug_short_names = {} #regimen_name_map
       @drug_cms_names = {}
 
       @drug_cms_packsizes = {}
-      (DrugCms.find_by_sql("SELECT name, drug_inventory_id, pack_size FROM drug_cms") rescue []).each do |drug|
+      (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
         drug_name = Drug.find(drug.drug_inventory_id).name
         @drug_cms_names[drug_name] = drug.name
         @drug_cms_packsizes[drug_name] = drug.pack_size
+        @drug_short_names[drug_name] = "#{drug.short_name} #{drug.strength} #{drug.tabs}"
       end
 
       if params[:relocation_or_disposal].match(/RELOCATIONS/i)
@@ -637,25 +635,12 @@ class GenericDrugController < ApplicationController
   end
 
   def preformat_regimen
-    formatted = ["ABC/3TC (Abacavir and Lamivudine 60/30mg tablet)",
-      "AZT/3TC (Zidovudine and Lamivudine 60/30 tablet)",
-      "AZT/3TC (Zidovudine and Lamivudine 300/150mg)",
-      "AZT/3TC/NVP (60/30/50mg tablet)",
-      "AZT/3TC/NVP (300/150/200mg tablet)",
-      "d4T/3TC (Stavudine Lamivudine 6/30mg tablet)",
-      "d4T/3TC (Stavudine Lamivudine 30/150 tablet)",
-      "Triomune baby (d4T/3TC/NVP 6/30/50mg tablet)",
-      "d4T/3TC/NVP (30/150/200mg tablet)",
-      "EFV (Efavirenz 200mg tablet)",
-      "EFV (Efavirenz 600mg tablet)",
-      "LPV/r (Lopinavir and Ritonavir 100/25mg tablet)",
-      "LPV/r (Lopinavir and Ritonavir 200/50mg tablet)",
-      "LPV/r (Lopinavir and Ritonavir syrup)",
-      "ATV/r (Atazanavir 300mg/Ritonavir 100mg)",
-      "NVP (Nevirapine 200 mg tablet)",
-      "TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet", "TDF/3TC/EFV (300/300/600mg tablet)",
-      "Cotrimoxazole (480mg tablet)",
-      "Cotrimoxazole (960mg)", "INH or H (Isoniazid 100mg tablet)", "INH or H (Isoniazid 300mg tablet)"]
+
+    formatted = []
+    (DrugCms.find_by_sql("SELECT name, drug_inventory_id FROM drug_cms") rescue []).each do |drug|
+      formatted << Drug.find(drug.drug_inventory_id).name
+    end
+
     return formatted
   end
 
@@ -804,6 +789,7 @@ class GenericDrugController < ApplicationController
   def stock_report_edit
 
     if request.post?
+
       drug_short_names = regimen_name_map
       unless params[:obs].blank?
         params[:obs].each { |obs|
@@ -816,16 +802,11 @@ class GenericDrugController < ApplicationController
           expiring_units = obs[1]['expire_amount']
           expiry_date = nil
 
-          if (drug_comes_in_packs(obs[0], drug_short_names))
-            expiring_units = obs[1]['amount'].to_i
-            pack_size = obs[1]['expire_amount'].to_i
-          end
-
           expiring_units = nil if (tins == 0)
           expiry_date = nil if (tins == 0)
 
           if tins != 0
-            expiry_date = obs[1]['date'].to_date.end_of_month rescue ("01/" + obs[1]['date']).to_date.end_of_month
+            expiry_date = obs[1]['date'].to_date.end_of_month
           end
 
           if tins.to_i == 0 && expiring_units.to_i == 0

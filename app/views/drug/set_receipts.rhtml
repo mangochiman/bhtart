@@ -302,7 +302,7 @@
             if (!(sieved.indexOf(item.getAttribute("value")) >= 0)) {
                 var textField1 = document.createElement("input");
                 textField1.id = "Number of tins";
-                textField1.setAttribute("label", "Pills per tin");
+                textField1.setAttribute("label", "Amount per unit");
                 textField1.className = "input-field input-field-active";
                 textField1.value = drug_cms_packsizes[item.getAttribute("value")];
                 textField1.disabled = true;
@@ -320,7 +320,7 @@
             } else {
                 var textField1 = document.createElement("select");
                 textField1.id = "Number of expiring tins";
-                textField1.setAttribute("label", "Pack size");
+                textField1.setAttribute("label", "Amount per unit");
                 textField1.innerHTML = "<option>" + drug_cms_packsizes[item.getAttribute("value")] + "</option>";
                 textField1.disabled = true;
                 textField1.style.background = "white";
@@ -1305,7 +1305,7 @@
         var label = document.createElement("div");
         label.className = "drug-value scell hvalue";
         label.style.display = "table-cell";
-        label.innerHTML = "Pills per unit";
+        label.innerHTML = "Amount per unit";
         r.appendChild(label);
 
         var label = document.createElement("div");
