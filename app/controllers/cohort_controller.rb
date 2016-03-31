@@ -2263,11 +2263,10 @@ class CohortController < ActionController::Base
   def check_all_effects(start_date=Time.now, end_date=Time.now, section=nil)
   value = []
     patients = []
-
     end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
 
     $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
-
+#=begin
          per_nue = FlatCohortTable.find_by_sql("
                 SELECT
                     ft2.patient_id,
@@ -2388,11 +2387,31 @@ class CohortController < ActionController::Base
                                   AND e1.voided = 0)
                   GROUP BY ft2.patient_id").map(&:patient_id)
 
+                art_side_effects = FlatCohortTable.find_by_sql("select
+                                      patient_id
+                                  From
+                                      flat_table2
+                                  where
+                                      (side_effects_peripheral_neuropathy = 'Yes'
+                                          OR side_effects_hepatitis = 'Yes'
+                                          OR side_effects_skin_rash = 'Yes'
+                                          OR side_effects_lipodystrophy = 'Yes'
+                                          OR side_effects_other = 'Yes'
+                                          OR side_effects_kidney_failure = 'Yes'
+                                          OR side_effects_nightmares = 'Yes'
+                                          OR side_effects_diziness = 'Yes'
+                                          OR side_effects_psychosis = 'Yes'
+                                          OR side_effects_blurry_vision = 'Yes')
+                                  and patient_id in (#{$total_alive_and_on_art.join(',')})
+                                  and visit_date <= '#{end_date}'
+                                  GROUP BY patient_id").map(&:patient_id)
+
     patients = ((jaundice || []) +
                 (skin_rash || []) +
                 (hepatitis || []) +
                 (leg_pain || []) +
-                (per_nue || []))
+                (per_nue || []) +
+                (art_side_effects || []))
 
      patients = patients.uniq unless patients.blank?
      return patients
@@ -2406,7 +2425,6 @@ class CohortController < ActionController::Base
 
     drug_induced_side_effect_id = ConceptName.find_by_name('SYMPTOM PRESENT').concept_id
     $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
-
     patients = Encounter.find_by_sql("SELECT DISTINCT(e.patient_id) FROM encounter e
                                                     INNER JOIN obs o ON o.encounter_id = e.encounter_id
                                                     WHERE e.encounter_type = #{hiv_clinic_consultation_encounter_id}
@@ -2417,10 +2435,17 @@ class CohortController < ActionController::Base
                                                     AND e.encounter_datetime = (SELECT MAX(e1.encounter_datetime) FROM encounter e1
                                                                                   WHERE e1.patient_id = e.patient_id
                                                                                   AND e1.encounter_type = e.encounter_type
-                                                                                  AND e1.encounter_datetime BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+                                                                                  AND e1.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}'
                                                                                   AND e1.voided = 0)
-                                                    GROUP BY e.patient_id"
-		).collect{|p| p.patient_id} rescue []
+                                                    GROUP BY e.patient_id").collect{|p| p.patient_id} #rescue []
+
+    no_art_side_effects = Encounter.find_by_sql("SELECT patient_id FROM flat_table2
+                                       WHERE side_effects_no = 'Yes'
+                                       AND patient_id IN (#{$total_alive_and_on_art.join(',')})
+                                       AND patient_id NOT IN (#{patient_with_effect.join(',')})
+                                       AND (visit_date <= '#{end_date}')
+                                       GROUP BY patient_id").collect{|p| p.patient_id} #rescue []
+    patients = patients + no_art_side_effects
     return patients
   end
 
