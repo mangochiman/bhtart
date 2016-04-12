@@ -20,7 +20,7 @@ def get_all_patients
     $temp_outfile_3 = File.open("./db/flat_tables_init_output/patients_initialized_in_flat_cohort_table-" + @started_at + ".sql", "w")
     $temp_outfile_4 = File.open("./db/flat_tables_init_output/guardians-" + @started_at + ".sql", "w")
     $temp_outfile_5 = File.open("./db/flat_tables_init_output/guardians_initialized_in_flat_cohort_table-" + @started_at + ".sql", "w")
-    
+
     patient_list = Patient.find_by_sql("SELECT patient_id FROM #{@source_db}.flat_table1
                                         WHERE patient_id IN (SELECT patient_id FROM #{@source_db}.earliest_start_date) GROUP BY patient_id").map(&:patient_id)
 
@@ -29,6 +29,7 @@ def get_all_patients
                                                 gender,
                                                 dob,
                                                 earliest_start_date,
+                                                date_enrolled,
                                                 age_at_initiation,
                                                 age_in_days,
                                                 death_date,
@@ -56,12 +57,12 @@ def get_all_patients
 
   $guardians = []
   $guardians = Patient.find_by_sql("SELECT patient_id, guardian_id FROM #{@source_db}.guardians")
-  
+
   $guardians_not_on_art = []
   $guardians_not_on_art = Patient.find_by_sql("SELECT * FROM #{@source_db}.guardians
                                                WHERE guardian_id NOT IN (SELECT patient_id FROM #{@source_db}.earliest_start_date ) GROUP BY guardian_id")
     patient_list.each do |p|
-      $temp_outfile_3 << "#{p}," 
+      $temp_outfile_3 << "#{p},"
       puts ">>working on patient>>>#{p}<<<<<<<"
       sql_statements = get_patients_data(p)
       $temp_outfile_1 << sql_statements[0]
@@ -69,14 +70,14 @@ def get_all_patients
     end
 
     $guardians_not_on_art.each do |guardian|
-      $temp_outfile_5 << "#{guardian.guardian_id}," 
+      $temp_outfile_5 << "#{guardian.guardian_id},"
       puts ">>working on guardian>>>#{guardian.guardian_id}<<<<<<<"
       sql_statements = process_all_guardians_not_on_arvs(guardian)
-      $temp_outfile_4 << sql_statements[0]    
+      $temp_outfile_4 << sql_statements[0]
       puts ">>finished working on guardian>>>#{guardian.guardian_id}<<<<<<<"
     end
 
-    #close files 
+    #close files
     $temp_outfile_1.close
     $temp_outfile_3.close
     $temp_outfile_4.close
@@ -87,14 +88,14 @@ end
 def process_all_guardians_not_on_arvs(guardian_data)
    initial_flat_table1_string = "INSERT INTO flat_table1 "
    guardian_details = []
-  
-   #get_guardians_data  
+
+   #get_guardians_data
    guardian_details = $guardians_not_on_art.select{|guardian| guardian.guardian_id == guardian_data.guardian_id}
 #   raise guardian_details.to_yaml
    if guardian_details
      guardian_details = process_guardians(guardian_data.guardian_id)
    end
-  
+
   #check if any of the strings are empty
   guardian_details = process_guardians(guardian_data.guardian_id) if guardian_details.empty?
 
@@ -102,7 +103,7 @@ def process_all_guardians_not_on_arvs(guardian_data)
   flat_table_1_sql_statement = initial_flat_table1_string + "(" + guardian_details[0] + ")" + \
   	 " VALUES (" + guardian_details[1] + ");"
 
-   return [flat_table_1_sql_statement]  
+   return [flat_table_1_sql_statement]
 end
 
 def process_guardians(guardian_id, type = 0)
@@ -116,29 +117,29 @@ def process_guardians(guardian_id, type = 0)
   this_guardian = $guardians_not_on_art.select{|guardian| guardian.guardian_id == guardian_id} rescue []
   the_identifiers = $patient_identifiers.select{|patient| patient.patient_id == guardian_id} rescue []
   the_attributes = $patient_attributes.select{|patient| patient.person_id == guardian_id} rescue []
-  
+
   guardian_person_ids = $guardians.select{|person| person.patient_id == guardian_id}.map(&:guardian_id) rescue []
   guardian_to_which_patient_ids = $guardians.select{|person| person.guardian_id == guardian_id}.map(&:patient_id) rescue []
 
-  a_hash[:patient_id] = this_guardian.first.guardian_id 
+  a_hash[:patient_id] = this_guardian.first.guardian_id
   a_hash[:given_name] = this_guardian.first.given_name rescue nil
   a_hash[:middle_name] = this_guardian.first.middle_name rescue nil
-  a_hash[:family_name] = this_guardian.first.family_name rescue nil 
+  a_hash[:family_name] = this_guardian.first.family_name rescue nil
   a_hash[:gender] = this_guardian.first.gender  rescue nil #this_guardian.gender  rescue nil
-  a_hash[:dob] = this_guardian.first.birthdate rescue nil 
-  a_hash[:dob_estimated] = this_guardian.first.birthdate_estimated rescue nil  
+  a_hash[:dob] = this_guardian.first.birthdate rescue nil
+  a_hash[:dob_estimated] = this_guardian.first.birthdate_estimated rescue nil
   a_hash[:death_date] =  this_guardian.first.death_date.strftime('%Y-%m-%d') rescue nil
-                   
+
   a_hash[:ta] = this_guardian.first.traditional_authority  rescue nil
   a_hash[:current_address] = this_guardian.first.current_residence  rescue nil
   a_hash[:home_district] = this_guardian.first.home_district  rescue nil
   a_hash[:landmark] = this_guardian.first.landmark  rescue nil
-                    
+
   a_hash[:cellphone_number] = the_attributes.first.cell_phone  rescue nil
-  a_hash[:home_phone_number] = the_attributes.first.home_phone  rescue nil 
+  a_hash[:home_phone_number] = the_attributes.first.home_phone  rescue nil
   a_hash[:office_phone_number] = the_attributes.first.office_phone  rescue nil
   a_hash[:occupation] = the_attributes.first.occupation  rescue nil
-                    
+
   a_hash[:nat_id] = the_identifiers.first.national_id  rescue nil
   a_hash[:arv_number]  = the_identifiers.first.arv_number  rescue nil
   a_hash[:pre_art_number] = the_identifiers.first.pre_art_number  rescue nil
@@ -153,7 +154,7 @@ def process_guardians(guardian_id, type = 0)
     a_hash[:guardian_person_id2] = guardian_person_ids[1]
     a_hash[:guardian_person_id3] = guardian_person_ids[2]
     a_hash[:guardian_person_id4] = guardian_person_ids[3]
-    a_hash[:guardian_person_id5] = guardian_person_ids[4]                
+    a_hash[:guardian_person_id5] = guardian_person_ids[4]
   end
 
   if guardian_to_which_patient_ids
@@ -161,7 +162,7 @@ def process_guardians(guardian_id, type = 0)
     a_hash[:guardian_to_which_patient2] = guardian_to_which_patient_ids[1]
     a_hash[:guardian_to_which_patient3] = guardian_to_which_patient_ids[2]
     a_hash[:guardian_to_which_patient4] = guardian_to_which_patient_ids[3]
-    a_hash[:guardian_to_which_patient5] = guardian_to_which_patient_ids[4]                
+    a_hash[:guardian_to_which_patient5] = guardian_to_which_patient_ids[4]
   end
 
     return generate_sql_string(a_hash)
@@ -171,11 +172,11 @@ def get_patients_data(patient_id)
    #building flat_cohort_table
 
    initial_flat_table1_string = "INSERT INTO flat_cohort_table "
-   
-   flat_table_1_data = []; flat_table_2_data = [] 
+
+   flat_table_1_data = []; flat_table_2_data = []
 
    #get flat_table1 data
-   flat_table_1_data = $flat_table_1_patients_list.select {|patient| patient.patient_id == patient_id} 
+   flat_table_1_data = $flat_table_1_patients_list.select {|patient| patient.patient_id == patient_id}
 
    if flat_table_1_data
       flat_table1 = process_flat_table_1(flat_table_1_data)
@@ -244,15 +245,15 @@ def get_patients_data(patient_id)
                               side_effects_diziness,
                               side_effects_psychosis,
                               drug_induced_kidney_failure,
-                              drug_induced_nightmares, 
-                              drug_induced_diziness,  
+                              drug_induced_nightmares,
+                              drug_induced_diziness,
                               drug_induced_psychosis,
                               drug_induced_blurry_vision
                             FROM #{@source_db}.flat_table2
                             WHERE patient_id = #{patient_id}
                             ORDER BY visit_date DESC
                             LIMIT 1")
-                        
+
    if flat_table_2_data
       flat_table2 = process_flat_table_2(flat_table_2_data)
    end
@@ -268,7 +269,7 @@ def get_patients_data(patient_id)
    return [flat_cohort_table_sql_statement]
 end
 
-def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 1 generate_template only 
+def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 1 generate_template only
 
     #initialize field and values variables
     fields = ""
@@ -280,7 +281,7 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
     return generate_sql_string(a_hash) if type == 1
 
     (flat_table_1_data || []).each do |patient|
-    
+
       pat = Patient.find_by_patient_id(patient.patient_id)
 
       a_hash[:patient_id] = patient.patient_id
@@ -288,6 +289,7 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
       a_hash[:birthdate] = patient.dob
       a_hash[:death_date] = patient.death_date
       a_hash[:earliest_start_date] = patient.earliest_start_date
+      a_hash[:date_enrolled] = patient.date_enrolled
       a_hash[:age_at_initiation] = patient.age_at_initiation
       a_hash[:age_in_days] = patient.age_in_days
       a_hash[:reason_for_starting] = patient.reason_for_eligibility
@@ -312,7 +314,7 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
     return generate_sql_string(a_hash)
 end
 
-def process_flat_table_2(flat_table_2_data, type = 0) #type 0 normal encounter, 1 generate_template only 
+def process_flat_table_2(flat_table_2_data, type = 0) #type 0 normal encounter, 1 generate_template only
 
     #initialize field and values variables
     fields = ""
@@ -427,10 +429,10 @@ def process_flat_table_2(flat_table_2_data, type = 0) #type 0 normal encounter, 
       a_hash[:side_effects_diziness] = patient.side_effects_diziness
       a_hash[:side_effects_psychosis] = patient.side_effects_psychosis
       a_hash[:drug_induced_kidney_failure] = patient.drug_induced_kidney_failure
-      a_hash[:drug_induced_nightmares] = patient.drug_induced_nightmares 
+      a_hash[:drug_induced_nightmares] = patient.drug_induced_nightmares
       a_hash[:drug_induced_diziness] = patient.drug_induced_diziness
       a_hash[:drug_induced_psychosis] = patient.drug_induced_psychosis
-      a_hash[:drug_induced_blurry_vision] = patient.drug_induced_blurry_vision     
+      a_hash[:drug_induced_blurry_vision] = patient.drug_induced_blurry_vision
    end
     return generate_sql_string(a_hash)
 end
@@ -441,7 +443,7 @@ def generate_sql_string(a_hash)
 
     a_hash.each do |key,value|
         fields += fields.empty? ? "`#{key}`" : ", `#{key}`"
-	      
+
 	      str = '"' + value.to_s + '"'
         values += values.empty? ? "#{str}" : ", #{str}"
     end
@@ -454,4 +456,4 @@ def start
  get_all_patients
 end
 
-start 
+start
