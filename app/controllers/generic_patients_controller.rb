@@ -1907,15 +1907,15 @@ The following block of code should be replaced by a more cleaner function
         next if obs.value_numeric <= 0
         drug_concept_id = drug.concept.concept_id
         regimens.map do | regimen_type , concept_ids |
-          if regimen_type == 'FIRST LINE ANTIRETROVIRAL REGIMEN' and concept_ids.include?(drug_concept_id)
+          if regimen_type == 'FIRST LINE ANTIRETROVIRAL REGIMEN' #and concept_ids.include?(drug_concept_id)
             visits.date_of_first_line_regimen =  PatientService.date_antiretrovirals_started(patient_obj) #treatment_encounter.encounter_datetime.to_date
             visits.first_line_drugs << drug.concept.shortname
             visits.first_line_drugs = visits.first_line_drugs.uniq rescue []
-          elsif regimen_type == 'ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN' and concept_ids.include?(drug_concept_id)
+          elsif regimen_type == 'ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN' #and concept_ids.include?(drug_concept_id)
             visits.date_of_first_alt_line_regimen = PatientService.date_antiretrovirals_started(patient_obj) #treatment_encounter.encounter_datetime.to_date
             visits.alt_first_line_drugs << drug.concept.shortname
             visits.alt_first_line_drugs = visits.alt_first_line_drugs.uniq rescue []
-          elsif regimen_type == 'SECOND LINE ANTIRETROVIRAL REGIMEN' and concept_ids.include?(drug_concept_id)
+          elsif regimen_type == 'SECOND LINE ANTIRETROVIRAL REGIMEN' #and concept_ids.include?(drug_concept_id)
             visits.date_of_second_line_regimen = treatment_encounter.encounter_datetime.to_date
             visits.second_line_drugs << drug.concept.shortname
             visits.second_line_drugs = visits.second_line_drugs.uniq rescue []

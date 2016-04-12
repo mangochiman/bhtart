@@ -1172,6 +1172,7 @@ class CohortToolController < GenericCohortToolController
   end
 
   def cohort
+
     if params[:quarter] == 'Select date range'
       redirect_to :action => 'select_cohort_date' and return
     end
