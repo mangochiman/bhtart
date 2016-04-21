@@ -16,7 +16,7 @@
 -- view to capture avg ART/HIV care treatment time for ART patients at a given site
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `patient_service_waiting_time` AS
-    SELECT
+    SELECT 
         `e`.`patient_id` AS `patient_id`,
         cast(`e`.`encounter_datetime` as date) AS `visit_date`,
         min(`e`.`encounter_datetime`) AS `start_time`,
@@ -61,7 +61,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 -- ARV drugs
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	VIEW `arv_drug` AS
-	SELECT `drug_id` FROM `drug`
+	SELECT `drug_id` FROM `drug` 
 	WHERE `concept_id` IN (SELECT `concept_id` FROM `concept_set` WHERE `concept_set` = 1085);
 
 -- ARV drugs orders
@@ -74,7 +74,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 
 -- Non-voided HIV Clinic Registration encounters
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
-	VIEW `clinic_registration_encounter` AS
+	VIEW `clinic_registration_encounter` AS 
 	SELECT `encounter`.`encounter_id` AS `encounter_id`,
          `encounter`.`encounter_type` AS `encounter_type`,
          `encounter`.`patient_id` AS `patient_id`,
@@ -96,28 +96,28 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 
 
 
-DROP FUNCTION IF EXISTS date_antiretrovirals_started;
-
-DELIMITER $$
+DROP FUNCTION IF EXISTS date_antiretrovirals_started;                                          
+                                                                                
+DELIMITER $$                                                                     
 CREATE FUNCTION date_antiretrovirals_started(set_patient_id INT, min_state_date DATE) RETURNS DATE
-BEGIN
-
+BEGIN                                                                           
+                                                                                
 DECLARE date_started DATE;
 
 SET date_started = (SELECT LEFT(value_datetime,10) FROM obs WHERE concept_id = 2516 AND person_id = set_patient_id LIMIT 1);
 
-if date_started is NULL then
+if date_started is NULL then 
 SET date_started = min_state_date;
 end if;
 
 RETURN date_started;
-END$$
+END$$                                                                           
 DELIMITER ;
 
 -- The date of the first On ARVs state for each patient
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `earliest_start_date` AS
-  SELECT `p`.`patient_id` AS `patient_id`, DATE(patient_start_date(`p`.`patient_id`)) AS `date_enrolled`,
+  SELECT `p`.`patient_id` AS `patient_id`, patient_start_date(`p`.`patient_id`) AS `date_enrolled`,
          date_antiretrovirals_started(`p`.`patient_id`, MIN(`s`.`start_date`)) AS `earliest_start_date`, `person`.`death_date` AS death_date,
          (DATEDIFF(date_antiretrovirals_started(`p`.`patient_id`, MIN(`s`.`start_date`)), `person`.`birthdate`)/365.25) AS age_at_initiation,
          DATEDIFF(MIN(`s`.`start_date`), `person`.`birthdate`) AS age_in_days
@@ -194,7 +194,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
          `obs`.`date_voided` AS `date_voided`,
          `obs`.`void_reason` AS `void_reason`,
          `obs`.`value_complex` AS `value_complex`,
-         `obs`.`uuid` AS `uuid`
+         `obs`.`uuid` AS `uuid` 
   FROM `obs`
   INNER JOIN `person` ON ((`person`.`person_id` = `obs`.`person_id`))
   WHERE ((`obs`.`concept_id` IN (6131,1755, 7972)) AND
@@ -255,12 +255,12 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   FROM `obs`
   WHERE ((`obs`.`concept_id` = 2559) AND (`obs`.`voided` = 0));
 
-CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
-  VIEW `start_date_observation` AS
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER 
+  VIEW `start_date_observation` AS 
   SELECT `obs`.`person_id` AS `person_id`,
          `obs`.`obs_datetime` AS `obs_datetime`,
          `obs`.`value_datetime` AS `value_datetime`
-  FROM `obs`
+  FROM `obs` 
   WHERE ((`obs`.`concept_id` = 2516) AND (`obs`.`voided` = 0))
   GROUP BY `obs`.`person_id`,`obs`.`value_datetime`;
 
@@ -294,13 +294,13 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
          `obs`.`date_voided` AS `date_voided`,
          `obs`.`void_reason` AS `void_reason`,
          `obs`.`value_complex` AS `value_complex`,
-         `obs`.`uuid` AS `uuid`
-  FROM `obs`
+         `obs`.`uuid` AS `uuid` 
+  FROM `obs` 
   WHERE ((`obs`.`concept_id` = 7459) and (`obs`.`voided` = 0));
 
 -- The following 2 views will be used in calculation of defaulted dates
-CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
-  VIEW `amount_dispensed_obs` AS
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER 
+  VIEW `amount_dispensed_obs` AS 
   SELECT
     `o`.`person_id`,
     `o`.`encounter_id`,
@@ -321,9 +321,9 @@ FROM
 WHERE
     `o`.`concept_id` = 2834 AND `o`.`voided` = 0;
 
-CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
-  VIEW `amount_brought_back_obs` AS
-SELECT
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER 
+  VIEW `amount_brought_back_obs` AS 
+SELECT 
     `o`.`person_id`,
     `o`.`encounter_id`,
     `o`.`order_id`,
@@ -343,7 +343,7 @@ WHERE
 
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `reason_for_eligibility_obs` AS
-SELECT
+SELECT 
     `e`.`patient_id`, `n`.`name` AS `reason_for_eligibility`, `o`.`obs_datetime`, `e`.`earliest_start_date`, `e`.`date_enrolled` AS `date_enrolled`
 FROM
     `earliest_start_date` `e`
@@ -359,7 +359,7 @@ ORDER BY `e`.`patient_id` , `o`.`obs_datetime` DESC;
 
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `patients_with_has_transfer_letter_yes` AS
-SELECT
+SELECT 
     `o`.`person_id`, `p`.`gender`, `o`.`obs_datetime`, `o`.`date_created`, `e`.`earliest_start_date`
 FROM
     `obs` `o`
@@ -372,11 +372,11 @@ FROM
 WHERE
     `o`.`concept_id` = 6393
         AND `o`.`value_coded` = 1065
-        AND `o`.`voided` = 0;
+        AND `o`.`voided` = 0;    
 
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `all_patients_attributes` AS
-SELECT
+SELECT 
     `person_id`,
     MAX(CASE WHEN `person_attribute_type_id` = 13 THEN `value` END) AS `occupation`,
     MAX(CASE WHEN `person_attribute_type_id` = 12 THEN `value` END) AS `cell_phone`,
@@ -389,7 +389,7 @@ GROUP BY `person_id`;
 
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `all_patient_identifiers` AS
-SELECT
+SELECT 
     `patient_id`,
     MAX(CASE WHEN `identifier_type` = 1 THEN `identifier` END) AS `openmrs_ident_type`,
     MAX(CASE WHEN `identifier_type` = 3 THEN `identifier` END) AS `national_id`,
@@ -407,12 +407,12 @@ GROUP BY `patient_id`;
 
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `all_person_addresses` AS
-SELECT
+SELECT 
     `p`. *
 FROM
     `person_address` `p`
 WHERE
-    `p`.`person_address_id` = (SELECT
+    `p`.`person_address_id` = (SELECT 
             MAX(`pad`.`person_address_id`)
         FROM
             `person_address` `pad`
@@ -423,15 +423,15 @@ WHERE
 
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `guardians` AS
-SELECT
+SELECT 
     `person_a` AS `patient_id`,
     `person_b` AS `guardian_id`,
-    `per`.`gender` AS `gender`,
+    `per`.`gender` AS `gender`,    
     `p`.`given_name` AS `given_name`,
     `p`.`family_name` AS `family_name`,
     `p`.`middle_name` AS `middle_name`,
     `per`.`birthdate_estimated` AS `birthdate_estimated`,
-    `per`.`birthdate` AS `birthdate`,
+    `per`.`birthdate` AS `birthdate`,    
     `pa`.`address2` AS `home_district`,
     `pa`.`state_province` AS `current_district`,
     `pa`.`address1` AS `landmark`,
@@ -444,15 +444,15 @@ FROM
         LEFT JOIN
     `all_person_addresses` `pa` ON `pa`.`person_id` = `p`.`person_id`
         INNER JOIN
-    `person` `per` ON `per`.`person_id` = `p`.`person_id` AND `p`.`voided` = 0
+    `person` `per` ON `per`.`person_id` = `p`.`person_id` AND `p`.`voided` = 0 
 WHERE
     `r`.`voided` = 0
-AND `r`.`person_a` IN (SELECT `e`.`patient_id` FROM `earliest_start_date` `e`)
+AND `r`.`person_a` IN (SELECT `e`.`patient_id` FROM `earliest_start_date` `e`)    
 ORDER BY `patient_id`;
 
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `patients_demographics` AS
-SELECT
+SELECT 
     `esd`.`patient_id`,
     `p`.`given_name` AS `given_name`,
     `p`.`family_name` AS `family_name`,
@@ -481,18 +481,18 @@ FROM
 GROUP BY `esd`.`patient_id`
 ORDER BY `patient_id`;
 
-DROP FUNCTION IF EXISTS earliest_start_date_at_clinic;
-
-DELIMITER $$
+DROP FUNCTION IF EXISTS earliest_start_date_at_clinic;                                          
+                                                                                
+DELIMITER $$                                                                     
 CREATE FUNCTION earliest_start_date_at_clinic(set_patient_id INT) RETURNS DATE
-BEGIN
-
+BEGIN                                                                           
+                                                                                
 DECLARE date_started DATE;
 
 SET date_started = (SELECT MIN(start_date) FROM patient_state WHERE voided = 0 AND state = 7 AND patient_program_id IN (SELECT patient_program_id FROM patient_program WHERE patient_id = set_patient_id AND voided = 0 AND program_id = 1));
 
 RETURN date_started;
-END$$
+END$$                                                                           
 DELIMITER ;
 
 --
@@ -602,7 +602,7 @@ BEGIN
 	DECLARE my_drug_id, flag INT;
 
 	DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
-		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id		
 		INNER JOIN orders o ON d.order_id = o.order_id
 			AND d.quantity > 0
 			AND o.voided = 0
@@ -612,7 +612,7 @@ BEGIN
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
 	SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
-		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id		
 		INNER JOIN orders o ON d.order_id = o.order_id
 			AND d.quantity > 0
 			AND o.voided = 0
@@ -679,8 +679,8 @@ BEGIN
 	DECLARE cur1 CURSOR FOR SELECT SUM(ob.value_numeric), SUM(CAST(ob.value_text AS DECIMAL)) FROM obs ob
                         INNER JOIN drug_order do ON ob.order_id = do.order_id
                         INNER JOIN orders o ON do.order_id = o.order_id
-                    WHERE ob.person_id = my_patient_id
-                        AND ob.concept_id = 2540
+                    WHERE ob.person_id = my_patient_id 
+                        AND ob.concept_id = 2540 
                         AND ob.voided = 0
                         AND o.voided = 0
                         AND do.drug_inventory_id = my_drug_id
@@ -839,32 +839,32 @@ BEGIN
   SET @obs_value = NULL;
 	SELECT o.encounter_id INTO @encounter_id FROM encounter e
 			INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = my_concept_id AND o.voided = 0
-		WHERE e.encounter_type = my_encounter_type_id
+		WHERE e.encounter_type = my_encounter_type_id 
 			AND e.voided = 0
-			AND e.patient_id = my_patient_id
-			AND e.encounter_datetime <= my_end_date
+			AND e.patient_id = my_patient_id 
+			AND e.encounter_datetime <= my_end_date 
 		ORDER BY e.encounter_datetime DESC LIMIT 1;
 
 	SELECT cn.name INTO @obs_value FROM obs o
-			LEFT JOIN concept_name cn ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
+			LEFT JOIN concept_name cn ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' 
 		WHERE encounter_id = @encounter_id
-			AND o.voided = 0
-			AND o.concept_id = my_concept_id
+			AND o.voided = 0 
+			AND o.concept_id = my_concept_id 
 			AND o.voided = 0 LIMIT 1;
 
 	IF @obs_value IS NULL THEN
 		SELECT value_text INTO @obs_value FROM obs
 			WHERE encounter_id = @encounter_id
-				AND voided = 0
-				AND concept_id = my_concept_id
+				AND voided = 0 
+				AND concept_id = my_concept_id 
 				AND voided = 0 LIMIT 1;
 	END IF;
 
 	IF @obs_value IS NULL THEN
 		SELECT value_numeric INTO @obs_value FROM obs
 			WHERE encounter_id = @encounter_id
-				AND voided = 0
-				AND concept_id = my_concept_id
+				AND voided = 0 
+				AND concept_id = my_concept_id 
 				AND voided = 0 LIMIT 1;
 	END IF;
 
@@ -889,33 +889,33 @@ DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_text_for_obs`(my_patient_id INT, my_encounter_type_id INT, my_concept_id INT, my_end_date DATETIME) RETURNS VARCHAR(255)
 BEGIN
   SET @obs_value = NULL;
-	SELECT encounter_id INTO @encounter_id FROM encounter
-		WHERE encounter_type = my_encounter_type_id
+	SELECT encounter_id INTO @encounter_id FROM encounter 
+		WHERE encounter_type = my_encounter_type_id 
 			AND voided = 0
-			AND patient_id = my_patient_id
-			AND encounter_datetime <= my_end_date
+			AND patient_id = my_patient_id 
+			AND encounter_datetime <= my_end_date 
 		ORDER BY encounter_datetime DESC LIMIT 1;
 
 	SELECT cn.name INTO @obs_value FROM obs o
-			LEFT JOIN concept_name cn ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
+			LEFT JOIN concept_name cn ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' 
 		WHERE encounter_id = @encounter_id
-			AND o.voided = 0
-			AND o.concept_id = my_concept_id
+			AND o.voided = 0 
+			AND o.concept_id = my_concept_id 
 			AND o.voided = 0 LIMIT 1;
 
 	IF @obs_value IS NULL THEN
 		SELECT value_text INTO @obs_value FROM obs
 			WHERE encounter_id = @encounter_id
-				AND voided = 0
-				AND concept_id = my_concept_id
+				AND voided = 0 
+				AND concept_id = my_concept_id 
 				AND voided = 0 LIMIT 1;
 	END IF;
 
 	IF @obs_value IS NULL THEN
 		SELECT value_numeric INTO @obs_value FROM obs
 			WHERE encounter_id = @encounter_id
-				AND voided = 0
-				AND concept_id = my_concept_id
+				AND voided = 0 
+				AND concept_id = my_concept_id 
 				AND voided = 0 LIMIT 1;
 	END IF;
 
@@ -940,17 +940,17 @@ DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `current_value_for_obs`(my_patient_id INT, my_encounter_type_id INT, my_concept_id INT, my_end_date DATETIME) RETURNS int(11)
 BEGIN
   SET @obs_value_coded = NULL;
-	SELECT encounter_id INTO @encounter_id FROM encounter
-		WHERE encounter_type = my_encounter_type_id
+	SELECT encounter_id INTO @encounter_id FROM encounter 
+		WHERE encounter_type = my_encounter_type_id 
 			AND voided = 0
-			AND patient_id = my_patient_id
-			AND encounter_datetime <= my_end_date
+			AND patient_id = my_patient_id 
+			AND encounter_datetime <= my_end_date 
 		ORDER BY encounter_datetime DESC LIMIT 1;
 
 	SELECT value_coded INTO @obs_value_coded FROM obs
 			WHERE encounter_id = @encounter_id
-				AND voided = 0
-				AND concept_id = my_concept_id
+				AND voided = 0 
+				AND concept_id = my_concept_id 
 				AND voided = 0 LIMIT 1;
 
 	RETURN @obs_value_coded;
@@ -975,27 +975,27 @@ DELIMITER ;;
 BEGIN
 	DECLARE obs_value_coded, my_encounter_id INT;
 
-	SELECT encounter_id INTO my_encounter_id FROM encounter
-		WHERE encounter_type = my_encounter_type_id
+	SELECT encounter_id INTO my_encounter_id FROM encounter 
+		WHERE encounter_type = my_encounter_type_id 
 			AND voided = 0
-			AND patient_id = my_patient_id
+			AND patient_id = my_patient_id 
 			AND encounter_datetime <= ADDDATE(DATE(my_earliest_start_date), 1)
 		ORDER BY encounter_datetime DESC LIMIT 1;
 
 	IF my_encounter_id IS NULL THEN
-		SELECT encounter_id INTO my_encounter_id FROM encounter
-			WHERE encounter_type = my_encounter_type_id
+		SELECT encounter_id INTO my_encounter_id FROM encounter 
+			WHERE encounter_type = my_encounter_type_id 
 				AND voided = 0
-				AND patient_id = my_patient_id
-				AND encounter_datetime <= my_end_date
+				AND patient_id = my_patient_id 
+				AND encounter_datetime <= my_end_date 
                 AND encounter_datetime >= ADDDATE(DATE(my_earliest_start_date), 1)
 			ORDER BY encounter_datetime LIMIT 1;
 	END IF;
 
 	SELECT value_coded INTO obs_value_coded FROM obs
 			WHERE encounter_id = my_encounter_id
-				AND voided = 0
-				AND concept_id = my_concept_id
+				AND voided = 0 
+				AND concept_id = my_concept_id 
 				AND voided = 0 LIMIT 1;
 
 	RETURN obs_value_coded;
@@ -1054,7 +1054,7 @@ BEGIN
 	DECLARE my_drug_id, flag INT;
 
 	DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
-		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id		
 		INNER JOIN orders o ON d.order_id = o.order_id
 			AND d.quantity > 0
 			AND o.voided = 0
@@ -1064,7 +1064,7 @@ BEGIN
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
 	SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
-		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+		INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id		
 		INNER JOIN orders o ON d.order_id = o.order_id
 			AND d.quantity > 0
 			AND o.voided = 0

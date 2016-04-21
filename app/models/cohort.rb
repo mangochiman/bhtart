@@ -459,7 +459,7 @@ class Cohort
 		cohort_report['Total transferred in patients'] = transferred_in_patients(@@first_registration_date, @end_date)
 
 		cohort_report['Newly transferred in patients'] = transferred_in_patients
-        
+
         #raise cohort_report['Total registered'].to_yaml
 		cohort_report['Total Unknown age'] = cohort_report['Total registered'] - (cohort_report['Total registered adults'] +
 				cohort_report['Total registered children'] +
@@ -547,7 +547,7 @@ class Cohort
     AND patient_id NOT IN(#{reinitiated_on_art.join(',')})").each_with_index do | patient, i |
       patients << patient.patient_id
     end
-		
+
     return patients
   end
 
@@ -576,8 +576,8 @@ class Cohort
 =end
     patients = []
     PatientProgram.find_by_sql("SELECT esd.* FROM earliest_start_date esd
-      WHERE esd.date_enrolled BETWEEN '#{start_date} 00:00:00' AND '#{end_date}' 
-      AND DATE(esd.date_enrolled) = DATE(esd.earliest_start_date) 
+      WHERE esd.date_enrolled BETWEEN '#{start_date} 00:00:00' AND '#{end_date}'
+      AND DATE(esd.date_enrolled) = DATE(esd.earliest_start_date)
       GROUP BY esd.patient_id").each do | patient |
         patients << patient.patient_id
     end
@@ -649,7 +649,7 @@ class Cohort
       "SELECT esd.patient_id, esd.earliest_start_date
 	    FROM earliest_start_date esd
 	    INNER JOIN person ON person.person_id = esd.patient_id
-	    WHERE esd.date_enrolled BETWEEN '#{start_date} 00:00:00' 
+	    WHERE esd.date_enrolled BETWEEN '#{start_date} 00:00:00'
       AND '#{end_date}' #{conditions}").each do | patient |
 			  patients << patient.patient_id
 		  end
