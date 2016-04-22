@@ -517,7 +517,7 @@ module DDEService
           },
           "patient"=>
             {"identifiers"=>
-              {"old_identification_number" => params["person"]["patient"]["identifiers"]["old_identification_number"]}},
+              {"old_identification_number" => (params["person"]["patient"]["identifiers"]["old_identification_number"] rescue nil)}},
           "gender"=> person_params["gender"],
           "birthdate"=> birthdate,
           "birthdate_estimated"=> birthdate_estimated ,
