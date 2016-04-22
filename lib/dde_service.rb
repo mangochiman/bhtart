@@ -12,7 +12,7 @@
       replicated for local use to allow for independence when being used in systems
       that don't need the other libraries as well as customisation of some methods for its use
 =end
-
+require 'rest-client'
 module DDEService
 
   class Patient
