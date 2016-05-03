@@ -450,7 +450,6 @@ EOF
             WHERE drug_id =#{drug_id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id}
           ) LIMIT 1;"
     ).last.encounter_date rescue nil
-
     #total_physical_count = self.total_physically_counted(drug_id, last_physical_count_enc_date)
     total_physical_count = self.latest_physical_counted(drug_id, last_physical_count_enc_date) #Created a method for pulling latest drug total supervised
     total_dispensed = self.dispensed_drugs_since(drug_id, last_physical_count_enc_date)
@@ -571,9 +570,9 @@ EOF
     end
 
     return {:verified_stock => verified_stock.value_numeric, 
-            :expiring_units => verified_stock.expiring_units,
-            :earliest_expiry_date => verified_stock.expiry_date,
-            :previous_verified_stock => previous_verified_stock}
+      :expiring_units => verified_stock.expiring_units,
+      :earliest_expiry_date => verified_stock.expiry_date,
+      :previous_verified_stock => previous_verified_stock}
   end
 
   def self.drug_stock_on(drug_id, date = Date.today)
@@ -586,7 +585,6 @@ EOF
     total_physical_count = physical_count.first 
     start_date = physical_count.last
     return 0 if start_date > date
-
     total_dispensed = self.dispensed_drugs_since(drug_id, start_date, date)
     total_removed = self.total_removed(drug_id, start_date, date)
     count = (total_physical_count - (total_dispensed + total_removed))
@@ -597,13 +595,40 @@ EOF
   # ............................... New code to cal latest_physical_counted (meant for ART stock management app).................................#
   def self.latest_physical_count(drug_id)
     encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock').id
+=begin
     verified_stock = self.find_by_sql("SELECT * FROM pharmacy_obs t
-      WHERE t.encounter_date <= current_date() AND drug_id = #{drug_id} AND t.value_text = 'Supervision'
+      WHERE t.encounter_date <= current_date() AND drug_id = #{drug_id} AND t.value_text IN('Supervision', 'Clinic')
       AND pharmacy_encounter_type = #{encounter_type} AND t.voided = 0
-      AND date_created = (SELECT MAX(t2.date_created) FROM pharmacy_obs t2
-      WHERE t2.encounter_date <= current_date() AND t2.drug_id = #{drug_id} AND t2.value_text = 'Supervision' 
+      AND encounter_date = (SELECT MAX(t2.encounter_date) FROM pharmacy_obs t2
+      WHERE t2.encounter_date <= current_date() AND t2.drug_id = #{drug_id} AND t2.value_text IN('Supervision', 'Clinic')
       AND t2.pharmacy_encounter_type = #{encounter_type} AND t2.voided = 0) LIMIT 1").first 
-    
+=end
+
+    latest_date = Pharmacy.find_by_sql(
+      "SELECT * from pharmacy_obs WHERE
+           drug_id = #{drug_id} AND pharmacy_encounter_type = #{encounter_type} AND
+           DATE(encounter_date) = (
+            SELECT MAX(DATE(encounter_date)) FROM pharmacy_obs
+            WHERE drug_id =#{drug_id} AND pharmacy_encounter_type = #{encounter_type}
+          ) LIMIT 1;"
+    ).last.encounter_date rescue nil
+
+    verified_stock = Pharmacy.find_by_sql(
+      "SELECT * FROM pharmacy_obs p WHERE p.drug_id = #{drug_id}
+        AND p.pharmacy_module_id = (
+              SELECT MAX(pharmacy_module_id) FROM pharmacy_obs t
+              WHERE t.encounter_date = p.encounter_date AND t.drug_id = p.drug_id
+              AND t.pharmacy_encounter_type = #{encounter_type}
+              AND t.encounter_date >= '#{latest_date}' AND t.encounter_date <= '#{latest_date}'
+            )
+        AND p.encounter_date = (
+            SELECT max(encounter_date) from pharmacy_obs t2
+            where t2.encounter_date = p.encounter_date AND t2.drug_id = p.drug_id
+            AND t2.pharmacy_encounter_type = #{encounter_type}
+            AND t2.encounter_date >= '#{latest_date}' AND t2.encounter_date <= '#{latest_date}'
+          ) LIMIT 1;"
+    ).last
+
     return [] if verified_stock.blank?
     return [verified_stock.value_numeric, verified_stock.encounter_date]
   end
