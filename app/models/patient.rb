@@ -383,4 +383,13 @@ def self.vl_result_hash(patient)
     inner join regimen r on r.concept_id = c.concept_id
     where c.concept_id = '#{hiv_regimen_map}' and  concept_name_type = 'short' limit 1").map{|regimen| regimen.reg_index}
   end
+
+  def date_started_art
+    amount_dispensed = ConceptName.find_by_name('Amount dispensed').concept_id
+    eal_dispension_date =  ActiveRecord::Base.connection.select_value("SELECT MIN(obs_datetime) 
+      FROM obs WHERE concept_id = #{amount_dispensed} AND person_id = #{self.patient_id}").to_date rescue nil
+
+    return  ActiveRecord::Base.connection.select_value("SELECT date_antiretrovirals_started(#{self.patient_id},
+      '#{eal_dispension_date.to_date.to_s}');") rescue nil
+  end
 end
