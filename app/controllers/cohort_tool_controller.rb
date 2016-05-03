@@ -1172,6 +1172,9 @@ class CohortToolController < GenericCohortToolController
   end
 
   def cohort
+    #a hack to make sure the cohort does not cache - runs a fresh report everytime the code runs
+		session[:cohort] = nil
+
     if params[:quarter] == 'Select date range'
       redirect_to :action => 'select_cohort_date' and return
     end

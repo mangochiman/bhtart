@@ -24,14 +24,14 @@ class GenericApplicationController < ActionController::Base
 	helper :all
 	helper_method :next_task
 	filter_parameter_logging :password
-	before_filter :authenticate_user!, :except => ['login', 'logout','remote_demographics',
+	before_filter :authenticate_user!, :except => ['login', 'logout','remote_demographics','art_stock_info',
 		                                      'create_remote', 'mastercard_printable', 'get_token',
 		                                      'cohort','demographics_remote', 'export_on_art_patients', 'art_summary',
                                           'art_summary_dispensation', 'print_rules', 'rule_variables', 'print','new_prescription',
                                           'search_for_drugs','mastercard_printable', 'remote_app_search','remotely_reassign_new_identifier', 'create_person_from_anc', 'create_person_from_dmht', 'find_person_from_dmht', 'reassign_remote_identifier'
                                           ]
 
-    before_filter :set_current_user, :except => ['login', 'logout','remote_demographics',
+    before_filter :set_current_user, :except => ['login', 'logout','remote_demographics','art_stock_info',
 		                                      'create_remote', 'mastercard_printable', 'get_token',
                                           'cohort','demographics_remote', 'export_on_art_patients', 'art_summary',
                                           'art_summary_dispensation', 'print_rules', 'rule_variables', 'print','new_prescription',
@@ -40,7 +40,7 @@ class GenericApplicationController < ActionController::Base
 
 	before_filter :location_required, :except => ['login', 'logout', 'location',
 		                                        'demographics','create_remote',
-		                                         'mastercard_printable',
+		                                         'mastercard_printable','art_stock_info',
 		                                        'remote_demographics', 'get_token',
                                             'cohort','demographics_remote', 'export_on_art_patients', 'art_summary',
                                             'art_summary_dispensation', 'print_rules', 'rule_variables', 'print','new_prescription',
