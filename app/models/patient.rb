@@ -390,6 +390,6 @@ def self.vl_result_hash(patient)
       FROM obs WHERE concept_id = #{amount_dispensed} AND person_id = #{self.patient_id}").to_date rescue nil
 
     return  ActiveRecord::Base.connection.select_value("SELECT date_antiretrovirals_started(#{self.patient_id},
-      '#{eal_dispension_date.to_date.to_s}');") rescue nil
+      '#{eal_dispension_date.to_date.to_s}');").to_date rescue nil
   end
 end
