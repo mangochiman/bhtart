@@ -101,7 +101,8 @@ class GenericSessionsController < ApplicationController
     end
     
     @list = @list.sort_by{|k, v|k}
-    
+
+    render :layout => false
   end
 
 	# Update the session with the location information
