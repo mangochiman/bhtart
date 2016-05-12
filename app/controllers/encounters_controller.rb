@@ -37,11 +37,11 @@ class EncountersController < GenericEncountersController
     @ask_staging = false
     @check_preart = false
     @normal_procedure = false
-      if @current_hiv_program_status == "Pre-ART (Continue)"
-        current_date = session[:datetime].to_date rescue Date.today
-        if params[:repeat].blank?       
+    if @current_hiv_program_status == "Pre-ART (Continue)"
+      current_date = session[:datetime].to_date rescue Date.today
+      if params[:repeat].blank?
 
-       last_staging_date = Encounter.find_by_sql("
+        last_staging_date = Encounter.find_by_sql("
          SELECT * FROM encounter
           WHERE patient_id = #{@patient.id} AND encounter_type = #{EncounterType.find_by_name('HIV Staging').id}
           AND encounter_datetime < '#{current_date}' AND voided=0 ORDER BY encounter_datetime DESC LIMIT 1").first.encounter_datetime.to_date rescue ""
@@ -53,19 +53,19 @@ class EncountersController < GenericEncountersController
         end
         #raise session["#{@patient.id}"]["#{current_date}"][:stage_patient].to_yaml
         #session["#{@patient.id}"]["#{current_date}"][:stage_patient] = []
-        else
-          session["#{@patient.id}"] = {}
-          session["#{@patient.id}"]["#{current_date}"] = {}
+      else
+        session["#{@patient.id}"] = {}
+        session["#{@patient.id}"]["#{current_date}"] = {}
           
-          if params[:repeat] == "no"
-           session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "Yes"
-          else
-           session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "No"
-          end
-         
-          @check_preart = true
+        if params[:repeat] == "no"
+          session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "Yes"
+        else
+          session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "No"
         end
-     end
+         
+        @check_preart = true
+      end
+    end
     
 		if (params[:from_anc] == 'true')
       bart_activities = ['Manage Vitals','Manage HIV clinic consultations',
@@ -307,9 +307,9 @@ class EncountersController < GenericEncountersController
     if (params[:encounter_type].upcase rescue '') == 'TB_CLINIC_VISIT'
       @remote_results = false
       if @patient.person.observations.to_s.match(/Tuberculosis smear result:  Yes/i)
-          if @patient.person.observations.to_s.match(/Moderately positive/i) or @patient.person.observations.to_s.match(/Strongly positive/i) or  @patient.person.observations.to_s.match(/Weakly positive/i)
-            @suspected = true
-          end
+        if @patient.person.observations.to_s.match(/Moderately positive/i) or @patient.person.observations.to_s.match(/Strongly positive/i) or  @patient.person.observations.to_s.match(/Weakly positive/i)
+          @suspected = true
+        end
         
       end
     end
@@ -483,6 +483,23 @@ class EncountersController < GenericEncountersController
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 
+    ######>>########## CERVICAL CANCER SCREENING##############################
+    @via_referred = false
+    @has_via_results = false
+    cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
+
+    cervical_cancer_encounters = @patient.encounters.find(:last, :conditions => ["encounter_type =?",
+        cervical_cancer_screening_encounter_type_id])
+    @via_referred = true unless cervical_cancer_encounters.blank?
+
+    
+    via_results_concept_id  = Concept.find_by_name("VIA Results").concept_id
+    
+    cervical_cancer_result_encounters = @patient.encounters.find(:last, :joins => [:observations], :conditions => ["encounter_type =? AND concept_id =?",
+        cervical_cancer_screening_encounter_type_id, via_results_concept_id])
+    @has_via_results = true unless cervical_cancer_result_encounters.blank?
+    
+    ###########################################################################
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
 		else
@@ -1541,9 +1558,9 @@ class EncountersController < GenericEncountersController
 			AND o.value_drug IN (SELECT drug_id FROM drug WHERE name regexp 'cotrimoxazole')
 			AND e.patient_id IN (#{@patient_ids.join(',')}) AND DATE(e.encounter_datetime) <= ?", @end_date.to_date]).collect{|e|
         PatientIdentifier.find(:last,
-                               :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
-                                               e.patient_id, PatientIdentifierType.find_by_name("National id").id,
-                                               @ids]).identifier}.uniq rescue []
+          :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
+            e.patient_id, PatientIdentifierType.find_by_name("National id").id,
+            @ids]).identifier}.uniq rescue []
     else
       cpt_ids = []
     end

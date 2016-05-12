@@ -1,5 +1,23 @@
-<script>
+<script type="text/javascript">
   var tt_cancel_destination = '/patients/show/<%=@patient.id%>';
+  var viaReferred = '<%= @via_referred %>';
+  var patientHasviaResults = '<%= @has_via_results %>';
+
+  function patientReferredAndHasNoresults(){
+    if (viaReferred == 'true' && patientHasviaResults == 'false'){
+      return true;
+    }
+
+    return false;
+  }
+
+  function viaNotReferred(){
+    if (viaReferred == 'true'){
+      return true;
+    }
+    return false;
+  }
+  
 </script>
 
 <form action='/encounters/create' method = 'post'>
@@ -11,6 +29,21 @@
   <%= touch_select_tag 'VIA REFERRAL', @patient, options_for_select(["", "Yes", "No"]),
     {:id => 'refer_to_via',
     :helpText => "Refer to VIA?",
+    :condition => "viaNotReferred() == true;",
+    :tt_pageStyleClass => "NoKeyboard"
+  } %>
+
+  <%= touch_select_tag 'VIA RESULTS AVAILABLE?', @patient, options_for_select(["", "Yes", "No"]),
+    {:id => 'results_available?',
+    :helpText => "Are the VIA results available?",
+    :condition => "patientReferredAndHasNoresults() == true;",
+    :tt_pageStyleClass => "NoKeyboard"
+  } %>
+
+  <%= touch_select_tag 'VIA RESULTS', @patient, options_for_select(["", "Negative", "Positive", "Suspect Cancer"]),
+    {:id => 'refer_to_via',
+    :helpText => "Record Results",
+    :condition => "__$('results_available?').value == 'Yes'",
     :tt_pageStyleClass => "NoKeyboard"
   } %>
 
