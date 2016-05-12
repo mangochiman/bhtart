@@ -488,15 +488,21 @@ class EncountersController < GenericEncountersController
     @has_via_results = false
     cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
 
-    cervical_cancer_encounters = @patient.encounters.find(:last, :conditions => ["encounter_type =?",
-        cervical_cancer_screening_encounter_type_id])
-    @via_referred = true unless cervical_cancer_encounters.blank?
-
+    via_referral_concept_id = Concept.find_by_name("VIA REFERRAL").concept_id
     
     via_results_concept_id  = Concept.find_by_name("VIA Results").concept_id
     
-    cervical_cancer_result_encounters = @patient.encounters.find(:last, :joins => [:observations], :conditions => ["encounter_type =? AND concept_id =?",
-        cervical_cancer_screening_encounter_type_id, via_results_concept_id])
+    via_referral_answer_string = Observation.find(:last, :joins => [:encounter],
+      :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+        @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
+    ).answer_string.squish.upcase
+
+    @via_referred = true if via_referral_answer_string == "YES"
+
+    cervical_cancer_result_encounters = Observation.find(:last, :joins => [:encounter],
+      :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+        @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id])
+
     @has_via_results = true unless cervical_cancer_result_encounters.blank?
     
     ###########################################################################
