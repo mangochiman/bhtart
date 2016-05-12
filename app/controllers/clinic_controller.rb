@@ -35,23 +35,23 @@ class ClinicController < GenericClinicController
 
   def administration
     @reports =  [
-                  ['/clinic/users','User accounts/settings'],
-                  ['/clinic/management','Drug Management'], 
-                  ['/clinic/location_management','Location Management']
-                ]
+      ['/clinic/users','User accounts/settings'],
+      ['/clinic/management','Drug Management'],
+      ['/clinic/location_management','Location Management']
+    ]
     @landing_dashboard = 'clinic_administration'
     render :template => 'clinic/administration', :layout => 'clinic' 
   end
 
   def data_cleaning_tab
     @reports = [
-                 ['Missing Prescriptions' , '/cohort_tool/select?report_type=dispensations_without_prescriptions'],
-                 ['Missing Dispensations' , '/cohort_tool/select?report_type=prescriptions_without_dispensations'],
-                 ['Multiple Start Reasons' , '/cohort_tool/select?report_type=patients_with_multiple_start_reasons'],
-                 ['Out of range ARV number' , '/cohort_tool/select?report_type=out_of_range_arv_number'],
-                 ['Data Consistency Check' , '/cohort_tool/select?report_type=data_consistency_check'],
-                 ['Incomplete Visits' , '/cohort_tool/select?report_type=incomplete_visit']
-               ] 
+      ['Missing Prescriptions' , '/cohort_tool/select?report_type=dispensations_without_prescriptions'],
+      ['Missing Dispensations' , '/cohort_tool/select?report_type=prescriptions_without_dispensations'],
+      ['Multiple Start Reasons' , '/cohort_tool/select?report_type=patients_with_multiple_start_reasons'],
+      ['Out of range ARV number' , '/cohort_tool/select?report_type=out_of_range_arv_number'],
+      ['Data Consistency Check' , '/cohort_tool/select?report_type=data_consistency_check'],
+      ['Incomplete Visits' , '/cohort_tool/select?report_type=incomplete_visit']
+    ]
     render :layout => false
   end
 
@@ -72,14 +72,16 @@ class ClinicController < GenericClinicController
         ["Show Lab Results", "/properties/creation?value=show_lab_results"],
         ["Enter Lab Results", "/properties/creation?value=enter_lab_results"],
         ["Set Appointment Limit", "/properties/set_appointment_limit"],
-				    ["Export Cohort Data", "/properties/export_cohort_data"],
+        ["Export Cohort Data", "/properties/export_cohort_data"],
         ["Extended Family Planning","/properties/creation?value=extended_family_planning"],
         ["Mailing List", "/properties/mailing_management"],
         ["Activate VL routine check", "/properties/creation?value=activate_viral_load_routine_check"],
         ["Activate Drug Management","/properties/creation?value=activate_drug_management"],
         ["Activate Hypertension Screening","/properties/creation?value=activate_hypertension_enhancement"],
         ["Set Hypertension Screening Age", "/properties/set_htn_age_threshold"],
-        ["Set Hypertension BP Thresholds", "/properties/set_htn_bp_thresholds"]
+        ["Set Hypertension BP Thresholds", "/properties/set_htn_bp_thresholds"],
+        ["Activate Cervical Cancel Screening", "/properties/creation?value=activate_cervical_cancer_screening"],
+
       ]
     else
       @settings = []
