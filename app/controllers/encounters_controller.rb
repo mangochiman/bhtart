@@ -495,7 +495,7 @@ class EncountersController < GenericEncountersController
     via_referral_answer_string = Observation.find(:last, :joins => [:encounter],
       :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
         @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
-    ).answer_string.squish.upcase
+    ).answer_string.squish.upcase rescue ""
 
     @via_referred = true if via_referral_answer_string == "YES"
 
