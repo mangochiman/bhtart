@@ -21,6 +21,8 @@
 </script>
 
 <form action='/encounters/create' method = 'post'>
+  <% month_names = month_name_options.gsub('<option value="Unknown">Unknown</option>', '') %>
+
   <%= hidden_field_tag "encounter[encounter_type_name]", "CERVICAL CANCER SCREENING" %>
   <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
   <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
@@ -41,10 +43,61 @@
   } %>
 
   <%= touch_select_tag 'VIA RESULTS', @patient, options_for_select(["", "Negative", "Positive", "Suspect Cancer"]),
-    {:id => 'refer_to_via',
+    {:id => 'via_results',
     :helpText => "Record Results",
     :condition => "__$('results_available?').value == 'Yes'",
     :tt_pageStyleClass => "NoKeyboard"
   } %>
 
+  <%= touch_select_tag 'POSITIVE CRYO', @patient, options_for_select(["", "Cryo Done", "Cryo Delayed", "Lesion Size too big"]),
+    {:id => 'positive_cryo',
+    :helpText => "Record Cryo Result",
+    :condition => "__$('via_results').value.match(/Positive/i)",
+    :tt_pageStyleClass => "NoKeyboard"
+  } %>
+
+
+  <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),
+    {
+    :id => "referral_outcome",
+    :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i)",
+    :helpText => "Do you want to capture Referral outcomes today?"
+  } %>
+
+  <%= touch_select_tag 'VIA REFERRAL OUTCOME', @patient, options_for_select(["", "Pre/Cancer Treated", "Cancer Untreatable", "No Cancer"]),
+    {:id => 'via_referral_outcome',
+    :helpText => "Select Referral Outcome",
+    :condition => "__$('referral_outcome').value.match(/YES/i)",
+    :tt_pageStyleClass => "NoKeyboard"
+  } %>
+
+
+  <!--
+  <%= text_field_tag "year", nil,
+    {
+    :id => 'year',
+    :helpText => 'Year Cryo Will Be Done',
+    :condition => "__$('positive_cryo').value.match(/Cryo DELAYED/i)",
+    :field_type => 'number',
+    :tt_pageStyleClass => "Numeric NumbersOnly"
+  }  %>
+
+  <%= select_tag "month", month_names,
+    {
+    :id => 'month',
+    :condition => "__$('year').value.length > 0",
+    :helpText => 'Month Cryo Will Be Done',
+    :tt_onLoad => "__$('keyboard').style.display = 'none'"
+  } %>
+
+  <%= text_field_tag "day",  nil,
+    {
+    :id => 'day',
+    :condition => "__$('month').value.length > 0",
+    :field_type => 'number',
+    :helpText => "Day Cryo Will Be Done"
+  } %>
+
+  <%= touch_hidden_tag("CRYO DELAYED DATE", @patient, "", options={:id => 'cryo_delayed_date'}) %>
+  -->
 </form>

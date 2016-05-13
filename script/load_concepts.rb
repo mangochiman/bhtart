@@ -1,6 +1,7 @@
 def load_concepts
   encounter_types = ["CERVICAL CANCER SCREENING"]
-  concept_names = ["VIA REFERRAL", "VIA Results", "VIA RESULTS AVAILABLE?"]
+  concept_names = ["VIA REFERRAL", "VIA Results", "VIA RESULTS AVAILABLE?", "POSITIVE CRYO",
+    "CRYO DELAYED DATE", "VIA REFERRAL OUTCOME"]
 
   encounter_types.each do |encounter_type_name|
     encounter_exists = EncounterType.find_by_name(encounter_type_name)
