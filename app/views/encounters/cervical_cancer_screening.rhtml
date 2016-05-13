@@ -17,7 +17,23 @@
     }
     return false;
   }
-  
+
+  function updateCryptoDate(){
+    year = __$('year').value;
+    month = __$('month').value;
+    day = __$("touchscreenInput" + tstCurrentPage).value;
+    if (parseInt(day) < 10){
+      day = '0' + day;
+    }
+    if (parseInt(month) < 10){
+      month = '0' + month;
+    }
+    
+    cryptoDate = day + '-' + month + '-' + year; // 01/Jan/2014
+    
+    __$('cryo_done_date').value = cryptoDate;
+  }
+
 </script>
 
 <form action='/encounters/create' method = 'post'>
@@ -56,28 +72,11 @@
     :tt_pageStyleClass => "NoKeyboard"
   } %>
 
-
-  <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),
-    {
-    :id => "referral_outcome",
-    :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i)",
-    :helpText => "Do you want to capture Referral outcomes today?"
-  } %>
-
-  <%= touch_select_tag 'VIA REFERRAL OUTCOME', @patient, options_for_select(["", "Pre/Cancer Treated", "Cancer Untreatable", "No Cancer"]),
-    {:id => 'via_referral_outcome',
-    :helpText => "Select Referral Outcome",
-    :condition => "__$('referral_outcome').value.match(/YES/i)",
-    :tt_pageStyleClass => "NoKeyboard"
-  } %>
-
-
-  <!--
   <%= text_field_tag "year", nil,
     {
     :id => 'year',
     :helpText => 'Year Cryo Will Be Done',
-    :condition => "__$('positive_cryo').value.match(/Cryo DELAYED/i)",
+    :condition => "__$('positive_cryo').value.match(/Cryo Done/i)",
     :field_type => 'number',
     :tt_pageStyleClass => "Numeric NumbersOnly"
   }  %>
@@ -95,9 +94,24 @@
     :id => 'day',
     :condition => "__$('month').value.length > 0",
     :field_type => 'number',
+    :tt_onUnLoad => "updateCryptoDate();",
     :helpText => "Day Cryo Will Be Done"
   } %>
 
-  <%= touch_hidden_tag("CRYO DELAYED DATE", @patient, "", options={:id => 'cryo_delayed_date'}) %>
-  -->
+  <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),
+    {
+    :id => "referral_outcome",
+    :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i)",
+    :helpText => "Do you want to capture Referral outcomes today?"
+  } %>
+
+  <%= touch_select_tag 'VIA REFERRAL OUTCOME', @patient, options_for_select(["", "Pre/Cancer Treated", "Cancer Untreatable", "No Cancer"]),
+    {:id => 'via_referral_outcome',
+    :helpText => "Select Referral Outcome",
+    :condition => "__$('referral_outcome').value.match(/YES/i)",
+    :tt_pageStyleClass => "NoKeyboard"
+  } %>
+
+  <%= touch_hidden_tag("CRYO DONE DATE", @patient, "", {:id => 'cryo_done_date'}) %>
+
 </form>
