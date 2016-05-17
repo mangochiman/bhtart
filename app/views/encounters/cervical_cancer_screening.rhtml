@@ -75,7 +75,7 @@
   <%= text_field_tag "year", nil,
     {
     :id => 'year',
-    :helpText => 'Year Cryo Will Be Done',
+    :helpText => 'Year Cryo Was Done',
     :condition => "__$('positive_cryo').value.match(/Cryo Done/i)",
     :field_type => 'number',
     :tt_pageStyleClass => "Numeric NumbersOnly"
@@ -85,7 +85,7 @@
     {
     :id => 'month',
     :condition => "__$('year').value.length > 0",
-    :helpText => 'Month Cryo Will Be Done',
+    :helpText => 'Month Cryo Was Done',
     :tt_onLoad => "__$('keyboard').style.display = 'none'"
   } %>
 
@@ -95,7 +95,7 @@
     :condition => "__$('month').value.length > 0",
     :field_type => 'number',
     :tt_onUnLoad => "updateCryptoDate();",
-    :helpText => "Day Cryo Will Be Done"
+    :helpText => "Day Cryo Was Done"
   } %>
 
   <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),

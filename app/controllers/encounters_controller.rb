@@ -491,6 +491,8 @@ class EncountersController < GenericEncountersController
     via_referral_concept_id = Concept.find_by_name("VIA REFERRAL").concept_id
     
     via_results_concept_id  = Concept.find_by_name("VIA Results").concept_id
+
+    cryo_done_date_concept_id = Concept.find_by_name("CRYO DONE DATE").concept_id
     
     via_referral_answer_string = Observation.find(:last, :joins => [:encounter],
       :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
@@ -499,12 +501,48 @@ class EncountersController < GenericEncountersController
 
     @via_referred = true if via_referral_answer_string == "YES"
 
-    cervical_cancer_result_encounters = Observation.find(:last, :joins => [:encounter],
+    latest_via_results_obs_date = Observation.find(:last, :joins => [:encounter],
       :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
-        @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id])
+        @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id]
+    ).obs_datetime.to_date rescue nil
 
-    @has_via_results = true unless cervical_cancer_result_encounters.blank?
+    cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+      :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+        @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, latest_via_results_obs_date])
+
+    @has_via_results = true unless cervical_cancer_result_obs.blank?
     
+    latest_cervical_cancer_result =  cervical_cancer_result_obs.answer_string.squish.upcase rescue nil
+
+    three_years = 365 * 3
+    one_year = 365
+
+    unless latest_cervical_cancer_result.blank?
+        
+      obs_date = cervical_cancer_result_obs.obs_datetime.to_date
+      date_gone_in_days = (Date.today - obs_date).to_i #Total days Between Two Dates
+      if latest_cervical_cancer_result == 'NEGATIVE'
+        if date_gone_in_days >= three_years
+          @via_referred = false
+        end
+      end
+      
+      cryo_done_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, cryo_done_date_concept_id,
+          latest_via_results_obs_date])
+ 
+      unless cryo_done_cancer_result_obs.blank?
+        cryo_done_date = cryo_done_cancer_result_obs.answer_string.squish.to_date
+        date_gone_after_cryo_is_done = (Date.today - cryo_done_date).to_i #Total days Between Two Dates
+        if (date_gone_after_cryo_is_done >= one_year)
+          @via_referred = false
+        end
+      end
+
+    end
+
+
     ###########################################################################
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
