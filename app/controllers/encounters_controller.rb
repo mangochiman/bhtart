@@ -486,6 +486,10 @@ class EncountersController < GenericEncountersController
     ######>>########## CERVICAL CANCER SCREENING##############################
     @via_referred = false
     @has_via_results = false
+    @remaining_days = 0
+    @terminal = false
+    terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
+    
     cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
 
     via_referral_concept_id = Concept.find_by_name("VIA REFERRAL").concept_id
@@ -517,10 +521,12 @@ class EncountersController < GenericEncountersController
         @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id, latest_via_results_obs_date])
 
     latest_via_referral_outcome = via_referral_outcome_obs.answer_string.squish.upcase rescue nil
-    
+    @latest_via_referral_outcome = latest_via_referral_outcome
+
     @has_via_results = true unless cervical_cancer_result_obs.blank?
     
     latest_cervical_cancer_result =  cervical_cancer_result_obs.answer_string.squish.upcase rescue nil
+    @latest_cervical_cancer_result = latest_cervical_cancer_result
 
     three_years = 365 * 3
     one_year = 365
@@ -530,6 +536,7 @@ class EncountersController < GenericEncountersController
       obs_date = cervical_cancer_result_obs.obs_datetime.to_date
       date_gone_in_days = (Date.today - obs_date).to_i #Total days Between Two Dates
       if latest_cervical_cancer_result == 'NEGATIVE'
+        @remaining_days = three_years - date_gone_in_days
         if date_gone_in_days >= three_years
           @via_referred = false
         end
@@ -543,6 +550,7 @@ class EncountersController < GenericEncountersController
       unless cryo_done_cancer_result_obs.blank?
         cryo_done_date = cryo_done_cancer_result_obs.answer_string.squish.to_date
         date_gone_after_cryo_is_done = (Date.today - cryo_done_date).to_i #Total days Between Two Dates
+        @remaining_days = one_year - date_gone_after_cryo_is_done
         if (date_gone_after_cryo_is_done >= one_year)
           @via_referred = false
         end
@@ -552,6 +560,8 @@ class EncountersController < GenericEncountersController
         if latest_via_referral_outcome == 'NO CANCER'
           via_referral_outcome_obs_date = via_referral_outcome_obs.obs_datetime.to_date
           date_gone_after_referral_outcome_is_done = (Date.today - via_referral_outcome_obs_date).to_i #Total days Between Two Dates
+          @remaining_days = three_years - date_gone_after_referral_outcome_is_done
+          
           if (date_gone_after_referral_outcome_is_done >= three_years)
             @via_referred = false
           end
@@ -560,6 +570,18 @@ class EncountersController < GenericEncountersController
       
     end
 
+    via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
+      :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+        @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
+    ).collect{|o|o.answer_string.squish.upcase}
+    
+
+    via_referral_outcome_answers.each do |outcome|
+      if terminal_referral_outcomes.include?(outcome)
+        @terminal = true
+        break
+      end
+    end
 
     ###########################################################################
 		if PatientIdentifier.site_prefix == "MPC"
