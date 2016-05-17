@@ -493,7 +493,9 @@ class EncountersController < GenericEncountersController
     via_results_concept_id  = Concept.find_by_name("VIA Results").concept_id
 
     cryo_done_date_concept_id = Concept.find_by_name("CRYO DONE DATE").concept_id
-    
+
+    via_referral_outcome_concept_id = Concept.find_by_name("VIA REFERRAL OUTCOME").concept_id
+
     via_referral_answer_string = Observation.find(:last, :joins => [:encounter],
       :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
         @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
@@ -510,6 +512,12 @@ class EncountersController < GenericEncountersController
       :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
         @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, latest_via_results_obs_date])
 
+    via_referral_outcome_obs = Observation.find(:last, :joins => [:encounter],
+      :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+        @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id, latest_via_results_obs_date])
+
+    latest_via_referral_outcome = via_referral_outcome_obs.answer_string.squish.upcase rescue nil
+    
     @has_via_results = true unless cervical_cancer_result_obs.blank?
     
     latest_cervical_cancer_result =  cervical_cancer_result_obs.answer_string.squish.upcase rescue nil
@@ -540,6 +548,16 @@ class EncountersController < GenericEncountersController
         end
       end
 
+      unless latest_via_referral_outcome.blank?
+        if latest_via_referral_outcome == 'NO CANCER'
+          via_referral_outcome_obs_date = via_referral_outcome_obs.obs_datetime.to_date
+          date_gone_after_referral_outcome_is_done = (Date.today - via_referral_outcome_obs_date).to_i #Total days Between Two Dates
+          if (date_gone_after_referral_outcome_is_done >= three_years)
+            @via_referred = false
+          end
+        end
+      end
+      
     end
 
 

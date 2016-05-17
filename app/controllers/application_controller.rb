@@ -59,6 +59,40 @@ class ApplicationController < GenericApplicationController
       end
     end
 
+    if cervical_cancer_screening_activated
+      patient_bean = PatientService.get_patient(patient.person)
+      age = patient_bean.age
+      sex = patient_bean.sex.upcase
+      if sex == 'FEMALE' && (age >= 15 && age <= 50)
+        cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
+        via_referral_outcome_concept_id = Concept.find_by_name("VIA REFERRAL OUTCOME").concept_id
+
+        terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
+
+        via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
+          :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+            patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
+        ).collect{|o|o.answer_string.squish.upcase}
+        terminal = false
+
+        via_referral_outcome_answers.each do |outcome|
+          if terminal_referral_outcomes.include?(outcome)
+            terminal = true
+            break
+          end
+        end
+
+        if terminal == true
+          #Don't go to cervical screening cancer
+        else
+          if task.encounter_type.match(/TREATMENT/i)
+            task.encounter_type = "Cervical Cancer Screening"
+            task.url = "/encounters/new/cervical_cancer_screening?patient_id=#{patient.id}"
+          end
+        end
+      end
+    end
+
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
 
       patient_is_htn_client = htn_client?(patient)
@@ -1460,6 +1494,10 @@ class ApplicationController < GenericApplicationController
 
   def vl_routine_check_activated
     GlobalProperty.find_by_property("activate.vl.routine.check").property_value.to_s == "true" rescue false
+  end
+
+  def cervical_cancer_screening_activated
+    GlobalProperty.find_by_property("activate.cervical.cancer.screening").property_value.to_s == "true" rescue false
   end
 
   def patient_present(patient_id, date = Date.today)
