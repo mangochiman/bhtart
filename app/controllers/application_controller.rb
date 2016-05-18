@@ -66,7 +66,13 @@ class ApplicationController < GenericApplicationController
       if sex == 'FEMALE' && (age >= 15 && age <= 50)
         cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
         via_referral_outcome_concept_id = Concept.find_by_name("VIA REFERRAL OUTCOME").concept_id
+        via_referral_concept_id = Concept.find_by_name("VIA REFERRAL").concept_id
 
+        todays_cervical_cancer_encounter = Encounter.find(:last, :conditions => ["patient_id =? AND
+          encounter_type =? AND DATE(encounter_datetime) =?", patient.id,
+            cervical_cancer_screening_encounter_type_id, Date.today]
+        )
+        
         terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
 
         via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
@@ -86,9 +92,11 @@ class ApplicationController < GenericApplicationController
           #Don't go to cervical screening cancer
         else
           if !(session[:cervical_cancer_patient].to_i == patient.id)
-            if task.encounter_type.match(/TREATMENT/i)
-              task.encounter_type = "Cervical Cancer Screening"
-              task.url = "/encounters/new/cervical_cancer_screening?patient_id=#{patient.id}"
+            if todays_cervical_cancer_encounter.blank?
+              if task.encounter_type.match(/TREATMENT/i)
+                task.encounter_type = "Cervical Cancer Screening"
+                task.url = "/encounters/new/cervical_cancer_screening?patient_id=#{patient.id}"
+              end
             end
           end
         end

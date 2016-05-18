@@ -534,11 +534,26 @@ class EncountersController < GenericEncountersController
     unless latest_cervical_cancer_result.blank?
         
       obs_date = cervical_cancer_result_obs.obs_datetime.to_date
+      next_via_date = obs_date + three_years.days
       date_gone_in_days = (Date.today - obs_date).to_i #Total days Between Two Dates
       if latest_cervical_cancer_result == 'NEGATIVE'
         @remaining_days = three_years - date_gone_in_days
         if date_gone_in_days >= three_years
           @via_referred = false
+          @has_via_results = false
+          next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
+            :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+              @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
+          unless next_via_referral_obs.blank?
+            if (next_via_referral_obs.answer_string.squish.upcase == 'YES')
+              @via_referred = true
+            end
+          end
+
+          next_cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+            :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+              @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, next_via_date])
+          @has_via_results = true unless next_cervical_cancer_result_obs.blank?
         end
       end
       
@@ -567,7 +582,8 @@ class EncountersController < GenericEncountersController
           end
         end
       end
-      
+
+
     end
 
     via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
@@ -583,6 +599,7 @@ class EncountersController < GenericEncountersController
       end
     end
 
+    #raise @has_via_results.inspect
     ###########################################################################
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
