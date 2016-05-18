@@ -2,7 +2,8 @@
   var tt_cancel_destination = '/patients/show/<%=@patient.id%>';
   var viaReferred = '<%= @via_referred %>';
   var patientHasviaResults = '<%= @has_via_results %>';
-
+  var patientID = '<%=@patient.id%>';
+ 
   function patientReferredAndHasNoresults(){
     if (viaReferred == 'true' && patientHasviaResults == 'false'){
       return true;
@@ -37,13 +38,24 @@
   function changeAttributes(){
     __$('nextButton').innerHTML = '<span>Continue</span>';
     __$('nextButton').onmousedown = function(){
-      alert("here")
+      ContinueWorkFlow();
     }
     __$('backButton').style.display = 'none';
     __$('clearButton').style.display = 'none';
     __$('cancelButton').style.display = 'none';
     __$('keyboard').style.display = 'none';
     __$('inputFrame0').style.display = 'none';
+  }
+
+  function ContinueWorkFlow(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/set_cervical_cancer_session_variable",
+      data: "patient_id=" + patientID,
+      success: function(nextUrl){
+        window.location = nextUrl;
+      }
+    });
   }
 
 </script>
@@ -78,7 +90,7 @@
     helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. And she is no longer eligible for Cervical Cancer Screening"
   else
     helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. You are reminded to refer the patient
-  back to VIA after <b>#{@remaining_days}</b> days"
+    back to VIA after <b>#{@remaining_days}</b> days"
   end
 
 %>

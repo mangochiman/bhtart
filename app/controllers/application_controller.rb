@@ -85,9 +85,11 @@ class ApplicationController < GenericApplicationController
         if terminal == true
           #Don't go to cervical screening cancer
         else
-          if task.encounter_type.match(/TREATMENT/i)
-            task.encounter_type = "Cervical Cancer Screening"
-            task.url = "/encounters/new/cervical_cancer_screening?patient_id=#{patient.id}"
+          if !(session[:cervical_cancer_patient].to_i == patient.id)
+            if task.encounter_type.match(/TREATMENT/i)
+              task.encounter_type = "Cervical Cancer Screening"
+              task.url = "/encounters/new/cervical_cancer_screening?patient_id=#{patient.id}"
+            end
           end
         end
       end
