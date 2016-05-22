@@ -21,8 +21,8 @@
   }
 
   function updateCryptoDate(){
-    year = __$('year').value;
-    month = __$('month').value;
+    year = __$('cryo_year').value;
+    month = __$('cryo_month').value;
     day = __$("touchscreenInput" + tstCurrentPage).value;
     if (parseInt(day) < 10){
       day = '0' + day;
@@ -60,6 +60,12 @@
   }
 
 </script>
+
+<style type="text/css">
+  #tt_page_month_cryo_was_done .options{height:515px;}
+  #tt_page_month_cryo_was_done .options li{font-size:30px;}
+  .tt_page_day_cryo_was_done #Unknown { display:none; }
+</style>
 
 <% if @via_referred && @has_via_results && !@lesion_size_too_big%>
   <style>
@@ -141,27 +147,27 @@
       :tt_pageStyleClass => "NoKeyboard"
     } %>
 
-    <%= text_field_tag "year", nil,
+    <%= text_field_tag "cryo_year", nil,
       {
-      :id => 'year',
+      :id => 'cryo_year',
       :helpText => 'Year Cryo Was Done',
       :condition => "__$('positive_cryo').value.match(/Cryo Done/i)",
       :field_type => 'number',
       :tt_pageStyleClass => "Numeric NumbersOnly"
     }  %>
 
-    <%= select_tag "month", month_names,
+    <%= select_tag "cryo_month", month_names,
       {
-      :id => 'month',
-      :condition => "__$('year').value.length > 0",
+      :id => 'cryo_month',
+      :condition => "__$('cryo_year').value.length > 0",
       :helpText => 'Month Cryo Was Done',
       :tt_onLoad => "__$('keyboard').style.display = 'none'"
     } %>
 
-    <%= text_field_tag "day",  nil,
+    <%= text_field_tag "cryo_day",  nil,
       {
-      :id => 'day',
-      :condition => "__$('month').value.length > 0",
+      :id => 'cryo_day',
+      :condition => "__$('cryo_month').value.length > 0",
       :field_type => 'number',
       :tt_onUnLoad => "updateCryptoDate();",
       :helpText => "Day Cryo Was Done"
