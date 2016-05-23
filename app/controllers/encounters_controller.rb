@@ -920,6 +920,8 @@ class EncountersController < GenericEncountersController
         arvs_given = true
         break
       end
+
+      auto_expire_date = recalculation_auto_expire_date(orders_made, auto_expire_date)
 		else
 			auto_expire_date = orders_made.sort_by(&:auto_expire_date).first.auto_expire_date.to_date
       regimen_type_concept = ConceptName.find_by_name("TB REGIMEN TYPE").concept_id
@@ -963,7 +965,7 @@ class EncountersController < GenericEncountersController
                                                                                 
     hanging_pills_duration = ((total_brought_to_clinic)/order.drug_order.equivalent_daily_dose).to_i
                                                                                 
-    expire_date = order.auto_expire_date + hanging_pills_duration.days        
+    expire_date = auto_expire_date + hanging_pills_duration.days        
                                                                                 
     calculated_expire_date = expire_date.to_date if expire_date.to_date > calculated_expire_date
 
@@ -982,7 +984,55 @@ class EncountersController < GenericEncountersController
 		buffer = 0 if !arvs_given
 		return auto_expire_date - buffer.days
 	end
-	
+
+  def recalculation_auto_expire_date(orders, auto_expire_date)
+=begin
+  This block of code is making sure we add the exact number of days in months by 
+  using the Rails way of adding months to a given dat.
+  So if for example the given auto_expire_date date is first of January 2016
+  and the dispensed date is the 1st of January 2016 then, a month from the 
+  first the date will be 1st of Febuary 2016 not 28th of January 
+=end
+    smallest_expire_date = nil
+    (orders || []).each do |order|
+      if smallest_expire_date.blank?
+        smallest_expire_date = [order.start_date.to_date, order.auto_expire_date.to_date]
+      else
+        if smallest_expire_date.last > order.auto_expire_date.to_date
+          smallest_expire_date = [order.start_date.to_date, order.auto_expire_date.to_date]
+        end
+      end
+    end
+
+    return auto_expire_date if smallest_expire_date.blank?
+    exp_date = smallest_expire_date.last
+    dispensed_date = smallest_expire_date.first
+
+    duration = (exp_date - dispensed_date).to_i
+
+    case duration
+      when 28
+        return (dispensed_date + 1.month)
+      when 58
+        return (dispensed_date + 2.month)
+      when 86
+        return (dispensed_date + 3.month)
+      when 114
+        return (dispensed_date + 4.month)
+      when 142
+        return (dispensed_date + 5.month)
+      when 170
+        return (dispensed_date + 6.month)
+      when 198
+        return (dispensed_date + 7.month)
+      when 226
+        return (dispensed_date + 8.month)
+      else
+        return auto_expire_date
+    end
+
+  end
+  	
   def bookings_within_range(end_date = nil)
     clinic_days = GlobalProperty.find_by_property("clinic.days")
     clinic_days = clinic_days.property_value.split(',') rescue 'Monday,Tuesday,Wednesday,Thursday,Friday'.split(',')
