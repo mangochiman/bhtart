@@ -22,6 +22,14 @@ if params[:from] == 'clinic'%>
   }
 
 
+  function displayStocks(){
+    document.getElementById("stock_level_graph").style.display = '';
+  }
+
+  function hideStock(){
+    document.getElementById("stock_level_graph").style.display = 'none';
+  }
+
 </script>
 
 <style type="text/css">
@@ -36,24 +44,42 @@ if params[:from] == 'clinic'%>
 
   iframe{
     position: absolute;
-    padding-left: 20px;
+    padding-left: 10px;
     z-index: 900;
-    width: 96%;
-    top: 150px;
-    height: 460px;
+    width: 98%;
+    top: 0px;
+    height: 86%;
     border: none;
   }
 
+  #tt_page_current_stock_level .inputFrameClass, #tt_page_current_stock_level .helpTextClass{
+    display: none !important;
+  }
+
+  /*#graph{
+    position: absolute;
+    top: 200px;
+    margin-top: 100px;
+}*/
 </style>
 
 <form id='sessions' action="/sessions/update" method='post'>
   <label for="location">Location</label>
   <%= text_field_tag(:location, nil, :helpText => "Workstation location",
     :field_type => "number",
-    :tt_onLoad => "inform();__$('keyboard').style.display = 'none'; displayStocks();") %><br>
-  <%= submit_tag :value => "Submit" %>
-</form>
+    :tt_onLoad => "inform();__$('keyboard').style.display = 'none';") %>
+  <% if @activate_drug_management %>
+    <%= text_field_tag(:stock_level, nil, :helpText => "Current Stock Level",
+      :id => "current_stock_level",
+      :optional => "true",
+      :tt_onLoad => "__$('keyboard').style.display = 'none'; displayStocks();",
+      :tt_onUnload => "hideStock();") %>
 
-<% if @activate_drug_management %>
-  <iframe  src="/sessions/stock_levels_graph"></iframe>
+    <%= submit_tag :value => "Submit" %>
+  </form>
+
+  <div style="display: none;" id="stock_level_graph">
+
+    <iframe  src="/sessions/stock_levels_graph"></iframe>
+  </div>
 <% end %>

@@ -89,6 +89,10 @@ class GenericPeopleController < ApplicationController
 
     patient = nil
     if create_from_dde_server
+      address2 = (params["patient"]["birthplace"] rescue nil)
+      city_village = (params["patientaddress"]["city_village"] rescue nil)
+      county_district = (params["current_ta"]["identifier"] rescue nil)
+      state_province = (params["p_address"]["identifier"] rescue nil)
 
       passed_params = {"region" => "" ,
 				"person"=>{"occupation"=> params["occupation"] ,
@@ -98,12 +102,12 @@ class GenericPeopleController < ApplicationController
           "office_phone_number"=> params['office_phone']['identifier'] || nil,
 					"birth_month"=> params["patient_month"],
 				 "addresses"=>
-            {"state_province"=> params["addresses"]["state_province"],
-            "address2"=> params["addresses"]["address2"],
-            "address1"=> params["addresses"]["address1"],
-            "neighborhood_cell"=> params["addresses"]["neighborhood_cell"],
-            "city_village"=> params["addresses"]["city_village"],
-            "county_district"=> params["addresses"]["county_district"]},
+            {"state_province"=> (params["addresses"]["state_province"] rescue state_province),
+            "address2"=> (params["addresses"]["address2"] rescue address2),
+            "address1"=> (params["addresses"]["address1"] rescue nil),
+            "neighborhood_cell"=> (params["addresses"]["neighborhood_cell"] rescue nil),
+            "city_village"=> (params["addresses"]["city_village"] rescue city_village),
+            "county_district"=> (params["addresses"]["county_district"] rescue county_district)},
 					"gender"=>  params["patient"]["gender"],
 					"patient"=>"",
 					"birth_day"=>  params["patient_day"] ,
