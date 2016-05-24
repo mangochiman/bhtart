@@ -355,7 +355,7 @@ class EncountersController < GenericEncountersController
 						encounter = Encounter.find(encounter.id, :include => [:observations])
 						for obs in encounter.observations do
 							if obs.concept_id == ConceptName.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id
-								@currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
+								#@currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
 							end
 
 							if obs.concept_id == ConceptName.find_by_name("FAMILY PLANNING METHOD").concept_id
@@ -372,6 +372,15 @@ class EncountersController < GenericEncountersController
         |o|o.answer_string.squish.upcase
       }
       @terminal_family_planning_method = true if patient_family_planning_methods.include?("TUBAL LIGATION")
+  
+      latest_visit_date = Encounter.find_by_sql("SELECT MAX(encounter_datetime) as encounter_datetime FROM encounter WHERE patient_id = #{@patient.id} AND
+        voided = 0 AND DATE(encounter_datetime) < '#{session_date}'").last.encounter_datetime.to_date rescue nil
+
+      latest_family_planning_method_question = @patient.person.observations.question("CURRENTLY USING FAMILY PLANNING METHOD").find(:last,
+        :conditions => ["DATE(obs_datetime) = ?", latest_visit_date], :order => "obs_datetime ASC"
+      ).answer_string.squish.upcase rescue nil
+      @currently_using_family_planning_methods = latest_family_planning_method_question if latest_family_planning_method_question == 'YES'
+
     end
 
 		if CoreService.get_global_property_value('use.normal.staging.questions').to_s == "true"

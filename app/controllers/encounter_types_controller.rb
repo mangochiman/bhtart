@@ -9,7 +9,7 @@ class EncounterTypesController < GenericEncounterTypesController
     @encounter_privilege_hash = {}
 
     @encounter_privilege_map.each do |encounter_privilege|
-        @encounter_privilege_hash[encounter_privilege.split(":").last.squish.humanize] = encounter_privilege.split(":").first.squish.humanize
+      @encounter_privilege_hash[encounter_privilege.split(":").last.squish.humanize] = encounter_privilege.split(":").first.squish.humanize
     end
 
     roles_for_the_user = []
@@ -27,18 +27,28 @@ class EncounterTypesController < GenericEncounterTypesController
 
     @available_encounter_types = ((@available_encounter_types) - ((@available_encounter_types - roles_for_the_user) + (roles_for_the_user - @available_encounter_types)))
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true" && patient_present(Patient.find(params[:patient_id]), (session[:datetime].to_date rescue Date.today)) && htn_client?(Patient.find(params[:patient_id]))
-     @available_encounter_types << "BP Management"
+      @available_encounter_types << "BP Management"
     end
     @available_encounter_types = @available_encounter_types.sort
 
   end
 
   def show
-   if params["encounter_type"].downcase == "bp management"
-    redirect_to "/htn_encounter/bp_management?#{params.to_param}" and return
-   else
-    redirect_to "/encounters/new/#{params["encounter_type"].downcase.gsub(/ /,"_")}?#{params.to_param}" and return
-   end
+    patient = Patient.find(params[:patient_id])
+    if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
+      if params[:encounter_type].downcase == "vitals"
+        session_date = session[:datetime].to_date rescue Date.today
+        task = main_next_task(Location.current_location, patient, session_date)
+        htn_workflow = check_htn_workflow(patient, task)
+        redirect_to htn_workflow.url and return
+      end
+    end
+
+    if params["encounter_type"].downcase == "bp management"
+      redirect_to "/htn_encounter/bp_management?#{params.to_param}" and return
+    else
+      redirect_to "/encounters/new/#{params["encounter_type"].downcase.gsub(/ /,"_")}?#{params.to_param}" and return
+    end
 
   end
 
