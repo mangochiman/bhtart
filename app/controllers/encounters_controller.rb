@@ -876,24 +876,72 @@ class EncountersController < GenericEncountersController
 		dispensed_date = session[:datetime].to_date rescue Date.today
 		expiry_date = prescription_expiry_date(@patient, dispensed_date)
 		
-		#if the patient is a child (age 14 or less) and the peads clinic days are set - we
-		#use the peads clinic days to set the next appointment date		
-		peads_clinic_days = CoreService.get_global_property_value('peads.clinic.days')
-				
-		if (@patient_bean.age <= 14 && !peads_clinic_days.blank?)
-			clinic_days = peads_clinic_days
-		else
-			clinic_days = CoreService.get_global_property_value('clinic.days') || 'Monday,Tuesday,Wednesday,Thursday,Friday'		
-		end
-		clinic_days = clinic_days.split(',')		
-
-		bookings = bookings_within_range(expiry_date)
-    
-		clinic_holidays = CoreService.get_global_property_value('clinic.holidays') 
-		clinic_holidays = clinic_holidays.split(',').map{|day|day.to_date}.join(',').split(',') rescue []
-		
-		return suggested_date(expiry_date ,clinic_holidays, bookings, clinic_days)
+		return revised_suggested_date(expiry_date)
 	end
+
+  def revised_suggested_date(expiry_date)
+    clinic_appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
+    peads_clinic_days = CoreService.get_global_property_value('peads.clinic.days')
+    if (@patient_bean.age <= 14 && !peads_clinic_days.blank?)
+      clinic_days = peads_clinic_days
+    else
+      clinic_days = CoreService.get_global_property_value('clinic.days') || 'Monday,Tuesday,Wednesday,Thursday,Friday'
+    end
+    clinic_days = clinic_days.split(',')
+
+
+    clinic_holidays = CoreService.get_global_property_value('clinic.holidays')
+    clinic_holidays = clinic_holidays.split(',').map{|day|day.to_date.strftime('%d %B')}.join(',').split(',') rescue []
+
+    recommended_date = expiry_date.to_date;
+
+    start_date = (expiry_date - 5.day).strftime('%Y-%m-%d 00:00:00')
+    end_date = expiry_date.strftime('%Y-%m-%d 23:59:59')
+
+    encounter_type = EncounterType.find_by_name('APPOINTMENT')
+    concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
+
+    appointments = {} ; sdate = (expiry_date.to_date + 1.day)
+    1.upto(5).each do |num|
+      appointments[(sdate - num.day)] = 0
+    end
+
+    Observation.find_by_sql("SELECT value_datetime appointment_date, count(value_datetime) AS count FROM obs
+      INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
+      AND encounter_type = #{encounter_type.id} AND value_datetime BETWEEN '#{start_date}'
+      AND '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime").each do |appointment|
+      appointments[appointment.appointment_date.to_date] = appointment.count.to_i
+    end
+
+    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+      next unless clinic_days.include?(date.to_date.strftime('%A'))
+      next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
+
+      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
+        return date
+      end
+    end
+
+=begin
+    the following block of code will only run if the recommended date is full
+    Its a hack, we need to find a better way of cleaning up the code but it works :)
+=end
+    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+      next unless clinic_days.include?(date.to_date.strftime('%A'))
+      next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
+
+      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
+        return date
+      else
+        recommended_date = date
+        if count < clinic_appointment_limit
+          break
+        end
+      end
+    end
+
+    return recommended_date
+  end
 	
 	def prescription_expiry_date(patient, dispensed_date)
     session_date = dispensed_date.to_date
