@@ -1,0 +1,198 @@
+<script type="text/javascript">
+  var tt_cancel_destination = '/patients/show/<%=@patient.id%>';
+  var viaReferred = '<%= @via_referred %>';
+  var patientHasviaResults = '<%= @has_via_results %>';
+  var patientID = '<%=@patient.id%>';
+  var lesionSizeTooBig = '<%= @lesion_size_too_big %>';
+
+  function patientReferredAndHasNoresults(){
+    if (viaReferred == 'true' && patientHasviaResults == 'false'){
+      return true;
+    }
+
+    return false;
+  }
+
+  function viaNotReferred(){
+    if (viaReferred != 'true'){
+      return true;
+    }
+    return false;
+  }
+
+  function updateCryptoDate(){
+    year = __$('cryo_year').value;
+    month = __$('cryo_month').value;
+    day = __$("touchscreenInput" + tstCurrentPage).value;
+    if (parseInt(day) < 10){
+      day = '0' + day;
+    }
+    if (parseInt(month) < 10){
+      month = '0' + month;
+    }
+    
+    cryptoDate = day + '-' + month + '-' + year; // 01/Jan/2014
+    
+    __$('cryo_done_date').value = cryptoDate;
+  }
+
+  function changeAttributes(){
+    __$('nextButton').innerHTML = '<span>Continue</span>';
+    __$('nextButton').onmousedown = function(){
+      ContinueWorkFlow();
+    }
+    __$('backButton').style.display = 'none';
+    __$('clearButton').style.display = 'none';
+    __$('cancelButton').style.display = 'none';
+    __$('keyboard').style.display = 'none';
+    __$('inputFrame0').style.display = 'none';
+  }
+
+  function ContinueWorkFlow(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/set_cervical_cancer_session_variable",
+      data: "patient_id=" + patientID,
+      success: function(nextUrl){
+        window.location = nextUrl;
+      }
+    });
+  }
+
+</script>
+
+<style type="text/css">
+  #tt_page_month_cryo_was_done .options{height:515px;}
+  #tt_page_month_cryo_was_done .options li{font-size:30px;}
+  .tt_page_day_cryo_was_done #Unknown { display:none; }
+</style>
+
+<% if @via_referred && @has_via_results && !@lesion_size_too_big%>
+  <style>
+    #helpText0{
+      position: absolute;
+      text-align: center;
+    }
+
+    #helpText0 {
+      position: absolute;
+      text-align: center;
+    }
+    .helpTextClass {
+      -moz-user-select: none;
+      font-size: 2em;
+      padding-left: 0px;
+      padding-top: 35px;
+      width: 90%;
+      left: 35px;
+    }
+  </style>
+
+  <%
+
+  unless @latest_via_referral_outcome.blank?
+    @latest_cervical_cancer_result = @latest_cervical_cancer_result.to_s + " - " + @latest_via_referral_outcome
+  end
+  if @terminal == true
+    helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. And she is no longer eligible for Cervical Cancer Screening"
+  else
+    helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. You are reminded to refer the patient
+    back to VIA after <b>#{@remaining_days}</b> days"
+  end
+
+%>
+  <form action="#" >
+    <%= text_field_tag "info", nil,
+      {
+      :tt_onLoad => "changeAttributes();",
+      :optional => "true",
+      :tt_pageStyleClass => "NoControls",
+      :helpText => "#{helpText}" } %>
+  </form>
+
+<% else %>
+  <form action='/encounters/create' method = 'post'>
+    <% month_names = month_name_options.gsub('<option value="Unknown">Unknown</option>', '') %>
+
+    <%= hidden_field_tag "encounter[encounter_type_name]", "CERVICAL CANCER SCREENING" %>
+    <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
+    <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
+    <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
+
+    <%= touch_select_tag 'VIA REFERRAL', @patient, options_for_select(["", "Yes", "No"]),
+      {:id => 'refer_to_via',
+      :helpText => "This patient is elligible for VIA. Refer to VIA?",
+      :condition => "viaNotReferred() == true;",
+      :tt_pageStyleClass => "NoKeyboard"
+    } %>
+
+    <%= touch_select_tag 'VIA RESULTS AVAILABLE?', @patient, options_for_select(["", "Yes", "No"]),
+      {:id => 'results_available?',
+      :helpText => "Are the VIA results available?",
+      :condition => "patientReferredAndHasNoresults() == true;",
+      :tt_pageStyleClass => "NoKeyboard"
+    } %>
+
+    <%= touch_select_tag 'VIA RESULTS', @patient, options_for_select(["", "Negative", "Positive", "Suspect Cancer"]),
+      {:id => 'via_results',
+      :helpText => "Record Results",
+      :condition => "__$('results_available?').value == 'Yes'",
+      :tt_pageStyleClass => "NoKeyboard"
+    } %>
+
+    <%= touch_select_tag 'POSITIVE CRYO', @patient, options_for_select(["", "Cryo Done", "Cryo Delayed", "Lesion Size too big"]),
+      {:id => 'positive_cryo',
+      :helpText => "Record Cryo Result",
+      :condition => "__$('via_results').value.match(/Positive/i)",
+      :tt_pageStyleClass => "NoKeyboard"
+    } %>
+
+    <%= text_field_tag "cryo_year", nil,
+      {
+      :id => 'cryo_year',
+      :helpText => 'Year Cryo Was Done',
+      :condition => "__$('positive_cryo').value.match(/Cryo Done/i)",
+      :field_type => 'number',
+      :tt_pageStyleClass => "Numeric NumbersOnly"
+    }  %>
+
+    <%= select_tag "cryo_month", month_names,
+      {
+      :id => 'cryo_month',
+      :condition => "__$('cryo_year').value.length > 0",
+      :helpText => 'Month Cryo Was Done',
+      :tt_onLoad => "__$('keyboard').style.display = 'none'"
+    } %>
+
+    <%= text_field_tag "cryo_day",  nil,
+      {
+      :id => 'cryo_day',
+      :condition => "__$('cryo_month').value.length > 0",
+      :field_type => 'number',
+      :tt_onUnLoad => "updateCryptoDate();",
+      :helpText => "Day Cryo Was Done"
+    } %>
+
+    <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),
+      {
+      :id => "referral_outcome",
+      :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i) || __$('lesion_size_too_big').value.match(/TRUE/i)",
+      :helpText => "Do you want to capture Referral outcomes today?"
+    } %>
+
+    <%= touch_select_tag 'VIA REFERRAL OUTCOME', @patient, options_for_select(["", "Pre/Cancer Treated", "Cancer Untreatable", "No Cancer"]),
+      {:id => 'via_referral_outcome',
+      :helpText => "Select Referral Outcome",
+      :condition => "__$('referral_outcome').value.match(/YES/i)",
+      :tt_pageStyleClass => "NoKeyboard"
+    } %>
+
+    <%= touch_hidden_tag("CRYO DONE DATE", @patient, "", {:id => 'cryo_done_date'}) %>
+
+    <% if @lesion_size_too_big == true%>
+      <%= hidden_field_tag("lesion_size_too_big", "true", {:id => 'lesion_size_too_big'}) %>
+    <% else %>
+      <%= hidden_field_tag("lesion_size_too_big", "false", {:id => 'lesion_size_too_big'}) %>
+    <% end %>
+  </form>
+<% end %>
