@@ -327,8 +327,8 @@
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Export Cohort Data</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt">&nbsp;</td>
-          <td id="number" style="text-align:center">Change</td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @export_cohort_data_property %></td>
+          <td id="number" style="text-align:center" onclick="changeProperty('/properties/export_cohort_data')">Change</td>
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Extended Family Planning</td>
@@ -337,22 +337,22 @@
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Mailing List</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt">&nbsp;</td>
-          <td id="number" style="text-align:center">Change</td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @mailing_members.join("<br />") || 'Not Se'%></td>
+          <td id="number" style="text-align:center" onclick="changeProperty('/properties/mailing_management')">Change</td>
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Set Appointment Limit</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt">&nbsp;</td>
-          <td id="number" style="text-align:center">Change</td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @appointment_limit_property %> </td>
+          <td id="number" style="text-align:center" onclick="changeProperty('/properties/set_appointment_limit')">Change</td>
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Set Clinic Days</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt">&nbsp;</td>
-          <td id="number" style="text-align:center">Change</td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @clinic_days.join("<br />") || "Not Set" %></td>
+          <td id="number" style="text-align:center" onclick="changeProperty('/properties/clinic_days')">Change</td>
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Set Clinic Holidays</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt">&nbsp;</td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @clinic_holidays.join("<br />") || "Not Set" %></td>
           <td id="number" style="text-align:center">Change</td>
         </tr>
         <tr>
@@ -362,17 +362,17 @@
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Set Hypertension Screen Age</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @htn_screening_age_property %></td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @htn_screening_age_property || "Not Set"%></td>
           <td id="number" style="text-align:center" onclick="changeProperty('/properties/set_htn_age_threshold')">Change</td>
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Set Site Code</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @site_code_property %></td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= (@site_code_property || "Not Set") %></td>
           <td id="number" style="text-align:center" onclick="changeProperty('properties/site_code')">Change</td>
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Set Filing Limit</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @filing_number_property %></td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @filing_number_property || "Not Set"%></td>
           <td id="number" style="text-align:center" onclick="changeProperty('/properties/filing_number')">Change</td>
         </tr>
         <tr>
@@ -387,13 +387,13 @@
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Use Filing Numbers</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt">&nbsp;</td>
-          <td id="number" style="text-align:center">Change</td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @use_filing_number_property %></td>
+          <td id="number" style="text-align:center" onclick="changeProperty('/properties/creation?value=use_filing_numbers')">Change</td>
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Use User Selected Tasks</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt">&nbsp;</td>
-          <td id="number" style="text-align:center">Change</td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @use_user_selected_activities_property %></td>
+          <td id="number" style="text-align:center" onclick="changeProperty('/properties/creation?value=use_user_selected_activities')">Change</td>
         </tr>
 
       </tbody>
