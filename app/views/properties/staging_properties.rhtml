@@ -5,4 +5,9 @@
 <form id='staging_options' action="staging_options" method='post'>
   <%=  select_tag "staging_options", options_for_select(staging_options),{
   :helpText  => "Staging Options"} %>
+
+  <% unless params[:view_configuration].blank? %>
+    <%= hidden_field_tag "view_configuration", params[:view_configuration] %>
+  <% end %>
+  
 </form>>

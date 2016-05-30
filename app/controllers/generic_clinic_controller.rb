@@ -228,10 +228,10 @@ class GenericClinicController < ApplicationController
     @current_location = Location.current_health_center.name
     @cervical_cancer_property = GlobalProperty.find_by_property("activate.cervical.cancer.screening").property_value.to_s == "true"rescue "Not Set"
     @drug_management_property = GlobalProperty.find_by_property("activate.drug.management").property_value.to_s == "true" rescue "Not Set"
-    @hypertension_management_property = GlobalProperty.find_by_property("activate.hypertension.enhancement").property_value.to_s == "true" rescue "Not Set"
-    @vl_management_property = GlobalProperty.find_by_property("activate.viral_load.routine_check").property_value.to_s == "true" rescue "Not Set"
+    @hypertension_management_property = GlobalProperty.find_by_property("activate.htn.enhancement").property_value.to_s == "true" rescue "Not Set"
+    @vl_management_property = GlobalProperty.find_by_property("activate.vl.routine.check").property_value.to_s == "true" rescue "Not Set"
     @ask_pills_property = GlobalProperty.find_by_property("ask.pills.remaining.at.home").property_value.to_s == "true" rescue "Not Set"
-    @confirm_before_creating_property = GlobalProperty.find_by_property("confirm.before.creating.a.patient").property_value.to_s == "true" rescue "Not Set"
+    @confirm_before_creating_property = GlobalProperty.find_by_property("confirm.before.creating").property_value.to_s == "true" rescue "Not Set"
     @enter_lab_results_property = GlobalProperty.find_by_property("enter.lab.results").property_value.to_s == "true" rescue "Not Set"
     
     @export_cohort_data_property = (session["export.cohort.data"].downcase == "yes" rescue 'Not Set')
