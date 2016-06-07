@@ -16,7 +16,7 @@ class GenericPropertiesController < ApplicationController
       flash[:notice] = 'Date(s) successfully created.'
       redirect_to '/properties/clinic_holidays' and return
 		else
-    redirect_to '/properties/set_clinic_holidays' and return
+      redirect_to '/properties/set_clinic_holidays' and return
 		end
   end
 
@@ -80,28 +80,28 @@ class GenericPropertiesController < ApplicationController
     all_members = GlobalProperty.find_by_property("mailing.members") rescue []
    
     if ! all_members.blank?
-        all_members.property_value = all_members.property_value.gsub("#{member};", "")
-        all_members.save
+      all_members.property_value = all_members.property_value.gsub("#{member};", "")
+      all_members.save
     end
     redirect_to "/properties/mailing_management" and return
   end
 
   def disable_mail
-   enable = GlobalProperty.find_by_property("enable.mailing") rescue nil
-   if enable.blank?
-     nabled = GlobalProperty.new()
-     nabled.property = "enable.mailing"
-     nabled.property_value = "false"
-     nabled.save
-   else
-     if enable.property_value == "true"
-       enable.property_value = "false"
-     else
-       enable.property_value = "true"
-     end
-     enable.save
-   end
-   redirect_to "/properties/mailing_management" and return
+    enable = GlobalProperty.find_by_property("enable.mailing") rescue nil
+    if enable.blank?
+      nabled = GlobalProperty.new()
+      nabled.property = "enable.mailing"
+      nabled.property_value = "false"
+      nabled.save
+    else
+      if enable.property_value == "true"
+        enable.property_value = "false"
+      else
+        enable.property_value = "true"
+      end
+      enable.save
+    end
+    redirect_to "/properties/mailing_management" and return
   end
 
   def new_mail
@@ -109,15 +109,15 @@ class GenericPropertiesController < ApplicationController
       members = GlobalProperty.find_by_property("mailing.members") rescue nil
       #raise members.property_value.to_yaml
       if members.blank?
-         list = GlobalProperty.new()
-         list.property = "mailing.members"
-         list.property_value = "#{params[:first_name]}:#{params[:last_name]}:#{params[:email]};"
-         list.save
+        list = GlobalProperty.new()
+        list.property = "mailing.members"
+        list.property_value = "#{params[:first_name]}:#{params[:last_name]}:#{params[:email]};"
+        list.save
       else
         members.property_value = "#{members.property_value}#{params[:first_name]}:#{params[:last_name]}:#{params[:email]};"
         members.save
       end
-       redirect_to "/properties/mailing_management" and return
+      redirect_to "/properties/mailing_management" and return
       #raise members.to_yaml
     end
   end
@@ -129,6 +129,10 @@ class GenericPropertiesController < ApplicationController
       location = Location.find(Location.current_health_center.id)
       location.neighborhood_cell = params[:site_code]
       if location.save
+        if params[:view_configuration]
+          redirect_to("/clinic/system_configurations") and return
+        end
+      
         redirect_to "/clinic" and return  # /properties
       else
         flash[:error] = "Site code not created.  (#{params[:site_code]})"
@@ -148,6 +152,9 @@ class GenericPropertiesController < ApplicationController
       appointment_limit.property_value = params[:appointment_limit]
       appointment_limit.save 
       # redirect_to "/clinic/properties" and return
+      if params[:view_configuration]
+        redirect_to("/clinic/system_configurations") and return
+      end
       redirect_to "/clinic" and return
     end
   end
@@ -181,7 +188,7 @@ class GenericPropertiesController < ApplicationController
   def selected_roles
     render :text => "<li>" + RolePrivilege.find(:all, 
       :conditions =>["role = ?", params[:role]]).collect { |r|
-        r.privilege.privilege
+      r.privilege.privilege
     }.uniq.join("</li><li>") + "</li>"
   end
 
@@ -191,7 +198,10 @@ class GenericPropertiesController < ApplicationController
       global_property.property = params[:property]
       global_property.property_value = (params[:property_value].downcase == "yes").to_s
       global_property.save
-      redirect_to '/clinic'
+      if params[:view_configuration]
+        redirect_to("/clinic/system_configurations") and return
+      end
+      redirect_to '/clinic' and return
     end
   end
 
