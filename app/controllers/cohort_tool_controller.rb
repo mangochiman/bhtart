@@ -1442,16 +1442,18 @@ class CohortToolController < GenericCohortToolController
     type = "patients_with_adherence_greater_than_hundred"
     @type = type
     @report_type = "Adherence Histogram for all patients"
-    #@adherence_summary = "&nbsp;&nbsp;<button onclick='adhSummary();'>Summary</button>" unless adherences.blank?
-    #@adherence_summary+="<input class='test_name' type=\"button\" onmousedown=\"document.location='/cohort_tool/reports?report=#{@quarter}&report_type=#{type}';\" value=\"Over 100% Adherence\"/>"  unless adherences.blank?
     @adherence_summary_hash = Hash.new(0)
     adherences.each{|adherence,value|
       adh_value = value.to_i
       current_adh = adherence.to_i
-      if current_adh <= 94
-        @adherence_summary_hash["0 - 94"]+= adh_value
-      elsif current_adh >= 95 and current_adh <= 100
+      if current_adh >= 95 and current_adh <= 100
         @adherence_summary_hash["95 - 100"]+= adh_value
+      elsif current_adh >= 50 and current_adh <= 94
+        @adherence_summary_hash["50 - 94"]+= adh_value
+      elsif current_adh >= 25 and current_adh < 50
+        @adherence_summary_hash["25 - 49"]+= adh_value
+      elsif current_adh >= 0 and current_adh <= 24
+        @adherence_summary_hash["0 - 24"]+= adh_value
       else current_adh > 100
         @adherence_summary_hash["> 100"]+= adh_value
       end
@@ -1468,7 +1470,7 @@ class CohortToolController < GenericCohortToolController
     @results = @results.each {|result| result[0] = result[0]}.sort_by{|result| result[0]}
     @results.each{|result| @graph_max = result[1].to_f if result[1].to_f > (@graph_max || 0)}
     @graph_max ||= 0
-    render :layout => "report"
+    render :layout => false #"report"
   end
 
   def patients_with_adherence_greater_than_hundred
