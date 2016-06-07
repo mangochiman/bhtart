@@ -1,17 +1,17 @@
 <style>
-    #space { display:inline; font-size:1.2em; }
+  #space { display:inline; font-size:1.2em; }
 
-    #tt_page_identifier .touchscreenTextInput {
-        top: 46px;
-    }
-    .options {
-        display:none;
-    }
+  #tt_page_identifier .touchscreenTextInput {
+    top: 46px;
+  }
+  .options {
+    display:none;
+  }
 
 </style>
 
 <script>
-    var tt_cancel_destination = "/clinic"; // /properties/"
+  var tt_cancel_destination = "/clinic"; // /properties/"
 </script>
 
 <form method='post' action='/properties/set_htn_bp_thresholds'>
@@ -30,4 +30,8 @@
          min = 10
          max = 250
          tt_pageStyleClass = "Numeric NumbersOnly"/>
+
+  <% unless params[:view_configuration].blank? %>
+    <%= hidden_field_tag "view_configuration", params[:view_configuration] %>
+  <% end %>
 </form>

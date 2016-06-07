@@ -22,4 +22,8 @@
          min = 10
          max = 250
          tt_pageStyleClass = "Numeric NumbersOnly"/>
+
+  <% unless params[:view_configuration].blank? %>
+    <%= hidden_field_tag "view_configuration", params[:view_configuration] %>
+  <% end %>
 </form>

@@ -47,4 +47,9 @@
   <%= hidden_field_tag "property", property %>
 
   <%= hidden_field_tag "property_value", nil %>
+
+  <% unless params[:view_configuration].blank? %>
+    <%= hidden_field_tag "view_configuration", params[:view_configuration] %>
+  <% end %>
+
 <%end%>
