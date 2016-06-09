@@ -1836,7 +1836,7 @@ class EncountersController < GenericEncountersController
       cpt_ids = Encounter.find_by_sql(["SELECT * FROM encounter e
 			INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
 			INNER JOIN patient_identifier i ON e.patient_id = i.patient_id AND i.voided = 0
-      AND i.identifier_type = #{nationa_id_identifier_type} AND i.identifier IN(#{@ids})
+      AND i.identifier_type = #{nationa_id_identifier_type} AND i.identifier IN(#{@id_string})
 			WHERE e.encounter_type = (#{dispensing_encounter_type})
 			AND o.value_drug IN (#{cpt_drug_id.join(',')})
 			AND e.patient_id IN (#{@patient_ids.join(',')}) AND 
