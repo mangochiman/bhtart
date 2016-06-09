@@ -1797,35 +1797,50 @@ class EncountersController < GenericEncountersController
     @patient_ids = []
     b4_visit_one = []
     no_art = []
+ 
+    nationa_id_identifier_type = PatientIdentifierType.find_by_name('National id').id 
     
-    PatientProgram.find_by_sql("SELECT e.patient_id, f.identifier, e.earliest_start_date,
-      current_state_for_program(e.patient_id, 1, '#{@end_date}') AS state
-			FROM earliest_start_date e
-			JOIN person p ON p.person_id = e.patient_id
-            JOIN patient_identifier f ON f.patient_id = p.person_id
-      AND f.identifier_type = (SELECT patient_identifier_type_id FROM patient_identifier_type
-      WHERE name = 'National id') AND f.identifier IN (#{@id_string})
-			WHERE p.gender regexp 'F'
-			HAVING state = 7").each do | patient |
-      @patient_ids << patient.patient_id
-      idf = patient.identifier
-      result["#{idf}"] = patient.earliest_start_date
-      if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
-        b4_visit_one << idf
-      end
+    PatientProgram.find_by_sql("SELECT p.person_id patient_id, f.identifier, 
+      earliest_start_date_at_clinic(p.person_id) earliest_start_date,
+      current_state_for_program(p.person_id, 1, '#{@end_date}') AS state
+			FROM person p 
+      INNER JOIN patient_identifier f ON f.patient_id = p.person_id
+      AND f.identifier_type = (#{nationa_id_identifier_type}) AND f.identifier IN (#{@id_string})
+			WHERE (p.gender = 'F' OR gender = 'Female') 
+      GROUP BY p.person_id").each do | patient |
+        @patient_ids << patient.patient_id
+        idf = patient.identifier
+        result["#{idf}"] = patient.earliest_start_date
+        if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
+          b4_visit_one << idf
+        end
     end
     no_art = @ids - result.keys
 
+    dispensing_encounter_type = EncounterType.find_by_name('DISPENSING').id
+    cpt_drug_id = Drug.find(:all, :conditions => ["name LIKE ?", "%Cotrimoxazole%"]).map(&:id)
+
     if @patient_ids.length > 0
+=begin
       cpt_ids = Encounter.find_by_sql(["SELECT e.patient_id, o.value_drug, e.encounter_type FROM encounter e
 			INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
-			WHERE e.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'DISPENSING')
-			AND o.value_drug IN (SELECT drug_id FROM drug WHERE name regexp 'cotrimoxazole')
-			AND e.patient_id IN (#{@patient_ids.join(',')}) AND DATE(e.encounter_datetime) <= ?", @end_date.to_date]).collect{|e|
+			WHERE e.encounter_type = (#{dispensing_encounter_type})
+			AND o.value_drug IN (#{cpt_drug_id.join(',')})
+			AND e.patient_id IN (#{@patient_ids.join(',')}) AND 
+      e.encounter_datetime <= ?", @end_date.to_date.strftime('%Y-%m-%d 23:59:59')]).collect{|e|
         PatientIdentifier.find(:last,
           :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
             e.patient_id, PatientIdentifierType.find_by_name("National id").id,
             @ids]).identifier}.uniq rescue []
+=end
+      cpt_ids = Encounter.find_by_sql(["SELECT * FROM encounter e
+			INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
+			INNER JOIN patient_identifier i ON e.patient_id = i.patient_id AND i.voided = 0
+      AND i.identifier_type = #{nationa_id_identifier_type} AND i.identifier IN(#{@ids})
+			WHERE e.encounter_type = (#{dispensing_encounter_type})
+			AND o.value_drug IN (#{cpt_drug_id.join(',')})
+			AND e.patient_id IN (#{@patient_ids.join(',')}) AND 
+      e.encounter_datetime <= ?", @end_date.to_date.strftime('%Y-%m-%d 23:59:59')]).map(&:identifier)
     else
       cpt_ids = []
     end
