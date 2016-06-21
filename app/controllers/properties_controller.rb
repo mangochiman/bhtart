@@ -109,17 +109,19 @@ class PropertiesController < GenericPropertiesController
     current_cervical_min_age  = GlobalProperty.find_by_property(cervical_cancer_min_age_property).property_value rescue '??'
     current_cervical_max_age  = GlobalProperty.find_by_property(cervical_cancer_max_age_property).property_value rescue '??'
 
-    age_limits = "<span style='color: orange; font-style: italic;'>Current Age Limit</span>: <span style='color: orange; font-weight: bold;'>#{current_cervical_min_age.to_s + ' ' + current_cervical_max_age}</span>"
-    daily_referral_limit = "<span style='color: orange; font-style: italic;'>Daily Limit is </span> <span style='color: orange; font-weight: bold;'>#{current_daily_referral_limit}</span>"
+    age_limits = "<span style='color: orange; font-style: italic;'>Current Age Limit</span> : <span style='color: orange; font-weight: bold;'>#{current_cervical_min_age.to_s + ' to ' + current_cervical_max_age}</span>"
+    daily_referral_limit = "<span style='color: orange; font-style: italic;'>Current Daily Limit is </span> <span style='color: orange; font-weight: bold;'>#{current_daily_referral_limit}</span>"
 
     @reports =  [
       ["/properties/set_cervical_cancer_age_limits","Set Age Limit (#{age_limits})"],
       ['/properties/set_daily_referral_limit',"Set Daily Referral Limit (#{daily_referral_limit})"]
     ]
     if !cervical_cancer_property
-      @reports << ['/properties/activate_cervical_cancer_screening_module','Activate']
+      status = "<span style='color: orange; font-style: italic;'>Status </span>: <span style='color: orange; font-weight: bold;'>DEACTIVATED</span>"
+      @reports << ['/properties/activate_cervical_cancer_screening_module',"Activate (#{status})"]
     else
-      @reports << ['/properties/deativate_cervical_cancer','Deactivate']
+      status = "<span style='color: orange; font-style: italic;'>Status </span>: <span style='color: orange; font-weight: bold;'>ACTIVATED</span>"
+      @reports << ['/properties/deativate_cervical_cancer',"Deactivate #{status}"]
     end
     # render :layout => 'clinic'
     render :template => 'properties/cervical_cancer_module_properties', :layout => false
