@@ -98,4 +98,92 @@ class PropertiesController < GenericPropertiesController
       redirect_to "/clinic" and return
     end
   end
+
+  def cervical_cancer_module_properties
+    cervical_cancer_min_age_property = "cervical.cancer.min.age"
+    cervical_cancer_max_age_property = "cervical.cancer.max.age"
+    daily_referral_limit_concept = "cervical.cancer.daily.referral.limit"
+    current_daily_referral_limit = GlobalProperty.find_by_property(daily_referral_limit_concept).property_value rescue '??'
+
+    cervical_cancer_property = (CoreService.get_global_property_value('activate.cervical.cancer.screening') == "true")
+    current_cervical_min_age  = GlobalProperty.find_by_property(cervical_cancer_min_age_property).property_value rescue '??'
+    current_cervical_max_age  = GlobalProperty.find_by_property(cervical_cancer_max_age_property).property_value rescue '??'
+
+    age_limits = "<span style='color: orange; font-style: italic;'>Current Age Limit</span>: <span style='color: orange; font-weight: bold;'>#{current_cervical_min_age.to_s + ' ' + current_cervical_max_age}</span>"
+    daily_referral_limit = "<span style='color: orange; font-style: italic;'>Daily Limit is </span> <span style='color: orange; font-weight: bold;'>#{current_daily_referral_limit}</span>"
+
+    @reports =  [
+      ["/properties/set_cervical_cancer_age_limits","Set Age Limit (#{age_limits})"],
+      ['/properties/set_daily_referral_limit',"Set Daily Referral Limit (#{daily_referral_limit})"]
+    ]
+    if !cervical_cancer_property
+      @reports << ['/properties/activate_cervical_cancer_screening_module','Activate']
+    else
+      @reports << ['/properties/deativate_cervical_cancer','Deactivate']
+    end
+    # render :layout => 'clinic'
+    render :template => 'properties/cervical_cancer_module_properties', :layout => false
+  end
+
+  def activate_cervical_cancer_screening_module
+    cervical_cancer_screening_property = "activate.cervical.cancer.screening"
+    global_property = GlobalProperty.find_by_property(cervical_cancer_screening_property) || GlobalProperty.new()
+    global_property.property = cervical_cancer_screening_property
+    global_property.property_value = "true"
+    global_property.save
+    redirect_to "/clinic" and return
+  end
+
+  
+  def deativate_cervical_cancer
+    cervical_property = GlobalProperty.find_by_property('activate.cervical.cancer.screening')
+    cervical_property.delete if cervical_property
+    redirect_to "/clinic" and return
+  end
+
+  def set_cervical_cancer_age_limits
+    cervical_cancer_min_age_property = "cervical.cancer.min.age"
+    cervical_cancer_max_age_property = "cervical.cancer.max.age"
+    @global_property_min = GlobalProperty.find_by_property(cervical_cancer_min_age_property).property_value rescue ""
+    @global_property_max = GlobalProperty.find_by_property(cervical_cancer_max_age_property).property_value rescue ""
+    
+    if request.post?
+      min_age = params[:min_age].to_i
+      max_age = params[:max_age].to_i
+
+      if max_age < min_age
+        flash[:notice] = "Max age is greater than min age"
+        redirect_to("/properties/set_cervical_cancer_age_limits") and return
+      end
+
+      ActiveRecord::Base.transaction do
+        global_property_min = GlobalProperty.find_by_property(cervical_cancer_min_age_property) || GlobalProperty.new()
+        global_property_min.property = cervical_cancer_min_age_property
+        global_property_min.property_value = min_age
+        global_property_min.save
+
+        global_property_max = GlobalProperty.find_by_property(cervical_cancer_max_age_property) || GlobalProperty.new()
+        global_property_max.property = cervical_cancer_max_age_property
+        global_property_max.property_value = max_age
+        global_property_max.save
+      end
+
+      redirect_to '/clinic' and return
+    end
+  end
+
+  def set_daily_referral_limit
+    daily_referral_limit_concept = "cervical.cancer.daily.referral.limit"
+    @global_property_referral_limit = GlobalProperty.find_by_property(daily_referral_limit_concept).property_value rescue ""
+    
+    if request.post?
+      global_property_daily_referral_limit = GlobalProperty.find_by_property(daily_referral_limit_concept) || GlobalProperty.new()
+      global_property_daily_referral_limit.property = daily_referral_limit_concept
+      global_property_daily_referral_limit.property_value = params[:daily_referral_limit]
+      global_property_daily_referral_limit.save     
+      redirect_to '/clinic' and return
+    end
+    
+  end
+  
 end
