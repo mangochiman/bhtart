@@ -527,7 +527,8 @@ class EncountersController < GenericEncountersController
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
       ).answer_string.squish.upcase rescue ""
 
-      @cervical_cancer_first_visit_patient = false unless via_referral_answer_string.blank?
+      cervical_cancer_first_visit_question = @patient.person.observations.recent(1).question("EVER HAD VIA?")
+      @cervical_cancer_first_visit_patient = false unless cervical_cancer_first_visit_question.blank?
       @via_referred = true if via_referral_answer_string == "YES"
 
       latest_via_results_obs_date = Observation.find(:last, :joins => [:encounter],
@@ -655,6 +656,21 @@ class EncountersController < GenericEncountersController
 
       end
 
+      #>>>>>>>>>VIA DONE LOGIC>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      @via_results_expired = true
+
+      via_done_date_answer_string = @patient.person.observations.recent(1).question("VIA DONE DATE").last.answer_string.squish.to_date rescue nil
+      unless via_done_date_answer_string.blank?
+        #@cervical_cancer_first_visit_patient = false
+        days_gone_after_via_done = (Date.today - via_done_date_answer_string).to_i #Total days Between Two Dates
+        if (days_gone_after_via_done < three_years)
+          @via_referred = true
+          @via_results_expired = false
+          @remaining_days = three_years - days_gone_after_via_done
+        end
+      end
+
+      #>>>>>>>>VIA LOGIC END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
@@ -668,6 +684,7 @@ class EncountersController < GenericEncountersController
         end
       end
     end
+
     ###########################################################################
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"

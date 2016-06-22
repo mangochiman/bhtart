@@ -127,8 +127,7 @@
   .tt_page_day_cryo_was_done #Unknown { display:none; }
   #tt_page_month_via_was_done .options{height:515px;}
 </style>
-
-<% if @via_referred && @has_via_results && !@lesion_size_too_big%>
+<% if @via_results_expired == false %>
   <style>
     #helpText0{
       position: absolute;
@@ -152,17 +151,8 @@
   </style>
 
   <%
-
-  unless @latest_via_referral_outcome.blank?
-    @latest_cervical_cancer_result = @latest_cervical_cancer_result.to_s + " - " + @latest_via_referral_outcome
-  end
-  if @terminal == true
-    helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. And she is no longer eligible for Cervical Cancer Screening"
-  else
-    helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. You are reminded to refer the patient
-    back to VIA after <b>#{@remaining_days}</b> days"
-  end
-
+  helpText = "Patient has retrospective results from less than three years ago."
+  helpText += " Therefore she can only be referred to VIA after <b>#{@remaining_days}</b> days"
 %>
   <form action="#" >
     <%= text_field_tag "info", nil,
@@ -172,120 +162,170 @@
       :tt_pageStyleClass => "NoControls",
       :helpText => "#{helpText}" } %>
   </form>
-
 <% else %>
-  <form action='/encounters/create' method = 'post'>
-    <% month_names = month_name_options.gsub('<option value="Unknown">Unknown</option>', '') %>
 
-    <%= hidden_field_tag "encounter[encounter_type_name]", "CERVICAL CANCER SCREENING" %>
-    <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
-    <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
-    <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
 
-    <%= touch_select_tag 'EVER HAD VIA?', @patient, options_for_select(["", "Yes", "No"]),
-      {:id => 'ever_had_via',
-      :helpText => "Ever had VIA?",
-      :condition => "cervicalFirstVisitPatient() == true;",
-      :tt_pageStyleClass => "NoKeyboard"
-    } %>
 
-    <%= text_field_tag "via_year", nil,
-      {
-      :id => 'via_year',
-      :helpText => 'Year VIA Was Done',
-      :condition => "__$('ever_had_via').value.match(/YES/i)",
-      :field_type => 'number',
-      :tt_pageStyleClass => "Numeric NumbersOnly"
-    }  %>
+  <% if @via_referred && @has_via_results && !@lesion_size_too_big%>
+    <style>
+      #helpText0{
+        position: absolute;
+        text-align: center;
+      }
 
-    <%= select_tag "via_month", month_names,
-      {
-      :id => 'via_month',
-      :condition => "__$('via_year').value.length > 0",
-      :helpText => 'Month VIA Was Done',
-      :tt_onLoad => "__$('keyboard').style.display = 'none'",
-      :tt_onUnLoad => "updateVIAdoneDate();"
-    } %>
+      #helpText0 {
+        position: absolute;
+        text-align: center;
+      }
 
-    <%= touch_select_tag 'VIA REFERRAL', @patient, options_for_select(["", "Yes", "No"]),
-      {:id => 'refer_to_via',
-      :helpText => "This patient is elligible for VIA. Refer to VIA?",
-      :condition => "viaNotReferred() == true && patientVIAwithinThreeYears() == false;",
-      :tt_pageStyleClass => "NoKeyboard"
-    } %>
+      .helpTextClass {
+        -moz-user-select: none;
+        font-size: 2em;
+        padding-left: 0px;
+        padding-top: 35px;
+        width: 90%;
+        left: 35px;
+      }
 
-    <%= touch_select_tag 'VIA RESULTS AVAILABLE?', @patient, options_for_select(["", "Yes", "No"]),
-      {:id => 'results_available?',
-      :helpText => "Are the VIA results available?",
-      :condition => "patientReferredAndHasNoresults() == true;",
-      :tt_pageStyleClass => "NoKeyboard"
-    } %>
+    </style>
 
-    <%= touch_select_tag 'VIA RESULTS', @patient, options_for_select(["", "Negative", "Positive", "Suspect Cancer"]),
-      {:id => 'via_results',
-      :helpText => "Record Results",
-      :condition => "__$('results_available?').value == 'Yes'",
-      :tt_pageStyleClass => "NoKeyboard"
-    } %>
+    <%
 
-    <%= touch_select_tag 'POSITIVE CRYO', @patient, options_for_select(["", "Cryo Done", "Cryo Delayed", "Lesion Size too big"]),
-      {:id => 'positive_cryo',
-      :helpText => "Record Cryo Result",
-      :condition => "__$('via_results').value.match(/Positive/i)",
-      :tt_pageStyleClass => "NoKeyboard"
-    } %>
+    unless @latest_via_referral_outcome.blank?
+      @latest_cervical_cancer_result = @latest_cervical_cancer_result.to_s + " - " + @latest_via_referral_outcome
+    end
+    if @terminal == true
+      helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. And she is no longer eligible for Cervical Cancer Screening"
+    else
+      helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. You are reminded to refer the patient
+      back to VIA after <b>#{@remaining_days}</b> days"
+    end
 
-    <%= text_field_tag "cryo_year", nil,
-      {
-      :id => 'cryo_year',
-      :helpText => 'Year Cryo Was Done',
-      :condition => "__$('positive_cryo').value.match(/Cryo Done/i)",
-      :field_type => 'number',
-      :tt_pageStyleClass => "Numeric NumbersOnly"
-    }  %>
+  %>
+    <form action="#" >
+      <%= text_field_tag "info", nil,
+        {
+        :tt_onLoad => "changeAttributes();",
+        :optional => "true",
+        :tt_pageStyleClass => "NoControls",
+        :helpText => "#{helpText}" } %>
+    </form>
 
-    <%= select_tag "cryo_month", month_names,
-      {
-      :id => 'cryo_month',
-      :condition => "__$('cryo_year').value.length > 0",
-      :helpText => 'Month Cryo Was Done',
-      :tt_onLoad => "__$('keyboard').style.display = 'none'"
-    } %>
+  <% else %>
+    <form action='/encounters/create' method = 'post'>
+      <% month_names = month_name_options.gsub('<option value="Unknown">Unknown</option>', '') %>
 
-    <%= text_field_tag "cryo_day",  nil,
-      {
-      :id => 'cryo_day',
-      :condition => "__$('cryo_month').value.length > 0",
-      :field_type => 'number',
-      :tt_onUnLoad => "updateCryptoDate();",
-      :helpText => "Day Cryo Was Done"
-    } %>
+      <%= hidden_field_tag "encounter[encounter_type_name]", "CERVICAL CANCER SCREENING" %>
+      <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
+      <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
+      <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
 
-    <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),
-      {
-      :id => "referral_outcome",
-      :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i) || __$('lesion_size_too_big').value.match(/TRUE/i)",
-      :helpText => "Do you want to capture Referral outcomes today?"
-    } %>
+      <%= touch_select_tag 'EVER HAD VIA?', @patient, options_for_select(["", "Yes", "No"]),
+        {:id => 'ever_had_via',
+        :helpText => "Ever had VIA?",
+        :condition => "cervicalFirstVisitPatient() == true;",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
 
-    <%= touch_select_tag 'VIA REFERRAL OUTCOME', @patient, options_for_select(["", "Pre/Cancer Treated", "Cancer Untreatable", "No Cancer"]),
-      {:id => 'via_referral_outcome',
-      :helpText => "Select Referral Outcome",
-      :condition => "__$('referral_outcome').value.match(/YES/i)",
-      :tt_pageStyleClass => "NoKeyboard"
-    } %>
+      <%= text_field_tag "via_year", nil,
+        {
+        :id => 'via_year',
+        :helpText => 'Year VIA Was Done',
+        :condition => "__$('ever_had_via').value.match(/YES/i)",
+        :field_type => 'number',
+        :tt_pageStyleClass => "Numeric NumbersOnly"
+      }  %>
 
-    <%= touch_hidden_tag("CRYO DONE DATE", @patient, "", {:id => 'cryo_done_date'}) %>
+      <%= select_tag "via_month", month_names,
+        {
+        :id => 'via_month',
+        :condition => "__$('via_year').value.length > 0",
+        :helpText => 'Month VIA Was Done',
+        :tt_onLoad => "__$('keyboard').style.display = 'none'",
+        :tt_onUnLoad => "updateVIAdoneDate();"
+      } %>
 
-    <% if @cervical_cancer_first_visit_patient == true %>
-      <%= touch_hidden_tag("VIA DONE DATE", @patient, "", {:id => 'via_done_date'}) %>
-    <% end %>
+      <%= touch_select_tag 'VIA REFERRAL', @patient, options_for_select(["", "Yes", "No"]),
+        {:id => 'refer_to_via',
+        :helpText => "This patient is elligible for VIA. Refer to VIA?",
+        :condition => "viaNotReferred() == true && patientVIAwithinThreeYears() == false;",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
 
-    <% if @lesion_size_too_big == true %>
-      <%= hidden_field_tag("lesion_size_too_big", "true", {:id => 'lesion_size_too_big'}) %>
-    <% else %>
-      <%= hidden_field_tag("lesion_size_too_big", "false", {:id => 'lesion_size_too_big'}) %>
-    <% end %>
+      <%= touch_select_tag 'VIA RESULTS AVAILABLE?', @patient, options_for_select(["", "Yes", "No"]),
+        {:id => 'results_available?',
+        :helpText => "Are the VIA results available?",
+        :condition => "patientReferredAndHasNoresults() == true;",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
 
-  </form>
+      <%= touch_select_tag 'VIA RESULTS', @patient, options_for_select(["", "Negative", "Positive", "Suspect Cancer"]),
+        {:id => 'via_results',
+        :helpText => "Record Results",
+        :condition => "__$('results_available?').value == 'Yes'",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
+
+      <%= touch_select_tag 'POSITIVE CRYO', @patient, options_for_select(["", "Cryo Done", "Cryo Delayed", "Lesion Size too big"]),
+        {:id => 'positive_cryo',
+        :helpText => "Record Cryo Result",
+        :condition => "__$('via_results').value.match(/Positive/i)",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
+
+      <%= text_field_tag "cryo_year", nil,
+        {
+        :id => 'cryo_year',
+        :helpText => 'Year Cryo Was Done',
+        :condition => "__$('positive_cryo').value.match(/Cryo Done/i)",
+        :field_type => 'number',
+        :tt_pageStyleClass => "Numeric NumbersOnly"
+      }  %>
+
+      <%= select_tag "cryo_month", month_names,
+        {
+        :id => 'cryo_month',
+        :condition => "__$('cryo_year').value.length > 0",
+        :helpText => 'Month Cryo Was Done',
+        :tt_onLoad => "__$('keyboard').style.display = 'none'"
+      } %>
+
+      <%= text_field_tag "cryo_day",  nil,
+        {
+        :id => 'cryo_day',
+        :condition => "__$('cryo_month').value.length > 0",
+        :field_type => 'number',
+        :tt_onUnLoad => "updateCryptoDate();",
+        :helpText => "Day Cryo Was Done"
+      } %>
+
+      <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),
+        {
+        :id => "referral_outcome",
+        :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i) || __$('lesion_size_too_big').value.match(/TRUE/i)",
+        :helpText => "Do you want to capture Referral outcomes today?"
+      } %>
+
+      <%= touch_select_tag 'VIA REFERRAL OUTCOME', @patient, options_for_select(["", "Pre/Cancer Treated", "Cancer Untreatable", "No Cancer"]),
+        {:id => 'via_referral_outcome',
+        :helpText => "Select Referral Outcome",
+        :condition => "__$('referral_outcome').value.match(/YES/i)",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
+
+      <%= touch_hidden_tag("CRYO DONE DATE", @patient, "", {:id => 'cryo_done_date'}) %>
+
+      <% if @cervical_cancer_first_visit_patient == true %>
+        <%= touch_hidden_tag("VIA DONE DATE", @patient, "", {:id => 'via_done_date'}) %>
+      <% end %>
+
+      <% if @lesion_size_too_big == true %>
+        <%= hidden_field_tag("lesion_size_too_big", "true", {:id => 'lesion_size_too_big'}) %>
+      <% else %>
+        <%= hidden_field_tag("lesion_size_too_big", "false", {:id => 'lesion_size_too_big'}) %>
+      <% end %>
+
+    </form>
+  <% end %>
+
 <% end %>
