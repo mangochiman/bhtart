@@ -4,6 +4,7 @@
   var patientHasviaResults = '<%= @has_via_results %>';
   var patientID = '<%=@patient.id%>';
   var lesionSizeTooBig = '<%= @lesion_size_too_big %>';
+  var cervicalCancerFirstVisitPatient = '<%= @cervical_cancer_first_visit_patient %>';
 
   function patientReferredAndHasNoresults(){
     if (viaReferred == 'true' && patientHasviaResults == 'false'){
@@ -59,12 +60,72 @@
     });
   }
 
+  function cervicalFirstVisitPatient(){
+    if (cervicalCancerFirstVisitPatient == 'true'){
+      return true;
+    }
+
+    return false
+  }
+
+  function patientVIAwithinThreeYears(){
+    if (cervicalFirstVisitPatient() == true){
+      viaYear = parseInt(__$('via_year').value);
+      viaMonth = parseInt(__$('via_month').value);
+      dateString = viaYear + ', ' + viaMonth + ', ' + 1;
+      viaDate = new Date(dateString);
+      today = new Date();
+      date_diff_result = dateDiff(today, viaDate);
+      if (date_diff_result[2] < 3){
+        return true
+      }
+      else{
+        return false
+      }
+    }
+    else {
+      return false
+    }
+  }
+
+  function dateDiff(date1,date2) {
+    var diff = Math.floor(date1.getTime() - date2.getTime());
+    var day = 1000 * 60 * 60 * 24;
+
+    var days = Math.floor(diff/day);
+    var months = Math.floor(days/31);
+    var years = Math.floor(months/12);
+
+    return [days, months, years]
+  }
+
+  function updateVIAdoneDate(){
+    year = __$('via_year').value;
+    month = __$('via_month').value;
+    day = 1; //We are just setting the day to be 1 coz we are not capturing it;
+    
+    if (parseInt(day) < 10){
+      day = '0' + day;
+    }
+
+    if (parseInt(month) < 10){
+      month = '0' + month;
+    }
+
+    viaDate = day + '-' + month + '-' + year; // 01/Jan/2014
+
+    if (__$('via_done_date')){
+      __$('via_done_date').value = viaDate;
+    }
+  }
+
 </script>
 
 <style type="text/css">
   #tt_page_month_cryo_was_done .options{height:515px;}
   #tt_page_month_cryo_was_done .options li{font-size:30px;}
   .tt_page_day_cryo_was_done #Unknown { display:none; }
+  #tt_page_month_via_was_done .options{height:515px;}
 </style>
 
 <% if @via_referred && @has_via_results && !@lesion_size_too_big%>
@@ -78,6 +139,7 @@
       position: absolute;
       text-align: center;
     }
+
     .helpTextClass {
       -moz-user-select: none;
       font-size: 2em;
@@ -86,6 +148,7 @@
       width: 90%;
       left: 35px;
     }
+
   </style>
 
   <%
@@ -119,10 +182,35 @@
     <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
     <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
 
+    <%= touch_select_tag 'EVER HAD VIA?', @patient, options_for_select(["", "Yes", "No"]),
+      {:id => 'ever_had_via',
+      :helpText => "Ever had VIA?",
+      :condition => "cervicalFirstVisitPatient() == true;",
+      :tt_pageStyleClass => "NoKeyboard"
+    } %>
+
+    <%= text_field_tag "via_year", nil,
+      {
+      :id => 'via_year',
+      :helpText => 'Year VIA Was Done',
+      :condition => "__$('ever_had_via').value.match(/YES/i)",
+      :field_type => 'number',
+      :tt_pageStyleClass => "Numeric NumbersOnly"
+    }  %>
+
+    <%= select_tag "via_month", month_names,
+      {
+      :id => 'via_month',
+      :condition => "__$('via_year').value.length > 0",
+      :helpText => 'Month VIA Was Done',
+      :tt_onLoad => "__$('keyboard').style.display = 'none'",
+      :tt_onUnLoad => "updateVIAdoneDate();"
+    } %>
+
     <%= touch_select_tag 'VIA REFERRAL', @patient, options_for_select(["", "Yes", "No"]),
       {:id => 'refer_to_via',
       :helpText => "This patient is elligible for VIA. Refer to VIA?",
-      :condition => "viaNotReferred() == true;",
+      :condition => "viaNotReferred() == true && patientVIAwithinThreeYears() == false;",
       :tt_pageStyleClass => "NoKeyboard"
     } %>
 
@@ -189,10 +277,15 @@
 
     <%= touch_hidden_tag("CRYO DONE DATE", @patient, "", {:id => 'cryo_done_date'}) %>
 
-    <% if @lesion_size_too_big == true%>
+    <% if @cervical_cancer_first_visit_patient == true %>
+      <%= touch_hidden_tag("VIA DONE DATE", @patient, "", {:id => 'via_done_date'}) %>
+    <% end %>
+
+    <% if @lesion_size_too_big == true %>
       <%= hidden_field_tag("lesion_size_too_big", "true", {:id => 'lesion_size_too_big'}) %>
     <% else %>
       <%= hidden_field_tag("lesion_size_too_big", "false", {:id => 'lesion_size_too_big'}) %>
     <% end %>
+
   </form>
 <% end %>

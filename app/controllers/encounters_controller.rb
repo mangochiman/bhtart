@@ -506,6 +506,7 @@ class EncountersController < GenericEncountersController
       @remaining_days = 0
       @terminal = false
       @lesion_size_too_big = false
+      @cervical_cancer_first_visit_patient = true
 
       terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
     
@@ -526,6 +527,7 @@ class EncountersController < GenericEncountersController
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
       ).answer_string.squish.upcase rescue ""
 
+      @cervical_cancer_first_visit_patient = false unless via_referral_answer_string.blank?
       @via_referred = true if via_referral_answer_string == "YES"
 
       latest_via_results_obs_date = Observation.find(:last, :joins => [:encounter],
