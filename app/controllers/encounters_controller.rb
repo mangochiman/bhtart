@@ -552,24 +552,34 @@ class EncountersController < GenericEncountersController
       latest_cervical_cancer_result =  cervical_cancer_result_obs.answer_string.squish.upcase rescue nil
       @latest_cervical_cancer_result = latest_cervical_cancer_result
 
+      three_years = 365 * 3
+      one_year = 365
+
       ############################################################################
       latest_cryo_result = Observation.find(:last, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
           @patient.id, cervical_cancer_screening_encounter_type_id, positive_cryo_concept_id, latest_via_results_obs_date])
+
       unless latest_cryo_result.blank?
         cryo_result_answer = latest_cryo_result.answer_string.squish.upcase
         if cryo_result_answer == "CRYO DELAYED"
           @has_via_results = false
         end
+
         if cryo_result_answer == "LESION SIZE TOO BIG"
           @lesion_size_too_big = true
+          obs_date = latest_cryo_result.obs_datetime.to_date
+          date_gone_lesion_size_was_big = (Date.today - obs_date).to_i #Total days Between Two Dates
+
+          if (date_gone_lesion_size_was_big >= three_years)
+            @lesion_size_too_big = false
+          end
         end
+        
       end
 
       ############################################################################
 
-      three_years = 365 * 3
-      one_year = 365
 
       unless latest_cervical_cancer_result.blank?
         
@@ -638,7 +648,7 @@ class EncountersController < GenericEncountersController
               @via_referred = false
               @has_via_results = false
               @no_cancer = false
-              
+
               next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
                 :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
                   @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
@@ -651,7 +661,9 @@ class EncountersController < GenericEncountersController
               next_cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
                 :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
                   @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, next_via_date])
-              @has_via_results = true unless next_cervical_cancer_result_obs.blank?
+              unless next_cervical_cancer_result_obs.blank?
+                @has_via_results = true
+              end
             end
           end
         end
