@@ -63,7 +63,20 @@ class ApplicationController < GenericApplicationController
       patient_bean = PatientService.get_patient(patient.person)
       age = patient_bean.age
       sex = patient_bean.sex.upcase
-      if sex == 'FEMALE' && (age >= 15 && age <= 50)
+
+      cervical_cancer_min_age_property = "cervical.cancer.min.age"
+      cervical_cancer_max_age_property = "cervical.cancer.max.age"
+      daily_referral_limit_concept = "cervical.cancer.daily.referral.limit"
+      current_daily_referral_limit = GlobalProperty.find_by_property(daily_referral_limit_concept).property_value.to_i rescue 1000
+
+      current_cervical_min_age  = GlobalProperty.find_by_property(cervical_cancer_min_age_property).property_value.to_i rescue 0
+      current_cervical_max_age  = GlobalProperty.find_by_property(cervical_cancer_max_age_property).property_value.to_i rescue 1000
+
+      cervical_cancer_encounters_count = Encounter.find(:all, :select => "COUNT(DISTINCT(patient_id)) as count", :conditions =>["DATE(encounter_datetime) = ? AND
+          encounter_type = ?", session_date.to_date, EncounterType.find_by_name('CERVICAL CANCER SCREENING').id]
+      ).last["count"].to_i rescue 0
+
+      if sex == 'FEMALE' && (age >= current_cervical_min_age && age <= current_cervical_max_age)
         cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
         via_referral_outcome_concept_id = Concept.find_by_name("VIA REFERRAL OUTCOME").concept_id
         via_referral_concept_id = Concept.find_by_name("VIA REFERRAL").concept_id
@@ -93,9 +106,11 @@ class ApplicationController < GenericApplicationController
         else
           if !(session[:cervical_cancer_patient].to_i == patient.id)
             if todays_cervical_cancer_encounter.blank?
-              if task.encounter_type.match(/TREATMENT/i)
-                task.encounter_type = "Cervical Cancer Screening"
-                task.url = "/encounters/new/cervical_cancer_screening?patient_id=#{patient.id}"
+              if ((cervical_cancer_encounters_count <= current_daily_referral_limit) || (positive_cryo_patient_on_last_cervical_cancer_screening_visit(patient) == true))
+                if task.encounter_type.match(/TREATMENT/i)
+                  task.encounter_type = "Cervical Cancer Screening"
+                  task.url = "/encounters/new/cervical_cancer_screening?patient_id=#{patient.id}"
+                end
               end
             end
           end
@@ -131,6 +146,23 @@ class ApplicationController < GenericApplicationController
 
   # TB next form
 
+  def positive_cryo_patient_on_last_cervical_cancer_screening_visit(patient)
+    cervical_cancer_encounter_type = EncounterType.find_by_name('CERVICAL CANCER SCREENING').id
+    patient_cervical_cancer_encounter = Encounter.find(:last, :conditions => ["patient_id =? AND encounter_type =?",
+        patient.patient_id, cervical_cancer_encounter_type])
+    return false if patient_cervical_cancer_encounter.blank?
+    
+    patient_cervical_cancer_encounter.observations.each do |observation|
+      next unless observation.concept.fullname.match(/POSITIVE CRYO/i)
+      if observation.answer_string.squish.match(/Cryo Done/i)
+        return true
+        break
+      end
+      return false
+    end
+    
+  end
+  
   def continue_tb_treatment(patient,session_date)
     tb_visit = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
       :conditions =>["patient_id = ? AND encounter_type = ?

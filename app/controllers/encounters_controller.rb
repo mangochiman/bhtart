@@ -507,7 +507,8 @@ class EncountersController < GenericEncountersController
       @terminal = false
       @lesion_size_too_big = false
       @cervical_cancer_first_visit_patient = true
-
+      @no_cancer = false
+      
       terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
     
       cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
@@ -631,10 +632,13 @@ class EncountersController < GenericEncountersController
             next_via_date = via_referral_outcome_obs_date + three_years.days
             date_gone_after_referral_outcome_is_done = (Date.today - via_referral_outcome_obs_date).to_i #Total days Between Two Dates
             @remaining_days = three_years - date_gone_after_referral_outcome_is_done
-          
+            @no_cancer = true
+            
             if (date_gone_after_referral_outcome_is_done >= three_years)
               @via_referred = false
               @has_via_results = false
+              @no_cancer = false
+              
               next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
                 :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
                   @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
@@ -676,7 +680,6 @@ class EncountersController < GenericEncountersController
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
       ).collect{|o|o.answer_string.squish.upcase}
     
-
       via_referral_outcome_answers.each do |outcome|
         if terminal_referral_outcomes.include?(outcome)
           @terminal = true

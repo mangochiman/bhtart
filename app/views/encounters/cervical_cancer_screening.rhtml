@@ -164,9 +164,8 @@
   </form>
 <% else %>
 
+  <% if @via_referred && @has_via_results && (@no_cancer == true)%>
 
-
-  <% if @via_referred && @has_via_results && !@lesion_size_too_big%>
     <style>
       #helpText0{
         position: absolute;
@@ -192,12 +191,13 @@
     <%
 
     unless @latest_via_referral_outcome.blank?
-      @latest_cervical_cancer_result = @latest_cervical_cancer_result.to_s + " - " + @latest_via_referral_outcome
+      #@latest_cervical_cancer_result = @latest_cervical_cancer_result.to_s + " - " + @latest_via_referral_outcome
+      @latest_cervical_cancer_result = @latest_via_referral_outcome
     end
     if @terminal == true
-      helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. And she is no longer eligible for Cervical Cancer Screening"
+      helpText = "This patient had an outcome of \"<b style='color: orange;'>#{@latest_cervical_cancer_result} #{}</b>\" results. And she is no longer eligible for Cervical Cancer Screening"
     else
-      helpText = "This patient already has <b>#{@latest_cervical_cancer_result} #{}</b> results. You are reminded to refer the patient
+      helpText = "This patient had an outcome of \"<b style='color: orange;'>#{@latest_cervical_cancer_result}</b>\" after referral. You will be reminded to refer the patient
       back to VIA after <b>#{@remaining_days}</b> days"
     end
 
