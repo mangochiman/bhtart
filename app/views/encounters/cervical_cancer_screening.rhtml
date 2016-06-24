@@ -120,7 +120,6 @@
   }
 
   function showCervicalCancerWarning(){
-    //cervical_cancer_reminder_cover
     jQuery("#cervical_cancer_reminder").show();
     jQuery("#cervical_cancer_reminder_cover").show();
   }
@@ -130,6 +129,21 @@
     jQuery("#cervical_cancer_reminder_cover").hide();
   }
 
+  function setCervicalCancerDelayedReminder(){
+    jQuery("#cervical_cancer_reminder").hide();
+    jQuery("#cervical_cancer_reminder_cover").hide();
+    
+    available_options = document.getElementsByTagName('li');
+    for(i=0; i<available_options.length; i++){
+      inputValue = available_options[i].getAttribute("tstvalue");
+      if (inputValue.match(/CRYO DELAYED/i)){
+        available_options[i].onmouseup = function(){
+          showCervicalCancerWarning();
+        }
+      }     
+    }
+  }
+  
 </script>
 
 <style type="text/css">
@@ -281,6 +295,7 @@
         {:id => 'positive_cryo',
         :helpText => "Record Cryo Result",
         :condition => "__$('via_results').value.match(/Positive/i)",
+        :tt_onLoad => "setCervicalCancerDelayedReminder();",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
 
@@ -350,7 +365,7 @@
     <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
       <br />
       <Center>This patient had positive VIA but cryo was not done.<br />
-      Refer urgently for cryo again</center>
+        Refer urgently for cryo again</center>
     </div>
   </div>
 
