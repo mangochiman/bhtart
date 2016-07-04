@@ -13,6 +13,12 @@ class EncountersController < GenericEncountersController
       render :action => params[:encounter_type] and return
 		end
 
+    art_start_date = PatientService.date_antiretrovirals_started(@patient)
+    @art_duration_in_months = PatientService.period_on_treatment(art_start_date) rescue 0
+    @fast_track_patient = false
+    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    @fast_track_patient = true if @latest_fast_track_answer == 'YES'
+    
     session[:return_uri] = params[:return_ip] if ! params[:return_ip].blank?
     
     @hiv_status = tb_art_patient(@patient,"hiv program") rescue ""
@@ -499,7 +505,6 @@ class EncountersController < GenericEncountersController
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 
-    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     ######>>########## CERVICAL CANCER SCREENING##############################
     if cervical_cancer_screening_activated
       @via_referred = false

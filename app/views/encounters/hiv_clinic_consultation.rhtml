@@ -38,6 +38,7 @@
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>";
   var consultation_tb_status = '<%= @consultation_tb_status %>';
   var terminal_family_planning_method = '<%= @terminal_family_planning_method %>';
+  var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
 
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
@@ -528,8 +529,8 @@
       <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
         <br />
         <center>
-          This patient is already enrolled in FAST track program<br />
-          Do you want to continue fast track program with this patient
+          This patient is already enrolled in FAST track program. Assess the patient before proceeding.<br />
+          Do you want to continue fast track program with this patient?
         </center>
       </div>
     </div>
@@ -565,10 +566,12 @@
 <script type="text/javascript">
 
   function showFastTrackReminder(){
-    selectedSideEffects = __$('touchscreenInput' + tstCurrentPage).value.toUpperCase().trim();
-    if (selectedSideEffects == 'NO'){
-      jQuery("#fast_track_reminder").show();
-      jQuery("#fast_track_reminder_cover").show();
+    if (art_period_in_months >= 12){
+      selectedSideEffects = __$('touchscreenInput' + tstCurrentPage).value.toUpperCase().trim();
+      if (selectedSideEffects == 'NO'){
+        jQuery("#fast_track_reminder").show();
+        jQuery("#fast_track_reminder_cover").show();
+      }
     }
   }
 
