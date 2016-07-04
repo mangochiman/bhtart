@@ -189,7 +189,7 @@
   </form>
 <% else %>
 
-  <% if @via_referred && @has_via_results && (@no_cancer == true)%>
+  <% if @via_referred && @has_via_results && (!@lesion_size_too_big)%>
 
     <style>
       #helpText0{

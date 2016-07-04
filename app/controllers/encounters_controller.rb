@@ -499,6 +499,7 @@ class EncountersController < GenericEncountersController
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 
+    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     ######>>########## CERVICAL CANCER SCREENING##############################
     if cervical_cancer_screening_activated
       @via_referred = false
