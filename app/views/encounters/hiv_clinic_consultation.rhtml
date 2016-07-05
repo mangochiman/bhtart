@@ -38,6 +38,7 @@
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>";
   var consultation_tb_status = '<%= @consultation_tb_status %>';
   var terminal_family_planning_method = '<%= @terminal_family_planning_method %>';
+  var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
 
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
@@ -385,6 +386,7 @@
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
+      :tt_onUnLoad => 'showFastTrackReminder();',
       :helpText => "Side effects (select all that apply)" } %>
   <% else %>
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('COMMON MALAWI ART SYMPTOM SET'),
@@ -508,9 +510,162 @@
   <% else %>
     <%= hidden_field_tag "filter[provider]", nil %>
   <%end%>
+
+  <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
+
   <%= submit_tag "Finish" %>
 </form>
 
 <% if !art_adherence_to_be_done %>
   <script type="text/javascript">setTimeout('addButton()',1000)</script>
 <% end %>
+
+<div id="fast_track_reminder" style="display:none;">
+  <div id="fast_track_reminder_header">
+    <span style="font-size: 16pt; font-weight: bold;">Fast Track Notification</span>
+  </div>
+  <% if @latest_fast_track_answer == 'YES' %>
+    <div id="fast_track_reminder_content">
+      <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
+        <br />
+        <center>
+          This patient is already enrolled in FAST track program. Assess the patient before proceeding.<br />
+          Do you want to continue fast track program with this patient?
+        </center>
+      </div>
+    </div>
+
+    <div id="fast_track_reminder_footer">
+      <span id="fastTrackNotNow" style="padding: 12px 13%;" onclick="stopFastTrack();">Stop Fast Track</span>
+      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueFastTrack();">Continue Fast Track</span>
+    </div>
+
+  <% else %>
+    <div id="fast_track_reminder_content">
+      <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
+        <br />
+        <center>
+          This patient is eligible for Fast Track<br />
+          Do you want to enroll this patient into Fast Track Program?
+        </center>
+      </div>
+    </div>
+
+    <div id="fast_track_reminder_footer">
+      <span id="fastTrackNotNow" onclick="fastTrackNotNow();">Not Now</span>
+      <span id="fastTrackNow" onclick="fastTrackNow();">Enroll</span>
+    </div>
+  <% end %>
+
+</div>
+
+<div id="fast_track_reminder_cover" style="display:none;">
+
+</div>
+
+<script type="text/javascript">
+
+  function showFastTrackReminder(){
+    if (art_period_in_months >= 12){
+      selectedSideEffects = __$('touchscreenInput' + tstCurrentPage).value.toUpperCase().trim();
+      if (selectedSideEffects == 'NO'){
+        jQuery("#fast_track_reminder").show();
+        jQuery("#fast_track_reminder_cover").show();
+      }
+    }
+  }
+
+  function fastTrackNotNow(){
+    //jQuery('#fast-track-input').value = 'No';
+    jQuery('#fast-track-input').attr('value', 'No');
+    jQuery("#fast_track_reminder").hide();
+    jQuery("#fast_track_reminder_cover").hide();
+  }
+
+  function fastTrackNow(){
+    //jQuery('#fast-track-input').value = 'Yes';
+    jQuery('#fast-track-input').attr('value', 'Yes');
+    jQuery("#fast_track_reminder").hide();
+    jQuery("#fast_track_reminder_cover").hide();
+  }
+
+  function continueFastTrack(){
+    //jQuery('#fast-track-input').value = '';
+    jQuery('#fast-track-input').attr('value', '')
+    jQuery("#fast_track_reminder").hide();
+    jQuery("#fast_track_reminder_cover").hide();
+  }
+
+  function stopFastTrack(){
+    //jQuery('#fast-track-input').value = 'No';
+    jQuery('#fast-track-input').attr('value', 'No');
+    jQuery("#fast_track_reminder").hide();
+    jQuery("#fast_track_reminder_cover").hide();
+  }
+
+</script>
+
+<style type="text/css">
+  #fast_track_reminder_cover{
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.3;
+  }
+
+  #fast_track_reminder{
+    position: absolute;
+    width: 75%;
+    height: 40%;
+    top: 10%;
+    z-index: 991;
+    left: 12%;
+    border: 1px solid black;
+    background-color: #CD3333;
+    border-radius: 15px;
+  }
+
+  #fast_track_reminder_header{
+    padding: 10px;
+    background-color: white;
+    color: black;
+    border-radius: 15px 15px 0px 0px;
+  }
+
+  #fast_track_reminder_footer{
+    background-color: #FFD39B;
+    height: 60px;
+    width: 100%;
+    position: absolute;
+    width: 100%;
+    position: absolute;
+    bottom: 0px;
+    border-radius: 0px 0px 15px 15px;
+  }
+
+  #fast_track_reminder_footer #fastTrackNotNow{
+    background-color: goldenrod;
+    position: absolute;
+    padding: 12px 20%;
+    /*right: 8px;*/
+    left: 8px;
+    bottom: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  #fast_track_reminder_footer #fastTrackNow{
+    background-color: goldenrod;
+    position: absolute;
+    padding: 12px 20%;
+    right: 8px;
+    bottom: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+</style>

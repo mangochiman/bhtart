@@ -6,7 +6,8 @@
 
 <script>
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>"
-
+  var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
+  
   function new_relationship() {
     var current = '/encounters/new/hiv_reception?patient_id=<%= @patient.patient_id %>';
     window.location = "/relationships/search?patient_id=<%= @patient.patient_id %>&return_to=" + escape(current) + "&guardian_added=true"
@@ -17,9 +18,9 @@
     $('tt_extraButtons').innerHTML = button
   }
   
- function hide_new_relationship_button() {
+  function hide_new_relationship_button() {
     $('tt_extraButtons').innerHTML = "";    
- }
+  }
 
   // Don't save Guardian: None. We might later want to start saving this answer
   function cleanup_guardian_options() {
@@ -45,94 +46,255 @@
   <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
   <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
   <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
-<%  session_date = session[:datetime].to_date rescue nil
+  <%  session_date = session[:datetime].to_date rescue nil
 
 %>
   <% if session[:guardian_added] == nil  %>
-    <% 
+    <%
     if Person.find(@patient.patient_id).relationships.first.blank? %>
-       <label for='guardian_present'>Guardian Present</label>
-       <%  if session_date %>
-          <%= select_tag "observations[][value_text]", relationship_options(@patient),
+      <label for='guardian_present'>Guardian Present</label>
+      <%  if session_date %>
+        <%= select_tag "observations[][value_text]", relationship_options(@patient),
           {:id => "guardian_present",
-           :multiple => false,
-           :optional => false,
-           :tt_onUnLoad => "forcePatientPresentYes(),setTimeout(cleanup_guardian_options() , 500)" } %>
-        <% else %>
-          <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
+          :multiple => false,
+          :optional => false,
+          :tt_onUnLoad => "forcePatientPresentYes(),setTimeout(cleanup_guardian_options() , 500)" } %>
+      <% else %>
+        <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
           {:id => "guardian_present",
-           :multiple => false,
-           :optional => false,
-           :tt_onUnLoad => "forcePatientPresentYes(),setTimeout(cleanup_guardian_options() , 500)" } %>
-       <% end %>
-        
-        <%= hidden_field_tag("observations[][value_coded_or_text]", nil) %>
-        <%= hidden_field_tag("observations[][concept_name]", "GUARDIAN PRESENT") %>
-        <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
-        <%= hidden_field_tag("observations[][obs_datetime]", DateTime.now()) %>
+          :multiple => false,
+          :optional => false,
+          :tt_onUnLoad => "forcePatientPresentYes(),setTimeout(cleanup_guardian_options() , 500)" } %>
+      <% end %>
+
+      <%= hidden_field_tag("observations[][value_coded_or_text]", nil) %>
+      <%= hidden_field_tag("observations[][concept_name]", "GUARDIAN PRESENT") %>
+      <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
+      <%= hidden_field_tag("observations[][obs_datetime]", DateTime.now()) %>
     <% else %>
       <label for='guardian_present'>Guardian Present (<%=@patient_bean.guardian rescue ''%>)</label>
-        <%#= raise session_date.to_yaml %>
-        <%  if session_date %>
-          <%= select_tag "observations[][value_text]", relationship_options(@patient),
+    <%#= raise session_date.to_yaml %>
+      <%  if session_date %>
+        <%= select_tag "observations[][value_text]", relationship_options(@patient),
           {:id => "guardian_present",
-           :multiple => false,
-           :optional => false,
-           :tt_onUnLoad => "forcePatientPresentYes()" } %>
-        <% else %>
-          <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
+          :multiple => false,
+          :optional => false,
+          :tt_onUnLoad => "forcePatientPresentYes()" } %>
+      <% else %>
+        <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
           {:id => "guardian_present",
-           :multiple => false,
-           :optional => false,
-           :tt_onUnLoad => "forcePatientPresentYes()" } %>
-       <% end %>
-        <%= hidden_field_tag("observations[][value_coded_or_text]", nil) %>
-        <%= hidden_field_tag("observations[][concept_name]", "GUARDIAN PRESENT") %>
-        <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
-        <%= hidden_field_tag("observations[][obs_datetime]", DateTime.now()) %>
+          :multiple => false,
+          :optional => false,
+          :tt_onUnLoad => "forcePatientPresentYes()" } %>
+      <% end %>
+      <%= hidden_field_tag("observations[][value_coded_or_text]", nil) %>
+      <%= hidden_field_tag("observations[][concept_name]", "GUARDIAN PRESENT") %>
+      <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
+      <%= hidden_field_tag("observations[][obs_datetime]", DateTime.now()) %>
     <% end %>
   <% else %>
     <%= touch_hidden_tag("GUARDIAN PRESENT", @patient, "Yes", {:id=>"guardian_present"}) %>
   <% end %>
   <% session[:guardian_added] = nil %>
   <label for='patient_present'>Patient Present (<%=@patient_bean.name%>)</label>
-    <%= select_tag "observations[][value_coded_or_text]", options_for_select([['Yes','Yes'],['No','No']]), 
-      {:id => 'patient_present',
-       :condition => "$('guardian_present').value.toUpperCase() == 'YES'",
-       :tt_onLoad => 'hide_new_relationship_button()'} %>
-    <%= hidden_field_tag("observations[][value_text]", nil) %>
-    <%= hidden_field_tag("observations[][concept_name]", "PATIENT PRESENT") %>
-    <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
-    <%= hidden_field_tag("observations[][obs_datetime]", DateTime.now()) %>
+  <%= select_tag "observations[][value_coded_or_text]", options_for_select([['Yes','Yes'],['No','No']]),
+    {:id => 'patient_present',
+    :condition => "$('guardian_present').value.toUpperCase() == 'YES'",
+    :tt_onLoad => 'hide_new_relationship_button()'} %>
+  <%= hidden_field_tag("observations[][value_text]", nil) %>
+  <%= hidden_field_tag("observations[][concept_name]", "PATIENT PRESENT") %>
+  <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
+  <%= hidden_field_tag("observations[][obs_datetime]", DateTime.now()) %>
 
   <% reason_for_eligibility = PatientService.reason_for_art_eligibility(@patient)
-      unless reason_for_eligibility.blank?
-        reason_for_eligibility = nil if reason_for_eligibility.upcase == 'NONE'
-      end
-  %> 
+  unless reason_for_eligibility.blank?
+    reason_for_eligibility = nil if reason_for_eligibility.upcase == 'NONE'
+  end
+%> 
   <% if @patient_hcc_number.blank? && @patient_has_hiv_staging_enc%>
     <% if reason_for_eligibility.blank? %>
       <% unless @given_arvs_before %>
-            <%= render :partial => "/patients/hcc_number" %>
+        <%= render :partial => "/patients/hcc_number" %>
       <% end %>
     <% end %>
   <% end %>
 
   <%if @given_arvs_before and @patient_bean.arv_number.blank?
-      show_arv_number = get_global_property_value('show_arv_number') rescue 'true'
-      unless show_arv_number == 'false'
-  %>
-        <%= render :partial => "/patients/arv_number" %>
+    show_arv_number = get_global_property_value('show_arv_number') rescue 'true'
+    unless show_arv_number == 'false'
+    %>
+      <%= render :partial => "/patients/arv_number" %>
     <% end %>
   <% end %>
 
-  <% 
-    if session_date %>
+  <!---------------------- FAST TRACK -->
+  <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
+
+  <%= text_field_tag "fast_track_pop_up_input", nil, {
+    :id => "fast_track_pop_up_input",
+    :helpText => "Fast Track",
+    :tt_onLoad => "showFastTrackReminder();",
+    :condition => "parseInt(art_period_in_months) >= 12",
+    :optional => "true",
+    :tt_pageStyleClass => "NoControls"
+  } %>
+
+  <!------------------- FAST TRACK END--->
+
+
+  <%
+  if session_date %>
 
     <p><label for="filter_provider">Staff who provided the information (Provider)</label></br>
-<%= text_field "filter" , 'provider', :helpText => 'Staff who provided the information (Provider)', :ajaxURL => '/user/username?username=' %></p>
-    <% else %>
-      <%= hidden_field_tag "filter[provider]", nil %>
-    <%end%>
+      <%= text_field "filter" , 'provider', :helpText => 'Staff who provided the information (Provider)', :ajaxURL => '/user/username?username=' %></p>
+  <% else %>
+    <%= hidden_field_tag "filter[provider]", nil %>
+  <%end%>
   <%= submit_tag "Finish" %>
 </form>
+
+
+<div id="fast_track_reminder" style="display:none;">
+  <div id="fast_track_reminder_header">
+    <span style="font-size: 16pt; font-weight: bold;">Fast Track Notification</span>
+  </div>
+  <% if @latest_fast_track_answer == 'YES' %>
+    <div id="fast_track_reminder_content">
+      <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
+        <br />
+        <center>
+          This is to remind you that this patient is already enrolled in FAST track program.<br />
+          Refer the patient to Pharmacy
+        </center>
+      </div>
+    </div>
+
+    <div id="fast_track_reminder_footer">
+      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Refer the patient to Pharmacy</span>
+    </div>
+
+  <% else %>
+    <div id="fast_track_reminder_content">
+      <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
+        <br />
+        <center>
+          This patient is eligible for Fast Track. Assess the patient before proceeding.<br />
+          Do you want to enroll this patient into Fast Track Program now?
+        </center>
+      </div>
+    </div>
+
+    <div id="fast_track_reminder_footer">
+      <span id="fastTrackNotNow" onclick="fastTrackNotNow();">Not Now</span>
+      <span id="fastTrackNow" onclick="fastTrackNow();">Enroll Now</span>
+    </div>
+  <% end %>
+
+</div>
+
+<div id="fast_track_reminder_cover" style="display:none;">
+
+</div>
+
+
+<script type="text/javascript">
+
+  function showFastTrackReminder(){
+    jQuery('#keyboard').hide();
+    jQuery('#clearButton').hide();
+    jQuery("#fast_track_reminder").show();
+    jQuery("#fast_track_reminder_cover").show();
+  }
+
+  function fastTrackNotNow(){
+    //jQuery('#fast-track-input').value = 'No';
+    jQuery('#fast-track-input').attr('value', 'No');
+    jQuery("#fast_track_reminder").hide();
+    jQuery("#fast_track_reminder_cover").hide();
+    gotoNextPage();
+  }
+
+  function fastTrackNow(){
+    //jQuery('#fast-track-input').value = 'Yes';
+    jQuery('#fast-track-input').attr('value', 'Yes');
+    jQuery("#fast_track_reminder").hide();
+    jQuery("#fast_track_reminder_cover").hide();
+    gotoNextPage();
+  }
+
+  function continueNormalFlow(){
+    jQuery("#fast_track_reminder").hide();
+    jQuery("#fast_track_reminder_cover").hide();
+    gotoNextPage();
+  }
+
+</script>
+
+<style type="text/css">
+  #fast_track_reminder_cover{
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.87;
+  }
+
+  #fast_track_reminder{
+    position: absolute;
+    width: 75%;
+    height: 40%;
+    top: 10%;
+    z-index: 991;
+    left: 12%;
+    border: 1px solid black;
+    background-color: #CD3333;
+    border-radius: 15px;
+  }
+
+  #fast_track_reminder_header{
+    padding: 10px;
+    background-color: white;
+    color: black;
+    border-radius: 15px 15px 0px 0px;
+  }
+
+  #fast_track_reminder_footer{
+    background-color: #FFD39B;
+    height: 60px;
+    width: 100%;
+    position: absolute;
+    width: 100%;
+    position: absolute;
+    bottom: 0px;
+    border-radius: 0px 0px 15px 15px;
+  }
+
+  #fast_track_reminder_footer #fastTrackNotNow{
+    background-color: goldenrod;
+    position: absolute;
+    padding: 12px 20%;
+    /*right: 8px;*/
+    left: 8px;
+    bottom: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  #fast_track_reminder_footer #fastTrackNow{
+    background-color: goldenrod;
+    position: absolute;
+    padding: 12px 20%;
+    right: 8px;
+    bottom: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  #tt_page_fast_track .inputFrameClass{
+    padding :0px;
+  }
+
+</style>

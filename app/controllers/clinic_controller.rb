@@ -80,7 +80,7 @@ class ClinicController < GenericClinicController
         ["Activate Hypertension Screening","/properties/creation?value=activate_hypertension_enhancement"],
         ["Set Hypertension Screening Age", "/properties/set_htn_age_threshold"],
         ["Set Hypertension BP Thresholds", "/properties/set_htn_bp_thresholds"],
-        ["Activate Cervical Cancel Screening", "/properties/creation?value=activate_cervical_cancer_screening"],
+        ["Cervical Cancel Module Properties", "/properties/cervical_cancer_module_properties"],
 
       ]
     else
@@ -88,6 +88,5 @@ class ClinicController < GenericClinicController
     end
     render :layout => false
   end
-
 
 end

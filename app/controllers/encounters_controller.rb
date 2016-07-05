@@ -13,6 +13,12 @@ class EncountersController < GenericEncountersController
       render :action => params[:encounter_type] and return
 		end
 
+    art_start_date = PatientService.date_antiretrovirals_started(@patient)
+    @art_duration_in_months = PatientService.period_on_treatment(art_start_date) rescue 0
+    @fast_track_patient = false
+    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    @fast_track_patient = true if @latest_fast_track_answer == 'YES'
+    
     session[:return_uri] = params[:return_ip] if ! params[:return_ip].blank?
     
     @hiv_status = tb_art_patient(@patient,"hiv program") rescue ""
@@ -506,7 +512,9 @@ class EncountersController < GenericEncountersController
       @remaining_days = 0
       @terminal = false
       @lesion_size_too_big = false
-
+      @cervical_cancer_first_visit_patient = true
+      @no_cancer = false
+      
       terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
     
       cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
@@ -526,6 +534,8 @@ class EncountersController < GenericEncountersController
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
       ).answer_string.squish.upcase rescue ""
 
+      cervical_cancer_first_visit_question = @patient.person.observations.recent(1).question("EVER HAD VIA?")
+      @cervical_cancer_first_visit_patient = false unless cervical_cancer_first_visit_question.blank?
       @via_referred = true if via_referral_answer_string == "YES"
 
       latest_via_results_obs_date = Observation.find(:last, :joins => [:encounter],
@@ -548,24 +558,34 @@ class EncountersController < GenericEncountersController
       latest_cervical_cancer_result =  cervical_cancer_result_obs.answer_string.squish.upcase rescue nil
       @latest_cervical_cancer_result = latest_cervical_cancer_result
 
+      three_years = 365 * 3
+      one_year = 365
+
       ############################################################################
       latest_cryo_result = Observation.find(:last, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
           @patient.id, cervical_cancer_screening_encounter_type_id, positive_cryo_concept_id, latest_via_results_obs_date])
+
       unless latest_cryo_result.blank?
         cryo_result_answer = latest_cryo_result.answer_string.squish.upcase
         if cryo_result_answer == "CRYO DELAYED"
           @has_via_results = false
         end
+
         if cryo_result_answer == "LESION SIZE TOO BIG"
           @lesion_size_too_big = true
+          obs_date = latest_cryo_result.obs_datetime.to_date
+          date_gone_lesion_size_was_big = (Date.today - obs_date).to_i #Total days Between Two Dates
+
+          if (date_gone_lesion_size_was_big >= three_years)
+            @lesion_size_too_big = false
+          end
         end
+        
       end
 
       ############################################################################
 
-      three_years = 365 * 3
-      one_year = 365
 
       unless latest_cervical_cancer_result.blank?
         
@@ -628,10 +648,13 @@ class EncountersController < GenericEncountersController
             next_via_date = via_referral_outcome_obs_date + three_years.days
             date_gone_after_referral_outcome_is_done = (Date.today - via_referral_outcome_obs_date).to_i #Total days Between Two Dates
             @remaining_days = three_years - date_gone_after_referral_outcome_is_done
-          
+            @no_cancer = true
+            
             if (date_gone_after_referral_outcome_is_done >= three_years)
               @via_referred = false
               @has_via_results = false
+              @no_cancer = false
+
               next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
                 :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
                   @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
@@ -644,7 +667,9 @@ class EncountersController < GenericEncountersController
               next_cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
                 :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
                   @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, next_via_date])
-              @has_via_results = true unless next_cervical_cancer_result_obs.blank?
+              unless next_cervical_cancer_result_obs.blank?
+                @has_via_results = true
+              end
             end
           end
         end
@@ -653,12 +678,26 @@ class EncountersController < GenericEncountersController
 
       end
 
+      #>>>>>>>>>VIA DONE LOGIC>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      @via_results_expired = true
+
+      via_done_date_answer_string = @patient.person.observations.recent(1).question("VIA DONE DATE").last.answer_string.squish.to_date rescue nil
+      unless via_done_date_answer_string.blank?
+        #@cervical_cancer_first_visit_patient = false
+        days_gone_after_via_done = (Date.today - via_done_date_answer_string).to_i #Total days Between Two Dates
+        if (days_gone_after_via_done < three_years)
+          @via_referred = true
+          @via_results_expired = false
+          @remaining_days = three_years - days_gone_after_via_done
+        end
+      end
+
+      #>>>>>>>>VIA LOGIC END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
       ).collect{|o|o.answer_string.squish.upcase}
     
-
       via_referral_outcome_answers.each do |outcome|
         if terminal_referral_outcomes.include?(outcome)
           @terminal = true
@@ -666,6 +705,7 @@ class EncountersController < GenericEncountersController
         end
       end
     end
+
     ###########################################################################
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
