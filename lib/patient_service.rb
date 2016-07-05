@@ -1443,7 +1443,7 @@ EOF
    end
 
    (selected_patient_states || {}).each do |patient_id, states|
-     if states.include?(2) || states.include?(3) || states.include?(4) || states.include?(5) || states.include?(6) || states.include?(8)
+     if (states.include?(2) || states.include?(3) || states.include?(4) || states.include?(5) || states.include?(6) || states.include?(8)) and not states.include?(7)
        return patient_id
      end
    end

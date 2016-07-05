@@ -396,4 +396,11 @@ class PatientsController < GenericPatientsController
     render :text => next_url and return
   end
 
+  def set_cervical_cancer_session_variable
+    patient = Patient.find(params[:patient_id])
+    session[:cervical_cancer_patient] = params[:patient_id]
+    next_url = (next_task(patient))
+    render :text => next_url and return
+  end
+
 end

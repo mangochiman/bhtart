@@ -7,7 +7,7 @@
   .options {
     display:none;
   }
-  
+
 </style>
 
 <script>
@@ -16,5 +16,10 @@
 
 <% form_tag 'site_code', :method => :post do %>
   <%= text_field_tag :site_code,  @neighborhood_cell , {:field_type => 'alpha', :helpText => 'Site code', :allowFreeText => true, :textCase => 'upper' } %>
+
+  <% unless params[:view_configuration].blank? %>
+    <%= hidden_field_tag "view_configuration", params[:view_configuration] %>
+  <% end %>
+
   <%= submit_tag "Create" %>
 <% end -%>

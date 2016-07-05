@@ -89,6 +89,10 @@ class GenericPeopleController < ApplicationController
 
     patient = nil
     if create_from_dde_server
+      address2 = (params["patient"]["birthplace"] rescue nil)
+      city_village = (params["patientaddress"]["city_village"] rescue nil)
+      county_district = (params["current_ta"]["identifier"] rescue nil)
+      state_province = (params["p_address"]["identifier"] rescue nil)
 
       passed_params = {"region" => "" ,
 				"person"=>{"occupation"=> params["occupation"] ,
@@ -97,13 +101,13 @@ class GenericPeopleController < ApplicationController
           "home_phone_number"=> params['home_phone']['identifier'] || nil,
           "office_phone_number"=> params['office_phone']['identifier'] || nil,
 					"birth_month"=> params["patient_month"],
-				 "addresses"=>
-            {"state_province"=> params["addresses"]["state_province"],
-            "address2"=> params["addresses"]["address2"],
-            "address1"=> params["addresses"]["address1"],
-            "neighborhood_cell"=> params["addresses"]["neighborhood_cell"],
-            "city_village"=> params["addresses"]["city_village"],
-            "county_district"=> params["addresses"]["county_district"]},
+          "addresses"=>
+            {"state_province"=> (params["addresses"]["state_province"] rescue state_province),
+            "address2"=> (params["addresses"]["address2"] rescue address2),
+            "address1"=> (params["addresses"]["address1"] rescue nil),
+            "neighborhood_cell"=> (params["addresses"]["neighborhood_cell"] rescue nil),
+            "city_village"=> (params["addresses"]["city_village"] rescue city_village),
+            "county_district"=> (params["addresses"]["county_district"] rescue county_district)},
 					"gender"=>  params["patient"]["gender"],
 					"patient"=>"",
 					"birth_day"=>  params["patient_day"] ,
@@ -137,13 +141,13 @@ class GenericPeopleController < ApplicationController
         "home_phone_number"=> params['home_phone']['identifier'] || nil,
         "office_phone_number"=> params['office_phone']['identifier'] || nil,
         "birth_month"=> params[:patient_month],
-       "addresses"=>
-            {"state_province"=> state,
-            "address2"=> address2,
-            "address1"=> address1,
-            "neighborhood_cell"=> address,
-            "city_village"=> city_village,
-            "county_district"=> district},
+        "addresses"=>
+          {"state_province"=> state,
+          "address2"=> address2,
+          "address1"=> address1,
+          "neighborhood_cell"=> address,
+          "city_village"=> city_village,
+          "county_district"=> district},
         "gender" => params['patient']['gender'],
         "birth_day" => params[:patient_day],
         "names"=> {"family_name2"=>"Unknown",
@@ -162,8 +166,8 @@ class GenericPeopleController < ApplicationController
     end
 
     person["patient"] = {
-        "identifiers"=>
-                     {"National id"=> PatientService.get_national_id(patient) }
+      "identifiers"=>
+        {"National id"=> PatientService.get_national_id(patient) }
     }  if !patient.blank?
 
 		render :text => PatientService.remote_demographics(person).to_json
@@ -395,7 +399,7 @@ class GenericPeopleController < ApplicationController
 
     @patient_identifiers = LabController.new.id_identifiers(patient)
 
-   if vl_routine_check_activated && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
+    if vl_routine_check_activated && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
       @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
       @latest_date = @results[0].split('::')[0].to_date rescue nil
       @latest_result = @results[1]["TestValue"] rescue nil
@@ -414,16 +418,16 @@ class GenericPeopleController < ApplicationController
 
       @reason_for_art = PatientService.reason_for_art_eligibility(patient)
       @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-              patient.patient_id, Concept.find_by_name("Viral load").concept_id]
-          ).answer_string.squish.upcase rescue nil
+          patient.patient_id, Concept.find_by_name("Viral load").concept_id]
+      ).answer_string.squish.upcase rescue nil
 
       @repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
                 AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
-                "Repeat"]).answer_string.squish.upcase rescue nil
+          "Repeat"]).answer_string.squish.upcase rescue nil
 
       @repeat_vl_obs_date = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
               AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
-              "Repeat"]).obs_datetime.to_date rescue nil
+          "Repeat"]).obs_datetime.to_date rescue nil
 
       @date_vl_result_given = Observation.find(:last, :conditions => ["
           person_id =? AND concept_id =? AND value_text REGEXP ?", @person.id,
@@ -432,7 +436,7 @@ class GenericPeopleController < ApplicationController
 
       @vl_result_hash = Patient.vl_result_hash(patient)
 
-   end
+    end
 
     regimen_category = Concept.find_by_name("Regimen Category")
 
@@ -441,6 +445,14 @@ class GenericPeopleController < ApplicationController
         WHERE o.person_id = #{patient.id} AND o.concept_id =#{regimen_category.id}
         AND o.voided = 0)",regimen_category.id, patient.id]).value_text rescue nil
 
+    patient_is_htn_client = htn_client?(patient)
+    #raise patient_is_htn_client.inspect
+    if patient_is_htn_client
+      task = main_next_task(Location.current_location, patient, session_date)
+      if task.url.match(/VITALS/i)
+        @htn_alert = "Screen this patient for High Blood Pressure"
+      end
+    end
 		render :layout => false
 	end
 
@@ -691,37 +703,37 @@ class GenericPeopleController < ApplicationController
       unless (params[:relation].blank?)
         redirect_to search_complete_url(person.id, params[:relation]) and return
       else
-      if  ! params[:guardian_present].blank?
-        new_encounter = {"encounter_datetime"=> (session[:datetime] rescue Date.today),
-        "encounter_type_name"=>"HIV RECEPTION",
-        "patient_id"=> person.id,
-        "provider_id"=> current_user.id}
+        if  ! params[:guardian_present].blank?
+          new_encounter = {"encounter_datetime"=> (session[:datetime] rescue Date.today),
+            "encounter_type_name"=>"HIV RECEPTION",
+            "patient_id"=> person.id,
+            "provider_id"=> current_user.id}
 
-       encounter = Encounter.new(new_encounter)
-       encounter.encounter_datetime = session[:datetime] rescue Date.today
-       encounter.save
+          encounter = Encounter.new(new_encounter)
+          encounter.encounter_datetime = session[:datetime] rescue Date.today
+          encounter.save
 
-      reason_obs = {}
-      reason_obs[:concept_name] = 'GUARDIAN PRESENT'
-      reason_obs[:encounter_id] = encounter.id
-      reason_obs[:obs_datetime] = encounter.encounter_datetime || Time.now()
-      reason_obs[:person_id] ||= encounter.patient_id
-      reason_obs['value_coded_or_text'] = params[:guardian_present]
-      Observation.create(reason_obs)
+          reason_obs = {}
+          reason_obs[:concept_name] = 'GUARDIAN PRESENT'
+          reason_obs[:encounter_id] = encounter.id
+          reason_obs[:obs_datetime] = encounter.encounter_datetime || Time.now()
+          reason_obs[:person_id] ||= encounter.patient_id
+          reason_obs['value_coded_or_text'] = params[:guardian_present]
+          Observation.create(reason_obs)
 
-      reason_obs = {}
-      reason_obs[:concept_name] = 'PATIENT PRESENT'
-      reason_obs[:encounter_id] = encounter.id
-      reason_obs[:obs_datetime] = encounter.encounter_datetime || Time.now()
-      reason_obs[:person_id] ||= encounter.patient_id
-      reason_obs['value_coded_or_text'] = "YES"
-      Observation.create(reason_obs)
-      end
-      if  params[:guardian_present] == "YES"
-      redirect_to "/relationships/search?patient_id=#{person.id}&return_to=/people/redirections?person_id=#{person.id}" and return
-      else
-      redirect_to "/people/redirections?person_id=#{person.id}" and return
-     end
+          reason_obs = {}
+          reason_obs[:concept_name] = 'PATIENT PRESENT'
+          reason_obs[:encounter_id] = encounter.id
+          reason_obs[:obs_datetime] = encounter.encounter_datetime || Time.now()
+          reason_obs[:person_id] ||= encounter.patient_id
+          reason_obs['value_coded_or_text'] = "YES"
+          Observation.create(reason_obs)
+        end
+        if  params[:guardian_present] == "YES"
+          redirect_to "/relationships/search?patient_id=#{person.id}&return_to=/people/redirections?person_id=#{person.id}" and return
+        else
+          redirect_to "/people/redirections?person_id=#{person.id}" and return
+        end
         #raise use_filing_number.to_yaml
 
       end
@@ -732,24 +744,24 @@ class GenericPeopleController < ApplicationController
   end
 
   def redirections
-        person = Person.find(params[:person_id])
-        hiv_session = false
-        if current_program_location == "HIV program"
-            hiv_session = true
-        end
-       if use_filing_number and hiv_session
+    person = Person.find(params[:person_id])
+    hiv_session = false
+    if current_program_location == "HIV program"
+      hiv_session = true
+    end
+    if use_filing_number and hiv_session
 
-          PatientService.set_patient_filing_number(person.patient)
-          archived_patient = PatientService.patient_to_be_archived(person.patient)
-          message = PatientService.patient_printing_message(person.patient,archived_patient,creating_new_patient = true)
-          unless message.blank?
-            print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}" , next_task(person.patient),message,true,person.id)
-          else
-            print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
-          end
-        else
-          print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
-        end
+      PatientService.set_patient_filing_number(person.patient)
+      archived_patient = PatientService.patient_to_be_archived(person.patient)
+      message = PatientService.patient_printing_message(person.patient,archived_patient,creating_new_patient = true)
+      unless message.blank?
+        print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}" , next_task(person.patient),message,true,person.id)
+      else
+        print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
+      end
+    else
+      print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
+    end
   end
 
   def set_datetime
@@ -814,11 +826,11 @@ class GenericPeopleController < ApplicationController
 
   def correct_tb_numbers
     @identifier_types = ["Legacy Pediatric id","National id","Legacy National id","Old Identification Number"]
-      identifier_types = PatientIdentifierType.find(:all,
-        :conditions=>["name IN (?)",@identifier_types]
-      ).collect{| type |type.id }
+    identifier_types = PatientIdentifierType.find(:all,
+      :conditions=>["name IN (?)",@identifier_types]
+    ).collect{| type |type.id }
 
-      @patient = Patient.find(params[:patient_id] || params[:id])
+    @patient = Patient.find(params[:patient_id] || params[:id])
     if request.post?
       current_date = Date.today
       current_date = session[:datetime].to_date if !session[:datetime].blank?
@@ -829,56 +841,56 @@ class GenericPeopleController < ApplicationController
         :conditions => ['identifier_type = ?
                                          AND patient_id = ? AND voided = 0', params[:identifiers][0][:identifier_type].to_i , params[:patient_id]]).first
 
-        if ! patient_exists.blank?
-          patient_exists.voided = 1
-          patient_exists.save
+      if ! patient_exists.blank?
+        patient_exists.voided = 1
+        patient_exists.save
+      end
+      if params[:name].upcase == "VOIDING PERMANENTLY"
+        redirect_to "/patients/tb_treatment_card?patient_id=#{params[:patient_id]}" and return
+      end
+      if !params[:number].blank?
+        numbers_array = params[:number].gsub(/\s+/, "").chars.each_slice(4).map(&:join)
+        x = numbers_array.length - 1
+        year = numbers_array[0].to_i
+        surfix = ""
+        (1..x).each { |i| surfix = "#{surfix}#{numbers_array[i].squish}" }
+        if year > Date.today.year || surfix.to_i < 1
+          return
         end
-        if params[:name].upcase == "VOIDING PERMANENTLY"
-          redirect_to "/patients/tb_treatment_card?patient_id=#{params[:patient_id]}" and return
-        end
-        if !params[:number].blank?
-           numbers_array = params[:number].gsub(/\s+/, "").chars.each_slice(4).map(&:join)
-           x = numbers_array.length - 1
-           year = numbers_array[0].to_i
-           surfix = ""
-           (1..x).each { |i| surfix = "#{surfix}#{numbers_array[i].squish}" }
-            if year > Date.today.year || surfix.to_i < 1
-                return
-            end
-          patient_number = "#{prefix}-TB #{year} #{surfix.to_i}"
-          patient_exists = PatientIdentifier.find_by_sql("SELECT * FROM patient_identifier
+        patient_number = "#{prefix}-TB #{year} #{surfix.to_i}"
+        patient_exists = PatientIdentifier.find_by_sql("SELECT * FROM patient_identifier
                 WHERE REPLACE(identifier, ' ', '') = REPLACE('#{patient_number}', ' ', '') AND voided =0 ").first
 
-          if ! patient_exists.blank?
-              patient_exists.identifier = patient_number
-              patient_exists.save!
-          else
-              pat = PatientIdentifier.new()
-              pat.patient_id = params[:patient_id]
-              pat.identifier = patient_number
-              pat.identifier_type = params[:identifiers][0][:identifier_type].to_i
-              pat.location_id = params[:identifiers][0][:location_id].to_i
-              pat.creator = 1
-              pat.save!
-          end
-          redirect_to "/patients/tb_treatment_card?patient_id=#{params[:patient_id]}" and return
+        if ! patient_exists.blank?
+          patient_exists.identifier = patient_number
+          patient_exists.save!
+        else
+          pat = PatientIdentifier.new()
+          pat.patient_id = params[:patient_id]
+          pat.identifier = patient_number
+          pat.identifier_type = params[:identifiers][0][:identifier_type].to_i
+          pat.location_id = params[:identifiers][0][:location_id].to_i
+          pat.creator = 1
+          pat.save!
         end
-        type = PatientIdentifier.find_by_sql("SELECT * FROM patient_identifier
+        redirect_to "/patients/tb_treatment_card?patient_id=#{params[:patient_id]}" and return
+      end
+      type = PatientIdentifier.find_by_sql("SELECT * FROM patient_identifier
 																						WHERE identifier_type = #{params[:identifiers][0][:identifier_type].to_i} and identifier LIKE '%#{session_date}%'
 																						AND voided = 0 ORDER BY patient_identifier_id DESC")
-        type = type.first.identifier.split(" ") rescue ""
-        if type.include?(current_date.year.to_s)
-          surfix = (type.last.to_i + 1)
-        else
-          surfix = 1
-        end
-        pat = PatientIdentifier.new()
-        pat.patient_id = params[:patient_id]
-        pat.identifier = "#{session_date} #{surfix}"
-        pat.identifier_type = params[:identifiers][0][:identifier_type].to_i
-        pat.location_id = params[:identifiers][0][:location_id].to_i
-        pat.creator = 1
-        pat.save!
+      type = type.first.identifier.split(" ") rescue ""
+      if type.include?(current_date.year.to_s)
+        surfix = (type.last.to_i + 1)
+      else
+        surfix = 1
+      end
+      pat = PatientIdentifier.new()
+      pat.patient_id = params[:patient_id]
+      pat.identifier = "#{session_date} #{surfix}"
+      pat.identifier_type = params[:identifiers][0][:identifier_type].to_i
+      pat.location_id = params[:identifiers][0][:location_id].to_i
+      pat.creator = 1
+      pat.save!
 
       redirect_to "/patients/tb_treatment_card?patient_id=#{params[:patient_id]}" and return
     end

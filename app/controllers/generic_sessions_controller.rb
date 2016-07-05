@@ -65,39 +65,44 @@ class GenericSessionsController < ApplicationController
   def stock_levels_graph
     @current_heath_center_name = Location.current_health_center.name rescue '?'
     @list = {}
+=begin
     drug_names = GenericDrugController.new.preformat_regimen
     drug_cms_hash = {}
     DrugCms.all.each do |drug_cms|
       drug_cms_hash[drug_cms.drug_inventory_id] = drug_cms.name
     end
-    drug_names.each do |drug_name|
+=end
+    DrugCms.all.each do |drug_cms|
 
-      drug = Drug.find_by_name(drug_name)
-      next if drug_cms_hash[drug.id].blank?
-      drug_pack_size = Pharmacy.pack_size(drug.id)
+      drug = Drug.find(drug_cms.drug_inventory_id)
+      drug_pack_size = drug_cms.pack_size #Pharmacy.pack_size(drug.id)
       current_stock = (Pharmacy.latest_drug_stock(drug.id)/drug_pack_size).to_i #In tins
       consumption_rate = Pharmacy.average_drug_consumption(drug.id)
 
-      stock_level = current_stock # stock level comes in pills/day here we convert it to tins/month
-      disp_rate = (consumption_rate.to_f * 0.5) #rate is an avg of pills dispensed per day. here we convert it to tins per month
+      stock_level = current_stock
+      disp_rate = ((30 * consumption_rate)/drug_pack_size).to_f #rate is an avg of pills dispensed per day. here we convert it to tins per month
+      consumption_rate = ((30 * consumption_rate)/drug_pack_size) #rate is an avg of pills dispensed per day. here we convert it to tins per month
 
-      consumption_rate = (consumption_rate.to_f * 0.5)
       expected = stock_level.round
       month_of_stock = (expected/consumption_rate) rescue 0
-
       stocked_out = (disp_rate.to_i != 0 && month_of_stock.to_f.round(3) == 0.00)
 
       active = (disp_rate.to_i == 0 && stock_level.to_i != 0)? false : true
-      drug_cms_name = drug_cms_hash[drug.id]
+      drug_cms_name = drug_cms.name
+      
       @list[drug_cms_name] = {
         "month_of_stock" => month_of_stock,
         "stock_level" => stock_level,
-        "consumption_rate" => disp_rate.round(3),
+        "consumption_rate" => (disp_rate.round(2)),
         "stocked_out" => stocked_out,
         "active" => active
       }
 
     end
+    
+    @list = @list.sort_by{|k, v|k}
+
+    render :layout => false
   end
 
 	# Update the session with the location information

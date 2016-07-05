@@ -37,11 +37,11 @@ class EncountersController < GenericEncountersController
     @ask_staging = false
     @check_preart = false
     @normal_procedure = false
-      if @current_hiv_program_status == "Pre-ART (Continue)"
-        current_date = session[:datetime].to_date rescue Date.today
-        if params[:repeat].blank?       
+    if @current_hiv_program_status == "Pre-ART (Continue)"
+      current_date = session[:datetime].to_date rescue Date.today
+      if params[:repeat].blank?
 
-       last_staging_date = Encounter.find_by_sql("
+        last_staging_date = Encounter.find_by_sql("
          SELECT * FROM encounter
           WHERE patient_id = #{@patient.id} AND encounter_type = #{EncounterType.find_by_name('HIV Staging').id}
           AND encounter_datetime < '#{current_date}' AND voided=0 ORDER BY encounter_datetime DESC LIMIT 1").first.encounter_datetime.to_date rescue ""
@@ -53,19 +53,19 @@ class EncountersController < GenericEncountersController
         end
         #raise session["#{@patient.id}"]["#{current_date}"][:stage_patient].to_yaml
         #session["#{@patient.id}"]["#{current_date}"][:stage_patient] = []
-        else
-          session["#{@patient.id}"] = {}
-          session["#{@patient.id}"]["#{current_date}"] = {}
+      else
+        session["#{@patient.id}"] = {}
+        session["#{@patient.id}"]["#{current_date}"] = {}
           
-          if params[:repeat] == "no"
-           session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "Yes"
-          else
-           session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "No"
-          end
-         
-          @check_preart = true
+        if params[:repeat] == "no"
+          session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "Yes"
+        else
+          session["#{@patient.id}"]["#{current_date}"][:stage_patient] = "No"
         end
-     end
+         
+        @check_preart = true
+      end
+    end
     
 		if (params[:from_anc] == 'true')
       bart_activities = ['Manage Vitals','Manage HIV clinic consultations',
@@ -307,9 +307,9 @@ class EncountersController < GenericEncountersController
     if (params[:encounter_type].upcase rescue '') == 'TB_CLINIC_VISIT'
       @remote_results = false
       if @patient.person.observations.to_s.match(/Tuberculosis smear result:  Yes/i)
-          if @patient.person.observations.to_s.match(/Moderately positive/i) or @patient.person.observations.to_s.match(/Strongly positive/i) or  @patient.person.observations.to_s.match(/Weakly positive/i)
-            @suspected = true
-          end
+        if @patient.person.observations.to_s.match(/Moderately positive/i) or @patient.person.observations.to_s.match(/Strongly positive/i) or  @patient.person.observations.to_s.match(/Weakly positive/i)
+          @suspected = true
+        end
         
       end
     end
@@ -355,7 +355,7 @@ class EncountersController < GenericEncountersController
 						encounter = Encounter.find(encounter.id, :include => [:observations])
 						for obs in encounter.observations do
 							if obs.concept_id == ConceptName.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id
-								@currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
+								#@currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
 							end
 
 							if obs.concept_id == ConceptName.find_by_name("FAMILY PLANNING METHOD").concept_id
@@ -365,6 +365,22 @@ class EncountersController < GenericEncountersController
 					end
 				end
 			end
+
+      @terminal_family_planning_method = false
+
+      patient_family_planning_methods = @patient.person.observations.question("FAMILY PLANNING METHOD").collect{
+        |o|o.answer_string.squish.upcase
+      }
+      @terminal_family_planning_method = true if patient_family_planning_methods.include?("TUBAL LIGATION")
+  
+      latest_visit_date = Encounter.find_by_sql("SELECT MAX(encounter_datetime) as encounter_datetime FROM encounter WHERE patient_id = #{@patient.id} AND
+        voided = 0 AND DATE(encounter_datetime) < '#{session_date}'").last.encounter_datetime.to_date rescue nil
+
+      latest_family_planning_method_question = @patient.person.observations.question("CURRENTLY USING FAMILY PLANNING METHOD").find(:last,
+        :conditions => ["DATE(obs_datetime) = ?", latest_visit_date], :order => "obs_datetime ASC"
+      ).answer_string.squish.upcase rescue nil
+      @currently_using_family_planning_methods = latest_family_planning_method_question if latest_family_planning_method_question == 'YES'
+
     end
 
 		if CoreService.get_global_property_value('use.normal.staging.questions').to_s == "true"
@@ -483,6 +499,174 @@ class EncountersController < GenericEncountersController
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 
+    ######>>########## CERVICAL CANCER SCREENING##############################
+    if cervical_cancer_screening_activated
+      @via_referred = false
+      @has_via_results = false
+      @remaining_days = 0
+      @terminal = false
+      @lesion_size_too_big = false
+
+      terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
+    
+      cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
+
+      via_referral_concept_id = Concept.find_by_name("VIA REFERRAL").concept_id
+    
+      via_results_concept_id  = Concept.find_by_name("VIA Results").concept_id
+
+      cryo_done_date_concept_id = Concept.find_by_name("CRYO DONE DATE").concept_id
+
+      via_referral_outcome_concept_id = Concept.find_by_name("VIA REFERRAL OUTCOME").concept_id
+
+      positive_cryo_concept_id  = Concept.find_by_name("POSITIVE CRYO").concept_id
+
+      via_referral_answer_string = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
+      ).answer_string.squish.upcase rescue ""
+
+      @via_referred = true if via_referral_answer_string == "YES"
+
+      latest_via_results_obs_date = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id]
+      ).obs_datetime.to_date rescue nil
+
+      cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, latest_via_results_obs_date])
+
+      via_referral_outcome_obs = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id, latest_via_results_obs_date])
+      latest_via_referral_outcome = via_referral_outcome_obs.answer_string.squish.upcase rescue nil
+      @latest_via_referral_outcome = latest_via_referral_outcome
+
+      @has_via_results = true unless cervical_cancer_result_obs.blank?
+    
+      latest_cervical_cancer_result =  cervical_cancer_result_obs.answer_string.squish.upcase rescue nil
+      @latest_cervical_cancer_result = latest_cervical_cancer_result
+
+      ############################################################################
+      latest_cryo_result = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, positive_cryo_concept_id, latest_via_results_obs_date])
+      unless latest_cryo_result.blank?
+        cryo_result_answer = latest_cryo_result.answer_string.squish.upcase
+        if cryo_result_answer == "CRYO DELAYED"
+          @has_via_results = false
+        end
+        if cryo_result_answer == "LESION SIZE TOO BIG"
+          @lesion_size_too_big = true
+        end
+      end
+
+      ############################################################################
+
+      three_years = 365 * 3
+      one_year = 365
+
+      unless latest_cervical_cancer_result.blank?
+        
+        obs_date = cervical_cancer_result_obs.obs_datetime.to_date
+        date_gone_in_days = (Date.today - obs_date).to_i #Total days Between Two Dates
+        if latest_cervical_cancer_result == 'NEGATIVE'
+          next_via_date = obs_date + three_years.days
+          @remaining_days = three_years - date_gone_in_days
+          if date_gone_in_days >= three_years
+            @via_referred = false
+            @has_via_results = false
+            next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
+              :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+                @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
+            unless next_via_referral_obs.blank?
+              if (next_via_referral_obs.answer_string.squish.upcase == 'YES')
+                @via_referred = true
+              end
+            end
+
+            next_cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+              :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+                @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, next_via_date])
+            @has_via_results = true unless next_cervical_cancer_result_obs.blank?
+          end
+        end
+      
+        cryo_done_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+          :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+            @patient.id, cervical_cancer_screening_encounter_type_id, cryo_done_date_concept_id,
+            latest_via_results_obs_date])
+    
+        unless cryo_done_cancer_result_obs.blank?
+          cryo_done_date = cryo_done_cancer_result_obs.answer_string.squish.to_date
+          next_via_date = cryo_done_date + one_year.days
+          date_gone_after_cryo_is_done = (Date.today - cryo_done_date).to_i #Total days Between Two Dates
+          @remaining_days = one_year - date_gone_after_cryo_is_done
+          if (date_gone_after_cryo_is_done >= one_year)
+            @via_referred = false
+            @has_via_results = false
+            next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
+              :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+                @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
+            unless next_via_referral_obs.blank?
+              if (next_via_referral_obs.answer_string.squish.upcase == 'YES')
+                @via_referred = true
+              end
+            end
+
+            next_cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+              :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+                @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, next_via_date])
+            @has_via_results = true unless next_cervical_cancer_result_obs.blank?
+          end
+        end
+
+        unless latest_via_referral_outcome.blank?
+          if latest_via_referral_outcome == 'NO CANCER'
+            via_referral_outcome_obs_date = via_referral_outcome_obs.obs_datetime.to_date
+            next_via_date = via_referral_outcome_obs_date + three_years.days
+            date_gone_after_referral_outcome_is_done = (Date.today - via_referral_outcome_obs_date).to_i #Total days Between Two Dates
+            @remaining_days = three_years - date_gone_after_referral_outcome_is_done
+          
+            if (date_gone_after_referral_outcome_is_done >= three_years)
+              @via_referred = false
+              @has_via_results = false
+              next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
+                :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+                  @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
+              unless next_via_referral_obs.blank?
+                if (next_via_referral_obs.answer_string.squish.upcase == 'YES')
+                  @via_referred = true
+                end
+              end
+
+              next_cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
+                :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
+                  @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, next_via_date])
+              @has_via_results = true unless next_cervical_cancer_result_obs.blank?
+            end
+          end
+        end
+
+
+
+      end
+
+      via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
+      ).collect{|o|o.answer_string.squish.upcase}
+    
+
+      via_referral_outcome_answers.each do |outcome|
+        if terminal_referral_outcomes.include?(outcome)
+          @terminal = true
+          break
+        end
+      end
+    end
+    ###########################################################################
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
 		else
@@ -876,24 +1060,72 @@ class EncountersController < GenericEncountersController
 		dispensed_date = session[:datetime].to_date rescue Date.today
 		expiry_date = prescription_expiry_date(@patient, dispensed_date)
 		
-		#if the patient is a child (age 14 or less) and the peads clinic days are set - we
-		#use the peads clinic days to set the next appointment date		
-		peads_clinic_days = CoreService.get_global_property_value('peads.clinic.days')
-				
-		if (@patient_bean.age <= 14 && !peads_clinic_days.blank?)
-			clinic_days = peads_clinic_days
-		else
-			clinic_days = CoreService.get_global_property_value('clinic.days') || 'Monday,Tuesday,Wednesday,Thursday,Friday'		
-		end
-		clinic_days = clinic_days.split(',')		
-
-		bookings = bookings_within_range(expiry_date)
-    
-		clinic_holidays = CoreService.get_global_property_value('clinic.holidays') 
-		clinic_holidays = clinic_holidays.split(',').map{|day|day.to_date}.join(',').split(',') rescue []
-		
-		return suggested_date(expiry_date ,clinic_holidays, bookings, clinic_days)
+		return revised_suggested_date(expiry_date)
 	end
+
+  def revised_suggested_date(expiry_date)
+    clinic_appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
+    peads_clinic_days = CoreService.get_global_property_value('peads.clinic.days')
+    if (@patient_bean.age <= 14 && !peads_clinic_days.blank?)
+      clinic_days = peads_clinic_days
+    else
+      clinic_days = CoreService.get_global_property_value('clinic.days') || 'Monday,Tuesday,Wednesday,Thursday,Friday'
+    end
+    clinic_days = clinic_days.split(',')
+
+
+    clinic_holidays = CoreService.get_global_property_value('clinic.holidays')
+    clinic_holidays = clinic_holidays.split(',').map{|day|day.to_date.strftime('%d %B')}.join(',').split(',') rescue []
+
+    recommended_date = expiry_date.to_date;
+
+    start_date = (expiry_date - 5.day).strftime('%Y-%m-%d 00:00:00')
+    end_date = expiry_date.strftime('%Y-%m-%d 23:59:59')
+
+    encounter_type = EncounterType.find_by_name('APPOINTMENT')
+    concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
+
+    appointments = {} ; sdate = (expiry_date.to_date + 1.day)
+    1.upto(5).each do |num|
+      appointments[(sdate - num.day)] = 0
+    end
+
+    Observation.find_by_sql("SELECT value_datetime appointment_date, count(value_datetime) AS count FROM obs
+      INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
+      AND encounter_type = #{encounter_type.id} AND value_datetime BETWEEN '#{start_date}'
+      AND '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime").each do |appointment|
+      appointments[appointment.appointment_date.to_date] = appointment.count.to_i
+    end
+
+    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+      next unless clinic_days.include?(date.to_date.strftime('%A'))
+      next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
+
+      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
+        return date
+      end
+    end
+
+=begin
+    the following block of code will only run if the recommended date is full
+    Its a hack, we need to find a better way of cleaning up the code but it works :)
+=end
+    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+      next unless clinic_days.include?(date.to_date.strftime('%A'))
+      next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
+
+      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
+        return date
+      else
+        recommended_date = date
+        if count < clinic_appointment_limit
+          break
+        end
+      end
+    end
+
+    return recommended_date
+  end
 	
 	def prescription_expiry_date(patient, dispensed_date)
     session_date = dispensed_date.to_date
@@ -920,6 +1152,8 @@ class EncountersController < GenericEncountersController
         arvs_given = true
         break
       end
+
+      auto_expire_date = recalculation_auto_expire_date(orders_made, auto_expire_date)
 		else
 			auto_expire_date = orders_made.sort_by(&:auto_expire_date).first.auto_expire_date.to_date
       regimen_type_concept = ConceptName.find_by_name("TB REGIMEN TYPE").concept_id
@@ -963,7 +1197,7 @@ class EncountersController < GenericEncountersController
                                                                                 
     hanging_pills_duration = ((total_brought_to_clinic)/order.drug_order.equivalent_daily_dose).to_i
                                                                                 
-    expire_date = order.auto_expire_date + hanging_pills_duration.days        
+    expire_date = auto_expire_date + hanging_pills_duration.days        
                                                                                 
     calculated_expire_date = expire_date.to_date if expire_date.to_date > calculated_expire_date
 
@@ -982,7 +1216,55 @@ class EncountersController < GenericEncountersController
 		buffer = 0 if !arvs_given
 		return auto_expire_date - buffer.days
 	end
-	
+
+  def recalculation_auto_expire_date(orders, auto_expire_date)
+=begin
+  This block of code is making sure we add the exact number of days in months by 
+  using the Rails way of adding months to a given dat.
+  So if for example the given auto_expire_date date is first of January 2016
+  and the dispensed date is the 1st of January 2016 then, a month from the 
+  first the date will be 1st of Febuary 2016 not 28th of January 
+=end
+    smallest_expire_date = nil
+    (orders || []).each do |order|
+      if smallest_expire_date.blank?
+        smallest_expire_date = [order.start_date.to_date, order.auto_expire_date.to_date]
+      else
+        if smallest_expire_date.last > order.auto_expire_date.to_date
+          smallest_expire_date = [order.start_date.to_date, order.auto_expire_date.to_date]
+        end
+      end
+    end
+
+    return auto_expire_date if smallest_expire_date.blank?
+    exp_date = smallest_expire_date.last
+    dispensed_date = smallest_expire_date.first
+
+    duration = (exp_date - dispensed_date).to_i
+
+    case duration
+      when 28
+        return (dispensed_date + 1.month)
+      when 58
+        return (dispensed_date + 2.month)
+      when 86
+        return (dispensed_date + 3.month)
+      when 114
+        return (dispensed_date + 4.month)
+      when 142
+        return (dispensed_date + 5.month)
+      when 170
+        return (dispensed_date + 6.month)
+      when 198
+        return (dispensed_date + 7.month)
+      when 226
+        return (dispensed_date + 8.month)
+      else
+        return auto_expire_date
+    end
+
+  end
+  	
   def bookings_within_range(end_date = nil)
     clinic_days = GlobalProperty.find_by_property("clinic.days")
     clinic_days = clinic_days.property_value.split(',') rescue 'Monday,Tuesday,Wednesday,Thursday,Friday'.split(',')
@@ -1515,35 +1797,50 @@ class EncountersController < GenericEncountersController
     @patient_ids = []
     b4_visit_one = []
     no_art = []
+ 
+    nationa_id_identifier_type = PatientIdentifierType.find_by_name('National id').id 
     
-    PatientProgram.find_by_sql("SELECT e.patient_id, f.identifier, e.earliest_start_date,
-      current_state_for_program(e.patient_id, 1, '#{@end_date}') AS state
-			FROM earliest_start_date e
-			JOIN person p ON p.person_id = e.patient_id
-            JOIN patient_identifier f ON f.patient_id = p.person_id
-      AND f.identifier_type = (SELECT patient_identifier_type_id FROM patient_identifier_type
-      WHERE name = 'National id') AND f.identifier IN (#{@id_string})
-			WHERE p.gender regexp 'F'
-			HAVING state = 7").each do | patient |
-      @patient_ids << patient.patient_id
-      idf = patient.identifier
-      result["#{idf}"] = patient.earliest_start_date
-      if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
-        b4_visit_one << idf
-      end
+    PatientProgram.find_by_sql("SELECT p.person_id patient_id, f.identifier, 
+      earliest_start_date_at_clinic(p.person_id) earliest_start_date,
+      current_state_for_program(p.person_id, 1, '#{@end_date}') AS state
+			FROM person p 
+      INNER JOIN patient_identifier f ON f.patient_id = p.person_id
+      AND f.identifier_type = (#{nationa_id_identifier_type}) AND f.identifier IN (#{@id_string})
+			WHERE (p.gender = 'F' OR gender = 'Female') 
+      GROUP BY p.person_id").each do | patient |
+        @patient_ids << patient.patient_id
+        idf = patient.identifier
+        result["#{idf}"] = patient.earliest_start_date
+        if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
+          b4_visit_one << idf
+        end
     end
     no_art = @ids - result.keys
 
+    dispensing_encounter_type = EncounterType.find_by_name('DISPENSING').id
+    cpt_drug_id = Drug.find(:all, :conditions => ["name LIKE ?", "%Cotrimoxazole%"]).map(&:id)
+
     if @patient_ids.length > 0
+=begin
       cpt_ids = Encounter.find_by_sql(["SELECT e.patient_id, o.value_drug, e.encounter_type FROM encounter e
 			INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
-			WHERE e.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'DISPENSING')
-			AND o.value_drug IN (SELECT drug_id FROM drug WHERE name regexp 'cotrimoxazole')
-			AND e.patient_id IN (#{@patient_ids.join(',')}) AND DATE(e.encounter_datetime) <= ?", @end_date.to_date]).collect{|e|
+			WHERE e.encounter_type = (#{dispensing_encounter_type})
+			AND o.value_drug IN (#{cpt_drug_id.join(',')})
+			AND e.patient_id IN (#{@patient_ids.join(',')}) AND 
+      e.encounter_datetime <= ?", @end_date.to_date.strftime('%Y-%m-%d 23:59:59')]).collect{|e|
         PatientIdentifier.find(:last,
-                               :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
-                                               e.patient_id, PatientIdentifierType.find_by_name("National id").id,
-                                               @ids]).identifier}.uniq rescue []
+          :conditions => ["patient_id = ? AND identifier_type = ? AND identifier IN (?)",
+            e.patient_id, PatientIdentifierType.find_by_name("National id").id,
+            @ids]).identifier}.uniq rescue []
+=end
+      cpt_ids = Encounter.find_by_sql(["SELECT * FROM encounter e
+			INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
+			INNER JOIN patient_identifier i ON e.patient_id = i.patient_id AND i.voided = 0
+      AND i.identifier_type = #{nationa_id_identifier_type} AND i.identifier IN(#{@id_string})
+			WHERE e.encounter_type = (#{dispensing_encounter_type})
+			AND o.value_drug IN (#{cpt_drug_id.join(',')})
+			AND e.patient_id IN (#{@patient_ids.join(',')}) AND 
+      e.encounter_datetime <= ?", @end_date.to_date.strftime('%Y-%m-%d 23:59:59')]).map(&:identifier)
     else
       cpt_ids = []
     end

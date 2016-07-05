@@ -216,6 +216,7 @@ class GenericClinicController < ApplicationController
       ]
       if current_user.admin?
         @reports << ['/clinic/management_tab','Drug Management']
+        @reports << ['/clinic/system_configurations','View System Configurations']
       end
     end
 
@@ -223,6 +224,46 @@ class GenericClinicController < ApplicationController
     render :layout => false
   end
 
+  def system_configurations
+    @current_location = Location.current_health_center.name
+    @cervical_cancer_property = GlobalProperty.find_by_property("activate.cervical.cancer.screening").property_value.to_s == "true"rescue "Not Set"
+    @drug_management_property = GlobalProperty.find_by_property("activate.drug.management").property_value.to_s == "true" rescue "Not Set"
+    @hypertension_management_property = GlobalProperty.find_by_property("activate.htn.enhancement").property_value.to_s == "true" rescue "Not Set"
+    @vl_management_property = GlobalProperty.find_by_property("activate.vl.routine.check").property_value.to_s == "true" rescue "Not Set"
+    @ask_pills_property = GlobalProperty.find_by_property("ask.pills.remaining.at.home").property_value.to_s == "true" rescue "Not Set"
+    @confirm_before_creating_property = GlobalProperty.find_by_property("confirm.before.creating").property_value.to_s == "true" rescue "Not Set"
+    @enter_lab_results_property = GlobalProperty.find_by_property("enter.lab.results").property_value.to_s == "true" rescue "Not Set"
+    
+    @export_cohort_data_property = (session["export.cohort.data"].downcase == "yes" rescue 'Not Set')
+    @extended_family_panning_property = GlobalProperty.find_by_property("extended.family.planning").property_value.to_s == "true" rescue "Not Set"
+    @systollic_blood_pressure_property = CoreService.get_global_property_value("htn.systolic.threshold").to_i
+    @diastollic_blood_pressure_property = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
+
+    @htn_screening_age_property = CoreService.get_global_property_value("htn.screening.age.threshold")
+    @site_code_property = Location.find(Location.current_health_center.id).neighborhood_cell
+    @filing_number_property = CoreService.get_global_property_value("filing.number.limit")
+    @appointment_limit_property = GlobalProperty.find_by_property("clinic.appointment.limit").property_value rescue "Not Set"
+
+    @show_lab_results_property = GlobalProperty.find_by_property("show.lab.results").property_value.to_s == "true" rescue "Not Set"
+    @extended_staging_property = GlobalProperty.find_by_property("use.extended.staging.questions").property_value.to_s == "true" rescue "Not Set"
+    
+    @use_filing_number_property = GlobalProperty.find_by_property("use.filing.numbers").property_value.to_s == "true" rescue false
+    @use_user_selected_activities_property = GlobalProperty.find_by_property("use.user.selected.activities").property_value.to_s == "true" rescue "Not Set"
+
+    mailing_members = GlobalProperty.find_by_property("mailing.members").property_value.split(";") rescue []
+    @mailing_members = []
+    mailing_members.each do |member|
+      email_address = member.split(":").last
+      @mailing_members << email_address
+    end
+
+    @clinic_days = GlobalProperty.find_by_property("clinic.days").property_value.split(",") rescue "Not Set"
+    @clinic_holidays = GlobalProperty.find_by_property("clinic.holidays").property_value.split(",").collect{|d|
+      d.to_date.strftime("%d-%b-%Y")
+    } rescue []
+    render :layout => "report"
+  end
+  
   def supervision_tab
     @reports = [
                  ["Data that was Updated","/cohort_tool/select?report_type=summary_of_records_that_were_updated"],

@@ -1442,16 +1442,18 @@ class CohortToolController < GenericCohortToolController
     type = "patients_with_adherence_greater_than_hundred"
     @type = type
     @report_type = "Adherence Histogram for all patients"
-    #@adherence_summary = "&nbsp;&nbsp;<button onclick='adhSummary();'>Summary</button>" unless adherences.blank?
-    #@adherence_summary+="<input class='test_name' type=\"button\" onmousedown=\"document.location='/cohort_tool/reports?report=#{@quarter}&report_type=#{type}';\" value=\"Over 100% Adherence\"/>"  unless adherences.blank?
     @adherence_summary_hash = Hash.new(0)
     adherences.each{|adherence,value|
       adh_value = value.to_i
       current_adh = adherence.to_i
-      if current_adh <= 94
-        @adherence_summary_hash["0 - 94"]+= adh_value
-      elsif current_adh >= 95 and current_adh <= 100
+      if current_adh >= 95 and current_adh <= 100
         @adherence_summary_hash["95 - 100"]+= adh_value
+      elsif current_adh >= 50 and current_adh <= 94
+        @adherence_summary_hash["50 - 94"]+= adh_value
+      elsif current_adh >= 25 and current_adh < 50
+        @adherence_summary_hash["25 - 49"]+= adh_value
+      elsif current_adh >= 0 and current_adh <= 24
+        @adherence_summary_hash["0 - 24"]+= adh_value
       else current_adh > 100
         @adherence_summary_hash["> 100"]+= adh_value
       end
@@ -1468,6 +1470,20 @@ class CohortToolController < GenericCohortToolController
     @results = @results.each {|result| result[0] = result[0]}.sort_by{|result| result[0]}
     @results.each{|result| @graph_max = result[1].to_f if result[1].to_f > (@graph_max || 0)}
     @graph_max ||= 0
+    render :layout => false #"report"
+  end
+
+  def list_of_patients_with_adh
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+
+    @range_start = params[:range_start]
+    @range_end = params[:range_end]
+    @quarter = params[:quarter]
+   
+    @patients = get_list_of_patient_with_adherences(@quarter, @range_start, @range_end)
+ 
+    @date = Date.today
     render :layout => "report"
   end
 
@@ -2586,5 +2602,57 @@ class CohortToolController < GenericCohortToolController
     return obs
   end
 
+  def get_list_of_patient_with_adherences(quarter = "Q1 2009", range_start = 0, range_end = 0)
+		date = Report.generate_cohort_date_range(quarter)
+
+		start_date  = date.first.beginning_of_day.strftime("%Y-%m-%d %H:%M:%S")
+		end_date    = date.last.end_of_day.strftime("%Y-%m-%d %H:%M:%S")
+		adherences  = Hash.new(0)
+		adherence_concept_id = ConceptName.find_by_name("WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER").concept_id
+
+    if range_start.to_i == 0 and range_end.to_i == 0
+      sql_patch = "IS NULL;"
+    elsif range_start == '>' and range_end.to_i == 100
+      sql_patch = " > 100;"
+    else
+      sql_patch = "BETWEEN #{range_start.to_i} AND #{range_end.to_i};"
+    end
+
+		adherence_sql_statement= " SELECT worse_adherence_dif, pat_ad.person_id as patient_id, pat_ad.value_text AS adherence_rate_worse, obs_datetime
+                            FROM (SELECT ABS(100 - Abs(value_text)) as worse_adherence_dif, obs_id, person_id, 
+                            concept_id, encounter_id, order_id, obs_datetime, location_id, value_text
+                                  FROM obs q
+                                  WHERE concept_id = #{adherence_concept_id} AND order_id IS NOT NULL
+                                  ORDER BY q.obs_datetime DESC, worse_adherence_dif DESC, person_id ASC)pat_ad
+                            WHERE pat_ad.obs_datetime >= '#{start_date}' AND pat_ad.obs_datetime<= '#{end_date}'
+                            GROUP BY patient_id 
+                            HAVING adherence_rate_worse #{sql_patch}"
+
+		records = Observation.find_by_sql(adherence_sql_statement)
+
+    demographics = {}
+    (records || []).each do |r|
+      patient = PatientService.get_patient(Person.find(r.patient_id))
+      demographics[patient.patient_id] = {  :first_name => patient.first_name,
+                    :last_name => patient.last_name,
+                    :gender => patient.sex,
+                    :birthdate => patient.birth_date ,
+                    :adherence => r.adherence_rate_worse ,
+                    :visit_date => r.obs_datetime.to_date.strftime('%d/%b/%Y') ,
+                    :identifier => patient.filing_number || patient.arv_number 
+    }
+=begin
+,
+                    :visit_date => r.obs_datetime,
+                    :patient_id => r.person_id,
+                    :identifier => patient.filing_number || patient.arv_number }
+=end
+    end
+
+    return demographics
+
+  end
+
 end
+
 

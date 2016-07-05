@@ -12,7 +12,7 @@
       replicated for local use to allow for independence when being used in systems
       that don't need the other libraries as well as customisation of some methods for its use
 =end
-
+require 'rest-client'
 module DDEService
 
   class Patient
@@ -517,7 +517,7 @@ module DDEService
           },
           "patient"=>
             {"identifiers"=>
-              {"old_identification_number" => params["person"]["patient"]["identifiers"]["old_identification_number"]}},
+              {"old_identification_number" => (params["person"]["patient"]["identifiers"]["old_identification_number"] rescue nil)}},
           "gender"=> person_params["gender"],
           "birthdate"=> birthdate,
           "birthdate_estimated"=> birthdate_estimated ,
