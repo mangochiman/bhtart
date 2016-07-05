@@ -60,7 +60,7 @@ class ApplicationController < GenericApplicationController
 
       if (adherence_enc.blank?)
         task.encounter_type = "ART ADHERENCE"
-        task.url = "/encounters/new/art_adherence?show&patient_id=#{patient.id}"
+        task.url = "/encounters/new/art_adherence?patient_id=#{patient.id}"
         return task.url
       end
 
