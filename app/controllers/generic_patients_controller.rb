@@ -53,7 +53,7 @@ class GenericPatientsController < ApplicationController
       end
 
       if fast_next_task.match(/show/i)
-        @fast_track_next_task = 'Fast Track: NONE'
+        @fast_track_next_task = 'NONE'
       end
 
     end
