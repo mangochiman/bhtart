@@ -4027,5 +4027,26 @@ EOF
 
     render :text => true and return
   end
-  
+
+  def stop_fast_track
+    patient = Patient.find(params[:patient_id])
+    session_date = session[:datetime].to_date rescue Date.today
+    fast_track_concept_id = Concept.find_by_name('FAST').concept_id
+
+    no_concept = ConceptName.find_by_name('NO')
+    value_coded_name_id = no_concept.concept_name_id
+    value_coded = no_concept.concept_id
+
+    today_fast_track_obs = Observation.find(:last, :conditions => ["person_id =? AND DATE(obs_datetime) =?
+        AND concept_id =?", params[:patient_id], session_date, fast_track_concept_id])
+    
+    unless today_fast_track_obs.blank?
+      today_fast_track_obs.value_coded = value_coded
+      today_fast_track_obs.value_coded_name_id = value_coded_name_id
+      today_fast_track_obs.save
+    end
+
+    redirect_to next_task(patient) and return
+  end
+
 end
