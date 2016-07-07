@@ -39,6 +39,7 @@ class GenericPatientsController < ApplicationController
       @tb_registration_date = definitive_state_date(@patient, "TB PROGRAM")
     end
 
+    session[:active_patient_id] = @patient.patient_id
     if @location.downcase == "outpatient" || params[:source]== 'opd'
       render :template => 'dashboards/opdtreatment_dashboard', :layout => false
     else
@@ -445,6 +446,13 @@ The following block of code should be replaced by a more cleaner function
     @quarter = params[:quarter]
     @arv_start_number = params[:arv_start_number]
     @arv_end_number = params[:arv_end_number]
+    @active_patient = Patient.find(session[:active_patient_id]) rescue ""
+    @active_patient_age = PatientService.get_patient(@active_patient.person).age rescue ""
+    
+    child_parent_raltionship_type = RelationshipType.find(:first, :conditions => ["a_is_to_b =? AND b_is_to_a =?",
+        'Child', 'Parent']).relationship_type_id
+    @guardian_id = @active_patient.relationships.find(:last, :conditions => ["relationship =?",
+        child_parent_raltionship_type]).person_b rescue nil
 
     if params[:show_mastercard_counter].to_s == "true" && !params[:current].blank?
       @show_mastercard_counter = true

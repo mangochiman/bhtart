@@ -5,15 +5,17 @@
     <%= stylesheet_link_tag fancy_or_high_contrast_touch %>
 
     <script type="text/javascript">
-      var tt_cancel_destination = "/patients/show/" + "<%=@patient_id%>"
-
-     var total  = <%="#{session[:mastercard_ids].length.to_i}" rescue 0%>;
-     var current = <%="#{session[:mastercard_counter].to_i + 1}" rescue 0%>;
+      
+      var patientID = '<%=  @patient_id %>';
+      var primary_patient_id = '<%= session[:active_patient_id] %>';
+      var tt_cancel_destination = "/patients/show/" + primary_patient_id;
+      var total  = <%="#{session[:mastercard_ids].length.to_i}" rescue 0%>;
+      var current = <%="#{session[:mastercard_counter].to_i + 1}" rescue 0%>;
  
       function next(){
         current = current + 1;
         if (current >= total){
-           current = total;
+          current = total;
         }
         document.location = "/patients/mastercard?show_mastercard_counter=true&current=" + current;
       }
@@ -21,14 +23,14 @@
       function prev(){
         current = current - 1 ;
         if (current <= 0){
-           current = 1;
+          current = 1;
         }
         document.location = "/patients/mastercard?show_mastercard_counter=true&current=" + current;
       }    
       
       function hideLoadMsg() {
         document.getElementById('msgBox').style.display = "none";
-          document.getElementById('footer').style.display = "block";
+        document.getElementById('footer').style.display = "block";
       }
 
       function loadMsg() {
@@ -68,6 +70,11 @@
           document.getElementById('dot2').style.display = "inline";
         }
       }
+
+      function switchMasterCard(pID){
+        window.location = '/patients/mastercard?patient_id=' + pID + '&source=';
+      }
+
     </script>
 
     <style>
@@ -139,58 +146,77 @@
 
   </head>
   <body onload="hideLoadMsg();">
-   
+
     <div id="content">
       <iframe id="main" style="border: 0px solid #fff;"
               src="/patients/<%= (!@type.nil? ? "general_mastercard" : "mastercard_printable")
-                  %>?patient_id=<%=@patient_id%>&type=<%= @type %>"></iframe>
+            %>?patient_id=<%=@patient_id%>&type=<%= @type %>"></iframe>
 
       <div id="footer" style="">
-      	<% report_url = "/patients/show/#{@patient_id}" %>
-      	
-		    <% if (@show_mastercard_counter.to_s == "true") || (@from_report.to_s == "true") %>
-		    		<% report_url = session[:report_url] if !session[:report_url].blank? %>
-		    <% end %>
-	
+        <% report_url = "/patients/show/#{@patient_id}" %>
+
+        <% if (@show_mastercard_counter.to_s == "true") || (@from_report.to_s == "true") %>
+          <% report_url = session[:report_url] if !session[:report_url].blank? %>
+        <% end %>
+
         <button onclick="window.location ='<%="#{next_task(@patient)}"%>';" class="button navButton green"
-          id="nextButton" style="float: right; margin-right: 10px;" ><span>Finish</span>
+                id="nextButton" style="float: right; margin-right: 10px;" ><span>Finish</span>
         </button>
 
         <% if @source.nil? %>
           <button class="button navButton blue" style="float: left;"
-          	<% if !@show_mastercard_counter %>
-                  onmousedown="window.location = '/patients/print_mastercard?patient_id=<%=@patient_id%>'">
-            <% else %>
-                  onmousedown="window.location = '/patients/print_mastercard?patient_id=<%=@patient_id%>&show_mastercard_counter=true&current=' + current;">            
+          <% if !@show_mastercard_counter %>
+                    onmousedown="window.location = '/patients/print_mastercard?patient_id=<%=@patient_id%>'">
+                    <% else %>
+              onmousedown="window.location = '/patients/print_mastercard?patient_id=<%=@patient_id%>&show_mastercard_counter=true&current=' + current;">
             <% end %>
             <span>
               Print Mastercard
             </span>
           </button>
 
-          <%if @show_mastercard_counter %>        
-                <button id="back" class="<%=@prev_button_class%>" style="position:relative; float:left;" onclick="prev()">
-                	<span>Previous</span>
-                </button>
-                
-                <span style="position:relative;float:left; top:-6px; padding : 0px 10px 0 20px">
-                	<h1 id="navigation_value"> ----- </h1>
-                </span>
-                
-                <button id="forward" class="<%=@next_button_class%>" style="position:relative; float:left;" onclick="next()">
-                	<span>Next</span>
-                </button>
+          <%if @show_mastercard_counter %>
+            <button id="back" class="<%=@prev_button_class%>" style="position:relative; float:left;" onclick="prev()">
+              <span>Previous</span>
+            </button>
+
+            <span style="position:relative;float:left; top:-6px; padding : 0px 10px 0 20px">
+              <h1 id="navigation_value"> ----- </h1>
+            </span>
+
+            <button id="forward" class="<%=@next_button_class%>" style="position:relative; float:left;" onclick="next()">
+              <span>Next</span>
+            </button>
           <%end%>
         <% end %>
-    
+
         <button class="button navButton blue" style="float: left;"
                 onmousedown="window.location = '/patients/print_mastercard_pdf/<%=@patient.id -%>'">
           <span>
             Print PDF
           </span>
         </button>
-    
-        <% if show_lab_results %>                                     
+
+        <% if @active_patient_age <= 2 %>
+          <% if session[:active_patient_id].to_i == params[:patient_id].to_i %>
+            <% unless @guardian_id.blank? %>
+              <button class="button navButton blue" style="float: left;" onmousedown="switchMasterCard('<%=  @guardian_id -%>')">
+                <span>Switch To Mother MasterCard</span>
+              </button>
+            <% else %>
+              <button class="button navButton gray" style="float: left; pointer-events: none;">
+                <span>Switch To Mother MasterCard</span>
+              </button>
+            <% end %>
+          <% else %>
+            <button class="button navButton blue" style="float: left;" onmousedown="switchMasterCard('<%=  session[:active_patient_id] -%>')">
+              <span>Switch To Child MasterCard</span>
+            </button>
+          <% end %>
+        <% end %>
+
+
+        <% if show_lab_results %>
           <button class="button navButton blue" style="float: left;"
                   onmousedown="window.location = '/lab/results/<%=@patient.id -%>'">
             <span>
@@ -198,7 +224,7 @@
             </span>
           </button>
         <%end%>
-          
+
       </div>
 
       <div id="msgBox">
@@ -217,7 +243,7 @@
             <td class="dots" id="dot9">.</td>
             <td class="dots" id="dot10">.</td>
           </tr>
-        <table>
+        </table>
       </div>
     </div>
   </body>
@@ -225,14 +251,14 @@
 
 <script>
 
-	try {
-		 document.getElementById('navigation_value').innerHTML = "<input value =" + current + " size='3' maxlength='<%= "#{(session[:mastercard_ids].length.to_s rescue 0).split('').count}" %>' type='text' readonly='readonly' style='font-size:35px; text-align:right;font-weight: bold; padding-right:10px;' />" + " of " + total;
-	}
-	catch(e) {
-	 try{
-		document.getElementById('navigation_value').innerHTML = ''
-		}catch(d){}
-	}
+  try {
+    document.getElementById('navigation_value').innerHTML = "<input value =" + current + " size='3' maxlength='<%= "#{(session[:mastercard_ids].length.to_s rescue 0).split('').count}" %>' type='text' readonly='readonly' style='font-size:35px; text-align:right;font-weight: bold; padding-right:10px;' />" + " of " + total;
+  }
+  catch(e) {
+    try{
+      document.getElementById('navigation_value').innerHTML = ''
+    }catch(d){}
+  }
 	
   setInterval("showDots();",200);
   loadMsg();
