@@ -187,5 +187,17 @@ class PropertiesController < GenericPropertiesController
     end
     
   end
-  
+
+  def create_new_art_guide_line_start_date
+    new_art_start_date_concept = "new.art.start.date"
+    if request.post?
+      new_start_date = (params[:start_day].to_s + '-' + params[:start_month].to_s + '-' + params[:start_year].to_s).to_date
+      global_property_new_art_start_date = GlobalProperty.find_by_property(new_art_start_date_concept) || GlobalProperty.new()
+      global_property_new_art_start_date.property = new_art_start_date_concept
+      global_property_new_art_start_date.property_value = new_start_date
+      global_property_new_art_start_date.save
+      redirect_to '/clinic' and return
+    end
+  end
+
 end

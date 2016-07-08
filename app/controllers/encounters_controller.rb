@@ -14,6 +14,8 @@ class EncountersController < GenericEncountersController
 		end
 
     art_start_date = PatientService.date_antiretrovirals_started(@patient)
+    @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
+    @session_date = session_date
     @art_duration_in_months = PatientService.period_on_treatment(art_start_date) rescue 0
     @fast_track_patient = false
     @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
