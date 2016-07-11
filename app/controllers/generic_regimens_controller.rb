@@ -7,7 +7,6 @@ class GenericRegimensController < ApplicationController
 		else
 			@retrospective = false
 		end
-
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		@patient_bean = PatientService.get_patient(@patient.person)
 		@programs = @patient.patient_programs.all
@@ -49,6 +48,7 @@ class GenericRegimensController < ApplicationController
 		@current_hiv_program_state = Patient.current_hiv_program_state(@patient) #chunked
 
 		session_date = session[:datetime].to_date rescue Date.today
+    @session_date = session_date
     
 		pre_hiv_clinic_consultation = Patient.hiv_encounter(@patient, 'PART_FOLLOWUP', session_date)# chunked
 		hiv_clinic_consultation = Patient.hiv_encounter(@patient, 'HIV CLINIC CONSULTATION', session_date)# chunked
@@ -154,6 +154,7 @@ class GenericRegimensController < ApplicationController
     @vl_result_hash = Patient.vl_result_hash(@patient) rescue nil
     @cpt_drug_stock = cpt_drug_stock
 
+    @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
 	end
 
   def check_current_regimen_index
