@@ -274,6 +274,33 @@ dateToday = session[:datetime].to_date rescue Date.today
     displayText += "</div>";
   }
 
+  var sbpInterval;
+  var dbpInterval;
+  var currentSBPValue;
+  var currentDBPValue;
+
+  function updateSBPValues(){
+    sbpInterval = window.setInterval("updateSBP()", 200);
+  }
+
+  function updateDBPValues(){
+    dbpInterval = window.setInterval("updateDBP()", 200);
+  }
+
+  function updateSBP(){
+    currentSBPValue = jQuery('#touchscreenInput'+ tstCurrentPage)[0].value;
+    if (currentSBPValue.length === 0) currentSBPValue = '&nbsp;'
+    jQuery("#helpText" + tstCurrentPage + ">#sbp").html(currentSBPValue);
+  }
+
+  function updateDBP(){
+    currentDBPValue = jQuery('#touchscreenInput'+ tstCurrentPage)[0].value;
+    if (currentDBPValue.length === 0) currentDBPValue = '&nbsp;'
+    jQuery("#helpText" + tstCurrentPage + ">#sbp").html(currentSBPValue);
+    jQuery("#helpText" + tstCurrentPage + ">#dbp").html(currentDBPValue);
+    console.log('DBP = ' + currentDBPValue)
+  }
+  
 </script>
 
 <form action="/encounters/create/vitals">
@@ -368,28 +395,34 @@ dateToday = session[:datetime].to_date rescue Date.today
     <% end %>
   <% end %>
 
-  <% if ask_blood_pressure %>
-    <%= touch_text_field_tag "SYSTOLIC BLOOD PRESSURE (?/Y)", @patient, nil,
-      {	:id => "systolic_blood_pressure",
-      :field_type => "number",
-      :helpText => "Systolic blood pressure (?/Y)",
-      :absoluteMin => 80,
-      :absoluteMax => 180,
-      :validationRule => "^([0-9]+)|Unknown$",
-      :validationMessage => "You must enter numbers only (for example 157)",
-      :tt_pageStyleClass => "KeyboardNumeric NumbersOnly" } %>
+  <!-- NEW ART GUIDELINES. Screen all adults (30+ years) for hypertension at least once at the time of ART initiation. -->
+  <% if CoreService.get_global_property_value("activate.htn.enhancement").to_s != "true" %>
+    <% if @patient_bean.age >= 30 %>
+      <%= touch_text_field_tag "SYSTOLIC BLOOD PRESSURE", @patient, nil,{
+        :id => "systolic_blood_pressure",
+        :field_type => "number",
+        :tt_onLoad => "updateSBPValues();",
+        :tt_onUnLoad => "clearInterval(sbpInterval);", 
+        :helpText => "Systolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",
+        :absoluteMin => 80,
+        :absoluteMax => 180,
+        :validationRule => "^([0-9]+)|Unknown$",
+        :validationMessage => "You must enter numbers only (for example 157)",
+        :tt_pageStyleClass => "KeyboardNumeric NumbersOnly" } %>
 
 
-    <%= touch_text_field_tag "DIASTOLIC BLOOD PRESSURE (X/?)", @patient, nil,
-      {	:id => "diastolic_blood_pressure",
-      :field_type => "number",
-      :helpText => "Diastolic blood pressure (X/?)",
-      :absoluteMin => 50,
-      :tt_onLoad => "$('clearButton').style.display = 'inline';",
-      :absoluteMax => 110,
-      :validationRule => "^([0-9]+)|Unknown$",
-      :validationMessage => "You must enter numbers only (for example 157)",
-      :tt_pageStyleClass => "Keyboard Numeric NumbersOnly"} %>
+      <%= touch_text_field_tag "DIASTOLIC BLOOD PRESSURE", @patient, nil,{
+        :id => "diastolic_blood_pressure",
+        :tt_onLoad => "updateDBPValues();",
+        :tt_onUnLoad => "clearInterval(dbpInterval);",
+        :field_type => "number",
+        :helpText => "Diastolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",
+        :absoluteMin => 50,
+        :absoluteMax => 110,
+        :validationRule => "^([0-9]+)|Unknown$",
+        :validationMessage => "You must enter numbers only (for example 157)",
+        :tt_pageStyleClass => "Keyboard Numeric NumbersOnly"} %>
+    <% end %>
   <% end %>
 
   <% if @patient_bean.age > 14 %>
