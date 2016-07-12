@@ -142,7 +142,8 @@ class GenericClinicController < ApplicationController
       ["Missed Appointments", "/report/missed_appointment_duration?type=missed"],
       ["Defaulted patients", "/report/missed_appointment_duration?type=defaulter"],
       ["Avg ART clinic duration for patients", "/report/avg_waiting_time_for_art_patients"],
-      ["Flat tables reports", "/cohort/select_date"]
+      ["Flat tables reports", "/cohort/select_date"],
+      ["HTN Reports", "/cohort_tool/select_htn_date"]
     ]
 
 
