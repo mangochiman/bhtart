@@ -934,7 +934,7 @@ class ApplicationController < GenericApplicationController
         return task
       end
     end
-    
+
     if (adherence_enc.blank? )
       if (user_selected_activities.match(/Manage ART adherence/i))
         task.encounter_type = "ART ADHERENCE"
@@ -944,7 +944,7 @@ class ApplicationController < GenericApplicationController
         task.url = "/patients/show/#{patient.id}"
         return task
       end
-    end
+    end if not PatientService.art_drug_given_before(patient,session_date).blank?
 
     unless prescribe_drugs_question.blank?
 

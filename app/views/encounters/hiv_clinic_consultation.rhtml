@@ -39,6 +39,9 @@
   var consultation_tb_status = '<%= @consultation_tb_status %>';
   var terminal_family_planning_method = '<%= @terminal_family_planning_method %>';
   var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
+  var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
+  var hivFirstVisit = '<%= @art_first_visit %>';
+  var patientEverHadDrugs = '<%= @patient_ever_had_drugs %>'
 
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
@@ -386,7 +389,7 @@
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
-      :tt_onUnLoad => 'showFastTrackReminder();',
+      :tt_onUnLoad => 'setselectedSideEffects();',
       :helpText => "Side effects (select all that apply)" } %>
   <% else %>
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('COMMON MALAWI ART SYMPTOM SET'),
@@ -500,6 +503,14 @@
       :helpText => "Is patient allergic to sulphur" } %>
   <%end unless art_adherence_to_be_done %>
 
+  <%= text_field_tag "fast_track_pop_up_input", nil, {
+    :id => "fast_track_pop_up_input",
+    :helpText => "Fast Track",
+    :tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display = 'none';",
+    :condition => "(parseInt(art_period_in_months) >= 12 && selectedSideEffects == 'NO' && hivFirstVisit == 'true') || (parseInt(art_period_in_months) >= 12 && patientEverHadDrugs == 'false' && latestFastTrackAnswer == 'YES')",
+    :optional => "true",
+    :tt_pageStyleClass => "NoControls"
+  } %>
 
   <% session_date = session[:datetime].to_date rescue nil
   if session_date %>
@@ -564,10 +575,14 @@
 </div>
 
 <script type="text/javascript">
+  var selectedSideEffects;
+
+  function setselectedSideEffects(){
+    selectedSideEffects = __$('touchscreenInput' + tstCurrentPage).value.toUpperCase().trim();
+  }
 
   function showFastTrackReminder(){
     if (art_period_in_months >= 12){
-      selectedSideEffects = __$('touchscreenInput' + tstCurrentPage).value.toUpperCase().trim();
       if (selectedSideEffects == 'NO'){
         jQuery("#fast_track_reminder").show();
         jQuery("#fast_track_reminder_cover").show();
@@ -580,6 +595,7 @@
     jQuery('#fast-track-input').attr('value', 'No');
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
+    gotoNextPage();
   }
 
   function fastTrackNow(){
@@ -587,6 +603,7 @@
     jQuery('#fast-track-input').attr('value', 'Yes');
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
+    gotoNextPage();
   }
 
   function continueFastTrack(){
@@ -594,6 +611,7 @@
     jQuery('#fast-track-input').attr('value', '')
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
+    gotoNextPage();
   }
 
   function stopFastTrack(){
@@ -601,6 +619,7 @@
     jQuery('#fast-track-input').attr('value', 'No');
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
+    gotoNextPage();
   }
 
 </script>

@@ -228,9 +228,17 @@ class EncountersController < GenericEncountersController
 			@suggested_appointment_date = suggest_appointment_date
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 		end
-    
-		@drug_given_before = PatientService.drug_given_before(@patient, session[:datetime])
 
+    @patient_ever_had_drugs = false
+		@drug_given_before = PatientService.drug_given_before(@patient, session[:datetime])
+    @patient_ever_had_drugs = true unless @drug_given_before.blank?
+
+    todays_seen_encounters = @patient.encounters.find(:all, :conditions => ["DATE(encounter_datetime) =?",
+        session_date]).collect{|e|e.name.upcase}
+    @hiv_reception_only_available = false
+    if (todays_seen_encounters.count == 1 && todays_seen_encounters.include?('HIV RECEPTION'))
+      @hiv_reception_only_available = true
+    end
 
 		@hiv_status = PatientService.patient_hiv_status(@patient)
 		@hiv_test_date = PatientService.hiv_test_date(@patient.id)
@@ -1285,24 +1293,24 @@ class EncountersController < GenericEncountersController
     duration = (exp_date - dispensed_date).to_i
 
     case duration
-      when 28
-        return (dispensed_date + 1.month)
-      when 58
-        return (dispensed_date + 2.month)
-      when 86
-        return (dispensed_date + 3.month)
-      when 114
-        return (dispensed_date + 4.month)
-      when 142
-        return (dispensed_date + 5.month)
-      when 170
-        return (dispensed_date + 6.month)
-      when 198
-        return (dispensed_date + 7.month)
-      when 226
-        return (dispensed_date + 8.month)
-      else
-        return auto_expire_date
+    when 28
+      return (dispensed_date + 1.month)
+    when 58
+      return (dispensed_date + 2.month)
+    when 86
+      return (dispensed_date + 3.month)
+    when 114
+      return (dispensed_date + 4.month)
+    when 142
+      return (dispensed_date + 5.month)
+    when 170
+      return (dispensed_date + 6.month)
+    when 198
+      return (dispensed_date + 7.month)
+    when 226
+      return (dispensed_date + 8.month)
+    else
+      return auto_expire_date
     end
 
   end
@@ -1850,12 +1858,12 @@ class EncountersController < GenericEncountersController
       AND f.identifier_type = (#{nationa_id_identifier_type}) AND f.identifier IN (#{@id_string})
 			WHERE (p.gender = 'F' OR gender = 'Female') 
       GROUP BY p.person_id").each do | patient |
-        @patient_ids << patient.patient_id
-        idf = patient.identifier
-        result["#{idf}"] = patient.earliest_start_date
-        if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
-          b4_visit_one << idf
-        end
+      @patient_ids << patient.patient_id
+      idf = patient.identifier
+      result["#{idf}"] = patient.earliest_start_date
+      if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
+        b4_visit_one << idf
+      end
     end
     no_art = @ids - result.keys
 
