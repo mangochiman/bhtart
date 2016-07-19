@@ -4044,6 +4044,17 @@ EOF
       today_fast_track_obs.value_coded = value_coded
       today_fast_track_obs.value_coded_name_id = value_coded_name_id
       today_fast_track_obs.save
+    else
+      encounter_type_id = EncounterType.find_by_name('HIV RECEPTION').encounter_type_id
+      hiv_reception_encounter = patient.encounters.find(:last, :conditions => ["DATE(encounter_datetime) =? AND
+          encounter_type =?", session_date, encounter_type_id])
+      hiv_reception_encounter.observations.create({
+          :person_id => params[:patient_id],
+          :concept_id => fast_track_concept_id,
+          :value_coded => value_coded,
+          :value_coded_name_id => value_coded_name_id,
+          :obs_datetime => session_date
+        })
     end
 
     redirect_to next_task(patient) and return
