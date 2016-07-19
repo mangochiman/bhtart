@@ -20,6 +20,19 @@ class EncountersController < GenericEncountersController
     @fast_track_patient = false
     @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     @fast_track_patient = true if @latest_fast_track_answer == 'YES'
+ 
+    if (tb_suspected_or_confirmed?(@patient, session_date) == true)
+      #Not interested in patients with tb suspect or confirmed tb
+      @fast_track_patient = false
+      @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
+    end
+
+    if (is_patient_on_htn_treatment?(@patient, session_date) == true)
+      #Not interested in HTN patients
+      @fast_track_patient = false
+      @latest_fast_track_answer = 'NO'
+    end
+
     @fast_track_stop_reasons = ['', 'Poor Adherence', 'Sick', 'Side Effects', 'Other']
 
     session[:return_uri] = params[:return_ip] if ! params[:return_ip].blank?
