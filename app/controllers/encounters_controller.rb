@@ -20,7 +20,8 @@ class EncountersController < GenericEncountersController
     @fast_track_patient = false
     @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     @fast_track_patient = true if @latest_fast_track_answer == 'YES'
-    
+    @fast_track_stop_reasons = ['', 'Poor Adherence', 'Sick', 'Side Effects', 'Other']
+
     session[:return_uri] = params[:return_ip] if ! params[:return_ip].blank?
     
     @hiv_status = tb_art_patient(@patient,"hiv program") rescue ""

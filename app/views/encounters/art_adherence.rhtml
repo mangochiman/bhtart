@@ -232,7 +232,6 @@
   
   function setFastTrackOptions(){
     available_options = document.getElementsByTagName('li');
-    console.log(available_options)
     for(i=0; i<available_options.length; i++){
       inputValue = available_options[i].getAttribute("tstvalue");
       if (inputValue.match(/NO/i)){
@@ -255,6 +254,13 @@
     }
   }
 
+  function setFastTrackYesValue(){
+    selectedValue = $("touchscreenInput" + tstCurrentPage).value.trim().toUpperCase();
+    if (selectedValue == 'YES'){
+      jQuery('#fast-track-input').attr('value', 'Yes');
+    }
+  }
+
   function showFastTrackWarning(){
     jQuery("#fast_track_reminder").show();
     jQuery("#fast_track_reminder_cover").show();
@@ -268,6 +274,27 @@
 
   function stopFastTrack(){
     window.location = '/patients/stop_fast_track?patient_id=' + <%= @patient.patient_id %>;
+  }
+
+  function setNextCaption(){
+    available_options = document.getElementsByTagName('li');
+    for(i=0; i<available_options.length; i++){
+      inputValue = available_options[i].getAttribute("tstvalue");
+      available_options[i].onmouseup = function(){
+        fastTrackStopReason = this.getAttribute("tstvalue");
+        __$('nextButton').innerHTML = '<span>Finish</span>';
+        __$('nextButton').onmousedown = function(){
+          window.location = '/patients/stop_fast_track?patient_id=' + patientID + '&fast_track_stop_reason=' + fastTrackStopReason;
+        }
+      }
+    }
+  }
+
+  function resetNextCaption(){
+    __$('nextButton').innerHTML = '<span>Next</span>';
+    __$('nextButton').onmousedown = function(){
+      gotoNextPage();
+    }
   }
 
 </script>
@@ -285,8 +312,16 @@
     <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
       :id => 'fast_track',
       :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
-      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?',
-      :tt_onLoad => "setFastTrackOptions();"
+      :tt_onUnLoad => "setFastTrackYesValue()",
+      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
+    } %>
+
+    <%= select_tag "fast_track_stop_reason", options_for_select(@fast_track_stop_reasons),{
+      :id => 'fast_track_stop_reason',
+      :condition => "__$('fast_track').value == 'No'",
+      :helpText => 'Select Reason for stopping Fast Track',
+      :tt_onLoad => "setNextCaption();",
+      :tt_onUnLoad => "resetNextCaption();"
     } %>
 
     <% PatientService.art_drug_given_before(@patient, session_date.to_date).uniq.each do |order|
