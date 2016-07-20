@@ -660,8 +660,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                              regimens.push('<%=data[0].split(" ").first%>');
-                                                              display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                regimens.push('<%=data[0].split(" ").first%>');
+                                                                                display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -1870,12 +1870,17 @@ pyridoxine_options = ["","25", "50"]
       <%= hidden_field_tag(:patient_program, (@hiv_programs.first.patient_program_id rescue '')) %>
     <%end%>
 
-    <%= touch_yes_no_tag "PRESCRIBE ARVS", @patient, nil,
-      {:id => 'prescribe_arvs',
-      :allowFreeText => 'false',
-      :condition => 'hasReasonForART() == true && prescribeAntiretroviralDrugs() == true',
-      :helpText => "Prescribe ARVs?",
-      :tt_onLoad => "showCategory('Regimen');"} %>
+    <% if @fast_track_patient == true %>
+      <%= touch_hidden_tag("PRESCRIBE ARVS", @patient, 'YES', {:id => 'prescribe_arvs'}) %>
+    <% else %>
+      <%= touch_yes_no_tag "PRESCRIBE ARVS", @patient, nil,
+        {:id => 'prescribe_arvs',
+        :allowFreeText => 'false',
+        :condition => 'hasReasonForART() == true && prescribeAntiretroviralDrugs() == true',
+        :helpText => "Prescribe ARVs?",
+        :tt_onLoad => "showCategory('Regimen');"} %>
+    <% end %>
+
 
 <%#= select_tag :continue_existing_regimen, options_for_select([['',''],['Yes','YES'],['No','NO']], ''), {
 :textCase => "upper",
@@ -1890,14 +1895,26 @@ pyridoxine_options = ["","25", "50"]
     <%= touch_hidden_tag "Reason antiretrovirals changed or stopped", @patient, nil, {
       :id => 'reason_antiretrovirals_changed_or_stopped'} %>
 
-    <%= select_tag :continue_existing_regimen, options_for_select([['',''],['Yes','YES'],['No','NO']], ''), {
-      :textCase => "upper",
-      :allowFreeText => 'false',
-      :id => "continue_existing_regimen",
-      :tt_onLoad => 'showDrugs();setAttributes();changeButton();showCategory("Regimen");showRegimenChangeAlert(); showHighVlPopup(); showDrugStock()',
-      :tt_onUnLoad => 'resetAttributes();resetRegimen();hideStock();',
-      :condition => 'existingRegimen();',
-      :helpText => "Continue current ARV drugs?"}%>
+    <% if @fast_track_patient == true %>
+      <%= hidden_field_tag("continue_existing_regimen", 'YES', {:id => 'continue_existing_regimen'}) %>
+      <%= text_field_tag "current_drugs", nil, {
+        :id => "current_drugs",
+        :helpText => "Confirm Current Regimen",
+        :tt_onLoad => "showDrugs(); setAttributes();",
+        :tt_onUnLoad => 'resetAttributes();resetRegimen();',
+        :optional => "true",
+        :tt_pageStyleClass => "NoControls"
+      } %>
+    <% else %>
+      <%= select_tag :continue_existing_regimen, options_for_select([['',''],['Yes','YES'],['No','NO']], ''), {
+        :textCase => "upper",
+        :allowFreeText => 'false',
+        :id => "continue_existing_regimen",
+        :tt_onLoad => 'showDrugs();setAttributes();changeButton();showCategory("Regimen");showRegimenChangeAlert(); showHighVlPopup(); showDrugStock()',
+        :tt_onUnLoad => 'resetAttributes();resetRegimen();hideStock();',
+        :condition => 'existingRegimen();',
+        :helpText => "Continue current ARV drugs?"}%>
+    <% end %>
 
     <%= select_tag :regimen_concept_id, nil, {
       :ajaxUrl => "",

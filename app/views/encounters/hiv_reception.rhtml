@@ -165,6 +165,9 @@
       <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
         <br />
         <center>
+          <% unless @latest_vl_result[:latest_result].blank? %>
+            Latest Viral Load result: <%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %>
+          <% end %>
           This is to remind you that this patient is already enrolled in FAST track program.<br />
           Refer the patient to Pharmacy
         </center>

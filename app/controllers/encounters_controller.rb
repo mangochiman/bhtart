@@ -34,6 +34,7 @@ class EncountersController < GenericEncountersController
     end
 
     @fast_track_stop_reasons = ['', 'Poor Adherence', 'Sick', 'Side Effects', 'Other']
+    @latest_vl_result = Lab.latest_viral_load_result(@patient)
 
     session[:return_uri] = params[:return_ip] if ! params[:return_ip].blank?
     

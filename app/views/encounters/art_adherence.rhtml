@@ -697,6 +697,9 @@
       <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
         <br />
         <center>
+          <% unless @latest_vl_result[:latest_result].blank? %>
+            Latest Viral Load result: <%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %> <br />
+          <% end %>
           This patient is already enrolled in FAST track program. Assess the patient before proceeding.<br />
           Do you want to continue fast track program with this patient?
         </center>
