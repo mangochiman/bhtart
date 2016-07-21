@@ -141,6 +141,13 @@
     :tt_pageStyleClass => "NoControls"
   } %>
 
+  <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{
+    :id => 'fast_track_stop_reason',
+    :condition => "__$('fast_track').value == 'No'",
+    :helpText => 'Select Reason for stopping Fast Track',
+    :tt_onLoad => "setNextCaption();",
+    :tt_onUnLoad => "resetNextCaption();"
+  } %>
   <!------------------- FAST TRACK END--->
 
 
