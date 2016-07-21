@@ -272,9 +272,9 @@
     jQuery("#fast_track_reminder_cover").hide();
   }
 
-  function stopFastTrack(){
+  /*function stopFastTrack(){
     window.location = '/patients/stop_fast_track?patient_id=' + <%= @patient.patient_id %>;
-  }
+  }*/
 
   function setNextCaption(){
     available_options = document.getElementsByTagName('li');
@@ -283,9 +283,9 @@
       available_options[i].onmouseup = function(){
         fastTrackStopReason = this.getAttribute("tstvalue");
         __$('nextButton').innerHTML = '<span>Finish</span>';
-        __$('nextButton').onmousedown = function(){
+        /*__$('nextButton').onmousedown = function(){
           window.location = '/patients/stop_fast_track?patient_id=' + patientID + '&fast_track_stop_reason=' + fastTrackStopReason;
-        }
+        }*/
       }
     }
   }
@@ -308,21 +308,6 @@
     <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
     <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
     <%session_date = session[:datetime] || Time.now() %>
-
-    <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
-      :id => 'fast_track',
-      :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
-      :tt_onUnLoad => "setFastTrackYesValue()",
-      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
-    } %>
-
-    <%= select_tag "fast_track_stop_reason", options_for_select(@fast_track_stop_reasons),{
-      :id => 'fast_track_stop_reason',
-      :condition => "__$('fast_track').value == 'No'",
-      :helpText => 'Select Reason for stopping Fast Track',
-      :tt_onLoad => "setNextCaption();",
-      :tt_onUnLoad => "resetNextCaption();"
-    } %>
 
     <% PatientService.art_drug_given_before(@patient, session_date.to_date).uniq.each do |order|
     %>
@@ -663,6 +648,21 @@
         :condition => "$('refer_to_clinician').value == 'NO' && $('prescribe_drugs').value =='YES'" ,
         :helpText => "Is patient allergic to sulphur" } %>
     <%end unless refer_to_clinician_already_asked %>
+
+    <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
+      :id => 'fast_track',
+      :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
+      :tt_onUnLoad => "setFastTrackYesValue()",
+      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
+    } %>
+
+    <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{
+      :id => 'fast_track_stop_reason',
+      :condition => "__$('fast_track').value == 'No'",
+      :helpText => 'Select Reason for stopping Fast Track',
+      :tt_onLoad => "setNextCaption();",
+      :tt_onUnLoad => "resetNextCaption();"
+    } %>
 
     <%= text_field_tag "fast_track_pop_up_input", nil, {
       :id => "fast_track_pop_up_input",
