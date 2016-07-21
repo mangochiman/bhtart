@@ -1870,7 +1870,7 @@ pyridoxine_options = ["","25", "50"]
       <%= hidden_field_tag(:patient_program, (@hiv_programs.first.patient_program_id rescue '')) %>
     <%end%>
 
-    <% if @fast_track_patient == true %>
+    <% if @fast_track_patient == true && !@current_regimen.blank? %>
       <%= touch_hidden_tag("PRESCRIBE ARVS", @patient, 'YES', {:id => 'prescribe_arvs'}) %>
     <% else %>
       <%= touch_yes_no_tag "PRESCRIBE ARVS", @patient, nil,
@@ -1895,12 +1895,12 @@ pyridoxine_options = ["","25", "50"]
     <%= touch_hidden_tag "Reason antiretrovirals changed or stopped", @patient, nil, {
       :id => 'reason_antiretrovirals_changed_or_stopped'} %>
 
-    <% if @fast_track_patient == true %>
+    <% if @fast_track_patient == true && !@current_regimen.blank? %>
       <%= hidden_field_tag("continue_existing_regimen", 'YES', {:id => 'continue_existing_regimen'}) %>
       <%= text_field_tag "current_drugs", nil, {
         :id => "current_drugs",
         :helpText => "Confirm Current Regimen",
-        :tt_onLoad => "showDrugs(); setAttributes();",
+        :tt_onLoad => "showDrugs(); setAttributes(); $('keyboard').style.display = 'none';",
         :tt_onUnLoad => 'resetAttributes();resetRegimen();',
         :optional => "true",
         :tt_pageStyleClass => "NoControls"
