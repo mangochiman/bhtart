@@ -540,6 +540,7 @@ class EncountersController < GenericEncountersController
       @cervical_cancer_first_visit_patient = true
       @no_cancer = false
       @patient_went_for_via = false
+      @cryo_delayed = false
       ##### patient went for via logic START ################
 
 
@@ -607,6 +608,7 @@ class EncountersController < GenericEncountersController
       unless latest_cryo_result.blank?
         cryo_result_answer = latest_cryo_result.answer_string.squish.upcase
         if cryo_result_answer == "CRYO DELAYED"
+          @cryo_delayed = true
           @has_via_results = false
         end
 

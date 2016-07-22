@@ -6,7 +6,8 @@
   var lesionSizeTooBig = '<%= @lesion_size_too_big %>';
   var cervicalCancerFirstVisitPatient = '<%= @cervical_cancer_first_visit_patient %>';
   var patientWentForVIA = '<%= @patient_went_for_via %>';
-
+  var cryoDelayed = '<%= @cryo_delayed %>';
+ 
   function patientReferredAndHasNoresults(){
     if (viaReferred == 'true' && patientHasviaResults == 'false'){
       return true;
@@ -293,7 +294,7 @@
       <%= touch_select_tag 'VIA RESULTS AVAILABLE?', @patient, options_for_select(["", "Yes", "No"]),
         {:id => 'results_available?',
         :helpText => "Are the VIA results available?",
-        :condition => "patientReferredAndHasNoresults() == true;",
+        :condition => "patientReferredAndHasNoresults() == true && cryoDelayed == 'false';",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
 
@@ -330,7 +331,7 @@
       <%= touch_select_tag 'POSITIVE CRYO', @patient, options_for_select(["", "Cryo Done", "Cryo Delayed", "Lesion Size too big"]),
         {:id => 'positive_cryo',
         :helpText => "Record Cryo Result",
-        :condition => "__$('via_results').value.match(/Positive/i)",
+        :condition => "__$('via_results').value.match(/Positive/i) || cryoDelayed == 'true'",
         :tt_onLoad => "setCervicalCancerDelayedReminder();",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
