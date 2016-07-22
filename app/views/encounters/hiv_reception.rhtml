@@ -173,7 +173,7 @@
         <br />
         <center>
           <% unless @latest_vl_result[:latest_result].blank? %>
-            Latest Viral Load result: <%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %>
+          Latest Viral Load result: <span>(<i style="color: black;  text-decoration: underline;"><%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %></i> )</span> <br />
           <% end %>
           This is to remind you that this patient is already enrolled in FAST track program.<br />
           Refer the patient to Pharmacy
@@ -183,7 +183,7 @@
 
     <div id="fast_track_reminder_footer">
       <span id="fastTrackNotNow" onclick="fastTrackNotNow();" style="padding: 12px 7%;">Continue With Vitals</span>
-      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Refer the patient to Fast Track Kiosk</span>
+      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Refer the patient to Fast Track Station</span>
     </div>
 
   <% else %>
