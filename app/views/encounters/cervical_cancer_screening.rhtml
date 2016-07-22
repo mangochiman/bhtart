@@ -5,6 +5,7 @@
   var patientID = '<%=@patient.id%>';
   var lesionSizeTooBig = '<%= @lesion_size_too_big %>';
   var cervicalCancerFirstVisitPatient = '<%= @cervical_cancer_first_visit_patient %>';
+  var patientWentForVIA = '<%= @patient_went_for_via %>';
 
   function patientReferredAndHasNoresults(){
     if (viaReferred == 'true' && patientHasviaResults == 'false'){
@@ -47,6 +48,18 @@
     __$('cancelButton').style.display = 'none';
     __$('keyboard').style.display = 'none';
     __$('inputFrame0').style.display = 'none';
+  }
+
+  function modifyAttributes(){
+    __$('keyboard').style.display = 'none';
+    __$('inputFrame' + tstCurrentPage).style.display = 'none';
+    __$('helpText' + tstCurrentPage).style.position = 'absolute';
+    __$('helpText' + tstCurrentPage).style.fontSize = '2em';
+    __$('helpText' + tstCurrentPage).style.paddingLeft = '0px';
+    __$('helpText' + tstCurrentPage).style.paddingTop = '234px';
+    __$('helpText' + tstCurrentPage).style.width = '90%';
+    __$('helpText' + tstCurrentPage).style.left = '35px';
+    __$('helpText' + tstCurrentPage).style.textAlign = 'center';
   }
 
   function ContinueWorkFlow(){
@@ -283,6 +296,29 @@
         :condition => "patientReferredAndHasNoresults() == true;",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
+
+      <%= touch_select_tag 'PATIENT WENT FOR VIA?', @patient, options_for_select(["", "Yes", "No"]),
+        {:id => 'patient_went_for_via',
+        :helpText => "Did patient go for VIA?",
+        :condition => "__$('results_available?').value == 'No' && patientWentForVIA == 'false'",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
+
+      <%= text_field_tag "no_via", nil,{
+        :id => "no_via",
+        :tt_onLoad => "modifyAttributes();",
+        :condition => "__$('patient_went_for_via').value == 'No'",
+        :optional => "true",
+        :tt_pageStyleClass => "NoControls",
+        :helpText => "Refer this patient to VIA" } %>
+
+      <%= text_field_tag "yes_via", nil, {
+        :id => "yes_via",
+        :tt_onLoad => "modifyAttributes()",
+        :condition => "__$('patient_went_for_via').value == 'Yes'",
+        :optional => "true",
+        :tt_pageStyleClass => "NoControls",
+        :helpText => "Remind the patient to bring results on next visit!" } %>
 
       <%= touch_select_tag 'VIA RESULTS', @patient, options_for_select(["", "Negative", "Positive", "Suspect Cancer"]),
         {:id => 'via_results',

@@ -20,7 +20,7 @@ class EncountersController < GenericEncountersController
     @fast_track_patient = false
     @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     @fast_track_patient = true if @latest_fast_track_answer == 'YES'
- 
+    
     if (tb_suspected_or_confirmed?(@patient, session_date) == true)
       #Not interested in patients with tb suspect or confirmed tb
       @fast_track_patient = false
@@ -539,7 +539,11 @@ class EncountersController < GenericEncountersController
       @lesion_size_too_big = false
       @cervical_cancer_first_visit_patient = true
       @no_cancer = false
-      
+      @patient_went_for_via = false
+      ##### patient went for via logic START ################
+
+
+      ##### patient went for via logic END###################
       terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
     
       cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
@@ -553,6 +557,15 @@ class EncountersController < GenericEncountersController
       via_referral_outcome_concept_id = Concept.find_by_name("VIA REFERRAL OUTCOME").concept_id
 
       positive_cryo_concept_id  = Concept.find_by_name("POSITIVE CRYO").concept_id
+
+      patient_went_for_via_concept_id  = Concept.find_by_name("PATIENT WENT FOR VIA?").concept_id
+
+      latest_patient_went_for_via_obs = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, patient_went_for_via_concept_id]
+      ).answer_string.squish.upcase rescue nil
+
+      @patient_went_for_via = true if latest_patient_went_for_via_obs == 'YES'
 
       via_referral_answer_string = Observation.find(:last, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
