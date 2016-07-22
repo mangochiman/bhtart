@@ -11,6 +11,7 @@ class GenericPatientsController < ApplicationController
     session.delete(:hiv_viral_load_today_patient) if session[:hiv_viral_load_today_patient]
     session.delete(:cervical_cancer_patient) if session[:cervical_cancer_patient]
     session_date = session[:datetime].to_date rescue Date.today
+
     @patient_bean = PatientService.get_patient(@patient.person)
     @encounters = @patient.encounters.find_by_date(session_date)
     @diabetes_number = DiabetesService.diabetes_number(@patient)
@@ -54,6 +55,26 @@ class GenericPatientsController < ApplicationController
       @arv_number = PatientService.get_patient_identifier(@patient, 'ARV Number')
       @tb_number = PatientService.get_patient_identifier(@patient, 'District TB Number')
 
+
+      ############### FAST TRACK ######################
+      latest_fast_track = @patient.person.observations.recent(1).question("FAST").first
+      latest_fast_track_answer = latest_fast_track.answer_string.squish.upcase rescue nil
+      fast_track_answers = @patient.person.observations.question("FAST").all.collect{|o|o.answer_string.squish.upcase}
+
+      if (latest_fast_track_answer == 'YES')
+        if (@task.encounter_type rescue 'NONE').match(/NONE/i)
+          last_two_fast_track_answers = [fast_track_answers[-2], fast_track_answers[-1]].compact #Trying to find for two consecutive YES answers for fast track question
+          if (last_two_fast_track_answers.length > 1)
+            uniq_fast_track_answers = last_two_fast_track_answers.uniq
+            if (uniq_fast_track_answers.length == 1 && uniq_fast_track_answers.include?('YES'))
+              latest_fast_track.value_coded = Concept.find_by_name('NO').concept_id
+              latest_fast_track.save
+            end
+          end
+        end
+      end
+      
+      ############### END FAST TRACK ##################
       #######################
       regimen_category = Concept.find_by_name("Regimen Category")
 

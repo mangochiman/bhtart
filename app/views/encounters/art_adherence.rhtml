@@ -244,8 +244,8 @@
           }
         }
       } else{
-      console.log('Yes')
         available_options[i].onmouseup = function(){
+          jQuery('#fast-track-input').attr('value', 'Yes');
           __$('nextButton').innerHTML = '<span>Next</span>';
           __$('nextButton').onmousedown = function(){
             gotoNextPage();
