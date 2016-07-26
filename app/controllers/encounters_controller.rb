@@ -561,6 +561,8 @@ class EncountersController < GenericEncountersController
 
       patient_went_for_via_concept_id  = Concept.find_by_name("PATIENT WENT FOR VIA?").concept_id
 
+      yes_concept_id = Concept.find_by_name('YES').concept_id
+
       latest_patient_went_for_via_obs = Observation.find(:last, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
           @patient.id, cervical_cancer_screening_encounter_type_id, patient_went_for_via_concept_id]
@@ -572,6 +574,14 @@ class EncountersController < GenericEncountersController
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
       ).answer_string.squish.upcase rescue ""
+
+      @todays_refferals_count = Observation.find(:all, :select => "DISTINCT(person_id)", 
+        :conditions => ["DATE(obs_datetime) =? AND concept_id =? AND value_coded =?",
+          session_date, via_referral_concept_id, yes_concept_id]).count
+
+      daily_referral_limit_concept = "cervical.cancer.daily.referral.limit"
+      @daily_referral_limit = GlobalProperty.find_by_property(daily_referral_limit_concept).property_value.to_i rescue 1000
+
 
       cervical_cancer_first_visit_question = @patient.person.observations.recent(1).question("EVER HAD VIA?")
       @cervical_cancer_first_visit_patient = false unless cervical_cancer_first_visit_question.blank?

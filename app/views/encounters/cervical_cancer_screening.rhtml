@@ -165,6 +165,25 @@
   #tt_page_month_cryo_was_done .options li{font-size:30px;}
   .tt_page_day_cryo_was_done #Unknown { display:none; }
   #tt_page_month_via_was_done .options{height:515px;}
+
+  .referral_count{
+    color: orange;
+    font-weight: bold;
+    font-size: 14pt;
+    font-style: italic;
+    float: right;
+    text-align: center;
+    border-radius: 50%;
+    width: 290px;
+    height: 43px;
+    background: black;
+  }
+
+  .referral_count span{
+    top: 9px;
+    position: relative;
+  }
+  
 </style>
 <% if @via_results_expired == false %>
   <style>
@@ -286,7 +305,7 @@
 
       <%= touch_select_tag 'VIA REFERRAL', @patient, options_for_select(["", "Yes", "No"]),
         {:id => 'refer_to_via',
-        :helpText => "This patient is elligible for VIA. Refer to VIA?",
+        :helpText => "This patient is elligible for VIA. Refer to VIA? <span class='referral_count'><span>Today's Referrals Count: #{@todays_refferals_count}/#{@daily_referral_limit}</span></span><br /><br />",
         :condition => "viaNotReferred() == true && patientVIAwithinThreeYears() == false;",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
