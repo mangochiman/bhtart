@@ -689,6 +689,7 @@ class EncountersController < GenericEncountersController
             date_gone_after_referral_outcome_is_done = (Date.today - via_referral_outcome_obs_date).to_i #Total days Between Two Dates
             @remaining_days = three_years - date_gone_after_referral_outcome_is_done
             @no_cancer = true
+            @lesion_size_too_big = false
             
             if (date_gone_after_referral_outcome_is_done >= three_years)
               @via_referred = false
@@ -740,6 +741,7 @@ class EncountersController < GenericEncountersController
     
       via_referral_outcome_answers.each do |outcome|
         if terminal_referral_outcomes.include?(outcome)
+          @lesion_size_too_big = false
           @terminal = true
           break
         end

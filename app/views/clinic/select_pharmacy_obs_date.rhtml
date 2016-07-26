@@ -1,0 +1,36 @@
+
+<%= javascript_include_tag 'jquery' %>
+
+<script language="javascript">
+  var tt_cancel_destination = '/clinic';
+
+<% options = "<option>" "" "</option>"
+@formatted.each{|drug|
+  next if @cms_drugs[drug].blank?
+  options += "<option value = '#{drug}'>#{@cms_drugs[drug]}</option>"
+}
+
+%>
+</script>
+
+<style type="text/css">
+  #tt_page_select_product .options{
+    height: 297px;
+  }
+</style>
+
+<form method="POST" action="/clinic/select_pharmacy_obs_date">
+
+  <%= select_tag "pharmacy_obs_id", options_for_select(@encounter_dates),
+    {
+    :id => "pharmacy_obs_id",
+    :helpText => "Select Transaction Date"
+
+  } %>
+
+  <%= text_field_tag "number_of_tins", nil, {:helpText => 'Number of tins',
+            :field_type => 'number', :absoluteMin => "1",
+            :min => "1", :tt_pageStyleClass => "Numeric NumbersOnly"} %>
+
+</form>
+

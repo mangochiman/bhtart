@@ -217,12 +217,48 @@ class GenericClinicController < ApplicationController
       ]
       if current_user.admin?
         @reports << ['/clinic/management_tab','Drug Management']
+        @reports << ['/clinic/pharmacy_error_correction_menu','Pharmacy Error Correction']
         @reports << ['/clinic/system_configurations','View System Configurations']
       end
     end
 
     @landing_dashboard = 'clinic_administration'
     render :layout => false
+  end
+
+  def pharmacy_error_correction_menu
+    @formatted = GenericDrugController.new.preformat_regimen
+    @drugs = {} 
+    @cms_drugs = {}
+
+    (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @cms_drugs[drug_name] = drug.name
+      @drugs[drug_name] = "#{drug.short_name} #{drug.strength} "
+    end
+    
+    render :layout => "application"
+  end
+
+  def select_pharmacy_obs_date
+    raise params.inspect
+    @verification_type = params[:verification]
+    drug = Drug.find_by_name(params[:drug_name])
+    @key_value_data = {}
+    @encounter_dates = []
+
+    pharmacy_observations = Pharmacy.find(:all, :conditions => ["drug_id =? AND value_text =?", drug.drug_id,
+        params[:verification]], :order => "encounter_date DESC"
+    )
+
+    pharmacy_observations.each do |obs|
+      encounter_date = obs.encounter_date.to_date.strftime("%d-%b-%Y") rescue obs.encounter_date
+      tins = obs.value_numeric.to_i/obs.pack_size.to_i
+      @encounter_dates << [obs.id, "#{encounter_date} - #{tins} tins"]
+      @key_value_data[obs.id] = obs.value_numeric
+    end
+
+    render :layout => "application"
   end
 
   def system_configurations
