@@ -335,7 +335,7 @@
       <%= text_field_tag "yes_via", nil, {
         :id => "yes_via",
         :tt_onLoad => "modifyAttributes()",
-        :condition => "__$('patient_went_for_via').value == 'Yes'",
+        :condition => "__$('patient_went_for_via').value == 'Yes' || (__$('results_available?').value == 'No' && patientWentForVIA == 'true')",
         :optional => "true",
         :tt_pageStyleClass => "NoControls",
         :helpText => "Remind the patient to bring results on next visit!" } %>
