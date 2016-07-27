@@ -3,14 +3,15 @@
 
 <script language="javascript">
   var tt_cancel_destination = '/clinic';
+  var keyValueData = JSON.parse('<%= @key_value_data.to_json %>');
 
-<% options = "<option>" "" "</option>"
-@formatted.each{|drug|
-  next if @cms_drugs[drug].blank?
-  options += "<option value = '#{drug}'>#{@cms_drugs[drug]}</option>"
-}
+  function updateInputTins(){
+    obsID = __$('pharmacy_obs_id').value;
+    tins = keyValueData[obsID];
+    currentInput = __$('touchscreenInput' + tstCurrentPage)
+    currentInput.value = tins;
+  }
 
-%>
 </script>
 
 <style type="text/css">
@@ -19,18 +20,23 @@
   }
 </style>
 
-<form method="POST" action="/clinic/select_pharmacy_obs_date">
+<form method="POST" action="/clinic/update_pharmacy_obs">
 
   <%= select_tag "pharmacy_obs_id", options_for_select(@encounter_dates),
     {
     :id => "pharmacy_obs_id",
     :helpText => "Select Transaction Date"
-
   } %>
 
-  <%= text_field_tag "number_of_tins", nil, {:helpText => 'Number of tins',
-            :field_type => 'number', :absoluteMin => "1",
-            :min => "1", :tt_pageStyleClass => "Numeric NumbersOnly"} %>
+  <%= text_field_tag "number_of_tins", nil, {
+    :id => "number_of_tins",
+    :tt_onLoad => "updateInputTins();",
+    :helpText => 'Number of tins',
+    :field_type => 'number',
+    :absoluteMin => "1",
+    :min => "1",
+    :tt_pageStyleClass => "Numeric NumbersOnly"
+  } %>
 
 </form>
 
