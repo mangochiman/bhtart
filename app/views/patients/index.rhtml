@@ -351,12 +351,7 @@
               <% end %>
 
               <option value='/patients/next_task_description?task_id=<%= task.id -%>'>
-                <% if @fast_track_patient %>
-                  NEXT TASK: <%= @fast_track_next_task %>
-                <% else %>
-                  NEXT TASK: <%= task_name.gsub('_',' ') %>
-                <% end %>
-
+                NEXT TASK: <%= task_name.gsub('_',' ') %>
               </option>
 
             </select>

@@ -30,65 +30,6 @@ class ApplicationController < GenericApplicationController
     task = main_next_task(Location.current_location, patient,session_date)
     sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
     dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
-    ############### FAST TRACK START ##############################################
-    fast_track_patient = false
-    latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
-    fast_track_patient = true if latest_fast_track_answer == 'YES'
-
-    if fast_track_patient
-      concept_id = ConceptName.find_by_name("Prescribe drugs").concept_id
-      prescribe_drugs_question = Observation.find(:first,:conditions =>["person_id=? AND concept_id =? AND
-              DATE(obs_datetime) =?", patient.id, concept_id, session_date])
-
-      hiv_reception_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND
-          encounter_type = ?", patient.id,session_date,EncounterType.find_by_name('HIV RECEPTION').id])
-
-      adherence_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
-          patient.id,session_date,EncounterType.find_by_name('ART ADHERENCE').id])
-
-      treatment_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
-          patient.id,session_date,EncounterType.find_by_name('TREATMENT').id])
-
-      dispensation_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
-          patient.id,session_date,EncounterType.find_by_name('DISPENSING').id])
-
-      if hiv_reception_enc.blank?
-        task.encounter_type = "HIV RECEPTION"
-        task.url = "/encounters/new/hiv_reception?patient_id=#{patient.id}"
-        return task.url
-      end
-
-      if (adherence_enc.blank?)
-        task.encounter_type = "ART ADHERENCE"
-        task.url = "/encounters/new/art_adherence?patient_id=#{patient.id}"
-        return task.url
-      end
-
-      unless prescribe_drugs_question.blank?
-          
-        if (prescribe_drugs_question.answer_string.squish.upcase == 'YES')
-
-          if (treatment_enc.blank?)
-            task.encounter_type = "TREATMENT"
-            task.url = "/regimens/new?patient_id=#{patient.id}"
-            return task.url
-          end
-
-          if (dispensation_enc.blank?)
-            task.encounter_type = "DISPENSING"
-            task.url = "/patients/treatment_dashboard/#{patient.id}"
-            return task.url
-          end
-        end
-
-      end
-
-      task.encounter_type = "NONE"
-      task.url = "/patients/show/#{patient.id}"
-      return task.url
-      
-    end
-    ################ FAST TRACK END ###############################################
     
     if vl_routine_check_activated
       if (@template.improved_viral_load_check(patient) == true)
@@ -962,7 +903,83 @@ class ApplicationController < GenericApplicationController
     task.url = "/patients/show/#{patient.id}"
     return task
   end
-  
+
+  def fast_track_next_form(location , patient , session_date = Date.today)
+    task = (Task.first.nil?)? Task.new() : Task.first
+    user_selected_activities = current_user.activities.collect{|a| a.upcase }.join(',') rescue []
+
+    concept_id = ConceptName.find_by_name("Prescribe drugs").concept_id
+    prescribe_drugs_question = Observation.find(:first,:conditions =>["person_id=? AND concept_id =? AND
+              DATE(obs_datetime) =?", patient.id, concept_id, session_date])
+
+    hiv_reception_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND
+          encounter_type = ?", patient.id, session_date, EncounterType.find_by_name('HIV RECEPTION').id])
+
+    adherence_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
+        patient.id, session_date, EncounterType.find_by_name('ART ADHERENCE').id])
+
+    treatment_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
+        patient.id, session_date, EncounterType.find_by_name('TREATMENT').id])
+
+    dispensation_enc = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
+        patient.id, session_date, EncounterType.find_by_name('DISPENSING').id])
+
+    if hiv_reception_enc.blank?
+      if (user_selected_activities.match(/Manage HIV reception visits/i))
+        task.encounter_type = "HIV RECEPTION"
+        task.url = "/encounters/new/hiv_reception?patient_id=#{patient.id}"
+        return task
+      else
+        task.url = "/patients/show/#{patient.id}"
+        return task
+      end
+    end
+    
+    if (adherence_enc.blank? )
+      if (user_selected_activities.match(/Manage ART adherence/i))
+        task.encounter_type = "ART ADHERENCE"
+        task.url = "/encounters/new/art_adherence?patient_id=#{patient.id}"
+        return task
+      else
+        task.url = "/patients/show/#{patient.id}"
+        return task
+      end
+    end
+
+    unless prescribe_drugs_question.blank?
+
+      if (prescribe_drugs_question.answer_string.squish.upcase == 'YES')
+        if (treatment_enc.blank?)
+          if (user_selected_activities.match(/Manage prescriptions/i))
+            task.encounter_type = "TREATMENT"
+            task.url = "/regimens/new?patient_id=#{patient.id}"
+            return task
+          else
+            task.url = "/patients/show/#{patient.id}"
+            return task
+          end
+        end
+
+        if dispensation_enc.blank?
+          if (user_selected_activities.match(/Manage drug dispensations/i))
+            task.encounter_type = "DISPENSING"
+            task.url = "/patients/treatment_dashboard/#{patient.id}"
+            return task
+          else
+            task.url = "/patients/show/#{patient.id}"
+            return task
+          end
+        end unless treatment_enc.blank?
+
+      end
+
+    end
+
+    task.encounter_type = "NONE"
+    task.url = "/patients/show/#{patient.id}"
+    return task.url
+  end
+
   def next_form(location , patient , session_date = Date.today)
     #for Oupatient departments
     task = (Task.first.nil?)? Task.new() : Task.first
@@ -1031,6 +1048,16 @@ class ApplicationController < GenericApplicationController
       task.url = "/patients/show/#{patient.id}"
       return task
     end
+    ############ FAST TRACK #################
+    fast_track_patient = false
+    latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    fast_track_patient = true if latest_fast_track_answer == 'YES'
+
+    if fast_track_patient
+      return fast_track_next_form(location , patient , session_date)
+    end
+    ########### FAST TRACK END ##############
+
     art_reason = patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue nil
     reason_for_art = PatientService.reason_for_art_eligibility(patient)
     if !reason_for_art.nil? && reason_for_art.upcase == 'NONE'

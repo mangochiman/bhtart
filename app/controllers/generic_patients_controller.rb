@@ -29,35 +29,6 @@ class GenericPatientsController < ApplicationController
     end
     #@tb_status = PatientService.patient_tb_status(@patient)
     #raise @tb_status.downcase.to_yaml
-    @fast_track_patient = false
-    latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
-    @fast_track_patient = true if latest_fast_track_answer == 'YES'
-
-    if @fast_track_patient
-      fast_next_task = next_task(@patient)
-
-      if fast_next_task.match(/hiv_reception/i)
-        @fast_track_next_task = 'Fast Track: HIV RECEPTION'
-      end
-
-      if fast_next_task.match(/art_adherence/i)
-        @fast_track_next_task = 'Fast Track: ART ADHERENCE'
-      end
-
-      if fast_next_task.match(/regimens/i)
-        @fast_track_next_task = 'Fast Track: TREATMENT'
-      end
-
-      if fast_next_task.match(/treatment_dashboard/i)
-        @fast_track_next_task = 'Fast Track: DISPENSING'
-      end
-
-      if fast_next_task.match(/show/i)
-        @fast_track_next_task = 'NONE'
-      end
-
-    end
-
     @art_start_date = PatientService.patient_art_start_date(@patient)
     @art_start_date = definitive_state_date(@patient, "ON ARV") if @art_start_date.blank?
     @second_line_treatment_start_date = PatientService.date_started_second_line_regimen(@patient)
