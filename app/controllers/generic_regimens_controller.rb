@@ -753,8 +753,18 @@ class GenericRegimensController < ApplicationController
 		@options = MedicationService.regimen_options(current_weight, patient_program.program)
 
 		tmp = []
-
+    new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
 		@options.each{|i|
+      
+      unless new_guide_lines_start_date.blank?
+        if new_guide_lines_start_date <= session_date
+          next if i.to_s.include?("1P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1A") #Not supported in new ART Guidelines
+          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+        end
+      end
+
 			if i.to_s.include?("2P") && current_weight<25
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 
@@ -791,8 +801,18 @@ class GenericRegimensController < ApplicationController
 		tmp = []
 
 		current_weight = params[:current_weight].to_f
-
+    new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
+    
 		@options.each{|i|
+      unless new_guide_lines_start_date.blank?
+        if new_guide_lines_start_date <= session_date
+          next if i.to_s.include?("1P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1A") #Not supported in new ART Guidelines
+          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+        end
+      end
+      
 			if i.to_s.include?("2P") && current_weight<25.to_f
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 

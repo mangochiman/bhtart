@@ -1,3 +1,4 @@
+=begin
 def load_concepts
   encounter_types = ["CERVICAL CANCER SCREENING"]
   concept_names = ["VIA REFERRAL", "VIA Results", "VIA RESULTS AVAILABLE?", "POSITIVE CRYO",
@@ -40,3 +41,4 @@ def load_concepts
 end
 
 load_concepts
+=end
