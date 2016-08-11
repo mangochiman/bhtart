@@ -139,3 +139,5 @@ def regimen_drug_orders
   end
   
 end
+
+regimen_drug_orders
