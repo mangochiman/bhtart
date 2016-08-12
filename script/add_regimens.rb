@@ -25,7 +25,7 @@ def regimens
   
 end
 
-regimens
+#regimens
 
 def regimen_drug_orders
   regimen_drug_orders = {}
@@ -112,32 +112,34 @@ def regimen_drug_orders
   
   ActiveRecord::Base.transaction do
     regimen_drug_orders.sort_by{|k, v|k.to_i}.each do |regimen_index, values|
-      values.each do |drug_id, data|
-        min_weight = data[0]
-        max_weight = data[1]
-        equivalent_daily_dose = data[2]
-        frequency = data[3]
-        instructions = data[4]
-        dose = data[5]
-        regimen = Regimen.find(:last, :conditions => ["regimen_index =? AND min_weight =? AND max_weight =?",
-            regimen_index, min_weight, max_weight])
-        regimen_id = regimen.regimen_id
+      values.each do |drug_id, regimen_data|
+        regimen_data.each do |data|
+          min_weight = data[0]
+          max_weight = data[1]
+          equivalent_daily_dose = data[2]
+          frequency = data[3]
+          instructions = data[4]
+          dose = data[5]
+          regimen = Regimen.find(:last, :conditions => ["regimen_index =? AND min_weight =? AND max_weight =?",
+              regimen_index, min_weight, max_weight])
+          regimen_id = regimen.regimen_id
 
-        regimen_drug_order = RegimenDrugOrder.new
-        regimen_drug_order.regimen_id = regimen_id
-        regimen_drug_order.drug_inventory_id = drug_id
-        regimen_drug_order.dose
-        regimen_drug_order.equivalent_daily_dose = equivalent_daily_dose
-        regimen_drug_order.units = "tab(s)"
-        regimen_drug_order.frequency = frequency
-        regimen_drug_order.instructions = instructions
-        regimen_drug_order.creator = 1
-        regimen_drug_order.date_created = Date.today
-        regimen_drug_order.save
+          regimen_drug_order = RegimenDrugOrder.new
+          regimen_drug_order.regimen_id = regimen_id
+          regimen_drug_order.drug_inventory_id = drug_id
+          regimen_drug_order.dose = dose
+          regimen_drug_order.equivalent_daily_dose = equivalent_daily_dose
+          regimen_drug_order.units = "tab(s)"
+          regimen_drug_order.frequency = frequency
+          regimen_drug_order.instructions = instructions
+          regimen_drug_order.creator = 1
+          regimen_drug_order.date_created = Date.today
+          regimen_drug_order.save
+        end
       end
     end
   end
   
 end
 
-regimen_drug_orders
+#regimen_drug_orders

@@ -758,9 +758,9 @@ class GenericRegimensController < ApplicationController
       
       unless new_guide_lines_start_date.blank?
         if new_guide_lines_start_date <= session_date
-          next if i.to_s.include?("1P") #Not supported in new ART Guidelines
-          next if i.to_s.include?("1A") #Not supported in new ART Guidelines
-          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1A")  unless i.to_s.include?("11A")          #Not supported in new ART Guidelines
+          next if i.to_s.include?("3A") #Not supported in new ART Guidelines
           next if i.to_s.include?("3P") #Not supported in new ART Guidelines
         end
       end
@@ -806,9 +806,9 @@ class GenericRegimensController < ApplicationController
 		@options.each{|i|
       unless new_guide_lines_start_date.blank?
         if new_guide_lines_start_date <= session_date
-          next if i.to_s.include?("1P") #Not supported in new ART Guidelines
-          next if i.to_s.include?("1A") #Not supported in new ART Guidelines
-          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1A")  unless i.to_s.include?("11A")          #Not supported in new ART Guidelines
+          next if i.to_s.include?("3A") #Not supported in new ART Guidelines
           next if i.to_s.include?("3P") #Not supported in new ART Guidelines
         end
       end
