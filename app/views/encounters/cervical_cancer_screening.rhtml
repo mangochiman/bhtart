@@ -5,7 +5,9 @@
   var patientID = '<%=@patient.id%>';
   var lesionSizeTooBig = '<%= @lesion_size_too_big %>';
   var cervicalCancerFirstVisitPatient = '<%= @cervical_cancer_first_visit_patient %>';
-
+  var patientWentForVIA = '<%= @patient_went_for_via %>';
+  var cryoDelayed = '<%= @cryo_delayed %>';
+ 
   function patientReferredAndHasNoresults(){
     if (viaReferred == 'true' && patientHasviaResults == 'false'){
       return true;
@@ -47,6 +49,18 @@
     __$('cancelButton').style.display = 'none';
     __$('keyboard').style.display = 'none';
     __$('inputFrame0').style.display = 'none';
+  }
+
+  function modifyAttributes(){
+    __$('keyboard').style.display = 'none';
+    __$('inputFrame' + tstCurrentPage).style.display = 'none';
+    __$('helpText' + tstCurrentPage).style.position = 'absolute';
+    __$('helpText' + tstCurrentPage).style.fontSize = '2em';
+    __$('helpText' + tstCurrentPage).style.paddingLeft = '0px';
+    __$('helpText' + tstCurrentPage).style.paddingTop = '234px';
+    __$('helpText' + tstCurrentPage).style.width = '90%';
+    __$('helpText' + tstCurrentPage).style.left = '35px';
+    __$('helpText' + tstCurrentPage).style.textAlign = 'center';
   }
 
   function ContinueWorkFlow(){
@@ -151,6 +165,25 @@
   #tt_page_month_cryo_was_done .options li{font-size:30px;}
   .tt_page_day_cryo_was_done #Unknown { display:none; }
   #tt_page_month_via_was_done .options{height:515px;}
+
+  .referral_count{
+    color: orange;
+    font-weight: bold;
+    font-size: 14pt;
+    font-style: italic;
+    float: right;
+    text-align: center;
+    border-radius: 50%;
+    width: 290px;
+    height: 43px;
+    background: black;
+  }
+
+  .referral_count span{
+    top: 9px;
+    position: relative;
+  }
+  
 </style>
 <% if @via_results_expired == false %>
   <style>
@@ -272,7 +305,7 @@
 
       <%= touch_select_tag 'VIA REFERRAL', @patient, options_for_select(["", "Yes", "No"]),
         {:id => 'refer_to_via',
-        :helpText => "This patient is elligible for VIA. Refer to VIA?",
+        :helpText => "This patient is elligible for VIA. Refer to VIA? <span class='referral_count'><span>Today's Referrals Count: #{@todays_refferals_count}/#{@daily_referral_limit}</span></span><br /><br />",
         :condition => "viaNotReferred() == true && patientVIAwithinThreeYears() == false;",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
@@ -280,9 +313,32 @@
       <%= touch_select_tag 'VIA RESULTS AVAILABLE?', @patient, options_for_select(["", "Yes", "No"]),
         {:id => 'results_available?',
         :helpText => "Are the VIA results available?",
-        :condition => "patientReferredAndHasNoresults() == true;",
+        :condition => "patientReferredAndHasNoresults() == true && cryoDelayed == 'false';",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
+
+      <%= touch_select_tag 'PATIENT WENT FOR VIA?', @patient, options_for_select(["", "Yes", "No"]),
+        {:id => 'patient_went_for_via',
+        :helpText => "Did patient go for VIA?",
+        :condition => "__$('results_available?').value == 'No' && patientWentForVIA == 'false'",
+        :tt_pageStyleClass => "NoKeyboard"
+      } %>
+
+      <%= text_field_tag "no_via", nil,{
+        :id => "no_via",
+        :tt_onLoad => "modifyAttributes();",
+        :condition => "__$('patient_went_for_via').value == 'No'",
+        :optional => "true",
+        :tt_pageStyleClass => "NoControls",
+        :helpText => "Refer this patient to VIA" } %>
+
+      <%= text_field_tag "yes_via", nil, {
+        :id => "yes_via",
+        :tt_onLoad => "modifyAttributes()",
+        :condition => "__$('patient_went_for_via').value == 'Yes' || (__$('results_available?').value == 'No' && patientWentForVIA == 'true')",
+        :optional => "true",
+        :tt_pageStyleClass => "NoControls",
+        :helpText => "Remind the patient to bring results on next visit!" } %>
 
       <%= touch_select_tag 'VIA RESULTS', @patient, options_for_select(["", "Negative", "Positive", "Suspect Cancer"]),
         {:id => 'via_results',
@@ -294,7 +350,7 @@
       <%= touch_select_tag 'POSITIVE CRYO', @patient, options_for_select(["", "Cryo Done", "Cryo Delayed", "Lesion Size too big"]),
         {:id => 'positive_cryo',
         :helpText => "Record Cryo Result",
-        :condition => "__$('via_results').value.match(/Positive/i)",
+        :condition => "__$('via_results').value.match(/Positive/i) || cryoDelayed == 'true'",
         :tt_onLoad => "setCervicalCancerDelayedReminder();",
         :tt_pageStyleClass => "NoKeyboard"
       } %>

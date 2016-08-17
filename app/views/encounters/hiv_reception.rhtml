@@ -8,7 +8,8 @@
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>"
   var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
   var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
-
+  var fastTrackPatient = '<%= @fast_track_patient %>';
+  
   function new_relationship() {
     var current = '/encounters/new/hiv_reception?patient_id=<%= @patient.patient_id %>';
     window.location = "/relationships/search?patient_id=<%= @patient.patient_id %>&return_to=" + escape(current) + "&guardian_added=true"
@@ -140,6 +141,13 @@
     :tt_pageStyleClass => "NoControls"
   } %>
 
+  <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{
+    :id => 'fast_track_stop_reason',
+    :condition => "__$('fast-track-input').value == 'No'",
+    :helpText => 'Select Reason for stopping Fast Track',
+    :tt_onLoad => "setNextCaption();",
+    :tt_onUnLoad => "resetNextCaption();"
+  } %>
   <!------------------- FAST TRACK END--->
 
 
@@ -164,6 +172,9 @@
       <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
         <br />
         <center>
+          <% unless @latest_vl_result[:latest_result].blank? %>
+          Latest Viral Load result: <span>(<i style="color: black;  text-decoration: underline;"><%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %></i> )</span> <br />
+          <% end %>
           This is to remind you that this patient is already enrolled in FAST track program.<br />
           Refer the patient to Pharmacy
         </center>
@@ -172,7 +183,7 @@
 
     <div id="fast_track_reminder_footer">
       <span id="fastTrackNotNow" onclick="fastTrackNotNow();" style="padding: 12px 7%;">Continue With Vitals</span>
-      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Refer the patient to Pharmacy</span>
+      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Refer the patient to Fast Track Station</span>
     </div>
 
   <% else %>

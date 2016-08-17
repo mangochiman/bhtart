@@ -21,9 +21,9 @@ class GenericRegimensController < ApplicationController
 		#@hiv_programs = @patient.patient_programs.not_completed.in_programs('HIV PROGRAM')
     @hiv_programs = []
     @programs.each do |prog|
-        if prog.program.name.upcase == "HIV PROGRAM"
-          @hiv_programs << prog #unless ProgramWorkflowState.find_state(prog.patient_states.last.state).concept.fullname.match(/treatment stopped/i)
-        end
+      if prog.program.name.upcase == "HIV PROGRAM"
+        @hiv_programs << prog #unless ProgramWorkflowState.find_state(prog.patient_states.last.state).concept.fullname.match(/treatment stopped/i)
+      end
     end
 
 		@reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
@@ -60,22 +60,22 @@ class GenericRegimensController < ApplicationController
 		end
 
 		tb_visit_obs = Encounter.find(:all,:order => "encounter_datetime DESC,date_created DESC",
-		:conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
-			session_date.to_date, @patient.id, EncounterType.find_by_name("TB VISIT").id],
+      :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
+        session_date.to_date, @patient.id, EncounterType.find_by_name("TB VISIT").id],
 			:include => [:observations])
 
 		prescribe_tb_medication = false
 		@transfer_out_patient = false;
 		(tb_visit_obs || []).each do | obs |
 			(obs.observations.each || []).each do |observation|
-			if observation.concept_id == (Concept.find_by_name('Prescribe drugs').concept_id rescue nil)
-				prescribe_tb_medication = true if Concept.find(observation.value_coded).fullname.upcase == 'YES'
-			end
+        if observation.concept_id == (Concept.find_by_name('Prescribe drugs').concept_id rescue nil)
+          prescribe_tb_medication = true if Concept.find(observation.value_coded).fullname.upcase == 'YES'
+        end
 
-			if observation.concept_id == (Concept.find_by_name('Continue treatment').concept_id rescue nil)
-				@transfer_out_patient = true if Concept.find(observation.value_coded).fullname.upcase == 'NO'
-			end
-		end
+        if observation.concept_id == (Concept.find_by_name('Continue treatment').concept_id rescue nil)
+          @transfer_out_patient = true if Concept.find(observation.value_coded).fullname.upcase == 'NO'
+        end
+      end
 		end
 
 		treatment_obs = Patient.hiv_encounter(@patient, 'TREATMENT', session_date)# chunked
@@ -84,14 +84,14 @@ class GenericRegimensController < ApplicationController
 
 		(treatment_obs || []).each do | obs |
 			(obs.observations.each || []).each do |observation|
-			if observation.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
-				tb_medication_prescribed = true
-			end
+        if observation.concept_id == (Concept.find_by_name('TB regimen type').concept_id rescue nil)
+          tb_medication_prescribed = true
+        end
 
-			if observation.concept_id == (Concept.find_by_name('ARV regimen type').concept_id rescue nil)
-				arvs_prescribed = true
-			end
-		 end
+        if observation.concept_id == (Concept.find_by_name('ARV regimen type').concept_id rescue nil)
+          arvs_prescribed = true
+        end
+      end
 		end
 
 
@@ -115,7 +115,7 @@ class GenericRegimensController < ApplicationController
 				@prescribe_art_drugs = true if Concept.find(obs.value_coded).fullname.upcase == 'YES' and !arvs_prescribed
 			end
 			if hiv_symptoms_ids.include?(obs.value_coded) and !@found_symptoms.include?(Concept.find(obs.value_coded).fullname.upcase.to_s)
-					@found_symptoms += [Concept.find(obs.value_coded).fullname.upcase.to_s]
+        @found_symptoms += [Concept.find(obs.value_coded).fullname.upcase.to_s]
 			end
 		end
 
@@ -127,32 +127,52 @@ class GenericRegimensController < ApplicationController
     @family_planning_methods = []
     @is_patient_pregnant_value = 'Unknown'
 
-#................................................................................................................
+    #................................................................................................................
     if @patient_bean.sex == 'Female'
-        for encounter in current_encounters.reverse do
+      for encounter in current_encounters.reverse do
 
-            if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation')
+        if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation')
 
-                encounter = Encounter.find(encounter.id)
+          encounter = Encounter.find(encounter.id)
 
-                for obs in encounter.observations do
+          for obs in encounter.observations do
 
-                    if obs.concept_id == ConceptName.find_by_name("IS PATIENT PREGNANT?").concept_id
-                        @is_patient_pregnant_value = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}"
-										elsif obs.concept_id == ConceptName.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id
-											@currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
-										elsif obs.concept_id == ConceptName.find_by_name("FAMILY PLANNING METHOD").concept_id
-											@family_planning_methods << "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish.humanize
-										end
-
-                end
+            if obs.concept_id == ConceptName.find_by_name("IS PATIENT PREGNANT?").concept_id
+              @is_patient_pregnant_value = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}"
+            elsif obs.concept_id == ConceptName.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id
+              @currently_using_family_planning_methods = "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish
+            elsif obs.concept_id == ConceptName.find_by_name("FAMILY PLANNING METHOD").concept_id
+              @family_planning_methods << "#{obs.to_s(["short", "order"]).to_s.split(":")[1]}".squish.humanize
             end
+
+          end
         end
+      end
 
     end    
-#................................................................................................................
+    #................................................................................................................
     @vl_result_hash = Patient.vl_result_hash(@patient) rescue nil
     @cpt_drug_stock = cpt_drug_stock
+
+    ###################### FAST TRACK ##########################################
+    @fast_track_patient = false
+    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    @fast_track_patient = true if @latest_fast_track_answer == 'YES'
+
+    if (tb_suspected_or_confirmed?(@patient, session_date) == true)
+      #Not interested in patients with tb suspect or confirmed tb
+      @fast_track_patient = false
+      @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
+    end
+
+    if (is_patient_on_htn_treatment?(@patient, session_date) == true)
+      #Not interested in HTN patients
+      @fast_track_patient = false
+      @latest_fast_track_answer = 'NO'
+    end
+
+    @latest_vl_result = Lab.latest_viral_load_result(@patient)
+    ###################### FAST TRACK END ###############################################
 
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
 	end
@@ -169,120 +189,120 @@ class GenericRegimensController < ApplicationController
 	def regimen_options
     adverse_options = {
       '0' => { 'adverse' => [
-        ['Fever', 'Body pains', 'Vomiting', 'Cough', 'Fever', 'Body pains', 'Vomiting', 'Cough'],
-        ['Hepatitis, Skin rash', 'Hepatitis, Skin rash'],
-        ['Lipodystrophy, Lactic acidocis', 'Lipodystrophy, Lactic acidocis'],
-        ['Treatment failure','Treatment failure']
-      ],
+          ['Fever', 'Body pains', 'Vomiting', 'Cough', 'Fever', 'Body pains', 'Vomiting', 'Cough'],
+          ['Hepatitis, Skin rash', 'Hepatitis, Skin rash'],
+          ['Lipodystrophy, Lactic acidocis', 'Lipodystrophy, Lactic acidocis'],
+          ['Treatment failure','Treatment failure']
+        ],
 				'contraindications' => [
           ['ABC hypersensitivity', 'ABC hypersensitivity'],
 					['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
 				'alt1' => [
-				['Fever', 'Body pains', 'Vomiting', 'Cough', '2'],
-        ['Hepatitis, Skin rash','ABC/3TC+EFV'],
-        ['Lipodystrophy, Lactic acidocis','5'],
-        ['Treatment failure','7']
+          ['Fever', 'Body pains', 'Vomiting', 'Cough', '2'],
+          ['Hepatitis, Skin rash','ABC/3TC+EFV'],
+          ['Lipodystrophy, Lactic acidocis','5'],
+          ['Treatment failure','7']
 				],
 				'alt2'=> [
-				['Fever', 'Body pains', 'Vomiting', 'Cough', '6 or 5 or NS'],
-        ['Hepatitis, Skin rash','5 or 4'],
-        ['Lipodystrophy, Lactic acidocis','6 or NS'],
-        ['Treatment failure','8']
+          ['Fever', 'Body pains', 'Vomiting', 'Cough', '6 or 5 or NS'],
+          ['Hepatitis, Skin rash','5 or 4'],
+          ['Lipodystrophy, Lactic acidocis','6 or NS'],
+          ['Treatment failure','8']
 				]
 			},
       '1' => { 'adverse' => [
-        ['Neuropathy','Neuropathy'],
-        ['Hepatitis, Skin rash','Hepatitis, Skin rash'],
-        ['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
-        ['Treatment failure','Treatment failure']
-      ],
+          ['Neuropathy','Neuropathy'],
+          ['Hepatitis, Skin rash','Hepatitis, Skin rash'],
+          ['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
+          ['Treatment failure','Treatment failure']
+        ],
 				'contraindications' => [
 					['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
 				'alt1' => [
-				['Neuropathy','2 or 5'],
-        ['Hepatitis, Skin rash','5 or 4'],
-        ['Lipodystrophy, Lactic acidocis','5'],
-        ['Treatment failure','7']
+          ['Neuropathy','2 or 5'],
+          ['Hepatitis, Skin rash','5 or 4'],
+          ['Lipodystrophy, Lactic acidocis','5'],
+          ['Treatment failure','7']
 				],
 				'alt2'=> [
-				['Neuropathy','0 or 6'],
-        ['Hepatitis, Skin rash',' NS'],
-        ['Lipodystrophy, Lactic acidocis','NS'],
-        ['Treatment failure','9']
+          ['Neuropathy','0 or 6'],
+          ['Hepatitis, Skin rash',' NS'],
+          ['Lipodystrophy, Lactic acidocis','NS'],
+          ['Treatment failure','9']
 				]
 			},
 			'2' => { 'adverse' =>[
-				['Hepatitis, Skin rash','Hepatitis, Skin rash'],
-				['Treatment failure','Treatment failure'],
-				['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
-				['Anemia','Anemia']
-			],
+          ['Hepatitis, Skin rash','Hepatitis, Skin rash'],
+          ['Treatment failure','Treatment failure'],
+          ['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
+          ['Anemia','Anemia']
+        ],
 				'contraindications' => [
 					['Hepatitis/Jaundice','Hepatitis/Jaundice'],
 					['Anaemia <8g/dl','Anaemia <8g/dl']
 				],
 				'alt1' => [
-				['Hepatitis, Skin rash','4'],
-				['Treatment failure','7'],
-				['Lipodystrophy, Lactic acidocis','5'],
-				['Anemia','0 or 5']
+          ['Hepatitis, Skin rash','4'],
+          ['Treatment failure','7'],
+          ['Lipodystrophy, Lactic acidocis','5'],
+          ['Anemia','0 or 5']
 				],
 				'alt2'=> [
-				['Hepatitis, Skin rash','5 or 3'],
-				['Treatment failure','9'],
-				['Lipodystrophy, Lactic acidocis','NS'],
-				['Anemia','6']
+          ['Hepatitis, Skin rash','5 or 3'],
+          ['Treatment failure','9'],
+          ['Lipodystrophy, Lactic acidocis','NS'],
+          ['Anemia','6']
 				]},
 			'3' => { 'adverse' =>[
-				['Neuropathy','Neuropathy'],
-				['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
-				['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
-				['Treatment failure','Treatment failure']
-			],
+          ['Neuropathy','Neuropathy'],
+          ['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
+          ['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
+          ['Treatment failure','Treatment failure']
+        ],
 				'contraindications' => [
 					['History of psychiatric illness','History of psychiatric illness']
 				],
 				'alt1' => [
-				['Neuropathy','5'],
-				['Hepatitis, Skin rash, psychiat disorder','0 or 6'],
-				['Lipodystrophy, Lactic acidocis','5'],
-				['Treatment failure','7 or 9']
+          ['Neuropathy','5'],
+          ['Hepatitis, Skin rash, psychiat disorder','0 or 6'],
+          ['Lipodystrophy, Lactic acidocis','5'],
+          ['Treatment failure','7 or 9']
 				],
 				'alt2'=> [
-				['Neuropathy','4 or NS'],
-				['Hepatitis, Skin rash, psychiat disorder','NS'],
-				['Lipodystrophy, Lactic acidocis','6'],
-				['Treatment failure','None']
+          ['Neuropathy','4 or NS'],
+          ['Hepatitis, Skin rash, psychiat disorder','NS'],
+          ['Lipodystrophy, Lactic acidocis','6'],
+          ['Treatment failure','None']
 				]},
 			'4' => { 'adverse' => [
-				['Anemia','Anemia'],
-				['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
-				['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
-				['Treatment failure','Treatment failure']
-			],
+          ['Anemia','Anemia'],
+          ['Lipodystrophy, Lactic acidocis','Lipodystrophy, Lactic acidocis'],
+          ['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
+          ['Treatment failure','Treatment failure']
+        ],
 				'contraindications' => [
 					['History of psychiatric illness','History of psychiatric illness'],
 					['Anaemia <8g/dl','Anaemia <8g/dl']
 				],
 				'alt1' => [
-				['Anemia','5 or 0'],
-				['Lipodystrophy, Lactic acidocis','5'],
-				['Hepatitis, Skin rash, psychiat disorder','2 or 0'],
-				['Treatment failure','7']
+          ['Anemia','5 or 0'],
+          ['Lipodystrophy, Lactic acidocis','5'],
+          ['Hepatitis, Skin rash, psychiat disorder','2 or 0'],
+          ['Treatment failure','7']
 				],
 				'alt2'=> [
-				['Anemia','3 or 6'],
-				['Lipodystrophy, Lactic acidocis', 'None'],
-				['Hepatitis, Skin rash, psychiat disorder','6'],
-				['Treatment failure','9']
+          ['Anemia','3 or 6'],
+          ['Lipodystrophy, Lactic acidocis', 'None'],
+          ['Hepatitis, Skin rash, psychiat disorder','6'],
+          ['Treatment failure','9']
 				]},
 			'5' => { 'adverse' =>[
-				['Renal Failure','Renal Failure'],
-				['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
-        ['Persistent dizziness, Visual disturbances', 'Persistent dizziness, Visual disturbances'],
-				['Treatment failure','Treatment failure']
+          ['Renal Failure','Renal Failure'],
+          ['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
+          ['Persistent dizziness, Visual disturbances', 'Persistent dizziness, Visual disturbances'],
+          ['Treatment failure','Treatment failure']
 				],
 				'contraindications' => [
 					['History of psychiatric illness','History of psychiatric illness'],
@@ -290,21 +310,21 @@ class GenericRegimensController < ApplicationController
 					['Child under 3 years','Child under 3 years']
 				],
 				'alt1' => [
-				['Renal Failure','0'],
-				['Hepatitis, Skin rash, psychiat disorder','6'],
-        ['Persistent dizziness, Visual disturbances', '6'],
-				['Treatment failure','8']
+          ['Renal Failure','0'],
+          ['Hepatitis, Skin rash, psychiat disorder','6'],
+          ['Persistent dizziness, Visual disturbances', '6'],
+          ['Treatment failure','8']
 				],
 				'alt2'=> [
-				['Renal Failure','2'],
-				['Hepatitis, Skin rash, psychiat disorder','0 or 2'],
-        ['Persistent dizziness, Visual disturbances', '0 or 2'],
-				['Treatment failure','NS']
+          ['Renal Failure','2'],
+          ['Hepatitis, Skin rash, psychiat disorder','0 or 2'],
+          ['Persistent dizziness, Visual disturbances', '0 or 2'],
+          ['Treatment failure','NS']
 				]},
 			'6' => { 'adverse' =>[
-				['Renal failure','Renal failure'],
-				['Hepatitis, Skin rash','Hepatitis, Skin rash'],
-				['Treatment failure','Treatment failure']
+          ['Renal failure','Renal failure'],
+          ['Hepatitis, Skin rash','Hepatitis, Skin rash'],
+          ['Treatment failure','Treatment failure']
 				],
 				'contraindications' => [
 					['Hepatitis/Jaundice','Hepatitis/Jaundice'],
@@ -312,19 +332,19 @@ class GenericRegimensController < ApplicationController
 					['Child under 3 years','Child under 3 years']
 				],
 				'alt1' => [
-				['Renal failure','0'],
-				['Hepatitis, Skin rash','5'],
-				['Treatment failure','8']
+          ['Renal failure','0'],
+          ['Hepatitis, Skin rash','5'],
+          ['Treatment failure','8']
 				],
 				'alt2'=> [
-				['Renal failure','2'],
-				['Hepatitis, Skin rash','NS'],
-				['Treatment failure','NS']
+          ['Renal failure','2'],
+          ['Hepatitis, Skin rash','NS'],
+          ['Treatment failure','NS']
 				]},
 			'7' =>{ 'adverse' =>[
-				['Nausia, vomiting','Nausia, vomiting'],
-				['Renal failure','Renal failure'],
-				['Jaundice','Jaundice']
+          ['Nausia, vomiting','Nausia, vomiting'],
+          ['Renal failure','Renal failure'],
+          ['Jaundice','Jaundice']
 				],
 				'contraindications' => [
 					['Renal failure','Renal failure'],
@@ -332,19 +352,19 @@ class GenericRegimensController < ApplicationController
           ['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
 				'alt1' => [
-				['Nausia, vomiting','NS'],
-				['Renal failure','8'],
-				['Jaundice','TDF/3TC + LPV/r']
+          ['Nausia, vomiting','NS'],
+          ['Renal failure','8'],
+          ['Jaundice','TDF/3TC + LPV/r']
 				],
 				'alt2'=> [
-				['Nausia, vomiting','None'],
-				['Renal failure','NS'],
-				['Jaundice','None']
+          ['Nausia, vomiting','None'],
+          ['Renal failure','NS'],
+          ['Jaundice','None']
 				]},
 			'8' => { 'adverse' => [
-				['Nausia, vomiting','Nausia, vomiting'],
-				['Anemia','Anemia'],
-				['Jaundice', 'Jaundice']
+          ['Nausia, vomiting','Nausia, vomiting'],
+          ['Anemia','Anemia'],
+          ['Jaundice', 'Jaundice']
 				],
 				'contraindications' => [
 					['Anaemia <8g/dl','Anaemia <8g/dl'],
@@ -352,31 +372,31 @@ class GenericRegimensController < ApplicationController
           ['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
 				'alt1' => [
-				['Nausia, vomiting','NS'],
-				['Anemia','7'],
-				['Jaundice','AZT/3TC + LPV/r']
+          ['Nausia, vomiting','NS'],
+          ['Anemia','7'],
+          ['Jaundice','AZT/3TC + LPV/r']
 				],
 				'alt2'=> [
-				['Nausia, vomiting','None'],
-				['Anemia','9'],
-				['Jaundice','None']
+          ['Nausia, vomiting','None'],
+          ['Anemia','9'],
+          ['Jaundice','None']
 				]},
 			'9' => { 'adverse' =>[
-				['Fever, Body pains, Vomiting, Cough', 'Fever, Body pains, Vomiting, Cough'],
-				['Diarrhoea, Vomiting','Diarrhoea, Vomiting']
+          ['Fever, Body pains, Vomiting, Cough', 'Fever, Body pains, Vomiting, Cough'],
+          ['Diarrhoea, Vomiting','Diarrhoea, Vomiting']
 				],
 				'contraindications' => [
 					['ABC hypersensitivity','ABC hypersensitivity']
 				],
 				'alt1' => [
-				['Fever, Body pains, Vomiting, Cough', '7'],
-				['Diarrhoea, Vomiting','NS']
+          ['Fever, Body pains, Vomiting, Cough', '7'],
+          ['Diarrhoea, Vomiting','NS']
 				],
 				'alt2'=> [
-				['Fever, Body pains, Vomiting, Cough', '8'],
-				['Diarrhoea, Vomiting','None']
+          ['Fever, Body pains, Vomiting, Cough', '8'],
+          ['Diarrhoea, Vomiting','None']
 				]
-				}
+      }
 
 		}
 
@@ -497,40 +517,40 @@ class GenericRegimensController < ApplicationController
 
       if !params[:duration].blank?
         auto_htn_expire_date = session[:datetime] + params[:duration].to_i.days +
-            arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
+          arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
       else
         auto_htn_expire_date = session[:datetime] + params[:cpt_duration].to_i.days +
-            arvs_buffer.days rescue Time.now + params[:cpt_duration].to_i.days + arvs_buffer.days
+          arvs_buffer.days rescue Time.now + params[:cpt_duration].to_i.days + arvs_buffer.days
       end
 
       drug = Drug.find_by_name(drg)
       DrugOrder.write_order(encounter, @patient, nil, drug, start_date, auto_htn_expire_date,
-                         1,"OD",false, "#{drug.name}: Once a day", 1)
+        1,"OD",false, "#{drug.name}: Once a day", 1)
     end
 
     if (!params[:htn_drugs].blank?)
       ht_program_id = Program.find_by_name("HYPERTENSION PROGRAM").id
       program = PatientProgram.find(:last,
-                                    :conditions => ["DATE(date_enrolled) <= ? AND patient_id = ? AND program_id = ?",
-                                                          (session[:datetime].to_date rescue Date.today), @patient.id,
-                                                          ht_program_id])
+        :conditions => ["DATE(date_enrolled) <= ? AND patient_id = ? AND program_id = ?",
+          (session[:datetime].to_date rescue Date.today), @patient.id,
+          ht_program_id])
 
       state = PatientState.find(:last,
-                                :conditions => ["patient_program_id = ? AND DATE(start_date) <= ?",
-                                                program.id, (session[:datetime].to_date rescue Date.today)]) rescue nil
+        :conditions => ["patient_program_id = ? AND DATE(start_date) <= ?",
+          program.id, (session[:datetime].to_date rescue Date.today)]) rescue nil
       current_state = ConceptName.find_by_concept_id(state.program_workflow_state.concept_id).name rescue nil
 
       if state.present? && (current_state.downcase.strip != "on treatment")
         on_treatment_state = ProgramWorkflowState.find(:first,
-                                                       :conditions => ["program_workflow_id = ? AND concept_id = ?",
-                                                                       ProgramWorkflow.find(:first,
-                                                                                            :conditions => ["program_id = ?",
-                                                                                                            ht_program_id]).id,
-                                                                       Concept.find_by_name("On Treatment").id]).id
+          :conditions => ["program_workflow_id = ? AND concept_id = ?",
+            ProgramWorkflow.find(:first,
+              :conditions => ["program_id = ?",
+                ht_program_id]).id,
+            Concept.find_by_name("On Treatment").id]).id
 
         PatientState.create(:patient_program_id => program.id,
-                            :start_date => (session[:datetime].to_date rescue Date.today),
-                            :state => on_treatment_state)
+          :start_date => (session[:datetime].to_date rescue Date.today),
+          :state => on_treatment_state)
         state.update_attributes(:end_date => (session[:datetime].to_date rescue Date.today))
       end
     end
@@ -568,17 +588,17 @@ class GenericRegimensController < ApplicationController
 				drug = Drug.find(order.drug_inventory_id)
 				regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
 				DrugOrder.write_order(
-				encounter,
-				@patient,
-				obs,
-				drug,
-				start_date,
-				auto_expire_date,
-				order.dose,
-				order.frequency,
-				order.prn,
-				"#{drug.name}: #{order.instructions} (#{regimen_name})",
-				order.equivalent_daily_dose)
+          encounter,
+          @patient,
+          obs,
+          drug,
+          start_date,
+          auto_expire_date,
+          order.dose,
+          order.frequency,
+          order.prn,
+          "#{drug.name}: #{order.instructions} (#{regimen_name})",
+          order.equivalent_daily_dose)
 			end if prescribe_arvs
 		end
 
@@ -616,39 +636,39 @@ class GenericRegimensController < ApplicationController
 				end
       else
 				if params[:ipt_mgs] == "300"
-						drug = Drug.find_by_name('INH or H (Isoniazid 300mg tablet)')
+          drug = Drug.find_by_name('INH or H (Isoniazid 300mg tablet)')
         elsif params[:ipt_mgs] == "250"
-						drug = Drug.find_by_name('INH or H (Isoniazid 250mg tablet)')
+          drug = Drug.find_by_name('INH or H (Isoniazid 250mg tablet)')
         elsif params[:ipt_mgs] == "200"
-						drug = Drug.find_by_name('INH or H (Isoniazid 200mg tablet)')
+          drug = Drug.find_by_name('INH or H (Isoniazid 200mg tablet)')
         elsif params[:ipt_mgs] == "150"
-						drug = Drug.find_by_name('INH or H (Isoniazid 150mg tablet)')
+          drug = Drug.find_by_name('INH or H (Isoniazid 150mg tablet)')
         else
-						drug = Drug.find_by_name('INH or H (Isoniazid 100mg tablet)')
+          drug = Drug.find_by_name('INH or H (Isoniazid 100mg tablet)')
 				end
 			end
 
 			weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
 			regimen_id = Regimen.all(:conditions =>  ['min_weight <= ? AND max_weight >= ? AND concept_id = ?', weight, weight, drug.concept_id]).first.regimen_id
 			orders = RegimenDrugOrder.all(:conditions => {:regimen_id => regimen_id, :drug_inventory_id => drug.id})
-#=begin
-					#raise auto_cpt_ipt_expire_date.to_yaml
-					orders.each do |order|
-						regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept_names.typed("FULLY_SPECIFIED").first).name
-						DrugOrder.write_order(
-						encounter,
-						@patient,
-						obs,
-						drug,
-						start_date,
-						auto_cpt_ipt_expire_date,
-						order.dose,
-						order.frequency,
-						order.prn,
-						"#{drug.name}: #{order.instructions} (#{regimen_name})",
-						order.equivalent_daily_dose)
-					end
-#=end
+      #=begin
+      #raise auto_cpt_ipt_expire_date.to_yaml
+      orders.each do |order|
+        regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept_names.typed("FULLY_SPECIFIED").first).name
+        DrugOrder.write_order(
+          encounter,
+          @patient,
+          obs,
+          drug,
+          start_date,
+          auto_cpt_ipt_expire_date,
+          order.dose,
+          order.frequency,
+          order.prn,
+          "#{drug.name}: #{order.instructions} (#{regimen_name})",
+          order.equivalent_daily_dose)
+      end
+      #=end
 		end
 
     unless prescribe_pyridoxine .blank?
@@ -662,43 +682,43 @@ class GenericRegimensController < ApplicationController
       else
         auto_cpt_ipt_expire_date = auto_tb_continuation_expire_date
       end
-       concept_name = "pyridoxine"
-       yes_no = ConceptName.find_by_name(prescribe_pyridoxine)
-			 obs = Observation.create(
+      concept_name = "pyridoxine"
+      yes_no = ConceptName.find_by_name(prescribe_pyridoxine)
+      obs = Observation.create(
 				:concept_name => concept_name ,
 				:person_id => @patient.person.person_id ,
 				:encounter_id => encounter.encounter_id ,
 				:value_coded => yes_no.concept_id ,
 				:obs_datetime => start_date)
 
-       if params[:pyridoxine_value] == "50"
-         drug = Drug.find_by_name('Pyridoxine (50mg)')
-       else
-         drug = Drug.find_by_name('Pyridoxine (25mg)')
-       end unless params[:pyridoxine_value].blank?
+      if params[:pyridoxine_value] == "50"
+        drug = Drug.find_by_name('Pyridoxine (50mg)')
+      else
+        drug = Drug.find_by_name('Pyridoxine (25mg)')
+      end unless params[:pyridoxine_value].blank?
 
-       unless params[:pyridoxine_value].blank?
+      unless params[:pyridoxine_value].blank?
 
-          weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
-          regimen_id = Regimen.all(:conditions =>  ['min_weight <= ? AND max_weight >= ? AND concept_id = ?', weight, weight, drug.concept_id]).first.regimen_id
-          orders = RegimenDrugOrder.all(:conditions => {:regimen_id => regimen_id, :drug_inventory_id => drug.id})
-       end
-#=begin
-					orders.each do |order|
-						regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept_names.typed("FULLY_SPECIFIED").first).name
-						DrugOrder.write_order(
-						encounter,
-						@patient,
-						obs,
-						drug,
-						start_date,
-						auto_cpt_ipt_expire_date,
-						order.dose,
-						order.frequency,
-						order.prn,
-						"#{drug.name}: #{order.instructions} (#{regimen_name})",
-						order.equivalent_daily_dose)
-					end unless params[:pyridoxine_value].blank?
+        weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
+        regimen_id = Regimen.all(:conditions =>  ['min_weight <= ? AND max_weight >= ? AND concept_id = ?', weight, weight, drug.concept_id]).first.regimen_id
+        orders = RegimenDrugOrder.all(:conditions => {:regimen_id => regimen_id, :drug_inventory_id => drug.id})
+      end
+      #=begin
+      orders.each do |order|
+        regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept_names.typed("FULLY_SPECIFIED").first).name
+        DrugOrder.write_order(
+          encounter,
+          @patient,
+          obs,
+          drug,
+          start_date,
+          auto_cpt_ipt_expire_date,
+          order.dose,
+          order.frequency,
+          order.prn,
+          "#{drug.name}: #{order.instructions} (#{regimen_name})",
+          order.equivalent_daily_dose)
+      end unless params[:pyridoxine_value].blank?
     end
 
 		obs = Observation.create(
@@ -733,8 +753,18 @@ class GenericRegimensController < ApplicationController
 		@options = MedicationService.regimen_options(current_weight, patient_program.program)
 
 		tmp = []
-
+    new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
 		@options.each{|i|
+      
+      unless new_guide_lines_start_date.blank?
+        if new_guide_lines_start_date <= session_date
+          next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1A")  unless i.to_s.include?("11A")          #Not supported in new ART Guidelines
+          next if i.to_s.include?("3A") #Not supported in new ART Guidelines
+          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+        end
+      end
+
 			if i.to_s.include?("2P") && current_weight<25
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 
@@ -771,8 +801,18 @@ class GenericRegimensController < ApplicationController
 		tmp = []
 
 		current_weight = params[:current_weight].to_f
-
+    new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
+    
 		@options.each{|i|
+      unless new_guide_lines_start_date.blank?
+        if new_guide_lines_start_date <= session_date
+          next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines
+          next if i.to_s.include?("1A")  unless i.to_s.include?("11A")          #Not supported in new ART Guidelines
+          next if i.to_s.include?("3A") #Not supported in new ART Guidelines
+          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
+        end
+      end
+      
 			if i.to_s.include?("2P") && current_weight<25.to_f
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 
@@ -804,7 +844,7 @@ class GenericRegimensController < ApplicationController
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
     @criteria = Regimen.find(:all,:order => 'regimen_index',:conditions => ['program_id = ? AND concept_id =?', 1, params[:id]],:include => :regimen_drug_orders)
 
-	#	@criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
+    #	@criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
 
 		@options = @criteria.map do |r|
 			[r.regimen_id, r.regimen_drug_orders.map(&:to_s).join('; ')]
@@ -824,7 +864,7 @@ class GenericRegimensController < ApplicationController
     render :text => @options.to_json
 	end
 
-  	def formulations_all
+  def formulations_all
     @patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
     @criteria = Regimen.find(:all,:order => 'regimen_index',:conditions => ['concept_id =?',params[:id]],:include => :regimen_drug_orders)
     #@criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
@@ -839,7 +879,7 @@ class GenericRegimensController < ApplicationController
   def recommend_duration(total_days, equivalent_daily_dose, current_stock, drug_pack_size)
     current_stock = (current_stock * drug_pack_size) #converting tins to tablets
     durations = ['4 days','1 week','2 weeks','1 month','2 months','3 months',
-                  '4 months','5 months','6 months','7 months','8 months']
+      '4 months','5 months','6 months','7 months','8 months']
     hash = {}
     durations.each do |duration|
       days = (((duration.to_i) * 7)) if duration.match(/week/i)
@@ -879,65 +919,65 @@ class GenericRegimensController < ApplicationController
   end
 
   def check_stock_levels
-     orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
-     drug_details = {}
-     arvs_buffer = 2
-     reduced = false
+    orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
+    drug_details = {}
+    arvs_buffer = 2
+    reduced = false
 
-     orders.each do |order|
-       drug_name = order.drug.name
-       drug_id = order.drug.id
-       drug_pack_size = Pharmacy.pack_size(drug_id)
-       current_stock = (Pharmacy.latest_drug_stock(drug_id)/drug_pack_size).to_i #In tins
-       equivalent_daily_dose = order.equivalent_daily_dose.to_i
-       duration = (params[:duration].to_i + arvs_buffer)
+    orders.each do |order|
+      drug_name = order.drug.name
+      drug_id = order.drug.id
+      drug_pack_size = Pharmacy.pack_size(drug_id)
+      current_stock = (Pharmacy.latest_drug_stock(drug_id)/drug_pack_size).to_i #In tins
+      equivalent_daily_dose = order.equivalent_daily_dose.to_i
+      duration = (params[:duration].to_i + arvs_buffer)
 
-       if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
-					reduced = true
-					duration = (params[:duration].to_i + 1)
-       end
-
-       required_amount = (equivalent_daily_dose * duration)
-       required_amount = DrugOrder.calculate_complete_pack(order.drug, required_amount)
-       drug_details[drug_name] = {}
-       drug_details[drug_name]["required_amount"] = required_amount #in tabs
-       drug_details[drug_name]["current_stock"] = current_stock # in tins
-       drug_details[drug_name]["drug_pack_size"] = drug_pack_size
-       if (required_amount > (current_stock * drug_pack_size)) #comparing tabs to tabs
-         drug_details[drug_name]["low_stock_warning"] = true
-         drug_details[drug_name]["recommended_duration"] = recommend_duration(duration, equivalent_daily_dose, current_stock, drug_pack_size)
-       end
-
+      if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
+        reduced = true
+        duration = (params[:duration].to_i + 1)
       end
 
-     render :json => drug_details and return
+      required_amount = (equivalent_daily_dose * duration)
+      required_amount = DrugOrder.calculate_complete_pack(order.drug, required_amount)
+      drug_details[drug_name] = {}
+      drug_details[drug_name]["required_amount"] = required_amount #in tabs
+      drug_details[drug_name]["current_stock"] = current_stock # in tins
+      drug_details[drug_name]["drug_pack_size"] = drug_pack_size
+      if (required_amount > (current_stock * drug_pack_size)) #comparing tabs to tabs
+        drug_details[drug_name]["low_stock_warning"] = true
+        drug_details[drug_name]["recommended_duration"] = recommend_duration(duration, equivalent_daily_dose, current_stock, drug_pack_size)
+      end
+
+    end
+
+    render :json => drug_details and return
   end
 
   def drug_stock(patient, concept_id)
 		stock = {}
 		if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false)
-    regimens = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => concept_id}, :include => :regimen_drug_orders)
-    regimens.each do | r |
-      r.regimen_drug_orders.each do | order |
-        drug = order.drug
+      regimens = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => concept_id}, :include => :regimen_drug_orders)
+      regimens.each do | r |
+        r.regimen_drug_orders.each do | order |
+          drug = order.drug
 
-        drug_pack_size = Pharmacy.pack_size(drug.id)
-        current_stock = (Pharmacy.latest_drug_stock(drug.id)/drug_pack_size).to_i #In tins
-        consumption_rate = Pharmacy.average_drug_consumption(drug.id)
+          drug_pack_size = Pharmacy.pack_size(drug.id)
+          current_stock = (Pharmacy.latest_drug_stock(drug.id)/drug_pack_size).to_i #In tins
+          consumption_rate = Pharmacy.average_drug_consumption(drug.id)
 
-        stock_out_days = ((current_stock * drug_pack_size)/consumption_rate).to_i rescue 0 #To avoid division by zero error when consumption_rate is zero
-        estimated_stock_out_date = (Date.today + stock_out_days).strftime('%d-%b-%Y')
-        estimated_stock_out_date = "(N/A)" if (consumption_rate.to_i <= 0)
-        estimated_stock_out_date = "Stocked out" if (current_stock <= 0) #We don't want to estimate the stock out date if there is no stock available
+          stock_out_days = ((current_stock * drug_pack_size)/consumption_rate).to_i rescue 0 #To avoid division by zero error when consumption_rate is zero
+          estimated_stock_out_date = (Date.today + stock_out_days).strftime('%d-%b-%Y')
+          estimated_stock_out_date = "(N/A)" if (consumption_rate.to_i <= 0)
+          estimated_stock_out_date = "Stocked out" if (current_stock <= 0) #We don't want to estimate the stock out date if there is no stock available
 
-        stock[drug.id] = {}
-        stock[drug.id]["drug_name"] = drug.name
-        stock[drug.id]["current_stock"] = current_stock
-        stock[drug.id]["consumption_rate"] = consumption_rate.to_f.round(1)
-        stock[drug.id]["estimated_stock_out_date"] = estimated_stock_out_date
-        stock[drug.id]["drug_pack_size"] = drug_pack_size
+          stock[drug.id] = {}
+          stock[drug.id]["drug_name"] = drug.name
+          stock[drug.id]["current_stock"] = current_stock
+          stock[drug.id]["consumption_rate"] = consumption_rate.to_f.round(1)
+          stock[drug.id]["estimated_stock_out_date"] = estimated_stock_out_date
+          stock[drug.id]["drug_pack_size"] = drug_pack_size
+        end
       end
-    end
 		end
     stock
   end
@@ -946,8 +986,8 @@ class GenericRegimensController < ApplicationController
 
 		stock = {}
 		if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false)
-    required_cpt = ["Cotrimoxazole (480mg tablet)", "Cotrimoxazole (960mg)"]
-    required_cpt.each do | name |
+      required_cpt = ["Cotrimoxazole (480mg tablet)", "Cotrimoxazole (960mg)"]
+      required_cpt.each do | name |
         drug = Drug.find_by_name(name)
 
         drug_pack_size = Pharmacy.pack_size(drug.id)
@@ -965,8 +1005,8 @@ class GenericRegimensController < ApplicationController
         stock[drug.id]["consumption_rate"] = consumption_rate.to_f.round(1)
         stock[drug.id]["estimated_stock_out_date"] = estimated_stock_out_date
         stock[drug.id]["drug_pack_size"] = drug_pack_size
+      end
     end
-	end
     stock
   end
 
@@ -1031,7 +1071,7 @@ class GenericRegimensController < ApplicationController
 
 	def current_regimen_names_for_programs
 		@programs.inject({}) do |result, program|
-	  		result[program.patient_program_id] = program.current_regimen ? Concept.find_by_concept_id(program.current_regimen).concept_names.tagged(["short"]).map(&:name) : nil; result
+      result[program.patient_program_id] = program.current_regimen ? Concept.find_by_concept_id(program.current_regimen).concept_names.tagged(["short"]).map(&:name) : nil; result
 		end
 	end
 
@@ -1047,7 +1087,7 @@ class GenericRegimensController < ApplicationController
     current_active_state.end_date = params[:current_date].to_date
 
 
-     # set current location via params if given
+    # set current location via params if given
     Location.current_location = Location.find(params[:location]) if params[:location]
 
     patient_state = patient_program.patient_states.build( :state => params[:current_state], :start_date => params[:current_date])
@@ -1086,7 +1126,7 @@ class GenericRegimensController < ApplicationController
       date_completed = params[:current_date].to_date rescue Time.now()
 
       PatientProgram.update_all "date_completed = '#{date_completed.strftime('%Y-%m-%d %H:%M:%S')}'",
-                                 "patient_program_id = #{patient_program.patient_program_id}"
+        "patient_program_id = #{patient_program.patient_program_id}"
     end
   end
 
@@ -1094,7 +1134,7 @@ class GenericRegimensController < ApplicationController
   def current_regimen(patient_id)
 	  regimen_category = Concept.find_by_name("Regimen Category")
 
-      current_regimen = Observation.find(:first, :conditions => ["concept_id = ? AND
+    current_regimen = Observation.find(:first, :conditions => ["concept_id = ? AND
         person_id = ? AND obs_datetime = (SELECT MAX(obs_datetime) FROM obs o
         WHERE o.person_id = #{patient_id} AND o.concept_id =#{regimen_category.id}
         AND o.voided = 0)",regimen_category.id, patient_id]).value_text rescue nil
