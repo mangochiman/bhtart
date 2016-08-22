@@ -260,7 +260,6 @@ end
   }
 
   function addFastTrackAssesmentButton(){
-    console.log("_____________________________________");
     html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
     jQuery("#fastTrackAssesmentButton").remove();
     buttonsDiv = jQuery(".buttonsDiv")[0];
@@ -268,11 +267,27 @@ end
   }
 
   function setFastTrackVisit(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=Yes",
+      success: function(){
+        window.location = location.href;
+      }
 
+    });
   }
 
   function setClinicVisit(){
-  
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=No",
+      success: function(){
+        window.location = location.href;
+      }
+
+    });
   }
 
   function cancelFastTrackPopup(){
@@ -312,5 +327,5 @@ end
     <%end%>
 
   </form>
-  <script src="/javascripts/fastTrackOptionsPopup.js" type="text/javascript"></script>
+  <script src="/javascripts/fastTrackOptionsPopup.js?version=<%=Time.now.to_i%>" type="text/javascript"></script>
 </body>

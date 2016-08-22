@@ -2062,27 +2062,65 @@ class EncountersController < GenericEncountersController
 		end
   end
 
+  def create_fast_track_assesment_observations
+    session_date = session[:datetime].to_date rescue Time.now
+    fast_track_status = params[:fast_track_status]
+    patient = Patient.find(params[:patient_id])
+    encounter_type = EncounterType.find_by_name("FAST TRACK ASSESMENT")
+    concept_ids = params[:concept_ids].split(",")
+    
+    ActiveRecord::Base.transaction do
+      encounter = patient.encounters.find(:last, :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
+          encounter_type, session_date.to_date])
+      encounter.void unless encounter.blank?
+      encounter = Encounter.new
+      encounter.encounter_type = encounter_type.encounter_type_id
+      encounter.patient_id = params[:patient_id]
+      encounter.encounter_datetime = session_date
+      encounter.save
+
+      concept_ids.each do |concept_id|
+        encounter.observations.create({
+            :person_id => params[:patient_id],
+            :concept_id => concept_id,
+            :value_coded => Concept.find_by_name("YES").concept_id,
+            :obs_datetime => encounter.encounter_datetime
+          })
+      end
+
+      encounter.observations.create({
+          :person_id => params[:patient_id],
+          :concept_id => Concept.find_by_name("FAST").concept_id,
+          :value_coded => Concept.find_by_name(fast_track_status).concept_id,
+          :obs_datetime => encounter.encounter_datetime
+        })
+    end
+    
+    render :text => true and return
+  end
+  
   protected
 
-  def number_of_booked_patients(date)                          
+  def number_of_booked_patients(date)
                                                                                 
-    start_date = date.strftime('%Y-%m-%d 00:00:00')                             
-    end_date = date.strftime('%Y-%m-%d 23:59:59')                               
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
                                                                                 
-    appointments = Observation.find_by_sql("SELECT count(value_datetime) AS count FROM obs 
+    appointments = Observation.find_by_sql("SELECT count(value_datetime) AS count FROM obs
       INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{@concept_id} 
       AND encounter_type = #{@encounter_type.id} AND value_datetime >= '#{start_date}' 
       AND value_datetime <= '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime")     
-    count = appointments.first.count unless appointments.blank?                       
-    count = 0 if count.blank?                                                 
+    count = appointments.first.count unless appointments.blank?
+    count = 0 if count.blank?
                                                                                 
     return count
   end
 
   def suggested(program_id)
-		session_date = session[:datetime].to_date rescue Date.today
-		patient_program = PatientProgram.find(program_id)
-		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date) rescue []
-		return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
-	end
+    session_date = session[:datetime].to_date rescue Date.today
+    patient_program = PatientProgram.find(program_id)
+    current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date) rescue []
+    return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
+  end
+  
 end

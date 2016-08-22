@@ -36,7 +36,7 @@ function fastTrackAssesmentPopup(){
     popupDiv.style.marginTop = '-20px';
     popupDiv.style.marginLeft = '-20px';
     popupDiv.style.position = 'absolute';
-    popupDiv.style.marginTop = '70px';
+    popupDiv.style.marginTop = '29px';
     popupDiv.style.width = '95%';
     popupDiv.style.zIndex = '991';
     content.appendChild(popupDiv);
@@ -83,8 +83,8 @@ function fastTrackAssesmentPopup(){
     clinicVisitButton.style.color = 'black';
     
     clinicVisitButton.onclick = function(){
-        hideLibPopup();
-        notifier();
+        //hideLibPopup();
+        //notifier();
         setClinicVisit();
     }
     
@@ -140,7 +140,7 @@ function fastTrackAssesmentPopup(){
     fastTrackVisitButton.style.color = 'black';
     //fastTrackVisitButton.style.left = '81%';
     fastTrackVisitButton.onclick = function(){
-        hideLibPopup();
+        //hideLibPopup();
         setFastTrackVisit();
     //selectMalariaDrug = {}; //Remove the selected drug
     //removeDrugFromGenerics();
@@ -171,7 +171,6 @@ function highLightSelectedRow(obj){
     img = document.getElementById('img_' + rowID );
     img_src_array = img.getAttribute("src").split("/");
     src = img_src_array[img_src_array.length - 1];
-    console.log(src)
     if (src == 'unticked.jpg'){
         img.src = checkedImg;
         obj.style.backgroundColor = 'lightBlue';
@@ -189,36 +188,6 @@ function highLightSelectedRow(obj){
 
 }
 
-function uncheckRows(){
-    selectMalariaDrug = {};
-    current_selected_drug = null;
-    malariaDrugsTable = document.getElementById('malariaDrugs');
-    table_rows = malariaDrugsTable.getElementsByTagName('tr');
-    for (var i=0; i<=table_rows.length - 1; i++){
-        row = table_rows[i];
-        if (row.hasAttribute('row_id')){
-            rID = row.getAttribute('row_id');
-            oldColor = row.getAttribute('color');
-            row.style.backgroundColor = oldColor;
-            mycheckedImg = document.getElementById('img_' + rID );
-            mycheckedImg.src = uncheckedImg;
-            d_name = row.getAttribute('drug_name');
-
-            if (selectedGenerics[current_diagnosis]){
-                if (selectedGenerics[current_diagnosis][d_name]){
-                    delete selectedGenerics[current_diagnosis][d_name];
-                }
-            }
-        }
-    }
-    
-    if (selectedGenerics[current_diagnosis]){
-        if (Object.keys(selectedGenerics[current_diagnosis]).length == 0){
-            delete selectedGenerics[current_diagnosis] //it has no data
-        }
-    }
-}
-
 function disableEnableFastTrackVisitButton(){
     fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
     if (fastTrackVisitButton){
@@ -230,7 +199,8 @@ function disableEnableFastTrackVisitButton(){
         }else{
             fastTrackVisitButton.style.backgroundColor = '#C1FFC1';
             fastTrackVisitButton.onclick = function(){
-                hideLibPopup();
+                setFastTrackVisit();
+            //hideLibPopup();
             }
         }
     }
