@@ -63,7 +63,7 @@ function fastTrackAssesmentPopup(){
     popupFooter.style.marginBottom = '60px';
 
     clinicVisitButton = document.createElement('span');
-    clinicVisitButton.className = 'clinicVisitButton';
+    clinicVisitButton.className = 'clinicVisitButton FastTrackBtn';
     clinicVisitButton.innerHTML = 'Next Visit: Clinic Visit';
     clinicVisitButton.style.backgroundImage = 'none';
     clinicVisitButton.style.border = '1px solid transparent';
@@ -91,7 +91,7 @@ function fastTrackAssesmentPopup(){
     popupDiv.appendChild(clinicVisitButton);
 
     cancelButton = document.createElement('span');
-    cancelButton.className = 'nextButton';
+    cancelButton.className = 'cancelButton FastTrackBtn';
     cancelButton.innerHTML = 'Cancel';
     cancelButton.style.backgroundImage = 'none';
     cancelButton.style.border = '1px solid transparent';
@@ -118,7 +118,7 @@ function fastTrackAssesmentPopup(){
     popupDiv.appendChild(cancelButton);
 
     fastTrackVisitButton = document.createElement('span');
-    fastTrackVisitButton.className = 'fastTrackVisitButton';
+    fastTrackVisitButton.className = 'fastTrackVisitButton FastTrackBtn';
     fastTrackVisitButton.innerHTML = 'Next Visit: Fast Track Visit';
     fastTrackVisitButton.style.backgroundImage = 'none';
     fastTrackVisitButton.style.border = '1px solid transparent';
@@ -223,7 +223,7 @@ function disableEnableFastTrackVisitButton(){
     fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
     if (fastTrackVisitButton){
         if (selectedFastTrackConcepts.length < 7){
-            fastTrackVisitButton.style.backgroundColor = '#A9A9A9';
+            fastTrackVisitButton.style.backgroundColor = '#dddddd';
             fastTrackVisitButton.onclick = function(){
 
             }
