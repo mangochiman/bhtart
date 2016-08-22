@@ -1,5 +1,6 @@
 
 var selectFastTrackOptions = {};
+var selectedFastTrackConcepts = []
 
 var fastTrackOptions = "<table id='malariaDrugs' cellspacing='0px' style='width:80%; left:10%; margin-left: 101px; font-size: 14pt;'>";
 fastTrackOptions += "<tr>";
@@ -9,41 +10,16 @@ fastTrackOptions += "</tr>";
 
 uncheckedImg = '/touchscreentoolkit/lib/images/unticked.jpg';
 checkedImg = '/touchscreentoolkit/lib/images/ticked.jpg';
- 
-fastTrackOptions += "<tr id='' row_id = '1' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Age > 18 years and on ART > 1 year</td>";
-fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_1' src='" + uncheckedImg + "'></img></td>";
-fastTrackOptions += "</tr>";
 
-fastTrackOptions += "<tr id='' row_id = '2' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Not On Second Line Treatment OR on IPT</td>";
-fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_2' src='" + uncheckedImg + "'></img></td>";
-fastTrackOptions += "</tr>";
-
-fastTrackOptions += "<tr id='' row_id = '3' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Last VL < 1000, no VL Result pending, no VL taken at next visit</td>";
-fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_3' src='" + uncheckedImg + "'></img></td>";
-fastTrackOptions += "</tr>";
-
-fastTrackOptions += "<tr id='' row_id = '4' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Not Pregnant? - no EID needed at next visit</td>";
-fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_4' src='" + uncheckedImg + "'></img></td>";
-fastTrackOptions += "</tr>";
-
-fastTrackOptions += "<tr id='' row_id = '5' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Adherence on last 2 visits was good (check pill count and history)</td>";
-fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_5' src='" + uncheckedImg + "'></img></td>";
-fastTrackOptions += "</tr>";
-
-fastTrackOptions += "<tr id='' row_id = '6' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Patient not suffering from major side effects, signs of TB or HIV associated disease</td>";
-fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_6' src='" + uncheckedImg + "'></img></td>";
-fastTrackOptions += "</tr>";
-
-fastTrackOptions += "<tr id='' row_id = '7' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Patient not not need hypertension or diabetes care on next visit</td>";
-fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_7' src='" + uncheckedImg + "'></img></td>";
-fastTrackOptions += "</tr>";
+for (var pos in fastTrackAssesmentConcepts){
+    concept_name = fastTrackAssesmentConcepts[pos]["concept_name"];
+    concept_id = fastTrackAssesmentConcepts[pos]["concept_id"];
+    
+    fastTrackOptions += "<tr id='' row_id = '" + concept_id + "' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+    fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>" + concept_name + "</td>";
+    fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_" + concept_id + "' src='" + uncheckedImg + "'></img></td>";
+    fastTrackOptions += "</tr>";
+}
 
 fastTrackOptions += "</table>"
 
@@ -142,7 +118,7 @@ function fastTrackAssesmentPopup(){
     popupDiv.appendChild(cancelButton);
 
     fastTrackVisitButton = document.createElement('span');
-    fastTrackVisitButton.className = 'cancelButton';
+    fastTrackVisitButton.className = 'fastTrackVisitButton';
     fastTrackVisitButton.innerHTML = 'Next Visit: Fast Track Visit';
     fastTrackVisitButton.style.backgroundImage = 'none';
     fastTrackVisitButton.style.border = '1px solid transparent';
@@ -166,8 +142,8 @@ function fastTrackAssesmentPopup(){
     fastTrackVisitButton.onclick = function(){
         hideLibPopup();
         setFastTrackVisit();
-        //selectMalariaDrug = {}; //Remove the selected drug
-        //removeDrugFromGenerics();
+    //selectMalariaDrug = {}; //Remove the selected drug
+    //removeDrugFromGenerics();
     }
 
     popupDiv.appendChild(fastTrackVisitButton);
@@ -186,28 +162,28 @@ function fastTrackAssesmentPopup(){
     popupCover.style.opacity = '0.65';
     content.appendChild(popupCover);
 
-    //loadPreviousSelectedDrug(); //Preselect previously selected values
+//loadPreviousSelectedDrug(); //Preselect previously selected values
 }
 
 function highLightSelectedRow(obj){
     rowID = obj.getAttribute('row_id');
+    concept_id = rowID;
     img = document.getElementById('img_' + rowID );
     img_src_array = img.getAttribute("src").split("/");
     src = img_src_array[img_src_array.length - 1];
-    if (src == 'unchecked.png'){
-        uncheckRows();
+    console.log(src)
+    if (src == 'unticked.jpg'){
         img.src = checkedImg;
         obj.style.backgroundColor = 'lightBlue';
-        selectedDrugID = rowID;
-        selectMalariaDrug = antiMalariaDrugsHash[parseInt(rowID)];
-        current_selected_drug = selectMalariaDrug["drug_name"];
-        //hackGenericDrugs();
+        selectedFastTrackConcepts.push(concept_id);
     }else{
-        oldColor = obj.getAttribute('color');
-        selectMalariaDrug = {}
-        obj.style.backgroundColor = oldColor;
+        var index = selectedFastTrackConcepts.indexOf(concept_id);
+        if (index > -1) {
+            selectedFastTrackConcepts.splice(index, 1);
+        }
+        obj.style.backgroundColor = '';
         img.src = uncheckedImg;
-        //removeDrugFromGenerics();
+
 
     }
 
@@ -243,30 +219,24 @@ function uncheckRows(){
     }
 }
 
-function disableEnableFinishButton(){
-    /*finishButton = document.getElementsByClassName("finishButton")[0];
-    if (finishButton){
-        if (Object.keys(selectMalariaDrug).length == 0){
-            finishButton.style.backgroundColor = 'gray';
-            finishButton.onclick = function(){
+function disableEnableFastTrackVisitButton(){
+    fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
+    if (fastTrackVisitButton){
+        if (selectedFastTrackConcepts.length < 7){
+            fastTrackVisitButton.style.backgroundColor = '#A9A9A9';
+            fastTrackVisitButton.onclick = function(){
 
             }
         }else{
-            finishButton.style.backgroundColor = 'green';
-            finishButton.onclick = function(){
+            fastTrackVisitButton.style.backgroundColor = '#C1FFC1';
+            fastTrackVisitButton.onclick = function(){
                 hideLibPopup();
-                notifier();
-                if (notifierInterval){
-                    clearInterval(notifierInterval);
-                    notifierInterval = window.setInterval("hideNotifier();", 2000);
-                }
             }
         }
-    }*/
-
+    }
 }
 
-window.setInterval("disableEnableFinishButton()", 200);
+window.setInterval("disableEnableFastTrackVisitButton()", 200);
 
 function hideLibPopup(){
     popupCover = document.getElementsByClassName("popup-cover")[0];
