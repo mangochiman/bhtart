@@ -13,6 +13,26 @@ class ApplicationController < GenericApplicationController
     
   end
 
+  def patient_has_visited_on_scheduled_date(patient,  session_date = Date.today)
+    appointment_date_concept_id = Concept.find_by_name("APPOINTMENT DATE").concept_id
+    latest_appointment_date = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) < ? AND concept_id =?",
+        session_date, appointment_date_concept_id]
+    ).answer_string.squish.to_date rescue nil
+
+    if (latest_appointment_date.class == Date) #check if it is a valid date object
+      min_valid_date = latest_appointment_date - 7.days #One week earlier
+      max_valid_date = latest_appointment_date + 7.days #One week later
+      if (session_date <= min_valid_date || session_date >= max_valid_date)
+        #The patient came one or more weeks earlier than the appointment date
+        #The patient came one or more weeks later than the appointment date
+        return false
+      end
+      return true
+    end
+
+    return false
+  end
+
   def htn_client?(patient)
     #    link_to_htn = CoreService.get_global_property_value("activate.htn.enhancement")
     htn_min_age = CoreService.get_global_property_value("htn.screening.age.threshold")
