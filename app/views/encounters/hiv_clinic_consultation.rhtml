@@ -252,10 +252,13 @@
   }
 
   function addFastTrackAssesmentButton(){
-    html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
-    jQuery("#fastTrackAssesmentButton").remove();
-    buttonsDiv = jQuery(".buttonsDiv")[0];
-    buttonsDiv.innerHTML += html;
+    if (hivFirstVisit == 'true' || patientEverHadDrugs == 'false'){
+      html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
+      jQuery("#fastTrackAssesmentButton").remove();
+      buttonsDiv = jQuery(".buttonsDiv")[0];
+      buttonsDiv.innerHTML += html;
+    }
+    //(parseInt(art_period_in_months) >= 12 && selectedSideEffects == 'NO' && hivFirstVisit == 'true') || (parseInt(art_period_in_months) >= 12 && patientEverHadDrugs == 'false' && latestFastTrackAnswer == 'YES')
   }
 
   function removeFastTrackAssesmentButton(){
