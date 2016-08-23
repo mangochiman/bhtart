@@ -197,7 +197,7 @@
           </span>
         </button>
 
-        <% if @active_patient_age <= 2 %>
+        <% if @active_patient_age.to_i <= 2 %>
           <% if session[:active_patient_id].to_i == params[:patient_id].to_i %>
             <% unless @guardian_id.blank? %>
               <button class="button navButton blue" style="float: left;" onmousedown="switchMasterCard('<%=  @guardian_id -%>')">
