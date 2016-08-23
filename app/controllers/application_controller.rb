@@ -1065,8 +1065,9 @@ class ApplicationController < GenericApplicationController
     fast_track_patient = false
     latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     fast_track_patient = true if latest_fast_track_answer == 'YES'
-    fast_track_patient = false if (tb_suspected_or_confirmed?(patient, session_date) == true)
-    fast_track_patient = false if (is_patient_on_htn_treatment?(patient, session_date) == true)
+    
+    #fast_track_patient = false if (tb_suspected_or_confirmed?(patient, session_date) == true)
+    #fast_track_patient = false if (is_patient_on_htn_treatment?(patient, session_date) == true)
     
     if fast_track_patient
       return fast_track_next_form(location , patient , session_date)
