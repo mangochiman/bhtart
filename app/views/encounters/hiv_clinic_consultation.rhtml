@@ -503,7 +503,7 @@
       :helpText => "Is patient allergic to sulphur" } %>
   <%end unless art_adherence_to_be_done %>
 
-  <%= text_field_tag "fast_track_pop_up_input", nil, {
+  <%#= text_field_tag "fast_track_pop_up_input", nil, {
     :id => "fast_track_pop_up_input",
     :helpText => "Fast Track",
     :tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display = 'none';",
