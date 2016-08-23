@@ -5,20 +5,20 @@ class EncountersController < GenericEncountersController
 		@patient_bean = PatientService.get_patient(@patient.person)
 		session_date = session[:datetime].to_date rescue Date.today
 
+    fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
+      "Last VL < 1000, no VL Result pending, no VL taken at next visit", "Not Pregnant? - no EID needed at next visit",
+      "Adherence on last 2 visits was good", "Patient not suffering from major side effects, signs of TB or HIV associated disease",
+      "Patient do not need hypertension or diabetes care on next visit"]
+
+    @fast_track_assesment_concept_names = {}
+    count = 1
+    fast_track_concepts_names.each do |c_name|
+      concept = Concept.find_by_name(c_name)
+      @fast_track_assesment_concept_names[count] = {:concept_id => concept.concept_id, :concept_name => c_name}
+      count = count + 1
+    end
+      
 		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
-      fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
-        "Last VL < 1000, no VL Result pending, no VL taken at next visit", "Not Pregnant? - no EID needed at next visit",
-        "Adherence on last 2 visits was good", "Patient not suffering from major side effects, signs of TB or HIV associated disease",
-        "Patient do not need hypertension or diabetes care on next visit"]
-
-      @fast_track_assesment_concept_names = {}
-      count = 1
-      fast_track_concepts_names.each do |c_name|
-        concept = Concept.find_by_name(c_name)
-        @fast_track_assesment_concept_names[count] = {:concept_id => concept.concept_id, :concept_name => c_name}
-        count = count + 1
-      end
-
 			@todays_date = session_date
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
 			@suggested_appointment_date = suggest_appointment_date
@@ -33,7 +33,9 @@ class EncountersController < GenericEncountersController
     @fast_track_patient = false
     @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     @fast_track_patient = true if @latest_fast_track_answer == 'YES'
-    
+
+    #raise patient_has_visited_on_scheduled_date(@patient,  session_date = Date.today).inspect
+=begin
     if (tb_suspected_or_confirmed?(@patient, session_date) == true)
       #Not interested in patients with tb suspect or confirmed tb
       @fast_track_patient = false
@@ -45,7 +47,7 @@ class EncountersController < GenericEncountersController
       @fast_track_patient = false
       @latest_fast_track_answer = 'NO'
     end
-
+=end
     @fast_track_stop_reasons = ['', 'Poor Adherence', 'Sick', 'Side Effects', 'Other']
     @latest_vl_result = Lab.latest_viral_load_result(@patient)
 

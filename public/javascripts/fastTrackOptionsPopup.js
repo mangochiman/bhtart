@@ -4,8 +4,8 @@ var selectedFastTrackConcepts = []
 
 var fastTrackOptions = "<table id='malariaDrugs' cellspacing='0px' style='width:80%; left:10%; margin-left: 101px; font-size: 14pt;'>";
 fastTrackOptions += "<tr>";
-fastTrackOptions += "<th style='border-bottom: 1px solid black; padding:8px;'>&nbsp;</th>"
-fastTrackOptions += "<th style='border: 0px solid black; padding:8px;'>&nbsp;</th>"
+fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px;'>&nbsp;</td>"
+fastTrackOptions += "<td style='border: 0px solid black; padding:8px;'>&nbsp;</td>"
 fastTrackOptions += "</tr>";
 
 uncheckedImg = '/touchscreentoolkit/lib/images/unticked.jpg';
@@ -275,6 +275,11 @@ function hideNotifier(){
     popupDiv = document.getElementsByClassName("popup-div-notifier")[0];
     if (popupCover) popupCover.parentNode.removeChild(popupCover);
     if (popupDiv) popupDiv.parentNode.removeChild(popupDiv);
+}
+
+
+function cancelFastTrackPopup(){
+    hideLibPopup();
 }
 
 var notifierInterval = window.setInterval("hideNotifier();", 2000);

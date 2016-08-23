@@ -31,6 +31,16 @@
     top: 30%;
   }
 
+  .FastTrackBtn{
+    text-decoration: none;
+    border:1px solid #25729a;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    font-family:arial, helvetica, sans-serif;
+    padding: 10px 10px 10px 10px;
+    text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+    text-align: center;
+  }
 </style>
 
 <script>
@@ -42,7 +52,9 @@
   var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
   var hivFirstVisit = '<%= @art_first_visit %>';
   var patientEverHadDrugs = '<%= @patient_ever_had_drugs %>'
-
+  var fastTrackAssesmentConcepts = JSON.parse('<%= @fast_track_assesment_concept_names.to_json %>');
+  var patient_id = <%= @patient.id %>;
+  
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
     var symptoms = 0;
@@ -238,6 +250,62 @@
     }
   
   }
+
+  function addFastTrackAssesmentButton(){
+    html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
+    jQuery("#fastTrackAssesmentButton").remove();
+    buttonsDiv = jQuery(".buttonsDiv")[0];
+    buttonsDiv.innerHTML += html;
+  }
+
+  function removeFastTrackAssesmentButton(){
+    jQuery("#fastTrackAssesmentButton").remove();
+  }
+
+  function setFastTrackVisit(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=Yes",
+      beforeSend: function(){
+        fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
+        clinicVisitButton = document.getElementsByClassName("clinicVisitButton")[0];
+
+        if (fastTrackVisitButton){
+          fastTrackVisitButton.style.backgroundColor = '#dddddd';
+          fastTrackVisitButton.onclick = function(){
+          }
+        }
+
+        if (clinicVisitButton){
+          clinicVisitButton.style.backgroundColor = '#dddddd';
+          clinicVisitButton.onclick = function(){
+          }
+        }
+      },
+      error: function(xhr) { // if error occured
+        showMessage("There was an error while processing your request");
+      },
+      success: function(){
+        selectedFastTrackConcepts = []
+        hideLibPopup();
+      }
+
+    });
+  }
+
+  function setClinicVisit(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=No",
+      success: function(){
+        hideLibPopup()
+      }
+
+    });
+  }
+
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -486,11 +554,15 @@
     <%  if session_date %>
       <%= touch_yes_no_unknown_tag "Prescribe drugs", @patient, nil,
         {:id => "prescribe_drugs",
+        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO'" ,
         :helpText => "Prescribe drugs during this visit" } %>
     <% else %>
       <%= touch_yes_no_tag "Prescribe drugs", @patient, nil,
         {:id => "prescribe_drugs",
+        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO'" ,
         :helpText => "Prescribe drugs during this visit" } %>
     <% end %>
@@ -503,14 +575,14 @@
       :helpText => "Is patient allergic to sulphur" } %>
   <%end unless art_adherence_to_be_done %>
 
-  <%#= text_field_tag "fast_track_pop_up_input", nil, {
-    :id => "fast_track_pop_up_input",
-    :helpText => "Fast Track",
-    :tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display = 'none';",
-    :condition => "(parseInt(art_period_in_months) >= 12 && selectedSideEffects == 'NO' && hivFirstVisit == 'true') || (parseInt(art_period_in_months) >= 12 && patientEverHadDrugs == 'false' && latestFastTrackAnswer == 'YES')",
-    :optional => "true",
-    :tt_pageStyleClass => "NoControls"
-  } %>
+<%#= text_field_tag "fast_track_pop_up_input", nil, {
+:id => "fast_track_pop_up_input",
+:helpText => "Fast Track",
+:tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display = 'none';",
+:condition => "(parseInt(art_period_in_months) >= 12 && selectedSideEffects == 'NO' && hivFirstVisit == 'true') || (parseInt(art_period_in_months) >= 12 && patientEverHadDrugs == 'false' && latestFastTrackAnswer == 'YES')",
+:optional => "true",
+:tt_pageStyleClass => "NoControls"
+} %>
 
   <% session_date = session[:datetime].to_date rescue nil
   if session_date %>
@@ -525,6 +597,8 @@
   <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
 
   <%= submit_tag "Finish" %>
+
+  <script src="/javascripts/fastTrackOptionsPopup.js?version=<%=Time.now.to_i%>" type="text/javascript"></script>
 </form>
 
 <% if !art_adherence_to_be_done %>
