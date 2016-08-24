@@ -21,6 +21,13 @@ for (var pos in fastTrackAssesmentConcepts){
     fastTrackOptions += "</tr>";
 }
 
+html = "<br /><center><i style='color: green; font-size: 15pt; font-weight: bold;'>If all boxes ticked, inform patient that his/her next visit could be a <b style='color: red;'>Fast Track Visit</b>";
+html+= " to reduce waiting time. Ask what he/she prefers<i></center>";
+
+fastTrackOptions += "<tr>";
+fastTrackOptions += "<td colspan='2' style=''>" + html + "</td>"
+fastTrackOptions += "</tr>";
+
 fastTrackOptions += "</table>"
 
 function fastTrackAssesmentPopup(){
@@ -30,7 +37,7 @@ function fastTrackAssesmentPopup(){
     popupDiv.style.backgroundColor = '#F4F4F4';
     popupDiv.style.border = '2px solid #E0E0E0';
     popupDiv.style.borderRadius = '15px';
-    popupDiv.style.height = '550px';
+    popupDiv.style.height = '600px';
     popupDiv.style.top = '2%';
     popupDiv.style.left = '3%';
     popupDiv.style.marginTop = '-20px';
