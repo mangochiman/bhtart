@@ -132,11 +132,20 @@
   <!---------------------- FAST TRACK -->
   <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
 
-  <%= text_field_tag "fast_track_pop_up_input", nil, {
+  <%#= text_field_tag "fast_track_pop_up_input", nil, {
     :id => "fast_track_pop_up_input",
     :helpText => "Fast Track",
     :tt_onLoad => "showFastTrackReminder();",
     :condition => "parseInt(art_period_in_months) >= 12 && latestFastTrackAnswer == 'YES'",
+    :optional => "true",
+    :tt_pageStyleClass => "NoControls"
+  } %>
+
+  <%= text_field_tag "fast_track_pop_up_input", nil, {
+    :id => "fast_track_pop_up_input",
+    :helpText => "Fast Track",
+    :tt_onLoad => "showFastTrackReminder();",
+    :condition => "latestFastTrackAnswer == 'YES'",
     :optional => "true",
     :tt_pageStyleClass => "NoControls"
   } %>

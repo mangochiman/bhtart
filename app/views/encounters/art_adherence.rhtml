@@ -256,10 +256,13 @@
     }
   }
 
-  function setFastTrackYesValue(){
+  function setFastTrackYesNoValue(){
     selectedValue = $("touchscreenInput" + tstCurrentPage).value.trim().toUpperCase();
     if (selectedValue == 'YES'){
       jQuery('#fast-track-input').attr('value', 'Yes');
+    }
+    if (selectedValue == 'NO'){
+      jQuery('#fast-track-input').attr('value', 'No');
     }
   }
 
@@ -712,7 +715,7 @@
     <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
       :id => 'fast_track',
       :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
-      :tt_onUnLoad => "setFastTrackYesValue()",
+      :tt_onUnLoad => "setFastTrackYesNoValue()",
       :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
     } %>
 
@@ -724,12 +727,22 @@
       :tt_onUnLoad => "resetNextCaption();"
     } %>
 
+<%#= text_field_tag "fast_track_pop_up_input", nil, {
+:id => "fast_track_pop_up_input",
+:helpText => "Fast Track",
+:tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display='none';",
+:tt_onUnLoad => "__$('keyboard').style.display='inline';",
+:condition => "parseInt(art_period_in_months) >= 12 && hivReceptionOnlyAvailable == 'false'",
+:optional => "true",
+:tt_pageStyleClass => "NoControls"
+} %>
+
     <%= text_field_tag "fast_track_pop_up_input", nil, {
       :id => "fast_track_pop_up_input",
       :helpText => "Fast Track",
       :tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display='none';",
       :tt_onUnLoad => "__$('keyboard').style.display='inline';",
-      :condition => "parseInt(art_period_in_months) >= 12 && hivReceptionOnlyAvailable == 'false'",
+      :condition => "hivReceptionOnlyAvailable == 'false'",
       :optional => "true",
       :tt_pageStyleClass => "NoControls"
     } %>

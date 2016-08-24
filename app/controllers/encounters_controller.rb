@@ -33,8 +33,10 @@ class EncountersController < GenericEncountersController
     @fast_track_patient = false
     @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     @fast_track_patient = true if @latest_fast_track_answer == 'YES'
-
-    #raise patient_has_visited_on_scheduled_date(@patient,  session_date = Date.today).inspect
+    if (patient_has_visited_on_scheduled_date(@patient,  session_date) == false)
+      @fast_track_patient = false
+      @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
+    end
 =begin
     if (tb_suspected_or_confirmed?(@patient, session_date) == true)
       #Not interested in patients with tb suspect or confirmed tb
