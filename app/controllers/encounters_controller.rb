@@ -298,6 +298,12 @@ class EncountersController < GenericEncountersController
 		sputum_submissons_with_no_results(@patient.id).each{|order| @sputum_submission_waiting_results[order.accession_number] = Concept.find(order.value_coded).fullname rescue order.value_text}
 		sputum_results_not_given(@patient.id).each{|order| @sputum_results_not_given[order.accession_number] = Concept.find(order.value_coded).fullname rescue order.value_text}
 
+    if @art_first_visit
+      @hiv_clinic_consultation_side_efects_label = "Contra-indications (select all that apply)"
+    else
+      @hiv_clinic_consultation_side_efects_label = "Side effects (select all that apply)"
+    end
+
 		@tb_status = recent_lab_results(@patient.id, session_date)
     # use @patient_tb_status  for the tb_status moved from the patient model
     @patient_tb_status = PatientService.patient_tb_status(@patient)
