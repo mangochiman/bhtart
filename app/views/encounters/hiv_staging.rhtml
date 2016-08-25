@@ -914,7 +914,7 @@ end %>
     %>
     <% end %>-->
 
-    <%= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
+    <%#= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
       {	:optional => true,:helpText => "Clinical notes (optional)"}, time=DateTime.now()) %>
 
     <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
