@@ -324,6 +324,15 @@
     }
   }
 
+  function checkAndSelectTBSuspected(){
+    tb_suspected_option_input = jQuery("[tstvalue='TB suspected']")[0]
+    selected_tb_associated_symptoms = __$("routine_tb_screening").value;
+    if (selected_tb_associated_symptoms.length > 0){
+      if (tb_suspected_option_input) updateTouchscreenInputForSelect(tb_suspected_option_input);
+    }
+
+  }
+
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -516,7 +525,7 @@
       {:id => 'tb_status',
       :multiple => false,
       :helpText => "TB Status",
-      :tt_onLoad => 'checkTbHivStatus()',
+      :tt_onLoad => 'checkTbHivStatus(); checkAndSelectTBSuspected();',
       :condition => @show_tb_types  == true} %>
   <% else %>
     <%= touch_hidden_tag "TB STATUS" , @patient, ConceptName.find_by_name("#{@patient_tb_status}").name, {:id => "tb_status"} %>
