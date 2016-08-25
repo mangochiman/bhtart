@@ -533,22 +533,22 @@
     /*
         if (stage == 3) {
 <%  if @patient.person.observations.to_s.include?('Pulmonary tuberculosis' || 'Smear +ve')%>
-                                                                      if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                            selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
-                                                                      }
-                                                                      else{
-                                                                            selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
-                                                                      }
+                                                                        if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                              selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
+                                                                        }
+                                                                        else{
+                                                                              selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
+                                                                        }
 <%end%>
         }
         if (stage == 4) {
 <% if @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
-                                                                      if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                            selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
-                                                                      }
-                                                                      else{
-                                                                            selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
-                                                                      }
+                                                                        if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                              selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
+                                                                        }
+                                                                        else{
+                                                                              selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
+                                                                        }
 <%end%>
         }
      */
@@ -878,19 +878,21 @@ end %>
         <% end %>
       <% end %>
 
-      <label for='new_lymphocyte_count_available'>New Lymphocyte count available?</label>
-      <%= select_tag "new_lymphocyte_count_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_lymphocyte_count_available', :tt_pageStyleClass => 'NoKeyboard' %>
+      <% if @session_date < @new_guide_lines_start_date %>
+        <label for='new_lymphocyte_count_available'>New Lymphocyte count available?</label>
+        <%= select_tag "new_lymphocyte_count_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_lymphocyte_count_available', :tt_pageStyleClass => 'NoKeyboard' %>
 
-      <%= touch_date_tag "LYMPHOCYTE COUNT DATETIME", @patient, nil,
-        {:id => "lymphocyte_count_date",
-        :condition => '$("new_lymphocyte_count_available").value == "YES"',
-        :helpText => "Lymphocyte Count Date",
-        :max => "#{session[:datetime].to_date rescue Date.today}"} %>
+        <%= touch_date_tag "LYMPHOCYTE COUNT DATETIME", @patient, nil,
+          {:id => "lymphocyte_count_date",
+          :condition => '$("new_lymphocyte_count_available").value == "YES"',
+          :helpText => "Lymphocyte Count Date",
+          :max => "#{session[:datetime].to_date rescue Date.today}"} %>
 
-      <%= touch_numeric_tag "LYMPHOCYTE COUNT", @patient, nil,
-        {:id => "lymphocyte_count",
-        :condition => '$("new_lymphocyte_count_available").value == "YES"',
-        :helpText => "Lymphocyte Count"} %>
+        <%= touch_numeric_tag "LYMPHOCYTE COUNT", @patient, nil,
+          {:id => "lymphocyte_count",
+          :condition => '$("new_lymphocyte_count_available").value == "YES"',
+          :helpText => "Lymphocyte Count"} %>
+      <% end %>
 
       <% if @session_date < @new_guide_lines_start_date %>
         <%= touch_location_tag "CD4 PERCENT LOCATION", @patient, nil,
@@ -914,8 +916,8 @@ end %>
     %>
     <% end %>-->
 
-    <%#= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
-      {	:optional => true,:helpText => "Clinical notes (optional)"}, time=DateTime.now()) %>
+  <%#= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
+  {	:optional => true,:helpText => "Clinical notes (optional)"}, time=DateTime.now()) %>
 
     <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
     <%= touch_hidden_tag "WHO STAGE", @patient, "", :id => "who_stage" %>

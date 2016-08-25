@@ -956,24 +956,26 @@ end %>
           <% end %>
         <% end %>
 
-        <label for='new_lymphocyte_count_available'>New Lymphocyte count available?</label>
-        <%= select_tag "new_lymphocyte_count_available", options_for_select([['Yes','YES'],['No','NO']]),
-          :id => 'new_lymphocyte_count_available',
-          :tt_onLoad => "setTimeout('cssText();',1);",
-          :tt_pageStyleClass => 'NoKeyboard' %>
+        <% if @session_date < @new_guide_lines_start_date %>
+          <label for='new_lymphocyte_count_available'>New Lymphocyte count available?</label>
+          <%= select_tag "new_lymphocyte_count_available", options_for_select([['Yes','YES'],['No','NO']]),
+            :id => 'new_lymphocyte_count_available',
+            :tt_onLoad => "setTimeout('cssText();',1);",
+            :tt_pageStyleClass => 'NoKeyboard' %>
 
 
-        <%= touch_date_tag "LYMPHOCYTE COUNT DATETIME", @patient, (Time.now - 1.month).year,
-          {:id => "lymphocyte_count_date",
-          :condition => '$("new_lymphocyte_count_available").value == "YES"',
-          :helpText => "Lymphocyte Count Date",
-          :max => "#{session[:datetime].to_date rescue Date.today}"} %>
+          <%= touch_date_tag "LYMPHOCYTE COUNT DATETIME", @patient, (Time.now - 1.month).year,
+            {:id => "lymphocyte_count_date",
+            :condition => '$("new_lymphocyte_count_available").value == "YES"',
+            :helpText => "Lymphocyte Count Date",
+            :max => "#{session[:datetime].to_date rescue Date.today}"} %>
 
-        <%= touch_numeric_tag "LYMPHOCYTE COUNT", @patient, nil,
-          {:id => "lymphocyte_count",
-          :condition => '$("new_lymphocyte_count_available").value == "YES"',
-          :helpText => "Lymphocyte Count"} %>
-
+          <%= touch_numeric_tag "LYMPHOCYTE COUNT", @patient, nil,
+            {:id => "lymphocyte_count",
+            :condition => '$("new_lymphocyte_count_available").value == "YES"',
+            :helpText => "Lymphocyte Count"} %>
+        <% end %>
+          
         <% if @session_date < @new_guide_lines_start_date %>
           <%= touch_location_tag "CD4 PERCENT LOCATION", @patient, nil,
             {	:id => "cd4_percent_location",
@@ -995,7 +997,7 @@ end %>
       %>
       <% end %>-->
 
-      <%= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
+      <%#= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
         {:optional => true,:helpText => "Clinical notes (optional)"}, time=DateTime.now()) %>
 
       <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
