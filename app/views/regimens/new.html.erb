@@ -1685,20 +1685,25 @@ end
 </script>
 
 <%
-options = [["240", "240"]]
+#options = [["240", "240"]] Not needed
+options = []
 if (@current_weight < 14)
-  options << ['120 <span class="moh_recommend">(MoH Recommended)</span>', '120']
-  options << ['480 <span class="moh_recommend">(MoH Recommended)</span>', '480']
+  #options << ['120 <span class="moh_recommend">(MoH Recommended)</span>', '120']
+  #options << ['480 <span class="moh_recommend">(MoH Recommended)</span>', '480']
+  options << ['120', '120'] #Removed MOH Recommended tag
+  options << ['480', '480']
 else
   options << ['120', '120']
 end
 
 if (@current_weight >= 14) and (@current_weight < 30)
-  options << ['480 <span class="moh_recommend">(MoH Recommended)</span>', '480']
+  #options << ['480 <span class="moh_recommend">(MoH Recommended)</span>', '480']
+  options << ['480', '480'] #Removed MOH Recommended tag
   options << ['960', '960']
 elsif (@current_weight >= 30)
   options << ['480', '480']
-  options << ['960 <span class="moh_recommend">(MoH Recommended)</span>', '960']
+  #options << ['960 <span class="moh_recommend">(MoH Recommended)</span>', '960']
+  options << ['960', '960'] #Removed MOH Recommended tag
 end
 options = options.sort_by{|key, value| value.to_i}
 #options = options.sort_by{|key, value| value}
@@ -2095,7 +2100,7 @@ pyridoxine_options = ["","25", "50"]
 
     <% if @patient_bean.age >= 14 %>
       <% if @retrospective %>
-        <%= touch_numeric_tag "CONDOMS", @patient, nil,
+        <%#= touch_numeric_tag "CONDOMS", @patient, nil,
           {	:max => '100',
           :condition => 'hasARTVisit() == true;',
           :tt_pageStyleClass => "unknownButton",
@@ -2103,7 +2108,7 @@ pyridoxine_options = ["","25", "50"]
           :tt_onLoad => "showCategory('Regimen');"
         } %>
       <% else %>
-        <%= touch_numeric_tag "CONDOMS", @patient, nil,
+        <%#= touch_numeric_tag "CONDOMS", @patient, nil,
           {	:max => '100',
           :condition => 'hasARTVisit() == true;',
           :helpText => 'Number of condoms given',
