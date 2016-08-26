@@ -751,11 +751,11 @@ class GenericRegimensController < ApplicationController
 		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
 		#regimen_concepts = patient_program.regimens(current_weight).uniq
 		@options = MedicationService.regimen_options(current_weight, patient_program.program)
-
 		tmp = []
     new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
 		@options.each{|i|
-      
+      next if i.to_s.include?("12A") #This is third line drug. It has to be shown in suggest_all
+
       unless new_guide_lines_start_date.blank?
         if new_guide_lines_start_date <= session_date
           next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines
@@ -764,7 +764,7 @@ class GenericRegimensController < ApplicationController
           next if i.to_s.include?("3P") #Not supported in new ART Guidelines
         end
       end
-
+=begin
 			if i.to_s.include?("2P") && current_weight<25
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 
@@ -780,7 +780,8 @@ class GenericRegimensController < ApplicationController
 			elsif i.to_s.include?("5A") && current_weight > 35
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 			end
-
+=end
+      
 			tmp << i
 		}
 
@@ -812,7 +813,7 @@ class GenericRegimensController < ApplicationController
           next if i.to_s.include?("3P") #Not supported in new ART Guidelines
         end
       end
-      
+=begin
 			if i.to_s.include?("2P") && current_weight<25.to_f
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 
@@ -822,7 +823,7 @@ class GenericRegimensController < ApplicationController
 			elsif i.to_s.include?("5A") && current_weight > 35.to_f
 				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
 			end
-
+=end
 			tmp << i
 		}
 
