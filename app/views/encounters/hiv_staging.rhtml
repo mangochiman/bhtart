@@ -533,22 +533,22 @@
     /*
         if (stage == 3) {
 <%  if @patient.person.observations.to_s.include?('Pulmonary tuberculosis' || 'Smear +ve')%>
-                                                                        if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                              selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
-                                                                        }
-                                                                        else{
-                                                                              selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
-                                                                        }
+                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                                  selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
+                                                                            }
+                                                                            else{
+                                                                                  selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
+                                                                            }
 <%end%>
         }
         if (stage == 4) {
 <% if @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
-                                                                        if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                              selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
-                                                                        }
-                                                                        else{
-                                                                              selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
-                                                                        }
+                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                                  selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
+                                                                            }
+                                                                            else{
+                                                                                  selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
+                                                                            }
 <%end%>
         }
      */
@@ -830,52 +830,50 @@ end %>
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
-      <% if @session_date < @new_guide_lines_start_date %>
-        <label for='new_cd4_count_available'>Recent CD4 count results available?</label>
-        <%= select_tag "new_cd4_count_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_cd4_count_available', :tt_pageStyleClass => 'NoKeyboard' %>
+      <label for='new_cd4_count_available'>Recent CD4 count results available?</label>
+      <%= select_tag "new_cd4_count_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_cd4_count_available', :tt_pageStyleClass => 'NoKeyboard' %>
 
-        <%= touch_date_tag "CD4 COUNT DATETIME", @patient, nil,
-          {:id => "cd4_count_date",
-          :condition => '$("new_cd4_count_available").value == "YES"',
-          :helpText => "CD4 Count Date",
+      <%= touch_date_tag "CD4 COUNT DATETIME", @patient, nil,
+        {:id => "cd4_count_date",
+        :condition => '$("new_cd4_count_available").value == "YES"',
+        :helpText => "CD4 Count Date",
+        :max => "#{session[:datetime].to_date rescue Date.today}"} %>
+
+      <%= touch_cd4_count_numeric_tag "CD4 COUNT", @patient, nil,
+        {:id => "cd4_count",
+        :condition => '$("new_cd4_count_available").value == "YES"',
+        :helpText => "CD4 Count",
+        :max => 1000 ,
+        :min => 1 ,
+        :tt_onLoad => "updateCD4CountKeyPad();",
+        :tt_onUnLoad => "updateCD4Count();"} %>
+
+      <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 250", @patient, "", :id => "cd4_count_less_than_250" %>
+      <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 350", @patient, "", :id => "cd4_count_less_than_350" %>
+      <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 500", @patient, "", :id => "cd4_count_less_than_500" %>
+
+
+      <% if @patient_bean.age <= 14 %>
+
+        <label for='new_cd4_percent_available'>New CD4 percent available?</label>
+        <%= select_tag "new_cd4_percent_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_cd4_percent_available', :tt_pageStyleClass => 'NoKeyboard' %>
+
+        <%= touch_date_tag "CD4 PERCENT DATETIME", @patient, (Time.now - 1.month).year,
+          {:id => "cd4_percent_date",
+          :condition => '$("new_cd4_percent_available").value == "YES"',
+          :helpText => "CD4 Percent Date",
           :max => "#{session[:datetime].to_date rescue Date.today}"} %>
 
-        <%= touch_cd4_count_numeric_tag "CD4 COUNT", @patient, nil,
-          {:id => "cd4_count",
-          :condition => '$("new_cd4_count_available").value == "YES"',
-          :helpText => "CD4 Count",
-          :max => 1000 ,
-          :min => 1 ,
-          :tt_onLoad => "updateCD4CountKeyPad();",
-          :tt_onUnLoad => "updateCD4Count();"} %>
+        <%= touch_numeric_tag "CD4 PERCENT", @patient, nil,
+          {:id => "cd4_percent",
+          :condition => '$("new_cd4_percent_available").value == "YES"',
+          :helpText => "CD4 Percent",
+          :tt_onUnLoad => 'updateCD4Percent()'} %>
 
-        <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 250", @patient, "", :id => "cd4_count_less_than_250" %>
-        <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 350", @patient, "", :id => "cd4_count_less_than_350" %>
-        <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 500", @patient, "", :id => "cd4_count_less_than_500" %>
+        <%= touch_hidden_tag "CD4 PERCENT LESS THAN 25", @patient, "", :id => "cd4_percent_less_than_25" %>
 
-
-        <% if @patient_bean.age <= 14 %>
-
-          <label for='new_cd4_percent_available'>New CD4 percent available?</label>
-          <%= select_tag "new_cd4_percent_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_cd4_percent_available', :tt_pageStyleClass => 'NoKeyboard' %>
-
-          <%= touch_date_tag "CD4 PERCENT DATETIME", @patient, (Time.now - 1.month).year,
-            {:id => "cd4_percent_date",
-            :condition => '$("new_cd4_percent_available").value == "YES"',
-            :helpText => "CD4 Percent Date",
-            :max => "#{session[:datetime].to_date rescue Date.today}"} %>
-
-          <%= touch_numeric_tag "CD4 PERCENT", @patient, nil,
-            {:id => "cd4_percent",
-            :condition => '$("new_cd4_percent_available").value == "YES"',
-            :helpText => "CD4 Percent",
-            :tt_onUnLoad => 'updateCD4Percent()'} %>
-
-          <%= touch_hidden_tag "CD4 PERCENT LESS THAN 25", @patient, "", :id => "cd4_percent_less_than_25" %>
-
-        <% else %>
-          <%= hidden_field_tag "new_cd4_percent_available", "" %>
-        <% end %>
+      <% else %>
+        <%= hidden_field_tag "new_cd4_percent_available", "" %>
       <% end %>
 
       <% if @session_date < @new_guide_lines_start_date %>
@@ -892,14 +890,14 @@ end %>
           {:id => "lymphocyte_count",
           :condition => '$("new_lymphocyte_count_available").value == "YES"',
           :helpText => "Lymphocyte Count"} %>
+      <% else %>
+        <%= hidden_field_tag("new_lymphocyte_count_available", "") %>
       <% end %>
 
-      <% if @session_date < @new_guide_lines_start_date %>
-        <%= touch_location_tag "CD4 PERCENT LOCATION", @patient, nil,
-          {	:id => "cd4_percent_location",
-          :condition => '$("new_cd4_percent_available").value == "YES" || $("new_lymphocyte_count_available").value == "YES" || ($("new_cd4_count_available").value == "YES" && transferInPatient() == false)',
-          :helpText => "CD4 or Lymphocyte count location"} %>
-      <% end %>
+      <%= touch_location_tag "CD4 PERCENT LOCATION", @patient, nil,
+        {	:id => "cd4_percent_location",
+        :condition => '$("new_cd4_percent_available").value == "YES" || $("new_lymphocyte_count_available").value == "YES" || ($("new_cd4_count_available").value == "YES" && transferInPatient() == false)',
+        :helpText => "CD4 or Lymphocyte count location"} %>
 
     <% end %>
 
