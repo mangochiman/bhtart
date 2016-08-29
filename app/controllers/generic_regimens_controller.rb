@@ -753,9 +753,14 @@ class GenericRegimensController < ApplicationController
 		@options = MedicationService.regimen_options(current_weight, patient_program.program)
 		tmp = []
     new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
+
 		@options.each{|i|
       next if i.to_s.include?("12A") #This is third line drug. It has to be shown in suggest_all
-
+      if (patient_has_psychosis?(patient_program.patient, session_date))
+        #Remove 5A if the patient has psychosis as a side effect/contraindication
+        next if i.to_s.include?("5A")
+      end
+      
       unless new_guide_lines_start_date.blank?
         if new_guide_lines_start_date <= session_date
           next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines

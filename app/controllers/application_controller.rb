@@ -13,6 +13,17 @@ class ApplicationController < GenericApplicationController
     
   end
 
+  def patient_has_psychosis?(patient, session_date = Date.today)
+    mw_art_side_effects_concept_id = Concept.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+    psychosis_concept_id = Concept.find_by_name('PSYCHOSIS').concept_id
+    latest_psychosis_side_effect = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) <= ? AND
+      concept_id =? AND value_coded =?",
+        session_date, mw_art_side_effects_concept_id, psychosis_concept_id]
+    )
+    return true unless latest_psychosis_side_effect.blank?
+    return false
+  end
+
   def patient_has_visited_on_scheduled_date(patient,  session_date = Date.today)
     appointment_date_concept_id = Concept.find_by_name("APPOINTMENT DATE").concept_id
     latest_appointment_date = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) < ? AND concept_id =?",
