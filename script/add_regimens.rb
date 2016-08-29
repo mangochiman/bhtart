@@ -1,9 +1,13 @@
 def regimens
   regimens = {}
-  regimens["9A"] = [[3, 6, 9523], [6,10, 9523], [10, 14, 9523], [14, 20, 9523], [20, 25, 9523], [25, 200, 9523]]
-  regimens["10P"] = [[35, 200, 2992]]
-  regimens["11P"] = [[3, 6, 2994], [6,10, 2994], [10, 14, 2994], [14, 20, 2994], [20, 25, 2994], [25, 200, 2994]]
-  regimens["11A"] = [[3, 6, 2994], [6,10, 2994], [10, 14, 2994], [14, 20, 2994], [20, 25, 2994], [25, 200, 2994]]
+  #regimens["9A"] = [[3, 6, 9523], [6,10, 9523], [10, 14, 9523], [14, 20, 9523], [20, 25, 9523], [25, 200, 9523]]
+  regimens["9A"] = [[25, 200, 9523]]
+  #regimens["10P"] = [[35, 200, 2992]]
+  regimens["10P"] = [[3, 25, 2992]]
+  #regimens["11P"] = [[3, 6, 2994], [6,10, 2994], [10, 14, 2994], [14, 20, 2994], [20, 25, 2994], [25, 200, 2994]]
+  regimens["11P"] = [[3, 6, 2994], [6,10, 2994], [10, 14, 2994], [14, 20, 2994], [20, 25, 2994]]
+  #regimens["11A"] = [[3, 6, 2994], [6,10, 2994], [10, 14, 2994], [14, 20, 2994], [20, 25, 2994], [25, 200, 2994]]
+  regimens["11A"] = [[25, 200, 2994]]
   regimens["12A"] = [[35, 200, 9524]]
 
   ActiveRecord::Base.transaction do
@@ -29,6 +33,7 @@ end
 
 def regimen_drug_orders
   regimen_drug_orders = {}
+=begin
   regimen_drug_orders["9A"] = {
     969 => [
       [3, 6, 2, "TWICE A DAY (BD)", "1 tab(s) TWICE A DAY (BD)", 1],
@@ -47,7 +52,16 @@ def regimen_drug_orders
       [25, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
     ]
   }
-
+=end
+  regimen_drug_orders["9A"] = {
+    969 => [
+      [25, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
+    ],
+    73 => [
+      [25, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
+    ]
+  }
+=begin
   regimen_drug_orders["10P"] = {
     734 => [
       [35, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
@@ -56,7 +70,16 @@ def regimen_drug_orders
       [35, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
     ]
   }
-
+=end
+  regimen_drug_orders["10P"] = {
+    734 => [
+      [3, 25, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
+    ],
+    73 => [
+      [3, 25, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
+    ]
+  }
+=begin
   regimen_drug_orders["11P"] = {
     736 => [
       [3, 6, 2, "TWICE A DAY (BD)", "2 tab(s) TWICE A DAY (BD)", 1],
@@ -75,7 +98,24 @@ def regimen_drug_orders
       [25, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
     ]
   }
-
+=end
+  regimen_drug_orders["11P"] = {
+    736 => [
+      [3, 6, 2, "TWICE A DAY (BD)", "2 tab(s) TWICE A DAY (BD)", 1],
+      [6, 10, 3, "TWICE A DAY (BD)", "1.5 tab(s) TWICE A DAY (BD)", 1.5],
+      [10, 14, 4, "TWICE A DAY (BD)", "2 tab(s) TWICE A DAY (BD)", 2],
+      [14, 20, 5, "TWICE A DAY (BD)", "2.5 tab(s) TWICE A DAY (BD)", 2.5],
+      [20, 25, 6, "TWICE A DAY (BD)", "3 tab(s) TWICE A DAY (BD)", 3]
+    ],
+    73 => [
+      [3, 6, 2, "TWICE A DAY (BD)", "1 tab(s) TWICE A DAY (BD)", 1],
+      [6, 10, 3, "TWICE A DAY (BD)", "1.5 tab(s) TWICE A DAY (BD)", 1.5],
+      [10, 14, 4, "TWICE A DAY (BD)", "1 tab(s) TWICE A DAY (BD)", 2],
+      [14, 20, 5, "TWICE A DAY (BD)", "2.5 tab(s) TWICE A DAY (BD)", 2.5],
+      [20, 25, 6, "TWICE A DAY (BD)", "3 tab(s) TWICE A DAY (BD)", 3]
+    ]
+  }
+=begin
   regimen_drug_orders["11A"] = {
     39 => [
       [3, 6, 2, "TWICE A DAY (BD)", "1 tab(s) TWICE A DAY (BD)", 1],
@@ -94,7 +134,16 @@ def regimen_drug_orders
       [25, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
     ]
   }
-
+=end
+  regimen_drug_orders["11A"] = {
+    39 => [
+      [25, 200, 2, "TWICE A DAY (BD)", "1 tab(s) TWICE A DAY (BD)", 1]
+    ],
+    73 => [
+      [25, 200, 1, "ONCE A DAY (OD)", "1 tab(s) ONCE A DAY (OD)", 1]
+    ]
+  }
+  
   regimen_drug_orders["12A"] = {
     976 => [
       [35, 200, 2, "TWICE A DAY (BD)", "1 tab(s) TWICE A DAY (BD)", 1]
