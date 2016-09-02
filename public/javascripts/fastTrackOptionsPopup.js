@@ -21,12 +21,12 @@ for (var pos in fastTrackAssesmentConcepts){
     fastTrackOptions += "</tr>";
 }
 
-html = "<br /><center><i style='color: green; font-size: 15pt; font-weight: bold;'>If all boxes ticked, inform patient that his/her next visit could be a <b style='color: red;'>Fast Track Visit</b>";
+/*html = "<br /><center><i style='color: green; font-size: 15pt; font-weight: bold;'>If all boxes ticked, inform patient that his/her next visit could be a <b style='color: red;'>Fast Track Visit</b>";
 html+= " to reduce waiting time. Ask what he/she prefers<i></center>";
 
 fastTrackOptions += "<tr>";
 fastTrackOptions += "<td colspan='2' style=''>" + html + "</td>"
-fastTrackOptions += "</tr>";
+fastTrackOptions += "</tr>";*/
 
 fastTrackOptions += "</table>"
 
@@ -50,12 +50,13 @@ function fastTrackAssesmentPopup(){
 
     popupHeader = document.createElement('div');
     popupHeader.className = 'popup-header';
-    popupHeader.innerHTML = 'Fast Track Assesment';
+    popupHeader.innerHTML = 'Check eligibility for <span style="color:red; ">Fast Track</span> at Next Visit<br /><br />';
     popupHeader.style.borderBottom = '2px solid #7D9EC0';
     popupHeader.style.backgroundColor = '#FFFFFF';
     popupHeader.style.paddingTop = '5px';
     popupHeader.style.borderRadius = '15px 15px 0 0';
     popupHeader.style.fontSize = '16pt';
+    popupHeader.style.textAlign = 'center';
     popupHeader.style.fontWeight = 'bolder';
 
 
@@ -71,7 +72,7 @@ function fastTrackAssesmentPopup(){
 
     clinicVisitButton = document.createElement('span');
     clinicVisitButton.className = 'clinicVisitButton FastTrackBtn';
-    clinicVisitButton.innerHTML = 'Next Visit: Clinic Visit';
+    clinicVisitButton.innerHTML = 'Book Regular <br />Clinic Visit';
     clinicVisitButton.style.backgroundImage = 'none';
     clinicVisitButton.style.border = '1px solid transparent';
     clinicVisitButton.style.borderRadius = '4px';
@@ -82,12 +83,13 @@ function fastTrackAssesmentPopup(){
     clinicVisitButton.style.lineHeight = '1.94857';
     clinicVisitButton.style.position = 'absolute';
     clinicVisitButton.style.bottom = '10px';
-    clinicVisitButton.style.padding = '9px 54px';
+    clinicVisitButton.style.padding = '9px 86px';
+    clinicVisitButton.style.left = '10px';
     clinicVisitButton.style.textAlign = 'center';
     clinicVisitButton.style.verticalAlign = 'middle';
     clinicVisitButton.style.whiteSpace = 'nowrap';
-    clinicVisitButton.style.backgroundColor = '#FF7F24';
-    clinicVisitButton.style.color = 'black';
+    clinicVisitButton.style.backgroundColor = '#00B2EE';
+    clinicVisitButton.style.color = 'white';
     
     clinicVisitButton.onclick = function(){
         //hideLibPopup();
@@ -116,17 +118,17 @@ function fastTrackAssesmentPopup(){
     cancelButton.style.whiteSpace = 'nowrap';
     cancelButton.style.backgroundColor = '#DC143C';
     cancelButton.style.borderColor = '#6495ED';
-    cancelButton.style.color = 'black';
+    cancelButton.style.color = 'white';
     cancelButton.style.left = '22.6%';
     cancelButton.onclick = function(){
         cancelFastTrackPopup();
     }
 
-    popupDiv.appendChild(cancelButton);
+    //popupDiv.appendChild(cancelButton);
 
     fastTrackVisitButton = document.createElement('span');
     fastTrackVisitButton.className = 'fastTrackVisitButton FastTrackBtn';
-    fastTrackVisitButton.innerHTML = 'Next Visit: Fast Track Visit';
+    fastTrackVisitButton.innerHTML = 'Book Fast <br />Track Visit';
     fastTrackVisitButton.style.backgroundImage = 'none';
     fastTrackVisitButton.style.border = '1px solid transparent';
     fastTrackVisitButton.style.borderRadius = '4px';
@@ -137,14 +139,15 @@ function fastTrackAssesmentPopup(){
     fastTrackVisitButton.style.lineHeight = '1.94857';
     fastTrackVisitButton.style.position = 'absolute';
     fastTrackVisitButton.style.bottom = '10px';
-    fastTrackVisitButton.style.right = '0px';
-    fastTrackVisitButton.style.padding = '9px 26px';
+    //fastTrackVisitButton.style.right = '0px';
+    fastTrackVisitButton.style.padding = '9px 83px';
+    fastTrackVisitButton.style.right = '10px';
     fastTrackVisitButton.style.textAlign = 'center';
     fastTrackVisitButton.style.verticalAlign = 'middle';
     fastTrackVisitButton.style.whiteSpace = 'nowrap';
-    fastTrackVisitButton.style.backgroundColor = '#C1FFC1';
+    fastTrackVisitButton.style.backgroundColor = '#228B22';
     fastTrackVisitButton.style.borderColor = '#00688B';
-    fastTrackVisitButton.style.color = 'black';
+    fastTrackVisitButton.style.color = 'white';
     //fastTrackVisitButton.style.left = '81%';
     fastTrackVisitButton.onclick = function(){
         //hideLibPopup();
@@ -199,7 +202,7 @@ function disableEnableFastTrackVisitButton(){
     fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
     if (fastTrackVisitButton){
         if (selectedFastTrackConcepts.length < 7){
-            fastTrackVisitButton.style.backgroundColor = '#dddddd';
+            //fastTrackVisitButton.style.backgroundColor = '#dddddd';
             fastTrackVisitButton.onclick = function(){
 
             }
