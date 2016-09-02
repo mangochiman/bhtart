@@ -533,22 +533,22 @@
     /*
         if (stage == 3) {
 <%  if @patient.person.observations.to_s.include?('Pulmonary tuberculosis' || 'Smear +ve')%>
-                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                  selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
-                                                                            }
-                                                                            else{
-                                                                                  selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
-                                                                            }
+                                                                                if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                                      selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
+                                                                                }
+                                                                                else{
+                                                                                      selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
+                                                                                }
 <%end%>
         }
         if (stage == 4) {
 <% if @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
-                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                  selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
-                                                                            }
-                                                                            else{
-                                                                                  selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
-                                                                            }
+                                                                                if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                                      selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
+                                                                                }
+                                                                                else{
+                                                                                      selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
+                                                                                }
 <%end%>
         }
      */
@@ -788,24 +788,17 @@ end %>
 
         <% end %>
       <% end %>
-
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i),
-        {:id => "stage_1_conditions",
+    
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv, @severe_wasting),
+        {:id => "stage_4_conditions",
         :multiple => true,
         :optional => true,
-        :tt_onUnLoad => 'setSelectedStageConditions(1);',
-        :helpText => "Stage 1 Conditions",
-        :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
-
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii),
-        {:id => "stage_2_conditions",
-        :multiple => true,
-        :optional => true,
+        :selected => @who_stage_iv_selected,
+        :tt_onUnLoad => 'setSelectedStageConditions(4);',
+        :tt_onLoad => 'checkEptb();',
         :condition => 'showConditions() == true',
-        :tt_onUnLoad => 'setSelectedStageConditions(2);',
-        :helpText => "Stage 2 Conditions",
+        :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
-
 
       <%= #raise @who_stage_iv.to_yaml
       touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii, @moderate_wasting),
@@ -818,17 +811,22 @@ end %>
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
-
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv, @severe_wasting),
-        {:id => "stage_4_conditions",
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii),
+        {:id => "stage_2_conditions",
         :multiple => true,
         :optional => true,
-        :selected => @who_stage_iv_selected,
-        :tt_onUnLoad => 'setSelectedStageConditions(4);',
-        :tt_onLoad => 'checkEptb();',
         :condition => 'showConditions() == true',
-        :helpText => "Stage 4 Conditions",
+        :tt_onUnLoad => 'setSelectedStageConditions(2);',
+        :helpText => "Stage 2 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i),
+        {:id => "stage_1_conditions",
+        :multiple => true,
+        :optional => true,
+        :tt_onUnLoad => 'setSelectedStageConditions(1);',
+        :helpText => "Stage 1 Conditions",
+        :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
 
       <label for='new_cd4_count_available'>Recent CD4 count results available?</label>
       <%= select_tag "new_cd4_count_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_cd4_count_available', :tt_pageStyleClass => 'NoKeyboard' %>
