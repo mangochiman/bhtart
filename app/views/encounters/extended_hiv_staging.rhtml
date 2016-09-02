@@ -803,6 +803,11 @@ end %>
       <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
       <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
       <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
+
+      <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
+      <%= touch_hidden_tag "WHO STAGE", @patient, "", :id => "who_stage" %>
+      <%= touch_hidden_tag "REASON FOR ART ELIGIBILITY", @patient, "", :id => "reason_for_art_eligibility" %>
+      
       <%  @severe_wasted_infant = "" %>
       <% if @patient_bean.age_in_months < 12 and @confirmatory_hiv_test_type == 'HIV rapid test' %>
 
@@ -999,10 +1004,6 @@ end %>
 
   <%#= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
   {:optional => true,:helpText => "Clinical notes (optional)"}, time=DateTime.now()) %>
-
-      <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
-      <%= touch_hidden_tag "WHO STAGE", @patient, "", :id => "who_stage" %>
-      <%= touch_hidden_tag "REASON FOR ART ELIGIBILITY", @patient, "", :id => "reason_for_art_eligibility" %>
 
       <label for='summary'>Summary</label>
       <%= text_field_tag :summary, nil, { :tt_onLoad => "summary();__$('keyboard').style.display = 'none';", :optional => "true", :tt_pageStyleClass => "NoControls" } %>

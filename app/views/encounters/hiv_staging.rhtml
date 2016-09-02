@@ -56,7 +56,7 @@
   var tstCurrentDate = '<%= session[:datetime].to_date.strftime("%Y-%m-%d") rescue Date.today.strftime("%Y-%m-%d") %>'
 
   function resetPad() {
-    curr_page = tstCurrentPage - 1 
+    curr_page = tstCurrentPage - 1
     buttons = document.getElementsByClassName("keyboardButton");
     for(i = 0; i < buttons.length ; i++) {
       buttons[i].disabled = false;
@@ -104,21 +104,21 @@
     var cd4_available = $('new_cd4_count_available').value == 'YES';
     var cd4_count = cd4_available ? $('cd4_count').value : null;
     var cd4_count_modifier = '';
-	
-    try { 
-      cd4_count_numeric = parseInt(cd4_count.match(/[0-9](.*)/i)[0]); 
+
+    try {
+      cd4_count_numeric = parseInt(cd4_count.match(/[0-9](.*)/i)[0]);
     } catch(e) { cd4_count_numeric = null; }
 
     if (cd4_count_numeric == null || ''+cd4_count_numeric == 'NaN') {
       try {
         var matches = cd4_count.match(/^(\<|\>)([0-9\.]+)$/)
-        cd4_count_modifier = matches[1]; 
+        cd4_count_modifier = matches[1];
         cd4_count_estimate = parseInt(matches[2]);
         cd4_count_numeric = cd4_count_estimate;
         if (cd4_count_modifier == '<') cd4_count_numeric -= 1;
         if (cd4_count_modifier == '>') cd4_count_numeric += 1;
       } catch(e) {
-        cd4_count_modifier = null; 
+        cd4_count_modifier = null;
         cd4_count_estimate = null;
         cd4_count_numeric = null;
       }
@@ -132,7 +132,7 @@
       $('cd4_count_less_than_350').value = "UNKNOWN";
       $('cd4_count_less_than_500').value = "UNKNOWN";
     } else {
-     
+
       if(cd4_count_numeric <= 250 && cd4_count_modifier != ">") {
         $('cd4_count_less_than_250').value = "YES";
       } else {
@@ -150,7 +150,7 @@
       } else {
         $('cd4_count_less_than_500').value = "NO";
       }
-    }    
+    }
   }
 
   function updateCD4Percent() {
@@ -201,7 +201,7 @@
     if (selected_stage_three_conditions) {
       conditions_found = 0;
       severe_weight_loss = false;
-			
+
       for (i = 0 ; i < selected_stage_three_conditions.length ; i++) {
         if (selected_stage_three_conditions[i] == 'Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained') {
           severe_weight_loss = true;
@@ -239,7 +239,7 @@
   }
 
   var whoStage = null;
-  
+
 
   function updateWhoStage() {
     // Everyone is supposed to be HIV positive so start them at 1
@@ -250,11 +250,11 @@
       } catch(e) {
 
       }
-			
+
     }
 
     var adultOrPeds = (age > 14) ? "ADULT" : "PEDS";
- 
+
     if (ageInMonths < 12 && firstPositiveHivTestType == "HIV rapid test") {
       $('who_stage').value = "PRESUMED SEVERE HIV";
     } else {
@@ -350,7 +350,7 @@
         return
       }
 
-      var reasonForArtEligibility = "HIV infected";
+      var reasonForArtEligibility = "NONE";
       // Lymphocyte thresholds for ages 0-15
       var lymphocyteThresholds = [4000, 4000, 4000, 3000, 3000, 2500, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000];
 
@@ -368,7 +368,7 @@
       if (age > 14) {
         if (whoStage >= 3) {
           reasonForArtEligibility = whoStageConcept(whoStage, "ADULT");
-	  
+
         } else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
           reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
         } else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
@@ -388,7 +388,7 @@
         var presumedSevereHivConditions = "";
         if ($('presumed_severe_hiv_conditions')) presumedSevereHivConditions = selectedValues($('presumed_severe_hiv_conditions'));
         var presumedSevereHiv = false;
-		
+
         if (firstPositiveHivTestType == "HIV rapid test") {
           if (
           presumedSevereHivConditions.indexOf("Pneumocystis pneumonia") > -1 ||
@@ -431,11 +431,10 @@
           }
         } catch (e) {}
       }
-
 <% else %>
       reasonForArtEligibility = "HIV infected";
 <% end %>
-
+            
     $('reason_for_art_eligibility').value = reasonForArtEligibility;
   }
 
@@ -471,7 +470,7 @@
 
     $('inputFrame'+tstCurrentPage).innerHTML = '<div id="summary">' + display + '</div>' ;
     $("clearButton").style.display = "none";
-		
+
     if (conditions.length > 0) {
       $('inputFrame'+tstCurrentPage).innerHTML += '<div id="selected_stage_conditions"><hr /><br />' + conditions + '</div>' ;
     }
@@ -501,7 +500,7 @@
     } catch(e) {
       return false;
     }
-	
+
     return false;
   }
 
@@ -533,22 +532,22 @@
     /*
         if (stage == 3) {
 <%  if @patient.person.observations.to_s.include?('Pulmonary tuberculosis' || 'Smear +ve')%>
-                                                                                if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                      selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
-                                                                                }
-                                                                                else{
-                                                                                      selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
-                                                                                }
+                                                              if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                    selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
+                                                              }
+                                                              else{
+                                                                    selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
+                                                              }
 <%end%>
         }
         if (stage == 4) {
 <% if @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
-                                                                                if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                      selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
-                                                                                }
-                                                                                else{
-                                                                                      selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
-                                                                                }
+                                                              if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                    selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
+                                                              }
+                                                              else{
+                                                                    selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
+                                                              }
 <%end%>
         }
      */
@@ -585,7 +584,7 @@
       }
 <% end  %>
   }
-	
+
   function checkPastTb(){
     return
 <% if @patient.person.observations.to_s.include?('Ever received TB treatment:  Yes') %>
@@ -598,7 +597,7 @@
       }
 <%  end %>
   }
-	
+
   function checkEptb(){
     return
 <% if  @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
@@ -624,7 +623,7 @@
       }
     });
   }
-  
+
   function allowStaging(){
     jQuery.ajax({
       type: "POST",
@@ -633,7 +632,7 @@
       success: function(){
         window.location = "/encounters/new/<%= params[:encounter_type] %>?action=show&controller=encounter_types&encounter_type='HIV staging'&id=show&patient_id=<%= params[:patient_id] %>&repeat=no"
       }
-    });   
+    });
   }
 
   var assigned_hcc_number = []
@@ -679,9 +678,9 @@
         assigned_arv_number = eval(hcc_numbers)
       }})
   }
-  
+
   //window.setInterval("updateReasonForArtEligibility();", 350);
-</script>  
+</script>
 <style type="text/css">
   .small .options li { font-size:1.1em; }
   .tt_controls_cd4_count #lessthan, .tt_controls_cd4_count #greaterthan { display:block; float:right }
@@ -737,6 +736,9 @@ end %>
     <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
     <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
 
+    <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
+    <%= touch_hidden_tag "WHO STAGE", @patient, "", :id => "who_stage" %>
+    <%= touch_hidden_tag "REASON FOR ART ELIGIBILITY", @patient, "", :id => "reason_for_art_eligibility" %>
 
     <% if @patient_bean.age_in_months < 12 and @confirmatory_hiv_test_type == 'HIV rapid test' %>
       <%= touch_select_tag "PRESUMED SEVERE HIV CRITERIA PRESENT", @patient, concept_set_options('PRESUMED SEVERE HIV CRITERIA IN INFANTS'),
@@ -788,17 +790,24 @@ end %>
 
         <% end %>
       <% end %>
-    
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv, @severe_wasting),
-        {:id => "stage_4_conditions",
+
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i),
+        {:id => "stage_1_conditions",
         :multiple => true,
         :optional => true,
-        :selected => @who_stage_iv_selected,
-        :tt_onUnLoad => 'setSelectedStageConditions(4);',
-        :tt_onLoad => 'checkEptb();',
+        :tt_onUnLoad => 'setSelectedStageConditions(1);',
+        :helpText => "Stage 1 Conditions",
+        :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
+
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii),
+        {:id => "stage_2_conditions",
+        :multiple => true,
+        :optional => true,
         :condition => 'showConditions() == true',
-        :helpText => "Stage 4 Conditions",
+        :tt_onUnLoad => 'setSelectedStageConditions(2);',
+        :helpText => "Stage 2 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
 
       <%= #raise @who_stage_iv.to_yaml
       touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii, @moderate_wasting),
@@ -811,22 +820,17 @@ end %>
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii),
-        {:id => "stage_2_conditions",
-        :multiple => true,
-        :optional => true,
-        :condition => 'showConditions() == true',
-        :tt_onUnLoad => 'setSelectedStageConditions(2);',
-        :helpText => "Stage 2 Conditions",
-        :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i),
-        {:id => "stage_1_conditions",
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv, @severe_wasting),
+        {:id => "stage_4_conditions",
         :multiple => true,
         :optional => true,
-        :tt_onUnLoad => 'setSelectedStageConditions(1);',
-        :helpText => "Stage 1 Conditions",
-        :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
+        :selected => @who_stage_iv_selected,
+        :tt_onUnLoad => 'setSelectedStageConditions(4);',
+        :tt_onLoad => 'checkEptb();',
+        :condition => 'showConditions() == true',
+        :helpText => "Stage 4 Conditions",
+        :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <label for='new_cd4_count_available'>Recent CD4 count results available?</label>
       <%= select_tag "new_cd4_count_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_cd4_count_available', :tt_pageStyleClass => 'NoKeyboard' %>
@@ -849,7 +853,6 @@ end %>
       <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 250", @patient, "", :id => "cd4_count_less_than_250" %>
       <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 350", @patient, "", :id => "cd4_count_less_than_350" %>
       <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 500", @patient, "", :id => "cd4_count_less_than_500" %>
-
 
       <% if @patient_bean.age <= 14 %>
 
@@ -876,9 +879,13 @@ end %>
 
       <% if @session_date < @new_guide_lines_start_date %>
         <label for='new_lymphocyte_count_available'>New Lymphocyte count available?</label>
-        <%= select_tag "new_lymphocyte_count_available", options_for_select([['Yes','YES'],['No','NO']]), :id => 'new_lymphocyte_count_available', :tt_pageStyleClass => 'NoKeyboard' %>
+        <%= select_tag "new_lymphocyte_count_available", options_for_select([['Yes','YES'],['No','NO']]),
+          :id => 'new_lymphocyte_count_available',
+          :tt_onLoad => "setTimeout('cssText();',1);",
+          :tt_pageStyleClass => 'NoKeyboard' %>
 
-        <%= touch_date_tag "LYMPHOCYTE COUNT DATETIME", @patient, nil,
+
+        <%= touch_date_tag "LYMPHOCYTE COUNT DATETIME", @patient, (Time.now - 1.month).year,
           {:id => "lymphocyte_count_date",
           :condition => '$("new_lymphocyte_count_available").value == "YES"',
           :helpText => "Lymphocyte Count Date",
@@ -892,11 +899,11 @@ end %>
         <%= hidden_field_tag("new_lymphocyte_count_available", "") %>
       <% end %>
 
+
       <%= touch_location_tag "CD4 PERCENT LOCATION", @patient, nil,
         {	:id => "cd4_percent_location",
         :condition => '$("new_cd4_percent_available").value == "YES" || $("new_lymphocyte_count_available").value == "YES" || ($("new_cd4_count_available").value == "YES" && transferInPatient() == false)',
         :helpText => "CD4 or Lymphocyte count location"} %>
-
     <% end %>
 
     <!--<% if @patient_hcc_number.blank? %>
@@ -911,13 +918,6 @@ end %>
         :helpText => "HCC number" }
     %>
     <% end %>-->
-
-  <%#= touch_text_area_tag("CLINICAL NOTES CONSTRUCT", @patient, nil,
-  {	:optional => true,:helpText => "Clinical notes (optional)"}, time=DateTime.now()) %>
-
-    <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
-    <%= touch_hidden_tag "WHO STAGE", @patient, "", :id => "who_stage" %>
-    <%= touch_hidden_tag "REASON FOR ART ELIGIBILITY", @patient, "", :id => "reason_for_art_eligibility" %>
 
     <label for='summary'>Summary</label>
     <%= text_field_tag :summary, nil, { :tt_onLoad => "summary();__$('keyboard').style.display = 'none';", :optional => "true", :tt_pageStyleClass => "NoControls" } %>
