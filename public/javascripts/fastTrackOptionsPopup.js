@@ -1,8 +1,10 @@
 
 var selectFastTrackOptions = {};
 var selectedFastTrackConcepts = []
+uncheckedImg = '/touchscreentoolkit/lib/images/unticked.jpg';
+checkedImg = '/touchscreentoolkit/lib/images/ticked.jpg';
 
-var fastTrackOptions = "<table id='malariaDrugs' cellspacing='0px' style='width:80%; left:10%; margin-left: 101px; font-size: 14pt;'>";
+/*var fastTrackOptions = "<table id='malariaDrugs' cellspacing='0px' style='width:80%; left:10%; margin-left: 101px; font-size: 14pt;'>";
 fastTrackOptions += "<tr>";
 fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px;'>&nbsp;</td>"
 fastTrackOptions += "<td style='border: 0px solid black; padding:8px;'>&nbsp;</td>"
@@ -19,7 +21,7 @@ for (var pos in fastTrackAssesmentConcepts){
     fastTrackOptions += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>" + concept_name + "</td>";
     fastTrackOptions += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_" + concept_id + "' src='" + uncheckedImg + "'></img></td>";
     fastTrackOptions += "</tr>";
-}
+}*/
 
 /*html = "<br /><center><i style='color: green; font-size: 15pt; font-weight: bold;'>If all boxes ticked, inform patient that his/her next visit could be a <b style='color: red;'>Fast Track Visit</b>";
 html+= " to reduce waiting time. Ask what he/she prefers<i></center>";
@@ -28,7 +30,71 @@ fastTrackOptions += "<tr>";
 fastTrackOptions += "<td colspan='2' style=''>" + html + "</td>"
 fastTrackOptions += "</tr>";*/
 
-fastTrackOptions += "</table>"
+//fastTrackOptions += "</table>"
+var fastTrackOptions;
+leftTable = "<table cellspacing='0px' style='width:40%; left:10%; margin-left: 101px; font-size: 14pt;'>";
+leftTable += "<tr>";
+leftTable += "<td style='border-bottom: 1px solid black; padding:8px;'>&nbsp;</td>"
+leftTable += "<td style='border: 0px solid black; padding:8px;'>&nbsp;</td>"
+leftTable += "</tr>";
+
+leftTable += "<tr id='' row_id = '9533' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+leftTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Adult  18 years +</td>";
+leftTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9533' src='" + uncheckedImg + "'></img></td>";
+leftTable += "</tr>";
+
+leftTable += "<tr id='' row_id = '9534' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+leftTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>on ART for 12 months </td>";
+leftTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9534' src='" + uncheckedImg + "'></img></td>";
+leftTable += "</tr>";
+
+leftTable += "<tr id='' row_id = '9535' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+leftTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>on 1st Line ART</td>";
+leftTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9535' src='" + uncheckedImg + "'></img></td>";
+leftTable += "</tr>";
+
+leftTable += "<tr id='' row_id = '9536' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+leftTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Last VL < 1000</td>";
+leftTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9536' src='" + uncheckedImg + "'></img></td>";
+leftTable += "</tr>";
+
+leftTable += "<tr id='' row_id = '9537' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+leftTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Good adherence last 2 visits</td>";
+leftTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9537' src='" + uncheckedImg + "'></img></td>";
+leftTable += "</tr>";
+
+leftTable += "</table>";
+
+rightTable = "<table cellspacing='0px' style='width:40%; right:4%; font-size: 14pt; position: absolute; top: 64px;'>";
+rightTable += "<tr>";
+rightTable += "<td style='border-bottom: 1px solid black; padding:8px;'>&nbsp;</td>"
+rightTable += "<td style='border: 0px solid black; padding:8px;'>&nbsp;</td>"
+rightTable += "</tr>";
+
+rightTable += "<tr id='' row_id = '9538' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Not Pregnant / Breastfeeding</td>";
+rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9538' src='" + uncheckedImg + "'></img></td>";
+rightTable += "</tr>";
+
+rightTable += "<tr id='' row_id = '9539' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>No Side Effects, OI / TB</td>";
+rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9539' src='" + uncheckedImg + "'></img></td>";
+rightTable += "</tr>";
+
+rightTable += "<tr id='' row_id = '9540' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>No BP / diabetes treatment</td>";
+rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9540' src='" + uncheckedImg + "'></img></td>";
+rightTable += "</tr>";
+
+rightTable += "<tr id='' row_id = '9541' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>No need for Depo at ART</td>";
+rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9541' src='" + uncheckedImg + "'></img></td>";
+rightTable += "</tr>";
+
+rightTable += "</table>";
+
+fastTrackOptions = leftTable;
+fastTrackOptions += rightTable;
 
 function fastTrackAssesmentPopup(){
     content = document.getElementById('content');
