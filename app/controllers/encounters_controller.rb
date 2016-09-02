@@ -10,6 +10,11 @@ class EncountersController < GenericEncountersController
       "Adherence on last 2 visits was good", "Patient not suffering from major side effects, signs of TB or HIV associated disease",
       "Patient do not need hypertension or diabetes care on next visit"]
 
+    fast_track_new_concept_names = ["Adult 18 years +", "on ART for 12 months +", "on 1st Line ART", "Last VL < 1000",
+      "Good adherence last 2 visits", "Not Pregnant / Breastfeeding", "No Side Effects, OI / TB",
+      "No BP / diabetes treatment", "No need for Depo at ART"
+    ]
+
     @fast_track_assesment_concept_names = {}
     count = 1
     fast_track_concepts_names.each do |c_name|
@@ -319,7 +324,7 @@ class EncountersController < GenericEncountersController
 		sputum_results_not_given(@patient.id).each{|order| @sputum_results_not_given[order.accession_number] = Concept.find(order.value_coded).fullname rescue order.value_text}
 
     if @art_first_visit
-      @hiv_clinic_consultation_side_efects_label = "Contra-indications (select all that apply)"
+      @hiv_clinic_consultation_side_efects_label = "Potential Contra-indications (select all that apply)"
     else
       @hiv_clinic_consultation_side_efects_label = "Potential Side effects (select all that apply)"
     end
