@@ -267,13 +267,13 @@ function highLightSelectedRow(obj){
 function disableEnableFastTrackVisitButton(){
     fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
     if (fastTrackVisitButton){
-        if (selectedFastTrackConcepts.length < 7){
-            //fastTrackVisitButton.style.backgroundColor = '#dddddd';
+        if (selectedFastTrackConcepts.length < 9){
+            fastTrackVisitButton.style.backgroundColor = '#8FBC8F';
             fastTrackVisitButton.onclick = function(){
 
             }
         }else{
-            fastTrackVisitButton.style.backgroundColor = '#C1FFC1';
+            fastTrackVisitButton.style.backgroundColor = '#228b22';
             fastTrackVisitButton.onclick = function(){
                 setFastTrackVisit();
             //hideLibPopup();
