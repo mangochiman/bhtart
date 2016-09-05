@@ -30,13 +30,15 @@ class EncountersController < GenericEncountersController
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
     @session_date = session_date
     @art_duration_in_months = PatientService.period_on_treatment(art_start_date) rescue 0
-    @fast_track_patient = false
-    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
-    @fast_track_patient = true if @latest_fast_track_answer == 'YES'
-    if (patient_has_visited_on_scheduled_date(@patient,  session_date) == false)
-      @fast_track_patient = false
-      @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
-    end
+    @fast_track_patient = fast_track_patient?(@patient, session_date)
+    #@fast_track_patient = false
+    #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    #@fast_track_patient = true if @latest_fast_track_answer == 'YES'
+    
+    #if (patient_has_visited_on_scheduled_date(@patient,  session_date) == false)
+    #@fast_track_patient = false
+    # @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
+    #end
 =begin
     if (tb_suspected_or_confirmed?(@patient, session_date) == true)
       #Not interested in patients with tb suspect or confirmed tb

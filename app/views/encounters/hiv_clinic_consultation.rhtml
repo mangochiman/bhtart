@@ -49,7 +49,6 @@
   var consultation_tb_status = '<%= @consultation_tb_status %>';
   var terminal_family_planning_method = '<%= @terminal_family_planning_method %>';
   var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
-  var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
   var hivFirstVisit = '<%= @art_first_visit %>';
   var patientEverHadDrugs = '<%= @patient_ever_had_drugs %>'
   var fastTrackAssesmentConcepts = JSON.parse('<%= @fast_track_assesment_concept_names.to_json %>');
@@ -258,7 +257,6 @@
       buttonsDiv = jQuery(".buttonsDiv")[0];
       buttonsDiv.innerHTML += html;
     }
-    //(parseInt(art_period_in_months) >= 12 && selectedSideEffects == 'NO' && hivFirstVisit == 'true') || (parseInt(art_period_in_months) >= 12 && patientEverHadDrugs == 'false' && latestFastTrackAnswer == 'YES')
   }
 
   function removeFastTrackAssesmentButton(){
@@ -602,15 +600,6 @@
       :condition => "$('refer_to_clinician').value == 'NO' && $('prescribe_drugs').value =='YES'" ,
       :helpText => "Is patient allergic to cotrimoxazole" } %>
   <%end unless art_adherence_to_be_done %>
-
-<%#= text_field_tag "fast_track_pop_up_input", nil, {
-:id => "fast_track_pop_up_input",
-:helpText => "Fast Track",
-:tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display = 'none';",
-:condition => "(parseInt(art_period_in_months) >= 12 && selectedSideEffects == 'NO' && hivFirstVisit == 'true') || (parseInt(art_period_in_months) >= 12 && patientEverHadDrugs == 'false' && latestFastTrackAnswer == 'YES')",
-:optional => "true",
-:tt_pageStyleClass => "NoControls"
-} %>
 
   <% session_date = session[:datetime].to_date rescue nil
   if session_date %>

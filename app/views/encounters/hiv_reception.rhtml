@@ -7,8 +7,7 @@
 <script>
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>"
   var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
-  var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
-  var fastTrackPatient = '<%= @fast_track_patient %>';
+  var fastTrackPatient = '<%= @fast_track_patient %>'.toUpperCase();
   
   function new_relationship() {
     var current = '/encounters/new/hiv_reception?patient_id=<%= @patient.patient_id %>';
@@ -132,20 +131,11 @@
   <!---------------------- FAST TRACK -->
   <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
 
-  <%#= text_field_tag "fast_track_pop_up_input", nil, {
-    :id => "fast_track_pop_up_input",
-    :helpText => "Fast Track",
-    :tt_onLoad => "showFastTrackReminder();",
-    :condition => "parseInt(art_period_in_months) >= 12 && latestFastTrackAnswer == 'YES'",
-    :optional => "true",
-    :tt_pageStyleClass => "NoControls"
-  } %>
-
   <%= text_field_tag "fast_track_pop_up_input", nil, {
     :id => "fast_track_pop_up_input",
     :helpText => "Fast Track",
     :tt_onLoad => "showFastTrackReminder();",
-    :condition => "latestFastTrackAnswer == 'YES'",
+    :condition => "fastTrackPatient == 'TRUE'",
     :optional => "true",
     :tt_pageStyleClass => "NoControls"
   } %>
