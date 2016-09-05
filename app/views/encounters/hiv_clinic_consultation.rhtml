@@ -51,7 +51,8 @@ malawi_art_side_effects.each do |side_effect|
   side_effect = side_effect.gsub("Hepatitis", "Jaundice").gsub("No", "None")
   side_effects_options << side_effect
 end
-
+#"<option value=\"None\">None</option>"
+side_effects_options << "<option value=\"Anemia\">Anemia</option>"
 side_effects_options = side_effects_options.join("\n")
 %>
 <script>
