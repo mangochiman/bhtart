@@ -494,6 +494,7 @@ side_effects_options = side_effects_options.join("\n")
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
+      :tt_onLoad => "controlNoneSelection();",
       :tt_onUnLoad => 'setselectedSideEffects();',
       :helpText => "#{@hiv_clinic_consultation_side_efects_label}" } %>
   <% else %>
@@ -725,6 +726,54 @@ side_effects_options = side_effects_options.join("\n")
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
     gotoNextPage();
+  }
+
+  function controlNoneSelection(){
+    liOptions = document.getElementsByTagName("li");
+    for (var i=0; i<=liOptions.length - 1; i++){
+      tstValue = liOptions[i].getAttribute("tstvalue");
+
+      if (tstValue.match(/NONE/i)){
+        liOptions[i].onclick = function(){
+          selectedValues = $("touchscreenInput" + tstCurrentPage).value.split(";")
+          currentLiItem = this;
+          
+          if (currentLiItem.style.backgroundColor.match(/lightblue/i)){
+
+            for (var j=0; j<=selectedValues.length - 1; j++){
+              liElement = jQuery("[tstvalue=" + selectedValues[j] + "]")[0];
+              if (liElement){
+                id = liElement.getAttribute("id");
+                updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
+              }
+            }
+          }else{
+            for (var j=0; j<=selectedValues.length - 1; j++){
+              liElement = jQuery("[tstvalue=" + selectedValues[j] + "]")[0];
+              if (liElement){
+                id = liElement.getAttribute("id");
+                updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
+              }
+            }
+            
+            noneElement = jQuery("[tstvalue=None]")[0];
+            noneElementID = noneElement.getAttribute("id");
+            updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement)
+          }
+
+        }
+      }
+      else{
+        liOptions[i].onmouseup = function(){
+          noneElement = jQuery("[tstvalue=None]")[0];
+          noneElementID = noneElement.getAttribute("id");
+          if (noneElement.style.backgroundColor.match(/lightblue/i)){
+            updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement);
+          }
+        }
+      }
+    }
+
   }
 
 </script>
