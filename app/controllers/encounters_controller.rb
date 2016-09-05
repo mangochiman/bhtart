@@ -321,9 +321,9 @@ class EncountersController < GenericEncountersController
     if @art_first_visit
       @hiv_clinic_consultation_side_efects_label = "Contra-indications (select all that apply)"
     else
-      @hiv_clinic_consultation_side_efects_label = "Side effects (select all that apply)"
+      @hiv_clinic_consultation_side_efects_label = "Potential Side effects (select all that apply)"
     end
-
+    
 		@tb_status = recent_lab_results(@patient.id, session_date)
     # use @patient_tb_status  for the tb_status moved from the patient model
     @patient_tb_status = PatientService.patient_tb_status(@patient)

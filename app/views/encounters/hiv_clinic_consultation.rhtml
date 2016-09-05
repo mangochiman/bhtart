@@ -42,7 +42,18 @@
     text-align: center;
   }
 </style>
+<%
+side_effects_options = []
+malawi_art_side_effects = concept_set_options('MALAWI ART SIDE EFFECTS').split("\n")
 
+malawi_art_side_effects.each do |side_effect|
+  next if side_effect.match(/Skin rash|Nightmares|Dizziness|Blurry Vision|Renal failure|Other/i)
+  side_effect = side_effect.gsub("Hepatitis", "Jaundice").gsub("No", "None")
+  side_effects_options << side_effect
+end
+
+side_effects_options = side_effects_options.join("\n")
+%>
 <script>
 
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>";
@@ -478,11 +489,10 @@
   <%end%>
 
   <% if ask_standard_art_side_effects == false %>
-    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, concept_set_options('MALAWI ART SIDE EFFECTS').gsub("Hepatitis", "Jaundice"),
+    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
-      :tt_onLoad => "removeSomeSideEffects()",
       :tt_onUnLoad => 'setselectedSideEffects();',
       :helpText => "#{@hiv_clinic_consultation_side_efects_label}" } %>
   <% else %>
