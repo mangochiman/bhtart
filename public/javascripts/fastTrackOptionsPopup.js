@@ -116,7 +116,7 @@ function fastTrackAssesmentPopup(){
 
     popupHeader = document.createElement('div');
     popupHeader.className = 'popup-header';
-    popupHeader.innerHTML = 'Check eligibility for <span style="color:red; ">Fast Track</span> at Next Visit<br /><br />';
+    popupHeader.innerHTML = 'Check eligibility for <span style="color:green; ">Fast Track</span> at Next Visit<br /><br />';
     popupHeader.style.borderBottom = '2px solid #7D9EC0';
     popupHeader.style.backgroundColor = '#FFFFFF';
     popupHeader.style.paddingTop = '5px';
