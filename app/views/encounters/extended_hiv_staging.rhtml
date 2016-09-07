@@ -807,7 +807,7 @@ end %>
       <%= touch_hidden_tag "WHO STAGES CRITERIA PRESENT", @patient, "", :id => "calculated_who_stage_4" %>
       <%= touch_hidden_tag "WHO STAGE", @patient, "", :id => "who_stage" %>
       <%= touch_hidden_tag "REASON FOR ART ELIGIBILITY", @patient, "", :id => "reason_for_art_eligibility" %>
-      
+
       <%  @severe_wasted_infant = "" %>
       <% if @patient_bean.age_in_months < 12 and @confirmatory_hiv_test_type == 'HIV rapid test' %>
 
@@ -982,10 +982,14 @@ end %>
         <% end %>
 
         <% #if @session_date < @new_guide_lines_start_date %>
+        <%
+        cd_location_help_text = "CD4 or Lymphocyte count location"
+        cd_location_help_text = "CD4 count location" if @new_guide_lines_start_date <= @session_date
+      %>
         <%= touch_location_tag "CD4 PERCENT LOCATION", @patient, nil,
           {	:id => "cd4_percent_location",
           :condition => '$("new_cd4_percent_available").value == "YES" || $("new_lymphocyte_count_available").value == "YES" || ($("new_cd4_count_available").value == "YES" && transferInPatient() == false)',
-          :helpText => "CD4 or Lymphocyte count location"} %>
+          :helpText => "#{cd_location_help_text}"} %>
     <%#end %>
       <% end %>
 
