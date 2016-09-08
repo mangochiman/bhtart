@@ -474,6 +474,11 @@ class EncountersController < GenericEncountersController
 			@who_stage_adults_iv = concept_set('WHO STAGE IV ADULT')
 		end
 
+    who_stage_iv_to_be_removed = ["HIV encephalopathy", "Disseminated non-tuberculosis mycobacterial infection",
+      "Isosporiasis >1 month",
+      "Disseminated mycosis (coccidiomycosis or histoplasmosis)", "Progressive multifocal leukoencephalopathy",
+      "Cytomegalovirus infection (retinitis or infection or other organs)"]
+
 		if (params[:encounter_type].upcase rescue '') == 'HIV_STAGING' or (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION'
 			if @patient_bean.age > 14 
 				@who_stage_i = concept_set('WHO STAGE I ADULT AND PEDS') + concept_set('WHO STAGE I ADULT')
@@ -521,7 +526,9 @@ class EncountersController < GenericEncountersController
 						@moderate_wasting = []
 					end
 				end
-				
+
+        @who_stage_iv.delete_if{|stage_condition|who_stage_iv_to_be_removed.include?(stage_condition[0])} << ["Other", "Other"]
+        
 				reason_for_art = @patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue []
         @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
 				if !@reason_for_art_eligibility.nil? && @reason_for_art_eligibility.upcase == 'NONE'
