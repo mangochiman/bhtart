@@ -166,42 +166,25 @@
   <div id="fast_track_reminder_header">
     <span style="font-size: 16pt; font-weight: bold;">Fast Track Notification</span>
   </div>
-  <% if @latest_fast_track_answer == 'YES' %>
+  <% if @fast_track_patient %>
     <div id="fast_track_reminder_content">
       <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
         <br />
         <center>
           <% unless @latest_vl_result[:latest_result].blank? %>
-          Latest Viral Load result: <span>(<i style="color: black;  text-decoration: underline;"><%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %></i> )</span> <br />
+            Latest Viral Load result: <span>(<i style="color: black;  text-decoration: underline;"><%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %></i> )</span> <br />
           <% end %>
-          This is to remind you that this patient is already enrolled in FAST track program.<br />
-          Refer the patient to Pharmacy
+          Fast Track Appointment on [DATE HERE]<br />
+          Patient is on time
         </center>
       </div>
     </div>
 
     <div id="fast_track_reminder_footer">
-      <span id="fastTrackNotNow" onclick="fastTrackNotNow();" style="padding: 12px 7%;">Continue With Normal Visit</span>
-      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Refer the patient to Fast Track Station</span>
-    </div>
-
-  <% else %>
-    <div id="fast_track_reminder_content">
-      <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
-        <br />
-        <center>
-          This patient is eligible for Fast Track. Assess the patient before proceeding.<br />
-          Do you want to enroll this patient into Fast Track Program now?
-        </center>
-      </div>
-    </div>
-
-    <div id="fast_track_reminder_footer">
-      <span id="fastTrackNotNow" onclick="fastTrackNotNow();">Not Now</span>
-      <span id="fastTrackNow" onclick="fastTrackNow();">Enroll Now</span>
+      <span id="fastTrackNotNow" onclick="fastTrackNotNow();" style="padding: 12px 7%;">Revert to regular clinic visit</span>
+      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Proceed With Fast Track</span>
     </div>
   <% end %>
-
 </div>
 
 <div id="fast_track_reminder_cover" style="display:none;">
@@ -262,7 +245,7 @@
     z-index: 991;
     left: 12%;
     border: 1px solid black;
-    background-color: #CD3333;
+    background-color: #228B22;
     border-radius: 15px;
   }
 
@@ -285,7 +268,6 @@
   }
 
   #fast_track_reminder_footer #fastTrackNotNow{
-    background-color: goldenrod;
     position: absolute;
     padding: 12px 20%;
     /*right: 8px;*/
@@ -293,16 +275,27 @@
     bottom: 8px;
     font-weight: bold;
     cursor: pointer;
+    font-family: arial;
+    font-size: 18px;
+    padding: 13px 34px;
+    border-radius: 8px;
+    border: 2px solid #228b22;
+    background: goldenrod;
   }
 
   #fast_track_reminder_footer #fastTrackNow{
-    background-color: goldenrod;
     position: absolute;
     padding: 12px 20%;
     right: 8px;
     bottom: 8px;
     font-weight: bold;
     cursor: pointer;
+    font-family: arial;
+    font-size: 18px;
+    padding: 13px 34px;
+    border-radius: 8px;
+    border: 2px solid #228b22;
+    background: goldenrod;
   }
 
   #tt_page_fast_track .inputFrameClass{
