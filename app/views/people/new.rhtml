@@ -325,7 +325,7 @@
   
   <%#= select_tag("person[occupation]", options_for_select([" ", "Housewife", "Farmer", "Police", "Soldier", "Business", "Teacher", "Student", "Healthcare Worker"].sort.concat(["Other"]) ,params[:occupation]),:helpText =>"Occupation",:allowFreeText => true, :tt_onLoad => 'seen(tstCurrentPage);')%>
 
-  <%= select_tag("person[occupation]", options_for_select(@occupations ,params[:occupation]),
+  <%#= select_tag("person[occupation]", options_for_select(@occupations ,params[:occupation]),
       :helpText =>"Occupation",
       :id => "occupation",
       :allowFreeText => false, 

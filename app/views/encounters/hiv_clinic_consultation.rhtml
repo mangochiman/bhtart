@@ -31,18 +31,41 @@
     top: 30%;
   }
 
+  .FastTrackBtn{
+    text-decoration: none;
+    border:1px solid #25729a;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    font-family:arial, helvetica, sans-serif;
+    padding: 10px 10px 10px 10px;
+    text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+    text-align: center;
+  }
 </style>
+<%
+side_effects_options = []
+malawi_art_side_effects = concept_set_options('MALAWI ART SIDE EFFECTS').split("\n")
 
+malawi_art_side_effects.each do |side_effect|
+  next if side_effect.match(/Skin rash|Nightmares|Dizziness|Blurry Vision|Renal failure|Other/i)
+  side_effect = side_effect.gsub("Hepatitis", "Jaundice").gsub("No", "None")
+  side_effects_options << side_effect
+end
+#"<option value=\"None\">None</option>"
+side_effects_options << "<option value=\"Anemia\">Anemia</option>"
+side_effects_options = side_effects_options.join("\n")
+%>
 <script>
 
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>";
   var consultation_tb_status = '<%= @consultation_tb_status %>';
   var terminal_family_planning_method = '<%= @terminal_family_planning_method %>';
   var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
-  var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
   var hivFirstVisit = '<%= @art_first_visit %>';
   var patientEverHadDrugs = '<%= @patient_ever_had_drugs %>'
-
+  var fastTrackAssesmentConcepts = JSON.parse('<%= @fast_track_assesment_concept_names.to_json %>');
+  var patient_id = <%= @patient.id %>;
+  
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
     var symptoms = 0;
@@ -238,6 +261,88 @@
     }
   
   }
+
+  function addFastTrackAssesmentButton(){
+    if (hivFirstVisit == 'true' || patientEverHadDrugs == 'false'){
+      html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
+      jQuery("#fastTrackAssesmentButton").remove();
+      buttonsDiv = jQuery(".buttonsDiv")[0];
+      buttonsDiv.innerHTML += html;
+    }
+  }
+
+  function removeFastTrackAssesmentButton(){
+    jQuery("#fastTrackAssesmentButton").remove();
+  }
+
+  function setFastTrackVisit(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=Yes",
+      beforeSend: function(){
+        fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
+        clinicVisitButton = document.getElementsByClassName("clinicVisitButton")[0];
+
+        if (fastTrackVisitButton){
+          fastTrackVisitButton.style.backgroundColor = '#dddddd';
+          fastTrackVisitButton.onclick = function(){
+          }
+        }
+
+        if (clinicVisitButton){
+          clinicVisitButton.style.backgroundColor = '#dddddd';
+          clinicVisitButton.onclick = function(){
+          }
+        }
+      },
+      error: function(xhr) { // if error occured
+        showMessage("There was an error while processing your request");
+      },
+      success: function(){
+        selectedFastTrackConcepts = []
+        hideLibPopup();
+      }
+
+    });
+  }
+
+  function setClinicVisit(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=No",
+      success: function(){
+        hideLibPopup()
+      }
+
+    });
+  }
+
+  function removeSomeSideEffects(){
+    sideEffectsToBeRemoved = ["Skin rash", "Nightmares", "Dizziness", "Blurry Vision", "Renal failure", "Other"]
+    liElements = jQuery("li");
+    for (var i=0; i<=liElements.length - 1; i++){
+      currentElement = liElements[i];
+      currentValue = currentElement.getAttribute("tstvalue");
+      for (var j=0; j<=sideEffectsToBeRemoved.length - 1; j++){
+        if (sideEffectsToBeRemoved[j].trim().toUpperCase() == currentValue.trim().toUpperCase()){
+          jQuery("#" + i).remove(); //Remove that Element
+          break;
+        }
+      }
+    }
+  }
+
+  function checkAndSelectTBSuspected(){
+    tb_suspected_option_input = jQuery("[tstvalue='TB suspected']")[0]
+    selected_tb_associated_symptoms = __$("routine_tb_screening").value;
+    if (selected_tb_associated_symptoms.length > 0){
+      if (tb_suspected_option_input) updateTouchscreenInputForSelect(tb_suspected_option_input);
+    }
+
+  }
+
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -385,12 +490,13 @@
   <%end%>
 
   <% if ask_standard_art_side_effects == false %>
-    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, concept_set_options('MALAWI ART SIDE EFFECTS'),
+    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
+      :tt_onLoad => "controlNoneSelection();",
       :tt_onUnLoad => 'setselectedSideEffects();',
-      :helpText => "Side effects (select all that apply)" } %>
+      :helpText => "#{@hiv_clinic_consultation_side_efects_label}" } %>
   <% else %>
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('COMMON MALAWI ART SYMPTOM SET'),
       {:id => 'symptoms',
@@ -429,7 +535,7 @@
       {:id => 'tb_status',
       :multiple => false,
       :helpText => "TB Status",
-      :tt_onLoad => 'checkTbHivStatus()',
+      :tt_onLoad => 'checkTbHivStatus(); checkAndSelectTBSuspected();',
       :condition => @show_tb_types  == true} %>
   <% else %>
     <%= touch_hidden_tag "TB STATUS" , @patient, ConceptName.find_by_name("#{@patient_tb_status}").name, {:id => "tb_status"} %>
@@ -486,11 +592,15 @@
     <%  if session_date %>
       <%= touch_yes_no_unknown_tag "Prescribe drugs", @patient, nil,
         {:id => "prescribe_drugs",
+        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO'" ,
         :helpText => "Prescribe drugs during this visit" } %>
     <% else %>
       <%= touch_yes_no_tag "Prescribe drugs", @patient, nil,
         {:id => "prescribe_drugs",
+        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO'" ,
         :helpText => "Prescribe drugs during this visit" } %>
     <% end %>
@@ -500,17 +610,8 @@
     <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
       {	:id => "allergic_to_sulphur",
       :condition => "$('refer_to_clinician').value == 'NO' && $('prescribe_drugs').value =='YES'" ,
-      :helpText => "Is patient allergic to sulphur" } %>
+      :helpText => "Is patient allergic to cotrimoxazole" } %>
   <%end unless art_adherence_to_be_done %>
-
-  <%= text_field_tag "fast_track_pop_up_input", nil, {
-    :id => "fast_track_pop_up_input",
-    :helpText => "Fast Track",
-    :tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display = 'none';",
-    :condition => "(parseInt(art_period_in_months) >= 12 && selectedSideEffects == 'NO' && hivFirstVisit == 'true') || (parseInt(art_period_in_months) >= 12 && patientEverHadDrugs == 'false' && latestFastTrackAnswer == 'YES')",
-    :optional => "true",
-    :tt_pageStyleClass => "NoControls"
-  } %>
 
   <% session_date = session[:datetime].to_date rescue nil
   if session_date %>
@@ -525,6 +626,8 @@
   <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
 
   <%= submit_tag "Finish" %>
+
+  <script src="/javascripts/fastTrackOptionsPopup.js?version=<%=Time.now.to_i%>" type="text/javascript"></script>
 </form>
 
 <% if !art_adherence_to_be_done %>
@@ -623,6 +726,54 @@
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
     gotoNextPage();
+  }
+
+  function controlNoneSelection(){
+    liOptions = document.getElementsByTagName("li");
+    for (var i=0; i<=liOptions.length - 1; i++){
+      tstValue = liOptions[i].getAttribute("tstvalue");
+
+      if (tstValue.match(/NONE/i)){
+        liOptions[i].onclick = function(){
+          selectedValues = $("touchscreenInput" + tstCurrentPage).value.split(";")
+          currentLiItem = this;
+          
+          if (currentLiItem.style.backgroundColor.match(/lightblue/i)){
+
+            for (var j=0; j<=selectedValues.length - 1; j++){
+              liElement = jQuery("[tstvalue=" + selectedValues[j] + "]")[0];
+              if (liElement){
+                id = liElement.getAttribute("id");
+                updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
+              }
+            }
+          }else{
+            for (var j=0; j<=selectedValues.length - 1; j++){
+              liElement = jQuery("[tstvalue=" + selectedValues[j] + "]")[0];
+              if (liElement){
+                id = liElement.getAttribute("id");
+                updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
+              }
+            }
+            
+            noneElement = jQuery("[tstvalue=None]")[0];
+            noneElementID = noneElement.getAttribute("id");
+            updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement)
+          }
+
+        }
+      }
+      else{
+        liOptions[i].onmouseup = function(){
+          noneElement = jQuery("[tstvalue=None]")[0];
+          noneElementID = noneElement.getAttribute("id");
+          if (noneElement.style.backgroundColor.match(/lightblue/i)){
+            updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement);
+          }
+        }
+      }
+    }
+
   }
 
 </script>

@@ -7,8 +7,7 @@
 <script>
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>"
   var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
-  var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
-  var fastTrackPatient = '<%= @fast_track_patient %>';
+  var fastTrackPatient = '<%= @fast_track_patient %>'.toUpperCase();
   
   function new_relationship() {
     var current = '/encounters/new/hiv_reception?patient_id=<%= @patient.patient_id %>';
@@ -136,7 +135,7 @@
     :id => "fast_track_pop_up_input",
     :helpText => "Fast Track",
     :tt_onLoad => "showFastTrackReminder();",
-    :condition => "parseInt(art_period_in_months) >= 12 && latestFastTrackAnswer == 'YES'",
+    :condition => "fastTrackPatient == 'TRUE'",
     :optional => "true",
     :tt_pageStyleClass => "NoControls"
   } %>
@@ -148,6 +147,16 @@
     :tt_onLoad => "setNextCaption();",
     :tt_onUnLoad => "resetNextCaption();"
   } %>
+
+  <% if @fast_track_patient_but_missed_appointment %>
+    <%= text_field_tag "fast_track_pop_up_missed_input", nil, {
+      :id => "fast_track_pop_up_missed_input",
+      :helpText => "Fast Track",
+      :tt_onLoad => "showFastTrackMissedNotification();",
+      :optional => "true",
+      :tt_pageStyleClass => "NoControls"
+    } %>
+  <% end %>
   <!------------------- FAST TRACK END--->
 
 
@@ -167,46 +176,54 @@
   <div id="fast_track_reminder_header">
     <span style="font-size: 16pt; font-weight: bold;">Fast Track Notification</span>
   </div>
-  <% if @latest_fast_track_answer == 'YES' %>
+  <% if @fast_track_patient %>
     <div id="fast_track_reminder_content">
       <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
         <br />
         <center>
           <% unless @latest_vl_result[:latest_result].blank? %>
-          Latest Viral Load result: <span>(<i style="color: black;  text-decoration: underline;"><%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %></i> )</span> <br />
+            Latest Viral Load result: <span>(<i style="color: black;  text-decoration: underline;"><%= @latest_vl_result[:modifier].to_s + ' ' + @latest_vl_result[:latest_result].to_s + ' on ' + @latest_vl_result[:latest_date].to_s %></i> )</span> <br />
           <% end %>
-          This is to remind you that this patient is already enrolled in FAST track program.<br />
-          Refer the patient to Pharmacy
+          Fast Track Appointment on <u><%= @last_appointment_date.strftime("%d-%b-%Y") rescue @last_appointment_date %></u><br />
+          <%= @fast_track_message %>
         </center>
       </div>
     </div>
 
     <div id="fast_track_reminder_footer">
-      <span id="fastTrackNotNow" onclick="fastTrackNotNow();" style="padding: 12px 7%;">Continue With Vitals</span>
-      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Refer the patient to Fast Track Station</span>
-    </div>
-
-  <% else %>
-    <div id="fast_track_reminder_content">
-      <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
-        <br />
-        <center>
-          This patient is eligible for Fast Track. Assess the patient before proceeding.<br />
-          Do you want to enroll this patient into Fast Track Program now?
-        </center>
-      </div>
-    </div>
-
-    <div id="fast_track_reminder_footer">
-      <span id="fastTrackNotNow" onclick="fastTrackNotNow();">Not Now</span>
-      <span id="fastTrackNow" onclick="fastTrackNow();">Enroll Now</span>
+      <span id="fastTrackNotNow" onclick="fastTrackNotNow();" style="padding: 12px 7%;">Revert to regular clinic visit</span>
+      <span id="fastTrackNow" style="padding: 12px 13%;" onclick="continueNormalFlow();">Proceed With Fast Track</span>
     </div>
   <% end %>
-
 </div>
 
 <div id="fast_track_reminder_cover" style="display:none;">
 
+</div>
+
+<div id="fast_track_reminder_cover_missed" style="display:none;">
+
+</div>
+
+
+<div id="fast_track_reminder_missed" style="display:none; background-color: #FF4040;">
+  <div id="fast_track_reminder_header_missed">
+    <span style="font-size: 16pt; font-weight: bold;">Missed Fast Track Notification</span>
+  </div>
+
+  <div id="fast_track_reminder_content_missed">
+    <div style="position: relative; overflow:auto; height: 80%; font-size: 14pt; font-weight: bold; color: white;">
+      <br />
+      <center>
+        Fast Track Appointment on <u><%= @last_appointment_date.strftime("%d-%b-%Y") rescue @last_appointment_date %></u><br />
+        <%= @fast_track_message %>
+      </center>
+    </div>
+  </div>
+
+  <div id="fast_track_reminder_footer_missed">
+    <span id="fastTrackMissed" onclick="continueNormalFlow();" style="padding: 12px 7%;">Proceed With Regular Clinic Visit</span>
+  </div>
 </div>
 
 
@@ -238,13 +255,21 @@
   function continueNormalFlow(){
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
+    jQuery("#fast_track_reminder_missed").hide(); 
+    jQuery("#fast_track_reminder_cover_missed").hide();
     gotoNextPage();
   }
 
+  function showFastTrackMissedNotification(){
+    jQuery('#keyboard').hide();
+    jQuery('#clearButton').hide();
+    jQuery("#fast_track_reminder_missed").show();
+    jQuery("#fast_track_reminder_cover_missed").show();
+  }
 </script>
 
 <style type="text/css">
-  #fast_track_reminder_cover{
+  #fast_track_reminder_cover, #fast_track_reminder_cover_missed{
     position: absolute;
     background-color: black;
     width: 100%;
@@ -255,7 +280,7 @@
     opacity: 0.87;
   }
 
-  #fast_track_reminder{
+  #fast_track_reminder, #fast_track_reminder_missed{
     position: absolute;
     width: 75%;
     height: 40%;
@@ -263,18 +288,18 @@
     z-index: 991;
     left: 12%;
     border: 1px solid black;
-    background-color: #CD3333;
+    background-color: #228B22;
     border-radius: 15px;
   }
 
-  #fast_track_reminder_header{
+  #fast_track_reminder_header, #fast_track_reminder_header_missed{
     padding: 10px;
     background-color: white;
     color: black;
     border-radius: 15px 15px 0px 0px;
   }
 
-  #fast_track_reminder_footer{
+  #fast_track_reminder_footer, #fast_track_reminder_footer_missed{
     background-color: #FFD39B;
     height: 60px;
     width: 100%;
@@ -286,7 +311,6 @@
   }
 
   #fast_track_reminder_footer #fastTrackNotNow{
-    background-color: goldenrod;
     position: absolute;
     padding: 12px 20%;
     /*right: 8px;*/
@@ -294,16 +318,27 @@
     bottom: 8px;
     font-weight: bold;
     cursor: pointer;
+    font-family: arial;
+    font-size: 18px;
+    padding: 13px 34px;
+    border-radius: 8px;
+    border: 2px solid #228b22;
+    background: goldenrod;
   }
 
-  #fast_track_reminder_footer #fastTrackNow{
-    background-color: goldenrod;
+  #fast_track_reminder_footer #fastTrackNow, #fast_track_reminder_footer_missed #fastTrackMissed{
     position: absolute;
     padding: 12px 20%;
     right: 8px;
     bottom: 8px;
     font-weight: bold;
     cursor: pointer;
+    font-family: arial;
+    font-size: 18px;
+    padding: 13px 34px;
+    border-radius: 8px;
+    border: 2px solid #228b22;
+    background: goldenrod;
   }
 
   #tt_page_fast_track .inputFrameClass{

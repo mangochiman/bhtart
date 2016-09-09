@@ -166,9 +166,10 @@
   var fastTrackPatient = '<%= @fast_track_patient %>';
   
   var art_period_in_months = parseInt('<%= @art_duration_in_months %>');
-  var latestFastTrackAnswer = '<%= @latest_fast_track_answer %>';
   var hivReceptionOnlyAvailable = '<%= @hiv_reception_only_available %>';
-
+  var fastTrackAssesmentConcepts = JSON.parse('<%= @fast_track_assesment_concept_names.to_json %>');
+  var patient_id = <%= @patient.id %>;
+  
   function dateCreate(date_str){
     intyear = 0 ; intmonth = 0 ; intday = 0;
     intyear = parseInt(date_str.substring(0,4))
@@ -254,10 +255,13 @@
     }
   }
 
-  function setFastTrackYesValue(){
+  function setFastTrackYesNoValue(){
     selectedValue = $("touchscreenInput" + tstCurrentPage).value.trim().toUpperCase();
     if (selectedValue == 'YES'){
       jQuery('#fast-track-input').attr('value', 'Yes');
+    }
+    if (selectedValue == 'NO'){
+      jQuery('#fast-track-input').attr('value', 'No');
     }
   }
 
@@ -282,7 +286,7 @@
       inputValue = available_options[i].getAttribute("tstvalue");
       available_options[i].onmouseup = function(){
         fastTrackStopReason = this.getAttribute("tstvalue");
-        __$('nextButton').innerHTML = '<span>Finish</span>';
+        //__$('nextButton').innerHTML = '<span>Finish</span>';
         /*__$('nextButton').onmousedown = function(){
           window.location = '/patients/stop_fast_track?patient_id=' + patientID + '&fast_track_stop_reason=' + fastTrackStopReason;
         }*/
@@ -396,6 +400,21 @@
 :condition => "abnormalAdherence = 'YES'",
 :tt_onLoad => "checkAdherence()",
 :helpText  => "Reason for lower adherence" } %>
+
+    <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
+      :id => 'fast_track',
+      :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
+      :tt_onUnLoad => "setFastTrackYesNoValue()",
+      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
+    } %>
+
+    <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{
+      :id => 'fast_track_stop_reason',
+      :condition => "__$('fast_track').value == 'No'",
+      :helpText => 'Select Reason for stopping Fast Track',
+      :tt_onLoad => "setNextCaption();",
+      :tt_onUnLoad => "resetNextCaption();"
+    } %>
 
     <script>
       var abnormalAdherence;
@@ -597,6 +616,62 @@
     return ""+date.getDate()+"-"+months[date.getMonth()]+"-"+date.getFullYear();
   }
 
+  function addFastTrackAssesmentButton(){
+    if (fastTrackPatient == 'false'){
+      html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
+      jQuery("#fastTrackAssesmentButton").remove();
+      buttonsDiv = jQuery(".buttonsDiv")[0];
+      buttonsDiv.innerHTML += html;
+    }
+  }
+
+  function removeFastTrackAssesmentButton(){
+    jQuery("#fastTrackAssesmentButton").remove();
+  }
+
+  function setFastTrackVisit(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=Yes",
+      beforeSend: function(){
+        fastTrackVisitButton = document.getElementsByClassName("fastTrackVisitButton")[0];
+        clinicVisitButton = document.getElementsByClassName("clinicVisitButton")[0];
+
+        if (fastTrackVisitButton){
+          fastTrackVisitButton.style.backgroundColor = '#dddddd';
+          fastTrackVisitButton.onclick = function(){
+          }
+        }
+
+        if (clinicVisitButton){
+          clinicVisitButton.style.backgroundColor = '#dddddd';
+          clinicVisitButton.onclick = function(){
+          }
+        }
+      },
+      error: function(xhr) { // if error occured
+        showMessage("There was an error while processing your request");
+      },
+      success: function(){
+        selectedFastTrackConcepts = []
+        hideLibPopup();
+      }
+
+    });
+  }
+
+  function setClinicVisit(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/encounters/create_fast_track_assesment_observations",
+      data: "concept_ids=" + selectedFastTrackConcepts + "&patient_id=" + patient_id + "&fast_track_status=No",
+      success: function(){
+        hideLibPopup()
+      }
+
+    });
+  }
     </script>
 
     <%
@@ -636,10 +711,16 @@
     <%if @obs_ans.match(/Prescribe drugs: Yes/i) %>
       <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
     <%else%>
-      <%= touch_yes_no_unknown_tag "Prescribe drugs", @patient, nil,
-        {:id => "prescribe_drugs",
-        :condition => "$('refer_to_clinician').value == 'NO'" ,
-        :helpText => "Prescribe drugs during this visit" } %>
+      <% if @fast_track_patient %>
+        <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
+      <% else %>
+        <%= touch_yes_no_unknown_tag "Prescribe drugs", @patient, nil,
+          {:id => "prescribe_drugs",
+          :tt_onLoad => "addFastTrackAssesmentButton();",
+          :tt_onUnLoad => "removeFastTrackAssesmentButton();",
+          :condition => "$('refer_to_clinician').value == 'NO'" ,
+          :helpText => "Prescribe drugs during this visit" } %>
+      <% end %>
     <%end unless refer_to_clinician_already_asked %>
 
     <%if @allergic_to_sulphur.blank? %>
@@ -649,30 +730,25 @@
         :helpText => "Is patient allergic to sulphur" } %>
     <%end unless refer_to_clinician_already_asked %>
 
-    <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
-      :id => 'fast_track',
-      :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
-      :tt_onUnLoad => "setFastTrackYesValue()",
-      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
-    } %>
+<%#= text_field_tag "fast_track_pop_up_input", nil, {
+:id => "fast_track_pop_up_input",
+:helpText => "Fast Track",
+:tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display='none';",
+:tt_onUnLoad => "__$('keyboard').style.display='inline';",
+:condition => "parseInt(art_period_in_months) >= 12 && hivReceptionOnlyAvailable == 'false'",
+:optional => "true",
+:tt_pageStyleClass => "NoControls"
+} %>
 
-    <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{
-      :id => 'fast_track_stop_reason',
-      :condition => "__$('fast_track').value == 'No'",
-      :helpText => 'Select Reason for stopping Fast Track',
-      :tt_onLoad => "setNextCaption();",
-      :tt_onUnLoad => "resetNextCaption();"
-    } %>
-
-    <%= text_field_tag "fast_track_pop_up_input", nil, {
-      :id => "fast_track_pop_up_input",
-      :helpText => "Fast Track",
-      :tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display='none';",
-      :tt_onUnLoad => "__$('keyboard').style.display='inline';",
-      :condition => "parseInt(art_period_in_months) >= 12 && hivReceptionOnlyAvailable == 'false'",
-      :optional => "true",
-      :tt_pageStyleClass => "NoControls"
-    } %>
+<%#= text_field_tag "fast_track_pop_up_input", nil, {
+:id => "fast_track_pop_up_input",
+:helpText => "Fast Track",
+:tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display='none';",
+:tt_onUnLoad => "__$('keyboard').style.display='inline';",
+:condition => "hivReceptionOnlyAvailable == 'false'",
+:optional => "true",
+:tt_pageStyleClass => "NoControls"
+} %>
 
     <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
 
@@ -686,6 +762,7 @@
     <%end%>
 
   </form>
+  <script src="/javascripts/fastTrackOptionsPopup.js?version=<%=Time.now.to_i%>" type="text/javascript"></script>
 </body>
 
 <div id="fast_track_reminder" style="display:none;">

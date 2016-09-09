@@ -375,11 +375,21 @@ class GenericPeopleController < ApplicationController
 
 		@current_hiv_program_state = PatientProgram.find(:first, :joins => :location, :conditions => ["program_id = ? AND patient_id = ? AND location.location_id = ?", Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,@person.id, Location.current_health_center.location_id]).patient_states.last.program_workflow_state.concept.fullname rescue ''
 		@transferred_out = @current_hiv_program_state.upcase == "PATIENT TRANSFERRED OUT"? true : nil
-		defaulter = Patient.find_by_sql("SELECT current_defaulter(#{@person.patient.patient_id}, '#{session_date}')
+
+    arv_drugs_given = false
+    PatientService.art_drug_given_before(patient,session_date).each do |order|
+      arv_drugs_given = true
+      break
+    end
+
+    #this should be done for patients with at least one ARV dispensation
+    defaulter = Patient.find_by_sql("SELECT current_defaulter(#{@person.patient.patient_id}, '#{session_date}')
                                      AS defaulter
                                      FROM patient_program LIMIT 1")[0].defaulter rescue 0
-		@defaulted = "#{defaulter}" == "0" ? nil : true if ! @pp.match(/patient\sdied/i)
-		@task = main_next_task(Location.current_location, @person.patient, session_date)
+
+    @defaulted = "#{defaulter}" == "0" ? nil : true if ! @pp.match(/patient\sdied/i) && arv_drugs_given == true
+
+    @task = main_next_task(Location.current_location, @person.patient, session_date)
 		@arv_number = PatientService.get_patient_identifier(@person, 'ARV Number')
     @tb_number = PatientService.get_patient_identifier(@person, 'District TB Number')
 		@patient_bean = PatientService.get_patient(@person)
@@ -1188,14 +1198,14 @@ class GenericPeopleController < ApplicationController
       patient = PatientService.get_patient(person)
       first_name =  patient.name.split[0] rescue ''
       last_name =  patient.name.split[1] rescue ''
-      hash[person.person_id] = {"national_id" => params[:identifier], 
+      hash[person.person_id] = {"national_id" => params[:identifier],
         "first_name" => first_name,
-        "last_name" => last_name, "dob" => patient.birth_date, 
-        "gender" => patient.sex, "age" => patient.age } 
+        "last_name" => last_name, "dob" => patient.birth_date,
+        "gender" => patient.sex, "age" => patient.age }
     end
     render :text => hash.to_json
   end
-  
+
   def reassign_dde_national_id
     person = DDEService.reassign_dde_identification(params[:dde_person_id],params[:local_person_id])
     print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))

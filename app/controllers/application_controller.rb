@@ -1,5 +1,39 @@
 class ApplicationController < GenericApplicationController
 
+  def patient_last_appointment_date(patient,  session_date = Date.today)
+    appointment_date_concept_id = Concept.find_by_name("APPOINTMENT DATE").concept_id
+    latest_appointment_date = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) < ? AND concept_id =?",
+        session_date, appointment_date_concept_id]
+    ).answer_string.squish.to_date rescue nil
+    return latest_appointment_date
+  end
+
+  def fast_track_patient_but_missed_appointment?(patient, session_date = Date.today)
+    fast_track_patient = false
+    latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    fast_track_patient = true if latest_fast_track_answer == 'YES'
+
+    if fast_track_patient
+      if (patient_has_visited_on_scheduled_date(patient,  session_date) == false)
+        return true
+      end
+    end
+    
+    return false #If not fast track OR fast track but missed their appointment dates
+  end
+
+  def fast_track_patient?(patient, session_date = Date.today)
+    fast_track_patient = false
+    latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    fast_track_patient = true if latest_fast_track_answer == 'YES'
+
+    if (patient_has_visited_on_scheduled_date(patient,  session_date) == false)
+      fast_track_patient = false
+    end
+    
+    return fast_track_patient
+  end
+
   def tb_suspected_or_confirmed?(patient, session_date = Date.today)
     tb_status_concept_id = Concept.find_by_name('TB STATUS').concept_id
 
@@ -11,6 +45,37 @@ class ApplicationController < GenericApplicationController
     return true if (latest_tb_status.match(/TB SUSPECTED|CONFIRMED/i))
     return false
     
+  end
+
+  def patient_has_psychosis?(patient, session_date = Date.today)
+    mw_art_side_effects_concept_id = Concept.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+    psychosis_concept_id = Concept.find_by_name('PSYCHOSIS').concept_id
+    latest_psychosis_side_effect = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) <= ? AND
+      concept_id =? AND value_coded =?",
+        session_date, mw_art_side_effects_concept_id, psychosis_concept_id]
+    )
+    return true unless latest_psychosis_side_effect.blank?
+    return false
+  end
+
+  def patient_has_visited_on_scheduled_date(patient,  session_date = Date.today)
+    appointment_date_concept_id = Concept.find_by_name("APPOINTMENT DATE").concept_id
+    latest_appointment_date = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) < ? AND concept_id =?",
+        session_date, appointment_date_concept_id]
+    ).answer_string.squish.to_date rescue nil
+
+    if (latest_appointment_date.class == Date) #check if it is a valid date object
+      min_valid_date = latest_appointment_date - 7.days #One week earlier
+      max_valid_date = latest_appointment_date + 7.days #One week later
+      if (session_date < min_valid_date || session_date > max_valid_date)
+        #The patient came one or more weeks earlier than the appointment date
+        #The patient came one or more weeks later than the appointment date
+        return false
+      end
+      return true
+    end
+
+    return false
   end
 
   def htn_client?(patient)
@@ -1062,13 +1127,14 @@ class ApplicationController < GenericApplicationController
       return task
     end
     ############ FAST TRACK #################
-    fast_track_patient = false
-    latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
-    fast_track_patient = true if latest_fast_track_answer == 'YES'
-    fast_track_patient = false if (tb_suspected_or_confirmed?(patient, session_date) == true)
-    fast_track_patient = false if (is_patient_on_htn_treatment?(patient, session_date) == true)
+    #fast_track_patient = false
+    #latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    #fast_track_patient = true if latest_fast_track_answer == 'YES'
     
-    if fast_track_patient
+    #fast_track_patient = false if (tb_suspected_or_confirmed?(patient, session_date) == true)
+    #fast_track_patient = false if (is_patient_on_htn_treatment?(patient, session_date) == true)
+    
+    if fast_track_patient?(patient, session_date)
       return fast_track_next_form(location , patient , session_date)
     end
     ########### FAST TRACK END ##############

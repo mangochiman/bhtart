@@ -5,6 +5,24 @@ class EncountersController < GenericEncountersController
 		@patient_bean = PatientService.get_patient(@patient.person)
 		session_date = session[:datetime].to_date rescue Date.today
 
+    fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
+      "Last VL < 1000, no VL Result pending, no VL taken at next visit", "Not Pregnant? - no EID needed at next visit",
+      "Adherence on last 2 visits was good", "Patient not suffering from major side effects, signs of TB or HIV associated disease",
+      "Patient do not need hypertension or diabetes care on next visit"]
+
+    fast_track_new_concept_names = ["Adult 18 years +", "on ART for 12 months +", "on 1st Line ART", "Last VL < 1000",
+      "Good adherence last 2 visits", "Not Pregnant / Breastfeeding", "No Side Effects, OI / TB",
+      "No BP / diabetes treatment", "No need for Depo at ART"
+    ]
+
+    @fast_track_assesment_concept_names = {}
+    count = 1
+    fast_track_concepts_names.each do |c_name|
+      concept = Concept.find_by_name(c_name)
+      @fast_track_assesment_concept_names[count] = {:concept_id => concept.concept_id, :concept_name => c_name}
+      count = count + 1
+    end
+      
 		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
@@ -17,10 +35,34 @@ class EncountersController < GenericEncountersController
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
     @session_date = session_date
     @art_duration_in_months = PatientService.period_on_treatment(art_start_date) rescue 0
-    @fast_track_patient = false
-    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
-    @fast_track_patient = true if @latest_fast_track_answer == 'YES'
+    @fast_track_patient = fast_track_patient?(@patient, session_date)
+    @last_appointment_date = patient_last_appointment_date(@patient,  session_date)
+    @fast_track_patient_but_missed_appointment = fast_track_patient_but_missed_appointment?(@patient, session_date)
+
+    @fast_track_message = ""
+    if (session_date == @last_appointment_date.to_date)
+      @fast_track_message = "Patient is on time"
+    end rescue nil
+
+    if (session_date < @last_appointment_date.to_date)
+      days_diff = (@last_appointment_date.to_date - session_date).to_i
+      @fast_track_message = "Patient is #{days_diff} day(s) early"
+    end rescue nil
+
+    if (session_date > @last_appointment_date.to_date)
+      days_diff = (session_date - @last_appointment_date.to_date).to_i
+      @fast_track_message = "Patient is #{days_diff} day(s) late"
+    end rescue nil
+
+    #@fast_track_patient = false
+    #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    #@fast_track_patient = true if @latest_fast_track_answer == 'YES'
     
+    #if (patient_has_visited_on_scheduled_date(@patient,  session_date) == false)
+    #@fast_track_patient = false
+    # @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
+    #end
+=begin
     if (tb_suspected_or_confirmed?(@patient, session_date) == true)
       #Not interested in patients with tb suspect or confirmed tb
       @fast_track_patient = false
@@ -32,7 +74,7 @@ class EncountersController < GenericEncountersController
       @fast_track_patient = false
       @latest_fast_track_answer = 'NO'
     end
-
+=end
     @fast_track_stop_reasons = ['', 'Poor Adherence', 'Sick', 'Side Effects', 'Other']
     @latest_vl_result = Lab.latest_viral_load_result(@patient)
 
@@ -281,6 +323,12 @@ class EncountersController < GenericEncountersController
 		sputum_submissons_with_no_results(@patient.id).each{|order| @sputum_submission_waiting_results[order.accession_number] = Concept.find(order.value_coded).fullname rescue order.value_text}
 		sputum_results_not_given(@patient.id).each{|order| @sputum_results_not_given[order.accession_number] = Concept.find(order.value_coded).fullname rescue order.value_text}
 
+    if @art_first_visit
+      @hiv_clinic_consultation_side_efects_label = "Potential Contra-indications (select all that apply)"
+    else
+      @hiv_clinic_consultation_side_efects_label = "Potential Side effects (select all that apply)"
+    end
+    
 		@tb_status = recent_lab_results(@patient.id, session_date)
     # use @patient_tb_status  for the tb_status moved from the patient model
     @patient_tb_status = PatientService.patient_tb_status(@patient)
@@ -426,6 +474,11 @@ class EncountersController < GenericEncountersController
 			@who_stage_adults_iv = concept_set('WHO STAGE IV ADULT')
 		end
 
+    who_stage_iv_to_be_removed = ["HIV encephalopathy", "Disseminated non-tuberculosis mycobacterial infection",
+      "Isosporiasis >1 month",
+      "Disseminated mycosis (coccidiomycosis or histoplasmosis)", "Progressive multifocal leukoencephalopathy",
+      "Cytomegalovirus infection (retinitis or infection or other organs)"]
+
 		if (params[:encounter_type].upcase rescue '') == 'HIV_STAGING' or (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION'
 			if @patient_bean.age > 14 
 				@who_stage_i = concept_set('WHO STAGE I ADULT AND PEDS') + concept_set('WHO STAGE I ADULT')
@@ -473,7 +526,9 @@ class EncountersController < GenericEncountersController
 						@moderate_wasting = []
 					end
 				end
-				
+
+        @who_stage_iv.delete_if{|stage_condition|who_stage_iv_to_be_removed.include?(stage_condition[0])} << ["Other", "Other"]
+        
 				reason_for_art = @patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue []
         @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
 				if !@reason_for_art_eligibility.nil? && @reason_for_art_eligibility.upcase == 'NONE'
@@ -759,6 +814,7 @@ class EncountersController < GenericEncountersController
     end
 
     ###########################################################################
+
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
 		else
@@ -2048,27 +2104,65 @@ class EncountersController < GenericEncountersController
 		end
   end
 
+  def create_fast_track_assesment_observations
+    session_date = session[:datetime].to_date rescue Time.now
+    fast_track_status = params[:fast_track_status]
+    patient = Patient.find(params[:patient_id])
+    encounter_type = EncounterType.find_by_name("FAST TRACK ASSESMENT")
+    concept_ids = params[:concept_ids].split(",")
+    
+    ActiveRecord::Base.transaction do
+      encounter = patient.encounters.find(:last, :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
+          encounter_type, session_date.to_date])
+      encounter.void unless encounter.blank?
+      encounter = Encounter.new
+      encounter.encounter_type = encounter_type.encounter_type_id
+      encounter.patient_id = params[:patient_id]
+      encounter.encounter_datetime = session_date
+      encounter.save
+
+      concept_ids.each do |concept_id|
+        encounter.observations.create({
+            :person_id => params[:patient_id],
+            :concept_id => concept_id,
+            :value_coded => Concept.find_by_name("YES").concept_id,
+            :obs_datetime => encounter.encounter_datetime
+          })
+      end
+
+      encounter.observations.create({
+          :person_id => params[:patient_id],
+          :concept_id => Concept.find_by_name("FAST").concept_id,
+          :value_coded => Concept.find_by_name(fast_track_status).concept_id,
+          :obs_datetime => encounter.encounter_datetime
+        })
+    end
+    
+    render :text => true and return
+  end
+  
   protected
 
-  def number_of_booked_patients(date)                          
+  def number_of_booked_patients(date)
                                                                                 
-    start_date = date.strftime('%Y-%m-%d 00:00:00')                             
-    end_date = date.strftime('%Y-%m-%d 23:59:59')                               
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
                                                                                 
-    appointments = Observation.find_by_sql("SELECT count(value_datetime) AS count FROM obs 
+    appointments = Observation.find_by_sql("SELECT count(value_datetime) AS count FROM obs
       INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{@concept_id} 
       AND encounter_type = #{@encounter_type.id} AND value_datetime >= '#{start_date}' 
       AND value_datetime <= '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime")     
-    count = appointments.first.count unless appointments.blank?                       
-    count = 0 if count.blank?                                                 
+    count = appointments.first.count unless appointments.blank?
+    count = 0 if count.blank?
                                                                                 
     return count
   end
 
   def suggested(program_id)
-		session_date = session[:datetime].to_date rescue Date.today
-		patient_program = PatientProgram.find(program_id)
-		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date) rescue []
-		return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
-	end
+    session_date = session[:datetime].to_date rescue Date.today
+    patient_program = PatientProgram.find(program_id)
+    current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date) rescue []
+    return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
+  end
+  
 end
