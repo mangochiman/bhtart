@@ -31,6 +31,24 @@ class EncountersController < GenericEncountersController
     @session_date = session_date
     @art_duration_in_months = PatientService.period_on_treatment(art_start_date) rescue 0
     @fast_track_patient = fast_track_patient?(@patient, session_date)
+    @last_appointment_date = patient_last_appointment_date(@patient,  session_date)
+    @fast_track_patient_but_missed_appointment = fast_track_patient_but_missed_appointment?(@patient, session_date)
+
+    @fast_track_message = ""
+    if (session_date == @last_appointment_date.to_date)
+      @fast_track_message = "Patient is on time"
+    end rescue nil
+
+    if (session_date < @last_appointment_date.to_date)
+      days_diff = (@last_appointment_date.to_date - session_date).to_i
+      @fast_track_message = "Patient is #{days_diff} day(s) early"
+    end rescue nil
+
+    if (session_date > @last_appointment_date.to_date)
+      days_diff = (session_date - @last_appointment_date.to_date).to_i
+      @fast_track_message = "Patient is #{days_diff} day(s) late"
+    end rescue nil
+
     #@fast_track_patient = false
     #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     #@fast_track_patient = true if @latest_fast_track_answer == 'YES'
