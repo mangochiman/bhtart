@@ -41,11 +41,33 @@
     text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
     text-align: center;
   }
+
+  .labelText {
+    font-size: 1.8em;
+    vertical-align: top;
+    padding-left: 20px;
+  }
+
+  #divcontent {
+    background-color: #fff;
+    border: 2px solid #ccf;
+    border-radius: 10px;
+    height: 84%;
+    margin: 10px;
+    overflow: hidden;
+    width: 98%;
+  }
+
+  #divScroller {
+    height: 97%;
+    margin: 10px;
+    overflow: auto;
+    width: 98%;
+  }
 </style>
 <%
 side_effects_options = []
 malawi_art_side_effects = concept_set_options('MALAWI ART SIDE EFFECTS').split("\n")
-
 malawi_art_side_effects.each do |side_effect|
   next if side_effect.match(/Skin rash|Nightmares|Dizziness|Blurry Vision|Renal failure|Other/i)
   side_effect = side_effect.gsub("Hepatitis", "Jaundice").gsub("No", "None")
@@ -54,6 +76,18 @@ end
 #"<option value=\"None\">None</option>"
 side_effects_options << "<option value=\"Anemia\">Anemia</option>"
 side_effects_options = side_effects_options.join("\n")
+
+
+
+concept_id = concept_id = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').concept_id
+set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
+side_effects_array = set.map{|item|
+  next if item.concept.blank? ;
+  next if item.concept.fullname.match(/Skin rash|Nightmares|Dizziness|Blurry Vision|Renal failure|Other|No/i);
+  [item.concept.fullname.gsub("Hepatitis", "Jaundice").gsub("No", "None")]
+
+}
+side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
 %>
 <script>
 
@@ -65,7 +99,8 @@ side_effects_options = side_effects_options.join("\n")
   var patientEverHadDrugs = '<%= @patient_ever_had_drugs %>'
   var fastTrackAssesmentConcepts = JSON.parse('<%= @fast_track_assesment_concept_names.to_json %>');
   var patient_id = <%= @patient.id %>;
-  
+  var sideEffectsHash = {};
+
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
     var symptoms = 0;
@@ -343,6 +378,140 @@ side_effects_options = side_effects_options.join("\n")
 
   }
 
+<% side_effects_array.each do |side_effect| %>
+    sideEffectsHash['<%= side_effect %>'] = {yes: '', no: ''}
+<% end %>
+
+  function advancedSideEffects(){
+
+    sideEffectsArray = JSON.parse('<%=  side_effects_array.to_json %>');
+    jQuery("#inputFrame" + tstCurrentPage).remove()
+    jQuery("#helpText" + tstCurrentPage).css({
+      marginLeft: "30%",
+      fontWeight: "bold",
+      fontSize: "1.9em"
+    })
+
+    html = "<div id='divcontent'>";
+    html += "<div id='divScroller'>";
+    sideEffectsOptions = JSON.parse('<%=  side_effects_array.to_json %>');
+    html += "<table cellspacing='1' cellpadding='2' width='95%'>";
+    html += "<tbody>";
+
+    for (var i=0; i<=sideEffectsOptions.length - 1; i++){
+      html += "<tr>";
+      html += "<td class='labelText'>" + sideEffectsOptions[i] + "</td>";
+      html += "<td style='width: 50%;'>";
+      html += "<table style='float: right; min-width: 150px;'>";
+      html += "<tr>";
+
+      html += "<td>";
+      html += "<button onclick='updateSideEffectYesValue(this);' key='" + sideEffectsOptions[i] + "' class='blue' value='" + sideEffectsOptions[i] + "'><span>Yes</span></button>"
+      html += "</td>";
+
+      html += "<td>";
+      html += "<button onclick='updateSideEffectNoValue(this);' key='" + sideEffectsOptions[i] + "' class='blue' value='" + sideEffectsOptions[i] + "'><span>No</span></button>"
+      html += "</td>";
+      html += "</tr>";
+
+      html += "</table>";
+      html += "</td>"
+      html += "</tr>"
+    }
+
+    html += "<tbody>"
+    html += "</table>";
+    html += "</div>";
+    html += "</div>";
+
+    thisPage = document.getElementById('page' + tstCurrentPage);
+    thisPage.innerHTML += html;
+
+    preselectSelectedSideEffects();
+    
+    __$('nextButton').onmousedown = function(){
+      validateSideEffectsInput();
+    }
+    
+  }
+
+  function updateSideEffectYesValue(obj){
+    key = obj.getAttribute('key');
+    yes_no_buttons = jQuery("[key='" + key + "']");
+    yes_button = yes_no_buttons[0];
+    no_button = yes_no_buttons[1];
+
+    if (yes_button.className.match(/blue/i)){
+      yes_button.className = 'green';
+      no_button.className = 'blue';
+      __$(key).value = key;
+      sideEffectsHash[key]["yes"] = 'true';
+      sideEffectsHash[key]["no"] = '';
+      //Update Yes Value Here
+    }else{
+      yes_button.className = 'blue';
+      sideEffectsHash[key]["yes"] = '';
+      __$(key).value = '';
+    }
+  }
+
+  function updateSideEffectNoValue(obj){
+    key = obj.getAttribute('key');
+    yes_no_buttons = jQuery("[key='" + key + "']");
+    yes_button = yes_no_buttons[0]
+    no_button = yes_no_buttons[1]
+
+    if (no_button.className.match(/blue/i)){
+      no_button.className = 'green';
+      yes_button.className = 'blue';
+      __$(key).value = '';
+      sideEffectsHash[key]["no"] = 'true';
+      sideEffectsHash[key]["yes"] = '';
+      //Update No Value Here
+    }else{
+      no_button.className = 'blue';
+      sideEffectsHash[key]["no"] = '';
+    }
+  }
+
+  function preselectSelectedSideEffects(){
+    for (var key in sideEffectsHash){
+      yesValue = sideEffectsHash[key]["yes"];
+      noValue = sideEffectsHash[key]["no"];
+      yes_no_buttons = jQuery("[key='" + key + "']");
+      yes_button = yes_no_buttons[0]
+      no_button = yes_no_buttons[1]
+    
+      if (yesValue.length > 0){
+        //Yes was selected
+        yes_button.className = 'green';
+      }
+
+      if (noValue.length > 0){
+        //No was selected
+        no_button.className = 'green';
+      }
+    }
+  }
+
+  function validateSideEffectsInput(){
+    unselectedSideEffects = [];
+    for (var key in sideEffectsHash){
+      yesValue = sideEffectsHash[key]["yes"];
+      noValue = sideEffectsHash[key]["no"];
+      if (yesValue.length == 0 && noValue.length == 0){
+        //The row was not selected
+        unselectedSideEffects.push(key);
+      }
+    }
+
+    if (unselectedSideEffects.length > 0){
+      showMessage("The following side effects are not selected <br />" +  unselectedSideEffects.join('<br /> '));
+    }else{
+      gotoNextPage();
+    }
+  }
+
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -350,6 +519,10 @@ side_effects_options = side_effects_options.join("\n")
   <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
   <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
   <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
+
+  <% side_effects_array.each do |element| %>
+    <%= touch_hidden_tag "MALAWI ART SIDE EFFECTS", @patient, "", :id => "#{element}" %>
+  <% end %>
 
   <% if @patient_is_child_bearing_female && !@ter_family_planning_method_done %>
     <% if @currently_using_family_planning_methods.nil? %>
@@ -490,13 +663,22 @@ side_effects_options = side_effects_options.join("\n")
   <%end%>
 
   <% if ask_standard_art_side_effects == false %>
-    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
+    <%#= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
       :tt_onLoad => "controlNoneSelection();",
       :tt_onUnLoad => 'setselectedSideEffects();',
       :helpText => "#{@hiv_clinic_consultation_side_efects_label}" } %>
+
+    <%= text_field_tag "advanced_side_effects", nil, {
+      :id => 'side_effects',
+      :tt_onLoad => "advancedSideEffects(); __$('keyboard').style.display = 'none';",
+      :helpText => "#{@hiv_clinic_consultation_side_efects_label}",
+      :optional => "true",
+      :conditions => @art_first_visit == false,
+      :tt_pageStyleClass => "NoControls" } %>
+      
   <% else %>
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('COMMON MALAWI ART SYMPTOM SET'),
       {:id => 'symptoms',
