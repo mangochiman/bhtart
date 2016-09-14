@@ -428,6 +428,11 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     thisPage.innerHTML += html;
 
     preselectSelectedSideEffects();
+    
+    __$('nextButton').onmousedown = function(){
+      validateSideEffectsInput();
+    }
+    
   }
 
   function updateSideEffectYesValue(obj){
@@ -486,6 +491,25 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
         //No was selected
         no_button.className = 'green';
       }
+    }
+  }
+
+  function validateSideEffectsInput(){
+    unselectedSideEffects = [];
+    for (var key in sideEffectsHash){
+      yesValue = sideEffectsHash[key]["yes"];
+      noValue = sideEffectsHash[key]["no"];
+      if (yesValue.length == 0 && noValue.length == 0){
+        //The row was not selected
+        console.log("Hereeeeee")
+        unselectedSideEffects.push(key);
+      }
+    }
+
+    if (unselectedSideEffects.length > 0){
+      showMessage("The following side effects are not selected <br />" +  unselectedSideEffects.join('<br /> '));
+    }else{
+      gotoNextPage();
     }
   }
 
