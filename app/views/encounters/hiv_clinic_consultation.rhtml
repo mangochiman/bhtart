@@ -385,9 +385,9 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
   function advancedSideEffects(){
 
     sideEffectsArray = JSON.parse('<%=  side_effects_array.to_json %>');
-    jQuery("#inputFrame0").remove()
-    jQuery("#helpText0").css({
-      marginLeft: "36%",
+    jQuery("#inputFrame" + tstCurrentPage).remove()
+    jQuery("#helpText" + tstCurrentPage).css({
+      marginLeft: "30%",
       fontWeight: "bold",
       fontSize: "1.9em"
     })
@@ -424,7 +424,7 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     html += "</div>";
     html += "</div>";
 
-    thisPage = document.getElementById('page0');
+    thisPage = document.getElementById('page' + tstCurrentPage);
     thisPage.innerHTML += html;
 
     preselectSelectedSideEffects();
@@ -460,7 +460,7 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     yes_no_buttons = jQuery("[key='" + key + "']");
     yes_button = yes_no_buttons[0]
     no_button = yes_no_buttons[1]
-    console.log(yes_button);
+
     if (no_button.className.match(/blue/i)){
       no_button.className = 'green';
       yes_button.className = 'blue';
@@ -501,7 +501,6 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
       noValue = sideEffectsHash[key]["no"];
       if (yesValue.length == 0 && noValue.length == 0){
         //The row was not selected
-        console.log("Hereeeeee")
         unselectedSideEffects.push(key);
       }
     }
@@ -524,14 +523,6 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
   <% side_effects_array.each do |element| %>
     <%= touch_hidden_tag "MALAWI ART SIDE EFFECTS", @patient, "", :id => "#{element}" %>
   <% end %>
-
-  <label for='summary'>Summary</label>
-  <%= text_field_tag "new_side_effects", nil, {
-    :tt_onLoad => "advancedSideEffects();__$('keyboard').style.display = 'none';",
-    :helpText => "Advanced Side Effects",
-    :optional => "true",
-    :conditions => @art_first_visit == false,
-    :tt_pageStyleClass => "NoControls" } %>
 
   <% if @patient_is_child_bearing_female && !@ter_family_planning_method_done %>
     <% if @currently_using_family_planning_methods.nil? %>
@@ -672,13 +663,22 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
   <%end%>
 
   <% if ask_standard_art_side_effects == false %>
-    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
+    <%#= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
       :tt_onLoad => "controlNoneSelection();",
       :tt_onUnLoad => 'setselectedSideEffects();',
       :helpText => "#{@hiv_clinic_consultation_side_efects_label}" } %>
+
+    <%= text_field_tag "advanced_side_effects", nil, {
+      :id => 'side_effects',
+      :tt_onLoad => "advancedSideEffects(); __$('keyboard').style.display = 'none';",
+      :helpText => "#{@hiv_clinic_consultation_side_efects_label}",
+      :optional => "true",
+      :conditions => @art_first_visit == false,
+      :tt_pageStyleClass => "NoControls" } %>
+      
   <% else %>
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('COMMON MALAWI ART SYMPTOM SET'),
       {:id => 'symptoms',
