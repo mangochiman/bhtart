@@ -52,7 +52,7 @@
     background-color: #fff;
     border: 2px solid #ccf;
     border-radius: 10px;
-    height: 80%;
+    height: 84%;
     margin: 10px;
     overflow: hidden;
     width: 98%;
@@ -83,7 +83,7 @@ concept_id = concept_id = ConceptName.find_by_name('MALAWI ART SIDE EFFECTS').co
 set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
 side_effects_array = set.map{|item|
   next if item.concept.blank? ;
-  next if item.concept.fullname.match(/Skin rash|Nightmares|Dizziness|Blurry Vision|Renal failure|Other/i);
+  next if item.concept.fullname.match(/Skin rash|Nightmares|Dizziness|Blurry Vision|Renal failure|Other|No/i);
   [item.concept.fullname.gsub("Hepatitis", "Jaundice").gsub("No", "None")]
 
 }
@@ -426,6 +426,8 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
 
     thisPage = document.getElementById('page0');
     thisPage.innerHTML += html;
+
+    preselectSelectedSideEffects();
   }
 
   function updateSideEffectYesValue(obj){
@@ -467,6 +469,25 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     }
   }
 
+  function preselectSelectedSideEffects(){
+    for (var key in sideEffectsHash){
+      yesValue = sideEffectsHash[key]["yes"];
+      noValue = sideEffectsHash[key]["no"];
+      yes_no_buttons = jQuery("[key='" + key + "']");
+      yes_button = yes_no_buttons[0]
+      no_button = yes_no_buttons[1]
+    
+      if (yesValue.length > 0){
+        //Yes was selected
+        yes_button.className = 'green';
+      }
+
+      if (noValue.length > 0){
+        //No was selected
+        no_button.className = 'green';
+      }
+    }
+  }
 
 </script>
 
