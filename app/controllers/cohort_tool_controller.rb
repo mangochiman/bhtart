@@ -1436,6 +1436,10 @@ class CohortToolController < GenericCohortToolController
   def revised_cohort_menu
   end
 
+  def revised_cohort_to_print
+    render :layout => false
+  end
+
   def adherence
     @logo = CoreService.get_global_property_value('logo').to_s
     @current_location = Location.current_health_center.name
