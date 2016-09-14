@@ -33,6 +33,79 @@ select
 EOF
 
 =end
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP FUNCTION IF EXISTS `re_initiated_check`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION re_initiated_check(set_patient_id INT, set_date_enrolled DATE) RETURNS VARCHAR(15) 
+DETERMINISTIC
+BEGIN
+DECLARE re_initiated VARCHAR(15) DEFAULT 'N/A';
+DECLARE check_one INT DEFAULT 0;
+DECLARE check_two INT DEFAULT 0;
+
+DECLARE yes_concept INT;
+DECLARE no_concept INT;
+DECLARE date_art_last_taken_concept INT;
+DECLARE taken_arvs_concept INT;
+
+set yes_concept = (SELECT concept_id FROM concept_name WHERE name ='YES' LIMIT 1);
+set no_concept = (SELECT concept_id FROM concept_name WHERE name ='NO' LIMIT 1);
+set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE name ='DATE ART LAST TAKEN' LIMIT 1);
+set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
+
+
+set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 56)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
+
+set check_two = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
+
+if check_one >= 1 then set re_initiated ="Re-initiated";
+elseif check_two >= 1 then set re_initiated ="Re-initiated";
+end if;
+
+
+RETURN re_initiated;
+END;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP FUNCTION IF EXISTS `died_in`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION died_in(set_patient_id INT, set_status VARCHAR(25), date_enrolled DATE) RETURNS varchar(25) 
+DETERMINISTIC
+BEGIN
+DECLARE set_outcome varchar(25) default 'N/A';
+DECLARE date_of_death DATE;   
+DECLARE num_of_months INT;                                                     
+
+IF set_status = 'Patient died' THEN
+ 
+  SET date_of_death = (SELECT death_date FROM temp_earliest_start_date WHERE patient_id = set_patient_id);
+
+  IF date_of_death IS NULL THEN
+    RETURN 'Unknown';
+  END IF;
+
+
+  set num_of_months = (TIMESTAMPDIFF(month, date(date_enrolled), date(date_of_death)));
+
+  IF num_of_months < 2 THEN set set_outcome ="1st month";
+  ELSEIF num_of_months = 2 THEN set set_outcome ="2nd month";
+  ELSEIF num_of_months = 3 THEN set set_outcome ="3rd month";
+  ELSEIF num_of_months > 3 THEN set set_outcome ="4+ months";
+  END IF;
+
+ 
+END IF;
+
+RETURN set_outcome;
+END;
+EOF
+
+#=end
       #Get earliest date enrolled
       cum_start_date = self.get_cum_start_date 
       cohort = CohortService.new(cum_start_date)
@@ -67,7 +140,10 @@ Unique PatientProgram entries at the current location for those patients with at
 
       #Non-pregnant females (all ages)
 =begin
-Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having gender of related PERSON entry as F for female and no entries of 'IS PATIENT PREGNANT?' observation answered 'YES' in related HIV CLINIC CONSULTATION encounters not within 28 days from earliest registration date 
+      Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+      and earliest start date of the 'ON ARVs' state within the quarter and having gender of 
+      related PERSON entry as F for female and no entries of 'IS PATIENT PREGNANT?' observation answered 'YES' 
+      in related HIV CLINIC CONSULTATION encounters not within 28 days from earliest registration date 
 =end
       cohort.non_pregnant_females = self.non_pregnant_females(start_date, end_date, cohort.pregnant_females_all_ages)
       cohort.cum_non_pregnant_females = self.non_pregnant_females(cum_start_date, end_date, cohort.cum_pregnant_females_all_ages)
@@ -89,14 +165,429 @@ Unique PatientProgram entries at the current location for those patients with at
       cohort.cum_unknown_age = self.unknown_age(cum_start_date, end_date)
 
 =begin
-               :presumed_severe_hiv_disease_in_infants, :confirmed_hiv_infection_in_infants_pcr,
-               :tb_within_the_last_two_years, :current_episode_of_tb, :kaposis_sarcoma,
-               :presumed_severe_hiv_disease_in_infants, :confirmed_hiv_infection_in_infants_pcr,
-               :who_stage_two, :children_12_23_months, :breastfeeding_mothers, :pregnant_women,
-               :who_stage_three, :who_stage_four, :unknown_other_reason_outside_guidelines
+      Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+      and earliest start date of the 'ON ARVs' state within the quarter 
+      and having a REASON FOR ELIGIBILITY observation with an answer as PRESUMED SEVERE HIV
+=end
+      cohort.presumed_severe_hiv_disease_in_infants = self.presumed_severe_hiv_disease_in_infants(start_date, end_date)
+      cohort.cum_presumed_severe_hiv_disease_in_infants = self.presumed_severe_hiv_disease_in_infants(cum_start_date, end_date)
+
+=begin
+      Confirmed HIV infection in infants (PCR)
+      
+      Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+      and earliest start date of the 'ON ARVs' state within the quarter and 
+      having a REASON FOR ELIGIBILITY observation with an answer as HIV PCR
+=end
+      cohort.confirmed_hiv_infection_in_infants_pcr = self.confirmed_hiv_infection_in_infants_pcr(start_date, end_date)
+      cohort.cum_confirmed_hiv_infection_in_infants_pcr = self.confirmed_hiv_infection_in_infants_pcr(cum_start_date, end_date)
+
+=begin
+      WHO stage 1 or 2, CD4 below threshold
+      Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+      and earliest start date of the 'ON ARVs' state within the quarter and having a REASON FOR ELIGIBILITY 
+      observation with an answer as CD4 COUNT LESS THAN OR EQUAL TO 350 or CD4 COUNT LESS THAN OR EQUAL TO 750
+=end
+      cohort.who_stage_two = self.who_stage_two(start_date, end_date)
+      cohort.cum_who_stage_two = self.who_stage_two(cum_start_date, end_date)
+
+
+=begin
+    Breastfeeding mothers
+
+    Unique PatientProgram entries at the current location for those patients with at least one state 
+    ON ARVs and earliest start date of the 'ON ARVs' state within the quarter 
+    and having a REASON FOR ELIGIBILITY observation with an answer as BREASTFEEDING
+=end
+    cohort.breastfeeding_mothers = self.breastfeeding_mothers(start_date, end_date)
+    cohort.cum_breastfeeding_mothers = self.breastfeeding_mothers(cum_start_date, end_date)
+
+=begin
+  Pregnant women
+
+  Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+  and earliest start date of the 'ON ARVs' state within the quarter 
+  and having a REASON FOR ELIGIBILITY observation with an answer as PATIENT PREGNANT
+=end
+    cohort.pregnant_women = self.pregnant_women(start_date, end_date)
+    cohort.cum_pregnant_women = self.pregnant_women(cum_start_date, end_date)
+
+=begin
+  WHO STAGE 3
+  Unique PatientProgram entries at the current location for those patients with at least 
+  one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter 
+  and having a REASON FOR ELIGIBILITY observation with an answer as WHO STAGE III
+=end
+    cohort.who_stage_three = self.who_stage_three(start_date, end_date)
+    cohort.cum_who_stage_three = self.who_stage_three(cum_start_date, end_date)
+
+=begin
+  WHO STAGE 4
+  Unique PatientProgram entries at the current location for those patients with at least 
+  one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter 
+  and having a REASON FOR ELIGIBILITY observation with an answer as WHO STAGE IV
+=end
+    cohort.who_stage_four = self.who_stage_four(start_date, end_date)
+    cohort.cum_who_stage_four = self.who_stage_four(cum_start_date, end_date)
+
+=begin
+    Unknown / other reason outside guidelines
+    Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+    and earliest start date of the 'ON ARVs' state within the quarter 
+    and having a REASON FOR ELIGIBILITY observation with an answer as UNKNOWN
+=end
+    cohort.unknown_other_reason_outside_guidelines = self.unknown_other_reason_outside_guidelines(start_date, end_date)
+    cohort.cum_unknown_other_reason_outside_guidelines = self.unknown_other_reason_outside_guidelines(cum_start_date, end_date)
+
+=begin
+   Children 12-23 months
+
+   Unique PatientProgram entries at the current location for those patients with at least one state 
+   ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having 
+   Confirmed HIV Infection (HIV Rapid antibody test or DNA-PCR), regardless of WHO stage and CD4 Count
+=end
+    cohort.children_12_23_months = self.children_12_23_months(start_date, end_date)
+    cohort.cum_children_12_23_months = self.children_12_23_months(cum_start_date, end_date)
+
+=begin
+    TB within the last 2 years
+
+    Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+    and earliest start date of the 'ON ARVs' state within the quarter 
+    and having a TB WITHIN THE LAST 2 YEARS observation at the HIV staging encounter on the initiation date 
+=end
+    cohort.tb_within_the_last_two_years = self.tb_within_the_last_two_years(start_date, end_date)
+    cohort.cum_tb_within_the_last_two_years = self.tb_within_the_last_two_years(cum_start_date, end_date)
+
+=begin
+    Current EPISODE OF TB
+    
+    Unique PatientProgram entries at the current location for those patients with at least one state 
+    ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having a 
+    CURRENT EPISODE OF TB observation at the HIV staging encounter on the initiation date 
 =end
 
-      return cohort
+    cohort.current_episode_of_tb = self.current_episode_of_tb(start_date, end_date)
+    cohort.cum_current_episode_of_tb = self.current_episode_of_tb(cum_start_date, end_date)
+
+=begin
+    Kaposis Sarcoma
+
+    Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs 
+    and earliest start date of the 'ON ARVs' state within the quarter and having a KAPOSIS SARCOMA observation 
+    at the HIV staging encounter on the initiation date 
+=end
+    cohort.kaposis_sarcoma = self.kaposis_sarcoma(start_date, end_date)
+    cohort.cum_kaposis_sarcoma = self.kaposis_sarcoma(cum_start_date, end_date)
+
+=begin
+    From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
+=end      
+    self.update_cum_outcome(end_date)
+
+
+=begin
+    Total Alive and On ART
+    Unique PatientProgram entries at the current location for those patients with at least one state 
+    ON ARVs and earliest start date of the 'ON ARVs' state less than or equal to end date of quarter 
+    and latest state is ON ARVs  (Excluding defaulters)
+=end
+    cohort.total_alive_and_on_art = self.get_outcome('On antiretrovirals') 
+    cohort.died_within_the_1st_month_of_art_initiation = self.died_in('1st month')
+    cohort.died_within_the_2nd_month_of_art_initiation = self.died_in('2nd month')
+    cohort.died_within_the_3rd_month_of_art_initiation = self.died_in('3rd month')
+    cohort.died_after_the_3rd_month_of_art_initiation  = self.died_in('4+ months')
+    cohort.died_total                                  = self.get_outcome('Patient died')
+    cohort.defaulted                                   = self.get_outcome('Defaulted')
+    cohort.stopped_art                                 = self.get_outcome('Treatment stopped')
+    cohort.transfered_out                              = self.get_outcome('Patient transferred out')
+    cohort.unknown_outcome                             = self.get_outcome('Pre-ART (Continue)')
+
+    return cohort
+  end
+
+  def self.died_in(month_str)
+    registered = []
+    data = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+      INNER JOIN temp_earliest_start_date t USING(patient_id)
+      WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+      HAVING died_in = '#{month_str}';
+EOF
+
+    
+    (data || []).each do |patient| 
+      registered << patient
+    end
+
+    return registered
+  end
+
+  def self.get_outcome(outcome)
+    registered = []
+    total_alive_and_on_art = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_patient_outcomes 
+      WHERE cum_outcome = '#{outcome}' GROUP BY patient_id;
+EOF
+
+    
+    (total_alive_and_on_art || []).each do |patient| 
+      registered << patient
+    end
+
+    return registered
+  end
+
+  def self.update_cum_outcome(end_date)
+
+      ActiveRecord::Base.connection.execute <<EOF
+        DROP TABLE IF EXISTS `temp_patient_outcomes`;
+EOF
+
+      ActiveRecord::Base.connection.execute <<EOF
+        CREATE TABLE temp_patient_outcomes
+          SELECT patient_id, patient_outcome(patient_id, '#{end_date}') cum_outcome
+        FROM temp_earliest_start_date;
+EOF
+
+  end
+
+  def self.kaposis_sarcoma(start_date, end_date)
+    #KAPOSIS SARCOMA
+    concept_id = ConceptName.find_by_name('KAPOSIS SARCOMA').concept_id
+    who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
+    registered = []
+    
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND (value_coded = #{concept_id}) AND concept_id = #{who_stages_criteria}
+      AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.current_episode_of_tb(start_date, end_date)
+    #CURRENT EPISODE OF TB
+    concept_id = ConceptName.find_by_name('EXTRAPULMONARY TUBERCULOSIS (EPTB)').concept_id
+    who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
+    registered = []
+    
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND (value_coded = #{concept_id}) AND concept_id = #{who_stages_criteria}
+      AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+  end
+
+  def self.tb_within_the_last_two_years(start_date, end_date)
+    #Pulmonary tuberculosis within the last 2 years
+    concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
+    who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
+    registered = []
+    
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND (value_coded = #{concept_id}) AND concept_id = #{who_stages_criteria}
+      AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+  end
+
+  def self.children_12_23_months(start_date, end_date)
+    reason_concept_id = ConceptName.find_by_name('HIV DNA POLYMERASE CHAIN REACTION').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND (value_coded = #{reason_concept_id}) AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.unknown_other_reason_outside_guidelines(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('Unknown').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id}) 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.who_stage_four(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('WHO stage IV adult').concept_id
+    reason2_concept_id = ConceptName.find_by_name('WHO stage IV peds').concept_id
+    reason3_concept_id = ConceptName.find_by_name('WHO STAGE 4').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id} 
+      OR value_coded = #{reason2_concept_id} OR value_coded = #{reason3_concept_id}) 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.who_stage_three(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('WHO stage III adult').concept_id
+    reason2_concept_id = ConceptName.find_by_name('WHO stage III peds').concept_id
+    reason3_concept_id = ConceptName.find_by_name('WHO STAGE 3').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id} 
+      OR value_coded = #{reason2_concept_id} OR value_coded = #{reason3_concept_id}) 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.pregnant_women(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id} 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.breastfeeding_mothers(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('BREASTFEEDING').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id} 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.who_stage_two(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
+    reason2_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 750').concept_id
+    reason3_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
+    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND 
+      (value_coded = #{reason_concept_id} OR value_coded = #{reason2_concept_id}
+      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}) 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.confirmed_hiv_infection_in_infants_pcr(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('HIV PCR').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id}) 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
+  end
+
+  def self.presumed_severe_hiv_disease_in_infants(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason_concept_id = ConceptName.find_by_name('PRESUMED SEVERE HIV').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' 
+      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id} 
+      AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient| 
+      registered << patient
+    end
+
   end
 
   def self.unknown_age(start_date, end_date)
