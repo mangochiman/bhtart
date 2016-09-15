@@ -1436,6 +1436,10 @@ class CohortToolController < GenericCohortToolController
   def revised_cohort_menu
   end
 
+  def revised_cohort
+    render :layout => false
+  end
+
   def revised_cohort_to_print
     render :layout => false
   end
