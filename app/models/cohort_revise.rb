@@ -521,6 +521,10 @@ Unique PatientProgram entries at the current location for those patients with at
     return cohort
   end
 
+  
+
+  private
+
   def self.total_patients_with_side_effects(data, end_date)
     patient_ids = []
      
