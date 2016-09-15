@@ -38,7 +38,8 @@ class CohortService
   attr_accessor :tb_not_suspected, :tb_suspected, :tbconfirmed_currently_not_yet_on_tb_treatment,
                 :tb_confirmed_on_tb_treatment, :unknown_tb_status
 
-
+  #Total patients with side effects
+  attr_accessor :total_patients_with_side_effects
   
   
 

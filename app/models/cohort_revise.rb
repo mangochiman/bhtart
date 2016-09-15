@@ -435,8 +435,44 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.transfered_out                              = self.get_outcome('Patient transferred out')
     cohort.unknown_outcome                             = self.get_outcome('Pre-ART (Continue)')
 
+=begin
+    Total patients with side effects:
+    Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
+=end
+    cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, end_date)
+
+
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
+  end
+
+  def self.total_patients_with_side_effects(data, end_date)
+    patient_ids = []
+     
+    (data || []).each do |row| 
+      patient_ids << row['patient_id'].to_i
+    end
+    
+    return [] if patient_ids.blank?
+    result = []
+
+    drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
+    data = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{drug_induced_concept_id}
+      AND o.person_id IN(#{patient_ids.join(',')}) AND 
+      o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND o.obs_datetime = (
+        SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{drug_induced_concept_id}
+        AND voided = 0 AND o.person_id = person_id AND
+        obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      ) GROUP BY person_id;
+EOF
+
+    (data || []).each do |row| 
+      result << row
+    end
+    
+    return result 
   end
 
   def self.died_in(month_str)
