@@ -3,6 +3,7 @@ class CohortRevise
 
 
   def self.get_indicators(start_date, end_date)
+  time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
 =begin   
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
@@ -33,6 +34,137 @@ select
 EOF
 
 =end
+
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP FUNCTION IF EXISTS `current_defaulter`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION `current_defaulter`(my_patient_id INT, my_end_date DATETIME) RETURNS int(1)
+BEGIN
+  DECLARE done INT DEFAULT FALSE;
+  DECLARE my_start_date, my_expiry_date, my_obs_datetime DATETIME;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_drug_id, flag INT;
+
+  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+  SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id
+    GROUP BY o.patient_id;
+
+  OPEN cur1;
+
+  SET flag = 0;
+
+  read_loop: LOOP
+    FETCH cur1 INTO my_drug_id, my_start_date, my_daily_dose, my_quantity, my_obs_datetime;
+
+    IF done THEN
+      CLOSE cur1;
+      LEAVE read_loop;
+    END IF;
+
+    IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
+
+            SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
+
+            SET @expiry_date = ADDDATE(my_start_date, ((my_quantity + my_pill_count)/my_daily_dose));
+
+      IF my_expiry_date IS NULL THEN
+        SET my_expiry_date = @expiry_date;
+      END IF;
+
+      IF @expiry_date < my_expiry_date THEN
+        SET my_expiry_date = @expiry_date;
+            END IF;
+        END IF;
+    END LOOP;
+
+    IF DATEDIFF(my_end_date, my_expiry_date) > 56 THEN
+        SET flag = 1;
+    END IF;
+
+  RETURN flag;
+END;
+EOF
+
+
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP FUNCTION IF EXISTS `patient_outcome`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION patient_outcome(patient_id INT, visit_date date) RETURNS varchar(25) 
+DETERMINISTIC
+BEGIN
+DECLARE set_program_id INT;                                                        
+DECLARE set_patient_state INT;                                                        
+DECLARE set_outcome varchar(25);                                                        
+
+SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
+
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND start_date <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
+
+
+IF set_patient_state = 1 THEN
+  SET set_outcome = 'Pre-ART (Continue)';
+END IF;
+
+IF set_patient_state = 2   THEN
+  SET set_outcome = 'Patient transferred out';
+END IF;
+
+IF set_patient_state = 3 THEN
+  SET set_outcome = 'Patient died';
+END IF;
+
+IF set_patient_state = 6 THEN
+  SET set_outcome = 'Treatment stopped';
+END IF;
+
+IF set_patient_state = 7 THEN
+  SET set_outcome = 'On antiretrovirals';
+END IF;
+
+
+
+
+IF set_outcome IS NULL THEN
+  SET set_patient_state = current_defaulter(patient_id, visit_date);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_outcome IS NULL THEN
+    SET set_outcome = 'On antiretrovirals';
+  END IF;
+
+END IF;
+
+RETURN set_outcome;
+END;
+EOF
+
+
+
+
+
+
     ActiveRecord::Base.connection.execute <<EOF
       DROP FUNCTION IF EXISTS `re_initiated_check`;
 EOF
@@ -303,6 +435,7 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.transfered_out                              = self.get_outcome('Patient transferred out')
     cohort.unknown_outcome                             = self.get_outcome('Pre-ART (Continue)')
 
+    puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
   end
 
