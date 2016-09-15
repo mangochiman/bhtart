@@ -424,7 +424,7 @@ Unique PatientProgram entries at the current location for those patients with at
     ON ARVs and earliest start date of the 'ON ARVs' state less than or equal to end date of quarter 
     and latest state is ON ARVs  (Excluding defaulters)
 =end
-    cohort.total_alive_and_on_art = self.get_outcome('On antiretrovirals') 
+    cohort.total_alive_and_on_art                      = self.get_outcome('On antiretrovirals') 
     cohort.died_within_the_1st_month_of_art_initiation = self.died_in('1st month')
     cohort.died_within_the_2nd_month_of_art_initiation = self.died_in('2nd month')
     cohort.died_within_the_3rd_month_of_art_initiation = self.died_in('3rd month')
