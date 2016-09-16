@@ -369,6 +369,14 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     }
   }
 
+  function checkAndSelectConfirmedTBOnTreatment(){
+    confirmed_tb_on_treatment_option_input = jQuery("[tstvalue='Confirmed TB on treatment']")[0];
+    selected_tb_treatment_question = __$("tb_treatment_question").value;
+    if (selected_tb_treatment_question == 'Yes'){
+      updateTouchscreenInputForSelect(confirmed_tb_on_treatment_option_input);
+    }
+  }
+
   function checkAndSelectTBSuspected(){
     tb_suspected_option_input = jQuery("[tstvalue='TB suspected']")[0]
     selected_tb_associated_symptoms = __$("routine_tb_screening").value;
@@ -381,6 +389,7 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
 <% side_effects_array.each do |side_effect| %>
     sideEffectsHash['<%= side_effect %>'] = {yes: '', no: ''}
 <% end %>
+
 
   function advancedSideEffects(){
 
@@ -663,13 +672,13 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
   <%end%>
 
   <% if ask_standard_art_side_effects == false %>
-    <%#= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
-      {:id => 'side_effects',
-      :multiple => true,
-      :conditions => @art_first_visit == false,
-      :tt_onLoad => "controlNoneSelection();",
-      :tt_onUnLoad => 'setselectedSideEffects();',
-      :helpText => "#{@hiv_clinic_consultation_side_efects_label}" } %>
+  <%#= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, side_effects_options,
+  {:id => 'side_effects',
+  :multiple => true,
+  :conditions => @art_first_visit == false,
+  :tt_onLoad => "controlNoneSelection();",
+  :tt_onUnLoad => 'setselectedSideEffects();',
+  :helpText => "#{@hiv_clinic_consultation_side_efects_label}" } %>
 
     <%= text_field_tag "advanced_side_effects", nil, {
       :id => 'side_effects',
@@ -678,7 +687,7 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
       :optional => "true",
       :conditions => @art_first_visit == false,
       :tt_pageStyleClass => "NoControls" } %>
-      
+
   <% else %>
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('COMMON MALAWI ART SYMPTOM SET'),
       {:id => 'symptoms',
@@ -703,11 +712,17 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     <% end %>
   <% end %>
 
+  <%= touch_select_tag "TB TREATMENT", @patient, options_for_select(['', 'Yes', 'No']),
+    {
+    :id => 'tb_treatment_question',
+    :helpText => "Is the patient on TB Treatment?" } %>
+
   <% if @avilable_status == '' %>
     <%= touch_select_tag "Routine Tuberculosis Screening", @patient, concept_set_options('Routine Tuberculosis Screening'),
       {	:id => 'routine_tb_screening',
       :optional => true,
       :multiple => true,
+      :condition => "__$('tb_treatment_question').value == 'No'",
       :helpText => "TB associated symptoms" } %>
   <% end %>
 
@@ -717,7 +732,7 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
       {:id => 'tb_status',
       :multiple => false,
       :helpText => "TB Status",
-      :tt_onLoad => 'checkTbHivStatus(); checkAndSelectTBSuspected();',
+      :tt_onLoad => 'checkTbHivStatus(); checkAndSelectTBSuspected(); checkAndSelectConfirmedTBOnTreatment();',
       :condition => @show_tb_types  == true} %>
   <% else %>
     <%= touch_hidden_tag "TB STATUS" , @patient, ConceptName.find_by_name("#{@patient_tb_status}").name, {:id => "tb_status"} %>
