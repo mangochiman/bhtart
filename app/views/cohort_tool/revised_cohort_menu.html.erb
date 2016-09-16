@@ -9,18 +9,12 @@
 	height:550px ! important;
   }
 </style>
-<% qtrs = ['']
-  if params[:type] == "pre_art" %>
-  <form id='quarter' action="pre_art" method='post'>
-<% elsif params[:type] == "appointment" %>
-  <form id='quarter' action="missed_appointment" method='post'>
-<% else %>
-   <form id='quarter' action="cohort" method='post'>
+   <form id='quarter' action="revised_cohort" method='post'>
  <%
     if current_user.admin?
       qtrs = ['' , 'Select date range']
     end
-  end 
+
     current_qtr = ""
     date = Date.today
     if (date >= "#{date.year}-01-01".to_date and date <= "#{date.year}-03-31".to_date)

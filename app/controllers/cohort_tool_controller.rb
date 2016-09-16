@@ -2722,7 +2722,7 @@ class CohortToolController < GenericCohortToolController
     end
     @data =  data
     
-    render:layout=>"report"
+    render :layout => "report"
   end
   
 end
