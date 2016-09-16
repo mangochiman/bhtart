@@ -1,549 +1,562 @@
 <style type="text/css">
-	.table {
-		width: 100%;
-		height: 100%;
-		border: none;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-	.border-null {
-		border: none;
-	}
-	.text-bold {
-		font-weight: bold;
-	}
-	.index {
-		border: none;
-	}
-	.border-null-right {
-		border-right: none;
-	}
-	.border-null-left {
-		border-left: none;
-	}
-	.border-null-top {
-		border-top: none;
-	}
-	.border-null-bottom {
-		border-bottom: none;
-	}
+        .table {
+            width: 100%;
+            height: 100%;
+            border: none;
+            font-family: "Bitstream Vera Sans Mono", "Monaco", "Courier New", monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .border-null {
+            border: none;
+        }
+        .text-bold {
+            font-weight: bold;
+        }
+        .index {
+            border: none;
+        }
+        .border-null-right {
+            border-right: none;
+        }
+        .border-null-left {
+            border-left: none;
+        }
+        .border-null-top {
+            border-top: none;
+        }
+        .border-null-bottom {
+            border-bottom: none;
+        }
+        .border-left-dotted {
+            border-left-style: dotted;
+        }
+        .border-right-dotted {
+            border-right-style: dotted;
+        }
+        .border-bottom-dotted {
+            border-bottom-style: dotted;
+        }
+        .border-top-dotted {
+            border-top-style: dotted;
+        }
 </style>
 
 <table class="table" border="2px;">
-	<tr>
-		<td class="index">1.</td>
-		<td class=" border-null-bottom text-bold">
-			Clinic name
-		</td>
-		<td colspan="5">
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">2.</td>
-		<td class="border-null-bottom border-null-top">
-			Supervisors
-		</td>
-		<td colspan="2" class="text-bold">
-			Name
-		</td>
-		<td colspan="3" class="text-bold">
-			Signature
-		</td>
-	</tr>
-	<tr>
-		<td class="index">3.</td>
-		<td class="border-null-bottom border-null-top">
-			&nbsp;
-		</td>
-		<td colspan="2">
-			&nbsp;
-		</td>
-		<td colspan="3">
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">4.</td>
-		<td class="border-null-bottom border-null-top">
-			&nbsp;
-		</td>
-		<td colspan="2">
-			&nbsp;
-		</td>
-		<td colspan="3">
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">5.</td>
-		<td class="border-null-bottom border-null-top">
-			&nbsp;
-		</td>
-		<td colspan="2">
-			&nbsp;
-		</td>
-		<td colspan="3">
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">6.</td>
-		<td class="border-null-bottom border-null-top">
-			&nbsp;
-		</td>
-		<td colspan="2">
-			&nbsp;
-		</td>
-		<td colspan="3">
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">7.</td>
-		<td>
-			Quarter evaluated
-		</td>
-		<td colspan="2">
-			Year
-		</td>
-		<td colspan="3">
-			Quarter
-		</td>
-	</tr>
-	<tr>
-		<td class="border-null" colspan="7"> 
-			&nbsp;
-		</td>
-	</tr>	
-	<tr>
-		<td class="border-null">
-			&nbsp;
-		</td>
-		<td colspan="2" class="border-null text-bold">
-			HIV CARE CLINIC
-		</td>
-		<td class="border-null" colspan="4">
-			*Supervisors: No need to copy the 'Clinic own data' on this page
-		</td>
-	</tr>
-	<tr>
-		<td class="border-null">
-			&nbsp;
-		</td>
-		<td class="border-null" colspan="2">
-			&nbsp;
-		</td>
-		<td colspan="2" class="text-bold border-null">
-			Newly registered in quarter
-		</td>
-		<td colspan="2" class="text-bold border-null">
-			Cumulative ever registered
-		</td>
-	</tr>
-	<tr>
-		<td class="border-null">
-			&nbsp;
-		</td>
-		<td class="text-bold" colspan="2">
-			HCC Patient registration details
-		</td>
-		<td>
-			Clinic own data*
-		</td>
-		<td>
-			Checked data
-		</td>
-		<td>
-			Clinic own data*
-		</td>
-		<td>
-			Checked data
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			8.
-		</td>
-		<td colspan="2">
-			Total Registered
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>		
-	</tr>
-	<tr>
-		<td class="index">
-			9.
-		</td>
-		<td class="text-bold">
-			FT
-		</td>
-		<td>
-			Patients enrolled first time
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			10.
-		</td>
-		<td class="text-bold">
-			Re
-		</td>
-		<td>
-			Patients re-enrolled
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			11.
-		</td>
-		<td class="text-bold">
-			TI
-		</td>
-		<td>
-			Patients transferred in
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			12.
-		</td>
-		<td class="text-bold">
-			M
-		</td>
-		<td>
-			Males (all ages)
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			13.
-		</td>
-		<td class="text-bold">
-			FNP
-		</td>
-		<td>
-			Non-pregnant Females (all ages)
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			14.
-		</td>
-		<td class="text-bold">
-			FP
-		</td>
-		<td>
-			Pregnant Females (Should not be in HCC!)
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			15.
-		</td>
-		<td class="text-bold">
-			A1
-		</td>
-		<td>
-			Infants below 2 months at enrolment
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			16.
-		</td>
-		<td class="text-bold">
-			A2
-		</td>
-		<td>
-			Children 2 - below 24 months at enrolm.
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			17.
-		</td>
-		<td class="text-bold">
-			B
-		</td>
-		<td>
-			Children 24 months - 14 yrs at enrolm.
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			18.
-		</td>
-		<td class="text-bold">
-			C
-		</td>
-		<td>
-			Adults 15 years or older at enrolment
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			19.
-		</td>
-		<td class="text-bold">
-			Exp
-		</td>
-		<td>
-			Exposed infants
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			20.
-		</td>
-		<td class="text-bold">
-			Conf
-		</td>
-		<td>
-		Patients re-enrolled
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="border-null" colspan="7"> 
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="border-null">
-			&nbsp;
-		</td>
-		<td colspan="4" class="text-bold border-null">
-			Primary outcomes of all Pre-ART patients ever registered as of the end of quarter
-		</td>
-		<td class="border-null">
-			Clinic own data*
-		</td>
-		<td class="border-null">
-			Checked data
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			21.
-		</td>
-		<td colspan="4">
-			Total retained alive in pre-ART follow-up
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			22.
-		</td>
-		<td colspan="4">
-			Started ART
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			23.
-		</td>
-		<td colspan="4">
-			Transferred out
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			24.
-		</td>
-		<td colspan="4">
-			Defaulted (more than 2 months late for next appointment)
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
-	<tr>
-		<td class="index">
-			25.
-		</td>
-		<td colspan="4">
-			Died
-		</td>
-		<td>
-			&nbsp;
-		</td>
-		<td>
-			&nbsp;
-		</td>
-	</tr>
+    <tr>
+        <td class="index">1.</td>
+        <td class=" border-null-bottom text-bold border-top-dotted border-left-dotted">
+            Clinic name
+        </td>
+        <td colspan="5">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">2.</td>
+        <td class="border-null-bottom border-null-top border-left-dotted">
+            Supervisors
+        </td>
+        <td colspan="2" class="text-bold">
+            Name
+        </td>
+        <td colspan="3" class="text-bold">
+            Signature
+        </td>
+    </tr>
+    <tr>
+        <td class="index">3.</td>
+        <td class="border-left-dotted border-null-bottom border-null-top">
+            &nbsp;
+        </td>
+        <td colspan="2">
+            &nbsp;
+        </td>
+        <td colspan="3">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">4.</td>
+        <td class="border-left-dotted border-null-bottom border-null-top">
+            &nbsp;
+        </td>
+        <td colspan="2">
+            &nbsp;
+        </td>
+        <td colspan="3">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">5.</td>
+        <td class="border-left-dotted border-null-bottom border-null-top">
+            &nbsp;
+        </td>
+        <td colspan="2">
+            &nbsp;
+        </td>
+        <td colspan="3">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">6.</td>
+        <td class="border-left-dotted border-null-bottom border-null-top">
+            &nbsp;
+        </td>
+        <td colspan="2">
+            &nbsp;
+        </td>
+        <td colspan="3">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">7.</td>
+        <td class="border-left-dotted border-null-top">
+            Quarter evaluated
+        </td>
+        <td colspan="2">
+            Year
+        </td>
+        <td colspan="3">
+            Quarter
+        </td>
+    </tr>
+    <tr>
+        <td class="border-null" colspan="7">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="border-null">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null text-bold">
+            HIV CARE CLINIC
+        </td>
+        <td class="border-null" colspan="4">
+            *Supervisors: No need to copy the 'Clinic own data' on this page
+        </td>
+    </tr>
+    <tr>
+        <td class="border-null">
+            &nbsp;
+        </td>
+        <td class="border-null" colspan="2">
+            &nbsp;
+        </td>
+        <td colspan="2" class="text-bold border-null">
+            Newly registered in quarter
+        </td>
+        <td colspan="2" class="text-bold border-null">
+            Cumulative ever registered
+        </td>
+    </tr>
+    <tr>
+        <td class="border-null">
+            &nbsp;
+        </td>
+        <td class="text-bold" colspan="2">
+            HCC Patient registration details
+        </td>
+        <td>
+            Clinic own data*
+        </td>
+        <td>
+            Checked data
+        </td>
+        <td>
+            Clinic own data*
+        </td>
+        <td>
+            Checked data
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            8.
+        </td>
+        <td colspan="2">
+            Total Registered
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            9.
+        </td>
+        <td class="text-bold">
+            FT
+        </td>
+        <td>
+            Patients enrolled first time
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            10.
+        </td>
+        <td class="text-bold">
+            Re
+        </td>
+        <td>
+            Patients re-enrolled
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            11.
+        </td>
+        <td class="text-bold">
+            TI
+        </td>
+        <td>
+            Patients transferred in
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            12.
+        </td>
+        <td class="text-bold">
+            M
+        </td>
+        <td>
+            Males (all ages)
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            13.
+        </td>
+        <td class="text-bold">
+            FNP
+        </td>
+        <td>
+            Non-pregnant Females (all ages)
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            14.
+        </td>
+        <td class="text-bold">
+            FP
+        </td>
+        <td>
+            Pregnant Females (Should not be in HCC!)
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            15.
+        </td>
+        <td class="text-bold">
+            A1
+        </td>
+        <td>
+            Infants below 2 months at enrolment
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            16.
+        </td>
+        <td class="text-bold">
+            A2
+        </td>
+        <td>
+            Children 2 - below 24 months at enrolm.
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            17.
+        </td>
+        <td class="text-bold">
+            B
+        </td>
+        <td>
+            Children 24 months - 14 yrs at enrolm.
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            18.
+        </td>
+        <td class="text-bold">
+            C
+        </td>
+        <td>
+            Adults 15 years or older at enrolment
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            19.
+        </td>
+        <td class="text-bold">
+            Exp
+        </td>
+        <td>
+            Exposed infants
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            20.
+        </td>
+        <td class="text-bold">
+            Conf
+        </td>
+        <td>
+            Patients re-enrolled
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="border-null" colspan="7">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="border-null">
+            &nbsp;
+        </td>
+        <td colspan="4" class="text-bold border-null">
+            Primary outcomes of all Pre-ART patients ever registered as of the end of quarter
+        </td>
+        <td class="border-null">
+            Clinic own data*
+        </td>
+        <td class="border-null">
+            Checked data
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            21.
+        </td>
+        <td colspan="4">
+            Total retained alive in pre-ART follow-up
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            22.
+        </td>
+        <td colspan="4">
+            Started ART
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            23.
+        </td>
+        <td colspan="4">
+            Transferred out
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            24.
+        </td>
+        <td colspan="4">
+            Defaulted (more than 2 months late for next appointment)
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            25.
+        </td>
+        <td colspan="4">
+            Died
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
 </table>
