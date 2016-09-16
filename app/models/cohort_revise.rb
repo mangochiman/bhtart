@@ -491,7 +491,7 @@ Unique PatientProgram entries at the current location for those patients with at
     of each patient that is linked to the Dispensing encounter in the reporting period
 =end
 
-    @@regimen_categories = self.cal_regimem_category(end_date)
+    @@regimen_categories = self.cal_regimem_category(cohort.total_alive_and_on_art, end_date)
 
     cohort.zero_a           = self.get_regimen_category('0A')
     cohort.zero_p           = self.get_regimen_category('0P')
@@ -521,24 +521,24 @@ Unique PatientProgram entries at the current location for those patients with at
     return cohort
   end
 
-  
+
 
   private
 
   def self.total_patients_with_side_effects(data, end_date)
     patient_ids = []
-     
-    (data || []).each do |row| 
+
+    (data || []).each do |row|
       patient_ids << row['patient_id'].to_i
     end
-    
+
     return [] if patient_ids.blank?
     result = []
 
     drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{drug_induced_concept_id}
-      AND o.person_id IN(#{patient_ids.join(',')}) AND 
+      AND o.person_id IN(#{patient_ids.join(',')}) AND
       o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND o.obs_datetime = (
         SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{drug_induced_concept_id}
@@ -547,16 +547,24 @@ Unique PatientProgram entries at the current location for those patients with at
       ) GROUP BY person_id;
 EOF
 
-    (data || []).each do |row| 
+    (data || []).each do |row|
       result << row
     end
-    
-    return result 
+
+    return result
 
   end
 
-  def self.cal_regimem_category(end_date)
+  def self.cal_regimem_category(patient_list, end_date)
     regimens = []
+
+    patient_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
 
     dispensing_encounter_id = EncounterType.find_by_name("DISPENSING").id
     regimen_category = ConceptName.find_by_name("REGIMEN CATEGORY").concept_id
@@ -564,18 +572,17 @@ EOF
     unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT o.patient_id,
-      last_text_for_obs(o.patient_id, #{dispensing_encounter_id}, #{regimen_category}, #{regimem_given_concept}, #{unknown_regimen_given}, '#{end_date}') regimen_category
-      FROM temp_patient_outcomes o
-      INNER JOIN temp_earliest_start_date t USING(patient_id)
-      WHERE cum_outcome = 'On antiretrovirals' GROUP BY patient_id;
+      SELECT t.patient_id,
+      last_text_for_obs(t.patient_id, #{dispensing_encounter_id}, #{regimen_category}, #{regimem_given_concept}, #{unknown_regimen_given}, '#{end_date}') regimen_category
+      FROM temp_earliest_start_date t
+      WHERE t.patient_id IN (#{patient_ids.join(', ')}) GROUP BY patient_id;
 EOF
 
       (data || []).each do |regimen_attr|
         regimen = regimen_attr['regimen_category']
         regimen = 'unknown_regimen' if regimen.blank?
         regimens << {
-          :patient_id => regimen_attr['patient_id'].to_i, 
+          :patient_id => regimen_attr['patient_id'].to_i,
           :regimen_category => regimen
         }
       end
@@ -585,27 +592,12 @@ EOF
 
   def self.get_regimen_category(arv_regimen_category)
     registered = []
-=begin
-    dispensing_encounter_id = EncounterType.find_by_name("DISPENSING").id
-    regimen_category = ConceptName.find_by_name("REGIMEN CATEGORY").concept_id
-    regimem_given_concept = ConceptName.find_by_name('ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT').concept_id
-    unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
-
-    data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT o.patient_id,
-             last_text_for_obs(o.patient_id, #{dispensing_encounter_id}, #{regimen_category}, #{regimem_given_concept}, #{unknown_regimen_given}, '#{end_date}') regimen_category
-      FROM temp_patient_outcomes o
-      INNER JOIN temp_earliest_start_date t USING(patient_id)
-      WHERE cum_outcome = 'On antiretrovirals' GROUP BY patient_id
-      HAVING regimen_category = '#{arv_regimen_category}'
-EOF
-=end
       (@@regimen_categories || []).each do |regimen_attr|
         if arv_regimen_category == regimen_attr[:regimen_category]
           registered << {:patient_id => regimen_attr[:patient_id], :regimen => regimen_attr[:regimen_category]}
         end
       end
-  
+
       return registered
   end
 
