@@ -206,7 +206,7 @@
 </div>
 
 
-<div id="fast_track_reminder_missed" style="display:none;">
+<div id="fast_track_reminder_missed" style="display:none; background-color: #FF4040;">
   <div id="fast_track_reminder_header_missed">
     <span style="font-size: 16pt; font-weight: bold;">Missed Fast Track Notification</span>
   </div>
@@ -222,7 +222,7 @@
   </div>
 
   <div id="fast_track_reminder_footer_missed">
-    <span id="fastTrackMissed" onclick="gotoNextPage();" style="padding: 12px 7%;">Proceed With Regular Clinic Visit</span>
+    <span id="fastTrackMissed" onclick="continueNormalFlow();" style="padding: 12px 7%;">Proceed With Regular Clinic Visit</span>
   </div>
 </div>
 
@@ -255,6 +255,8 @@
   function continueNormalFlow(){
     jQuery("#fast_track_reminder").hide();
     jQuery("#fast_track_reminder_cover").hide();
+    jQuery("#fast_track_reminder_missed").hide(); 
+    jQuery("#fast_track_reminder_cover_missed").hide();
     gotoNextPage();
   }
 
