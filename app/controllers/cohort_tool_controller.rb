@@ -1449,7 +1449,8 @@ class CohortToolController < GenericCohortToolController
         output ="#{DateTime.now.strftime('%d-%m-%Y')}#{params[:location]}.pdf"
         print_url = "wkhtmltopdf --zoom #{zoom} -s A4 --username 
                     #{CONFIG["print_user"]} --password #{CONFIG["print_password"]} " +
-                    "#{CONFIG["protocol"]}://#{request.env["SERVER_NAME"]}:#{request.env["SERVER_PORT"]}/#{params[:location]}?print=#{params[:print]}" +
+                    "#{CONFIG["protocol"]}://#{request.env["SERVER_NAME"]}:#{request.env["SERVER_PORT"]}/
+					#{params[:location]}?print=#{params[:print]}" +
                     "#{Rails.root}/tmp/#{output}\n"
         Kernel.system print_url
         pdf_filename = File.join(Rails.root, "tmp/#{output}")
