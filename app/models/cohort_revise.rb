@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-#=begin
+=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -12,28 +12,21 @@ EOF
 
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
-select
+select 
         `p`.`patient_id` AS `patient_id`,
-        cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
-        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-        `person`.`death_date` AS `death_date`,
-        TRUNCATE(((to_days(date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`))) - to_days(`person`.`birthdate`)) / 365.25), 0) AS `age_at_initiation`,
-        (to_days(min(`s`.`start_date`)) - to_days(`person`.`birthdate`)) AS `age_in_days`
+        `p`.`earliest_start_date` AS `earliest_start_date`,
+        `p`.`death_date` AS `death_date`,
+        `p`.`gender` AS `gender`,
+        TRUNCATE(`p`.`age_at_initiation`,0) AS `age_at_initiation`,
+        `p`.`age_in_days` AS `age_in_days`,
+        cast(`pf`.`encounter_datetime` as date) AS `date_enrolled`
     from
-        ((`patient_program` `p`
-        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-    where
-        (
-          (`p`.`voided` = 0)
-          and (`s`.`voided` = 0)
-          and (`p`.`program_id` = 1)
-          and (`s`.`state` = 7)
-        )
-    group by `p`.`patient_id`;
+        (`patients_on_arvs` `p`
+        join `patient_first_arv_amount_dispensed` `pf` ON ((`pf`.`patient_id` = `p`.`patient_id`)))
+    group by `p`.`patient_id`
 EOF
 
-#=end
+=end
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `last_text_for_obs`;
 EOF
@@ -213,10 +206,6 @@ END IF;
 RETURN set_outcome;
 END;
 EOF
-
-
-
-
 
 
     ActiveRecord::Base.connection.execute <<EOF
@@ -494,29 +483,139 @@ Unique PatientProgram entries at the current location for those patients with at
     Alive and On ART and Value Coded of the latest 'Regimen Category' Observation
     of each patient that is linked to the Dispensing encounter in the reporting period
 =end
-    cohort.zero_a = self.get_regimen_category('0A', end_date)
-    cohort.zero_p = self.get_regimen_category('0P', end_date)
-    cohort.one_a  = self.get_regimen_category('1A', end_date)
-    cohort.one_p  = self.get_regimen_category('1P', end_date)
-    cohort.two_a  = self.get_regimen_category('2A', end_date)
-    cohort.two_p  = self.get_regimen_category('2P', end_date)
-    cohort.three_a = self.get_regimen_category('3A', end_date)
-    cohort.three_p = self.get_regimen_category('3P', end_date)
-    cohort.four_a  = self.get_regimen_category('4A', end_date)
-    cohort.four_p  = self.get_regimen_category('4P', end_date)
-    cohort.five_a  = self.get_regimen_category('5A', end_date)
-    cohort.six_a   = self.get_regimen_category('6A', end_date)
-    cohort.seven_a = self.get_regimen_category('7A', end_date)
-    cohort.eight_a = self.get_regimen_category('8A', end_date)
-    cohort.nine_p  = self.get_regimen_category('9P', end_date)
-    cohort.unknown_regimen = self.get_regimen_category('unknown_regimen', end_date)
 
-    puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    return cohort
+    @@regimen_categories = self.cal_regimem_category(cohort.total_alive_and_on_art, end_date)
+
+    cohort.zero_a           = self.get_regimen_category('0A')
+    cohort.one_a            = self.get_regimen_category('1A')
+    cohort.zero_p           = self.get_regimen_category('0P')
+    cohort.one_p            = self.get_regimen_category('1P')
+    cohort.two_a            = self.get_regimen_category('2A')
+    cohort.two_p            = self.get_regimen_category('2P')
+    cohort.three_a          = self.get_regimen_category('3A')
+    cohort.three_p          = self.get_regimen_category('3P')
+    cohort.four_a           = self.get_regimen_category('4A')
+    cohort.four_p           = self.get_regimen_category('4P')
+    cohort.five_a           = self.get_regimen_category('5A')
+    cohort.six_a            = self.get_regimen_category('6A')
+    cohort.seven_a          = self.get_regimen_category('7A')
+    cohort.eight_a          = self.get_regimen_category('8A')
+    cohort.nine_p           = self.get_regimen_category('9P')
+    cohort.unknown_regimen  = self.get_regimen_category('unknown_regimen')
+
+=begin
+    Total patients with side effects:
+    Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
+=end
+    cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, end_date)
+
+=begin
+    TB Status
+    Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
+    or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
+    during their latest HIV Clinic Consultaiton encounter in the reporting period
+=end
+    @@tb_status = self.cal_tb_status(cohort.total_alive_and_on_art, end_date)
+
+    cohort.tb_suspected = self.get_tb_status('TB suspected')
+    cohort.tb_not_suspected = self.get_tb_status('TB NOT suspected')
+    cohort.tb_confirmed_on_tb_treatment = self.get_tb_status('Confirmed TB on treatment')
+    cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.get_tb_status('Confirmed TB NOT on treatment')
+    cohort.unknown_tb_status = self.get_tb_status('unknown_tb_status')
+
+    runtime = "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    return [cohort, runtime]
   end
 
-  def self.get_regimen_category(arv_regimen_category, end_date)
+
+  private
+  def self.cal_tb_status(patient_list, end_date)
+    patient_ids = []
+    tb_status = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+
+    tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
+
+    data = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT person_id, value_coded, value_coded_name_id,  cn.name as tb_status
+      FROM obs o
+       LEFT JOIN concept_name cn ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
+      WHERE o.voided = 0 AND o.concept_id = #{tb_status_concept_id}
+      AND o.person_id IN(#{patient_ids.join(',')}) AND
+      o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND o.obs_datetime = (
+        SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{tb_status_concept_id}
+        AND voided = 0 AND o.person_id = person_id AND
+        obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      ) GROUP BY person_id
+EOF
+    (data || []).each do |patient_tb_status|
+      status = patient_tb_status['tb_status']
+      status = 'unknown_tb_status' if status.blank?
+      tb_status << {
+        :patient_id => patient_tb_status['person_id'].to_i,
+        :tb_status => status
+      }
+    end
+    return tb_status
+  end
+
+  def self.get_tb_status(tb_status)
     registered = []
+      (@@tb_status || []).each do |status|
+        if tb_status == status[:tb_status]
+          registered << {:patient_id => status[:patient_id], :tb_status => status[:tb_status]}
+        end
+      end
+
+      return registered
+  end
+
+  def self.total_patients_with_side_effects(data, end_date)
+    patient_ids = []
+
+    (data || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+    drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
+    data = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{drug_induced_concept_id}
+      AND o.person_id IN(#{patient_ids.join(',')}) AND
+      o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND o.obs_datetime = (
+        SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{drug_induced_concept_id}
+        AND voided = 0 AND o.person_id = person_id AND
+        obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      ) GROUP BY person_id
+EOF
+
+    (data || []).each do |row|
+      result << row
+    end
+
+    return result
+
+  end
+
+  def self.cal_regimem_category(patient_list, end_date)
+    regimens = []
+
+    patient_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
 
     dispensing_encounter_id = EncounterType.find_by_name("DISPENSING").id
     regimen_category = ConceptName.find_by_name("REGIMEN CATEGORY").concept_id
@@ -524,16 +623,31 @@ Unique PatientProgram entries at the current location for those patients with at
     unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT o.patient_id,
-             last_text_for_obs(o.patient_id, #{dispensing_encounter_id}, #{regimen_category}, #{regimem_given_concept}, #{unknown_regimen_given}, '#{end_date}') regimen_category
-      FROM temp_patient_outcomes o
-      INNER JOIN temp_earliest_start_date t USING(patient_id)
-      WHERE cum_outcome = 'On antiretrovirals' GROUP BY patient_id
-      HAVING regimen_category = '#{arv_regimen_category}'
+      SELECT t.patient_id,
+      last_text_for_obs(t.patient_id, #{dispensing_encounter_id}, #{regimen_category}, #{regimem_given_concept}, #{unknown_regimen_given}, '#{end_date}') regimen_category
+      FROM temp_earliest_start_date t
+      WHERE t.patient_id IN (#{patient_ids.join(', ')}) GROUP BY patient_id;
 EOF
-      (data || []).each do |patient|
-        registered << patient
+    (data || []).each do |regimen_attr|
+        regimen = regimen_attr['regimen_category']
+        regimen = 'unknown_regimen' if regimen.blank?
+        regimens << {
+          :patient_id => regimen_attr['patient_id'].to_i,
+          :regimen_category => regimen
+        }
       end
+
+      return regimens
+  end
+
+  def self.get_regimen_category(arv_regimen_category)
+    registered = []
+      (@@regimen_categories || []).each do |regimen_attr|
+        if arv_regimen_category == regimen_attr[:regimen_category]
+          registered << {:patient_id => regimen_attr[:patient_id], :regimen => regimen_attr[:regimen_category]}
+        end
+      end
+
       return registered
   end
 
@@ -891,7 +1005,6 @@ EOF
 
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
-      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female')
       AND t.patient_id NOT IN(#{pregnant_women_ids.join(',')}) GROUP BY patient_id;
@@ -908,7 +1021,6 @@ EOF
     registered = [] ; patient_id_plus_date_enrolled = []
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
-      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
 EOF
@@ -921,7 +1033,7 @@ EOF
     preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
 
     (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-      result = ActiveRecord::Base.connection.select_value <<EOF
+      result = ActiveRecord::Base.connection.select_one <<EOF
         SELECT * FROM obs
         WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
         AND '#{(date_enrolled + 28.days).strftime('%Y-%m-%d 23:59:59')}'
@@ -939,7 +1051,6 @@ EOF
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
-      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'Male' OR gender = 'M') GROUP BY patient_id;
 EOF
