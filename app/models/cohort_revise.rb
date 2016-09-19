@@ -487,8 +487,8 @@ Unique PatientProgram entries at the current location for those patients with at
     @@regimen_categories = self.cal_regimem_category(cohort.total_alive_and_on_art, end_date)
 
     cohort.zero_a           = self.get_regimen_category('0A')
-    cohort.zero_p           = self.get_regimen_category('0P')
     cohort.one_a            = self.get_regimen_category('1A')
+    cohort.zero_p           = self.get_regimen_category('0P')
     cohort.one_p            = self.get_regimen_category('1P')
     cohort.two_a            = self.get_regimen_category('2A')
     cohort.two_p            = self.get_regimen_category('2P')
@@ -509,14 +509,72 @@ Unique PatientProgram entries at the current location for those patients with at
 =end
     cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, end_date)
 
+=begin
+    TB Status
+    Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
+    or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
+    during their latest HIV Clinic Consultaiton encounter in the reporting period
+=end
+    @@tb_status = self.cal_tb_status(cohort.total_alive_and_on_art, end_date)
+
+    cohort.tb_suspected = self.get_tb_status('TB suspected')
+    cohort.tb_not_suspected = self.get_tb_status('TB NOT suspected')
+    cohort.tb_confirmed_on_tb_treatment = self.get_tb_status('Confirmed TB on treatment')
+    cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.get_tb_status('Confirmed TB NOT on treatment')
+    cohort.unknown_tb_status = self.get_tb_status('unknown_tb_status')
 
     runtime = "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return [cohort, runtime]
   end
 
 
-
   private
+  def self.cal_tb_status(patient_list, end_date)
+    patient_ids = []
+    tb_status = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+
+    tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
+
+    data = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT person_id, value_coded, value_coded_name_id,  cn.name as tb_status
+      FROM obs o
+       LEFT JOIN concept_name cn ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
+      WHERE o.voided = 0 AND o.concept_id = #{tb_status_concept_id}
+      AND o.person_id IN(#{patient_ids.join(',')}) AND
+      o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND o.obs_datetime = (
+        SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{tb_status_concept_id}
+        AND voided = 0 AND o.person_id = person_id AND
+        obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      ) GROUP BY person_id
+EOF
+    (data || []).each do |patient_tb_status|
+      status = patient_tb_status['tb_status']
+      status = 'unknown_tb_status' if status.blank?
+      tb_status << {
+        :patient_id => patient_tb_status['person_id'].to_i,
+        :tb_status => status
+      }
+    end
+    return tb_status
+  end
+
+  def self.get_tb_status(tb_status)
+    registered = []
+      (@@tb_status || []).each do |status|
+        if tb_status == status[:tb_status]
+          registered << {:patient_id => status[:patient_id], :tb_status => status[:tb_status]}
+        end
+      end
+
+      return registered
+  end
 
   def self.total_patients_with_side_effects(data, end_date)
     patient_ids = []
@@ -537,7 +595,7 @@ Unique PatientProgram entries at the current location for those patients with at
         SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{drug_induced_concept_id}
         AND voided = 0 AND o.person_id = person_id AND
         obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      ) GROUP BY person_id;
+      ) GROUP BY person_id
 EOF
 
     (data || []).each do |row|
@@ -570,8 +628,7 @@ EOF
       FROM temp_earliest_start_date t
       WHERE t.patient_id IN (#{patient_ids.join(', ')}) GROUP BY patient_id;
 EOF
-
-      (data || []).each do |regimen_attr|
+    (data || []).each do |regimen_attr|
         regimen = regimen_attr['regimen_category']
         regimen = 'unknown_regimen' if regimen.blank?
         regimens << {
