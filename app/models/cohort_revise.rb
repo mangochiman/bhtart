@@ -12,25 +12,18 @@ EOF
 
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
-select
+select 
         `p`.`patient_id` AS `patient_id`,
-        cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
-        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-        `person`.`death_date` AS `death_date`,
-        TRUNCATE(((to_days(date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`))) - to_days(`person`.`birthdate`)) / 365.25), 0) AS `age_at_initiation`,
-        (to_days(min(`s`.`start_date`)) - to_days(`person`.`birthdate`)) AS `age_in_days`
+        `p`.`earliest_start_date` AS `earliest_start_date`,
+        `p`.`death_date` AS `death_date`,
+        `p`.`gender` AS `gender`,
+        TRUNCATE(`p`.`age_at_initiation`,0) AS `age_at_initiation`,
+        `p`.`age_in_days` AS `age_in_days`,
+        cast(`pf`.`encounter_datetime` as date) AS `date_enrolled`
     from
-        ((`patient_program` `p`
-        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-    where
-        (
-          (`p`.`voided` = 0)
-          and (`s`.`voided` = 0)
-          and (`p`.`program_id` = 1)
-          and (`s`.`state` = 7)
-        )
-    group by `p`.`patient_id`;
+        (`patients_on_arvs` `p`
+        join `patient_first_arv_amount_dispensed` `pf` ON ((`pf`.`patient_id` = `p`.`patient_id`)))
+    group by `p`.`patient_id`
 EOF
 
 =end
@@ -517,8 +510,8 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, end_date)
 
 
-    puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    return cohort
+    runtime = "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    return [cohort, runtime]
   end
 
 
@@ -955,7 +948,6 @@ EOF
 
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
-      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female')
       AND t.patient_id NOT IN(#{pregnant_women_ids.join(',')}) GROUP BY patient_id;
@@ -972,7 +964,6 @@ EOF
     registered = [] ; patient_id_plus_date_enrolled = []
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
-      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
 EOF
@@ -985,7 +976,7 @@ EOF
     preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
 
     (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-      result = ActiveRecord::Base.connection.select_value <<EOF
+      result = ActiveRecord::Base.connection.select_one <<EOF
         SELECT * FROM obs
         WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
         AND '#{(date_enrolled + 28.days).strftime('%Y-%m-%d 23:59:59')}'
@@ -1003,7 +994,6 @@ EOF
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
-      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'Male' OR gender = 'M') GROUP BY patient_id;
 EOF
