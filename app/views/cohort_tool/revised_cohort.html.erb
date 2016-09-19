@@ -3,7 +3,7 @@
             width: 100%;
             height: 100%;
             border: none;
-            font-family: "Bitstream Vera Sans Mono", "Monaco", "Courier New", monospace;
+            font-family: Georgia, Times, "Times New Roman", serif;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -42,6 +42,17 @@
         }
         .border-top-dotted {
             border-top-style: dotted;
+        }
+        .button-print {
+            background-color: green;
+            font-size: 54px;
+            color: white;
+            float: right;
+            border: 2px solid;
+            border-radius: 2px;
+        }
+        .row-button-print {
+
         }
 </style>
 
@@ -560,6 +571,19 @@
         </td>
         <td>
             &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="border-null">&nbsp;</td>
+        <td class="border-null">&nbsp;</td>
+        <td class="border-null">&nbsp;</td>
+        <td class="border-null">&nbsp;</td>
+        <td class="border-null">&nbsp;</td>
+        <td class="border-null">&nbsp;</td>
+        <td class="border-null row-button-print">
+            <button class="button-print">
+                Print
+            </button>
         </td>
     </tr>
 </table>
