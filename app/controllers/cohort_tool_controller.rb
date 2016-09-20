@@ -1446,15 +1446,13 @@ class CohortToolController < GenericCohortToolController
 
   def download_pdf
         zoom = 0.8
-        output ="#{DateTime.now.strftime('%d-%m-%Y')}#{params[:location]}.pdf"
-        print_url = "wkhtmltopdf --zoom #{zoom} -s A4 --username 
-                    #{CONFIG["print_user"]} --password #{CONFIG["print_password"]} " +
-                    "#{CONFIG["protocol"]}://#{request.env["SERVER_NAME"]}:#{request.env["SERVER_PORT"]}/
-					#{params[:location]}?print=#{params[:print]}" +
-                    "#{Rails.root}/tmp/#{output}\n"
+        output ="file_name.pdf"
+        print_url = "wkhtmltopdf http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}/cohort_tool/revised_cohort_to_print #{Rails.root}/tmp/#{output}"
         Kernel.system print_url
+        #raise 'done'
         pdf_filename = File.join(Rails.root, "tmp/#{output}")
         send_file(pdf_filename, :filename => "#{output}", :type => "application/pdf")
+	    return
   end
 
   def adherence
