@@ -3,7 +3,9 @@
             width: 100%;
             height: 100%;
             border: none;
+            border-collapse: collapse;
             font-family: Georgia, Times, "Times New Roman", serif;
+            font-size: large;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -581,7 +583,7 @@
         <td class="border-null">&nbsp;</td>
         <td class="border-null">&nbsp;</td>
         <td class="border-null row-button-print">
-            <%= button_to 'Print', :action => 'download_pdf' %>
+            <%= button_to 'Print', :action => 'download_pdf', :class => 'button-print' %>
         </td>
     </tr>
 </table>
