@@ -746,51 +746,12 @@ class GenericRegimensController < ApplicationController
 	def suggested
 		session_date = session[:datetime].to_date rescue Date.today
 		patient_program = PatientProgram.find(params[:id])
-		@options = []
 		render :layout => false and return unless patient_program
 		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
-		#regimen_concepts = patient_program.regimens(current_weight).uniq
-		@options = MedicationService.regimen_options(current_weight, patient_program.program)
-		tmp = []
-    new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
-
-		@options.each{|i|
-      next if i.to_s.include?("12A") #This is third line drug. It has to be shown in suggest_all
-      if (patient_has_psychosis?(patient_program.patient, session_date))
-        #Remove 5A if the patient has psychosis as a side effect/contraindication
-        next if i.to_s.include?("5A")
-      end
-      
-      unless new_guide_lines_start_date.blank?
-        if new_guide_lines_start_date <= session_date
-          next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines
-          next if i.to_s.include?("1A")  unless i.to_s.include?("11A")          #Not supported in new ART Guidelines
-          next if i.to_s.include?("3A") #Not supported in new ART Guidelines
-          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
-        end
-      end
-=begin
-			if i.to_s.include?("2P") && current_weight<25
-				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-
-      elsif (i.to_s.include?("7A") || i.to_s.include?("8A")) && (current_weight >= 35) && (i.to_s.upcase.include?("ATV/R"))
-        i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-
-      elsif i.to_s.include?("9P") && (current_weight < 35)
-        i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-
-			elsif i.to_s.include?("2A") && (current_weight >= 25 && current_weight <= 35)
-				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-
-			elsif i.to_s.include?("5A") && current_weight > 35
-				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-			end
-=end
-      
-			tmp << i
-		}
-
-		@options = tmp
+		#@options = MedicationService.regimen_options(current_weight, patient_program.program)
+		@options = MedicationService.moh_arv_regimen_options(current_weight)
+		#tmp = []
+    #new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
 
 		render :layout => false
 	end
@@ -860,12 +821,12 @@ class GenericRegimensController < ApplicationController
 
 	def formulations
     @patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
-    #@criteria = Regimen.find(:all,:order => 'regimen_index',:conditions => ['concept_id =?',params[:id]],:include => :regimen_drug_orders)
-    @criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
-    @options = @criteria.map do | r |
-      r.regimen_drug_orders.map do | order |
-        [order.drug.name , order.dose, order.frequency , order.units , r.id ]
-      end
+    session_date = session[:datetime].to_date rescue Date.today
+    current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
+    regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
+
+    @options = (regimen_medications || []).each do | r |
+      [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] ]
     end
     render :text => @options.to_json
 	end
@@ -1160,6 +1121,5 @@ class GenericRegimensController < ApplicationController
 		end
 		return options
 	end
-
 
 end
