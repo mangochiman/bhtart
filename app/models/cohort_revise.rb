@@ -622,11 +622,11 @@ EOF
         ) GROUP BY person_id
 EOF
     (data || []).each do |row|
-  	   result << row['person_id'].to_i
+  	   result << row
     end
 
     (malawi_art_side_effects || []).each do |row|
-      result << row['person_id'].to_i
+      result << row
     end
      return result.uniq if !result.blank?
   end
@@ -686,11 +686,11 @@ EOF
 EOF
 
     (patients || []).each do |row|
-  	   result << row['person_id'].to_i
+  	   result << row
     end
 
     (malawi_art_side_effects || []).each do |row|
-      result << row['person_id'].to_i
+      result << row
     end
     return result.uniq if !result.blank?
   end
