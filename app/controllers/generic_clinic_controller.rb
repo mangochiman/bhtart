@@ -133,6 +133,7 @@ class GenericClinicController < ApplicationController
   def reports_tab
     @reports = [
       ["Cohort","/cohort_tool/cohort_menu"],
+      ["Revised Cohort","/cohort_tool/revised_cohort_menu"],
       ["Supervision","/clinic/supervision_tab"],
       ["Data Cleaning Tools", "/clinic/data_cleaning_tab"],
       #["View appointments","/report/select_date"],
