@@ -757,43 +757,13 @@ class GenericRegimensController < ApplicationController
 	end
 
   def suggest_all
-		session_date = session[:datetime].to_date rescue Date.today
-		patient_program = PatientProgram.find(params[:id])
-		@options = []
-		render :layout => false and return unless patient_program
-		#current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
-		#regimen_concepts = patient_program.regimens(current_weight).uniq
-		@options = MedicationService.all_regimen_options(patient_program.program)
+    medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i 
+      ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*", 
+      :group => 'drug.drug_id')
 
-		tmp = []
-
-		current_weight = params[:current_weight].to_f
-    new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
-    
-		@options.each{|i|
-      unless new_guide_lines_start_date.blank?
-        if new_guide_lines_start_date <= session_date
-          next if i.to_s.include?("1P") unless i.to_s.include?("11P") #Not supported in new ART Guidelines
-          next if i.to_s.include?("1A")  unless i.to_s.include?("11A")          #Not supported in new ART Guidelines
-          next if i.to_s.include?("3A") #Not supported in new ART Guidelines
-          next if i.to_s.include?("3P") #Not supported in new ART Guidelines
-        end
-      end
-=begin
-			if i.to_s.include?("2P") && current_weight<25.to_f
-				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-
-			elsif i.to_s.include?("2A") && (current_weight >= 25.to_f && current_weight <= 35.to_f)
-				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-
-			elsif i.to_s.include?("5A") && current_weight > 35.to_f
-				i[0] = i[0].to_s + " <span class='moh_recommend'>(MoH Recommended)</span>"
-			end
-=end
-			tmp << i
-		}
-
-		@options = tmp
+    @options = (medications || []).map do | m |
+      [m.name , m.drug_id ]
+    end
 
 		render :layout => false
 	end
@@ -832,15 +802,17 @@ class GenericRegimensController < ApplicationController
 	end
 
   def formulations_all
-    @patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
-    @criteria = Regimen.find(:all,:order => 'regimen_index',:conditions => ['concept_id =?',params[:id]],:include => :regimen_drug_orders)
-    #@criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
-    @options = @criteria.map do | r |
-      r.regimen_drug_orders.map do | order |
-        [order.drug.name , order.dose, order.frequency , order.units , r.id ]
-      end
+    names = params[:names].split('::')
+
+    medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i 
+      ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
+      :conditions => ["drug.name IN(?)", names], :group => "drug.drug_id")
+
+    @options = (medications || []).map do | m |
+      [m.name , m.units, m.drug_id ]
     end
     render :text => @options.to_json
+
 	end
 
   def recommend_duration(total_days, equivalent_daily_dose, current_stock, drug_pack_size)
