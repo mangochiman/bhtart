@@ -243,6 +243,7 @@ module MedicationService
           :am => medication.am,
           :pm => medication.pm,
           :units => medication.units,
+          :drug_id => medication.drug_id,
           :regimen_index => regimen_index
         }
       end
