@@ -1647,6 +1647,9 @@ class EncountersController < GenericEncountersController
       end
 
       if params[:encounter]['encounter_type_name'].upcase == 'HIV STAGING'
+        
+        @allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked
+
         observations = []
         (params[:observations] || []).each do |observation|
           if observation['concept_name'].upcase == 'CD4 COUNT' or observation['concept_name'].upcase == "LYMPHOCYTE COUNT"

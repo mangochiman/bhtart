@@ -708,6 +708,13 @@
       <%= touch_hidden_tag "REFER TO ART CLINICIAN", @patient, "NO", :id => "refer_to_clinician" %>
     <%end unless refer_to_clinician_already_asked %>
 
+    <%if @allergic_to_sulphur.blank? %>
+      <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
+        {	:id => "allergic_to_sulphur",
+        :condition => "$('refer_to_clinician').value == 'NO'" ,
+        :helpText => "Is patient allergic to sulphur" } %>
+    <%end unless refer_to_clinician_already_asked %>
+
     <%if @obs_ans.match(/Prescribe drugs: Yes/i) %>
       <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
     <%else%>
@@ -732,13 +739,6 @@
 
 
       <% end %>
-    <%end unless refer_to_clinician_already_asked %>
-
-    <%if @allergic_to_sulphur.blank? %>
-      <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
-        {	:id => "allergic_to_sulphur",
-        :condition => "$('refer_to_clinician').value == 'NO' && $('prescribe_drugs').value =='YES'" ,
-        :helpText => "Is patient allergic to sulphur" } %>
     <%end unless refer_to_clinician_already_asked %>
 
 <%#= text_field_tag "fast_track_pop_up_input", nil, {

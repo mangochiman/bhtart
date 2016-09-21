@@ -970,7 +970,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%if @allergic_to_sulphur.blank? %>
     <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
       {	:id => "allergic_to_sulphur",
-      :condition => "$('refer_to_clinician').value == 'NO' && $('prescribe_drugs').value =='YES'" ,
+      :condition => "$('refer_to_clinician').value == 'NO'" ,
       :helpText => "Is patient allergic to cotrimoxazole" } %>
   <%end unless art_adherence_to_be_done %>
 

@@ -19,7 +19,11 @@ class GenericRegimensController < ApplicationController
 
     ################################################################################################################
     @prescribe_arvs_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'ARVS')
-    @prescribe_cpt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'CPT')
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'CPT')
+    end
     @prescribe_ipt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'Isoniazid')
     ################################################################################################################
 
