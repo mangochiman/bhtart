@@ -396,6 +396,69 @@ class GenericRegimensController < ApplicationController
           ['Fever, Body pains, Vomiting, Cough', '8'],
           ['Diarrhoea, Vomiting','None']
 				]
+      },
+      '10' => { 'adverse' =>[
+          ['Renal failure', 'Renal failure'],
+          ['Diarrhoea, vomiting, dizziness, headache', 'Diarrhoea, vomiting, dizziness, headache'],
+          ['Treatment failure', 'Treatment failure']
+				],
+				'contraindications' => [
+					['Renal failure', 'Renal failure']
+				],
+				'alt1' => [
+           ['Renal failure', '11'],
+           ['Diarrhoea, vomiting, dizziness, headache', '7'],
+           ['Treatment failure', '12']
+				],
+				'alt2'=> [
+           ['Renal failure', '8'],
+           ['Diarrhoea, vomiting, dizziness, headache', '8'],
+           ['Treatment failure', 'None']
+				]
+      },
+      '11' => { 'adverse' =>[
+          ['Anaemia, vomiting, appetite loss', 'Anaemia, vomiting, appetite loss'],
+          ['Lipodystrophy, lactic acidosis', 'Lipodystrophy, lactic acidosis'],
+          ['Diarrhoea, vomiting, dizziness, headache', 'Diarrhoea, vomiting, dizziness, headache'],
+          ['Treatment failure', 'Treatment failure']
+				],
+				'contraindications' => [
+					['Anaemia <8g/dl', 'Anaemia <8g/dl']
+				],
+				'alt1' => [
+          ['Anaemia, vomiting, appetite loss', '10'],
+          ['Lipodystrophy, lactic acidosis', '10'],
+          ['Diarrhoea, vomiting, dizziness, headache', '8'],
+          ['Treatment failure', '12']
+				],
+				'alt2'=> [
+          ['Anaemia, vomiting, appetite loss', '7'],
+          ['Lipodystrophy, lactic acidosis', '7'],
+          ['Diarrhoea, vomiting, dizziness, headache', '7'],
+          ['Treatment failure', 'None']
+				]
+      },
+      '12' => { 'adverse' =>[
+          ['Diarrhoea, vomiting, headache, dizziness', 'Diarrhoea, vomiting, headache, dizziness'],
+          ['Neuropathy', 'Neuropathy'],
+          ['Rash', 'Rash'],
+          ['Jaundice', 'Jaundice']
+				],
+				'contraindications' => [
+					['', '']
+				],
+				'alt1' => [
+          ['Diarrhoea, vomiting, headache, dizziness', 'NS'],
+          ['Neuropathy', 'NS'],
+          ['Rash', 'NS'],
+          ['Jaundice', 'NS']
+				],
+				'alt2'=> [
+          ['Diarrhoea, vomiting, headache, dizziness', 'None'],
+          ['Neuropathy', 'None'],
+          ['Rash', 'None'],
+          ['Jaundice', 'None']
+				]
       }
 
 		}

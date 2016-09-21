@@ -391,7 +391,21 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   function checkAndSelectTBSuspected(){
     tb_suspected_option_input = jQuery("[tstvalue='TB suspected']")[0]
     selected_tb_associated_symptoms = __$("routine_tb_screening").value;
-    if (selected_tb_associated_symptoms.length > 0){
+
+    /*if (selected_tb_associated_symptoms.length > 0){
+      if (tb_suspected_option_input) updateTouchscreenInputForSelect(tb_suspected_option_input);
+    }*/
+
+    yesTBSymptoms = [];
+    for (var key in tbSymptomsHash){
+      yesValue = tbSymptomsHash[key]["yes"];
+      noValue = tbSymptomsHash[key]["no"];
+      if (yesValue.length > 0){
+        yesTBSymptoms.push(key);
+      }
+    }
+
+    if (yesTBSymptoms.length > 0){
       if (tb_suspected_option_input) updateTouchscreenInputForSelect(tb_suspected_option_input);
     }
 
@@ -410,7 +424,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     sideEffectsArray = JSON.parse('<%=  side_effects_array.to_json %>');
     jQuery("#inputFrame" + tstCurrentPage).remove()
     jQuery("#helpText" + tstCurrentPage).css({
-      marginLeft: "30%",
+      marginLeft: "0%",
       fontWeight: "bold",
       fontSize: "1.9em"
     })
@@ -451,7 +465,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     thisPage.innerHTML += html;
 
     preselectSelectedSideEffects();
-    
+    setBackButton();
     __$('nextButton').onmousedown = function(){
       validateSideEffectsInput();
     }
@@ -462,7 +476,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     tbSymptomssArray = JSON.parse('<%=  tb_symptoms_array.to_json %>');
     jQuery("#inputFrame" + tstCurrentPage).remove()
     jQuery("#helpText" + tstCurrentPage).css({
-      marginLeft: "30%",
+      marginLeft: "0%",
       fontWeight: "bold",
       fontSize: "1.9em"
     });
@@ -503,7 +517,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     thisPage.innerHTML += html;
 
     preselectSelectedTBSymptoms();
-
+    setBackButton();
     __$('nextButton').onmousedown = function(){
       validateTBSymptomsInput();
     }
@@ -640,7 +654,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
 
     if (unselectedSideEffects.length > 0){
-      showMessage("The following side effects are not selected <br />" +  unselectedSideEffects.join('<br /> '));
+      showMessage("The following <%= @hiv_clinic_consultation_side_efects_label_short %> are not selected <br />" +  unselectedSideEffects.join('<br /> '));
     }else{
       gotoNextPage();
     }
@@ -658,12 +672,31 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
 
     if (unselectedTBSymptoms.length > 0){
-      showMessage("The following side effects are not selected <br />" +  unselectedTBSymptoms.join('<br /> '));
+      showMessage("The following TB Symptoms are not selected <br />" +  unselectedTBSymptoms.join('<br /> '));
     }else{
       gotoNextPage();
     }
   }
 
+  function setBackButton(){
+    backButton = jQuery('#backButton')[0];
+    if (backButton){
+      mouseEvent = backButton.getAttribute('onmousedown');
+      if (mouseEvent){
+        if (!mouseEvent.match(/resetNextButton/i)){
+          onmousedownevent = backButton.getAttribute('onmousedown') + '; resetNextButton()';
+          backButton.setAttribute('onmousedown', onmousedownevent);
+        }
+      }
+    }
+  }
+
+  function resetNextButton(){
+    __$('nextButton').onmousedown = function(){
+      gotoNextPage();
+    }
+  }
+  
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -873,12 +906,12 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       :condition => "__$('tb_treatment_question').value == 'No'",
       :tt_pageStyleClass => "NoControls" } %>
 
-    <%#= touch_select_tag "Routine Tuberculosis Screening", @patient, concept_set_options('Routine Tuberculosis Screening'),
-      {	:id => 'routine_tb_screening',
-      :optional => true,
-      :multiple => true,
-      :condition => "__$('tb_treatment_question').value == 'No'",
-      :helpText => "TB associated symptoms" } %>
+  <%#= touch_select_tag "Routine Tuberculosis Screening", @patient, concept_set_options('Routine Tuberculosis Screening'),
+  {	:id => 'routine_tb_screening',
+  :optional => true,
+  :multiple => true,
+  :condition => "__$('tb_treatment_question').value == 'No'",
+  :helpText => "TB associated symptoms" } %>
   <% end %>
 
   <%  if @tb_programs_state.nil? %>
