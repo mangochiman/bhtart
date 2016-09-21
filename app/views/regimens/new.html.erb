@@ -507,19 +507,19 @@
 
   #tt_page_confirm_current_regimen .inputFrameClass{
     height: 0px !important;
-}
-.dose-input{
-   float: right;
+  }
+  .dose-input{
+    float: right;
     height: 3em;
     margin-right: 16px;
     width: 120px;
     font-weight: bold;
     font-size: 16pt;
     text-align: center;
-}
+  }
 
-.numeric-input{
-   background-color: white;
+  .numeric-input{
+    background-color: white;
     border: 1px solid black;
     font-size: 14pt;
     height: 2em;
@@ -530,7 +530,7 @@
     color: black;
     text-align: center;
     font-weight: bold;
-}
+  }
 </style>
 
 <%= javascript_include_tag "prototype"%>
@@ -690,8 +690,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                regimens.push('<%=data[0].split(" ").first%>');
-                                                                                display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                        regimens.push('<%=data[0].split(" ").first%>');
+                                                                                        display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -934,7 +934,7 @@
     medication_names = $('touchscreenInput'+tstCurrentPage).value 
   }
 
-
+  var selectedDrugsHash = {};
   function buildPrescriptionPage_all(continueExistingRegimen, patientProgram, regimenConceptId, prescriptionContainer) {
     $('touchscreenInput'+tstCurrentPage).setAttribute('type','hidden');
     $('clearButton').style.display = 'none';
@@ -951,7 +951,8 @@
     //html += "<th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th>"
     html += "</tr></table></div>"
     current_page.innerHTML += html
-
+    selectedDrugsHash = {};
+    
     new Ajax.Request("/regimens/formulations_all?names=" + names ,{method:'get',onSuccess: function(transport){
         formulations = JSON.parse(transport.responseText) || "";
         if(formulations.length > 0 && formulations != "[[[]]]" && formulations != "[]"){
@@ -974,15 +975,55 @@
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
+            selectedDrugsHash[data[0]] = {am: '', pm: ''};
             createHiddenInputsForDoses(data[0])
           }
-          html += "</table>"
+          html += "</table>";
           prescription_container.innerHTML = html
         }
       }});
 
+    setBackButton();
+    __$('nextButton').onmousedown = function(){
+      validateCustomeDosesInput();
+    }
   }
 
+  function validateCustomeDosesInput(){
+    incomplete_doses = [];
+    for (var key in selectedDrugsHash){
+      am_dose = selectedDrugsHash[key]["am"];
+      pm_dose = selectedDrugsHash[key]["pm"];
+      if (am_dose.length == 0 || pm_dose.length == 0){
+        incomplete_doses.push(key);
+      }
+    }
+    if (incomplete_doses.length > 0){
+      showMessage("Incomplete Doses for the following drugs <br />" + incomplete_doses.join('<br />'))
+    }else{
+      gotoNextPage();
+    }
+  }
+
+  function setBackButton(){
+    backButton = jQuery('#backButton')[0];
+    if (backButton){
+      mouseEvent = backButton.getAttribute('onmousedown');
+      if (mouseEvent){
+        if (!mouseEvent.match(/resetNextButton/i)){
+          onmousedownevent = backButton.getAttribute('onmousedown') + '; resetNextButton()';
+          backButton.setAttribute('onmousedown', onmousedownevent);
+        }
+      }
+    }
+  }
+
+  function resetNextButton(){
+    __$('nextButton').onmousedown = function(){
+      gotoNextPage();
+    }
+  }
+  
   function createHiddenInputsForDoses(drugName){
     //jQuery('#' + drugName + '_am').remove();
     //jQuery('#' + drugName + '_pm').remove();
@@ -1575,9 +1616,9 @@
 
   function prescribeIPT() {
     var prescribe = false;
-    <%if @prescribe_ipt_set%>
+<%if @prescribe_ipt_set%>
       prescribe = true;
-    <%end%>
+<%end%>
     return prescribe;
   }
 
@@ -1960,12 +2001,12 @@ pyridoxine_options = ["","25", "50"]
     <% if @fast_track_patient == true && !@current_regimen.blank? %>
       <%= touch_hidden_tag("PRESCRIBE ARVS", @patient, 'YES', {:id => 'prescribe_arvs'}) %>
     <% else %>
-      <%#= touch_yes_no_tag "PRESCRIBE ARVS", @patient, nil,
-        {:id => 'prescribe_arvs',
-        :allowFreeText => 'false',
-        :condition => 'hasReasonForART() == true && prescribeAntiretroviralDrugs() == true',
-        :helpText => "Prescribe ARVs?",
-        :tt_onLoad => "showCategory('Regimen');"} %>
+  <%#= touch_yes_no_tag "PRESCRIBE ARVS", @patient, nil,
+  {:id => 'prescribe_arvs',
+  :allowFreeText => 'false',
+  :condition => 'hasReasonForART() == true && prescribeAntiretroviralDrugs() == true',
+  :helpText => "Prescribe ARVs?",
+  :tt_onLoad => "showCategory('Regimen');"} %>
       <%if @prescribe_arvs_set %>
         <%= touch_hidden_tag("PRESCRIBE ARVS", @patient, 'YES', {:id => 'prescribe_arvs'}) %>
       <% else %>
@@ -2089,15 +2130,15 @@ pyridoxine_options = ["","25", "50"]
       <% current = session[:datetime].to_date rescue Date.today
       if current >= '2014-04-01'.to_date %>
         <% if @patient_bean.age >= 5 && !@current_hiv_program_state.match(/On antiretrovirals/i) && !@current_hiv_program_state.match(/Patient transferred in/i) %>
-          <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
-            {	:id => 'ipt_given',
-            :allowFreeText => 'false',
-            :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
-            :helpText => "Prescribe IPT",
-            :tt_onLoad => "showCategory('Regimen');"} %>
-          
+      <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
+      {	:id => 'ipt_given',
+      :allowFreeText => 'false',
+      :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
+      :helpText => "Prescribe IPT",
+      :tt_onLoad => "showCategory('Regimen');"} %>
+
           <% ipt_ans = 'YES' if @prescribe_ipt_set
-             ipt_ans = 'NO' if not @prescribe_ipt_set %> 
+          ipt_ans = 'NO' if not @prescribe_ipt_set %>
           <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
 
 
@@ -2113,15 +2154,15 @@ pyridoxine_options = ["","25", "50"]
 
       <%  else %>
         <% if @patient_bean.age >= 2 && !@current_hiv_program_state.match(/On antiretrovirals/i) && !@current_hiv_program_state.match(/Patient transferred in/i) %>
-          <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
-            {	:id => 'ipt_given',
-            :allowFreeText => 'false',
-            :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
-            :helpText => "Prescribe IPT",
-            :tt_onLoad => "showCategory('Regimen');"} %>
+      <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
+      {	:id => 'ipt_given',
+      :allowFreeText => 'false',
+      :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
+      :helpText => "Prescribe IPT",
+      :tt_onLoad => "showCategory('Regimen');"} %>
 
           <% ipt_ans = 'YES' if @prescribe_ipt_set
-             ipt_ans = 'NO' if not @prescribe_ipt_set %> 
+          ipt_ans = 'NO' if not @prescribe_ipt_set %>
           <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
 
           <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
@@ -2137,16 +2178,16 @@ pyridoxine_options = ["","25", "50"]
     <% else %>
       <!---NEW ART GUIDE LINES. Prescribe IPT for all children and adults ---->
       <% if @patient_bean.age >= 2 %>
-        <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,{
-          :id => 'ipt_given',
-          :allowFreeText => 'false',
-          :condition => "$('prescribe_arvs').value == 'YES' && prescribeIPT()",
-          :helpText => "Prescribe IPT",
-          :tt_onLoad => "showCategory('Regimen');"} %>
+    <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,{
+    :id => 'ipt_given',
+    :allowFreeText => 'false',
+    :condition => "$('prescribe_arvs').value == 'YES' && prescribeIPT()",
+    :helpText => "Prescribe IPT",
+    :tt_onLoad => "showCategory('Regimen');"} %>
 
-          <% ipt_ans = 'YES' if @prescribe_ipt_set
-             ipt_ans = 'NO' if not @prescribe_ipt_set %> 
-          <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
+        <% ipt_ans = 'YES' if @prescribe_ipt_set
+        ipt_ans = 'NO' if not @prescribe_ipt_set %>
+        <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
 
 
         <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
@@ -2197,30 +2238,30 @@ pyridoxine_options = ["","25", "50"]
 
     <% if @patient_bean.age >= 14 %>
       <% if @retrospective %>
-        <%#= touch_numeric_tag "CONDOMS", @patient, nil,
-          {	:max => '100',
-          :condition => 'hasARTVisit() == true;',
-          :tt_pageStyleClass => "unknownButton",
-          :helpText => 'Number of condoms given',
-          :tt_onLoad => "showCategory('Regimen');"
-        } %>
+    <%#= touch_numeric_tag "CONDOMS", @patient, nil,
+    {	:max => '100',
+    :condition => 'hasARTVisit() == true;',
+    :tt_pageStyleClass => "unknownButton",
+    :helpText => 'Number of condoms given',
+    :tt_onLoad => "showCategory('Regimen');"
+    } %>
       <% else %>
-        <%#= touch_numeric_tag "CONDOMS", @patient, nil,
-          {	:max => '100',
-          :condition => 'hasARTVisit() == true;',
-          :helpText => 'Number of condoms given',
-          :tt_onLoad => "showCategory('Regimen');"
-        } %>
+    <%#= touch_numeric_tag "CONDOMS", @patient, nil,
+    {	:max => '100',
+    :condition => 'hasARTVisit() == true;',
+    :helpText => 'Number of condoms given',
+    :tt_onLoad => "showCategory('Regimen');"
+    } %>
       <% end %>
 
     <% end %>
 
-    <%#= touch_text_area_tag "CLINICAL NOTES CONSTRUCT", @patient, nil,
-      {	:id => "clinical_notes",
-      :optional => true,
-      :helpText => "Clinical notes (optional)",
-      :tt_onLoad => "showCategory('Regimen');"
-    }, time=DateTime.now() %>
+<%#= touch_text_area_tag "CLINICAL NOTES CONSTRUCT", @patient, nil,
+{	:id => "clinical_notes",
+:optional => true,
+:helpText => "Clinical notes (optional)",
+:tt_onLoad => "showCategory('Regimen');"
+}, time=DateTime.now() %>
 
     <% initial_date = "#{session[:datetime].strftime('%Y-%m-%d')}" rescue "#{(Date.today).strftime('%Y-%m-%d')}" %>
 

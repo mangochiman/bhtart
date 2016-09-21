@@ -172,7 +172,12 @@ function updateNumericInput(){
     currentNumericInput.value = numericValue;
     //key
     key = currentNumericInput.getAttribute('key');
-    document.getElementById(key).value = numericValue
-    console.log(key)
+    drugName = key.split('_')[0];
+    am_pm = key.split('_')[1];
+   
+    document.getElementById(key).value = numericValue;
+    selectedDrugsHash[drugName][am_pm] = numericValue;
+
+    //selectedDrugsHash
     hideLibPopup();
 }
