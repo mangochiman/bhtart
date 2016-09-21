@@ -1573,6 +1573,14 @@
     return prescribe;
   }
 
+  function prescribeCPT() {
+    var prescribe = false;
+    <%if @prescribe_cpt_set%>
+      prescribe = true;
+    <%end%>
+    return prescribe;
+  }
+
   function prescribeIPT() {
     var prescribe = false;
     <%if @prescribe_ipt_set%>
@@ -2069,7 +2077,7 @@ pyridoxine_options = ["","25", "50"]
         <%= touch_yes_no_tag "Prescribe cotramoxazole", @patient, nil,
           {	:id => 'cpt_given',
           :allowFreeText => 'false',
-          :condition => 'prescribeAntiretroviralDrugs() == true',
+          :condition => 'prescribeAntiretroviralDrugs() == true && prescribeCPT() == true',
           :helpText => "Prescribe CPT",
           :tt_onLoad => "showCategory('Regimen');"} %>
 
