@@ -146,7 +146,18 @@ function hideLibPopup(){
 
 function updateNumericPadInput(value){
     input = document.getElementById('numeric-pad-input');
-    input.value += value
+    if (value == '.'){
+        if (!input.value.contains('.')){
+            if (input.value.length >=1) input.value += value; //Avoid decimal point from the beginning or multiple decimals
+        }
+    }else{
+        input.value += value;
+    }
+    if (parseInt(value) == 0){
+        if (input.value == 0){
+            input.value = 0 //Avoid things like 000000000000 at the beginning
+        }
+    }
 }
 
 function clearNumericInput(){
