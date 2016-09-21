@@ -250,5 +250,24 @@ module MedicationService
     return regimen_medications    
   end
 
+  def self.regimen_interpreter(medication_ids = [])
+    return nil if medication_ids.blank?
+    moh_regimen_ingredients = {}
+
+    (MohRegimenLookup.all || []).each do |l|
+      moh_regimen_ingredients[l.regimen_name] = [] if moh_regimen_ingredients[l.regimen_name].blank?
+      moh_regimen_ingredients[l.regimen_name] << l.drug_inventory_id
+    end
+
+    regimen_name = 'Unknown'
+
+    (moh_regimen_ingredients || {}).each do |regimen, drug_inventory_ids|
+      if (drug_inventory_ids - medication_ids) == [] and (drug_inventory_ids.count == medication_ids.count)
+        regimen_name = regimen
+      end
+    end
+
+    return regimen_name
+  end
 
 end
