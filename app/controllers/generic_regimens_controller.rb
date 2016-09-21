@@ -517,7 +517,6 @@ class GenericRegimensController < ApplicationController
 		auto_tb_continuation_expire_date = session[:datetime] + params[:tb_continuation_duration].to_i.days rescue Time.now + params[:tb_continuation_duration].to_i.days
 		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
 
-
 		orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:tb_regimen]})
 		ActiveRecord::Base.transaction do
 			# Need to write an obs for the regimen they are on, note that this is ARV
@@ -690,7 +689,7 @@ class GenericRegimensController < ApplicationController
           dose,
           frequency,
           prn,
-          "#{drug.name}: #{instructions} (#{regimen_name})",
+          instructions,
           equivalent_daily_dose)
 			end if prescribe_arvs
 		end
