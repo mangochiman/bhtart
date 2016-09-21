@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-=begin
+#=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -12,7 +12,7 @@ EOF
 
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
-select 
+select
         `p`.`patient_id` AS `patient_id`,
         `p`.`earliest_start_date` AS `earliest_start_date`,
         `p`.`death_date` AS `death_date`,
@@ -26,7 +26,7 @@ select
     group by `p`.`patient_id`
 EOF
 
-=end
+#=end
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `last_text_for_obs`;
 EOF
@@ -186,9 +186,16 @@ IF set_patient_state = 6 THEN
 END IF;
 
 IF set_patient_state = 7 THEN
-  SET set_outcome = 'On antiretrovirals';
-END IF;
+  SET set_patient_state = current_defaulter(patient_id, visit_date);
 
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_patient_state = 0 THEN
+    SET set_outcome = 'On antiretrovirals';
+  END IF;
+END IF;
 
 IF set_outcome IS NULL THEN
   SET set_patient_state = current_defaulter(patient_id, visit_date);
@@ -508,6 +515,8 @@ Unique PatientProgram entries at the current location for those patients with at
     Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
 =end
     cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, end_date)
+    cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, end_date)
+
 
 =begin
     TB Status
@@ -549,8 +558,8 @@ Unique PatientProgram entries at the current location for those patients with at
       AND o.person_id IN(#{patient_ids.join(',')}) AND
       o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND o.obs_datetime = (
-        SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{tb_status_concept_id}
-        AND voided = 0 AND o.person_id = person_id AND
+        SELECT max(obs_datetime) FROM obs WHERE concept_id = #{tb_status_concept_id}
+        AND voided = 0 AND person_id = o.person_id AND
         obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       ) GROUP BY person_id
 EOF
@@ -576,9 +585,8 @@ EOF
       return registered
   end
 
-  def self.total_patients_with_side_effects(data, end_date)
+  def self.total_patients_with_side_effects(data, start_date, end_date)
     patient_ids = []
-
     (data || []).each do |row|
       patient_ids << row['patient_id'].to_i
     end
@@ -586,24 +594,105 @@ EOF
     return [] if patient_ids.blank?
     result = []
 
-    drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
-    data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{drug_induced_concept_id}
-      AND o.person_id IN(#{patient_ids.join(',')}) AND
-      o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND o.obs_datetime = (
-        SELECT max(obs_datetime) FROM obs WHERE o.concept_id = #{drug_induced_concept_id}
-        AND voided = 0 AND o.person_id = person_id AND
-        obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      ) GROUP BY person_id
+  	drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
+    malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
+    no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
+
+    malawi_art_side_effects =  ActiveRecord::Base.connection.select_all <<EOF
+            SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id IN (#{malawi_art_side_effects_concept_id})
+            AND o.person_id IN (#{patient_ids.join(',')})
+            AND o.value_coded != #{no_side_effects_concept_id}
+            AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            AND o.obs_datetime = (
+              SELECT max(obs_datetime) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id})
+              AND value_coded != #{no_side_effects_concept_id}
+              AND voided = 0 AND person_id = o.person_id
+              AND obs_datetime BETWEEN  '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            ) GROUP BY person_id
 EOF
 
+    data = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{drug_induced_concept_id}
+        AND o.person_id IN (#{patient_ids.join(',')}) AND
+        o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND o.obs_datetime = (
+          SELECT max(obs_datetime) FROM obs WHERE concept_id = #{drug_induced_concept_id}
+          AND voided = 0 AND person_id = o.person_id
+          AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        ) GROUP BY person_id
+EOF
     (data || []).each do |row|
-      result << row
+  	   result << row['person_id'].to_i
     end
 
-    return result
+    (malawi_art_side_effects || []).each do |row|
+      result << row['person_id'].to_i
+    end
+     return result.uniq if !result.blank?
+  end
 
+  def self.total_patients_without_side_effects(data, start_date, end_date)
+    patient_ids = []; drug_induced_ids = []
+    (data || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+  	drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
+    malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
+    no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
+    symptom_present_concept_id = ConceptName.find_by_name('Symptom present').concept_id
+
+    malawi_art_side_effects =  ActiveRecord::Base.connection.select_all <<EOF
+            SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id IN (#{malawi_art_side_effects_concept_id})
+            AND o.person_id IN (#{patient_ids.join(',')})
+            AND o.value_coded = #{no_side_effects_concept_id}
+            AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            AND o.obs_datetime = (
+              SELECT max(obs_datetime) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id})
+              AND value_coded = #{no_side_effects_concept_id}
+              AND voided = 0 AND person_id = o.person_id
+              AND obs_datetime BETWEEN  '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            ) GROUP BY person_id
+EOF
+  drug_induced = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{drug_induced_concept_id}
+        AND o.person_id IN (#{patient_ids.join(',')}) AND
+        o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND o.obs_datetime = (
+          SELECT max(obs_datetime) FROM obs WHERE concept_id = #{drug_induced_concept_id}
+          AND voided = 0 AND person_id = o.person_id
+          AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        ) GROUP BY person_id
+EOF
+
+    (drug_induced || []).each do |row|
+      drug_induced_ids << row['person_id']
+    end
+    drug_induced_ids = [0] if drug_induced_ids.blank?
+
+    patients = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{symptom_present_concept_id}
+        AND (o.person_id IN (#{patient_ids.join(',')}) AND
+             o.person_id NOT IN (#{drug_induced_ids.join(',')}))
+		AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND o.obs_datetime = (
+          SELECT max(obs_datetime) FROM obs WHERE concept_id = #{drug_induced_concept_id}
+          AND voided = 0 AND person_id = o.person_id
+          AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        ) GROUP BY person_id
+EOF
+
+    (patients || []).each do |row|
+  	   result << row['person_id'].to_i
+    end
+
+    (malawi_art_side_effects || []).each do |row|
+      result << row['person_id'].to_i
+    end
+     return result
   end
 
   def self.cal_regimem_category(patient_list, end_date)
@@ -692,7 +781,8 @@ EOF
       ActiveRecord::Base.connection.execute <<EOF
         CREATE TABLE temp_patient_outcomes
           SELECT patient_id, patient_outcome(patient_id, '#{end_date}') cum_outcome
-        FROM temp_earliest_start_date;
+        FROM temp_earliest_start_date
+        WHERE date_enrolled <= '#{end_date}';
 EOF
 
   end
@@ -719,7 +809,10 @@ EOF
 
   def self.current_episode_of_tb(start_date, end_date)
     #CURRENT EPISODE OF TB
-    concept_id = ConceptName.find_by_name('EXTRAPULMONARY TUBERCULOSIS (EPTB)').concept_id
+    eptb_concept_id = ConceptName.find_by_name('EXTRAPULMONARY TUBERCULOSIS (EPTB)').concept_id
+    pulmonary_tb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS').concept_id
+    current_ptb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS (CURRENT)').concept_id
+
     who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     registered = []
 
@@ -727,7 +820,7 @@ EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded = #{concept_id}) AND concept_id = #{who_stages_criteria}
+      AND (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND concept_id = #{who_stages_criteria})
       AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
 EOF
 
@@ -738,7 +831,8 @@ EOF
 
   def self.tb_within_the_last_two_years(start_date, end_date)
     #Pulmonary tuberculosis within the last 2 years
-    concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
+    pulmonary_tb_within_last_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
+    ptb_within_the_past_two_yrs_concept_id = ConceptName.find_by_name('Ptb within the past two years').concept_id
     who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     registered = []
 
@@ -746,7 +840,7 @@ EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded = #{concept_id}) AND concept_id = #{who_stages_criteria}
+      AND (value_coded IN (#{pulmonary_tb_within_last_2yrs_concept_id}, #{ptb_within_the_past_two_yrs_concept_id})) AND concept_id = #{who_stages_criteria}
       AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
 EOF
 
@@ -1021,6 +1115,7 @@ EOF
     registered = [] ; patient_id_plus_date_enrolled = []
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
+      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
 EOF
@@ -1031,14 +1126,17 @@ EOF
 
     yes_concept_id = ConceptName.find_by_name('Yes').concept_id
     preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
+    patient_preg_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
+    preg_at_initiation_concept_id = ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id
+
 
     (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-      result = ActiveRecord::Base.connection.select_one <<EOF
+      result = ActiveRecord::Base.connection.select_value <<EOF
         SELECT * FROM obs
         WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
         AND '#{(date_enrolled + 28.days).strftime('%Y-%m-%d 23:59:59')}'
         AND person_id = #{patient_id} AND value_coded = #{yes_concept_id}
-        AND concept_id = #{preg_concept_id} AND voided = 0 GROUP BY person_id;
+        AND concept_id IN (#{preg_concept_id}, #{patient_preg_concept_id}, #{preg_at_initiation_concept_id}) AND voided = 0 GROUP BY person_id;
 EOF
 
       registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
