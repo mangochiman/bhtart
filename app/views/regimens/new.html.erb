@@ -7,6 +7,7 @@
 <%= javascript_include_tag("miscellaneous")%>
 <%= stylesheet_link_tag("miscellaneous")%>
 <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
+<%= javascript_include_tag("numericKeypad")%>
 <style type="text/css">
 
 
@@ -507,6 +508,29 @@
   #tt_page_confirm_current_regimen .inputFrameClass{
     height: 0px !important;
 }
+.dose-input{
+   float: right;
+    height: 3em;
+    margin-right: 16px;
+    width: 120px;
+    font-weight: bold;
+    font-size: 16pt;
+    text-align: center;
+}
+
+.numeric-input{
+   background-color: white;
+    border: 1px solid black;
+    font-size: 14pt;
+    height: 2em;
+    margin-top: -17px;
+    padding-bottom: 13px;
+    top: 7px;
+    width: 80%;
+    color: black;
+    text-align: center;
+    font-weight: bold;
+}
 </style>
 
 <%= javascript_include_tag "prototype"%>
@@ -942,14 +966,15 @@
             regimen_id = data[2]
             html += "<tr><td>" + data[0] + "</td>"
             html += "<td>" + data[1] + "</td>"
-            html += "<td>" + '' + "</td>"
-            html += "<td>" + '' + "</td>"
+            html += "<td><input key='" + data[0] + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+            html += "<td><input key='" + data[0] + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
             html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
             html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
             $('touchscreenInput'+tstCurrentPage).value += data[0] + ':';
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
+            createHiddenInputsForDoses(data[0])
           }
           html += "</table>"
           prescription_container.innerHTML = html
@@ -958,6 +983,37 @@
 
   }
 
+  function createHiddenInputsForDoses(drugName){
+    //jQuery('#' + drugName + '_am').remove();
+    //jQuery('#' + drugName + '_pm').remove();
+    previousDrugAmInput = document.getElementById(drugName + '_am');
+    if (previousDrugAmInput){
+      previousDrugAmInput.parentNode.removeChild(previousDrugAmInput)
+    }
+
+    previousDrugPmInput = document.getElementById(drugName + '_pm');
+    if (previousDrugPmInput){
+      previousDrugPmInput.parentNode.removeChild(previousDrugPmInput);
+    }
+
+    amInput = document.createElement('input');
+    amInput.type = 'hidden';
+    amInput.className = 'custom-input';
+    amInput.name = 'drug_names[' + drugName + '][am]';
+    amInput.id = drugName + '_am';
+
+
+    pmInput = document.createElement('input');
+    pmInput.type = 'hidden';
+    pmInput.className = 'custom-input'
+    pmInput.name = 'drug_names[' + drugName + '][pm]';
+    pmInput.id = drugName + '_pm';
+
+    form = jQuery('form')[0];
+    form.appendChild(amInput);
+    form.appendChild(pmInput);
+  }
+  
   function hideStockLevelDetails(){
     document.getElementsByClassName("stock_level_details")[0].style.display='none';
   }
@@ -1950,7 +2006,7 @@ pyridoxine_options = ["","25", "50"]
 
     <%= select_tag :regimen_concept_id_all, nil, {
       :allowFreeText => 'false',
-      :tt_onLoad => "checkInput(); changeRegimen();set_patient_posible_all_suggestions($('patient_program').value);setTimeout('setSelectedRow(); setTextToAppear(\" (MoH Recommended)\")',1000);showCategory('Regimen');",
+      :tt_onLoad => "checkInput(); set_patient_posible_all_suggestions($('patient_program').value);setTimeout('setSelectedRow(); setTextToAppear(\" (MoH Recommended)\")',1000);showCategory('Regimen');",
       :condition => 'other_regimen == "yes"',
       :helpText => "Select ART regimen",
       :multiple => true,
