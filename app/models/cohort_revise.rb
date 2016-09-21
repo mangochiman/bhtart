@@ -513,8 +513,8 @@ Unique PatientProgram entries at the current location for those patients with at
     Total patients with side effects:
     Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
 =end
-    cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, end_date)
-    cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, end_date)
+    cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
+    cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
 
 
 =begin
@@ -1114,7 +1114,6 @@ EOF
     registered = [] ; patient_id_plus_date_enrolled = []
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
-      INNER JOIN person p ON p.person_id = t.patient_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
 EOF
