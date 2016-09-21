@@ -942,6 +942,12 @@ end %>
     %>
     <% end %>-->
 
+    <%if @allergic_to_sulphur.blank? %>
+      <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
+        { :id => "allergic_to_sulphur",
+        :helpText => "Is patient allergic to sulphur" } %>
+    <%end%>
+
     <label for='summary'>Summary</label>
     <%= text_field_tag :summary, nil, { :tt_onLoad => "summary();__$('keyboard').style.display = 'none';", :optional => "true", :tt_pageStyleClass => "NoControls" } %>
 

@@ -16,6 +16,17 @@ class GenericRegimensController < ApplicationController
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, allergic_to_sulphur_session_date) #chunked
     ################################################################################################################
 
+
+    ################################################################################################################
+    @prescribe_arvs_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'ARVS')
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'CPT')
+    end
+    @prescribe_ipt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'Isoniazid')
+    ################################################################################################################
+
 		@current_regimen = current_regimen(@patient.id) rescue nil
 
 		#@hiv_programs = @patient.patient_programs.not_completed.in_programs('HIV PROGRAM')
@@ -1190,6 +1201,17 @@ class GenericRegimensController < ApplicationController
         person_id = ? AND obs_datetime = (SELECT MAX(obs_datetime) FROM obs o
         WHERE o.person_id = #{patient_id} AND o.concept_id =#{regimen_category.id}
         AND o.voided = 0)",regimen_category.id, patient_id]).value_text rescue nil
+  end
+
+  def prescribe_medication_set(patient, date, medication_type)
+	  prescribe_medication = Concept.find_by_name("Medication orders").concept_id
+	  medication_concept = Concept.find_by_name(medication_type).concept_id
+
+    found = Observation.find(:first, :conditions => ["concept_id = ? AND
+        person_id = ? AND value_coded = ? AND DATE(obs_datetime) = ?",
+        prescribe_medication, patient.id, medication_concept, date.to_date])
+
+    return (found.blank? ? false : true)
   end
 
   protected

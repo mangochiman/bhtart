@@ -967,35 +967,44 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%= touch_hidden_tag "REFER TO ART CLINICIAN", @patient, "NO", :id => "refer_to_clinician" %>
   <%end unless art_adherence_to_be_done %>
 
+  <%if @allergic_to_sulphur.blank? %>
+    <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
+      {	:id => "allergic_to_sulphur",
+      :condition => "$('refer_to_clinician').value == 'NO'" ,
+      :helpText => "Is patient allergic to cotrimoxazole" } %>
+  <%end unless art_adherence_to_be_done %>
+
 
   <%if @obs_ans.match(/Prescribe drugs: Yes/i) %>
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%else%>
     <%  session_date = session[:datetime].to_date rescue nil
-
+    if @allergic_to_sulphur.blank? 
+      medication_options = ['ARVs','CPT','Isoniazid','NONE']
+    else
+      medication_options = ['ARVs','Isoniazid','NONE']
+    end
   %>
     <%  if session_date %>
-      <%= touch_yes_no_unknown_tag "Prescribe drugs", @patient, nil,
+      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
         {:id => "prescribe_drugs",
         :tt_onLoad => "addFastTrackAssesmentButton();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO'" ,
-        :helpText => "Prescribe drugs during this visit" } %>
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit:" } %>
+    
     <% else %>
-      <%= touch_yes_no_tag "Prescribe drugs", @patient, nil,
+      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
         {:id => "prescribe_drugs",
         :tt_onLoad => "addFastTrackAssesmentButton();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO'" ,
-        :helpText => "Prescribe drugs during this visit" } %>
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit:" } %>
+    
     <% end %>
-  <%end unless art_adherence_to_be_done %>
-
-  <%if @allergic_to_sulphur.blank? %>
-    <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
-      {	:id => "allergic_to_sulphur",
-      :condition => "$('refer_to_clinician').value == 'NO' && $('prescribe_drugs').value =='YES'" ,
-      :helpText => "Is patient allergic to cotrimoxazole" } %>
+    <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%end unless art_adherence_to_be_done %>
 
   <% session_date = session[:datetime].to_date rescue nil
