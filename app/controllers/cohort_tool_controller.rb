@@ -1433,6 +1433,28 @@ class CohortToolController < GenericCohortToolController
   def cohort_menu
   end
 
+  def revised_cohort_menu
+  end
+
+  def revised_cohort
+    render :layout => false
+  end
+
+  def revised_cohort_to_print
+    render :layout => false
+  end
+
+  def download_pdf
+        zoom = 0.8
+        output ="file_name.pdf"
+        print_url = "wkhtmltopdf http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}/cohort_tool/revised_cohort_to_print #{Rails.root}/tmp/#{output}"
+        Kernel.system print_url
+        #raise 'done'
+        pdf_filename = File.join(Rails.root, "tmp/#{output}")
+        send_file(pdf_filename, :filename => "#{output}", :type => "application/pdf")
+	    return
+  end
+
   def adherence
     @logo = CoreService.get_global_property_value('logo').to_s
     @current_location = Location.current_health_center.name
@@ -2699,7 +2721,7 @@ class CohortToolController < GenericCohortToolController
     end
     @data =  data
     
-    render:layout=>"report"
+    render :layout => "report"
   end
   
 end
