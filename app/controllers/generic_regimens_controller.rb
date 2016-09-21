@@ -620,36 +620,66 @@ class GenericRegimensController < ApplicationController
 
     params[:regimen] = params[:regimen_all] if ! params[:regimen_all].blank?
 		reduced = false
-		orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
+    weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
+
+    orders = MedicationService.regimen_medications(params[:regimen], weight)
+    regimen_drug_ids = orders.collect{|o|o[:drug_id]}
+		#orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
 		ActiveRecord::Base.transaction do
 			# Need to write an obs for the regimen they are on, note that this is ARV
 			# Specific at the moment and will likely need to have some kind of lookup
 			# or be made generic
-			selected_regimen = Regimen.find(params[:regimen]) if prescribe_arvs
-
+			#selected_regimen = Regimen.find(params[:regimen]) if prescribe_arvs
+      selected_regimen = MedicationService.regimen_interpreter(regimen_drug_ids) if prescribe_arvs
 			obs = Observation.create(
 				:concept_name => "REGIMEN CATEGORY",
 				:person_id => @patient.person.person_id,
 				:encounter_id => encounter.encounter_id,
-				:value_text => selected_regimen.regimen_index,
+				:value_text => selected_regimen,
 				:obs_datetime => start_date) if prescribe_arvs
-
+=begin
 			obs = Observation.create(
 				:concept_name => "WHAT TYPE OF ANTIRETROVIRAL REGIMEN",
 				:person_id => @patient.person.person_id,
 				:encounter_id => encounter.encounter_id,
 				:value_coded => params[:regimen_concept_id],
 				:obs_datetime => start_date) if prescribe_arvs
+=end
+      regimen_type = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' ')
+      obs = Observation.create(
+				:concept_name => "WHAT TYPE OF ANTIRETROVIRAL REGIMEN",
+				:person_id => @patient.person.person_id,
+				:encounter_id => encounter.encounter_id,
+				:value_text => regimen_type,
+				:obs_datetime => start_date) if prescribe_arvs
 
 			orders.each do |order|
 				# Reduce buffer from 2 to 1 for starter packs
+=begin
 				if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
 					reduced = true
 					auto_expire_date  = auto_expire_date - 1.days
 				end
+=end
+				#drug = Drug.find(order.drug_inventory_id)
+        drug = Drug.find(order[:drug_id])
+				#regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
+        regimen_name = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' + ')
+        morning_tabs = order[:am]
+        evening_tabs = order[:pm]
 
-				drug = Drug.find(order.drug_inventory_id)
-				regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
+        instructions = "Morning: #{morning_tabs} tab(s), Evening: #{evening_tabs} tabs"
+        frequency = "ONCE A DAY (OD)"
+        equivalent_daily_dose = morning_tabs.to_f + evening_tabs.to_f
+        dose = morning_tabs if evening_tabs.to_i == 0
+        dose = evening_tabs if morning_tabs.to_i == 0
+        
+        if (morning_tabs.to_i > 0 && evening_tabs.to_i > 0)
+          frequency = "TWICE A DAY (BD)"
+          dose = (morning_tabs.to_f + evening_tabs.to_f)/2
+        end
+        prn = 0
+
 				DrugOrder.write_order(
           encounter,
           @patient,
@@ -657,11 +687,11 @@ class GenericRegimensController < ApplicationController
           drug,
           start_date,
           auto_expire_date,
-          order.dose,
-          order.frequency,
-          order.prn,
-          "#{drug.name}: #{order.instructions} (#{regimen_name})",
-          order.equivalent_daily_dose)
+          dose,
+          frequency,
+          prn,
+          "#{drug.name}: #{instructions} (#{regimen_name})",
+          equivalent_daily_dose)
 			end if prescribe_arvs
 		end
 
