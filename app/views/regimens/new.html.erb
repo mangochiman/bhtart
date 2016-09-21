@@ -1517,6 +1517,14 @@
     return prescribe;
   }
 
+  function prescribeIPT() {
+    var prescribe = false;
+    <%if @prescribe_ipt_set%>
+      prescribe = true;
+    <%end%>
+    return prescribe;
+  }
+
   function isRegisteredForTB() {
     var isRegistered = false;
     if(prescribeTBDrugs == 'true'){
@@ -1896,12 +1904,17 @@ pyridoxine_options = ["","25", "50"]
     <% if @fast_track_patient == true && !@current_regimen.blank? %>
       <%= touch_hidden_tag("PRESCRIBE ARVS", @patient, 'YES', {:id => 'prescribe_arvs'}) %>
     <% else %>
-      <%= touch_yes_no_tag "PRESCRIBE ARVS", @patient, nil,
+      <%#= touch_yes_no_tag "PRESCRIBE ARVS", @patient, nil,
         {:id => 'prescribe_arvs',
         :allowFreeText => 'false',
         :condition => 'hasReasonForART() == true && prescribeAntiretroviralDrugs() == true',
         :helpText => "Prescribe ARVs?",
         :tt_onLoad => "showCategory('Regimen');"} %>
+      <%if @prescribe_arvs_set %>
+        <%= touch_hidden_tag("PRESCRIBE ARVS", @patient, 'YES', {:id => 'prescribe_arvs'}) %>
+      <% else %>
+        <%= touch_hidden_tag("PRESCRIBE ARVS", @patient, 'NO', {:id => 'prescribe_arvs'}) %>
+      <% end %>
     <% end %>
 
 
@@ -2020,12 +2033,17 @@ pyridoxine_options = ["","25", "50"]
       <% current = session[:datetime].to_date rescue Date.today
       if current >= '2014-04-01'.to_date %>
         <% if @patient_bean.age >= 5 && !@current_hiv_program_state.match(/On antiretrovirals/i) && !@current_hiv_program_state.match(/Patient transferred in/i) %>
-          <%= touch_yes_no_tag "ISONIAZID", @patient, nil,
+          <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
             {	:id => 'ipt_given',
             :allowFreeText => 'false',
-            :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES'",
+            :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
             :helpText => "Prescribe IPT",
             :tt_onLoad => "showCategory('Regimen');"} %>
+          
+          <% ipt_ans = 'YES' if @prescribe_ipt_set
+             ipt_ans = 'NO' if not @prescribe_ipt_set %> 
+          <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
+
 
           <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
             :allowFreeText => 'false',
@@ -2039,12 +2057,16 @@ pyridoxine_options = ["","25", "50"]
 
       <%  else %>
         <% if @patient_bean.age >= 2 && !@current_hiv_program_state.match(/On antiretrovirals/i) && !@current_hiv_program_state.match(/Patient transferred in/i) %>
-          <%= touch_yes_no_tag "ISONIAZID", @patient, nil,
+          <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
             {	:id => 'ipt_given',
             :allowFreeText => 'false',
-            :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES'",
+            :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
             :helpText => "Prescribe IPT",
             :tt_onLoad => "showCategory('Regimen');"} %>
+
+          <% ipt_ans = 'YES' if @prescribe_ipt_set
+             ipt_ans = 'NO' if not @prescribe_ipt_set %> 
+          <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
 
           <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
             :allowFreeText => 'false',
@@ -2059,12 +2081,17 @@ pyridoxine_options = ["","25", "50"]
     <% else %>
       <!---NEW ART GUIDE LINES. Prescribe IPT for all children and adults ---->
       <% if @patient_bean.age >= 2 %>
-        <%= touch_yes_no_tag "ISONIAZID", @patient, nil,{
+        <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,{
           :id => 'ipt_given',
           :allowFreeText => 'false',
-          :condition => "$('prescribe_arvs').value == 'YES'",
+          :condition => "$('prescribe_arvs').value == 'YES' && prescribeIPT()",
           :helpText => "Prescribe IPT",
           :tt_onLoad => "showCategory('Regimen');"} %>
+
+          <% ipt_ans = 'YES' if @prescribe_ipt_set
+             ipt_ans = 'NO' if not @prescribe_ipt_set %> 
+          <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
+
 
         <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
           :allowFreeText => 'false',

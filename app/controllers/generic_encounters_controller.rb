@@ -1,5 +1,34 @@
 class GenericEncountersController < ApplicationController
   def create(params=params, session=session)
+    
+   
+    if params[:encounter]['encounter_type_name'].match(/HIV CLINIC CONSULTATION|ART ADHERENCE/i) 
+    #A hack to set concept: Prescribe drugs to No/Yes if Medication orders include any of: ARVs/CPT/IPT
+      set_prescribe_drugs_yes = true
+      params[:observations].each do |ob|
+        if ob[:concept_name] == 'Medication orders'
+          options_selected = ob['value_coded_or_text_multiple'].join(',')
+          if options_selected.match(/None/i)
+            set_prescribe_drugs_yes = false
+            break
+          end
+        end
+      end
+
+      params[:observations].each do |ob|
+        if ob[:concept_name] == 'Prescribe drugs'
+          if set_prescribe_drugs_yes
+            ob['value_coded'] = ConceptName.find_by_name('Yes').concept_id
+          else
+            ob['value_coded'] = ConceptName.find_by_name('No').concept_id
+          end
+          break
+        end
+      end
+
+    end
+    ##########3 hack ends here ######
+
     xpertassay = false
     if params[:change_appointment_date] == "true"
       session_date = session[:datetime].to_date rescue Date.today
