@@ -83,6 +83,7 @@ END;
 EOF
 
 
+
     ActiveRecord::Base.connection.execute <<EOF
       DROP FUNCTION IF EXISTS `current_defaulter`;
 EOF
@@ -515,8 +516,6 @@ Unique PatientProgram entries at the current location for those patients with at
 =end
     cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
     cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
-
-
 =begin
     TB Status
     Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
@@ -531,8 +530,10 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.get_tb_status('Confirmed TB NOT on treatment')
     cohort.unknown_tb_status = self.get_tb_status('unknown_tb_status')
 
-    runtime = "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    return [cohort, runtime]
+    puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    return cohort
+
+
   end
 
 
@@ -691,7 +692,7 @@ EOF
     (malawi_art_side_effects || []).each do |row|
       result << row['person_id'].to_i
     end
-     return result
+    return result.uniq if !result.blank?
   end
 
   def self.cal_regimem_category(patient_list, end_date)
@@ -758,12 +759,11 @@ EOF
 
   def self.get_outcome(outcome)
     registered = []
+
     total_alive_and_on_art = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_patient_outcomes
       WHERE cum_outcome = '#{outcome}' GROUP BY patient_id;
 EOF
-
-
     (total_alive_and_on_art || []).each do |patient|
       registered << patient
     end
@@ -819,7 +819,7 @@ EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND concept_id = #{who_stages_criteria})
+      AND (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id})) AND concept_id = #{who_stages_criteria}
       AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
 EOF
 
@@ -1126,7 +1126,6 @@ EOF
     preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
     patient_preg_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
     preg_at_initiation_concept_id = ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id
-
 
     (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
       result = ActiveRecord::Base.connection.select_value <<EOF
