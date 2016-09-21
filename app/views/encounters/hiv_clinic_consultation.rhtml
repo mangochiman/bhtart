@@ -972,6 +972,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       {	:id => "allergic_to_sulphur",
       :condition => "$('refer_to_clinician').value == 'NO'" ,
       :helpText => "Is patient allergic to cotrimoxazole" } %>
+  <%else%>
+    <input type="hidden" id='allergic_to_sulphur' value="<%=@allergic_to_sulphur.upcase%>" />
   <%end unless art_adherence_to_be_done %>
 
 
@@ -979,29 +981,44 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%else%>
     <%  session_date = session[:datetime].to_date rescue nil
-    if @allergic_to_sulphur.blank? 
-      medication_options = ['ARVs','CPT','Isoniazid','NONE']
-    else
-      medication_options = ['ARVs','Isoniazid','NONE']
-    end
+        medication_options_allergic_to_sulphur_no = ['ARVs','CPT','Isoniazid','NONE']
+        medication_options_allergic_to_sulphur_yes = ['ARVs','Isoniazid','NONE']
   %>
     <%  if session_date %>
-      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
+      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
         :tt_onLoad => "addFastTrackAssesmentButton();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
-        :condition => "$('refer_to_clinician').value == 'NO'" ,
+        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit:" } %>
+   
+      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
+        {:id => "prescribe_drugs",
+        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
+        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit:" } %>
+   
     
     <% else %>
-      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
+      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
         :tt_onLoad => "addFastTrackAssesmentButton();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
-        :condition => "$('refer_to_clinician').value == 'NO'" ,
+        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit:" } %>
+   
+      <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
+        {:id => "prescribe_drugs",
+        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
+        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit:" } %>
+   
     
     <% end %>
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>

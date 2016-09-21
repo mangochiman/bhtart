@@ -1,13 +1,17 @@
 class GenericEncountersController < ApplicationController
   def create(params=params, session=session)
     
-   
-    if params[:encounter]['encounter_type_name'].match(/HIV CLINIC CONSULTATION|ART ADHERENCE/i) 
     #A hack to set concept: Prescribe drugs to No/Yes if Medication orders include any of: ARVs/CPT/IPT
+    if params[:encounter]['encounter_type_name'].match(/HIV CLINIC CONSULTATION|ART ADHERENCE/i) 
       set_prescribe_drugs_yes = true
       params[:observations].each do |ob|
         if ob[:concept_name] == 'Medication orders'
-          options_selected = ob['value_coded_or_text_multiple'].join(',')
+          options_selected = ob['value_coded_or_text_multiple'].join(',') unless ob['value_coded_or_text_multiple'].blank?
+          if options_selected.blank?
+            params[:observations] -= [ob]
+            next
+          end
+
           if options_selected.match(/None/i)
             set_prescribe_drugs_yes = false
             break
