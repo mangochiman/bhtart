@@ -88,7 +88,17 @@ side_effects_array = set.map{|item|
 
 }
 side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
+
+tb_symptom_concept_id = concept_id = ConceptName.find_by_name('Routine Tuberculosis Screening').concept_id
+tb_symptoms_set = ConceptSet.find_all_by_concept_set(tb_symptom_concept_id, :order => 'sort_weight')
+tb_symptoms_array = tb_symptoms_set.map{|item|
+  next if item.concept.blank?;
+  [item.concept.fullname]
+}.compact.flatten
+
 %>
+
+
 <script>
 
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>";
@@ -100,6 +110,7 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
   var fastTrackAssesmentConcepts = JSON.parse('<%= @fast_track_assesment_concept_names.to_json %>');
   var patient_id = <%= @patient.id %>;
   var sideEffectsHash = {};
+  var tbSymptomsHash = {};
 
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
@@ -390,6 +401,9 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     sideEffectsHash['<%= side_effect %>'] = {yes: '', no: ''}
 <% end %>
 
+<% tb_symptoms_array.each do |tb_syptom| %>
+    tbSymptomsHash['<%= tb_syptom %>'] = {yes: '', no: ''}
+<% end %>
 
   function advancedSideEffects(){
 
@@ -444,6 +458,58 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     
   }
 
+  function advancedTBSymptoms(){
+    tbSymptomssArray = JSON.parse('<%=  tb_symptoms_array.to_json %>');
+    jQuery("#inputFrame" + tstCurrentPage).remove()
+    jQuery("#helpText" + tstCurrentPage).css({
+      marginLeft: "30%",
+      fontWeight: "bold",
+      fontSize: "1.9em"
+    });
+
+    html = "<div id='divcontent'>";
+    html += "<div id='divScroller'>";
+    tbSymptomsOptions = JSON.parse('<%=  tb_symptoms_array.to_json %>');
+    html += "<table cellspacing='1' cellpadding='2' width='95%'>";
+    html += "<tbody>";
+
+    for (var i=0; i <= tbSymptomsOptions.length - 1; i++){
+      html += "<tr>";
+      html += "<td class='labelText'>" + tbSymptomsOptions[i] + "</td>";
+      html += "<td style='width: 50%;'>";
+      html += "<table style='float: right; min-width: 150px;'>";
+      html += "<tr>";
+
+      html += "<td>";
+      html += "<button onclick='updateTBSymptomYesValue(this);' symptom='" + tbSymptomsOptions[i] + "' class='blue' value='" + tbSymptomsOptions[i] + "'><span>Yes</span></button>"
+      html += "</td>";
+
+      html += "<td>";
+      html += "<button onclick='updateTBSymptomNoValue(this);' symptom='" + tbSymptomsOptions[i] + "' class='blue' value='" + tbSymptomsOptions[i] + "'><span>No</span></button>"
+      html += "</td>";
+      html += "</tr>";
+
+      html += "</table>";
+      html += "</td>"
+      html += "</tr>"
+    }
+
+    html += "<tbody>"
+    html += "</table>";
+    html += "</div>";
+    html += "</div>";
+
+    thisPage = document.getElementById('page' + tstCurrentPage);
+    thisPage.innerHTML += html;
+
+    preselectSelectedTBSymptoms();
+
+    __$('nextButton').onmousedown = function(){
+      validateTBSymptomsInput();
+    }
+  }
+
+
   function updateSideEffectYesValue(obj){
     key = obj.getAttribute('key');
     yes_no_buttons = jQuery("[key='" + key + "']");
@@ -464,6 +530,45 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     }
   }
 
+  function updateTBSymptomYesValue(obj){
+    key = obj.getAttribute('symptom');
+    yes_no_buttons = jQuery("[symptom='" + key + "']");
+    yes_button = yes_no_buttons[0];
+    no_button = yes_no_buttons[1];
+
+    if (yes_button.className.match(/blue/i)){
+      yes_button.className = 'green';
+      no_button.className = 'blue';
+      __$(key).value = key;
+      tbSymptomsHash[key]["yes"] = 'true';
+      tbSymptomsHash[key]["no"] = '';
+      //Update Yes Value Here
+    }else{
+      yes_button.className = 'blue';
+      tbSymptomsHash[key]["yes"] = '';
+      __$(key).value = '';
+    }
+  }
+
+  function updateTBSymptomNoValue(obj){
+    key = obj.getAttribute('symptom');
+    yes_no_buttons = jQuery("[symptom='" + key + "']");
+    yes_button = yes_no_buttons[0]
+    no_button = yes_no_buttons[1]
+
+    if (no_button.className.match(/blue/i)){
+      no_button.className = 'green';
+      yes_button.className = 'blue';
+      __$(key).value = '';
+      tbSymptomsHash[key]["no"] = 'true';
+      tbSymptomsHash[key]["yes"] = '';
+      //Update No Value Here
+    }else{
+      no_button.className = 'blue';
+      tbSymptomsHash[key]["no"] = '';
+    }
+  }
+  
   function updateSideEffectNoValue(obj){
     key = obj.getAttribute('key');
     yes_no_buttons = jQuery("[key='" + key + "']");
@@ -503,6 +608,26 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     }
   }
 
+  function preselectSelectedTBSymptoms(){
+    for (var key in tbSymptomsHash){
+      yesValue = tbSymptomsHash[key]["yes"];
+      noValue = tbSymptomsHash[key]["no"];
+      yes_no_buttons = jQuery("[symptom='" + key + "']");
+      yes_button = yes_no_buttons[0]
+      no_button = yes_no_buttons[1]
+
+      if (yesValue.length > 0){
+        //Yes was selected
+        yes_button.className = 'green';
+      }
+
+      if (noValue.length > 0){
+        //No was selected
+        no_button.className = 'green';
+      }
+    }
+  }
+
   function validateSideEffectsInput(){
     unselectedSideEffects = [];
     for (var key in sideEffectsHash){
@@ -521,6 +646,24 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     }
   }
 
+  function validateTBSymptomsInput(){
+    unselectedTBSymptoms = [];
+    for (var key in tbSymptomsHash){
+      yesValue = tbSymptomsHash[key]["yes"];
+      noValue = tbSymptomsHash[key]["no"];
+      if (yesValue.length == 0 && noValue.length == 0){
+        //The row was not selected
+        unselectedTBSymptoms.push(key);
+      }
+    }
+
+    if (unselectedTBSymptoms.length > 0){
+      showMessage("The following side effects are not selected <br />" +  unselectedTBSymptoms.join('<br /> '));
+    }else{
+      gotoNextPage();
+    }
+  }
+
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -531,6 +674,10 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
 
   <% side_effects_array.each do |element| %>
     <%= touch_hidden_tag "MALAWI ART SIDE EFFECTS", @patient, "", :id => "#{element}" %>
+  <% end %>
+
+  <% tb_symptoms_array.each do |element| %>
+    <%= touch_hidden_tag "Routine Tuberculosis Screening", @patient, "", :id => "#{element}" %>
   <% end %>
 
   <% if @patient_is_child_bearing_female && !@ter_family_planning_method_done %>
@@ -718,7 +865,15 @@ side_effects_array = (side_effects_array << ["Anemia"]).compact.flatten
     :helpText => "Is the patient on TB Treatment?" } %>
 
   <% if @avilable_status == '' %>
-    <%= touch_select_tag "Routine Tuberculosis Screening", @patient, concept_set_options('Routine Tuberculosis Screening'),
+    <%= text_field_tag "advanced_tb_symptoms", nil, {
+      :id => 'routine_tb_screening',
+      :tt_onLoad => "advancedTBSymptoms(); __$('keyboard').style.display = 'none';",
+      :helpText => "TB associated symptoms",
+      :optional => "true",
+      :condition => "__$('tb_treatment_question').value == 'No'",
+      :tt_pageStyleClass => "NoControls" } %>
+
+    <%#= touch_select_tag "Routine Tuberculosis Screening", @patient, concept_set_options('Routine Tuberculosis Screening'),
       {	:id => 'routine_tb_screening',
       :optional => true,
       :multiple => true,
