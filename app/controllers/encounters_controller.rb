@@ -325,8 +325,10 @@ class EncountersController < GenericEncountersController
 
     if @art_first_visit
       @hiv_clinic_consultation_side_efects_label = "Potential Contra-indications (select all that apply)"
+      @hiv_clinic_consultation_side_efects_label_short = "Potential Contra-indications"
     else
       @hiv_clinic_consultation_side_efects_label = "Potential Side effects (select all that apply)"
+      @hiv_clinic_consultation_side_efects_label_short = "Potential Side effects"
     end
     
 		@tb_status = recent_lab_results(@patient.id, session_date)
