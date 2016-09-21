@@ -617,9 +617,11 @@
     symptoms = symptoms.split(',');
     id = document.getElementById("regimen_concept_id").value
     if (other_regimen != "yes"){
-      selected = $('regimen_concept_id').options[$('regimen_concept_id').selectedIndex].text.split("-")[0][0];
+      //selected = $('regimen_concept_id').options[$('regimen_concept_id').selectedIndex].text.split("-")[0][0];
+      selected = $('regimen_concept_id').options[$('regimen_concept_id').selectedIndex].text.split(" ")[1];
     } else {
-      selected = $('regimen_concept_id_all').options[$('regimen_concept_id_all').selectedIndex].text.split("-")[0][0];
+      //selected = $('regimen_concept_id_all').options[$('regimen_concept_id_all').selectedIndex].text.split("-")[0][0];
+      selected = $('regimen_concept_id_all').options[$('regimen_concept_id_all').selectedIndex].text.split(" ")[1];
     }
     for (x=0; x < adverse_events[selected.toString()]["adverse"].length; x++){
       for (i = 0; i < symptoms.length; i++){
