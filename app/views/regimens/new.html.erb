@@ -902,6 +902,13 @@
     listSuggestions(tstCurrentPage);
   }
 
+  var medication_names = null;
+
+  function getMedicationNames() {
+    medication_names = $('touchscreenInput'+tstCurrentPage).value 
+  }
+
+
   function buildPrescriptionPage_all(continueExistingRegimen, patientProgram, regimenConceptId, prescriptionContainer) {
     $('touchscreenInput'+tstCurrentPage).setAttribute('type','hidden');
     $('clearButton').style.display = 'none';
@@ -909,33 +916,34 @@
     $('viewport').style.display = 'none';
     $('helpText'+tstCurrentPage).innerHTML = "Select doses. Current patient weight:&nbsp;<%=@current_weight%>";
 
-    if(continueExistingRegimen == 'YES') {
-      var reg_id = current_regimens_for_programs[patientProgram];
-    } else {
-      var reg_id = encodeURIComponent(regimenConceptId);
-    }
+    //var reg_id = encodeURIComponent(regimenConceptId);
+    var names = medication_names.split(';').join('::');
 
     current_page = $('page'+tstCurrentPage);
 
     html = "&nbsp;<div id = '" + prescriptionContainer + "' class='prescription_container' ><table><tr>"
-    html += "<th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th>"
+    //html += "<th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th>"
     html += "</tr></table></div>"
     current_page.innerHTML += html
 
-    new Ajax.Request("/regimens/formulations_all?patient_id=<%=@patient.id %>&id=" + reg_id ,{method:'get',onSuccess: function(transport){
+    new Ajax.Request("/regimens/formulations_all?names=" + names ,{method:'get',onSuccess: function(transport){
         formulations = JSON.parse(transport.responseText) || "";
         if(formulations.length > 0 && formulations != "[[[]]]" && formulations != "[]"){
-          formulations = formulations[0]
+          //formulations = formulations[0]
           prescription_container = $(prescriptionContainer);
           html = "<table>"
-          html += "<tr><th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th></tr>"
+          html += "<tr><th>&nbsp;</th><th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th><th>&nbsp;</th></tr>"
+          html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 5px;'>";
+          html += "AM</th><th style='text-align: right; padding-right: 5px;'>PM</th><th></th></tr>"
           for (i = 0 ; i < formulations.length ; i++) {
             data = formulations[i]
-            regimen_id = data[4]
+            regimen_id = data[2]
             html += "<tr><td>" + data[0] + "</td>"
             html += "<td>" + data[1] + "</td>"
-            html += "<td>" + data[3] + "</td>"
-            html += "<td>" + data[2] + "</td></tr>"
+            html += "<td>" + '' + "</td>"
+            html += "<td>" + '' + "</td>"
+            html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
+            html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
             $('touchscreenInput'+tstCurrentPage).value += data[0] + ':';
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
@@ -1408,27 +1416,30 @@
       var reg_id = encodeURIComponent(regimenConceptId);
     }
 
+    var reg_id = encodeURIComponent(regimenConceptId);
     current_page = $('page'+tstCurrentPage);
 
     html = "&nbsp;<div id = '" + prescriptionContainer + "' class='prescription_container' ><table><tr>"
-    html += "<th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th>"
+    /* html += "<th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th>"*/
     html += "</tr></table></div>"
-    current_page.innerHTML += html
+    current_page.innerHTML += html;
 
     new Ajax.Request("/regimens/formulations?patient_id=<%=@patient.id %>&id=" + reg_id ,{method:'get',onSuccess: function(transport){
         formulations = JSON.parse(transport.responseText) || "";
         if(formulations.length > 0 && formulations != "[[[]]]" && formulations != "[]"){
-          formulations = formulations[0]
+          //formulations = formulations[0]
           prescription_container = $(prescriptionContainer);
           html = "<table>"
-          html += "<tr><th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th></tr>"
+          html += "<tr><th>&nbsp;</th>&nbsp;<th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th></tr>"
+          html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 5px;'>AM</th>";
+          html += "<th style='text-align: right; padding-right: 5px;'>PM</th></tr>"
           for (i = 0 ; i < formulations.length ; i++) {
-            data = formulations[i]
-            regimen_id = data[4]
-            html += "<tr><td>" + data[0] + "</td>"
-            html += "<td>" + data[1] + "</td>"
-            html += "<td>" + data[3] + "</td>"
-            html += "<td>" + data[2] + "</td></tr>"
+            data = formulations[i];
+            regimen_id = data['regimen_index']
+            html += "<tr><td>" + data['drug_name'] + "</td>"
+            html += "<td style='text-align: left; padding-left: 5px;'>" + data['units'] + "</td>"
+            html += "<td style='text-align: right; padding-right: 5px;'>" + data['am'] + "</td>"
+            html += "<td style='text-align: right; padding-right: 5px;'>" + data['pm'] + "</td></tr>"
             $('touchscreenInput'+tstCurrentPage).value += data[0] + ':';
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
@@ -1936,12 +1947,12 @@ pyridoxine_options = ["","25", "50"]
       :tt_onUnload => "resetRegimen();removeButton();"}%>
 
     <%= select_tag :regimen_concept_id_all, nil, {
-      :ajaxUrl => "",
       :allowFreeText => 'false',
       :tt_onLoad => "checkInput(); changeRegimen();set_patient_posible_all_suggestions($('patient_program').value);setTimeout('setSelectedRow(); setTextToAppear(\" (MoH Recommended)\")',1000);showCategory('Regimen');",
       :condition => 'other_regimen == "yes"',
       :helpText => "Select ART regimen",
-      :tt_onUnload => "resetRegimen()"}%>
+      :multiple => true,
+      :tt_onUnload => "resetRegimen();getMedicationNames();"}%>
 
     <%= text_field_tag :regimen, nil, {
       :ajaxUrl => "",

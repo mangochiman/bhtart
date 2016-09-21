@@ -194,4 +194,61 @@ module MedicationService
     return obs.first.obs_datetime
   end
 
+  def self.moh_arv_regimen_options(current_weight)
+    regimen_categories = {}
+    regimens = MohRegimen.find(:all, :joins => "INNER JOIN moh_regimen_lookup l 
+      ON l.regimen_id = moh_regimens.regimen_id", :select => "moh_regimens.*, l.*")
+
+    regimen_ingrients = {}
+    ingrients = MohRegimenIngredient.all
+
+    (ingrients || []).each do |r|
+      regimen_ingrients[r.regimen_id] = [] if regimen_ingrients[r.regimen_id].blank?
+      if current_weight >= r.min_weight and current_weight <= r.max_weight
+        regimen_ingrients[r.regimen_id] << r.drug_inventory_id 
+      end
+    end
+
+    moh_regimens = {}
+    (MohRegimenLookup.all || []).each do |lookup|
+      moh_regimens[lookup.regimen_name] = [] if moh_regimens[lookup.regimen_name].blank?
+      moh_regimens[lookup.regimen_name] << lookup.drug_inventory_id
+    end
+
+    recommended_regimens = []
+
+    (moh_regimens || {}).each do |regimen_name, drug_inventory_ids|
+      (regimen_ingrients || {}).each do |regimen_id, drug_ids|
+        if (drug_ids - drug_inventory_ids) == [] and (drug_inventory_ids.count == drug_ids.count)
+          regimen_index = MohRegimen.find(regimen_id).regimen_index
+          recommended_regimens << "Regimen #{regimen_index}"
+        end
+      end
+    end
+
+    
+    return recommended_regimens.sort_by{|x| x.gsub('Regimen ','').to_i}
+  end
+
+  def self.regimen_medications(regimen_index, current_weight)
+    regimen_index = regimen_index.to_s.gsub('Regimen ','').to_i 
+    regimen_id = MohRegimen.find(:first, :conditions =>['regimen_index = ?', regimen_index]).regimen_id
+    regimen_medications = Drug.find(:all,:joins => "INNER JOIN moh_regimen_ingredient i 
+      ON i.drug_inventory_id = drug.drug_id AND i.regimen_id = #{regimen_id}
+      INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
+      :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
+      :select => "drug.*, i.*, d.*").map do |medication|
+        {
+          :drug_name => medication.name,
+          :am => medication.am,
+          :pm => medication.pm,
+          :units => medication.units,
+          :regimen_index => regimen_index
+        }
+      end
+
+    return regimen_medications    
+  end
+
+
 end
