@@ -417,14 +417,14 @@ class GenericRegimensController < ApplicationController
 					['Renal failure', 'Renal failure']
 				],
 				'alt1' => [
-           ['Renal failure', '11'],
-           ['Diarrhoea, vomiting, dizziness, headache', '7'],
-           ['Treatment failure', '12']
+          ['Renal failure', '11'],
+          ['Diarrhoea, vomiting, dizziness, headache', '7'],
+          ['Treatment failure', '12']
 				],
 				'alt2'=> [
-           ['Renal failure', '8'],
-           ['Diarrhoea, vomiting, dizziness, headache', '8'],
-           ['Treatment failure', 'None']
+          ['Renal failure', '8'],
+          ['Diarrhoea, vomiting, dizziness, headache', '8'],
+          ['Treatment failure', 'None']
 				]
       },
       '11' => { 'adverse' =>[
@@ -632,15 +632,36 @@ class GenericRegimensController < ApplicationController
 		reduced = false
     weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
 
-    orders = MedicationService.regimen_medications(params[:regimen], weight)
+    unless params[:regimen_concept_id_all].blank?
+      drug_names = params[:drug_names].keys
+      drug_ids = Drug.find(:all, :conditions => ["name IN (?)", drug_names]).map(&:drug_id)
+      regimen_name = MedicationService.regimen_interpreter(drug_ids)
+      regimen_type = drug_names.join(' ')
+      
+      orders = params[:drug_names].map do |d_name, values|
+        {
+          :drug_name => d_name,
+          :am => values["am"],
+          :pm => values["pm"],
+          :units => "tabs",
+          :drug_id => Drug.find_by_name(d_name).drug_id,
+          :regimen_index => regimen_name
+        }
+      end
+      
+    else
+      orders = MedicationService.regimen_medications(params[:regimen], weight)
+      regimen_type = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' ')
+    end
+
     regimen_drug_ids = orders.collect{|o|o[:drug_id]}
+    selected_regimen = MedicationService.regimen_interpreter(regimen_drug_ids) if prescribe_arvs
 		#orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
 		ActiveRecord::Base.transaction do
 			# Need to write an obs for the regimen they are on, note that this is ARV
 			# Specific at the moment and will likely need to have some kind of lookup
 			# or be made generic
 			#selected_regimen = Regimen.find(params[:regimen]) if prescribe_arvs
-      selected_regimen = MedicationService.regimen_interpreter(regimen_drug_ids) if prescribe_arvs
 			obs = Observation.create(
 				:concept_name => "REGIMEN CATEGORY",
 				:person_id => @patient.person.person_id,
@@ -655,7 +676,7 @@ class GenericRegimensController < ApplicationController
 				:value_coded => params[:regimen_concept_id],
 				:obs_datetime => start_date) if prescribe_arvs
 =end
-      regimen_type = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' ')
+      
       obs = Observation.create(
 				:concept_name => "WHAT TYPE OF ANTIRETROVIRAL REGIMEN",
 				:person_id => @patient.person.person_id,
@@ -674,7 +695,7 @@ class GenericRegimensController < ApplicationController
 				#drug = Drug.find(order.drug_inventory_id)
         drug = Drug.find(order[:drug_id])
 				#regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
-        regimen_name = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' + ')
+        #regimen_name = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' + ')
         morning_tabs = order[:am]
         evening_tabs = order[:pm]
 
