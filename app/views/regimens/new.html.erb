@@ -952,6 +952,7 @@
     html += "</tr></table></div>"
     current_page.innerHTML += html
     selectedDrugsHash = {};
+    jQuery('.custom-input').remove(); //Remove old inputs with custom-input as a class name if any. For capturing doses
     
     new Ajax.Request("/regimens/formulations_all?names=" + names ,{method:'get',onSuccess: function(transport){
         formulations = JSON.parse(transport.responseText) || "";
