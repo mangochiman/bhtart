@@ -690,8 +690,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                        regimens.push('<%=data[0].split(" ").first%>');
-                                                                                        display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                          regimens.push('<%=data[0].split(" ").first%>');
+                                                                                          display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -1616,9 +1616,9 @@
 
   function prescribeCPT() {
     var prescribe = false;
-    <%if @prescribe_cpt_set%>
+<%if @prescribe_cpt_set%>
       prescribe = true;
-    <%end%>
+<%end%>
     return prescribe;
   }
 
@@ -1808,6 +1808,18 @@ end
 <% else%>
       return false
 <% end %>
+  }
+
+  function modifyPage(){
+    jQuery('#keyboard').hide();
+    jQuery('#inputFrame' + tstCurrentPage).css({
+      height: '86%'
+    });
+
+    jQuery('#inputFrame' + tstCurrentPage + '> .options').css({
+      height: '90%'
+    });
+
   }
 </script>
 
@@ -2061,9 +2073,9 @@ pyridoxine_options = ["","25", "50"]
     <%= select_tag :regimen_concept_id, nil, {
       :ajaxUrl => "",
       :allowFreeText => 'false',
-      :tt_onLoad => "checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);showCategory('Regimen');",
+      :tt_onLoad => "checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);showCategory('Regimen'); modifyPage();",
       :condition => 'hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value != "YES"',
-      :helpText => "Select ART regimen",
+      :helpText => "Select ART regimen. Current patient weight: <b>#{@current_weight}</b>",
       :optional => true,
       :tt_onUnload => "resetRegimen();removeButton();"}%>
 
