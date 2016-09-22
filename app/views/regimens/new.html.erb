@@ -2050,26 +2050,7 @@ pyridoxine_options = ["","25", "50"]
     <%= touch_hidden_tag "Reason antiretrovirals changed or stopped", @patient, nil, {
       :id => 'reason_antiretrovirals_changed_or_stopped'} %>
 
-    <% if @fast_track_patient == true && !@current_regimen.blank? %>
-      <%= hidden_field_tag("continue_existing_regimen", 'YES', {:id => 'continue_existing_regimen'}) %>
-      <%= text_field_tag "current_drugs", nil, {
-        :id => "current_drugs",
-        :helpText => "Confirm Current Regimen",
-        :tt_onLoad => "showDrugs(); setAttributes(); $('keyboard').style.display = 'none';",
-        :tt_onUnLoad => 'resetAttributes();resetRegimen();',
-        :optional => "true",
-        :tt_pageStyleClass => "NoControls"
-      } %>
-    <% else %>
-      <%= select_tag :continue_existing_regimen, options_for_select([['',''],['Yes','YES'],['No','NO']], ''), {
-        :textCase => "upper",
-        :allowFreeText => 'false',
-        :id => "continue_existing_regimen",
-        :tt_onLoad => 'showDrugs();setAttributes();changeButton();showCategory("Regimen");showRegimenChangeAlert(); showHighVlPopup(); showDrugStock()',
-        :tt_onUnLoad => 'resetAttributes();resetRegimen();hideStock();',
-        :condition => 'existingRegimen();',
-        :helpText => "Continue current ARV drugs?"}%>
-    <% end %>
+    <%= hidden_field_tag("continue_existing_regimen", 'NO', {:id => 'continue_existing_regimen'}) %>
 
     <%= select_tag :regimen_concept_id, nil, {
       :ajaxUrl => "",

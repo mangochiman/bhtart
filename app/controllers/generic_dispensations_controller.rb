@@ -255,51 +255,22 @@ class GenericDispensationsController < ApplicationController
   end
 
 	def set_received_regimen(patient, encounter,prescription)
-		dispense_finish = true ; dispensed_drugs_inventory_ids = []
+    regimen_cat = MedicationService.get_arv_regimen(patient.patient_id, encounter.encounter_datetime.to_date)
 
-		prescription.orders.each do | order |
-		  next if not MedicationService.arv(order.drug_order.drug)
-		  
-		  if order.drug_order.quantity and order.drug_order.quantity > 0
-		    dispensed_drugs_inventory_ids << order.drug_order.drug.id
-		  end
-		end
-
-		return_text = ''
-
-		if !dispensed_drugs_inventory_ids.blank?
-			regimen_drug_order = ActiveRecord::Base.connection.select_all <<EOF
-SELECT r.regimen_id, regimen_index, r.concept_id FROM regimen_drug_order x 
-INNER JOIN regimen r ON r.regimen_id = x.regimen_id
-WHERE x.drug_inventory_id IN (#{dispensed_drugs_inventory_ids.join(',')}) 
-GROUP BY x.regimen_id HAVING count(x.drug_inventory_id) = #{dispensed_drugs_inventory_ids.length}
-LIMIT 1
-EOF
-
-			regimen_prescribed = regimen_drug_order.first['concept_id'].to_i rescue ConceptName.find_by_name('Unknown antiretroviral drug').concept_id
-
-			regimen_value_text = Concept.find(regimen_prescribed).shortname rescue nil
-			if regimen_value_text.blank?
-				regimen_value_text = ConceptName.find_by_concept_id(regimen_prescribed).name rescue nil
-			end
-	
-			return if regimen_value_text.blank?
-			return_text = regimen_value_text
-
-			selected_regimen = Regimen.find(regimen_drug_order.first['regimen_id'].to_i) rescue nil
-
+		unless regimen_cat.blank?
       regimen_category_id = ConceptName.find_by_name('Regimen Category').concept_id
       if encounter.observations.find_by_concept_id(regimen_category_id).blank?
 				obs = Observation.create(
 					:concept_name => "Regimen Category",
 					:person_id => patient.id,
 					:encounter_id => encounter.id,
-					:value_text => selected_regimen.regimen_index,
-					:obs_datetime => encounter.encounter_datetime) if !selected_regimen.blank?
+					:value_text => regimen_cat,
+					:obs_datetime => encounter.encounter_datetime) 
 			end
 			
       regimens_received_id = ConceptName.find_by_name('ARV regimens received abstracted construct').concept_id
       if encounter.observations.find_by_concept_id(regimens_received_id).blank?
+=begin
 				obs = Observation.new(
 					:concept_name => "ARV regimens received abstracted construct",
 					:person_id => patient.id,
@@ -308,10 +279,11 @@ EOF
 					:obs_datetime => encounter.encounter_datetime)
 
         obs.save
+=end
 			end
 			
 		end
-		return return_text
+		return regimen_cat
 	end
 
 	private
