@@ -163,6 +163,8 @@ module MedicationService
       AND d.drug_inventory_id IN(SELECT drug_id FROM arv_drug);")  
     
     return if dispensed_arvs_ids.blank?
+
+    return self.regimen_interpreter(dispensed_arvs_ids.collect{|x| x.drug_inventory_id.to_i})
  
     dispensed_regimen = 'Unknown'
     dispensed_arvs_ids = dispensed_arvs_ids.map{|i|i.drug_inventory_id}.uniq
