@@ -128,6 +128,27 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
         (`s`.`state` = 7))
   GROUP BY `p`.`patient_id`;
 
+-- The date of the first On ARVs state for each patient
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+	VIEW `patients_on_arvs` AS
+    select 
+        `p`.`patient_id` AS `patient_id`,
+        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+        `person`.`death_date` AS `death_date`,
+        `person`.`gender` AS `gender`,
+        ((to_days(date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`))) - to_days(`person`.`birthdate`)) / 365.25) AS `age_at_initiation`,
+        (to_days(min(`s`.`start_date`)) - to_days(`person`.`birthdate`)) AS `age_in_days`
+    from
+        ((`patient_program` `p`
+        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+    where
+        ((`p`.`voided` = 0)
+            and (`s`.`voided` = 0)
+            and (`p`.`program_id` = 1)
+            and (`s`.`state` = 7))
+    group by `p`.`patient_id`;
+
 -- 7937 = Ever registered at ART clinic
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `ever_registered_obs` AS
