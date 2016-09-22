@@ -920,7 +920,7 @@ class GenericRegimensController < ApplicationController
     regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
 
     @options = (regimen_medications || []).each do | r |
-      [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] ]
+      [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] , r[:category]]
     end
     render :text => @options.to_json
 	end

@@ -196,21 +196,23 @@ module MedicationService
 
   def self.moh_arv_regimen_options(current_weight)
     regimen_categories = {}
-    regimens = MohRegimen.find(:all, :joins => "INNER JOIN moh_regimen_lookup l 
-      ON l.regimen_id = moh_regimens.regimen_id", :select => "moh_regimens.*, l.*")
+    #regimens = MohRegimen.find(:all, :joins => "INNER JOIN moh_regimen_lookup l 
+     # ON l.regimen_id = moh_regimens.regimen_id", :select => "moh_regimens.*, l.*")
 
-    regimen_ingrients = {}
+    regimen_ingrients = []
     ingrients = MohRegimenIngredient.all
 
     (ingrients || []).each do |r|
-      regimen_ingrients[r.regimen_id] = [] if regimen_ingrients[r.regimen_id].blank?
       if current_weight >= r.min_weight and current_weight <= r.max_weight
-        regimen_ingrients[r.regimen_id] << r.drug_inventory_id 
+        regimen_ingrients << r.drug_inventory_id 
       end
     end
 
     moh_regimens = {}
-    (MohRegimenLookup.all || []).each do |lookup|
+    moh_regimen_lookup = MohRegimenLookup.find(:all, 
+      :conditions => ["drug_inventory_id IN(?)", regimen_ingrients])
+
+    (moh_regimen_lookup || []).each do |lookup|
       moh_regimens[lookup.regimen_name] = [] if moh_regimens[lookup.regimen_name].blank?
       moh_regimens[lookup.regimen_name] << lookup.drug_inventory_id
     end
@@ -218,16 +220,34 @@ module MedicationService
     recommended_regimens = []
 
     (moh_regimens || {}).each do |regimen_name, drug_inventory_ids|
-      (regimen_ingrients || {}).each do |regimen_id, drug_ids|
-        if (drug_ids - drug_inventory_ids) == [] and (drug_inventory_ids.count == drug_ids.count)
-          regimen_index = MohRegimen.find(regimen_id).regimen_index
-          recommended_regimens << "Regimen #{regimen_index}"
+      regimen_index = regimen_name.to_i
+      regimen_index_s = regimen_name.to_s
+
+      num_of_drug_combination = MohRegimenLookup.find_by_regimen_name(regimen_name).num_of_drug_combination
+      regimen_possible_drug_ids = MohRegimenLookup.find_by_sql("
+        SELECT drug_inventory_id FROM moh_regimen_lookup 
+        WHERE LEFT(regimen_name,#{regimen_index_s.length}) = #{regimen_index}").map(&:drug_inventory_id)
+      found_in_combination = true
+
+      valid_medication_ids = []
+      (regimen_possible_drug_ids).each do |drug_id|
+        medication = MohRegimenIngredient.find(:first, :conditions =>["drug_inventory_id = ? 
+          AND #{current_weight} >= min_weight AND #{current_weight} <= max_weight", drug_id])
+
+        unless medication.blank?
+          valid_medication_ids << drug_id
         end
+      end  
+       
+      if (valid_medication_ids.count == num_of_drug_combination)
+        recommended_regimens << "Regimen #{regimen_index}"
       end
+
+
     end
 
     
-    return recommended_regimens.sort_by{|x| x.gsub('Regimen ','').to_i}
+    return recommended_regimens.sort_by{|x| x.gsub('Regimen ','').to_i}.uniq
   end
 
   def self.regimen_medications(regimen_index, current_weight)
@@ -244,7 +264,8 @@ module MedicationService
           :pm => medication.pm,
           :units => medication.units,
           :drug_id => medication.drug_id,
-          :regimen_index => regimen_index
+          :regimen_index => regimen_index,
+          :category => MohRegimenLookup.find_by_drug_inventory_id(medication.drug_id).regimen_name.match(/A|P/i)[0]
         }
       end
 

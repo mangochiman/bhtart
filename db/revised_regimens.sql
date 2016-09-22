@@ -16,6 +16,37 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `moh_regimen_lookup`
+--
+
+DROP TABLE IF EXISTS `moh_regimen_lookup`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `moh_regimen_lookup` (
+  `regimen_lookup_id` int(11) NOT NULL AUTO_INCREMENT,
+  `num_of_drug_combination` int(11) DEFAULT NULL,
+  `regimen_name` varchar(5) NOT NULL,
+  `drug_inventory_id` int(11) DEFAULT NULL,
+  `date_created` datetime DEFAULT NULL,
+  `date_updated` datetime DEFAULT NULL,
+  `creator` int(11) DEFAULT NULL,
+  `voided` tinyint(1) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
+  PRIMARY KEY (`regimen_lookup_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `moh_regimen_lookup`
+--
+
+LOCK TABLES `moh_regimen_lookup` WRITE;
+/*!40000 ALTER TABLE `moh_regimen_lookup` DISABLE KEYS */;
+INSERT INTO `moh_regimen_lookup` VALUES (1,2,'0P',733,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(2,2,'0P',968,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(3,2,'0A',969,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(4,2,'0A',22,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(5,1,'2P',732,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(6,1,'2A',731,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(7,2,'4P',736,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(8,2,'4P',30,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(9,2,'4A',39,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(10,2,'4A',11,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(11,1,'5A',735,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(12,2,'6A',734,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(13,2,'6A',22,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(14,2,'7A',734,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(15,2,'7A',932,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(16,2,'8A',39,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(17,2,'8A',932,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(18,2,'9P',733,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(19,2,'9P',74,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(20,2,'9A',969,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(21,2,'9A',73,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(22,2,'10A',734,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(23,2,'10A',73,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(24,2,'11P',736,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(25,2,'11P',74,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(26,2,'11A',39,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(27,2,'11A',73,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(28,4,'12A',976,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(29,4,'12A',977,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(30,4,'12A',954,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(31,4,'12A',978,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL);
+/*!40000 ALTER TABLE `moh_regimen_lookup` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `moh_regimen_ingredient`
 --
 
@@ -79,37 +110,6 @@ INSERT INTO `moh_regimen_doses` VALUES (1,1,1,'2016-09-19 16:00:00','2016-09-19 
 UNLOCK TABLES;
 
 --
--- Table structure for table `moh_regimen_lookup`
---
-
-DROP TABLE IF EXISTS `moh_regimen_lookup`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `moh_regimen_lookup` (
-  `regimen_lookup_id` int(11) NOT NULL AUTO_INCREMENT,
-  `regimen_id` int(11) DEFAULT NULL,
-  `regimen_name` varchar(5) NOT NULL,
-  `drug_inventory_id` int(11) DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL,
-  `date_updated` datetime DEFAULT NULL,
-  `creator` int(11) DEFAULT NULL,
-  `voided` tinyint(1) NOT NULL DEFAULT '0',
-  `voided_by` int(11) DEFAULT NULL,
-  PRIMARY KEY (`regimen_lookup_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `moh_regimen_lookup`
---
-
-LOCK TABLES `moh_regimen_lookup` WRITE;
-/*!40000 ALTER TABLE `moh_regimen_lookup` DISABLE KEYS */;
-INSERT INTO `moh_regimen_lookup` VALUES (1,1,'0P',733,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(2,1,'0P',968,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(3,1,'0A',969,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(4,1,'0A',22,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(5,2,'2P',732,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(6,2,'2A',731,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(7,3,'4P',736,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(8,3,'4P',30,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(9,3,'4A',39,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(10,3,'4A',11,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(11,4,'5A',735,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(12,5,'6A',734,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(13,5,'6A',22,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(14,6,'7A',734,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(15,6,'7A',932,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(16,7,'8A',39,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(17,7,'8A',932,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(18,8,'9P',733,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(19,8,'9P',74,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(20,8,'9A',969,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(21,8,'9A',73,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(22,9,'10A',734,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(23,9,'10A',73,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(24,10,'11P',736,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(25,10,'11P',74,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(26,10,'11A',39,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(27,10,'11A',73,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(28,11,'12A',976,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(29,11,'12A',977,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(30,11,'12A',954,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(31,11,'12A',978,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL);
-/*!40000 ALTER TABLE `moh_regimen_lookup` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `moh_regimens`
 --
 
@@ -148,4 +148,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-09-22  9:28:01
+-- Dump completed on 2016-09-22 12:51:14
