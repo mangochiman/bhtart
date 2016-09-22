@@ -282,7 +282,7 @@ function disableEnableFastTrackVisitButton(){
     }
 }
 
-window.setInterval("disableEnableFastTrackVisitButton()", 200);
+//window.setInterval("disableEnableFastTrackVisitButton()", 200);
 
 function hideLibPopup(){
     popupCover = document.getElementsByClassName("popup-cover")[0];
