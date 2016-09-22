@@ -186,7 +186,7 @@ class EncountersController < GenericEncountersController
           :order => "obs_datetime DESC,date_created DESC",
           :conditions => ["person_id = ? AND concept_id = ?
                             AND DATE(obs_datetime) <= ?",@patient.id,
-            ConceptName.find_by_name("Allergic to sulphur").concept_id,session_date])).to_s.strip.squish rescue ''
+            ConceptName.find_by_name("Allergic to sulphur").concept_id,session_date])).answer_string.strip.squish rescue ''
 
       @use_extended_family_planning = CoreService.get_global_property_value('extended.family.planning') rescue false
 

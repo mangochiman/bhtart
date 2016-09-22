@@ -987,7 +987,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%  if session_date %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
@@ -995,7 +995,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
    
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
@@ -1005,7 +1005,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <% else %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
@@ -1013,7 +1013,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
    
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton();",
+        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
@@ -1167,7 +1167,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
               }
             }
             
-            noneElement = jQuery("[tstvalue=None]")[0];
+            noneElement = jQuery("[tstvalue=NONE]")[0];
             noneElementID = noneElement.getAttribute("id");
             updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement)
           }
@@ -1176,7 +1176,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       }
       else{
         liOptions[i].onmouseup = function(){
-          noneElement = jQuery("[tstvalue=None]")[0];
+          noneElement = jQuery("[tstvalue=NONE]")[0];
           noneElementID = noneElement.getAttribute("id");
           if (noneElement.style.backgroundColor.match(/lightblue/i)){
             updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement);

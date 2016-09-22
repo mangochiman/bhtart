@@ -21,11 +21,12 @@ class GenericEncountersController < ApplicationController
 
       params[:observations].each do |ob|
         if ob[:concept_name] == 'Prescribe drugs'
-          if set_prescribe_drugs_yes
-            ob['value_coded'] = ConceptName.find_by_name('Yes').concept_id
+          if (set_prescribe_drugs_yes == true)
+            ob['value_coded_or_text'] = 'Yes'#ConceptName.find_by_name('Yes').concept_id
           else
-            ob['value_coded'] = ConceptName.find_by_name('No').concept_id
+            ob['value_coded_or_text'] = 'NO'#ConceptName.find_by_name('No').concept_id
           end
+          #raise "#{set_prescribe_drugs_yes} ::::: #{ob['value_coded']}".inspect
           break
         end
       end
