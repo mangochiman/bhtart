@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-=begin
+#=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -26,7 +26,7 @@ select
     group by `p`.`patient_id`
 EOF
 
-=end
+#=end
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `last_text_for_obs`;
 EOF
@@ -1132,8 +1132,10 @@ EOF
         SELECT * FROM obs
         WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
         AND '#{(date_enrolled + 28.days).strftime('%Y-%m-%d 23:59:59')}'
-        AND person_id = #{patient_id} AND value_coded = #{yes_concept_id}
-        AND concept_id IN (#{preg_concept_id}, #{patient_preg_concept_id}, #{preg_at_initiation_concept_id}) AND voided = 0 GROUP BY person_id;
+        AND person_id = #{patient_id}
+        AND value_coded = #{yes_concept_id}
+        AND concept_id IN (#{preg_concept_id}, #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
+        AND voided = 0 GROUP BY person_id;
 EOF
 
       registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
