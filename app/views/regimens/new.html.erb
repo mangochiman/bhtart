@@ -533,13 +533,19 @@
   }
 
   .regimen_category_A {
-    background-color: gold;
+    background-color: #FFFF33;
     color: black;
   }
 
   .regimen_category_P {
-    background-color: #A26BA2;
+    background-color: #8A2BE2;
     color: black;
+  }
+
+  .regimen_category_P td, .regimen_category_A td {
+    padding-left: 10px;
+    font-size: 25px;
+    font-weight: bold;
   }
 
 </style>
@@ -1748,7 +1754,7 @@ end
   function addButton(){
     var button = document.createElement("button");
     button.id = "addHere";
-    button.innerHTML = "<span>Select Other</span>";
+    button.innerHTML = "<span>Customize regimen</span>";
     button.style.cssFloat = "right";
 
     other_regimen = "no"
