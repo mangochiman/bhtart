@@ -1481,7 +1481,7 @@ class CohortToolController < GenericCohortToolController
   def download_pdf
         zoom = 0.8
         output ="file_name.pdf"
-        print_url = "wkhtmltopdf http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}/cohort_tool/revised_cohort_to_print #{Rails.root}/tmp/#{output}"
+        print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}/cohort_tool/revised_cohort_to_print #{Rails.root}/tmp/#{output}"
         Kernel.system print_url
         #raise 'done'
         pdf_filename = File.join(Rails.root, "tmp/#{output}")
