@@ -131,7 +131,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 -- The date of the first On ARVs state for each patient
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	VIEW `patients_on_arvs` AS
-    select 
+    select
         `p`.`patient_id` AS `patient_id`,
         date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
         `person`.`death_date` AS `death_date`,
@@ -149,10 +149,28 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
             and (`s`.`state` = 7))
     group by `p`.`patient_id`;
 
+-- reason_ or art eligibility obs
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  	VIEW `reason_for_art_eligibility_obs` AS
+    select
+        `o`.`person_id` AS `person_id`,
+        `o`.`concept_id` AS `concept_id`,
+        `o`.`obs_datetime` AS `obs_datetime`,
+        `n`.`name` AS `name`
+    from
+        (`obs` `o`
+        left join `concept_name` `n` ON (((`n`.`concept_id` = `o`.`value_coded`)
+            and (`n`.`concept_name_type` = 'FULLY_SPECIFIED')
+            and (`n`.`voided` = 0))))
+    where
+        ((`o`.`concept_id` = 7563)
+            and (`o`.`voided` = 0))
+    order by `o`.`obs_datetime` desc;
+
 -- The date of the first On ARVs state for each patient
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `patient_first_arv_amount_dispensed` AS
-    select 
+    select
         `enc`.`encounter_id` AS `encounter_id`,
         `enc`.`encounter_type` AS `encounter_type`,
         `enc`.`patient_id` AS `patient_id`,
@@ -174,7 +192,7 @@ VIEW `patient_first_arv_amount_dispensed` AS
     where
         ((`enc`.`encounter_type` = 54)
             and (`enc`.`voided` = 0)
-            and (cast(`enc`.`encounter_datetime` as date) = (select 
+            and (cast(`enc`.`encounter_datetime` as date) = (select
                 cast(min(`e`.`encounter_datetime`) as date)
             from
                 `encounter` `e`

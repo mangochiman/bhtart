@@ -11,10 +11,10 @@
 </style>
    <form id='quarter' action="revised_cohort" method='post'>
  <%
+    qtrs = []
     if current_user.admin?
       qtrs = ['' , 'Select date range']
     end
-
     current_qtr = ""
     date = Date.today
     if (date >= "#{date.year}-01-01".to_date and date <= "#{date.year}-03-31".to_date)
