@@ -154,7 +154,7 @@
             Year
         </td>
         <td colspan="3">
-            Quarter
+            Quarter:&nbsp;&nbsp;&nbsp;<%= @quarter %>
         </td>
     </tr>
     <tr>
@@ -218,13 +218,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.total_registered.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_total_registered.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -246,13 +246,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.initiated_on_art_first_time.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_initiated_on_art_first_time.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -269,13 +269,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.re_initiated_on_art.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_re_initiated_on_art.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -292,13 +292,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.transfer_in.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_transfer_in.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -320,13 +320,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.all_males.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_all_males.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -343,13 +343,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.pregnant_females_all_ages.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_pregnant_females_all_ages.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -366,13 +366,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.pregnant_females_all_ages.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_pregnant_females_all_ages.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -417,13 +417,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.children_below_24_months_at_art_initiation.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_children_below_24_months_at_art_initiation.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -440,13 +440,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.children_24_months_14_years_at_art_initiation.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_children_24_months_14_years_at_art_initiation.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -463,13 +463,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.adults_at_art_initiation.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_adults_at_art_initiation.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -491,13 +491,13 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.presumed_severe_hiv_disease_in_infants.count %>
+            &nbsp;
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.cum_presumed_severe_hiv_disease_in_infants.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -553,7 +553,7 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.total_alive_and_on_art.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -586,7 +586,7 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.transfered_out.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -600,7 +600,7 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.defaulted.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -614,7 +614,7 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.died_total.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -675,9 +675,6 @@
             Total Registered
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.total_registered.count %>
         </td>
         <td>
@@ -685,6 +682,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_total_registered.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -703,9 +703,6 @@
             Patients initiated on ART first time
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.initiated_on_art_first_time.count %>
         </td>
         <td>
@@ -713,6 +710,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_initiated_on_art_first_time.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -726,9 +726,6 @@
             Patients re-initiated on ART
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.re_initiated_on_art.count %>
         </td>
         <td>
@@ -736,6 +733,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_re_initiated_on_art.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -749,9 +749,6 @@
             Patients transferred in on ART
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.transfer_in.count %>
         </td>
         <td>
@@ -759,6 +756,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_transfer_in.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -777,9 +777,6 @@
             Males (all ages)
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.all_males.count %>
         </td>
         <td>
@@ -787,6 +784,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_all_males.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -800,9 +800,6 @@
             Non-pregnant Females (all ages)
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.non_pregnant_females.count %>
         </td>
         <td>
@@ -810,6 +807,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_non_pregnant_females.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -823,9 +823,6 @@
             Pregnant Females (all ages)
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.pregnant_females_all_ages.count %>
         </td>
         <td>
@@ -833,6 +830,8 @@
         </td>
         <td>
             &nbsp;<%= @cohort.pregnant_females_all_ages.count %>
+        </td>
+        <td>
         </td>
     </tr>
     <tr>
@@ -851,9 +850,6 @@
             Children below 24 m at ART initiation
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.children_below_24_months_at_art_initiation.count %>
         </td>
         <td>
@@ -861,6 +857,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_children_below_24_months_at_art_initiation.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -874,9 +873,6 @@
             Children 24 m - 14 yrs at ART initiation
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.children_12_23_months.count %>
         </td>
         <td>
@@ -884,6 +880,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_children_12_23_months.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -897,9 +896,6 @@
             Adults 15 years or older at ART initiation
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.adults_at_art_initiation.count %>
         </td>
         <td>
@@ -907,6 +903,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_adults_at_art_initiation.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -933,9 +932,6 @@
             Pres. Sev. HIV disease age < 12 m
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.presumed_severe_hiv_disease_in_infants.count %>
         </td>
         <td>
@@ -943,6 +939,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_presumed_severe_hiv_disease_in_infants.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -956,9 +955,6 @@
             Infants < 12 mths PCR+
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.confirmed_hiv_infection_in_infants_pcr.count %>
         </td>
         <td>
@@ -966,6 +962,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_confirmed_hiv_infection_in_infants_pcr.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -979,9 +978,6 @@
             Children 12-59 mths
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.children_12_23_months.count %>
         </td>
         <td>
@@ -989,6 +985,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_children_12_23_months.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1002,9 +1001,6 @@
             Pregnant women
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.pregnant_women.count %>
         </td>
         <td>
@@ -1012,6 +1008,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_pregnant_women.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1025,9 +1024,6 @@
             Breastfeeding mothers
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.breastfeeding_mothers.count %>
         </td>
         <td>
@@ -1035,6 +1031,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_breastfeeding_mothers.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1048,9 +1047,6 @@
             CD4 below threshold
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.who_stage_two.count %>
         </td>
         <td>
@@ -1058,6 +1054,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_who_stage_two.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1094,17 +1093,17 @@
             WHO stage 3
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.who_stage_three.count %>
         </td>
         <td>
-          &nbsp;<%= @cohort.who_stage_three.count %>
-            &nbsp;
-        </td>
-        <td>
+          &nbsp;
             &nbsp;
         </td>
         <td>
             &nbsp;<%= @cohort.cum_who_stage_three.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1118,9 +1117,6 @@
             WHO stage 4
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.who_stage_four.count %>
         </td>
         <td>
@@ -1128,6 +1124,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.who_stage_four.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1141,9 +1140,6 @@
             Unknown / reason outside guidelines
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.unknown_other_reason_outside_guidelines.count %>
         </td>
         <td>
@@ -1151,6 +1147,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_unknown_other_reason_outside_guidelines.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1200,9 +1199,6 @@
             TB within the last 2 years
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.tb_within_the_last_two_years.count %>
         </td>
         <td>
@@ -1210,6 +1206,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_tb_within_the_last_two_years.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1223,9 +1222,6 @@
             Current episode of TB
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.current_episode_of_tb.count %>
         </td>
         <td>
@@ -1233,6 +1229,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_current_episode_of_tb.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1251,9 +1250,6 @@
             Kaposi's Sarcoma
         </td>
         <td>
-            &nbsp;
-        </td>
-        <td>
             &nbsp;<%= @cohort.kaposis_sarcoma.count %>
         </td>
         <td>
@@ -1261,6 +1257,9 @@
         </td>
         <td>
             &nbsp;<%= @cohort.cum_kaposis_sarcoma.count %>
+        </td>
+        <td>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1296,10 +1295,10 @@
             Total alive and on ART
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.total_alive_and_on_art.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.total_alive_and_on_art.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1318,10 +1317,10 @@
             Died within the 1st month after ART initiation
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.died_within_the_1st_month_of_art_initiation.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.died_within_the_1st_month_of_art_initiation.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1335,10 +1334,10 @@
             Died within the 2nd month after ART initiation
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.died_within_the_2nd_month_of_art_initiation.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.died_within_the_2nd_month_of_art_initiation.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1352,10 +1351,10 @@
             Died within the 3rd month after ART initiation
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.died_within_the_3rd_month_of_art_initiation.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.died_within_the_3rd_month_of_art_initiation.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1369,10 +1368,10 @@
             Died after the end of the 3rd month after ART initiation
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.died_after_the_3rd_month_of_art_initiation.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.died_after_the_3rd_month_of_art_initiation.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1383,10 +1382,10 @@
             <b>Died</b> total
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.died_total.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.died_total.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1397,10 +1396,10 @@
             <b>Def</b>aulted (more than 2 months overdue after expected to have run out of ARVs)
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.defaulted.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.defaulted.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1411,10 +1410,10 @@
             <b>Stop</b>ped taking ARVs (clinician or patient own decision, last known alive)
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.stopped_art.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.stopped_art.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1425,10 +1424,10 @@
             <b>T</b>ransferred <b>O</b>ut
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.transfered_out.count %>
         </td>
         <td>
-            &nbsp;<%= @cohort.transfered_out.count %>
+            &nbsp;
         </td>
     </tr>
     <tr>
@@ -1741,7 +1740,7 @@
             <b>Unk</b>own (not circled)
         </td>
         <td colspan="2">
-            &nbsp;
+            &nbsp;<%= @cohort.unknown_side_effects.count %>
         </td>
     </tr>
     <tr>

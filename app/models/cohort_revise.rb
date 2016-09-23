@@ -516,6 +516,7 @@ Unique PatientProgram entries at the current location for those patients with at
 =end
     cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
     cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
+    cohort.unknown_side_effects = self.unknown_side_effects(cohort.total_alive_and_on_art, cohort.total_patients_with_side_effects, cohort.total_patients_without_side_effects)
 =begin
     TB Status
     Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
@@ -538,6 +539,28 @@ Unique PatientProgram entries at the current location for those patients with at
 
 
   private
+  def self.unknown_side_effects(total_alive, side_effects_patients, without_side_effects_patients)
+    total_alive_patients = []
+    patients_with_side_effects = []
+    patients_without_side_effects = []
+    result = []
+#raise 'am here'
+    (total_alive || []).each do |row|
+      total_alive_patients << row['patient_id'].to_i
+    end
+
+    (side_effects_patients || []).each do |row|
+      patients_with_side_effects << row['person_id'].to_i
+    end
+
+    (without_side_effects_patients || []).each do |row|
+      patients_without_side_effects << row['person_id'].to_i
+    end
+
+    result = total_alive_patients - patients_with_side_effects - patients_without_side_effects
+    return result
+  end
+
   def self.cal_tb_status(patient_list, end_date)
     patient_ids = []
     tb_status = []
