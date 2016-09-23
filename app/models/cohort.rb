@@ -466,8 +466,8 @@ class Cohort
 		cohort_report['No TB'] = (cohort_report['Newly total registered'] - ((current_episode || []) + (cohort_report['tb_with_the_last_2yrs'] || [])))
 		cohort_report['Total No TB'] = (cohort_report['Total registered'] - ((total_current_episode || []) + (cohort_report['total_tb_within_the_last_2yrs'] || [])))
 
-		cohort_report['No TB on report'] = (cohort_report['Newly total registered'].length - (current_episode.length + cohort_report['TB within the last 2 years'].length))
-		cohort_report['Total No TB on report'] = (cohort_report['Total registered'].length - (total_current_episode.length + cohort_report['Total TB within the last 2 years'].length))
+		cohort_report['No TB on report'] = ((cohort_report['Newly total registered'] || []).length - ((current_episode || []).length + (cohort_report['TB within the last 2 years'] || []).length))
+		cohort_report['Total No TB on report'] = ((cohort_report['Total registered'] || []).length - ((total_current_episode || []).length + (cohort_report['Total TB within the last 2 years'] || []).length))
 
 		cohort_report['Unknown outcomes'] = cohort_report['Total registered'] -
 			(cohort_report['Total alive and on ART'] +

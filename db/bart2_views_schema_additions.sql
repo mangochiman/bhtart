@@ -128,6 +128,61 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
         (`s`.`state` = 7))
   GROUP BY `p`.`patient_id`;
 
+-- The date of the first On ARVs state for each patient
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+	VIEW `patients_on_arvs` AS
+    select 
+        `p`.`patient_id` AS `patient_id`,
+        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+        `person`.`death_date` AS `death_date`,
+        `person`.`gender` AS `gender`,
+        ((to_days(date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`))) - to_days(`person`.`birthdate`)) / 365.25) AS `age_at_initiation`,
+        (to_days(min(`s`.`start_date`)) - to_days(`person`.`birthdate`)) AS `age_in_days`
+    from
+        ((`patient_program` `p`
+        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+    where
+        ((`p`.`voided` = 0)
+            and (`s`.`voided` = 0)
+            and (`p`.`program_id` = 1)
+            and (`s`.`state` = 7))
+    group by `p`.`patient_id`;
+
+-- The date of the first On ARVs state for each patient
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+VIEW `patient_first_arv_amount_dispensed` AS
+    select 
+        `enc`.`encounter_id` AS `encounter_id`,
+        `enc`.`encounter_type` AS `encounter_type`,
+        `enc`.`patient_id` AS `patient_id`,
+        `enc`.`provider_id` AS `provider_id`,
+        `enc`.`location_id` AS `location_id`,
+        `enc`.`form_id` AS `form_id`,
+        `enc`.`encounter_datetime` AS `encounter_datetime`,
+        `enc`.`creator` AS `creator`,
+        `enc`.`date_created` AS `date_created`,
+        `enc`.`voided` AS `voided`,
+        `enc`.`voided_by` AS `voided_by`,
+        `enc`.`date_voided` AS `date_voided`,
+        `enc`.`void_reason` AS `void_reason`,
+        `enc`.`uuid` AS `uuid`,
+        `enc`.`changed_by` AS `changed_by`,
+        `enc`.`date_changed` AS `date_changed`
+    from
+        `encounter` `enc`
+    where
+        ((`enc`.`encounter_type` = 54)
+            and (`enc`.`voided` = 0)
+            and (cast(`enc`.`encounter_datetime` as date) = (select 
+                cast(min(`e`.`encounter_datetime`) as date)
+            from
+                `encounter` `e`
+            where
+                ((`e`.`patient_id` = `enc`.`patient_id`)
+                    and (`e`.`encounter_type` = `enc`.`encounter_type`)
+                    and (`e`.`voided` = 0)))));
+
 -- 7937 = Ever registered at ART clinic
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `ever_registered_obs` AS
