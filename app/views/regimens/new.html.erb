@@ -531,21 +531,6 @@
     text-align: center;
     font-weight: bold;
   }
-
-  .drug_category_P {
-    background-color: purple;
-    color: white;
-  }
-
-  .drug_category_P td, .drug_category_A td {
-    padding-left: 10px;
-    font-size: 25px
-  }
-
-  .drug_category_A {
-    background-color: yellow;
-  }
-
 </style>
 
 <%= javascript_include_tag "prototype"%>
@@ -1550,11 +1535,8 @@
           html += "<th style='text-align: right; padding-right: 5px;'>PM</th></tr>"
           for (i = 0 ; i < formulations.length ; i++) {
             data = formulations[i];
-
-            drug_category = data['category'];
-
             regimen_id = data['regimen_index']
-            html += "<tr class='drug_category_" + drug_category + "'><td>" + data['drug_name'] + "</td>"
+            html += "<tr><td>" + data['drug_name'] + "</td>"
             html += "<td style='text-align: left; padding-left: 5px;'>" + data['units'] + "</td>"
             html += "<td style='text-align: right; padding-right: 5px;'>" + data['am'] + "</td>"
             html += "<td style='text-align: right; padding-right: 5px;'>" + data['pm'] + "</td></tr>"
@@ -2068,26 +2050,7 @@ pyridoxine_options = ["","25", "50"]
     <%= touch_hidden_tag "Reason antiretrovirals changed or stopped", @patient, nil, {
       :id => 'reason_antiretrovirals_changed_or_stopped'} %>
 
-    <% if @fast_track_patient == true && !@current_regimen.blank? %>
-      <%= hidden_field_tag("continue_existing_regimen", 'YES', {:id => 'continue_existing_regimen'}) %>
-      <%= text_field_tag "current_drugs", nil, {
-        :id => "current_drugs",
-        :helpText => "Confirm Current Regimen",
-        :tt_onLoad => "showDrugs(); setAttributes(); $('keyboard').style.display = 'none';",
-        :tt_onUnLoad => 'resetAttributes();resetRegimen();',
-        :optional => "true",
-        :tt_pageStyleClass => "NoControls"
-      } %>
-    <% else %>
-      <%= select_tag :continue_existing_regimen, options_for_select([['',''],['Yes','YES'],['No','NO']], ''), {
-        :textCase => "upper",
-        :allowFreeText => 'false',
-        :id => "continue_existing_regimen",
-        :tt_onLoad => 'showDrugs();setAttributes();changeButton();showCategory("Regimen");showRegimenChangeAlert(); showHighVlPopup(); showDrugStock()',
-        :tt_onUnLoad => 'resetAttributes();resetRegimen();hideStock();',
-        :condition => 'existingRegimen();',
-        :helpText => "Continue current ARV drugs?"}%>
-    <% end %>
+    <%= hidden_field_tag("continue_existing_regimen", 'NO', {:id => 'continue_existing_regimen'}) %>
 
     <%= select_tag :regimen_concept_id, nil, {
       :ajaxUrl => "",
