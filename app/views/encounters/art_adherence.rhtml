@@ -286,7 +286,7 @@
       inputValue = available_options[i].getAttribute("tstvalue");
       available_options[i].onmouseup = function(){
         fastTrackStopReason = this.getAttribute("tstvalue");
-        __$('nextButton').innerHTML = '<span>Finish</span>';
+        //__$('nextButton').innerHTML = '<span>Finish</span>';
         /*__$('nextButton').onmousedown = function(){
           window.location = '/patients/stop_fast_track?patient_id=' + patientID + '&fast_track_stop_reason=' + fastTrackStopReason;
         }*/
@@ -400,6 +400,21 @@
 :condition => "abnormalAdherence = 'YES'",
 :tt_onLoad => "checkAdherence()",
 :helpText  => "Reason for lower adherence" } %>
+
+    <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
+      :id => 'fast_track',
+      :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
+      :tt_onUnLoad => "setFastTrackYesNoValue()",
+      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
+    } %>
+
+    <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{
+      :id => 'fast_track_stop_reason',
+      :condition => "__$('fast_track').value == 'No'",
+      :helpText => 'Select Reason for stopping Fast Track',
+      :tt_onLoad => "setNextCaption();",
+      :tt_onUnLoad => "resetNextCaption();"
+    } %>
 
     <script>
       var abnormalAdherence;
@@ -711,21 +726,6 @@
         :helpText => "Is patient allergic to sulphur" } %>
     <%end unless refer_to_clinician_already_asked %>
 
-    <%= select_tag "continue_fast_track", options_for_select(['', 'Yes', 'No']),{
-      :id => 'fast_track',
-      :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
-      :tt_onUnLoad => "setFastTrackYesNoValue()",
-      :helpText => 'This patient is currently on Fast Track program. Continue with Fast Track?'
-    } %>
-
-    <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{
-      :id => 'fast_track_stop_reason',
-      :condition => "__$('fast_track').value == 'No'",
-      :helpText => 'Select Reason for stopping Fast Track',
-      :tt_onLoad => "setNextCaption();",
-      :tt_onUnLoad => "resetNextCaption();"
-    } %>
-
 <%#= text_field_tag "fast_track_pop_up_input", nil, {
 :id => "fast_track_pop_up_input",
 :helpText => "Fast Track",
@@ -736,15 +736,15 @@
 :tt_pageStyleClass => "NoControls"
 } %>
 
-    <%#= text_field_tag "fast_track_pop_up_input", nil, {
-      :id => "fast_track_pop_up_input",
-      :helpText => "Fast Track",
-      :tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display='none';",
-      :tt_onUnLoad => "__$('keyboard').style.display='inline';",
-      :condition => "hivReceptionOnlyAvailable == 'false'",
-      :optional => "true",
-      :tt_pageStyleClass => "NoControls"
-    } %>
+<%#= text_field_tag "fast_track_pop_up_input", nil, {
+:id => "fast_track_pop_up_input",
+:helpText => "Fast Track",
+:tt_onLoad => "showFastTrackReminder(); __$('keyboard').style.display='none';",
+:tt_onUnLoad => "__$('keyboard').style.display='inline';",
+:condition => "hivReceptionOnlyAvailable == 'false'",
+:optional => "true",
+:tt_pageStyleClass => "NoControls"
+} %>
 
     <%= touch_hidden_tag("FAST", @patient, "", {:id => 'fast-track-input'}) %>
 
