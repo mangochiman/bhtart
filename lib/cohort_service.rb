@@ -16,7 +16,7 @@ class CohortService
                :cum_pregnant_females_all_ages, :cum_non_pregnant_females, :cum_children_below_24_months_at_art_initiation,
                :cum_children_24_months_14_years_at_art_initiation, :cum_adults_at_art_initiation, :cum_unknown_age,
                :cum_presumed_severe_hiv_disease_in_infants, :cum_confirmed_hiv_infection_in_infants_pcr,
-               :cum_tb_within_the_last_two_years, :cum_current_episode_of_tb, :cum_kaposis_sarcoma,
+               :cum_tb_within_the_last_two_years, :cum_current_episode_of_tb, :cum_kaposis_sarcoma, :no_tb, :cum_no_tb,
                :cum_presumed_severe_hiv_disease_in_infants, :cum_confirmed_hiv_infection_in_infants_pcr,
                :cum_who_stage_two, :cum_children_12_23_months, :cum_breastfeeding_mothers, :cum_pregnant_women,
                :cum_who_stage_three, :cum_who_stage_four, :cum_unknown_other_reason_outside_guidelines, :cum_all_males
