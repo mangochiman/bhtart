@@ -454,6 +454,13 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.cum_current_episode_of_tb = self.current_episode_of_tb(cum_start_date, end_date)
 
 =begin
+    No TB
+    total_registered - (current_episode - tb_within_the_last_two_years)
+=end
+    cohort.no_tb = self.no_tb(cohort.total_registered, cohort.tb_within_the_last_two_years, cohort.current_episode_of_tb)
+    cohort.cum_no_tb = self.cum_no_tb(cohort.cum_total_registered, cohort.cum_tb_within_the_last_two_years, cohort.cum_current_episode_of_tb)
+
+=begin
     Kaposis Sarcoma
 
     Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
@@ -870,6 +877,50 @@ EOF
     (total_registered || []).each do |patient|
       registered << patient
     end
+  end
+
+  def self.no_tb(total_registered, tb_within_the_last_two_years, current_episode_of_tb)
+    total_registered_patients = []
+    tb_within_2yrs_patients = []
+    current_tb_episode_patients = []
+    result = []
+
+    (total_registered || []).each do |patient|
+      total_registered_patients << patient[:patient_id].to_i
+    end
+
+    (tb_within_the_last_two_years || []).each do |patient|
+      tb_within_2yrs_patients << patient[:patient_id].to_i
+    end
+
+    (current_episode_of_tb || []).each do |patient|
+      current_tb_episode_patients << patient[:patient_id].to_i
+    end
+
+    result = total_registered_patients - (tb_within_2yrs_patients + current_tb_episode_patients)
+    return result
+  end
+
+  def self.cum_no_tb(cum_total_registered, cum_tb_within_the_last_two_years, cum_current_episode_of_tb)
+    total_registered_patients = []
+    tb_within_2yrs_patients = []
+    current_tb_episode_patients = []
+    result = []
+
+    (cum_total_registered || []).each do |patient|
+      total_registered_patients << patient[:patient_id].to_i
+    end
+
+    (cum_tb_within_the_last_two_years || []).each do |patient|
+      tb_within_2yrs_patients << patient[:patient_id].to_i
+    end
+
+    (cum_current_episode_of_tb || []).each do |patient|
+      current_tb_episode_patients << patient[:patient_id].to_i
+    end
+
+    result = total_registered_patients - (tb_within_2yrs_patients + current_tb_episode_patients)
+    return result
   end
 
   def self.children_12_23_months(start_date, end_date)

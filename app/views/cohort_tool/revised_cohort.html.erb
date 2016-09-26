@@ -1123,7 +1123,7 @@
             &nbsp;
         </td>
         <td>
-            &nbsp;<%= @cohort.who_stage_four.count %>
+            &nbsp;<%= @cohort.cum_who_stage_four.count %>
         </td>
         <td>
             &nbsp;
@@ -1176,13 +1176,13 @@
             Never TB or TB over 2 years ago
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.no_tb.count %>
         </td>
         <td>
             &nbsp;
         </td>
         <td>
-            &nbsp;
+            &nbsp;<%= @cohort.cum_no_tb.count %>
         </td>
         <td>
             &nbsp;
