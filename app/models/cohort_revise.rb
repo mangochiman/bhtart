@@ -14,12 +14,13 @@ EOF
       CREATE TABLE temp_earliest_start_date
 select
         `p`.`patient_id` AS `patient_id`,
-        `p`.`earliest_start_date` AS `earliest_start_date`,
-        `p`.`death_date` AS `death_date`,
         `p`.`gender` AS `gender`,
-        TRUNCATE(`p`.`age_at_initiation`,0) AS `age_at_initiation`,
-        `p`.`age_in_days` AS `age_in_days`,
-        cast(`pf`.`encounter_datetime` as date) AS `date_enrolled`
+        `p`.`birthdate`,
+        `p`.`earliest_start_date` AS `earliest_start_date`,
+        cast(`pf`.`encounter_datetime` as date) AS `date_enrolled`,
+        `p`.`death_date` AS `death_date`,
+        (select timestampdiff(year, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_at_initiation`,
+        (select timestampdiff(day, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_in_days`
     from
         (`patients_on_arvs` `p`
         join `patient_first_arv_amount_dispensed` `pf` ON ((`pf`.`patient_id` = `p`.`patient_id`)))
@@ -1154,7 +1155,7 @@ EOF
       result = ActiveRecord::Base.connection.select_value <<EOF
         SELECT * FROM obs
         WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
-        AND '#{(date_enrolled + 28.days).strftime('%Y-%m-%d 23:59:59')}'
+        AND '#{(date_enrolled + 30.days).strftime('%Y-%m-%d 23:59:59')}'
         AND person_id = #{patient_id}
         AND value_coded = #{yes_concept_id}
         AND concept_id IN (#{preg_concept_id}, #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})

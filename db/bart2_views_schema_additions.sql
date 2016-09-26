@@ -133,6 +133,7 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	VIEW `patients_on_arvs` AS
     select
         `p`.`patient_id` AS `patient_id`,
+        `person`.`birthdate`,
         date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
         `person`.`death_date` AS `death_date`,
         `person`.`gender` AS `gender`,
