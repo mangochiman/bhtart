@@ -1043,8 +1043,9 @@ EOF
 
   def self.who_stage_two(start_date, end_date)
     reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
     reason2_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 750').concept_id
+    reason5_concept_id = ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
+    reason_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
     reason3_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
     reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
@@ -1055,8 +1056,8 @@ EOF
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND concept_id = #{reason_for_art} AND
       (value_coded = #{reason_concept_id} OR value_coded = #{reason2_concept_id}
-      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id})
-      AND voided = 0 GROUP BY patient_id;
+      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}
+      OR value_coded = #{reason5_concept_id}) AND voided = 0 GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
