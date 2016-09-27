@@ -2009,8 +2009,7 @@ class EncountersController < GenericEncountersController
     result = {}
     @patient = PatientIdentifier.find_by_identifier(params[:national_id]).patient rescue nil
 
-    result["start_date"] = PatientProgram.find_by_sql("SELECT * FROM earliest_start_date
-	    WHERE patient_id = #{@patient.id}").first.earliest_start_date.to_date rescue ""
+    result["start_date"] = PatientService.earliest_start_date_patient_data(@patient.id)[:earliest_start_date] || ""
 
     result["arv_number"] = PatientService.get_patient_identifier(@patient, 'ARV Number') rescue ""
 

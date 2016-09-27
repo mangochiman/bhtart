@@ -2372,6 +2372,41 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     end
   end
 
+  def self.earliest_start_date_patient_data(patient_id)
+    record = ActiveRecord::Base.connection.select_all("
+    select 
+        `p`.`patient_id` AS `patient_id`,
+        cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+        `person`.`death_date` AS `death_date`, `person`.`birthdate`,
+         TIMESTAMPDIFF(YEAR,`person`.`birthdate`,  min(`s`.`start_date`)) AS `age_at_initiation`,
+         TIMESTAMPDIFF(DAY,`person`.`birthdate`,  min(`s`.`start_date`)) AS `age_in_days`
+    from
+        ((`patient_program` `p`
+        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+    where
+        (
+          (`p`.`voided` = 0)
+          and (`s`.`voided` = 0)
+          and (`p`.`program_id` = 1)
+          and (`s`.`state` = 7)
+          and `p`.`patient_id` = #{patient_id}
+        )
+    group by `p`.`patient_id`").collect do |p|
+    {
+      :birthdate => (p['birthdate'].to_date rescue nil),
+      :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+      :earliest_start_date => (p['earliest_start_date'].to_date rescue nil), 
+      :death_date => (p['death_date'].to_date rescue nil), 
+      :age_at_initiation => (p['age_at_initiation'].to_i rescue nil), 
+      :age_in_days => (p['age_in_days'].to_i rescue nil)
+    }
+    end
+    
+    return record.first rescue nil
+  end
+
   private
 
   def self.current_program_location

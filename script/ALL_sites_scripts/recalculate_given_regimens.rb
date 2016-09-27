@@ -27,13 +27,10 @@
       regimen = set_received_regimen(encounter)
       unless regimen.blank?
         update_patient_regimen(encounter, regimen)
-        puts "#################################################### #{(i+1)} of #{encounters.length}"
+        #puts "#################################################### #{(i+1)} of #{encounters.length}"
       end
     end
 
-    puts ""
-    puts ""
-    puts ""
     puts "Started at: #{start_datetime.strftime('%Y-%m-%d %H:%M:%S')}"
     puts "Ended at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
   end
@@ -62,7 +59,7 @@
     end
 
     return if dispensed_drugs_inventory_ids.blank?
-
+=begin
     if !dispensed_drugs_inventory_ids.blank?
       regimen_drug_order = ActiveRecord::Base.connection.select_all <<EOF
 SELECT r.regimen_id, regimen_index, r.concept_id FROM regimen_drug_order x 
@@ -78,24 +75,24 @@ EOF
     if not regimen_drug_order.first['regimen_id'].blank?
       return Regimen.find(regimen_drug_order.first['regimen_id'])
     end rescue nil
+=end
+
+    return MedicationService.regimen_interpreter(dispensed_drugs_inventory_ids)
   end
 
-  def update_patient_regimen(encounter, regimen)
-    selected_regimen = regimen
-    regimen_category_id = regimen.concept_id
+  def update_patient_regimen(encounter, regimen_name)
 
     if encounter.observations.find_by_concept_id(RegimenCategory.concept_id).blank?
-      puts ".............. Created Regimen Category: Encounter ID: #{encounter.id}"
       obs = Observation.create(
         :concept_name => "Regimen Category",
         :person_id => encounter.patient_id,
         :encounter_id => encounter.id,
-        :value_text => selected_regimen.regimen_index,
-        :obs_datetime => encounter.encounter_datetime) if !selected_regimen.blank?
+        :value_text => regimen_name,
+        :obs_datetime => encounter.encounter_datetime) unless regimen_name.blank?
     end
 
     if encounter.observations.find_by_concept_id(RegimensReceived.concept_id).blank?
-      puts ">>>>>>>>>>>>>> Created ARV regimens received abstracted construct: Encounter ID: #{encounter.id}"
+      regimen = Regimen.find_by_regimen_index(regimen_name)
       obs = Observation.new(
         :concept_name => "ARV regimens received abstracted construct",
         :person_id => encounter.patient_id,
@@ -103,9 +100,10 @@ EOF
         :value_coded => regimen.concept_id,
         :obs_datetime => encounter.encounter_datetime)
 
-      obs.save
-    end
+      obs.save unless regimen.blank?
+    end unless regimen_name.match(/Unknown/i)
 
+    puts ">>>>>>>>>>>>>> Created ARV regimens received abstracted construct: Encounter ID: #{encounter.id}: #{regimen_name}"
   end
 
  start
