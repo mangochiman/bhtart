@@ -98,7 +98,7 @@ EOF
         :person_id => encounter.patient_id,
         :encounter_id => encounter.id,
         :value_coded => regimen.concept_id,
-        :obs_datetime => encounter.encounter_datetime)
+        :obs_datetime => encounter.encounter_datetime) unless regimen.blank?
 
       obs.save unless regimen.blank?
     end unless regimen_name.match(/Unknown/i)
