@@ -552,7 +552,7 @@ Unique PatientProgram entries at the current location for those patients with at
     patients_with_side_effects = []
     patients_without_side_effects = []
     result = []
-#raise 'am here'
+
     (total_alive || []).each do |row|
       total_alive_patients << row['patient_id'].to_i
     end
@@ -886,18 +886,20 @@ EOF
     result = []
 
     (total_registered || []).each do |patient|
-      total_registered_patients << patient[:patient_id].to_i
+    #  raise patient.to_yaml
+      total_registered_patients << patient["patient_id"].to_i
     end
 
     (tb_within_the_last_two_years || []).each do |patient|
-      tb_within_2yrs_patients << patient[:patient_id].to_i
+      tb_within_2yrs_patients << patient["patient_id"].to_i
     end
 
     (current_episode_of_tb || []).each do |patient|
-      current_tb_episode_patients << patient[:patient_id].to_i
+      current_tb_episode_patients << patient["patient_id"].to_i
     end
 
     result = total_registered_patients - (tb_within_2yrs_patients + current_tb_episode_patients)
+
     return result
   end
 
@@ -908,15 +910,15 @@ EOF
     result = []
 
     (cum_total_registered || []).each do |patient|
-      total_registered_patients << patient[:patient_id].to_i
+      total_registered_patients << patient["patient_id"].to_i
     end
 
     (cum_tb_within_the_last_two_years || []).each do |patient|
-      tb_within_2yrs_patients << patient[:patient_id].to_i
+      tb_within_2yrs_patients << patient["patient_id"].to_i
     end
 
     (cum_current_episode_of_tb || []).each do |patient|
-      current_tb_episode_patients << patient[:patient_id].to_i
+      current_tb_episode_patients << patient["patient_id"].to_i
     end
 
     result = total_registered_patients - (tb_within_2yrs_patients + current_tb_episode_patients)
