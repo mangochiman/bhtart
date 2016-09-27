@@ -28,7 +28,7 @@ class GenericRegimensController < ApplicationController
     ################################################################################################################
 
 		@current_regimen = current_regimen(@patient.id) rescue nil
-
+    @current_regimen_index = @current_regimen.to_i unless @current_regimen.blank?
 		#@hiv_programs = @patient.patient_programs.not_completed.in_programs('HIV PROGRAM')
     @hiv_programs = []
     @programs.each do |prog|
