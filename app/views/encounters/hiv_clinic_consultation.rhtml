@@ -981,8 +981,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%else%>
     <%  session_date = session[:datetime].to_date rescue nil
-        medication_options_allergic_to_sulphur_no = ['ARVs','CPT','Isoniazid','NONE']
-        medication_options_allergic_to_sulphur_yes = ['ARVs','Isoniazid','NONE']
+        medication_options_allergic_to_sulphur_no = ['ARVs','CPT','IPT','NONE']
+        medication_options_allergic_to_sulphur_yes = ['ARVs','IPT','NONE']
   %>
     <%  if session_date %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
