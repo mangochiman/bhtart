@@ -24,7 +24,7 @@ class GenericRegimensController < ApplicationController
     else
       @prescribe_cpt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'CPT')
     end
-    @prescribe_ipt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'Isoniazid')
+    @prescribe_ipt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'IPT')
     ################################################################################################################
 
 		@current_regimen = current_regimen(@patient.id) rescue nil

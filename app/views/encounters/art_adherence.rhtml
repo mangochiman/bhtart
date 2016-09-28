@@ -769,9 +769,9 @@
         <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
       <% else %>
         <%if @allergic_to_sulphur.blank?
-          medication_options = ['ARVs','CPT','Isoniazid','NONE']
+          medication_options = ['ARVs','CPT','IPT','NONE']
         else
-          medication_options = ['ARVs','Isoniazid','NONE']
+          medication_options = ['ARVs','IPT','NONE']
         end%>
 
         <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
