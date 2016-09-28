@@ -13,6 +13,7 @@
             text-overflow: ellipsis;
             margin: auto;
             page-break-inside: auto;
+            padding-bottom: 70px;
         }
         .table-top {
             page-break-inside: auto;
@@ -25,19 +26,6 @@
             text-overflow: ellipsis;
             margin: auto;
             page-break-inside: auto;
-        }
-        .table-bottom {
-            page-break-inside: auto;
-            width: 99%;
-            border: 0;
-            border-spacing: 0;
-            font-family: "Helvetica Neue", Arial, "Lucida Grande", sans-serif;
-            font-size: large;
-            overflow: auto;
-            text-overflow: ellipsis;
-            margin: auto;
-            page-break-inside: auto;
-            padding-bottom: 70px;
         }
         .border-null {
             border: none;
@@ -1290,7 +1278,7 @@
         <td class="border-null-bottom border-null-top border-null-left">
             WHO stage 4
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.who_stage_four.count %>
         </td>
         <td>
@@ -1299,7 +1287,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.cum_who_stage_four.count %>
         </td>
         <td>
@@ -1316,7 +1304,7 @@
         <td class="border-bottom-dotted border-null-top border-null-left">
             Unknown / reason outside guidelines
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.unknown_other_reason_outside_guidelines.count %>
         </td>
         <td>
@@ -1325,7 +1313,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.cum_unknown_other_reason_outside_guidelines.count %>
         </td>
         <td>
@@ -1355,7 +1343,7 @@
         <td class="border-top-dotted border-null-bottom border-null-left">
             Never TB or TB over 2 years ago
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.no_tb.count %>
         </td>
         <td>
@@ -1364,7 +1352,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.cum_no_tb.count %>
         </td>
         <td>
@@ -1381,7 +1369,7 @@
         <td class="border-null-bottom border-null-top border-null-left">
             TB within the last 2 years
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.tb_within_the_last_two_years.count %>
         </td>
         <td>
@@ -1390,7 +1378,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.cum_tb_within_the_last_two_years.count %>
         </td>
         <td>
@@ -1407,7 +1395,7 @@
         <td class="border-bottom-dotted border-null-top border-null-left">
             Current episode of TB
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.current_episode_of_tb.count %>
         </td>
         <td>
@@ -1416,7 +1404,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.cum_current_episode_of_tb.count %>
         </td>
         <td>
@@ -1438,7 +1426,7 @@
         <td class="border-bottom-dotted border-top-dotted border-null-left">
             Kaposi's Sarcoma
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.kaposis_sarcoma.count %>
         </td>
         <td>
@@ -1447,7 +1435,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.cum_kaposis_sarcoma.count %>
         </td>
         <td>
@@ -1489,7 +1477,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.total_alive_and_on_art.count %>
         </td>
         <td>
@@ -1514,7 +1502,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.died_within_the_1st_month_of_art_initiation.count %>
         </td>
         <td>
@@ -1534,7 +1522,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.died_within_the_2nd_month_of_art_initiation.count %>
         </td>
         <td>
@@ -1554,7 +1542,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.died_within_the_3rd_month_of_art_initiation.count %>
         </td>
         <td>
@@ -1574,7 +1562,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.died_after_the_3rd_month_of_art_initiation.count %>
         </td>
         <td>
@@ -1591,7 +1579,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.died_total.count %>
         </td>
         <td>
@@ -1608,7 +1596,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.defaulted.count %>
         </td>
         <td>
@@ -1625,7 +1613,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.stopped_art.count %>
         </td>
         <td>
@@ -1642,7 +1630,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td>
+        <td class="number">
             &nbsp;<%= @cohort.transfered_out.count %>
         </td>
         <td>
@@ -1675,7 +1663,7 @@
         <td colspan="2" class="border-null-bottom border-null-left border-top-dotted">
             Regimen <b>0P</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.zero_p.count %>
         </td>
     </tr>
@@ -1691,7 +1679,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>1P</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.one_p.count %>
         </td>
     </tr>
@@ -1702,7 +1690,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>2P</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.two_p.count %>
         </td>
     </tr>
@@ -1713,7 +1701,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>3P</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.three_p.count %>
         </td>
     </tr>
@@ -1724,7 +1712,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>4P</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.four_p.count %>
         </td>
     </tr>
@@ -1735,7 +1723,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>9P</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.nine_p.count %>
         </td>
     </tr>
@@ -1749,10 +1737,10 @@
         <td colspan="2" class="border-top-dotted border-null-bottom border-null-left border-null-right">
             <b>Adult</b> formulations (yellow card)
         </td>
-        <td colspan="2" class="border-top-dotted border-null-bottom border-null-left">
+        <td colspan="2" class="number border-top-dotted border-null-bottom border-null-left">
             Regimen <b>0A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.zero_a.count %>
         </td>
     </tr>
@@ -1766,7 +1754,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>1A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.one_a.count %>
         </td>
     </tr>
@@ -1780,8 +1768,8 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>2A</b>
         </td>
-        <td colspan="2"><%= @cohort.two_a.count %>
-            &nbsp;
+        <td colspan="2" class="number">
+            <%= @cohort.two_a.count %>
         </td>
     </tr>
     <tr>
@@ -1794,7 +1782,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>3A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.three_a.count %>
         </td>
     </tr>
@@ -1808,7 +1796,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>4A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.four_a.count %>
         </td>
     </tr>
@@ -1822,7 +1810,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>5A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.five_a.count %>
         </td>
     </tr>
@@ -1836,7 +1824,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>6A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.six_a.count %>
         </td>
     </tr>
@@ -1850,7 +1838,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>7A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.seven_a.count %>
         </td>
     </tr>
@@ -1864,7 +1852,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>8A</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.eight_a.count %>
         </td>
     </tr>
@@ -1878,7 +1866,7 @@
         <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
             Other (paed. / adult)
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.unknown_regimen.count %>
         </td>
     </tr>
@@ -1900,7 +1888,7 @@
         <td colspan="2" class="text-bold border-top-dotted border-null-bottom border-null-left" colspan="2">
             None
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.total_patients_without_side_effects.count %>
         </td>
     </tr>
@@ -1917,7 +1905,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             <b>Any</b> side effects
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.total_patients_with_side_effects.count %>
         </td>
     </tr>
@@ -1934,7 +1922,7 @@
         <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
             <b>Unk</b>own (not circled)
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.unknown_side_effects.count %>
         </td>
     </tr>
@@ -1956,7 +1944,7 @@
         <td colspan="2" class="border-top-dotted border-null-bottom border-null-left">
             <b>0 - 3 doses missed</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;
         </td>
     </tr>
@@ -1973,7 +1961,7 @@
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             <b>4+</b> doses missed
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;
         </td>
     </tr>
@@ -1990,7 +1978,7 @@
         <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
             <b>Unk</b>nown (not circled)
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;
         </td>
     </tr>
@@ -2012,7 +2000,7 @@
         <td colspan="2" class="border-top-dotted border-null-left border-null-bottom">
             TB <b>not</b> suspected
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.tb_not_suspected.count %>
         </td>
     </tr>
@@ -2029,7 +2017,7 @@
         <td colspan="2" class="border-null-left border-null-top border-null-bottom">
             TB <b>suspected</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.tb_suspected.count %>
         </td>
     </tr>
@@ -2043,7 +2031,7 @@
         <td colspan="2" class="border-null-top border-null-bottom border-null-left">
             TB conf., <b>not</b> on Rx
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.tb_confirmed_currently_not_yet_on_tb_treatment.count %>
         </td>
     </tr>
@@ -2057,7 +2045,7 @@
         <td colspan="2" class="border-null-left border-null-top border-null-bottom">
             TB conf., <b>on TB Rx</b>
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.tb_confirmed_on_tb_treatment.count %>
         </td>
     </tr>
@@ -2071,85 +2059,13 @@
         <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
             Unknown (not circled)
         </td>
-        <td colspan="2">
+        <td colspan="2" class="number">
             &nbsp;<%= @cohort.unknown_tb_status.count %>
         </td>
     </tr>
     <tr>
         <td colspan="7" class="border-null">
             &nbsp;
-        </td>
-    </tr>
-</table>
-
-<table class="table-bottom" border="2px;">
-    <tr>
-        <th colspan="10" class="border-null">
-            Cohort survival analysis
-        </th>
-    </tr>
-    <tr>
-        <td>
-            Reg. cohort
-        </td>
-        <td>
-            Interval months
-        </td>
-        <td>
-            Sub group
-        </td>
-        <td>
-            Total reg. (database)
-        </td>
-        <td>
-            Total reg. (confirmed)
-        </td>
-        <td>
-            Alive
-        </td>
-        <td>
-            Died
-        </td>
-        <td>
-            Defaulted
-        </td>
-        <td>
-            Stopped
-        </td>
-        <td>
-            Transfer out
-        </td>
-    </tr>
-    <tr>
-        <td class="text-bold">
-            2006 Q2
-        </td>
-        <td>
-            120
-        </td>
-        <td>
-            all ages
-        </td>
-        <td>
-            250
-        </td>
-        <td>
-            250
-        </td>
-        <td>
-            81
-        </td>
-        <td>
-            48
-        </td>
-        <td>
-            63
-        </td>
-        <td>
-            1
-        </td>
-        <td>
-            57
         </td>
     </tr>
 </table>

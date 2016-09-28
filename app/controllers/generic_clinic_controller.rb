@@ -134,6 +134,7 @@ class GenericClinicController < ApplicationController
     @reports = [
       ["Cohort","/cohort_tool/cohort_menu"],
       ["Revised Cohort","/cohort_tool/revised_cohort_menu"],
+      ["Revised Cohort Survival Analysis","/cohort_tool/revised_cohort_survival_analysis_menu"],
       ["Supervision","/clinic/supervision_tab"],
       ["Data Cleaning Tools", "/clinic/data_cleaning_tab"],
       #["View appointments","/report/select_date"],
