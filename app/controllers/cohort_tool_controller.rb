@@ -1479,7 +1479,7 @@ class CohortToolController < GenericCohortToolController
   end
 
 	def revised_cohort_survival_analysis
-
+		render :layout => false
 	end
 
 	def revised_cohort_survival_analysis_menu
