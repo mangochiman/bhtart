@@ -2775,6 +2775,7 @@ The following block of code should be replaced by a more cleaner function
   end
 
   def set_new_patient_filing_number(patient)
+=begin
     ActiveRecord::Base.transaction do
       global_property_value = GlobalProperty.find_by_property("filing.number.limit").property_value rescue '10'
 
@@ -2846,6 +2847,8 @@ The following block of code should be replaced by a more cleaner function
       end
       true
     end
+=end
+
   end
 
   def diabetes_treatments
