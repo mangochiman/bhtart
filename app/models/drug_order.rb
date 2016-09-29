@@ -5,7 +5,9 @@ class DrugOrder < ActiveRecord::Base
   belongs_to :drug, :foreign_key => :drug_inventory_id, :conditions => {:retired => 0}
 
   after_save do |record|
-    Pharmacy.update_stock_record(record.drug_inventory_id, Date.today)
+    if CoreService.get_global_property_value("activate.drug.management").to_s == "true"
+      Pharmacy.update_stock_record(record.drug_inventory_id, Date.today)
+    end
   end
 
   def order
