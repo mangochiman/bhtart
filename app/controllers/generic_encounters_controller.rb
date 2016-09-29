@@ -6,6 +6,8 @@ class GenericEncountersController < ApplicationController
       set_prescribe_drugs_yes = true
       params[:observations].each do |ob|
         if ob[:concept_name] == 'Medication orders'
+          ipt_index = ob['value_coded_or_text_multiple'].find_index('IPT') rescue nil
+          ob['value_coded_or_text_multiple'][ipt_index] = 'Isoniazid' unless ipt_index.blank?
           options_selected = ob['value_coded_or_text_multiple'].join(',') unless ob['value_coded_or_text_multiple'].blank?
           if options_selected.blank?
             params[:observations] -= [ob]
@@ -22,11 +24,11 @@ class GenericEncountersController < ApplicationController
       params[:observations].each do |ob|
         if ob[:concept_name] == 'Prescribe drugs'
           if (set_prescribe_drugs_yes == true)
-            ob['value_coded_or_text'] = 'Yes'#ConceptName.find_by_name('Yes').concept_id
+            ob['value_coded_or_text'] = 'Yes'
           else
-            ob['value_coded_or_text'] = 'NO'#ConceptName.find_by_name('No').concept_id
+            ob['value_coded_or_text'] = 'NO'
           end
-          #raise "#{set_prescribe_drugs_yes} ::::: #{ob['value_coded']}".inspect
+          
           break
         end
       end

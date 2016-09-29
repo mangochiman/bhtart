@@ -2150,7 +2150,7 @@ pyridoxine_options = ["","25", "50"]
       if @allergic_to_sulphur.upcase == 'YES'%>
         <%= touch_hidden_tag "Prescribe cotramoxazole", @patient, "NO", :id => "cpt_given" %>
       <%else%>
-        <%= touch_yes_no_tag "Prescribe cotramoxazole", @patient, nil,
+        <%#= touch_yes_no_tag "Prescribe cotramoxazole", @patient, nil,
           {	:id => 'cpt_given',
           :allowFreeText => 'false',
           :condition => 'prescribeAntiretroviralDrugs() == true && prescribeCPT() == true',
@@ -2161,7 +2161,7 @@ pyridoxine_options = ["","25", "50"]
           :allowFreeText => 'false',
           :condition => "$('cpt_given').value == 'YES'",
           :helpText => "Prescribed cotrimoxazole milligrams",
-          :tt_onLoad => "checkInput(); showCategory('Regimen'); setTextToAppear(); showCptDrugStock()",
+          :tt_onLoad => "checkInput(); showCategory('Regimen'); setTextToAppear(); showCptDrugStock(); prescribeCPT();",
           :tt_onUnLoad => 'hideStock();',
           :tt_onmousedown => "show_confirm_cpt_mgs()"} %>
       <%end%>
