@@ -1916,7 +1916,7 @@ pyridoxine_options = ["","25", "50"]
     <% unless @transfer_out_patient %>
 
       <%= touch_yes_no_tag "Prescribe drugs", @patient, nil,
-        {	:optional => false,
+        { :optional => false,
         :id => 'prescribe_tb_drugs',
         :condition => 'isRegisteredForTB() == true',
         :helpText => "Prescribe TB Regimen?",
@@ -1926,7 +1926,7 @@ pyridoxine_options = ["","25", "50"]
 
     <% unless @tb_programs.uniq.count == 1 %>
       <%= select_tag :tb_patient_program, options_for_select(@tb_programs.map{|program| [program.program.name, program.patient_program_id] if PatientProgram.find(program.patient_program_id).date_completed == nil}),
-        {	:textCase => "upper",
+        { :textCase => "upper",
         :condition => '$("prescribe_tb_drugs").value == "YES"',
         :allowFreeText => 'false',
         :helpText => "Prescribe regimen for which TB program?",
@@ -1938,20 +1938,20 @@ pyridoxine_options = ["","25", "50"]
     <% unless @transfer_out_patient %>
 
       <%= select_tag :tb_continue_existing_regimen, options_for_select([['',''],['Yes','YES'],['No','NO']], ''),
-        {	:textCase => "upper",
+        { :textCase => "upper",
         :allowFreeText => 'false',
         :condition => 'current_regimens_for_programs[$("tb_patient_program").value] != null && $("prescribe_tb_drugs").value == "YES"',
         :tt_onLoad => 'showTbDrugs();setAttributes();showCategory("Regimen");',
         :tt_onUnLoad => 'resetAttributes();',
         :helpText => "Continue current TB regimen?" } %>
 
-      <%	initial_regimen_help_text = "Select TB regimen"
+      <%  initial_regimen_help_text = "Select TB regimen"
       if @transfer_out_patient
         initial_regimen_help_text = "Select Inital TB regimen"
       end %>
 
       <%= select_tag :tb_regimen_concept_id, nil,
-        {	:ajaxUrl => "",
+        { :ajaxUrl => "",
         :allowFreeText => 'false',
         :tt_onLoad => "set_patient_program_for_suggestions($('tb_patient_program').value);setTimeout('setSelectedRow()',500);showCategory('Regimen');",
         :condition => '$("prescribe_tb_drugs").value == "YES" && $("tb_continue_existing_regimen").value != "YES"',
@@ -1981,7 +1981,7 @@ pyridoxine_options = ["","25", "50"]
       end
     %>
       <%= select_tag :tb_duration, optionsString,
-        {	:condition => '$("prescribe_tb_drugs").value == "YES"',
+        { :condition => '$("prescribe_tb_drugs").value == "YES"',
         :tt_onLoad => "__$('keyboard').style.display = 'none';showCategory('Regimen');",
         :helpText => 'Duration' } %>
 
@@ -1990,14 +1990,14 @@ pyridoxine_options = ["","25", "50"]
 
     <% if @transfer_out_patient %>
       <%= touch_yes_no_tag "Prescribe drugs", @patient, nil,
-        {	:optional => false,
+        { :optional => false,
         :id => 'prescribe_continuation_tb_drugs',
         :condition => 'isRegisteredForTB() == true',
         :helpText => "Prescribe Continuation TB Regimen?",
         :tt_onLoad => "showCategory('Regimen');"} %>
 
       <%= select_tag :tb_continuation_regimen_concept_id, nil,
-        {	:ajaxUrl => "",
+        { :ajaxUrl => "",
         :allowFreeText => 'false',
         :tt_onLoad => "set_patient_program_for_suggestions($('tb_patient_program').value);setTimeout('setSelectedRow()',500);showCategory('Regimen');",
         :condition => '$("prescribe_continuation_tb_drugs").value == "YES"',
@@ -2026,7 +2026,7 @@ pyridoxine_options = ["","25", "50"]
       end
     %>
       <%= select_tag :tb_continuation_duration, optionsString,
-        {	:condition => '$("prescribe_continuation_tb_drugs").value == "YES"',
+        { :condition => '$("prescribe_continuation_tb_drugs").value == "YES"',
         :helpText => 'Duration of TB drugs',
         :tt_onLoad => "showCategory('Regimen');"} %>
 
@@ -2143,17 +2143,19 @@ pyridoxine_options = ["","25", "50"]
         <%= touch_hidden_tag "Prescribe cotramoxazole", @patient, "NO", :id => "cpt_given" %>
       <%else%>
         <%#= touch_yes_no_tag "Prescribe cotramoxazole", @patient, nil,
-          {	:id => 'cpt_given',
+          { :id => 'cpt_given',
           :allowFreeText => 'false',
           :condition => 'prescribeAntiretroviralDrugs() == true && prescribeCPT() == true',
           :helpText => "Prescribe CPT",
           :tt_onLoad => "showCategory('Regimen');"} %>
 
+        <%= touch_hidden_tag "Prescribe cotramoxazole", @patient, "#{@prescribe_cpt_set == true ? 'YES' : 'NO'}", :id => "cpt_given" %>
+
         <%= select_tag :cpt_mgs, options_for_select(options), {
           :allowFreeText => 'false',
           :condition => "$('cpt_given').value == 'YES'",
           :helpText => "Prescribed cotrimoxazole milligrams",
-          :tt_onLoad => "checkInput(); showCategory('Regimen'); setTextToAppear(); showCptDrugStock(); prescribeCPT();",
+          :tt_onLoad => "checkInput(); showCategory('Regimen'); setTextToAppear(); showCptDrugStock()",
           :tt_onUnLoad => 'hideStock();',
           :tt_onmousedown => "show_confirm_cpt_mgs()"} %>
       <%end%>
@@ -2166,7 +2168,7 @@ pyridoxine_options = ["","25", "50"]
       if current >= '2014-04-01'.to_date %>
         <% if @patient_bean.age >= 5 && !@current_hiv_program_state.match(/On antiretrovirals/i) && !@current_hiv_program_state.match(/Patient transferred in/i) %>
       <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
-      {	:id => 'ipt_given',
+      { :id => 'ipt_given',
       :allowFreeText => 'false',
       :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
       :helpText => "Prescribe IPT",
@@ -2190,7 +2192,7 @@ pyridoxine_options = ["","25", "50"]
       <%  else %>
         <% if @patient_bean.age >= 2 && !@current_hiv_program_state.match(/On antiretrovirals/i) && !@current_hiv_program_state.match(/Patient transferred in/i) %>
       <%#= touch_yes_no_tag "ISONIAZID", @patient, nil,
-      {	:id => 'ipt_given',
+      { :id => 'ipt_given',
       :allowFreeText => 'false',
       :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && prescribeIPT()",
       :helpText => "Prescribe IPT",
@@ -2238,7 +2240,7 @@ pyridoxine_options = ["","25", "50"]
 
 
     <%= touch_yes_no_tag "pyridoxine", @patient, nil,
-      {	:id => 'pyridoxine',
+      { :id => 'pyridoxine',
       :allowFreeText => 'false',
       :condition => "prescribeAntiretroviralDrugs() && $('prescribe_arvs').value != 'YES' && $('ipt_given').value == 'YES'",
       :helpText => "Prescribe Pyridoxine",
@@ -2251,7 +2253,7 @@ pyridoxine_options = ["","25", "50"]
       :tt_onLoad => "showCategory('Regimen');"} %>
 
     <%= select_tag :cpt_duration, optionsString,
-      {	:condition => '($("prescribe_arvs").value == "NO" || $("prescribe_arvs").value == "")
+      { :condition => '($("prescribe_arvs").value == "NO" || $("prescribe_arvs").value == "")
   && ($("cpt_given").value == "YES" ||
   $("ipt_given").value == "YES"  ||
   $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
@@ -2267,14 +2269,14 @@ pyridoxine_options = ["","25", "50"]
     end %>
 
 <%#= select_tag :ipt_duration, optionsString,
-{	:condition => '$("prescribe_arvs").value == "NO" && $("ipt_given").value == "YES"',
+{ :condition => '$("prescribe_arvs").value == "NO" && $("ipt_given").value == "YES"',
 :tt_onLoad => "__$('keyboard').style.display = 'none'",
 :helpText => 'Duration' } %>
 
     <% if @patient_bean.age >= 14 %>
       <% if @retrospective %>
     <%#= touch_numeric_tag "CONDOMS", @patient, nil,
-    {	:max => '100',
+    { :max => '100',
     :condition => 'hasARTVisit() == true;',
     :tt_pageStyleClass => "unknownButton",
     :helpText => 'Number of condoms given',
@@ -2282,7 +2284,7 @@ pyridoxine_options = ["","25", "50"]
     } %>
       <% else %>
     <%#= touch_numeric_tag "CONDOMS", @patient, nil,
-    {	:max => '100',
+    { :max => '100',
     :condition => 'hasARTVisit() == true;',
     :helpText => 'Number of condoms given',
     :tt_onLoad => "showCategory('Regimen');"
@@ -2292,7 +2294,7 @@ pyridoxine_options = ["","25", "50"]
     <% end %>
 
 <%#= touch_text_area_tag "CLINICAL NOTES CONSTRUCT", @patient, nil,
-{	:id => "clinical_notes",
+{ :id => "clinical_notes",
 :optional => true,
 :helpText => "Clinical notes (optional)",
 :tt_onLoad => "showCategory('Regimen');"
@@ -2478,3 +2480,4 @@ pyridoxine_options = ["","25", "50"]
   }, 100);
 
 </script>
+
