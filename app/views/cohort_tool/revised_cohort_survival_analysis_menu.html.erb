@@ -10,6 +10,11 @@
     }
 </style>
 <form id='quarter' action="revised_cohort_survival_analysis" method='post'>
+    <% survival_analysis_types = ['','General','Women','Children']%>
+    <%= select_tag 'quarter', options_for_select( survival_analysis_types ), {
+            :helpText => "Choose Survival Analysis Type",
+            :tt_requireNextClick => 'false',
+            :tt_onLoad => "__$('keyboard').style.display = 'none'"} %>
     <%
         qtrs = []
         if current_user.admin?

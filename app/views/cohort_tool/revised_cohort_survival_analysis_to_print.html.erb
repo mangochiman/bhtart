@@ -123,9 +123,9 @@
     .table-inner-td {
         width: 10% !important;
     }
-        .table-inner-data {
-            width: 10% !important;
-        }
+    .table-inner-data {
+        width: 10% !important;
+    }
 </style>
 
 <table class="table-main" border="2px;">
@@ -210,15 +210,3 @@
         </td>
     </tr>
 </table>
-
-<!-- Controls -->
-<div class="row-button-print">
-    <%= button_to 'Print', {
-            :action => 'download_pdf',
-            :file_directory => '/cohort_tool/' ,
-            :file_name => 'revised_cohort_survival_analysis_to_print'
-    }, {
-            :class => 'button-print'
-    } %>
-</div>
-<!- ###   ### -->
