@@ -42,9 +42,8 @@ class CohortService
   #Total patients with side effects
   attr_accessor :total_patients_with_side_effects, :total_patients_without_side_effects, :unknown_side_effects
 
-
-
-
+  #survival analysis: Number of new patients registered on ART within a certain period of time
+  attr_accessor :general_survival_analysis, :women_survival_analysis, :children_survival_analysis
 
 	def initialize(name)
 		@name = name

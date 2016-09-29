@@ -541,8 +541,6 @@ Unique PatientProgram entries at the current location for those patients with at
 
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
-
-
   end
 
 
