@@ -1479,6 +1479,41 @@ class CohortToolController < GenericCohortToolController
   end
 
 	def revised_cohort_survival_analysis
+
+		session[:cohort] = nil
+
+		if params[:quarter] == 'Select date range'
+			redirect_to :action => 'select_cohort_date' and return
+		end
+		session[:pre_art] = []
+		@logo = CoreService.get_global_property_value('logo').to_s
+
+		if params[:date] and not params[:date]['start'].blank? and not params[:date]['end'].blank?
+			@quarter = params[:date]['start']. + " to " + params[:date]['end']
+			start_date = params[:date]['start'].to_date
+			end_date = params[:date]['end'].to_date
+		end if not params[:date].blank?
+
+		if start_date.blank? and end_date.blank?
+			@quarter = params[:quarter]
+			@quarter = @quarter.split("to")[0].to_date.strftime("%d %b, %Y") + " to " +
+				@quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
+			start_date,end_date = Report.generate_cohort_date_range(@quarter)
+		end
+
+		cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date)
+		logger.info("cohort")
+		#raise request.env["HTTP_CONNECTION"].to_yaml
+		if session[:cohort].blank?
+			@cohort = cohort#.report(logger)
+			session[:cohort]=@cohort
+		else
+			@cohort = session[:cohort]
+		end
+
+		session[:views]=nil; session[:chidren]; session[:nil]
+
+
 		render :layout => false
 	end
 
