@@ -175,42 +175,48 @@
             </table>
         </td>
     </tr>
-    <tr>
+    <% @name_of_quarter = @quarter.split.first %>
+    <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+        <% if data['Number of new registered'].to_i > 1 %>
+
+    <tr >
         <td class="text-bold border-null-right">
-            2006 Q2
+            <%= "#{@name_of_quarter} " + data['Quarter'] %>
         </td>
         <td class="number-center border-null-left border-null-right">
-            120
+            <%= range %>
         </td>
         <td class="border-null-left">
             all ages
         </td>
         <td class="number">
-            250
+          <%= data['Number of new registered']%>
         </td>
         <td class="number">
-            250
+
         </td>
         <td>
             <table class="table-inner" border="2px">
                 <tr>
                     <td class="number table-inner-data">
-                        81
+                        <%= data['Number Alive and on ART']%>
                     </td>
                     <td class="number table-inner-data">
-                        48
+                      <%= data['Number Dead']%>
                     </td>
                     <td class="number table-inner-data">
-                        63
+                      <%= data['Number Defaulted']%>
                     </td>
                     <td class="number table-inner-data">
-                        1
+                      <%= data['Number Stopped Treatment']%>
                     </td>
                     <td class="number table-inner-data">
-                        57
+                      <%= data['Number Transferred out']%>
                     </td>
                 </tr>
             </table>
+            <% end %>
+            <% end %>
         </td>
     </tr>
 </table>
