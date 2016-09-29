@@ -12,6 +12,31 @@ EOF
 
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
+        select 
+            `p`.`patient_id` AS `patient_id`,
+            `pe`.`gender` AS `gender`,
+            `pe`.`birthdate`,
+            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+            cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+            `person`.`death_date` AS `death_date`,
+            (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
+            (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
+        from
+            ((`patient_program` `p`
+            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+        where
+            ((`p`.`voided` = 0)
+                and (`s`.`voided` = 0)
+                and (`p`.`program_id` = 1)
+                and (`s`.`state` = 7))
+        group by `p`.`patient_id`;
+EOF
+
+=begin
+    ActiveRecord::Base.connection.execute <<EOF
+      CREATE TABLE temp_earliest_start_date
 select
         `p`.`patient_id` AS `patient_id`,
         `p`.`gender` AS `gender`,
@@ -27,7 +52,8 @@ select
     group by `p`.`patient_id`
 EOF
 
-#=end
+=end
+
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `last_text_for_obs`;
 EOF
