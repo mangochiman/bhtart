@@ -1478,6 +1478,14 @@ class CohortToolController < GenericCohortToolController
     render :layout => false
   end
 
+	def revised_cohort_survival_analysis
+		render :layout => false
+	end
+
+	def revised_cohort_survival_analysis_menu
+
+	end
+
   def download_pdf
         zoom = 0.8
         output ="file_name.pdf"

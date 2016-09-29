@@ -4,6 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+
 #=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
@@ -42,13 +43,12 @@ select
         `p`.`gender` AS `gender`,
         `p`.`birthdate`,
         `p`.`earliest_start_date` AS `earliest_start_date`,
-        cast(`pf`.`encounter_datetime` as date) AS `date_enrolled`,
+         cast(`patient_start_date`(`p`.`patient_id`) as date) AS `date_enrolled`,
         `p`.`death_date` AS `death_date`,
         (select timestampdiff(year, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_at_initiation`,
         (select timestampdiff(day, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_in_days`
     from
-        (`patients_on_arvs` `p`
-        join `patient_first_arv_amount_dispensed` `pf` ON ((`pf`.`patient_id` = `p`.`patient_id`)))
+        `patients_on_arvs` `p`
     group by `p`.`patient_id`
 EOF
 
@@ -314,6 +314,7 @@ RETURN set_outcome;
 END;
 EOF
 
+
 #=end
       #Get earliest date enrolled
       cum_start_date = self.get_cum_start_date
@@ -567,6 +568,7 @@ Unique PatientProgram entries at the current location for those patients with at
 
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
+
   end
 
 
