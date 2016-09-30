@@ -1479,11 +1479,17 @@ class CohortToolController < GenericCohortToolController
   end
 
 	def revised_cohort_survival_analysis
-		render :layout => false
+		case params[:quarter_type].downcase
+			when 'general'
+				render :template => '/cohort_tool/revised_cohort_survival_analysis', :layout => false and return
+			when 'women'
+				render :template => '/cohort_tool/revised_women_cohort_survival_analysis', :layout => false and return
+			when 'children'
+				render :template => '/cohort_tool/revised_children_cohort_survival_analysis', :layout => false and return
+		end
 	end
 
 	def revised_cohort_survival_analysis_menu
-
 	end
 
   def download_pdf
