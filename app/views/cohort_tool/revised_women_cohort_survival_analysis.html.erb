@@ -123,15 +123,18 @@
     .table-inner-td {
         width: 10% !important;
     }
-        .table-inner-data {
-            width: 10% !important;
-        }
+    .table-inner-data {
+        width: 10% !important;
+    }
+    .text-header {
+        font-size: large;
+    }
 </style>
 
 <table class="table-main" border="2px;">
     <tr>
-        <th colspan="10" class="text-left border-null">
-            General Cohort Survival Analysis
+        <th colspan="10" class="text-left border-null text-header">
+            Women Cohort Survival Analysis
         </th>
     </tr>
     <tr>
@@ -218,7 +221,7 @@
             :file_directory => '/cohort_tool/' ,
             :file_name => 'revised_cohort_survival_analysis_to_print'
     }, {
-            :class => 'button-print'
-    } %>
+                          :class => 'button-print'
+                  } %>
 </div>
 <!- ###   ### -->
