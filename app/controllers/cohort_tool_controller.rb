@@ -1479,13 +1479,12 @@ class CohortToolController < GenericCohortToolController
   end
 
 	def revised_cohort_survival_analysis
-
 		session[:cohort] = nil
 
 		if params[:quarter] == 'Select date range'
 			redirect_to :action => 'select_cohort_date' and return
 		end
-		session[:pre_art] = []
+
 		@logo = CoreService.get_global_property_value('logo').to_s
 
 		if params[:date] and not params[:date]['start'].blank? and not params[:date]['end'].blank?
@@ -1503,7 +1502,7 @@ class CohortToolController < GenericCohortToolController
 
 		cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date)
 		logger.info("cohort")
-		#raise request.env["HTTP_CONNECTION"].to_yaml
+
 		if session[:cohort].blank?
 			@cohort = cohort#.report(logger)
 			session[:cohort]=@cohort
@@ -1513,20 +1512,26 @@ class CohortToolController < GenericCohortToolController
 
 		session[:views]=nil; session[:chidren]; session[:nil]
 
-
-		render :layout => false
+		case params[:quarter_type].downcase
+			when 'general'
+				render :template => '/cohort_tool/revised_cohort_survival_analysis', :layout => false and return
+			when 'women'
+				render :template => '/cohort_tool/revised_women_cohort_survival_analysis', :layout => false and return
+			when 'children'
+				render :template => '/cohort_tool/revised_children_cohort_survival_analysis', :layout => false and return
+		end
 	end
 
 	def revised_cohort_survival_analysis_menu
-
 	end
 
   def download_pdf
         zoom = 0.8
-        output ="file_name.pdf"
-        print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}/cohort_tool/revised_cohort_to_print #{Rails.root}/tmp/#{output}"
+        file_directory = params[:file_directory]
+        file_name = params[:file_name]
+        output = "#{file_name}.pdf"
+        print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name} #{Rails.root}/tmp/#{output}"
         Kernel.system print_url
-        #raise 'done'
         pdf_filename = File.join(Rails.root, "tmp/#{output}")
         send_file(pdf_filename, :filename => "#{output}", :type => "application/pdf")
 	    return
