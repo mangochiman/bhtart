@@ -696,7 +696,16 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       gotoNextPage();
     }
   }
-  
+
+  function hideTBStatusQuestion(){
+    tbTreatmentValue = __$('touchscreenInput' + tstCurrentPage).value.toUpperCase();
+    if (tbTreatmentValue == 'YES'){
+      $('tb_status_hack').value = 'Confirmed TB ON Treatment';
+    }else{
+      $('tb_status_hack').value = '';
+    }
+  }
+
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -712,6 +721,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <% tb_symptoms_array.each do |element| %>
     <%= touch_hidden_tag "Routine Tuberculosis Screening", @patient, "", :id => "#{element}" %>
   <% end %>
+
+  <%= touch_hidden_tag "TB STATUS", @patient, "", :id => "tb_status_hack" %>
 
   <% if @patient_is_child_bearing_female && !@ter_family_planning_method_done %>
     <% if @currently_using_family_planning_methods.nil? %>
@@ -895,6 +906,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%= touch_select_tag "TB TREATMENT", @patient, options_for_select(['', 'Yes', 'No']),
     {
     :id => 'tb_treatment_question',
+    :tt_onUnLoad => "hideTBStatusQuestion();",
     :helpText => "Is the patient on TB Treatment?" } %>
 
   <% if @avilable_status == '' %>
@@ -921,7 +933,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       :multiple => false,
       :helpText => "TB Status",
       :tt_onLoad => 'checkTbHivStatus(); checkAndSelectTBSuspected(); checkAndSelectConfirmedTBOnTreatment();',
-      :condition => @show_tb_types  == true} %>
+      :condition => "#{@show_tb_types  == true} && __$('tb_treatment_question').value.toUpperCase() == 'NO'"} %>
   <% else %>
     <%= touch_hidden_tag "TB STATUS" , @patient, ConceptName.find_by_name("#{@patient_tb_status}").name, {:id => "tb_status"} %>
   <% end %>
@@ -981,8 +993,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%else%>
     <%  session_date = session[:datetime].to_date rescue nil
-        medication_options_allergic_to_sulphur_no = ['ARVs','CPT','IPT','NONE']
-        medication_options_allergic_to_sulphur_yes = ['ARVs','IPT','NONE']
+    medication_options_allergic_to_sulphur_no = ['ARVs','CPT','IPT','NONE']
+    medication_options_allergic_to_sulphur_yes = ['ARVs','IPT','NONE']
   %>
     <%  if session_date %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
@@ -992,7 +1004,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit:" } %>
-   
+
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
         :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection();",
@@ -1000,8 +1012,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit:" } %>
-   
-    
+
+
     <% else %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
@@ -1010,7 +1022,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit:" } %>
-   
+
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
         :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection();",
@@ -1018,8 +1030,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit:" } %>
-   
-    
+
+
     <% end %>
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%end unless art_adherence_to_be_done %>
