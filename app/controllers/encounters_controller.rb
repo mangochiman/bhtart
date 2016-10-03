@@ -529,7 +529,39 @@ class EncountersController < GenericEncountersController
 					end
 				end
 
-        @who_stage_iv.delete_if{|stage_condition|who_stage_iv_to_be_removed.include?(stage_condition[0])} << ["Other", "Other"]
+        @who_stage_iii = [
+          ["Pulmonary tuberculosis (current)", "Pulmonary tuberculosis (current)"],
+          ["Tuberculosis (PTB or EPTB) within the last 2 years", "Tuberculosis (PTB or EPTB) within the last 2 years"],
+          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
+          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
+          ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
+          ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
+          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
+          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
+          ["Oral candidiasis", "Oral candidiasis"],
+          ["Hepatitis B or C infection", "Hepatitis B or C infection"],
+          ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
+          ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"]
+        ]
+
+        @who_stage_iv = [
+          ["Kaposis sarcoma", "Kaposis sarcoma"],
+          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
+          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
+          ["Cryptococcal meningitis or other extrapulmonary cryptococcosis", "Cryptococcal meningitis or other extrapulmonary cryptococcosis"],
+          ["Symptomatic HIV-associated nephropathy or cardiomyopathy", "Symptomatic HIV-associated nephropathy or cardiomyopathy"],
+          ["Cerebral or B-cell non Hodgkin lymphoma", "Cerebral or B-cell non Hodgkin lymphoma"],
+          ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
+          ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"],
+          ["Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)", "Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)"],
+          ["Cytomegalovirus infection (retinitis or infection or other organs)", "Cytomegalovirus infection (retinitis or infection or other organs)"],
+          ["Toxoplasmosis of the brain", "Toxoplasmosis of the brain"],
+          ["Non-typhoidal Salmonella bacteraemia, recurrent", "Non-typhoidal Salmonella bacteraemia, recurrent"],
+          ["Invasive cancer of cervix", "Invasive cancer of cervix"],
+          ["Other", "Other"]
+        ]
+        #@who_stage_iv.delete_if{|stage_condition|who_stage_iv_to_be_removed.include?(stage_condition[0])} << ["Other", "Other"]
         
 				reason_for_art = @patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue []
         @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
