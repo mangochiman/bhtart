@@ -5,7 +5,7 @@ class CohortRevise
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
 
-#=begin
+=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -829,7 +829,7 @@ EOF
   end
 
   def self.update_cum_outcome(end_date)
-
+=begin
       ActiveRecord::Base.connection.execute <<EOF
         DROP TABLE IF EXISTS `temp_patient_outcomes`;
 EOF
@@ -840,7 +840,7 @@ EOF
         FROM temp_earliest_start_date
         WHERE date_enrolled <= '#{end_date}';
 EOF
-
+=end
   end
 
   def self.kaposis_sarcoma(start_date, end_date)

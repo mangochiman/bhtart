@@ -1458,8 +1458,9 @@ class CohortToolController < GenericCohortToolController
 			start_date,end_date = Report.generate_cohort_date_range(@quarter)
 		end
 
-		cohort = CohortRevise.get_indicators(start_date, end_date)
+		@cohort = CohortRevise.get_indicators(start_date, end_date)
 		logger.info("cohort")
+=begin
 		#raise request.env["HTTP_CONNECTION"].to_yaml
 		if session[:cohort].blank?
 			@cohort = cohort#.report(logger)
@@ -1469,7 +1470,7 @@ class CohortToolController < GenericCohortToolController
 		end
 
 		session[:views]=nil; session[:chidren]; session[:nil]
-
+=end
     render :layout => false
 
   end
