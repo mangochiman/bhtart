@@ -24,7 +24,7 @@ class GenericRegimensController < ApplicationController
     else
       @prescribe_cpt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'CPT')
     end
-    @prescribe_ipt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'IPT')
+    @prescribe_ipt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'Isoniazid')
     ################################################################################################################
 
 		@current_regimen = current_regimen(@patient.id) rescue nil
@@ -1205,7 +1205,6 @@ class GenericRegimensController < ApplicationController
 
   def prescribe_medication_set(patient, date, medication_type)
 	  prescribe_medication = Concept.find_by_name("Medication orders").concept_id
-    medication_type = 'Isoniazid' if medication_type.match(/IPT/i)
 	  medication_concept = Concept.find_by_name(medication_type).concept_id
 
     found = Observation.find(:first, :conditions => ["concept_id = ? AND
