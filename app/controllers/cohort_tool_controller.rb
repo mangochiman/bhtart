@@ -1492,6 +1492,18 @@ class CohortToolController < GenericCohortToolController
 	def revised_cohort_survival_analysis_menu
 	end
 
+	def revised_cohort_survival_analysis_to_print
+		render :layout => false
+	end
+
+	def revised_women_cohort_survival_analysis_to_print
+		render :layout => false
+	end
+
+	def revised_children_cohort_survival_analysis_to_print
+		render :layout => false
+	end
+
   def download_pdf
         zoom = 0.8
         file_directory = params[:file_directory]
