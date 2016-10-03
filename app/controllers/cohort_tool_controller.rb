@@ -1504,6 +1504,11 @@ class CohortToolController < GenericCohortToolController
 		render :layout => false
 	end
 
+	def list_more_details
+		@logo = CoreService.get_global_property_value('logo').to_s
+		render :layout => false
+	end
+
   def download_pdf
         zoom = 0.8
         file_directory = params[:file_directory]
