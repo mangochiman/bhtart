@@ -2071,7 +2071,13 @@
 </table>
 
 <!-- Controls -->
-    <div class="row-button-print">
-        <%= button_to 'Print', {:action => 'download_pdf'}, {:class => 'button-print'} %>
-    </div>
+<div class="row-button-print">
+    <%= button_to 'Print', {
+            :action => 'download_pdf',
+            :file_directory => '/cohort_tool/' ,
+            :file_name => 'revised_cohort_to_print'
+    }, {
+            :class => 'button-print'
+    } %>
+</div>
 <!- ###   ### -->

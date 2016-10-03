@@ -123,15 +123,18 @@
     .table-inner-td {
         width: 10% !important;
     }
-        .table-inner-data {
-            width: 10% !important;
-        }
+    .table-inner-data {
+        width: 10% !important;
+    }
+    .text-header {
+        font-size: large;
+    }
 </style>
 
 <table class="table-main" border="2px;">
     <tr>
-        <th colspan="10" class="text-left border-null">
-            General Cohort Survival Analysis
+        <th colspan="10" class="text-left border-null text-header">
+            Children Cohort Survival Analysis
         </th>
     </tr>
     <tr>
@@ -177,60 +180,36 @@
             </table>
         </td>
     </tr>
-    <% @name_of_quarter = @quarter.split.first %>
-    <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
-        <% if data['Number of new registered'].to_i > 1 %>
-
-    <tr >
+    <tr>
         <td class="text-bold border-null-right">
-            <%= "#{@name_of_quarter} " + data['Quarter'] %>
+            2006 Q2
         </td>
         <td class="number-center border-null-left border-null-right">
-            <%= range %>
+            120
         </td>
         <td class="border-null-left">
             all ages
         </td>
         <td class="number">
-          <%= data['Number of new registered']%>
+            250
         </td>
         <td class="number">
-
+            250
         </td>
-        <td>
-            <table class="table-inner" border="2px">
-                <tr>
-                    <td class="number table-inner-data">
-                        <%= data['Number Alive and on ART']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Dead']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Defaulted']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Stopped Treatment']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Transferred out']%>
-                    </td>
-                </tr>
-            </table>
-            <% end %>
-            <% end %>
+        <td class="number table-inner-data">
+            81
+        </td>
+        <td class="number table-inner-data">
+            48
+        </td>
+        <td class="number table-inner-data">
+            63
+        </td>
+        <td class="number table-inner-data">
+            1
+        </td>
+        <td class="number table-inner-data">
+            57
         </td>
     </tr>
 </table>
-
-<!-- Controls -->
-<div class="row-button-print">
-    <%= button_to 'Print', {
-            :action => 'download_pdf',
-            :file_directory => '/cohort_tool/' ,
-            :file_name => 'revised_cohort_survival_analysis_to_print'
-    }, {
-            :class => 'button-print'
-    } %>
-</div>
-<!- ###   ### -->
