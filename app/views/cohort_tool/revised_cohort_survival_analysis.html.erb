@@ -123,8 +123,11 @@
     .table-inner-td {
         width: 10% !important;
     }
-        .table-inner-data {
-            width: 10% !important;
+    .table-inner-data {
+        width: 10% !important;
+    }
+        .text-header {
+            font-size: large;
         }
 </style>
 
@@ -181,7 +184,7 @@
     <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
         <% if data['Number of new registered'].to_i > 1 %>
 
-    <tr >
+    <tr>
         <td class="text-bold border-null-right">
             <%= "#{@name_of_quarter} " + data['Quarter'] %>
         </td>
@@ -198,7 +201,7 @@
 
         </td>
         <td>
-            <table class="table-inner" border="2px">
+            <table class="table-inner">
                 <tr>
                     <td class="number table-inner-data">
                         <%= data['Number Alive and on ART']%>

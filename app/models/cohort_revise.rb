@@ -13,7 +13,7 @@ EOF
 
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
-        select 
+        select
             `p`.`patient_id` AS `patient_id`,
             `pe`.`gender` AS `gender`,
             `pe`.`birthdate`,
@@ -685,7 +685,12 @@ EOF
     (malawi_art_side_effects || []).each do |row|
       result << row
     end
-     return result.uniq if !result.blank?
+
+    if !result.blank?
+      return result.uniq
+    else
+      return []
+    end
   end
 
   def self.total_patients_without_side_effects(data, start_date, end_date)
@@ -749,7 +754,12 @@ EOF
     (malawi_art_side_effects || []).each do |row|
       result << row
     end
-    return result.uniq if !result.blank?
+
+    if !result.blank?
+      return result.uniq
+    else
+      return []
+    end
   end
 
   def self.cal_regimem_category(patient_list, end_date)
