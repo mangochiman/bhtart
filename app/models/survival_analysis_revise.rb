@@ -50,8 +50,8 @@ EOF
       interval = "#{(i + 1)*12}"
 
       states[interval.to_i] = self.general_analysis(range[:start_date], range[:end_date])
-      pregnant_and_breast_feeding_women[range[:start_date]] = self.pregnant_and_breast_feeding_women(range[:start_date], range[:end_date])
-      children_outcomes[range[:start_date]] = self.children_analysis(range[:start_date], range[:end_date], 0, 14)
+      pregnant_and_breast_feeding_women[interval.to_i] = self.pregnant_and_breast_feeding_women(range[:start_date], range[:end_date])
+      children_outcomes[interval.to_i] = self.children_analysis(range[:start_date], range[:end_date], 0, 14)
     end
 
     cohort.general_survival_analysis = states
@@ -155,7 +155,7 @@ EOF
       "number_transferred_out" => number_transferred_out
     }
 
-    return states, patient_outcomes
+    return states #, patient_outcomes
   end
 
   def self.children_analysis(start_date, end_date, min_age, max_age)
@@ -217,7 +217,7 @@ EOF
       "number_stopped_treatment" => number_stopped_treatment,
       "number_transferred_out" => number_transferred_out
     }
-    return registered, states
+    return registered #, states
   end
 
   def self.general_analysis(start_date, end_date)
@@ -239,7 +239,7 @@ EOF
     data = [] if data.blank?
 
     registered = {
-      'Quarter' => start_date.to_date.strftime("%Y"),
+        'Quarter' => start_date.to_date.strftime("%Y"),
         'Number of new registered' => data.count,
         'Number Alive and on ART' => 0,
         'Number Dead' => 0, 'Number Defaulted' => 0 ,

@@ -180,38 +180,43 @@
             </table>
         </td>
     </tr>
+    <% @name_of_quarter = @quarter.split.first %>
+    <%  (@cohort.women_survival_analysis.sort || []).each do |range, data| %>
+        <% if data['Number of new registered'].to_i > 1 %>
     <tr>
         <td class="text-bold border-null-right">
-            2006 Q2
+          <%= "#{@name_of_quarter} " + data['Quarter'] %>
         </td>
         <td class="number-center border-null-left border-null-right">
-            120
+          <%= range %>
         </td>
         <td class="border-null-left">
             all ages
         </td>
         <td class="number">
-            250
+          <%= data['Number of new registered']%>
         </td>
         <td class="number">
-            250
+
         </td>
         <td class="number table-inner-data">
-            81
+          <%= data['Number Alive and on ART']%>
         </td>
         <td class="number table-inner-data">
-            48
+          <%= data['Number Dead']%>
         </td>
         <td class="number table-inner-data">
-            63
+          <%= data['Number Defaulted']%>
         </td>
         <td class="number table-inner-data">
-            1
+          <%= data['Number Stopped Treatment']%>
         </td>
         <td class="number table-inner-data">
-            57
+          <%= data['Number Transferred out']%>
         </td>
     </tr>
+      <% end %>
+    <% end %>
 </table>
 
 <!-- Controls -->
@@ -219,7 +224,7 @@
     <%= button_to 'Print', {
             :action => 'download_pdf',
             :file_directory => '/cohort_tool/' ,
-            :file_name => 'revised_cohort_survival_analysis_to_print'
+            :file_name => 'revised_women_cohort_survival_analysis_to_print'
     }, {
                           :class => 'button-print'
                   } %>
