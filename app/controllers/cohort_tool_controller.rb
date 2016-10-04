@@ -1540,7 +1540,6 @@ class CohortToolController < GenericCohortToolController
 
 	def list_more_details
 		@logo = CoreService.get_global_property_value('logo').to_s
-		render :layout => false
 	end
 
   def download_pdf

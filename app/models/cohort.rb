@@ -1,3 +1,4 @@
+
 class Cohort
 
 	attr :cohort, :art_defaulters
@@ -41,7 +42,6 @@ class Cohort
     logger.info("defaulted " + Time.now.to_s)
 
     @art_defaulters ||= self.art_defaulted_patients(@patients_ever_reg)
-
     logger.info("alive_on_art " + Time.now.to_s)
 
     @patients_alive_and_on_art ||= self.total_alive_and_on_art(@patients_ever_reg, @art_defaulters)
@@ -543,15 +543,32 @@ class Cohort
 			end
 		end
 
+		if patients.blank?
+			PatientProgram.find_by_sql("SELECT * FROM earliest_start_date
+				WHERE date_enrolled BETWEEN '#{start_date} 00:00:00' AND '#{end_date}'").each do | patient |
+				@patient_earliest_start_date[patient.patient_id]= patient.earliest_start_date
+				patients << patient
+			end
+		else
+			patients = patients
+		end
+
 		return patients
 	end
 
   def transferred_in_patients(patient_list)
-		patients = []
+    patients = []
+    patients_list = []
     #total_registered = self.total_registered(start_date, end_date)
-    patients_list = patient_list.map(&:patient_id)
-		reinitiated_on_art = self.patients_reinitiated_on_art(patient_list)
+
+    patients_lists = patient_list.map(&:patient_id)
+
+    reinitiated_on_art = self.patients_reinitiated_on_art(patient_list)
     reinitiated_on_art = [0] if reinitiated_on_art.blank?
+    first_time_on_arvs = self.patients_initiated_on_art_first_time(patient_list)
+    first_time_on_arvs = [0] if first_time_on_arvs.blank?
+
+    patients = (patients_lists - first_time_on_arvs - reinitiated_on_art) #.uniq!
 =begin
     PatientProgram.find_by_sql("SELECT * FROM earliest_start_date
     WHERE date_enrolled BETWEEN '#{start_date} 00:00:00' AND '#{end_date}'
@@ -559,46 +576,68 @@ class Cohort
     AND patient_id NOT IN(#{reinitiated_on_art.join(',')})").each_with_index do | patient, i |
       patients << patient.patient_id
     end
-=end
-    patients_list = []
-    patient_list.each do |patient|
-			if patient.date_enrolled.to_date != patient.earliest_start_date.to_date
-				patients_list << patient.patient_id
-			end
-		end
 
-		PatientProgram.find_by_sql("SELECT * FROM encounter
-		WHERE patient_id IN (#{patients_list.join(',')})
-		AND patient_id NOT IN(#{reinitiated_on_art.join(',')})
-		GROUP BY patient_id").each_with_index do | patient, i |
-			patients << patient.patient_id
-		end
-    return patients
+    patient_ids = patient_list.map(&:patient_id)
+    patient_list.each do |patient|
+     if patient.date_enrolled.to_date != patient.earliest_start_date.to_date
+       patients_list << patient.patient_id
+     end
+    end
+=end
+=begin
+		PatientProgram.find_by_sql("SELECT * FROM encounter enc
+					      INNER JOIN clinic_registration_encounter e ON enc.patient_id = e.patient_id
+					      INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id
+					    WHERE enc.patient_id IN (#{patients_list.join(',')})
+					    AND enc.patient_id NOT IN (#{reinitiated_on_art.join(',')})
+                                            and ero.obs_id IS NULL
+					    GROUP BY enc.patient_id").each_with_index do | patient, i |
+										patients << patient.patient_id
+		raise patients.to_yaml							end
+
+
+
+     PatientProgram.find_by_sql("SELECT esd.*
+     		FROM patients_on_arvs esd
+     		INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id
+     		INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id
+    		LEFT JOIN (SELECT * FROM obs o
+    		           WHERE ((o.concept_id = 7751 AND
+                      (DATEDIFF(o.obs_datetime,o.value_datetime)) > 60) OR
+                      (o.concept_id = 7752 AND
+                      (o.value_coded = 1066 )))) AS ro ON e.encounter_id = ro.encounter_id
+            WHERE esd.patient_id IN (#{patients_list.join(',')})
+            AND ro.obs_id IS NULL
+            GROUP BY esd.patient_id").each do |patient|
+           patients << patient.patient_id
+   end
+    #patients = (patients + patients_list).uniq!
+=end
+   return patients
   end
 
 	def patients_initiated_on_art_first_time(patient_list)
-
     # Some patients have Ever registered at ART clinic = Yes but without any
     # original start date
     #
     # 7937 = Ever registered at ART clinic
     # 1065 = Yes
     #TODO remove reinitiated patients after threads in report method
-
+    patients_reinitiated_on_arvs = []
+    patients_reinitiated_on_arvs = self.patients_reinitiated_on_art(patient_list)
     patients = []
-=begin
-    PatientProgram.find_by_sql("SELECT esd.* FROM earliest_start_date esd
-      WHERE esd.date_enrolled BETWEEN '#{start_date} 00:00:00' AND '#{end_date}'
-      AND DATE(esd.date_enrolled) = DATE(esd.earliest_start_date)
+    patients_list = patient_list.map(&:patient_id)
+    PatientProgram.find_by_sql("SELECT esd.*
+      FROM patients_on_arvs esd
+      LEFT JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id
+      LEFT JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id
+      WHERE esd.patient_id IN (#{patients_list.join(',')}) AND
+              (ero.obs_id IS NULL)
       GROUP BY esd.patient_id").each do | patient |
-        patients << patient.patient_id
-    end
-=end
-		patient_list.each do | patient |
-      if patient.date_enrolled.to_date == patient.earliest_start_date.to_date
-				patients << patient.patient_id
-			end
+			patients << patient.patient_id
 		end
+    patients -= patients_reinitiated_on_arvs
+
     return patients
 	end
 
@@ -685,7 +724,6 @@ class Cohort
 
 		patients = (patients + transfer_ins_preg_women).uniq
 		return patients
-
 	end
 
 	def start_reason(patient_list, start_date = @start_date, end_date = @end_date)
@@ -716,7 +754,7 @@ class Cohort
 
 	def patients_with_start_cause(patient_list, start_date = @start_date, end_date = @end_date, concept_ids = nil)
 		patients = []
-    patients_list = patient_list.map(&:patient_id)
+    patients_list = patient_list #.map(&:patient_id)
 
 		who_stg_crit_concept_id = ConceptName.find_by_name("WHO STAGES CRITERIA PRESENT").concept_id
 		yes_concept_id = ConceptName.find_by_name("YES").concept_id
@@ -730,9 +768,9 @@ class Cohort
 			Encounter.find_by_sql("SELECT * FROM hiv_staging_conditions_obs
 			                       WHERE concept_id IN (#{all_concept_ids.join(', ')})
 														 AND value_coded in (#{value_coded_ids.join(',')})
-														 AND patient_id IN (#{patients_list.join(',')})
-														 GROUP BY patient_id").each do |patient|
-														 		patients << patient.patient_id
+														 AND person_id IN (#{patients_list.join(',')})
+														 GROUP BY person_id").each do |patient|
+														 		patients << patient.person_id
 													 end
 =begin
 			concept_ids.each do | concept |
@@ -767,7 +805,7 @@ class Cohort
 		self.patients_with_start_cause(patient_list, start_date,end_date, concept_id)
 	end
 
-	def total_alive_and_on_art(patient_list, defaulted_patients = self.art_defaulted_patients(patient_list))
+	def total_alive_and_on_art(patient_list = self.total_registered_cum, defaulted_patients = self.art_defaulted_patients(patient_list))
 =begin
 		on_art_concept_name = ConceptName.find_all_by_name('On antiretrovirals')
 		state = ProgramWorkflowState.find(
@@ -1076,7 +1114,7 @@ class Cohort
       regimen_category = "UNKNOWN ANTIRETROVIRAL DRUG"
     end
 
-    self.regimens_all.each do |reg_name, patient_ids|
+    self.regimens_all(patient_list = self.total_alive_and_on_art).each do |reg_name, patient_ids|
 
       if reg_name == regimen_category
         patient_ids.each do |patient_id|
@@ -1088,7 +1126,6 @@ class Cohort
   end
 
 	def regimens_all(patient_list)
-    #raise end_date.to_yaml
     regimen_hash = {}
     #@art_defaulters ||= self.art_defaulted_patients
     #@patients_alive_and_on_art ||= self.total_alive_and_on_art(@art_defaulters)
@@ -1156,15 +1193,19 @@ class Cohort
   end
 
   def patients_reinitiated_on_art(patient_list)
-
-		patients = []; patients_with_date_last_taken_obs = []; patients_with_taken_arvs_in_past_2mths_no = []
+    patients = []; patients_with_date_last_taken_obs = []; patients_with_taken_arvs_in_past_2mths_no = []
 
     yes_concept = ConceptName.find_by_name('YES').concept_id
-		no_concept = ConceptName.find_by_name('NO').concept_id
+    no_concept = ConceptName.find_by_name('NO').concept_id
     date_art_last_taken_concept = ConceptName.find_by_name('DATE ART LAST TAKEN').concept_id
     taken_arvs_concept = ConceptName.find_by_name('HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS').concept_id
 
-		patients_list = patient_list.map(&:patient_id)
+     patients_list = patient_list.map(&:patient_id)
+     if patients_list.blank?
+        patients_list = [0]
+      else
+	patients_list = patients_list
+      end
 
     PatientProgram.find_by_sql("SELECT esd.*
       FROM encounter esd
@@ -1194,11 +1235,11 @@ class Cohort
             esd.patient_id IN (#{patients_list.join(',')})
             AND esd.patient_id NOT IN (#{patient_ids.join(',')})
       GROUP BY esd.patient_id").each do | patient |
-			patients_with_taken_arvs_in_past_2mths_no << patient.patient_id.to_i
-			end
+        patients_with_taken_arvs_in_past_2mths_no << patient.patient_id.to_i
+      end
 
-  		return patients = (patients_with_date_last_taken_obs + patients_with_taken_arvs_in_past_2mths_no).uniq
-  end
+       return patients = (patients_with_date_last_taken_obs + patients_with_taken_arvs_in_past_2mths_no).uniq
+    end
 
 	def patients_with_doses_missed_at_their_last_visit(start_date = @start_date, end_date = @end_date)
 		@art_defaulters ||= self.art_defaulted_patients
