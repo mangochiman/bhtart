@@ -329,7 +329,7 @@
               }
             }
 
-            noneElement = jQuery("[tstvalue=NONE]")[0];
+            noneElement = jQuery("[tstvalue=NONE OF THE ABOVE]")[0];
             noneElementID = noneElement.getAttribute("id");
             updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement)
           }
@@ -338,7 +338,7 @@
       }
       else{
         liOptions[i].onmouseup = function(){
-          noneElement = jQuery("[tstvalue=NONE]")[0];
+          noneElement = jQuery("[tstvalue=NONE OF THE ABOVE]")[0];
           noneElementID = noneElement.getAttribute("id");
           if (noneElement.style.backgroundColor.match(/lightblue/i)){
             updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement);
@@ -769,9 +769,14 @@
         <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
       <% else %>
         <%if @allergic_to_sulphur.blank?
-          medication_options = ['ARVs','CPT','IPT','NONE']
+          medication_options = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
         else
-          medication_options = ['ARVs','IPT','NONE']
+          if @allergic_to_sulphur.to_s.squish.upcase == 'YES'
+            medication_options = ['ARVs','IPT', 'NONE OF THE ABOVE']
+          else
+            medication_options = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
+          end
+
         end%>
 
         <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
