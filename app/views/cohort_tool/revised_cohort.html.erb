@@ -790,7 +790,7 @@
         </td>
         <td class="number">
             <a href="/cohort_tool/list_more_details?">
-            &nbsp;  <%= @cohort.total_registered.count %>
+                <%= @cohort.total_registered.count %>
             </a>
         </td>
         <td>
@@ -1702,7 +1702,9 @@
             &nbsp;
         </td>
         <td class="number">
-            &nbsp;<%= @cohort.defaulted.count %>
+            <a href="/cohort_tool/list_more_details?">
+                <%= @cohort.defaulted.count %>
+            </a>
         </td>
         <td>
             &nbsp;
