@@ -167,6 +167,8 @@ class GenericRegimensController < ApplicationController
     @fast_track_patient = fast_track_patient?(@patient, session_date)
     @latest_vl_result = Lab.latest_viral_load_result(@patient)
     @patient_on_tb_treatment = patient_on_tb_treatment?(@patient, session_date)
+    @patient_tb_suspected = tb_suspected_today?(@patient, session_date)
+    @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
 	end
 
