@@ -1292,8 +1292,9 @@
             Asymptomatic / mild
         </td>
         <td class="number">
-            &nbsp;
-        </td>
+          <a href="/cohort_tool/list_more_details?">
+              <%= @cohort.asymptomatic.count %>
+          </a>        </td>
         <td>
             &nbsp;
         </td>
@@ -1301,8 +1302,10 @@
             &nbsp;
         </td>
         <td class="number">
-            &nbsp;
-        </td>
+          <a href="/cohort_tool/list_more_details?">
+              <%= @cohort.cum_asymptomatic.count %>
+          </a>
+       </td>
         <td>
             &nbsp;
         </td>
@@ -1854,7 +1857,23 @@
         <td class="index">
             67.
         </td>
-        <td class="border-null">
+        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
+            Regimen <b>11P</b>
+        </td>
+        <td colspan="2" class="number">
+            <a href="/cohort_tool/list_more_details?">
+                &nbsp;
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            68.
+        </td>
+        <td class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
         </td>
         <td colspan="2" class="border-top-dotted border-null-left border-null-bottom border-null-right">
@@ -1871,7 +1890,7 @@
     </tr>
     <tr>
         <td class="index">
-            68.
+            69.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1887,7 +1906,7 @@
     </tr>
     <tr>
         <td class="index">
-            69.
+            70.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1903,7 +1922,7 @@
     </tr>
     <tr>
         <td class="index">
-            70.
+            71.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1919,7 +1938,7 @@
     </tr>
     <tr>
         <td class="index">
-            71.
+            72.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1935,7 +1954,7 @@
     </tr>
     <tr>
         <td class="index">
-            72.
+            73.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1951,7 +1970,7 @@
     </tr>
     <tr>
         <td class="index">
-            73.
+            74.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1967,7 +1986,7 @@
     </tr>
     <tr>
         <td class="index">
-            74.
+            75.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1983,7 +2002,7 @@
     </tr>
     <tr>
         <td class="index">
-            75.
+            76.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1999,29 +2018,13 @@
     </tr>
     <tr>
         <td class="index">
-            76.
-        </td>
-        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
-            &nbsp;
-        </td>
-        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>10A</b>
-        </td>
-        <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
-                &nbsp;
-            </a>
-        </td>
-    </tr>
-    <tr>
-        <td class="index">
             77.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>12A</b>
+            Regimen <b>10A</b>
         </td>
         <td colspan="2" class="number">
             <a href="/cohort_tool/list_more_details?">
@@ -2041,13 +2044,29 @@
         </td>
         <td colspan="2" class="number">
             <a href="/cohort_tool/list_more_details?">
-                <%= @cohort.eight_a.count %>
+                &nbsp;
             </a>
         </td>
     </tr>
     <tr>
         <td class="index">
             79.
+        </td>
+        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
+            Regimen <b>12A</b>
+        </td>
+        <td colspan="2" class="number">
+            <a href="/cohort_tool/list_more_details?">
+                <%= @cohort.eight_a.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            80.
         </td>
         <td colspan="3" class="text-center border-left-dotted border-bottom-dotted border-null-top border-null-right">
             Specify above regimens counted as 'Other'
@@ -2068,7 +2087,7 @@
     </tr>
     <tr>
         <td class="index">
-            80.
+            81.
         </td>
         <td class="text-bold border-top-dotted border-left-dotted border-null-bottom border-null-right">
             Side effects
@@ -2087,7 +2106,7 @@
     </tr>
     <tr>
         <td class="index">
-            81.
+            82.
         </td>
         <td class="border-left-dotted border-null-bottom border-null-top border-null-right">
             &nbsp;
@@ -2106,7 +2125,7 @@
     </tr>
     <tr>
         <td class="index">
-            82.
+            83.
         </td>
         <td class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;
@@ -2130,7 +2149,7 @@
     </tr>
     <tr>
         <td class="index">
-            83.
+            84.
         </td>
         <td class="text-bold border-left-dotted border-top-dotted border-null-bottom border-null-right">
             Adherence
@@ -2147,7 +2166,7 @@
     </tr>
     <tr>
         <td class="index">
-            84.
+            85.
         </td>
         <td class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -2164,7 +2183,7 @@
     </tr>
     <tr>
         <td class="index">
-            85.
+            86.
         </td>
         <td class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;
@@ -2186,7 +2205,7 @@
     </tr>
     <tr>
         <td class="index">
-            86.
+            87.
         </td>
         <td class="border-top-dotted border-left-dotted border-null-bottom border-null-right">
             <b>Current TB status</b> any form of TB
@@ -2205,7 +2224,7 @@
     </tr>
     <tr>
         <td class="index">
-            87.
+            88.
         </td>
         <td class="border-left-dotted border-null-bottom border-null-top border-null-right">
             &nbsp;
@@ -2224,7 +2243,7 @@
     </tr>
     <tr>
         <td class="index">
-            88.
+            89.
         </td>
         <td colspan="3" class="border-left-dotted border-null-bottom border-null-top border-null-right">
             &nbsp;
@@ -2240,7 +2259,7 @@
     </tr>
     <tr>
         <td class="index">
-            89.
+            90.
         </td>
         <td colspan="3" class="border-left-dotted border-null-right border-null-bottom border-null-top">
             &nbsp;
@@ -2256,7 +2275,7 @@
     </tr>
     <tr>
         <td class="index">
-            90.
+            91.
         </td>
         <td colspan="3" class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;

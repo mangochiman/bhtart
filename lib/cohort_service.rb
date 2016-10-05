@@ -6,7 +6,7 @@ class CohortService
                :children_24_months_14_years_at_art_initiation, :adults_at_art_initiation, :unknown_age,
                :presumed_severe_hiv_disease_in_infants, :confirmed_hiv_infection_in_infants_pcr,
                :tb_within_the_last_two_years, :current_episode_of_tb, :kaposis_sarcoma,
-               :presumed_severe_hiv_disease_in_infants, :confirmed_hiv_infection_in_infants_pcr,
+               :presumed_severe_hiv_disease_in_infants, :confirmed_hiv_infection_in_infants_pcr,:asymptomatic,
                :who_stage_two, :children_12_23_months, :breastfeeding_mothers, :pregnant_women,
                :who_stage_three, :who_stage_four, :unknown_other_reason_outside_guidelines, :all_males
 
@@ -17,7 +17,7 @@ class CohortService
                :cum_children_24_months_14_years_at_art_initiation, :cum_adults_at_art_initiation, :cum_unknown_age,
                :cum_presumed_severe_hiv_disease_in_infants, :cum_confirmed_hiv_infection_in_infants_pcr,
                :cum_tb_within_the_last_two_years, :cum_current_episode_of_tb, :cum_kaposis_sarcoma, :no_tb, :cum_no_tb,
-               :cum_presumed_severe_hiv_disease_in_infants, :cum_confirmed_hiv_infection_in_infants_pcr,
+               :cum_presumed_severe_hiv_disease_in_infants, :cum_confirmed_hiv_infection_in_infants_pcr, :cum_asymptomatic,
                :cum_who_stage_two, :cum_children_12_23_months, :cum_breastfeeding_mothers, :cum_pregnant_women,
                :cum_who_stage_three, :cum_who_stage_four, :cum_unknown_other_reason_outside_guidelines, :cum_all_males
 
