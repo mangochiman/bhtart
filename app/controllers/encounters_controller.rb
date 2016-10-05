@@ -54,6 +54,10 @@ class EncountersController < GenericEncountersController
       @fast_track_message = "Patient is #{days_diff} day(s) late"
     end rescue nil
 
+    @patient_on_tb_treatment = patient_on_tb_treatment?(@patient, session_date)
+    @patient_tb_suspected = tb_suspected_today?(@patient, session_date)
+    @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
+
     #@fast_track_patient = false
     #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     #@fast_track_patient = true if @latest_fast_track_answer == 'YES'

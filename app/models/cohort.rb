@@ -247,8 +247,6 @@ class Cohort
   								cohort_report['WHO stage 1 or 2, CD4 below threshold'] << collection_reason.patient_id
   							elsif reason.match(/CD4 count less/i)
   								cohort_report['WHO stage 1 or 2, CD4 below threshold'] << collection_reason.patient_id
-  						  #elsif reason.match(/lymphocyte/i)
-  							#	cohort_report['WHO stage 2, total lymphocytes'] << collection_reason.patient_id
   							elsif reason.strip.humanize == 'Patient pregnant'
   								cohort_report['Patient pregnant'] << collection_reason.patient_id
   							elsif reason.match(/Breastfeeding/i)
