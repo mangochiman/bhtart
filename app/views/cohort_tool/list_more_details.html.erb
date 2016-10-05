@@ -6,6 +6,7 @@
     <%= javascript_include_tag 'jquery_data_table.js' %>
     <%= stylesheet_link_tag 'jquery.dataTables' %>
     <%=javascript_include_tag "jquery.table2CSV.min" %>
+    <title>List More Details</title>
     <script type="text/javascript" charset="utf8" src="/javascripts/jquery.dataTables.min.js"></script>
     <script>
         jQuery(document).ready(function($) {
@@ -167,8 +168,6 @@
             top: 194px;
             width: 672px;
         }
-    </style>
-    <style>
         div {
             -moz-user-select: none;
         }
@@ -236,7 +235,9 @@
         }
         #num{ display:none; }
         #char{ display:none; }
-
+        body {
+            font-family: "Nimbus Sans L", "Arial Narrow", sans-serif;
+        }
     </style>
 </head>
 <body>
