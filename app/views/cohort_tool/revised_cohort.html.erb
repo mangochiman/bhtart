@@ -1292,8 +1292,9 @@
             Asymptomatic / mild
         </td>
         <td class="number">
-            &nbsp;
-        </td>
+          <a href="/cohort_tool/list_more_details?">
+              <%= @cohort.asymptomatic.count %>
+          </a>        </td>
         <td>
             &nbsp;
         </td>
@@ -1301,8 +1302,10 @@
             &nbsp;
         </td>
         <td class="number">
-            &nbsp;
-        </td>
+          <a href="/cohort_tool/list_more_details?">
+              <%= @cohort.cum_asymptomatic.count %>
+          </a>
+       </td>
         <td>
             &nbsp;
         </td>
