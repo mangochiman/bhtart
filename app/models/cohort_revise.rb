@@ -5,7 +5,7 @@ class CohortRevise
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
 
-=begin
+#=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -566,6 +566,16 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.get_tb_status('Confirmed TB NOT on treatment')
     cohort.unknown_tb_status = self.get_tb_status('unknown_tb_status')
 
+=begin
+  ART adherence
+
+  Alive and On ART with value of their 'Drug order adherence" observation during their latest Adherence 
+  encounter in the reporting period  between 95 and 105
+=end
+    adherent, not_adherent = self.latest_art_adherence(cohort.total_alive_and_on_art, end_date)
+    cohort.patients_with_0_6_doses_missed_at_their_last_visit = adherent
+    cohort.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
+
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
 
@@ -573,6 +583,44 @@ Unique PatientProgram entries at the current location for those patients with at
 
 
   private
+
+  def self.latest_art_adherence(patient_list, end_date)
+    patient_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+    patient_ids = [0] if patient_ids.blank?
+
+    adherence = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT person_id, value_numeric, value_text FROM obs t WHERE concept_id = 6987 AND voided = 0 
+      AND obs_datetime BETWEEN (SELECT CONCAT(max(obs_datetime),' 00:00:00') FROM obs 
+        WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id 
+        AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}'
+      ) AND (SELECT CONCAT(max(obs_datetime),' 23:59:59') FROM obs 
+        WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
+        AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}'
+      ) AND person_id IN(#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}';
+EOF
+
+    adherent = [] ; not_adherent = []
+    
+    (adherence || []).each do |ad|
+      rate = ad['value_text'].to_f unless ad['value_text'].blank?
+      rate = ad['value_numeric'].to_f unless ad['value_numeric'].blank?
+      if rate >= 95 and rate <= 105
+        adherent << ad['person_id'].to_i
+      else
+        not_adherent << ad['person_id'].to_i
+      end
+    end
+    
+    found_in_both = (adherent & not_adherent)
+    adherent = (adherent - found_in_both)
+    new_patients_with_no_adherence_done = (patient_ids.uniq - (adherent.uniq + not_adherent.uniq))
+    return [(adherent.uniq + new_patients_with_no_adherence_done), not_adherent.uniq]
+  end
+
   def self.unknown_side_effects(total_alive, side_effects_patients, without_side_effects_patients)
     total_alive_patients = []
     patients_with_side_effects = []
@@ -839,7 +887,7 @@ EOF
   end
 
   def self.update_cum_outcome(end_date)
-=begin
+#=begin
       ActiveRecord::Base.connection.execute <<EOF
         DROP TABLE IF EXISTS `temp_patient_outcomes`;
 EOF
@@ -850,7 +898,7 @@ EOF
         FROM temp_earliest_start_date
         WHERE date_enrolled <= '#{end_date}';
 EOF
-=end
+#=end
   end
 
   def self.kaposis_sarcoma(start_date, end_date)
