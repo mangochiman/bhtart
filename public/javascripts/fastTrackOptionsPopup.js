@@ -59,7 +59,7 @@ leftTable += "<td style='border-bottom: 0px solid black; text-align: center;'><i
 leftTable += "</tr>";
 
 leftTable += "<tr id='' row_id = '9537' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-leftTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Good adherence last 2 visits</td>";
+leftTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Good adherence</td>";
 leftTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9537' src='" + uncheckedImg + "'></img></td>";
 leftTable += "</tr>";
 
@@ -86,10 +86,10 @@ rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-alig
 rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9540' src='" + uncheckedImg + "'></img></td>";
 rightTable += "</tr>";
 
-rightTable += "<tr id='' row_id = '9541' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>No need for Depo at ART</td>";
-rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9541' src='" + uncheckedImg + "'></img></td>";
-rightTable += "</tr>";
+//rightTable += "<tr id='' row_id = '9541' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+//rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>No need for Depo at ART</td>";
+//rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9541' src='" + uncheckedImg + "'></img></td>";
+//rightTable += "</tr>";
 
 rightTable += "</table>";
 
