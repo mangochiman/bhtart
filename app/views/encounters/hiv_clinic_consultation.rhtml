@@ -1223,15 +1223,23 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   function setIPTOptionForPopup(){
     ipt_option_input = jQuery("[tstvalue='IPT']")[0];
     tb_treatment__status = __$('tb_treatment_question').value.toUpperCase();
-    if (tb_treatment__status == 'YES'){
+    tb_status = __$('tb_status').value.toUpperCase();
+    ipt_message_header = "PATIENT IS ON TB TREATMENT";
+    if (tb_status == 'TB SUSPECTED'){
+      ipt_message_header = "PATIENT IS A TB SUSPECT";
+    }
+
+    if (tb_treatment__status == 'YES' || tb_status == 'TB SUSPECTED' || tb_status == 'CONFIRMED TB ON TREATMENT'){
       if (ipt_option_input){
         ipt_option_input.onmouseup = function(){
           if (!ipt_option_input.style.backgroundColor.match(/lightBlue/i)){
+            __$('ipt-message-header').innerHTML = ipt_message_header;
             showTBTreatmentPopup();
           }
         }
       }
     }
+    
   }
 
 </script>
@@ -1311,8 +1319,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
     <span style="font-size: 16pt;">
       <center>
-        <i><b>PATIENT ON TB TREATMENT</b></i><br />
-        This patient is on TB Treatment. Are you sure you want to prescribe IPT?
+        <i><b id="ipt-message-header">PATIENT ON TB TREATMENT</b></i><br />
+        Do you want to continue with <b>IPT</b> prescription?
       </center>
     </span>
     <div style="padding-top: 65px;">
