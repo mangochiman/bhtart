@@ -1111,7 +1111,7 @@
       jQuery.ajax({
         type: "POST",
         url: "/regimens/check_stock_levels",
-        data: "regimen=" + regimen_id + "&duration=30",
+        data: "regimen=" + regimen_id + "&duration=30" + "&patient_id=<%= @patient.id %>",
         success: function(result){
           stock_hash = result;
           element = document.getElementsByClassName("stock_level_details")[0];
@@ -1145,7 +1145,7 @@
       jQuery.ajax({
         type: "POST",
         url: "/regimens/check_stock_levels",
-        data: "regimen=" + regimen_id + "&duration=" + duration,
+        data: "regimen=" + regimen_id + "&duration=" + duration + "&patient_id=<%= @patient.id %>",
         beforeSend:function(){
           data = "<span class='stock_loading_message'>Loading ...</span>"
           document.getElementsByClassName('stock_level_details')[0].innerHTML=data;
@@ -1275,7 +1275,7 @@
       jQuery.ajax({
         type: "POST",
         url: "/regimens/check_stock_levels",
-        data: "regimen=" + regimen_id + "&duration=30",
+        data: "regimen=" + regimen_id + "&duration=30" + "&patient_id=<%= @patient.id %>",
         success: function(result){
           stock_hash = result;
           element = document.getElementsByClassName("stock_level_details")[0];
@@ -1309,7 +1309,7 @@
       jQuery.ajax({
         type: "POST",
         url: "/regimens/check_stock_levels",
-        data: "regimen=" + regimen_id + "&duration=" + duration,
+        data: "regimen=" + regimen_id + "&duration=" + duration + "&patient_id=<%= @patient.id %>",
         beforeSend:function(){
           data = "<span class='stock_loading_message'>Loading ...</span>"
           document.getElementsByClassName('stock_level_details')[0].innerHTML=data;
