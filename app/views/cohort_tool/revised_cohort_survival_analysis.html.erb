@@ -129,11 +129,14 @@
         .text-header {
             font-size: large;
         }
+        .table-main-data {
+            width: 10% !important;
+        }
 </style>
 
 <table class="table-main" border="2px;">
     <tr>
-        <th colspan="10" class="text-left border-null">
+        <th colspan="10" class="text-left border-null text-header">
             General Cohort Survival Analysis
         </th>
     </tr>
@@ -185,44 +188,38 @@
         <% if data['Number of new registered'].to_i > 1 %>
 
     <tr>
-        <td class="text-bold border-null-right">
+        <td class="text-bold border-null-right table-main-data">
             <%= "#{@name_of_quarter} " + data['Quarter'] %>
         </td>
-        <td class="number-center border-null-left border-null-right">
+        <td class="number-center border-null-left border-null-right table-main-data">
             <%= range %>
         </td>
-        <td class="border-null-left">
+        <td class="border-null-left table-main-data">
             all ages
         </td>
-        <td class="number">
+        <td class="number table-main-data">
           <%= data['Number of new registered']%>
         </td>
-        <td class="number">
+        <td class="number table-main-data">
 
         </td>
-        <td>
-            <table class="table-inner">
-                <tr>
-                    <td class="number table-inner-data">
-                        <%= data['Number Alive and on ART']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Dead']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Defaulted']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Stopped Treatment']%>
-                    </td>
-                    <td class="number table-inner-data">
-                      <%= data['Number Transferred out']%>
-                    </td>
-                </tr>
-            </table>
-            <% end %>
-            <% end %>
+        <td class="number table-inner-data">
+            <%= data['Number Alive and on ART']%>
         </td>
+        <td class="number table-inner-data">
+            <%= data['Number Dead']%>
+        </td>
+        <td class="number table-inner-data">
+            <%= data['Number Defaulted']%>
+        </td>
+        <td class="number table-inner-data">
+            <%= data['Number Stopped Treatment']%>
+        </td>
+        <td class="number table-inner-data">
+            <%= data['Number Transferred out']%>
+        </td>
+        <% end %>
+    <% end %>
     </tr>
 </table>
 

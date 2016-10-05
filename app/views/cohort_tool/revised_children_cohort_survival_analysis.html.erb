@@ -129,6 +129,9 @@
         .text-header {
             font-size: large;
         }
+        .table-main-data {
+            width: 10% !important;
+        }
 </style>
 
 <table class="table-main" border="2px;">
@@ -184,19 +187,19 @@
     <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
         <% if data['Number of new registered'].to_i > 1 %>
     <tr>
-        <td class="text-bold border-null-right">
+        <td class="text-bold border-null-right table-main-data">
           <%= "#{@name_of_quarter} " + data['Quarter'] %>
         </td>
-        <td class="number-center border-null-left border-null-right">
+        <td class="number-center border-null-left border-null-right table-main-data">
           <%= range %>
         </td>
-        <td class="border-null-left">
+        <td class="border-null-left table-main-data">
             all ages
         </td>
-        <td class="number">
+        <td class="number table-main-data">
           <%= data['Number of new registered']%>
         </td>
-        <td class="number">
+        <td class="number table-main-data">
 
         </td>
         <td class="number table-inner-data">
