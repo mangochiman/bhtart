@@ -966,26 +966,34 @@ class GenericRegimensController < ApplicationController
   end
 
   def check_stock_levels
-    orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
+    patient = Patient.find(params[:patient_id])
+    #orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
+    weight = PatientService.get_patient_attribute_value(patient, "current_weight")
+    orders = MedicationService.regimen_medications(params[:regimen], weight)
     drug_details = {}
     arvs_buffer = 2
     reduced = false
 
     orders.each do |order|
-      drug_name = order.drug.name
-      drug_id = order.drug.id
+      drug = Drug.find(order[:drug_id])
+      drug_name = drug.name
+      drug_id = drug.id
       drug_pack_size = Pharmacy.pack_size(drug_id)
       current_stock = (Pharmacy.latest_drug_stock(drug_id)/drug_pack_size).to_i #In tins
-      equivalent_daily_dose = order.equivalent_daily_dose.to_i
+
+      morning_tabs = order[:am]
+      evening_tabs = order[:pm]
+      equivalent_daily_dose = morning_tabs.to_f + evening_tabs.to_f
+
       duration = (params[:duration].to_i + arvs_buffer)
 
-      if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
-        reduced = true
-        duration = (params[:duration].to_i + 1)
-      end
+      #if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
+        #reduced = true
+        #duration = (params[:duration].to_i + 1)
+      #end
 
       required_amount = (equivalent_daily_dose * duration)
-      required_amount = DrugOrder.calculate_complete_pack(order.drug, required_amount)
+      required_amount = DrugOrder.calculate_complete_pack(drug, required_amount)
       drug_details[drug_name] = {}
       drug_details[drug_name]["required_amount"] = required_amount #in tabs
       drug_details[drug_name]["current_stock"] = current_stock # in tins
@@ -1060,9 +1068,30 @@ class GenericRegimensController < ApplicationController
   def drug_stock_availability
     patient = Patient.find(params[:patient_id])
     #regimens = Regimen.find(:all,:order => 'regimen_index',:conditions => ['concept_id =?',params[:concept_id]],:include => :regimen_drug_orders)
-    regimens = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => params[:concept_id]}, :include => :regimen_drug_orders)
+    #regimens = Regimen.criteria(PatientService.get_patient_attribute_value(patient, "current_weight")).all(:conditions => {:concept_id => params[:concept_id]}, :include => :regimen_drug_orders)
     stock = {}
+    weight = PatientService.get_patient_attribute_value(patient, "current_weight")
+    regimen_number = params[:concept_id].split(" ")[1]
+    drugs = MedicationService.regimen_medications(regimen_number, weight).collect{|o|Drug.find(o[:drug_id])}
+    drugs.each do | drug |
 
+      drug_pack_size = Pharmacy.pack_size(drug.id)
+      current_stock = (Pharmacy.latest_drug_stock(drug.id)/drug_pack_size).to_i #In tins
+      consumption_rate = Pharmacy.average_drug_consumption(drug.id)
+
+      stock_out_days = ((current_stock * drug_pack_size)/consumption_rate).to_i rescue 0 #To avoid division by zero error when consumption_rate is zero
+      estimated_stock_out_date = (Date.today + stock_out_days).strftime('%d-%b-%Y')
+      estimated_stock_out_date = "(N/A)" if (consumption_rate.to_i <= 0)
+      estimated_stock_out_date = "Stocked out" if (current_stock <= 0) #We don't want to estimate the stock out date if there is no stock available
+
+      stock[drug.id] = {}
+      stock[drug.id]["drug_name"] = drug.name
+      stock[drug.id]["current_stock"] = current_stock
+      stock[drug.id]["consumption_rate"] = consumption_rate.to_f.round(1)
+      stock[drug.id]["estimated_stock_out_date"] = estimated_stock_out_date
+      stock[drug.id]["drug_pack_size"] = drug_pack_size
+    end
+=begin
     regimens.each do | r |
       r.regimen_drug_orders.each do | order |
         drug = order.drug
@@ -1084,6 +1113,7 @@ class GenericRegimensController < ApplicationController
         stock[drug.id]["drug_pack_size"] = drug_pack_size
       end
     end
+=end
     render :json => stock and return
   end
 	# Look up likely durations for the regimen
