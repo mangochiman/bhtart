@@ -164,27 +164,9 @@ class GenericRegimensController < ApplicationController
     #................................................................................................................
     @vl_result_hash = Patient.vl_result_hash(@patient) rescue nil
     @cpt_drug_stock = cpt_drug_stock
-
-    ###################### FAST TRACK ##########################################
-    @fast_track_patient = false
-    @latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
-    @fast_track_patient = true if @latest_fast_track_answer == 'YES'
-
-    if (tb_suspected_or_confirmed?(@patient, session_date) == true)
-      #Not interested in patients with tb suspect or confirmed tb
-      @fast_track_patient = false
-      @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
-    end
-
-    if (is_patient_on_htn_treatment?(@patient, session_date) == true)
-      #Not interested in HTN patients
-      @fast_track_patient = false
-      @latest_fast_track_answer = 'NO'
-    end
-
+    @fast_track_patient = fast_track_patient?(@patient, session_date)
     @latest_vl_result = Lab.latest_viral_load_result(@patient)
-    ###################### FAST TRACK END ###############################################
-
+    @patient_on_tb_treatment = patient_on_tb_treatment?(@patient, session_date)
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
 	end
 

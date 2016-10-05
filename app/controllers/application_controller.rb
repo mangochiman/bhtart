@@ -1,5 +1,18 @@
 class ApplicationController < GenericApplicationController
 
+  def patient_on_tb_treatment?(patient, session_date = Date.today)
+    tb_treatment_concept_id = Concept.find_by_name('TB TREATMENT').concept_id
+
+    latest_tb_treatment_status = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) <= ? AND concept_id =?",
+        session_date, tb_treatment_concept_id]
+    ).answer_string.squish.upcase rescue nil
+
+    return false if latest_tb_treatment_status.blank?
+    return true if (latest_tb_treatment_status.match(/YES/i))
+    return false
+    
+  end
+
   def patient_last_appointment_date(patient,  session_date = Date.today)
     appointment_date_concept_id = Concept.find_by_name("APPOINTMENT DATE").concept_id
     latest_appointment_date = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) < ? AND concept_id =?",
