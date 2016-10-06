@@ -707,8 +707,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                                      regimens.push('<%=data[0].split(" ").first%>');
-                                                                                                      display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                                        regimens.push('<%=data[0].split(" ").first%>');
+                                                                                                        display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -995,10 +995,39 @@
             $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
             selectedDrugsHash[data[0]] = {am: '', pm: ''};
             createHiddenInputsForDoses(data[0])
+            console.log('Data[0] = ' + data[0] + ' Data[1]=' + data[1] + ' Data[3]=' + data[3])
           }
+
+          <% unless @cpt_dose.blank? %>
+              cptDrugName = '<%= @cpt_dose[:drug_name]%>';
+              html += "<tr><td>" + cptDrugName + "</td>"
+              html += "<td> Tabs </td>"
+              html += "<td><input key='" + cptDrugName + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td><input key='" + cptDrugName + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
+              html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
+              selectedDrugsHash[cptDrugName] = {am: '', pm: ''};
+              $('cpt_given').value = '';
+              createHiddenInputsForDoses(cptDrugName);
+          <% end %>
+
+          <% unless @ipt_dose.blank? %>
+              IPTDrugName = '<%= @ipt_dose[:drug_name] %>';
+              html += "<tr><td>" + IPTDrugName + "</td>"
+              html += "<td> Tabs </td>"
+              html += "<td><input key='" + IPTDrugName + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td><input key='" + IPTDrugName + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
+              html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
+              selectedDrugsHash[IPTDrugName] = {am: '', pm: ''};
+              $('ipt_given').value = '';
+              createHiddenInputsForDoses(IPTDrugName);
+           <% end %>
+
           html += "</table>";
           prescription_container.innerHTML = html
         }
+
       }});
 
     setBackButton();
@@ -1072,7 +1101,38 @@
     form.appendChild(amInput);
     form.appendChild(pmInput);
   }
-  
+  var CPTDrugName = '<%= @cpt_dose[:drug_name] rescue ''%>';
+  var IPTDrugName = '<%= @ipt_dose[:drug_name] rescue ''%>';
+
+  function createHiddenInputsForCPTDoses(drugName){
+    previousDrugAmInput = document.getElementById(drugName + '_am');
+    if (previousDrugAmInput){
+      previousDrugAmInput.parentNode.removeChild(previousDrugAmInput)
+    }
+
+    previousDrugPmInput = document.getElementById(drugName + '_pm');
+    if (previousDrugPmInput){
+      previousDrugPmInput.parentNode.removeChild(previousDrugPmInput);
+    }
+
+    amInput = document.createElement('input');
+    amInput.type = 'hidden';
+    amInput.className = 'custom-input';
+    amInput.name = 'drug_names[' + drugName + '][am]';
+    amInput.id = drugName + '_am';
+
+
+    pmInput = document.createElement('input');
+    pmInput.type = 'hidden';
+    pmInput.className = 'custom-input'
+    pmInput.name = 'drug_names[' + drugName + '][pm]';
+    pmInput.id = drugName + '_pm';
+
+    form = jQuery('form')[0];
+    form.appendChild(amInput);
+    form.appendChild(pmInput);
+  }
+
   function hideStockLevelDetails(){
     document.getElementsByClassName("stock_level_details")[0].style.display='none';
   }
@@ -1554,12 +1614,20 @@
           html += "<tr><th>&nbsp;</th>&nbsp;<th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th></tr>"
           html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 5px;'>AM</th>";
           html += "<th style='text-align: right; padding-right: 5px;'>PM</th></tr>"
+
+          var cpt_mgs = document.getElementById('cpt_mgs');
+          cpt_mgs.value = null;
+
+          var ipt_mgs = document.getElementById('ipt_mgs');
+          if (ipt_mgs) ipt_mgs.value = null;
+
           for (i = 0 ; i < formulations.length ; i++) {
             data = formulations[i];
 
             regimen_category = data['category'];
 
-            regimen_id = data['regimen_index']
+            if (data['regimen_index']) regimen_id = data['regimen_index']
+            
             html += "<tr class='regimen_category_" + regimen_category + "'><td>" + data['drug_name'] + "</td>"
             html += "<td style='text-align: left; padding-left: 5px;'>" + data['units'] + "</td>"
             html += "<td style='text-align: right; padding-right: 5px;'>" + data['am'] + "</td>"
@@ -1568,6 +1636,32 @@
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
+
+            if (data['drug_name'].match(/cotrim/i)){
+              if (data['drug_name'].match(/960/i)){
+                cpt_mgs.value = 960;
+              }else if (data['drug_name'].match(/480/i)){
+                cpt_mgs.value = 480;
+              }else{
+                cpt_mgs.value = 120;
+              }
+            }
+
+            if (data['drug_name'].match(/INH/i)){
+              if (data['drug_name'].match(/300/i)){
+                ipt_mgs.value = 300;
+              }else if (data['drug_name'].match(/250/i)){
+                ipt_mgs.value = 250;
+              }else if (data['drug_name'].match(/200/i)){
+                ipt_mgs.value = 200;
+              }
+              else if (data['drug_name'].match(/150/i)){
+                ipt_mgs.value = 150;
+              }else{
+                ipt_mgs.value = 100;
+              }
+            }
+
           }
           html += "</table>"
           prescription_container.innerHTML = html
@@ -1575,6 +1669,92 @@
       }});
 
   }
+
+function buildPrescriptionPageForCPTorIPT(continueExistingRegimen, patientProgram, regimenConceptId, prescriptionContainer){
+  $('touchscreenInput'+tstCurrentPage).setAttribute('type','hidden');
+    $('clearButton').style.display = 'none';
+    $('keyboard').style.display = 'none';
+    $('viewport').style.display = 'none';
+    $('helpText'+tstCurrentPage).innerHTML = "Current patient weight:&nbsp;<b><%=@current_weight%></b>";
+
+
+    if(continueExistingRegimen == 'YES') {
+      var reg_id = current_regimens_for_programs[patientProgram];
+    } else {
+      var reg_id = encodeURIComponent(regimenConceptId);
+    }
+
+    var reg_id = encodeURIComponent(regimenConceptId);
+    current_page = $('page'+tstCurrentPage);
+
+    html = "&nbsp;<div id = '" + prescriptionContainer + "' class='prescription_container' ><table><tr>"
+    /* html += "<th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th>"*/
+    html += "</tr></table></div>"
+    current_page.innerHTML += html;
+
+    new Ajax.Request("/regimens/formulations_cpt_or_ipt?patient_id=<%=@patient.id %>&id=" + reg_id ,{method:'get',onSuccess: function(transport){
+        formulations = JSON.parse(transport.responseText) || "";
+        if(formulations.length > 0 && formulations != "[[[]]]" && formulations != "[]"){
+          //formulations = formulations[0]
+          prescription_container = $(prescriptionContainer);
+          html = "<table>"
+          html += "<tr><th>&nbsp;</th>&nbsp;<th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th></tr>"
+          html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 5px;'>AM</th>";
+          html += "<th style='text-align: right; padding-right: 5px;'>PM</th></tr>"
+
+          var cpt_mgs = document.getElementById('cpt_mgs');
+          cpt_mgs.value = null;
+
+          var ipt_mgs = document.getElementById('ipt_mgs');
+          if (ipt_mgs) ipt_mgs.value = null;
+
+          for (i = 0 ; i < formulations.length ; i++) {
+            data = formulations[i];
+
+            regimen_category = data['category'];
+
+            if (data['regimen_index']) regimen_id = data['regimen_index']
+
+            html += "<tr class='regimen_category_" + regimen_category + "'><td>" + data['drug_name'] + "</td>"
+            html += "<td style='text-align: left; padding-left: 5px;'>" + data['units'] + "</td>"
+            html += "<td style='text-align: right; padding-right: 5px;'>" + data['am'] + "</td>"
+            html += "<td style='text-align: right; padding-right: 5px;'>" + data['pm'] + "</td></tr>"
+            $('touchscreenInput'+tstCurrentPage).value += data[0] + ':';
+            $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
+            $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
+            $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
+
+            if (data['drug_name'].match(/cotrim/i)){
+              if (data['drug_name'].match(/960/i)){
+                cpt_mgs.value = 960;
+              }else if (data['drug_name'].match(/480/i)){
+                cpt_mgs.value = 480;
+              }else{
+                cpt_mgs.value = 120;
+              }
+            }
+
+            if (data['drug_name'].match(/INH/i)){
+              if (data['drug_name'].match(/300/i)){
+                ipt_mgs.value = 300;
+              }else if (data['drug_name'].match(/250/i)){
+                ipt_mgs.value = 250;
+              }else if (data['drug_name'].match(/200/i)){
+                ipt_mgs.value = 200;
+              }
+              else if (data['drug_name'].match(/150/i)){
+                ipt_mgs.value = 150;
+              }else{
+                ipt_mgs.value = 100;
+              }
+            }
+
+          }
+          html += "</table>"
+          prescription_container.innerHTML = html
+        }
+      }});
+}
 
   function showTbDrugs() {
     var prescription_container = $("previous_drugs_dispensed");
@@ -2107,6 +2287,14 @@ pyridoxine_options = ["","25", "50"]
         :tt_onLoad => "set_regimen_concept_id_for_regimen($('patient_program').value, $('regimen_concept_id').value);buildPrescriptionPage($('continue_existing_regimen').value,$('patient_program').value,$('regimen_concept_id').value,'prescription_container');showCategory('Regimen'); showDrugStockAvailability($('regimen_concept_id').value)",
         :condition => 'other_regimen != "yes" && hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value !="YES"',
         :helpText => "Select formulations and doses"}%>
+
+      <%= text_field_tag :regimen_ipt_cpt, nil, {
+        :ajaxUrl => "",
+        :tt_onUnLoad => "setRegimenId('ART'); hideStock();" ,
+        :allowFreeText => true ,
+        :tt_onLoad => "buildPrescriptionPageForCPTorIPT($('continue_existing_regimen').value,$('patient_program').value,$('regimen_concept_id').value,'prescription_container');showCategory('Regimen');)",
+        :condition => 'other_regimen != "yes" && hasReasonForART() == true && $("prescribe_arvs").value != "YES" && $("continue_existing_regimen").value !="YES"',
+        :helpText => "Select formulations and doses"}%>
     <% end %>
 
     <%= text_field_tag :regimen_all, nil, {
@@ -2142,22 +2330,22 @@ pyridoxine_options = ["","25", "50"]
       if @allergic_to_sulphur.upcase == 'YES'%>
         <%= touch_hidden_tag "Prescribe cotramoxazole", @patient, "NO", :id => "cpt_given" %>
       <%else%>
-        <%#= touch_yes_no_tag "Prescribe cotramoxazole", @patient, nil,
-          { :id => 'cpt_given',
-          :allowFreeText => 'false',
-          :condition => 'prescribeAntiretroviralDrugs() == true && prescribeCPT() == true',
-          :helpText => "Prescribe CPT",
-          :tt_onLoad => "showCategory('Regimen');"} %>
+    <%#= touch_yes_no_tag "Prescribe cotramoxazole", @patient, nil,
+    { :id => 'cpt_given',
+    :allowFreeText => 'false',
+    :condition => 'prescribeAntiretroviralDrugs() == true && prescribeCPT() == true',
+    :helpText => "Prescribe CPT",
+    :tt_onLoad => "showCategory('Regimen');"} %>
 
         <%= touch_hidden_tag "Prescribe cotramoxazole", @patient, "#{@prescribe_cpt_set == true ? 'YES' : 'NO'}", :id => "cpt_given" %>
 
-        <%= select_tag :cpt_mgs, options_for_select(options), {
-          :allowFreeText => 'false',
-          :condition => "$('cpt_given').value == 'YES'",
-          :helpText => "Prescribed cotrimoxazole milligrams",
-          :tt_onLoad => "checkInput(); showCategory('Regimen'); setTextToAppear(); showCptDrugStock()",
-          :tt_onUnLoad => 'hideStock();',
-          :tt_onmousedown => "show_confirm_cpt_mgs()"} %>
+    <%#= select_tag :cpt_mgs, options_for_select(options), {
+    :allowFreeText => 'false',
+    :condition => "$('cpt_given').value == 'YES'",
+    :helpText => "Prescribed cotrimoxazole milligrams",
+    :tt_onLoad => "checkInput(); showCategory('Regimen'); setTextToAppear(); showCptDrugStock()",
+    :tt_onUnLoad => 'hideStock();',
+    :tt_onmousedown => "show_confirm_cpt_mgs()"} %>
       <%end%>
     <% else %>
       <%= touch_hidden_tag "Prescribe cotramoxazole", @patient, "NO", :id => "cpt_given" %>
@@ -2178,12 +2366,12 @@ pyridoxine_options = ["","25", "50"]
           ipt_ans = 'NO' if not @prescribe_ipt_set %>
           <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
 
-
-          <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
-            :allowFreeText => 'false',
-            :condition => "prescribeAntiretroviralDrugs() && $('ipt_given').value == 'YES'",
-            :helpText => "IPT milligrams",
-            :tt_onLoad => "showCategory('Regimen');"} %>
+          <input type='hidden' name='ipt_mgs' id='ipt_mgs' />
+      <%#= select_tag :ipt_mgs, options_for_select(ipt_options), {
+      :allowFreeText => 'false',
+      :condition => "prescribeAntiretroviralDrugs() && $('ipt_given').value == 'YES'",
+      :helpText => "IPT milligrams",
+      :tt_onLoad => "showCategory('Regimen');"} %>
 
         <%else%>
           <%= touch_hidden_tag "ISONIAZID", @patient, "", :id => "ipt_given" %>
@@ -2201,12 +2389,12 @@ pyridoxine_options = ["","25", "50"]
           <% ipt_ans = 'YES' if @prescribe_ipt_set
           ipt_ans = 'NO' if not @prescribe_ipt_set %>
           <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
-
-          <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
-            :allowFreeText => 'false',
-            :condition => "prescribeAntiretroviralDrugs() && $('ipt_given').value == 'YES'",
-            :helpText => "IPT milligrams",
-            :tt_onLoad => "showCategory('Regimen');"} %>
+          <input type='hidden' name='ipt_mgs' id='ipt_mgs' />
+      <%#= select_tag :ipt_mgs, options_for_select(ipt_options), {
+      :allowFreeText => 'false',
+      :condition => "prescribeAntiretroviralDrugs() && $('ipt_given').value == 'YES'",
+      :helpText => "IPT milligrams",
+      :tt_onLoad => "showCategory('Regimen');"} %>
         <%else%>
           <%= touch_hidden_tag "ISONIAZID", @patient, "", :id => "ipt_given" %>
         <%end %>
@@ -2226,12 +2414,12 @@ pyridoxine_options = ["","25", "50"]
         ipt_ans = 'NO' if not @prescribe_ipt_set %>
         <%= touch_hidden_tag "ISONIAZID", @patient, ipt_ans, :id => "ipt_given" %>
 
-
-        <%= select_tag :ipt_mgs, options_for_select(ipt_options), {
-          :allowFreeText => 'false',
-          :condition => "$('ipt_given').value == 'YES'",
-          :helpText => "IPT milligrams",
-          :tt_onLoad => "showCategory('Regimen');"} %>
+        <input type='hidden' name='ipt_mgs' id='ipt_mgs' />
+    <%#= select_tag :ipt_mgs, options_for_select(ipt_options), {
+    :allowFreeText => 'false',
+    :condition => "$('ipt_given').value == 'YES'",
+    :helpText => "IPT milligrams",
+    :tt_onLoad => "showCategory('Regimen');"} %>
       <% else %>
         <%= touch_hidden_tag "ISONIAZID", @patient, "", :id => "ipt_given" %>
       <% end %>
@@ -2252,7 +2440,7 @@ pyridoxine_options = ["","25", "50"]
       :helpText => "Pyridoxine Milligrams",
       :tt_onLoad => "showCategory('Regimen');"} %>
 
-    <%= select_tag :cpt_duration, optionsString,
+    <%#= select_tag :cpt_duration, optionsString,
       { :condition => '($("prescribe_arvs").value == "NO" || $("prescribe_arvs").value == "")
   && ($("cpt_given").value == "YES" ||
   $("ipt_given").value == "YES"  ||

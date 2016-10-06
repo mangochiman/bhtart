@@ -610,7 +610,7 @@ EOF
       rate = ad['value_numeric'].to_f unless ad['value_numeric'].blank?
       rate = 0 if rate.blank?
 
-      if rate >= 95 and rate <= 105
+      if rate >= 95 
         adherent << ad['person_id'].to_i
       else
         not_adherent << ad['person_id'].to_i
