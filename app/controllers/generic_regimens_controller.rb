@@ -705,7 +705,7 @@ class GenericRegimensController < ApplicationController
         morning_tabs = order[:am]
         evening_tabs = order[:pm]
 
-        instructions = "Morning: #{morning_tabs} tab(s), Evening: #{evening_tabs} tabs"
+        instructions = "#{drug.name}:- Morning: #{morning_tabs} tab(s), Evening: #{evening_tabs} tabs"
         frequency = "ONCE A DAY (OD)"
         equivalent_daily_dose = morning_tabs.to_f + evening_tabs.to_f
         dose = morning_tabs if evening_tabs.to_i == 0
