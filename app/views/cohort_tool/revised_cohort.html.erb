@@ -71,6 +71,9 @@
         .border-top-dotted {
             border-top-style: dotted;
         }
+        .buttons {
+            top: 0px;
+        }
         .button {
             font-size: 28px;
             text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
@@ -108,6 +111,9 @@
             position: fixed;
             left: 0px;
             bottom: 0px;
+            height: 80px;
+            overflow: hidden;
+            padding-right: 20px;
             width: 100%;
             background-color: rgb(51,51,51);
         }
@@ -2321,18 +2327,20 @@
 
 <!-- Controls -->
 <div class="row-button-print">
-    <%= button_to 'Finish', {
-            :action => 'finish'
-    }, {
-            :class => 'button button-finish'
-    } %>
+    <div class="buttons">
+        <%= button_to 'Finish', {
+                :action => 'finish'
+        }, {
+                :class => 'button button-finish'
+        } %>
 
-    <%= button_to 'Print', {
-            :action => 'download_pdf',
-            :file_directory => '/cohort_tool/' ,
-            :file_name => 'revised_cohort_to_print'
-    }, {
-            :class => 'button button-print'
-    } %>
+        <%= button_to 'Print', {
+                :action => 'download_pdf',
+                :file_directory => '/cohort_tool/' ,
+                :file_name => 'revised_cohort_to_print'
+        }, {
+                :class => 'button button-print'
+        } %>
+    </div>
 </div>
 <!- ###   ### -->
