@@ -1670,6 +1670,92 @@
 
   }
 
+function buildPrescriptionPageForCPTorIPT(continueExistingRegimen, patientProgram, regimenConceptId, prescriptionContainer){
+  $('touchscreenInput'+tstCurrentPage).setAttribute('type','hidden');
+    $('clearButton').style.display = 'none';
+    $('keyboard').style.display = 'none';
+    $('viewport').style.display = 'none';
+    $('helpText'+tstCurrentPage).innerHTML = "Current patient weight:&nbsp;<b><%=@current_weight%></b>";
+
+
+    if(continueExistingRegimen == 'YES') {
+      var reg_id = current_regimens_for_programs[patientProgram];
+    } else {
+      var reg_id = encodeURIComponent(regimenConceptId);
+    }
+
+    var reg_id = encodeURIComponent(regimenConceptId);
+    current_page = $('page'+tstCurrentPage);
+
+    html = "&nbsp;<div id = '" + prescriptionContainer + "' class='prescription_container' ><table><tr>"
+    /* html += "<th>Drug name</th><th>Dose</th><th>Units</th><th>Daily dose</th>"*/
+    html += "</tr></table></div>"
+    current_page.innerHTML += html;
+
+    new Ajax.Request("/regimens/formulations_cpt_or_ipt?patient_id=<%=@patient.id %>&id=" + reg_id ,{method:'get',onSuccess: function(transport){
+        formulations = JSON.parse(transport.responseText) || "";
+        if(formulations.length > 0 && formulations != "[[[]]]" && formulations != "[]"){
+          //formulations = formulations[0]
+          prescription_container = $(prescriptionContainer);
+          html = "<table>"
+          html += "<tr><th>&nbsp;</th>&nbsp;<th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th></tr>"
+          html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 5px;'>AM</th>";
+          html += "<th style='text-align: right; padding-right: 5px;'>PM</th></tr>"
+
+          var cpt_mgs = document.getElementById('cpt_mgs');
+          cpt_mgs.value = null;
+
+          var ipt_mgs = document.getElementById('ipt_mgs');
+          if (ipt_mgs) ipt_mgs.value = null;
+
+          for (i = 0 ; i < formulations.length ; i++) {
+            data = formulations[i];
+
+            regimen_category = data['category'];
+
+            if (data['regimen_index']) regimen_id = data['regimen_index']
+
+            html += "<tr class='regimen_category_" + regimen_category + "'><td>" + data['drug_name'] + "</td>"
+            html += "<td style='text-align: left; padding-left: 5px;'>" + data['units'] + "</td>"
+            html += "<td style='text-align: right; padding-right: 5px;'>" + data['am'] + "</td>"
+            html += "<td style='text-align: right; padding-right: 5px;'>" + data['pm'] + "</td></tr>"
+            $('touchscreenInput'+tstCurrentPage).value += data[0] + ':';
+            $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
+            $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
+            $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
+
+            if (data['drug_name'].match(/cotrim/i)){
+              if (data['drug_name'].match(/960/i)){
+                cpt_mgs.value = 960;
+              }else if (data['drug_name'].match(/480/i)){
+                cpt_mgs.value = 480;
+              }else{
+                cpt_mgs.value = 120;
+              }
+            }
+
+            if (data['drug_name'].match(/INH/i)){
+              if (data['drug_name'].match(/300/i)){
+                ipt_mgs.value = 300;
+              }else if (data['drug_name'].match(/250/i)){
+                ipt_mgs.value = 250;
+              }else if (data['drug_name'].match(/200/i)){
+                ipt_mgs.value = 200;
+              }
+              else if (data['drug_name'].match(/150/i)){
+                ipt_mgs.value = 150;
+              }else{
+                ipt_mgs.value = 100;
+              }
+            }
+
+          }
+          html += "</table>"
+          prescription_container.innerHTML = html
+        }
+      }});
+}
+
   function showTbDrugs() {
     var prescription_container = $("previous_drugs_dispensed");
     var html = "<table>"
@@ -2201,6 +2287,14 @@ pyridoxine_options = ["","25", "50"]
         :tt_onLoad => "set_regimen_concept_id_for_regimen($('patient_program').value, $('regimen_concept_id').value);buildPrescriptionPage($('continue_existing_regimen').value,$('patient_program').value,$('regimen_concept_id').value,'prescription_container');showCategory('Regimen'); showDrugStockAvailability($('regimen_concept_id').value)",
         :condition => 'other_regimen != "yes" && hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value !="YES"',
         :helpText => "Select formulations and doses"}%>
+
+      <%= text_field_tag :regimen_ipt_cpt, nil, {
+        :ajaxUrl => "",
+        :tt_onUnLoad => "setRegimenId('ART'); hideStock();" ,
+        :allowFreeText => true ,
+        :tt_onLoad => "buildPrescriptionPageForCPTorIPT($('continue_existing_regimen').value,$('patient_program').value,$('regimen_concept_id').value,'prescription_container');showCategory('Regimen');)",
+        :condition => 'other_regimen != "yes" && hasReasonForART() == true && $("prescribe_arvs").value != "YES" && $("continue_existing_regimen").value !="YES"',
+        :helpText => "Select formulations and doses"}%>
     <% end %>
 
     <%= text_field_tag :regimen_all, nil, {
@@ -2347,7 +2441,7 @@ pyridoxine_options = ["","25", "50"]
       :helpText => "Pyridoxine Milligrams",
       :tt_onLoad => "showCategory('Regimen');"} %>
 
-    <%= select_tag :cpt_duration, optionsString,
+    <%#= select_tag :cpt_duration, optionsString,
       { :condition => '($("prescribe_arvs").value == "NO" || $("prescribe_arvs").value == "")
   && ($("cpt_given").value == "YES" ||
   $("ipt_given").value == "YES"  ||
