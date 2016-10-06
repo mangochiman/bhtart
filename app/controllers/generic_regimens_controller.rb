@@ -461,7 +461,7 @@ class GenericRegimensController < ApplicationController
 	end
 
 	def create
-		#raise params[:observation][].to_yaml
+		raise params[:observation][].to_yaml
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
@@ -902,6 +902,31 @@ class GenericRegimensController < ApplicationController
     session_date = session[:datetime].to_date rescue Date.today
     current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
     regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
+
+    ################################################################################################################
+		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, session_date, 'CPT')
+    end
+    @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+
+    if @prescribe_cpt_set == true
+      dose = MedicationService.other_medications('Cotrimoxazole', current_weight)
+      unless dose.blank?
+        regimen_medications = (regimen_medications + dose)
+      end
+    end
+
+    if @prescribe_ipt_set == true
+      dose = MedicationService.other_medications('Isoniazid', current_weight)
+      unless dose.blank?
+        regimen_medications = (regimen_medications + dose)
+      end
+    end
+    ################################################################################################################
+
 
     @options = (regimen_medications || []).each do | r |
       [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] , r[:category]]

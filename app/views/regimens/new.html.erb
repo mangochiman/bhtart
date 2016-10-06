@@ -1554,6 +1554,10 @@
           html += "<tr><th>&nbsp;</th>&nbsp;<th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th></tr>"
           html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 5px;'>AM</th>";
           html += "<th style='text-align: right; padding-right: 5px;'>PM</th></tr>"
+
+          var cpt_mgs = document.getElementById('cpt_mgs');
+          cpt_mgs.value = null;
+
           for (i = 0 ; i < formulations.length ; i++) {
             data = formulations[i];
 
@@ -1568,6 +1572,16 @@
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
+
+            if (data['drug_name'].match(/cotrim/i)){
+              if (data['drug_name'].match(/960/i)){
+                cpt_mgs.value = 960;
+              }else if (data['drug_name'].match(/480/i)){
+                cpt_mgs.value = 480;
+              }else{
+                cpt_mgs.value = 120;
+              }
+            }
           }
           html += "</table>"
           prescription_container.innerHTML = html
@@ -2150,8 +2164,9 @@ pyridoxine_options = ["","25", "50"]
           :tt_onLoad => "showCategory('Regimen');"} %>
 
         <%= touch_hidden_tag "Prescribe cotramoxazole", @patient, "#{@prescribe_cpt_set == true ? 'YES' : 'NO'}", :id => "cpt_given" %>
+        <input type='hidden' name='cpt_mgs' id='cpt_mgs' />
 
-        <%= select_tag :cpt_mgs, options_for_select(options), {
+        <%#= select_tag :cpt_mgs, options_for_select(options), {
           :allowFreeText => 'false',
           :condition => "$('cpt_given').value == 'YES'",
           :helpText => "Prescribed cotrimoxazole milligrams",

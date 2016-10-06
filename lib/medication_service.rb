@@ -294,4 +294,26 @@ module MedicationService
     return regimen_name
   end
 
+  def self.other_medications(drug_name, current_weight)
+    drug_ids = Drug.find(:all, :conditions =>['name LIKE ?', "%#{drug_name}%"]).map(&:drug_id)
+
+    regimen_medications = Drug.find(:all,:joins => "INNER JOIN moh_other_medications o 
+      ON o.drug_inventory_id = drug.drug_id AND o.drug_inventory_id IN (#{drug_ids.join(',')})
+      INNER JOIN moh_regimen_doses d ON d.dose_id = o.dose_id",
+      :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
+      :select => "drug.*, o.*, d.*", :limit => 1, :order => "drug.name DESC").map do |medication|
+        {
+          :drug_name => medication.name,
+          :am => medication.am,
+          :pm => medication.pm,
+          :units => medication.units,
+          :drug_id => medication.drug_id,
+          :regimen_index => nil,
+          :category => medication.category
+        }
+      end
+
+    return regimen_medications    
+  end
+
 end
