@@ -68,15 +68,38 @@
     .border-top-dotted {
         border-top-style: dotted;
     }
+    .button {
+        font-size: 28px;
+        text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        color: #ffffff;
+        padding: 10px;
+        display: inline-block;
+        text-decoration: none;
+        min-width: 120px;
+        min-height: 55px;
+        margin: 3px;
+        border-radius: 3px !important;
+    }
+    .button-print:hover {
+        border: #5ca6c4;
+        background-color: #2F30EE;
+    }
     .button-print {
-        background-color: green;
-        font-size: 54px;
-        color: white;
+        border: #7eb9d0;
+        background-color: #5ca6c4;
+        float: left;
+    }
+    .button-finish:hover {
+        border: #224b09;
+        background-color: #224b09;
+    }
+    .button-finish {
+        border: #4ba614;
+        background-color: #4ba614;
         float: right;
-        border: 5px solid grey;
-        padding-left: 20px;
-        padding-right: 20px;
-        border-radius: 25px;
     }
     .row-button-print {
         position: fixed;
@@ -237,12 +260,18 @@
 
 <!-- Controls -->
 <div class="row-button-print">
+        <%= button_to 'Finish', {
+                :action => 'finish'
+        }, {
+                :class => 'button button-finish'
+        } %>
+
     <%= button_to 'Print', {
             :action => 'download_pdf',
             :file_directory => '/cohort_tool/' ,
             :file_name => 'revised_cohort_survival_analysis_to_print'
     }, {
-            :class => 'button-print'
+            :class => 'button button-print'
     } %>
 </div>
 <!- ###   ### -->
