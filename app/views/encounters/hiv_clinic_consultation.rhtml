@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="/stylesheets/yes_no_btn.css" type="text/css">
+
 <style type="text/css">
   .summary {
     margin:20px;
@@ -432,27 +434,27 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     html = "<div id='divcontent'>";
     html += "<div id='divScroller'>";
     sideEffectsOptions = JSON.parse('<%=  side_effects_array.to_json %>');
-    html += "<table cellspacing='1' cellpadding='2' width='95%'>";
+    html += "<table cellspacing='1' cellpadding='2' width='95%' id='yes_no_table'>";
     html += "<tbody>";
 
     for (var i=0; i<=sideEffectsOptions.length - 1; i++){
       html += "<tr>";
       html += "<td class='labelText'>" + sideEffectsOptions[i] + "</td>";
-      html += "<td style='width: 50%;'>";
-      html += "<table style='float: right; min-width: 150px;'>";
-      html += "<tr>";
 
-      html += "<td>";
-      html += "<button onclick='updateSideEffectYesValue(this);' key='" + sideEffectsOptions[i] + "' class='blue' value='" + sideEffectsOptions[i] + "'><span>Yes</span></button>"
+      
+      html += "<td style='width: 30%;'>";
+        html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
+          html += "<tr>";
+            html += "<td class='btn-containers'>";
+              html += "<div class='button'><a category='side_effects' key='" + sideEffectsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
+            html += "</td>";
+            html += "<td class='btn-containers'>";
+              html += "<div class='button'><a category='side_effects' key='" + sideEffectsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
+            html += "</td>";
+          html += "</tr>";
+        html += "</table>";
       html += "</td>";
-
-      html += "<td>";
-      html += "<button onclick='updateSideEffectNoValue(this);' key='" + sideEffectsOptions[i] + "' class='blue' value='" + sideEffectsOptions[i] + "'><span>No</span></button>"
-      html += "</td>";
-      html += "</tr>";
-
-      html += "</table>";
-      html += "</td>"
+      
       html += "</tr>"
     }
 
@@ -464,12 +466,42 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     thisPage = document.getElementById('page' + tstCurrentPage);
     thisPage.innerHTML += html;
 
-    preselectSelectedSideEffects();
+    //preselectSelectedSideEffects();
     setBackButton();
     __$('nextButton').onmousedown = function(){
       validateSideEffectsInput();
     }
     
+  }
+
+
+  function pressB(e) {
+    category = e.getAttribute('category');
+
+    var style = " width: 76px;height: 48px;margin: 2px 0 0 2px;border-bottom: ";
+    style += "1px solid #fff;font-size: 21px;color: #777; -webkit-box-shadow: ";
+    style += "inset rgba(0,0,0,.5) 0px 5px 10px;-moz-box-shadow: inset rgba(0,0,0,.5)";
+    style += " 0px 5px 10px;box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;";
+
+    e.setAttribute('style', style);
+
+    if(e.id.match(/no_/i)) {
+      index = e.id.replace('no_','');
+      document.getElementById('yes_' + index).setAttribute('style','');
+      if(category == 'side_effects') {
+        updateSideEffectYesValue(e);
+      }else{
+        updateTBSymptomYesValue(e);
+      }
+    }else{
+      index = e.id.replace('yes_','');
+      document.getElementById('no_' + index).setAttribute('style','');
+      if(category == 'side_effects') {
+        updateSideEffectNoValue(e)
+      }else{
+        updateTBSymptomNoValue(e);
+      }
+    }
   }
 
   function advancedTBSymptoms(){
@@ -484,27 +516,27 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     html = "<div id='divcontent'>";
     html += "<div id='divScroller'>";
     tbSymptomsOptions = JSON.parse('<%=  tb_symptoms_array.to_json %>');
-    html += "<table cellspacing='1' cellpadding='2' width='95%'>";
+    html += "<table cellspacing='1' cellpadding='2' width='95%' id='yes_no_table'>";
     html += "<tbody>";
 
     for (var i=0; i <= tbSymptomsOptions.length - 1; i++){
       html += "<tr>";
       html += "<td class='labelText'>" + tbSymptomsOptions[i] + "</td>";
-      html += "<td style='width: 50%;'>";
-      html += "<table style='float: right; min-width: 150px;'>";
-      html += "<tr>";
 
-      html += "<td>";
-      html += "<button onclick='updateTBSymptomYesValue(this);' symptom='" + tbSymptomsOptions[i] + "' class='blue' value='" + tbSymptomsOptions[i] + "'><span>Yes</span></button>"
+      
+      html += "<td style='width: 30%;'>";
+        html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
+          html += "<tr>";
+            html += "<td class='btn-containers'>";
+              html += "<div class='button'><a category='TB' key='" + tbSymptomsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
+            html += "</td>";
+            html += "<td class='btn-containers'>";
+              html += "<div class='button'><a category='TB' key='" + tbSymptomsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
+            html += "</td>";
+          html += "</tr>";
+        html += "</table>";
       html += "</td>";
-
-      html += "<td>";
-      html += "<button onclick='updateTBSymptomNoValue(this);' symptom='" + tbSymptomsOptions[i] + "' class='blue' value='" + tbSymptomsOptions[i] + "'><span>No</span></button>"
-      html += "</td>";
-      html += "</tr>";
-
-      html += "</table>";
-      html += "</td>"
+      
       html += "</tr>"
     }
 
@@ -516,7 +548,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     thisPage = document.getElementById('page' + tstCurrentPage);
     thisPage.innerHTML += html;
 
-    preselectSelectedTBSymptoms();
+    //preselectSelectedTBSymptoms();
     setBackButton();
     __$('nextButton').onmousedown = function(){
       validateTBSymptomsInput();
@@ -530,57 +562,31 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     yes_button = yes_no_buttons[0];
     no_button = yes_no_buttons[1];
 
-    if (yes_button.className.match(/blue/i)){
-      yes_button.className = 'green';
-      no_button.className = 'blue';
-      __$(key).value = key;
       sideEffectsHash[key]["yes"] = 'true';
       sideEffectsHash[key]["no"] = '';
       //Update Yes Value Here
-    }else{
-      yes_button.className = 'blue';
-      sideEffectsHash[key]["yes"] = '';
-      __$(key).value = '';
-    }
   }
 
   function updateTBSymptomYesValue(obj){
-    key = obj.getAttribute('symptom');
+    key = obj.getAttribute('key');
     yes_no_buttons = jQuery("[symptom='" + key + "']");
     yes_button = yes_no_buttons[0];
     no_button = yes_no_buttons[1];
 
-    if (yes_button.className.match(/blue/i)){
-      yes_button.className = 'green';
-      no_button.className = 'blue';
-      __$(key).value = key;
-      tbSymptomsHash[key]["yes"] = 'true';
-      tbSymptomsHash[key]["no"] = '';
-      //Update Yes Value Here
-    }else{
-      yes_button.className = 'blue';
-      tbSymptomsHash[key]["yes"] = '';
-      __$(key).value = '';
-    }
+    tbSymptomsHash[key]["yes"] = 'true';
+    tbSymptomsHash[key]["no"] = '';
+    //Update Yes Value Here
   }
 
   function updateTBSymptomNoValue(obj){
-    key = obj.getAttribute('symptom');
+    key = obj.getAttribute('key');
     yes_no_buttons = jQuery("[symptom='" + key + "']");
     yes_button = yes_no_buttons[0]
     no_button = yes_no_buttons[1]
 
-    if (no_button.className.match(/blue/i)){
-      no_button.className = 'green';
-      yes_button.className = 'blue';
-      __$(key).value = '';
-      tbSymptomsHash[key]["no"] = 'true';
-      tbSymptomsHash[key]["yes"] = '';
-      //Update No Value Here
-    }else{
-      no_button.className = 'blue';
-      tbSymptomsHash[key]["no"] = '';
-    }
+    tbSymptomsHash[key]["no"] = 'true';
+    tbSymptomsHash[key]["yes"] = '';
+    //Update No Value Here
   }
   
   function updateSideEffectNoValue(obj){
@@ -589,17 +595,9 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     yes_button = yes_no_buttons[0]
     no_button = yes_no_buttons[1]
 
-    if (no_button.className.match(/blue/i)){
-      no_button.className = 'green';
-      yes_button.className = 'blue';
-      __$(key).value = '';
-      sideEffectsHash[key]["no"] = 'true';
-      sideEffectsHash[key]["yes"] = '';
-      //Update No Value Here
-    }else{
-      no_button.className = 'blue';
-      sideEffectsHash[key]["no"] = '';
-    }
+    sideEffectsHash[key]["no"] = 'true';
+    sideEffectsHash[key]["yes"] = '';
+    //Update No Value Here
   }
 
   function preselectSelectedSideEffects(){
