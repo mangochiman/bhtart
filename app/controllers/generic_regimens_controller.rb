@@ -461,7 +461,6 @@ class GenericRegimensController < ApplicationController
 	end
 
 	def create
-		raise params[:observation][].to_yaml
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
