@@ -995,10 +995,39 @@
             $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
             selectedDrugsHash[data[0]] = {am: '', pm: ''};
             createHiddenInputsForDoses(data[0])
+            console.log('Data[0] = ' + data[0] + ' Data[1]=' + data[1] + ' Data[3]=' + data[3])
           }
+
+          <% unless @cpt_dose.blank? %>
+              cptDrugName = '<%= @cpt_dose[:drug_name]%>';
+              html += "<tr><td>" + cptDrugName + "</td>"
+              html += "<td> Tabs </td>"
+              html += "<td><input key='" + cptDrugName + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td><input key='" + cptDrugName + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
+              html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
+              selectedDrugsHash[cptDrugName] = {am: '', pm: ''};
+              $('cpt_given').value = '';
+              createHiddenInputsForDoses(cptDrugName);
+          <% end %>
+
+          <% unless @ipt_dose.blank? %>
+              IPTDrugName = '<%= @ipt_dose[:drug_name] %>';
+              html += "<tr><td>" + IPTDrugName + "</td>"
+              html += "<td> Tabs </td>"
+              html += "<td><input key='" + IPTDrugName + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td><input key='" + IPTDrugName + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
+              html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
+              html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
+              selectedDrugsHash[IPTDrugName] = {am: '', pm: ''};
+              $('ipt_given').value = '';
+              createHiddenInputsForDoses(IPTDrugName);
+           <% end %>
+
           html += "</table>";
           prescription_container.innerHTML = html
         }
+
       }});
 
     setBackButton();
@@ -1072,7 +1101,38 @@
     form.appendChild(amInput);
     form.appendChild(pmInput);
   }
-  
+  var CPTDrugName = '<%= @cpt_dose[:drug_name] rescue ''%>';
+  var IPTDrugName = '<%= @ipt_dose[:drug_name] rescue ''%>';
+
+  function createHiddenInputsForCPTDoses(drugName){
+    previousDrugAmInput = document.getElementById(drugName + '_am');
+    if (previousDrugAmInput){
+      previousDrugAmInput.parentNode.removeChild(previousDrugAmInput)
+    }
+
+    previousDrugPmInput = document.getElementById(drugName + '_pm');
+    if (previousDrugPmInput){
+      previousDrugPmInput.parentNode.removeChild(previousDrugPmInput);
+    }
+
+    amInput = document.createElement('input');
+    amInput.type = 'hidden';
+    amInput.className = 'custom-input';
+    amInput.name = 'drug_names[' + drugName + '][am]';
+    amInput.id = drugName + '_am';
+
+
+    pmInput = document.createElement('input');
+    pmInput.type = 'hidden';
+    pmInput.className = 'custom-input'
+    pmInput.name = 'drug_names[' + drugName + '][pm]';
+    pmInput.id = drugName + '_pm';
+
+    form = jQuery('form')[0];
+    form.appendChild(amInput);
+    form.appendChild(pmInput);
+  }
+
   function hideStockLevelDetails(){
     document.getElementsByClassName("stock_level_details")[0].style.display='none';
   }

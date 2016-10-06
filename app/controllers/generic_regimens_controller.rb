@@ -170,6 +170,28 @@ class GenericRegimensController < ApplicationController
     @patient_tb_suspected = tb_suspected_today?(@patient, session_date)
     @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
+
+
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, session_date, 'CPT')
+    end
+
+    @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+
+    @cpt_dose = ""
+    @ipt_dose = ""
+    if @prescribe_cpt_set == true
+      dose = MedicationService.other_medications('Cotrimoxazole', @current_weight)
+      @cpt_dose = (dose.first rescue '') unless dose.blank?
+    end
+
+    if @prescribe_ipt_set == true
+      dose = MedicationService.other_medications('Isoniazid', @current_weight)
+      @ipt_dose = (dose.first rescue '') unless dose.blank?
+    end
+
 	end
 
   def check_current_regimen_index
@@ -1012,8 +1034,8 @@ class GenericRegimensController < ApplicationController
       duration = (params[:duration].to_i + arvs_buffer)
 
       #if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
-        #reduced = true
-        #duration = (params[:duration].to_i + 1)
+      #reduced = true
+      #duration = (params[:duration].to_i + 1)
       #end
 
       required_amount = (equivalent_daily_dose * duration)
