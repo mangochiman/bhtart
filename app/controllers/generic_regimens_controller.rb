@@ -955,6 +955,39 @@ class GenericRegimensController < ApplicationController
     render :text => @options.to_json
 	end
 
+  def formulations_cpt_or_ipt
+    @patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
+    session_date = session[:datetime].to_date rescue Date.today
+    current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
+    regimen_medications = []
+
+		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date)
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, session_date, 'CPT')
+    end
+    @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+
+    if @prescribe_cpt_set == true
+      dose = MedicationService.other_medications('Cotrimoxazole', current_weight)
+      regimen_medications = (regimen_medications + dose) unless dose.blank?
+    end
+
+    if @prescribe_ipt_set == true
+      dose = MedicationService.other_medications('Isoniazid', current_weight)
+      regimen_medications = (regimen_medications + dose) unless dose.blank?
+    end
+
+    ################################################################################################################
+
+    @options = (regimen_medications || []).each do | r |
+      [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] , r[:category]]
+    end
+    
+    render :text => @options.to_json
+  end
+
   def formulations_all
     names = params[:names].split('::')
 
