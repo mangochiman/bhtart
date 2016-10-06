@@ -78,7 +78,7 @@
         padding: 10px;
         display: inline-block;
         text-decoration: none;
-        min-width: 120px;
+        width: 120px;
         min-height: 55px;
         margin: 3px;
         border-radius: 3px !important;
@@ -266,12 +266,12 @@
                 :class => 'button button-finish'
         } %>
 
-    <%= button_to 'Print', {
-            :action => 'download_pdf',
-            :file_directory => '/cohort_tool/' ,
-            :file_name => 'revised_cohort_survival_analysis_to_print'
-    }, {
-            :class => 'button button-print'
-    } %>
+        <%= button_to 'Print', {
+                :action => 'download_pdf',
+                :file_directory => '/cohort_tool/' ,
+                :file_name => 'revised_cohort_survival_analysis_to_print'
+        }, {
+                :class => 'button button-print'
+        } %>
 </div>
 <!- ###   ### -->
