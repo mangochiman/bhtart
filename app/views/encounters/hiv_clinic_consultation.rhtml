@@ -466,7 +466,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     thisPage = document.getElementById('page' + tstCurrentPage);
     thisPage.innerHTML += html;
 
-    //preselectSelectedSideEffects();
+    preselectSelectedSideEffects();
     setBackButton();
     __$('nextButton').onmousedown = function(){
       validateSideEffectsInput();
@@ -489,17 +489,17 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       index = e.id.replace('no_','');
       document.getElementById('yes_' + index).setAttribute('style','');
       if(category == 'side_effects') {
-        updateSideEffectYesValue(e);
+        updateSideEffectNoValue(e);
       }else{
-        updateTBSymptomYesValue(e);
+        updateTBSymptomNoValue(e);
       }
     }else{
       index = e.id.replace('yes_','');
       document.getElementById('no_' + index).setAttribute('style','');
       if(category == 'side_effects') {
-        updateSideEffectNoValue(e)
+        updateSideEffectYesValue(e)
       }else{
-        updateTBSymptomNoValue(e);
+        updateTBSymptomYesValue(e);
       }
     }
   }
@@ -548,58 +548,38 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     thisPage = document.getElementById('page' + tstCurrentPage);
     thisPage.innerHTML += html;
 
-    //preselectSelectedTBSymptoms();
+    preselectSelectedTBSymptoms();
     setBackButton();
     __$('nextButton').onmousedown = function(){
       validateTBSymptomsInput();
     }
   }
 
+  function updateSideEffectNoValue(obj){
+    key = obj.getAttribute('key');
+    sideEffectsHash[key]["no"] = 'true';
+    sideEffectsHash[key]["yes"] = '';
+  }
+
 
   function updateSideEffectYesValue(obj){
     key = obj.getAttribute('key');
-    yes_no_buttons = jQuery("[key='" + key + "']");
-    yes_button = yes_no_buttons[0];
-    no_button = yes_no_buttons[1];
-
-      sideEffectsHash[key]["yes"] = 'true';
-      sideEffectsHash[key]["no"] = '';
-      //Update Yes Value Here
+    sideEffectsHash[key]["yes"] = 'true';
+    sideEffectsHash[key]["no"] = '';
   }
 
   function updateTBSymptomYesValue(obj){
     key = obj.getAttribute('key');
-    yes_no_buttons = jQuery("[symptom='" + key + "']");
-    yes_button = yes_no_buttons[0];
-    no_button = yes_no_buttons[1];
-
     tbSymptomsHash[key]["yes"] = 'true';
     tbSymptomsHash[key]["no"] = '';
-    //Update Yes Value Here
   }
 
   function updateTBSymptomNoValue(obj){
     key = obj.getAttribute('key');
-    yes_no_buttons = jQuery("[symptom='" + key + "']");
-    yes_button = yes_no_buttons[0]
-    no_button = yes_no_buttons[1]
-
     tbSymptomsHash[key]["no"] = 'true';
     tbSymptomsHash[key]["yes"] = '';
-    //Update No Value Here
   }
   
-  function updateSideEffectNoValue(obj){
-    key = obj.getAttribute('key');
-    yes_no_buttons = jQuery("[key='" + key + "']");
-    yes_button = yes_no_buttons[0]
-    no_button = yes_no_buttons[1]
-
-    sideEffectsHash[key]["no"] = 'true';
-    sideEffectsHash[key]["yes"] = '';
-    //Update No Value Here
-  }
-
   function preselectSelectedSideEffects(){
     for (var key in sideEffectsHash){
       yesValue = sideEffectsHash[key]["yes"];
@@ -607,36 +587,39 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       yes_no_buttons = jQuery("[key='" + key + "']");
       yes_button = yes_no_buttons[0]
       no_button = yes_no_buttons[1]
-    
-      if (yesValue.length > 0){
-        //Yes was selected
-        yes_button.className = 'green';
-      }
+ 
+      var style = " width: 76px;height: 48px;margin: 2px 0 0 2px;border-bottom: ";
+      style += "1px solid #fff;font-size: 21px;color: #777; -webkit-box-shadow: ";
+      style += "inset rgba(0,0,0,.5) 0px 5px 10px;-moz-box-shadow: inset rgba(0,0,0,.5)";
+      style += " 0px 5px 10px;box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;";
 
-      if (noValue.length > 0){
-        //No was selected
-        no_button.className = 'green';
-      }
-    }
+      if(yesValue == 'true') {
+        yes_button.setAttribute('style', style);
+      }else if (noValue == 'true'){
+        no_button.setAttribute('style', style);
+      } 
+      
+    } 
   }
 
   function preselectSelectedTBSymptoms(){
     for (var key in tbSymptomsHash){
       yesValue = tbSymptomsHash[key]["yes"];
       noValue = tbSymptomsHash[key]["no"];
-      yes_no_buttons = jQuery("[symptom='" + key + "']");
-      yes_button = yes_no_buttons[0]
-      no_button = yes_no_buttons[1]
+      yes_no_buttons = jQuery("[key='" + key + "']");
+      yes_button = yes_no_buttons[0];
+      no_button = yes_no_buttons[1];
 
-      if (yesValue.length > 0){
-        //Yes was selected
-        yes_button.className = 'green';
-      }
+      var style = " width: 76px;height: 48px;margin: 2px 0 0 2px;border-bottom: ";
+      style += "1px solid #fff;font-size: 21px;color: #777; -webkit-box-shadow: ";
+      style += "inset rgba(0,0,0,.5) 0px 5px 10px;-moz-box-shadow: inset rgba(0,0,0,.5)";
+      style += " 0px 5px 10px;box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;";
 
-      if (noValue.length > 0){
-        //No was selected
-        no_button.className = 'green';
-      }
+      if(yesValue == 'true') {
+        yes_button.setAttribute('style', style);
+      }else if (noValue == 'true'){
+        no_button.setAttribute('style', style);
+      } 
     }
   }
 
