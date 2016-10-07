@@ -53,7 +53,6 @@ EOF
        (data || []).each do |d|
          d[:dose] = get_dose(curr_weight_then, d[:value_drug]) 
          d[:adherence] = cal_adherence_rate(d[:dose], d[:pills_given_last_time], d[:duration_gone], d[:pills_counted])
-         #puts ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #{d[:adherence]}% for #{d[:order_id]}"
        end
      end
    end
@@ -88,17 +87,8 @@ EOF
 
     expected_amount_remaining = (pills_given_last_time - (duration_gone * dose))
     adherence = (100*(pills_given_last_time - amount_remaining) / (pills_given_last_time - expected_amount_remaining)).round
-    return adherence if adherence >= 0 and adherence <= 100
-    if adherence > 100
-      adherence = adherence - (adherence - 100)
-      if adherence >= 0
-        return adherence
-      else
-        return 0
-      end
-    else
-      return 0
-    end
+    return adherence if adherence >= 0
+    return 0 if adherence < 0
   end
 
   def get_dose(weight, drug_inventory_id)
