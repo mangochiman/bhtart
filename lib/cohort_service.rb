@@ -32,7 +32,8 @@ class CohortService
                 :seven_a, :eight_a, :nine_p, :ten_a, :elleven_a, :elleven_p, :twelve_a, :unknown_regimen
 
   #Adherence
-  attr_accessor :patients_with_0_6_doses_missed_at_their_last_visit, :patients_with_7_plus_doses_missed_at_their_last_visit
+  attr_accessor :patients_with_0_6_doses_missed_at_their_last_visit, :patients_with_7_plus_doses_missed_at_their_last_visit,
+                :patients_with_unknown_adhrence
 
   #Current TB status,any form of TB
   attr_accessor :tb_not_suspected, :tb_suspected, :tb_confirmed_currently_not_yet_on_tb_treatment,

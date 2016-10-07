@@ -2190,7 +2190,9 @@
             <b>0 - 3 doses missed</b>
         </td>
         <td colspan="2" class="number">
-            &nbsp;
+            <a href="/cohort_tool/list_more_details?">
+                <%= @cohort.patients_with_0_6_doses_missed_at_their_last_visit.count %>
+            </a>
         </td>
     </tr>
     <tr>
@@ -2207,7 +2209,9 @@
             <b>4+</b> doses missed
         </td>
         <td colspan="2" class="number">
-            &nbsp;
+            <a href="/cohort_tool/list_more_details?">
+                <%= @cohort.patients_with_7_plus_doses_missed_at_their_last_visit.count %>
+            </a>
         </td>
     </tr>
     <tr>
@@ -2224,7 +2228,9 @@
             <b>Unk</b>nown (not circled)
         </td>
         <td colspan="2" class="number">
-            &nbsp;
+            <a href="/cohort_tool/list_more_details?">
+                <%= @cohort.patients_with_unknown_adhrence.count %>
+            </a>
         </td>
     </tr>
     <tr class="row-break">

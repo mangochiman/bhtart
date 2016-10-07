@@ -585,9 +585,10 @@ Unique PatientProgram entries at the current location for those patients with at
   Alive and On ART with value of their 'Drug order adherence" observation during their latest Adherence
   encounter in the reporting period  between 95 and 105
 =end
-    adherent, not_adherent = self.latest_art_adherence(cohort.total_alive_and_on_art, end_date)
+    adherent, not_adherent, unknown_adherence = self.latest_art_adherence(cohort.total_alive_and_on_art, end_date)
     cohort.patients_with_0_6_doses_missed_at_their_last_visit = adherent
     cohort.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
+    cohort.patients_with_unknown_adhrence = unknown_adherence
 
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
@@ -616,24 +617,38 @@ Unique PatientProgram entries at the current location for those patients with at
       ) AND person_id IN(#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}';
 EOF
 
-    adherent = [] ; not_adherent = []
+    adherent = [] ; not_adherent = [] ; unknown_adherence = [];
 
     (adherence || []).each do |ad|
+      if ad['value_text'].match(/unknown/i)
+        unknown_adherence << ad['person_id'].to_i ; unknown_adherence = unknown_adherence.uniq
+        next
+      end unless ad['value_text'].blank?
+
       rate = ad['value_text'].to_f unless ad['value_text'].blank?
       rate = ad['value_numeric'].to_f unless ad['value_numeric'].blank?
       rate = 0 if rate.blank?
 
       if rate >= 95 
-        adherent << ad['person_id'].to_i
+        adherent << ad['person_id'].to_i ; adherent = adherent.uniq
       else
-        not_adherent << ad['person_id'].to_i
+        not_adherent << ad['person_id'].to_i ; not_adherent = not_adherent.uniq
       end
     end
 
-    found_in_both = (adherent & not_adherent) ; found_in_both = [] if found_in_both.blank?
+    found_in_both = (adherent & not_adherent)
+    found_in_both = [] if found_in_both.blank?
+
     adherent = (adherent - found_in_both)
-    new_patients_with_no_adherence_done = (patient_ids.uniq - (adherent.uniq + not_adherent.uniq))
-    return [(adherent.uniq + new_patients_with_no_adherence_done), not_adherent.uniq]
+    new_patients_with_no_adherence_done = (patient_ids.uniq - (adherent + not_adherent))
+    adherent = (adherent + new_patients_with_no_adherence_done)
+
+    unless unknown_adherence.blank?
+      adherent = (adherent - unknown_adherence)
+      not_adherent = (not_adherent - unknown_adherence)
+    end
+
+    return [adherent, not_adherent.uniq, unknown_adherence]
   end
 
   def self.unknown_side_effects(total_alive, side_effects_patients, without_side_effects_patients)
