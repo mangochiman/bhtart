@@ -401,7 +401,6 @@ Unique PatientProgram entries at the current location for those patients with at
       cohort.who_stage_two = self.who_stage_two(start_date, end_date)
       cohort.cum_who_stage_two = self.who_stage_two(cum_start_date, end_date)
 
-
 =begin
     Breastfeeding mothers
 
@@ -439,6 +438,16 @@ Unique PatientProgram entries at the current location for those patients with at
 =end
     cohort.who_stage_four = self.who_stage_four(start_date, end_date)
     cohort.cum_who_stage_four = self.who_stage_four(cum_start_date, end_date)
+
+=begin
+  Asymptomatic
+  Unique PatientProgram entries at the current location for those patients with at least
+  one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
+  and having a REASON FOR ELIGIBILITY observation with an answer as Lymphocytes
+  or LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2
+=end
+  cohort.asymptomatic = self.asymptomatic(start_date, end_date)
+  cohort.cum_asymptomatic = self.asymptomatic(cum_start_date, end_date)
 
 =begin
     Unknown / other reason outside guidelines
@@ -543,6 +552,10 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.seven_a          = self.get_regimen_category('7A')
     cohort.eight_a          = self.get_regimen_category('8A')
     cohort.nine_p           = self.get_regimen_category('9P')
+    cohort.ten_a            = self.get_regimen_category('10A')
+    cohort.elleven_a        = self.get_regimen_category('11A')
+    cohort.elleven_p        = self.get_regimen_category('11P')
+    cohort.twelve_a         = self.get_regimen_category('12A')
     cohort.unknown_regimen  = self.get_regimen_category('unknown_regimen')
 
 =begin
@@ -569,7 +582,7 @@ Unique PatientProgram entries at the current location for those patients with at
 =begin
   ART adherence
 
-  Alive and On ART with value of their 'Drug order adherence" observation during their latest Adherence 
+  Alive and On ART with value of their 'Drug order adherence" observation during their latest Adherence
   encounter in the reporting period  between 95 and 105
 =end
     adherent, not_adherent = self.latest_art_adherence(cohort.total_alive_and_on_art, end_date)
@@ -593,18 +606,18 @@ Unique PatientProgram entries at the current location for those patients with at
     patient_ids = [0] if patient_ids.blank?
 
     adherence = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT person_id, value_numeric, value_text FROM obs t WHERE concept_id = 6987 AND voided = 0 
-      AND obs_datetime BETWEEN (SELECT CONCAT(max(obs_datetime),' 00:00:00') FROM obs 
-        WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id 
+      SELECT person_id, value_numeric, value_text FROM obs t WHERE concept_id = 6987 AND voided = 0
+      AND obs_datetime BETWEEN (SELECT CONCAT(max(obs_datetime),' 00:00:00') FROM obs
+        WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
         AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}'
-      ) AND (SELECT CONCAT(max(obs_datetime),' 23:59:59') FROM obs 
+      ) AND (SELECT CONCAT(max(obs_datetime),' 23:59:59') FROM obs
         WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
         AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}'
       ) AND person_id IN(#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}';
 EOF
 
     adherent = [] ; not_adherent = []
-    
+
     (adherence || []).each do |ad|
       rate = ad['value_text'].to_f unless ad['value_text'].blank?
       rate = ad['value_numeric'].to_f unless ad['value_numeric'].blank?
@@ -616,7 +629,7 @@ EOF
         not_adherent << ad['person_id'].to_i
       end
     end
-    
+
     found_in_both = (adherent & not_adherent) ; found_in_both = [] if found_in_both.blank?
     adherent = (adherent - found_in_both)
     new_patients_with_no_adherence_done = (patient_ids.uniq - (adherent.uniq + not_adherent.uniq))
@@ -1128,6 +1141,27 @@ EOF
     end
 
   end
+
+  def self.asymptomatic(start_date, end_date)
+    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
+    reason3_concept_id = ConceptName.find_by_name('LYMPHOCYTES').concept_id
+    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+
+    registered = []
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+      INNER JOIN obs ON t.patient_id = obs.person_id
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND concept_id = #{reason_for_art}
+      AND (value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}) AND voided = 0 GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient|
+      registered << patient
+    end
+
+  end
+
 
   def self.who_stage_two(start_date, end_date)
     reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id

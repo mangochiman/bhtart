@@ -2279,6 +2279,13 @@ pyridoxine_options = ["","25", "50"]
 
     <% if @fast_track_patient == true && !@current_regimen.blank? %>
       <%= hidden_field_tag("regimen", @current_regimen_index) %>
+      <%= text_field_tag :regimen_fast_track, nil, {
+        :ajaxUrl => "",
+        :tt_onUnLoad => "setRegimenId('ART'); hideStock();" ,
+        :allowFreeText => true ,
+        :tt_onLoad => "buildPrescriptionPage($('continue_existing_regimen').value,$('patient_program').value,$('regimen_concept_id').value,'prescription_container');showCategory('Regimen');",
+        :condition => 'other_regimen != "yes" && hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value !="YES"',
+        :helpText => "Select formulations and doses"}%>
     <% else %>
       <%= text_field_tag :regimen, nil, {
         :ajaxUrl => "",

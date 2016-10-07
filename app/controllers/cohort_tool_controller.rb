@@ -1542,6 +1542,10 @@ class CohortToolController < GenericCohortToolController
 		@logo = CoreService.get_global_property_value('logo').to_s
 	end
 
+	def finish
+		redirect_to '/clinic' and return
+	end
+
   def download_pdf
         zoom = 0.8
         file_directory = params[:file_directory]
