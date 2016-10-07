@@ -1,4 +1,23 @@
 class ApplicationController < GenericApplicationController
+  def todays_consultation_encounters(patient, session_date = Date.today)
+    hiv_clinic_consultation_encounter_type = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
+    hiv_clinic_consultations = Encounter.find(:all, :conditions =>["patient_id=? AND encounter_type=?
+      AND DATE(encounter_datetime) = ?", patient.id, hiv_clinic_consultation_encounter_type.id,
+        session_date.to_date])
+    return hiv_clinic_consultations.count
+  end
+  
+  def patient_has_stopped_fast_track_at_adherence?(patient, session_date = Date.today)
+    stop_reason_concept_id = Concept.find_by_name('STOP REASON').concept_id
+    fast_track_stop_reason_obs = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) = ? AND
+        concept_id =?", session_date, stop_reason_concept_id]
+    )
+    return false if fast_track_stop_reason_obs.blank?
+    encounter_type = fast_track_stop_reason_obs.encounter.type.name rescue nil
+    return false if encounter_type.blank?
+    return true if encounter_type.match(/ADHERENCE/i)
+    return false
+  end
 
   def tb_suspected_today?(patient, session_date = Date.today)
     tb_status_concept_id = Concept.find_by_name('TB STATUS').concept_id
@@ -1206,6 +1225,16 @@ class ApplicationController < GenericApplicationController
           return task
         end if reception.match(/PATIENT PRESENT FOR CONSULTATION:  YES/i)
       when 'HIV CLINIC CONSULTATION'
+        unless encounter_available.blank? and user_selected_activities.match(/Manage HIV clinic consultations/i)
+          if (patient_has_stopped_fast_track_at_adherence?(patient, session_date))
+            consultation_encounters_count = todays_consultation_encounters(patient, session_date)
+            if (consultation_encounters_count == 1)
+              task.url = "/encounters/new/hiv_clinic_consultation?patient_id=#{patient.id}"
+              return task
+            end
+          end
+        end
+
         if encounter_available.blank? and user_selected_activities.match(/Manage HIV clinic consultations/i)
           task.url = "/encounters/new/hiv_clinic_consultation?patient_id=#{patient.id}"
           return task

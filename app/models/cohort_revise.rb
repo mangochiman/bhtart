@@ -5,7 +5,7 @@ class CohortRevise
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
 
-#=begin
+=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -370,10 +370,6 @@ Unique PatientProgram entries at the current location for those patients with at
       cohort.adults_at_art_initiation = self.adults_at_art_initiation(start_date, end_date)
       cohort.cum_adults_at_art_initiation = self.adults_at_art_initiation(cum_start_date, end_date)
 
-      #asymptomatic/Mild
-      cohort.asymptomatic = self.asymptomatic(start_date, end_date)
-      cohort.cum_asymptomatic = self.asymptomatic(cum_start_date, end_date)
-
       #Unknown age
       cohort.unknown_age = self.unknown_age(start_date, end_date)
       cohort.cum_unknown_age = self.unknown_age(cum_start_date, end_date)
@@ -547,10 +543,6 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.seven_a          = self.get_regimen_category('7A')
     cohort.eight_a          = self.get_regimen_category('8A')
     cohort.nine_p           = self.get_regimen_category('9P')
-    cohort.ten_a            = self.get_regimen_category('10A')
-    cohort.elleven_a        = self.get_regimen_category('11A')
-    cohort.elleven_p        = self.get_regimen_category('11P')
-    cohort.twelve_a         = self.get_regimen_category('12A')
     cohort.unknown_regimen  = self.get_regimen_category('unknown_regimen')
 
 =begin
@@ -616,6 +608,8 @@ EOF
     (adherence || []).each do |ad|
       rate = ad['value_text'].to_f unless ad['value_text'].blank?
       rate = ad['value_numeric'].to_f unless ad['value_numeric'].blank?
+      rate = 0 if rate.blank?
+
       if rate >= 95 and rate <= 105
         adherent << ad['person_id'].to_i
       else
@@ -623,7 +617,7 @@ EOF
       end
     end
     
-    found_in_both = (adherent & not_adherent)
+    found_in_both = (adherent & not_adherent) ; found_in_both = [] if found_in_both.blank?
     adherent = (adherent - found_in_both)
     new_patients_with_no_adherence_done = (patient_ids.uniq - (adherent.uniq + not_adherent.uniq))
     return [(adherent.uniq + new_patients_with_no_adherence_done), not_adherent.uniq]
@@ -895,7 +889,7 @@ EOF
   end
 
   def self.update_cum_outcome(end_date)
-#=begin
+=begin
       ActiveRecord::Base.connection.execute <<EOF
         DROP TABLE IF EXISTS `temp_patient_outcomes`;
 EOF
@@ -906,7 +900,7 @@ EOF
         FROM temp_earliest_start_date
         WHERE date_enrolled <= '#{end_date}';
 EOF
-#=end
+=end
   end
 
   def self.kaposis_sarcoma(start_date, end_date)
@@ -1141,6 +1135,7 @@ EOF
     reason5_concept_id = ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
     reason_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
     reason3_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
+    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
@@ -1149,29 +1144,8 @@ EOF
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND concept_id = #{reason_for_art} AND
       (value_coded = #{reason_concept_id} OR value_coded = #{reason2_concept_id}
-      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason5_concept_id}) AND voided = 0 GROUP BY patient_id;
-EOF
-
-    (total_registered || []).each do |patient|
-      registered << patient
-    end
-
-  end
-
-  def self.asymptomatic(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-    reason5_concept_id = ConceptName.find_by_name('LYMPHOCYTES').concept_id
-
-
-    registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason4_concept_id}
-      OR value_coded = #{reason5_concept_id})
-      AND voided = 0 GROUP BY patient_id;
+      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}
+      OR value_coded = #{reason5_concept_id}) AND voided = 0 GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|

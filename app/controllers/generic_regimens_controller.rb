@@ -170,6 +170,28 @@ class GenericRegimensController < ApplicationController
     @patient_tb_suspected = tb_suspected_today?(@patient, session_date)
     @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
+
+
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, session_date, 'CPT')
+    end
+
+    @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+
+    @cpt_dose = ""
+    @ipt_dose = ""
+    if @prescribe_cpt_set == true
+      dose = MedicationService.other_medications('Cotrimoxazole', @current_weight)
+      @cpt_dose = (dose.first rescue '') unless dose.blank?
+    end
+
+    if @prescribe_ipt_set == true
+      dose = MedicationService.other_medications('Isoniazid', @current_weight)
+      @ipt_dose = (dose.first rescue '') unless dose.blank?
+    end
+
 	end
 
   def check_current_regimen_index
@@ -461,7 +483,6 @@ class GenericRegimensController < ApplicationController
 	end
 
 	def create
-		#raise params[:observation][].to_yaml
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
@@ -683,7 +704,7 @@ class GenericRegimensController < ApplicationController
         morning_tabs = order[:am]
         evening_tabs = order[:pm]
 
-        instructions = "Morning: #{morning_tabs} tab(s), Evening: #{evening_tabs} tabs"
+        instructions = "#{drug.name}:- Morning: #{morning_tabs} tab(s), Evening: #{evening_tabs} tabs"
         frequency = "ONCE A DAY (OD)"
         equivalent_daily_dose = morning_tabs.to_f + evening_tabs.to_f
         dose = morning_tabs if evening_tabs.to_i == 0
@@ -903,11 +924,69 @@ class GenericRegimensController < ApplicationController
     current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
     regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
 
+    ################################################################################################################
+		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, session_date, 'CPT')
+    end
+    @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+
+    if @prescribe_cpt_set == true
+      dose = MedicationService.other_medications('Cotrimoxazole', current_weight)
+      unless dose.blank?
+        regimen_medications = (regimen_medications + dose)
+      end
+    end
+
+    if @prescribe_ipt_set == true
+      dose = MedicationService.other_medications('Isoniazid', current_weight)
+      unless dose.blank?
+        regimen_medications = (regimen_medications + dose)
+      end
+    end
+    ################################################################################################################
+
+
     @options = (regimen_medications || []).each do | r |
       [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] , r[:category]]
     end
     render :text => @options.to_json
 	end
+
+  def formulations_cpt_or_ipt
+    @patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
+    session_date = session[:datetime].to_date rescue Date.today
+    current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
+    regimen_medications = []
+
+		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date)
+    if @allergic_to_sulphur == 'Yes'
+      @prescribe_medication_set = false
+    else
+      @prescribe_cpt_set = prescribe_medication_set(@patient, session_date, 'CPT')
+    end
+    @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+
+    if @prescribe_cpt_set == true
+      dose = MedicationService.other_medications('Cotrimoxazole', current_weight)
+      regimen_medications = (regimen_medications + dose) unless dose.blank?
+    end
+
+    if @prescribe_ipt_set == true
+      dose = MedicationService.other_medications('Isoniazid', current_weight)
+      regimen_medications = (regimen_medications + dose) unless dose.blank?
+    end
+
+    ################################################################################################################
+
+    @options = (regimen_medications || []).each do | r |
+      [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] , r[:category]]
+    end
+    
+    render :text => @options.to_json
+  end
 
   def formulations_all
     names = params[:names].split('::')
@@ -988,8 +1067,8 @@ class GenericRegimensController < ApplicationController
       duration = (params[:duration].to_i + arvs_buffer)
 
       #if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
-        #reduced = true
-        #duration = (params[:duration].to_i + 1)
+      #reduced = true
+      #duration = (params[:duration].to_i + 1)
       #end
 
       required_amount = (equivalent_daily_dose * duration)
