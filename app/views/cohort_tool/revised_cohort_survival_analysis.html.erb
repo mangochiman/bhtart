@@ -276,6 +276,7 @@
 
             <%= button_to 'Print', {
                     :action => 'download_pdf',
+                    :quarter => params[:quarter],
                     :file_directory => '/cohort_tool/' ,
                     :file_name => 'revised_cohort_survival_analysis_to_print'
             }, {
