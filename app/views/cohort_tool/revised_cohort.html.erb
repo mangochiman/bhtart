@@ -2190,7 +2190,7 @@
             <b>0 - 3 doses missed</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('patients_with_0_6_doses_missed_at_their_last_visit');">
                 <%= @cohort.patients_with_0_6_doses_missed_at_their_last_visit.count %>
             </a>
         </td>
@@ -2350,4 +2350,23 @@
         } %>
     </div>
 </div>
+
+<form id="patients" method="post" action="/cohort_tool/list_more_details">
+  <input id='patient_ids' type='hidden' name = 'patient_ids' />
+</form>
+
+<script>
+
+function drillDown(indicator) {
+  var patient_ids = [];
+  if(indicator == 'patients_with_0_6_doses_missed_at_their_last_visit') {
+    <%@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id|%>
+      patient_ids.push(<%=patient_id%>);
+    <%end%>
+  }else if(indicator == '') {
+  }
+
+  document.getElementById('patient_ids').value = patient_ids.join(',');
+  document.getElementById('patients').submit();
+}
 <!- ###   ### -->
