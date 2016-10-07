@@ -177,36 +177,42 @@
             </table>
         </td>
     </tr>
-    <tr>
-        <td class="text-bold border-null-right">
-            2006 Q2
-        </td>
-        <td class="number-center border-null-left border-null-right">
-            120
-        </td>
-        <td class="border-null-left">
-            all ages
-        </td>
-        <td class="number">
-            250
-        </td>
-        <td class="number">
-            250
-        </td>
-        <td class="number table-inner-data">
-            81
-        </td>
-        <td class="number table-inner-data">
-            48
-        </td>
-        <td class="number table-inner-data">
-            63
-        </td>
-        <td class="number table-inner-data">
-            1
-        </td>
-        <td class="number table-inner-data">
-            57
-        </td>
+    <% @name_of_quarter = @quarter.split.first %>
+    <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+        <% if data['Number of new registered'].to_i > 1 %>
+
+            <tr>
+                <td class="text-bold border-null-right table-main-data">
+                    <%= "#{@name_of_quarter} " + data['Quarter'] %>
+                </td>
+                <td class="number-center border-null-left border-null-right table-main-data">
+                    <%= range %>
+                </td>
+                <td class="border-null-left table-main-data">
+                    all ages
+                </td>
+                <td class="number table-main-data">
+                    <%= data['Number of new registered']%>
+                </td>
+                <td class="number table-main-data">
+
+                </td>
+                <td class="number table-inner-data">
+                    <%= data['Number Alive and on ART']%>
+                </td>
+                <td class="number table-inner-data">
+                    <%= data['Number Dead']%>
+                </td>
+                <td class="number table-inner-data">
+                    <%= data['Number Defaulted']%>
+                </td>
+                <td class="number table-inner-data">
+                    <%= data['Number Stopped Treatment']%>
+                </td>
+                <td class="number table-inner-data">
+                    <%= data['Number Transferred out']%>
+                </td>
+        <% end %>
+    <% end %>
     </tr>
 </table>
