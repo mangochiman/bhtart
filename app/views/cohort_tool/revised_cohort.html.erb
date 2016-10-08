@@ -2359,13 +2359,31 @@
 
     function drillDown(indicator) {
         var patient_ids = [];
-        if(indicator == 'patients_with_0_6_doses_missed_at_their_last_visit') {
-            <% (@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id| %>
-                patient_ids.push(<%=patient_id%>);
-            <% end %>
+        switch(indicator) {
+            case 'total_registered':
+                <% (@cohort.total_registered || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            case 'patients_with_0_6_doses_missed_at_their_last_visit':
+                <% (@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            default:
+
+        }
+        /*
+        if( indicator) {
+
+        }else if(indicator == 'patients_with_0_6_doses_missed_at_their_last_visit') {
+            <%# (@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id| %>
+                patient_ids.push(<%#=patient_id%>);
+            <%# end %>
         }else if(indicator == '') {
 
         }
+        **/
 
         document.getElementById('patient_ids').value = patient_ids.join(',');
         document.getElementById('patients').submit();
