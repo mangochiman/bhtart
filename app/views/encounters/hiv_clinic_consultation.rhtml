@@ -479,7 +479,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   function pressB(e) {
     category = e.getAttribute('category');
-
+    key = e.getAttribute('key');
+    
     var style = " width: 76px;height: 48px;margin: 2px 0 0 2px;border-bottom: ";
     style += "1px solid #fff;font-size: 21px; -webkit-box-shadow: ";
     style += "inset rgba(0,0,0,.5) 0px 5px 10px;-moz-box-shadow: inset rgba(0,0,0,.5)";
@@ -490,6 +491,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     if(e.id.match(/no_/i)) {
       index = e.id.replace('no_','');
       document.getElementById('yes_' + index).setAttribute('style','');
+      __$(key).value = '';
       if(category == 'side_effects') {
         updateSideEffectNoValue(e);
       }else{
@@ -503,6 +505,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }else{
       index = e.id.replace('yes_','');
       document.getElementById('no_' + index).setAttribute('style','');
+      __$(key).value = key;
       if(category == 'side_effects') {
         updateSideEffectYesValue(e)
       }else{
@@ -609,7 +612,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       if(yesValue == 'true') {
         yes_button.setAttribute('style', style);
-
+        __$(key).value = key;
         index = yes_button.id.replace('yes_','');
         style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
         document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
@@ -617,7 +620,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         document.getElementById('no_btn_container_' + index).setAttribute('style', style);
       }else if (noValue == 'true'){
         no_button.setAttribute('style', style);
-
+        __$(key).value = '';
         index = no_button.id.replace('no_','');
         style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
         document.getElementById('no_btn_container_' + index).setAttribute('style', style);
@@ -643,7 +646,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       if(yesValue == 'true') {
         yes_button.setAttribute('style', style);
-
+        __$(key).value = key;
         index = yes_button.id.replace('yes_','');
         style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
         document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
@@ -651,7 +654,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         document.getElementById('no_btn_container_' + index).setAttribute('style', style);
       }else if (noValue == 'true'){
         no_button.setAttribute('style', style);
-
+        __$(key).value = '';
         index = no_button.id.replace('no_','');
         style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
         document.getElementById('no_btn_container_' + index).setAttribute('style', style);
