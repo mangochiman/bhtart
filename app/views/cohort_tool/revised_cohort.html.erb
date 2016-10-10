@@ -2402,32 +2402,32 @@
                 break;
             case 'patients_with_0_6_doses_missed_at_their_last_visit':
                 <% (@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id| %>
-                    patient_ids.push(<%=patient_id%>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             case 'patients_with_7_plus_doses_missed_at_their_last_visit':
                 <% (@cohort.patients_with_7_plus_doses_missed_at_their_last_visit || []).each do |patient_id| %>
-                    patient_ids.push(<%=patient_id%>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             case 'tb_suspected':
                 <% (@cohort.tb_suspected || []).each do |patient_id| %>
-                    patient_ids.push(<%=patient_id%>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             case 'tb_confirmed_currently_not_yet_on_tb_treatment':
                 <% (@cohort.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |patient_id| %>
-                    patient_ids.push(<%=patient_id%>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             case 'tb_confirmed_on_tb_treatment':
                 <% (@cohort.tb_confirmed_on_tb_treatment || []).each do |patient_id| %>
-                    patient_ids.push(<%=patient_id%>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             case 'unknown_tb_status':
                 <% (@cohort.unknown_tb_status || []).each do |patient_id| %>
-                    patient_ids.push(<%=patient_id%>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             default:
