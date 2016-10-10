@@ -2360,8 +2360,53 @@
     function drillDown(indicator) {
         var patient_ids = [];
         switch(indicator) {
+            case 'total_registered':
+                <% (@cohort.total_registered || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
+            case 'cum_total_registered':
+                <% (@cohort.cum_total_registered || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
+            case 'initiated_on_art_first_time':
+                <% (@cohort.initiated_on_art_first_time || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
+            case 'cum_initiated_on_art_first_time':
+                <% (@cohort.cum_initiated_on_art_first_time || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
+            case 're_initiated_on_art':
+                <% (@cohort.re_initiated_on_art || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
+            case 'cum_re_initiated_on_art':
+                <% (@cohort.cum_re_initiated_on_art || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
+            case 'transfer_in':
+                <% (@cohort.transfer_in || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
+            case 'cum_transfer_in':
+                <% (@cohort.cum_transfer_in || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% end %>
+                break;
             case 'patients_with_0_6_doses_missed_at_their_last_visit':
                 <% (@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            case 'patients_with_7_plus_doses_missed_at_their_last_visit':
+                <% (@cohort.patients_with_7_plus_doses_missed_at_their_last_visit || []).each do |patient_id| %>
                     patient_ids.push(<%=patient_id%>);
                 <% end %>
                 break;

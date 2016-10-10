@@ -1457,7 +1457,6 @@ class CohortToolController < GenericCohortToolController
 				@quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
 			start_date,end_date = Report.generate_cohort_date_range(@quarter)
 		end
-
 		@cohort = CohortRevise.get_indicators(start_date, end_date)
 		logger.info("cohort")
 =begin
