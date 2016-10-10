@@ -446,10 +446,12 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
           html += "<tr>";
             html += "<td class='btn-containers'>";
-              html += "<div class='button'><a category='side_effects' key='" + sideEffectsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
+              html += "<div class='button' id='yes_btn_container_" + i + "'><a category='side_effects' ";
+              html += "key='" + sideEffectsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
             html += "</td>";
             html += "<td class='btn-containers'>";
-              html += "<div class='button'><a category='side_effects' key='" + sideEffectsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
+              html += "<div class='button' id='no_btn_container_" + i + "'><a category='side_effects'";
+              html += "key='" + sideEffectsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
             html += "</td>";
           html += "</tr>";
         html += "</table>";
@@ -479,7 +481,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     category = e.getAttribute('category');
 
     var style = " width: 76px;height: 48px;margin: 2px 0 0 2px;border-bottom: ";
-    style += "1px solid #fff;font-size: 21px;color: #777; -webkit-box-shadow: ";
+    style += "1px solid #fff;font-size: 21px; -webkit-box-shadow: ";
     style += "inset rgba(0,0,0,.5) 0px 5px 10px;-moz-box-shadow: inset rgba(0,0,0,.5)";
     style += " 0px 5px 10px;box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;";
 
@@ -493,6 +495,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       }else{
         updateTBSymptomNoValue(e);
       }
+
+      style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
+      document.getElementById('no_btn_container_' + index).setAttribute('style', style);
+      style = "background-image: -moz-linear-gradient(center top , #999, #d0d0d0 80%);";
+      document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
     }else{
       index = e.id.replace('yes_','');
       document.getElementById('no_' + index).setAttribute('style','');
@@ -501,6 +508,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       }else{
         updateTBSymptomYesValue(e);
       }
+
+      style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
+      document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
+      style = "background-image: -moz-linear-gradient(center top , #999, #d0d0d0 80%);";
+      document.getElementById('no_btn_container_' + index).setAttribute('style', style);
     }
   }
 
@@ -528,10 +540,12 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
           html += "<tr>";
             html += "<td class='btn-containers'>";
-              html += "<div class='button'><a category='TB' key='" + tbSymptomsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
+              html += "<div class='button' id='yes_btn_container_" + i + "'><a category='TB' ";
+              html += "key='" + tbSymptomsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
             html += "</td>";
             html += "<td class='btn-containers'>";
-              html += "<div class='button'><a category='TB' key='" + tbSymptomsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
+              html += "<div class='button' id='no_btn_container_" + i + "'><a category='TB' ";
+              html += "key='" + tbSymptomsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
             html += "</td>";
           html += "</tr>";
         html += "</table>";
@@ -589,14 +603,26 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       no_button = yes_no_buttons[1]
  
       var style = " width: 76px;height: 48px;margin: 2px 0 0 2px;border-bottom: ";
-      style += "1px solid #fff;font-size: 21px;color: #777; -webkit-box-shadow: ";
+      style += "1px solid #fff;font-size: 21px; -webkit-box-shadow: ";
       style += "inset rgba(0,0,0,.5) 0px 5px 10px;-moz-box-shadow: inset rgba(0,0,0,.5)";
       style += " 0px 5px 10px;box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;";
 
       if(yesValue == 'true') {
         yes_button.setAttribute('style', style);
+
+        index = yes_button.id.replace('yes_','');
+        style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
+        document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
+        style = "background-image: -moz-linear-gradient(center top , #999, #d0d0d0 80%);";
+        document.getElementById('no_btn_container_' + index).setAttribute('style', style);
       }else if (noValue == 'true'){
         no_button.setAttribute('style', style);
+
+        index = no_button.id.replace('no_','');
+        style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
+        document.getElementById('no_btn_container_' + index).setAttribute('style', style);
+        style = "background-image: -moz-linear-gradient(center top , #999, #d0d0d0 80%);";
+        document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
       } 
       
     } 
@@ -611,14 +637,26 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       no_button = yes_no_buttons[1];
 
       var style = " width: 76px;height: 48px;margin: 2px 0 0 2px;border-bottom: ";
-      style += "1px solid #fff;font-size: 21px;color: #777; -webkit-box-shadow: ";
+      style += "1px solid #fff;font-size: 21px; -webkit-box-shadow: ";
       style += "inset rgba(0,0,0,.5) 0px 5px 10px;-moz-box-shadow: inset rgba(0,0,0,.5)";
       style += " 0px 5px 10px;box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;";
 
       if(yesValue == 'true') {
         yes_button.setAttribute('style', style);
+
+        index = yes_button.id.replace('yes_','');
+        style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
+        document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
+        style = "background-image: -moz-linear-gradient(center top , #999, #d0d0d0 80%);";
+        document.getElementById('no_btn_container_' + index).setAttribute('style', style);
       }else if (noValue == 'true'){
         no_button.setAttribute('style', style);
+
+        index = no_button.id.replace('no_','');
+        style = "background-image: -moz-linear-gradient(center top , lightgreen, lightgreen 80%);";
+        document.getElementById('no_btn_container_' + index).setAttribute('style', style);
+        style = "background-image: -moz-linear-gradient(center top , #999, #d0d0d0 80%);";
+        document.getElementById('yes_btn_container_' + index).setAttribute('style', style);
       } 
     }
   }
