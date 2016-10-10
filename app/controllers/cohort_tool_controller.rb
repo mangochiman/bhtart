@@ -1560,6 +1560,7 @@ class CohortToolController < GenericCohortToolController
 	end
 
 	def list_more_details
+		@patient_ids = params[:patient_ids]
 		@logo = CoreService.get_global_property_value('logo').to_s
 	end
 

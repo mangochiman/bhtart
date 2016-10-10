@@ -818,7 +818,7 @@
             Total Registered
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('total_registered');">
                 <%= @cohort.total_registered.count %>
             </a>
         </td>
@@ -829,7 +829,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_total_registered');">
                 <%= @cohort.cum_total_registered.count %>
             </a>
         </td>
@@ -853,7 +853,7 @@
             Patients initiated on ART first time
         </td>
         <td class="clinic-result number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('initiated_on_art_first_time');">
                 <%= @cohort.initiated_on_art_first_time.count %>
             </a>
         </td>
@@ -864,7 +864,7 @@
             &nbsp;
         </td>
         <td class="clinic-result number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_initiated_on_art_first_time');">
                 <%= @cohort.cum_initiated_on_art_first_time.count %>
             </a>
         </td>
@@ -883,7 +883,7 @@
             Patients re-initiated on ART
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('re_initiated_on_art');">
                 <%= @cohort.re_initiated_on_art.count %>
             </a>
         </td>
@@ -894,7 +894,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_re_initiated_on_art');">
                 <%= @cohort.cum_re_initiated_on_art.count %>
             </a>
         </td>
@@ -913,7 +913,7 @@
             Patients transferred in on ART
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('transfer_in');">
                 <%= @cohort.transfer_in.count %>
             </a>
         </td>
@@ -924,7 +924,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_transfer_in');">
                 <%= @cohort.cum_transfer_in.count %>
             </a>
         </td>
@@ -948,7 +948,7 @@
             Males (all ages)
         </td>
         <td  class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('all_males');">
                 <%= @cohort.all_males.count %>
             </a>
         </td>
@@ -959,7 +959,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_all_males');">
                 <%= @cohort.cum_all_males.count %>
             </a>
         </td>
@@ -978,7 +978,7 @@
             Non-pregnant Females (all ages)
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('non_pregnant_females');">
                 <%= @cohort.non_pregnant_females.count %>
             </a>
         </td>
@@ -989,7 +989,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_non_pregnant_females');">
                 <%= @cohort.cum_non_pregnant_females.count %>
             </a>
         </td>
@@ -1008,7 +1008,7 @@
             Pregnant Females (all ages)
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('pregnant_females_all_ages');">
                 <%= @cohort.pregnant_females_all_ages.count %>
             </a>
         </td>
@@ -1019,7 +1019,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_pregnant_females_all_ages');">
                 <%= @cohort.cum_pregnant_females_all_ages.count %>
             </a>
         </td>
@@ -1043,7 +1043,7 @@
             Children below 24 m at ART initiation
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('children_below_24_months_at_art_initiation');">
                 <%= @cohort.children_below_24_months_at_art_initiation.count %>
             </a>
         </td>
@@ -1054,7 +1054,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_children_below_24_months_at_art_initiation');">
                 <%= @cohort.cum_children_below_24_months_at_art_initiation.count %>
             </a>
         </td>
@@ -1073,7 +1073,7 @@
             Children 24 m - 14 yrs at ART initiation
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('children_24_months_14_years_at_art_initiation');">
                 <%= @cohort.children_24_months_14_years_at_art_initiation.count %>
             </a>
         </td>
@@ -1084,7 +1084,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_children_24_months_14_years_at_art_initiation');">
                 <%= @cohort.cum_children_24_months_14_years_at_art_initiation.count %>
             </a>
         </td>
@@ -1103,7 +1103,7 @@
             Adults 15 years or older at ART initiation
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('adults_at_art_initiation');">
                 <%= @cohort.adults_at_art_initiation.count %>
             </a>
         </td>
@@ -1114,7 +1114,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_adults_at_art_initiation');">
                 <%= @cohort.cum_adults_at_art_initiation.count %>
             </a>
         </td>
@@ -1141,7 +1141,7 @@
             Pres. Sev. HIV disease age < 12 m
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('presumed_severe_hiv_disease_in_infants');">
                 <%= @cohort.presumed_severe_hiv_disease_in_infants.count %>
             </a>
         </td>
@@ -1152,7 +1152,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_presumed_severe_hiv_disease_in_infants');">
                 <%= @cohort.cum_presumed_severe_hiv_disease_in_infants.count %>
             </a>
         </td>
@@ -1171,7 +1171,7 @@
             Infants < 12 mths PCR+
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('confirmed_hiv_infection_in_infants_pcr');">
                 <%= @cohort.confirmed_hiv_infection_in_infants_pcr.count %>
             </a>
         </td>
@@ -1182,7 +1182,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_confirmed_hiv_infection_in_infants_pcr');">
                 <%= @cohort.cum_confirmed_hiv_infection_in_infants_pcr.count %>
             </a>
         </td>
@@ -1201,7 +1201,7 @@
             Children 12-59 mths
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('children_12_23_months');">
                 <%= @cohort.children_12_23_months.count %>
             </a>
         </td>
@@ -1212,7 +1212,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_children_12_23_months');">
                 <%= @cohort.cum_children_12_23_months.count %>
             </a>
         </td>
@@ -1231,7 +1231,7 @@
             Pregnant women
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('pregnant_women');">
                 <%= @cohort.pregnant_women.count %>
             </a>
         </td>
@@ -1242,7 +1242,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_pregnant_women');">
                 <%= @cohort.cum_pregnant_women.count %>
             </a>
         </td>
@@ -1261,7 +1261,7 @@
             Breastfeeding mothers
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('breastfeeding_mothers');">
                 <%= @cohort.breastfeeding_mothers.count %>
             </a>
         </td>
@@ -1272,7 +1272,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_breastfeeding_mothers');">
                 <%= @cohort.cum_breastfeeding_mothers.count %>
             </a>
         </td>
@@ -1291,7 +1291,7 @@
             CD4 below threshold
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('who_stage_two');">
                 <%= @cohort.who_stage_two.count %>
             </a>
         </td>
@@ -1302,7 +1302,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_who_stage_two');">
                 <%= @cohort.cum_who_stage_two.count %>
             </a>
         </td>
@@ -1321,7 +1321,7 @@
             Asymptomatic / mild
         </td>
         <td class="number">
-          <a href="/cohort_tool/list_more_details?">
+          <a href="javascript:drillDown('asymptomatic');">
               <%= @cohort.asymptomatic.count %>
           </a>        </td>
         <td>
@@ -1331,7 +1331,7 @@
             &nbsp;
         </td>
         <td class="number">
-          <a href="/cohort_tool/list_more_details?">
+          <a href="javascript:drillDown('cum_asymptomatic');">
               <%= @cohort.cum_asymptomatic.count %>
           </a>
        </td>
@@ -1350,7 +1350,7 @@
             WHO stage 3
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('who_stage_three');">
                 <%= @cohort.who_stage_three.count %>
             </a>
         </td>
@@ -1361,7 +1361,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_who_stage_three');">
                 <%= @cohort.cum_who_stage_three.count %>
             </a>
         </td>
@@ -1380,7 +1380,7 @@
             WHO stage 4
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('who_stage_four');">
                 <%= @cohort.who_stage_four.count %>
             </a>
         </td>
@@ -1391,7 +1391,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_who_stage_four');">
                 <%= @cohort.cum_who_stage_four.count %>
             </a>
         </td>
@@ -1410,7 +1410,7 @@
             Unknown / reason outside guidelines
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('unknown_other_reason_outside_guidelines');">
                 <%= @cohort.unknown_other_reason_outside_guidelines.count %>
             </a>
         </td>
@@ -1421,7 +1421,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_unknown_other_reason_outside_guidelines');">
                 <%= @cohort.cum_unknown_other_reason_outside_guidelines.count %>
             </a>
         </td>
@@ -1453,7 +1453,7 @@
             Never TB or TB over 2 years ago
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('no_tb');">
                 <%= @cohort.no_tb.count %>
             </a>
         </td>
@@ -1464,7 +1464,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_no_tb');">
                 <%= @cohort.cum_no_tb.count %>
             </a>
         </td>
@@ -1483,7 +1483,7 @@
             TB within the last 2 years
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('tb_within_the_last_two_years');">
                 <%= @cohort.tb_within_the_last_two_years.count %>
             </a>
         </td>
@@ -1494,7 +1494,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_tb_within_the_last_two_years');">
                 <%= @cohort.cum_tb_within_the_last_two_years.count %>
             </a>
         </td>
@@ -1513,7 +1513,7 @@
             Current episode of TB
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('current_episode_of_tb');">
                 <%= @cohort.current_episode_of_tb.count %>
             </a>
         </td>
@@ -1524,7 +1524,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_current_episode_of_tb');">
                 <%= @cohort.cum_current_episode_of_tb.count %>
             </a>
         </td>
@@ -1548,7 +1548,7 @@
             Kaposi's Sarcoma
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('kaposis_sarcoma');">
                 <%= @cohort.kaposis_sarcoma.count %>
             </a>
         </td>
@@ -1559,7 +1559,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('cum_kaposis_sarcoma');">
                 <%= @cohort.cum_kaposis_sarcoma.count %>
             </a>
         </td>
@@ -1603,7 +1603,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('total_alive_and_on_art');">
                 <%= @cohort.total_alive_and_on_art.count %>
             </a>
         </td>
@@ -1630,7 +1630,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('died_within_the_1st_month_of_art_initiation');">
                 <%= @cohort.died_within_the_1st_month_of_art_initiation.count %>
             </a>
         </td>
@@ -1652,7 +1652,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('died_within_the_2nd_month_of_art_initiation');">
                 <%= @cohort.died_within_the_2nd_month_of_art_initiation.count %>
             </a>
         </td>
@@ -1674,7 +1674,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('died_within_the_3rd_month_of_art_initiation');">
                 <%= @cohort.died_within_the_3rd_month_of_art_initiation.count %>
             </a>
         </td>
@@ -1696,7 +1696,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('died_after_the_3rd_month_of_art_initiation');">
                 <%= @cohort.died_after_the_3rd_month_of_art_initiation.count %>
             </a>
         </td>
@@ -1715,7 +1715,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('died_total');">
                 <%= @cohort.died_total.count %>
             </a>
         </td>
@@ -1734,7 +1734,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('defaulted');">
                 <%= @cohort.defaulted.count %>
             </a>
         </td>
@@ -1753,7 +1753,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('stopped_art');">
                 <%= @cohort.stopped_art.count %>
             </a>
         </td>
@@ -1772,7 +1772,7 @@
             &nbsp;
         </td>
         <td class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('transfered_out');">
                 <%= @cohort.transfered_out.count %>
             </a>
         </td>
@@ -1807,7 +1807,7 @@
             Regimen <b>0P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('zero_p');">
                 <%= @cohort.zero_p.count %>
             </a>
         </td>
@@ -1825,7 +1825,7 @@
             Regimen <b>1P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('one_p');">
                 <%= @cohort.one_p.count %>
             </a>
         </td>
@@ -1838,7 +1838,7 @@
             Regimen <b>2P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('two_p');">
                 <%= @cohort.two_p.count %>
             </a>
         </td>
@@ -1851,7 +1851,7 @@
             Regimen <b>3P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('three_p');">
                 <%= @cohort.three_p.count %>
             </a>
         </td>
@@ -1864,7 +1864,7 @@
             Regimen <b>4P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('four_p');">
                 <%= @cohort.four_p.count %>
             </a>
         </td>
@@ -1877,7 +1877,7 @@
             Regimen <b>9P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('nine_p');">
                 <%= @cohort.nine_p.count %>
             </a>
         </td>
@@ -1893,7 +1893,7 @@
             Regimen <b>11P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('elleven_p');">
               <%= @cohort.elleven_p.count %>
             </a>
         </td>
@@ -1912,7 +1912,7 @@
             Regimen <b>0A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('zero_a');">
                 <%= @cohort.zero_a.count %>
             </a>
         </td>
@@ -1928,7 +1928,7 @@
             Regimen <b>1A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('one_a');">
                 <%= @cohort.one_a.count %>
             </a>
         </td>
@@ -1944,7 +1944,7 @@
             Regimen <b>2A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('two_a');">
                 <%= @cohort.two_a.count %>
             </a>
         </td>
@@ -1960,7 +1960,7 @@
             Regimen <b>3A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('three_a');">
                 <%= @cohort.three_a.count %>
             </a>
         </td>
@@ -1976,7 +1976,7 @@
             Regimen <b>4A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('four_a');">
                 <%= @cohort.four_a.count %>
             </a>
         </td>
@@ -1992,7 +1992,7 @@
             Regimen <b>5A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('five_a');">
                 <%= @cohort.five_a.count %>
             </a>
         </td>
@@ -2008,7 +2008,7 @@
             Regimen <b>6A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('six_a');">
                 <%= @cohort.six_a.count %>
             </a>
         </td>
@@ -2024,7 +2024,7 @@
             Regimen <b>7A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('seven_a');">
                 <%= @cohort.seven_a.count %>
             </a>
         </td>
@@ -2040,7 +2040,7 @@
             Regimen <b>8A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('eight_a');">
                 <%= @cohort.eight_a.count %>
             </a>
         </td>
@@ -2056,7 +2056,7 @@
             Regimen <b>10A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('ten_a');">
               <%= @cohort.ten_a.count %>
             </a>
         </td>
@@ -2072,7 +2072,7 @@
             Regimen <b>11A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('elleven_a');">
               <%= @cohort.elleven_a.count %>
             </a>
         </td>
@@ -2088,7 +2088,7 @@
             Regimen <b>12A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('twelve_a');">
                 <%= @cohort.twelve_a.count %>
             </a>
         </td>
@@ -2104,7 +2104,7 @@
             Other (paed. / adult)
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('unknown_regimen');">
                 <%= @cohort.unknown_regimen.count %>
             </a>
         </td>
@@ -2128,7 +2128,7 @@
             None
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('total_patients_without_side_effects');">
                 <%= @cohort.total_patients_without_side_effects.count %>
             </a>
         </td>
@@ -2147,7 +2147,7 @@
             <b>Any</b> side effects
         </td>
         <td colspan="2" class="number">
-          <a href="/cohort_tool/list_more_details?">
+          <a href="javascript:drillDown('total_patients_with_side_effects');">
             &nbsp;<%= @cohort.total_patients_with_side_effects.count %>
           </a>
         </td>
@@ -2166,7 +2166,7 @@
             <b>Unk</b>own (not circled)
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('unknown_side_effects');">
                 <%= @cohort.unknown_side_effects.count %>
             </a>
         </td>
@@ -2209,7 +2209,7 @@
             <b>4+</b> doses missed
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('patients_with_7_plus_doses_missed_at_their_last_visit');">
                 <%= @cohort.patients_with_7_plus_doses_missed_at_their_last_visit.count %>
             </a>
         </td>
@@ -2228,7 +2228,7 @@
             <b>Unk</b>nown (not circled)
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('patients_with_unknown_adhrence');">
                 <%= @cohort.patients_with_unknown_adhrence.count %>
             </a>
         </td>
@@ -2252,7 +2252,7 @@
             TB <b>not</b> suspected
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('tb_not_suspected');">
                 <%= @cohort.tb_not_suspected.count %>
             </a>
         </td>
@@ -2271,7 +2271,7 @@
             TB <b>suspected</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('tb_suspected');">
                 <%= @cohort.tb_suspected.count %>
             </a>
         </td>
@@ -2287,7 +2287,7 @@
             TB conf., <b>not</b> on Rx
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('tb_confirmed_currently_not_yet_on_tb_treatment');">
                 <%= @cohort.tb_confirmed_currently_not_yet_on_tb_treatment.count %>
             </a>
         </td>
@@ -2303,7 +2303,7 @@
             TB conf., <b>on TB Rx</b>
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('tb_confirmed_on_tb_treatment');">
                 <%= @cohort.tb_confirmed_on_tb_treatment.count %>
             </a>
         </td>
@@ -2319,7 +2319,7 @@
             Unknown (not circled)
         </td>
         <td colspan="2" class="number">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('unknown_tb_status');">
                 <%= @cohort.unknown_tb_status.count %>
             </a>
         </td>
@@ -2357,16 +2357,41 @@
 
 <script>
 
-function drillDown(indicator) {
-  var patient_ids = [];
-  if(indicator == 'patients_with_0_6_doses_missed_at_their_last_visit') {
-    <%(@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id|%>
-      patient_ids.push(<%=patient_id%>);
-    <%end%>
-  }else if(indicator == '') {
-  }
+    function drillDown(indicator) {
+        var patient_ids = [];
+        switch(indicator) {
+            case 'patients_with_0_6_doses_missed_at_their_last_visit':
+                <% (@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            case 'tb_suspected':
+                <% (@cohort.tb_suspected || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            case 'tb_confirmed_currently_not_yet_on_tb_treatment':
+                <% (@cohort.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            case 'tb_confirmed_on_tb_treatment':
+                <% (@cohort.tb_confirmed_on_tb_treatment || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            case 'unknown_tb_status':
+                <% (@cohort.unknown_tb_status || []).each do |patient_id| %>
+                    patient_ids.push(<%=patient_id%>);
+                <% end %>
+                break;
+            default:
 
-  document.getElementById('patient_ids').value = patient_ids.join(',');
-  document.getElementById('patients').submit();
-}
+        }
+
+        document.getElementById('patient_ids').value = patient_ids.join(',');
+        document.getElementById('patients').submit();
+    }
+
+</script>
 <!- ###   ### -->
