@@ -946,6 +946,21 @@ class GenericRegimensController < ApplicationController
       unless dose.blank?
         regimen_medications = (regimen_medications + dose)
       end
+      category = regimen_medications.last[:category] rescue nil
+      drug = Drug.find_by_name('Pyridoxine (50mg)')
+      
+      pyridoxine_dose = [{
+          :drug_name => 'Pyridoxine (50mg)',
+          :am => '0',
+          :pm => '1',
+          :units => 'Tab(s)',
+          :drug_id => drug.drug_id,
+          :regimen_index => nil,
+          :category => category
+        }]
+
+      regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+      
     end
     ################################################################################################################
 
@@ -953,6 +968,7 @@ class GenericRegimensController < ApplicationController
     @options = (regimen_medications || []).each do | r |
       [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] , r[:category]]
     end
+
     render :text => @options.to_json
 	end
 
