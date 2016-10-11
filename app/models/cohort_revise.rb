@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-
+#=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -603,7 +603,7 @@ Unique PatientProgram entries at the current location for those patients with at
     (patient_list || []).each do |row|
       patient_ids << row['patient_id'].to_i
     end
-    patient_ids = [0] if patient_ids.blank?
+    return [[], [], []] if patient_ids.blank?
 
     adherence = ActiveRecord::Base.connection.select_all <<EOF
       SELECT person_id, value_numeric, value_text FROM obs t WHERE concept_id = 6987 AND voided = 0
@@ -735,13 +735,11 @@ EOF
     malawi_art_side_effects =  ActiveRecord::Base.connection.select_all <<EOF
             SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id IN (#{malawi_art_side_effects_concept_id})
             AND o.person_id IN (#{patient_ids.join(',')})
-            AND o.value_coded != #{no_side_effects_concept_id}
             AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             AND o.obs_datetime = (
               SELECT max(obs_datetime) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id})
-              AND value_coded != #{no_side_effects_concept_id}
               AND voided = 0 AND person_id = o.person_id
-              AND obs_datetime BETWEEN  '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+              AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             ) GROUP BY person_id
 EOF
 
@@ -752,7 +750,7 @@ EOF
         AND o.obs_datetime = (
           SELECT max(obs_datetime) FROM obs WHERE concept_id = #{drug_induced_concept_id}
           AND voided = 0 AND person_id = o.person_id
-          AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
         ) GROUP BY person_id
 EOF
     (data || []).each do |row|
@@ -916,7 +914,7 @@ EOF
   end
 
   def self.update_cum_outcome(end_date)
-=begin
+#=begin
       ActiveRecord::Base.connection.execute <<EOF
         DROP TABLE IF EXISTS `temp_patient_outcomes`;
 EOF
@@ -927,7 +925,7 @@ EOF
         FROM temp_earliest_start_date
         WHERE date_enrolled <= '#{end_date}';
 EOF
-=end
+#=end
   end
 
   def self.kaposis_sarcoma(start_date, end_date)
