@@ -810,7 +810,7 @@ class GenericRegimensController < ApplicationController
       elsif prescribe_tb_drugs
         auto_cpt_ipt_expire_date = auto_tb_expire_date
       else
-        auto_cpt_ipt_expire_date = auto_tb_continuation_expire_date
+        auto_cpt_ipt_expire_date = ((session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days) rescue auto_tb_continuation_expire_date)
       end
       concept_name = "pyridoxine"
       yes_no = ConceptName.find_by_name(prescribe_pyridoxine)
@@ -994,6 +994,20 @@ class GenericRegimensController < ApplicationController
     if @prescribe_ipt_set == true
       dose = MedicationService.other_medications('Isoniazid', current_weight)
       regimen_medications = (regimen_medications + dose) unless dose.blank?
+      category = regimen_medications.last[:category] rescue nil
+      drug = Drug.find_by_name('Pyridoxine (50mg)')
+
+      pyridoxine_dose = [{
+          :drug_name => 'Pyridoxine (50mg)',
+          :am => '0',
+          :pm => '1',
+          :units => 'Tab(s)',
+          :drug_id => drug.drug_id,
+          :regimen_index => nil,
+          :category => category
+        }]
+
+      regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
     end
 
     ################################################################################################################
