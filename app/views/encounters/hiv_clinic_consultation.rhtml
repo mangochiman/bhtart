@@ -444,18 +444,18 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       
       html += "<td style='width: 30%;'>";
-        html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
-          html += "<tr>";
-            html += "<td class='btn-containers'>";
-              html += "<div class='button' id='yes_btn_container_" + i + "'><a category='side_effects' ";
-              html += "key='" + sideEffectsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
-            html += "</td>";
-            html += "<td class='btn-containers'>";
-              html += "<div class='button' id='no_btn_container_" + i + "'><a category='side_effects'";
-              html += "key='" + sideEffectsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
-            html += "</td>";
-          html += "</tr>";
-        html += "</table>";
+      html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
+      html += "<tr>";
+      html += "<td class='btn-containers'>";
+      html += "<div class='button' id='yes_btn_container_" + i + "'><a category='side_effects' ";
+      html += "key='" + sideEffectsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
+      html += "</td>";
+      html += "<td class='btn-containers'>";
+      html += "<div class='button' id='no_btn_container_" + i + "'><a category='side_effects'";
+      html += "key='" + sideEffectsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
+      html += "</td>";
+      html += "</tr>";
+      html += "</table>";
       html += "</td>";
       
       html += "</tr>"
@@ -541,18 +541,18 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       
       html += "<td style='width: 30%;'>";
-        html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
-          html += "<tr>";
-            html += "<td class='btn-containers'>";
-              html += "<div class='button' id='yes_btn_container_" + i + "'><a category='TB' ";
-              html += "key='" + tbSymptomsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
-            html += "</td>";
-            html += "<td class='btn-containers'>";
-              html += "<div class='button' id='no_btn_container_" + i + "'><a category='TB' ";
-              html += "key='" + tbSymptomsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
-            html += "</td>";
-          html += "</tr>";
-        html += "</table>";
+      html += "<table style='float: right; width: 100%; padding-right: 10px;'>";
+      html += "<tr>";
+      html += "<td class='btn-containers'>";
+      html += "<div class='button' id='yes_btn_container_" + i + "'><a category='TB' ";
+      html += "key='" + tbSymptomsOptions[i] + "' id='yes_" + i + "' class='butt' onclick='pressB(this);'>Yes</a></div>";
+      html += "</td>";
+      html += "<td class='btn-containers'>";
+      html += "<div class='button' id='no_btn_container_" + i + "'><a category='TB' ";
+      html += "key='" + tbSymptomsOptions[i] + "' id='no_" + i + "' class='butt' onclick='pressB(this);'>No</a></div>";
+      html += "</td>";
+      html += "</tr>";
+      html += "</table>";
       html += "</td>";
       
       html += "</tr>"
@@ -951,7 +951,13 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   <%  if @tb_programs_state.nil? %>
   <%#= touch_hidden_tag "TB STATUS", @patient, @consultation_tb_status, {:id => "tb_status", :value_datetime => true}%>
-    <%= touch_select_tag "TB STATUS", @patient, concept_set_options_unknown('TB STATUS'),
+      
+    <% tb_status_options =  concept_set_options_unknown('TB STATUS').split("\n").collect{|option|
+      next if option.match(/confirmed/i)
+      option
+    }.join("\n")%>
+
+    <%= touch_select_tag "TB STATUS", @patient, tb_status_options,
       {:id => 'tb_status',
       :multiple => false,
       :helpText => "TB Status",
