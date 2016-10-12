@@ -71,10 +71,12 @@ rightTable += "<td style='border-bottom: 1px solid black; padding:8px;'>&nbsp;</
 rightTable += "<td style='border: 0px solid black; padding:8px;'>&nbsp;</td>"
 rightTable += "</tr>";
 
-rightTable += "<tr id='' row_id = '9538' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
-rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Not Pregnant / Breastfeeding</td>";
-rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9538' src='" + uncheckedImg + "'></img></td>";
-rightTable += "</tr>";
+if (gender.toUpperCase() == 'F'){
+    rightTable += "<tr id='' row_id = '9538' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
+    rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>Not Pregnant / Breastfeeding</td>";
+    rightTable += "<td style='border-bottom: 0px solid black; text-align: center;'><img id='img_9538' src='" + uncheckedImg + "'></img></td>";
+    rightTable += "</tr>";
+}
 
 rightTable += "<tr id='' row_id = '9539' onclick = 'highLightSelectedRow(this);' style='cursor: pointer;' >";
 rightTable += "<td style='border-bottom: 1px solid black; padding:8px; text-align: left;'>No Side Effects, OI / TB</td>";

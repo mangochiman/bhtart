@@ -9,6 +9,7 @@ class GenericRegimensController < ApplicationController
 		end
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		@patient_bean = PatientService.get_patient(@patient.person)
+    @gender = @patient.person.gender.upcase
 		@programs = @patient.patient_programs.all
 
     ################################################################################################################

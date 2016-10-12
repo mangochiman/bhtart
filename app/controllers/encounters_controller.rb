@@ -3,6 +3,7 @@ class EncountersController < GenericEncountersController
 		#raise params.to_yaml
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
 		@patient_bean = PatientService.get_patient(@patient.person)
+    @gender = @patient.person.gender.upcase
 		session_date = session[:datetime].to_date rescue Date.today
 
     fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
