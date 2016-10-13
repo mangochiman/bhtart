@@ -1,5 +1,5 @@
 
-function regimenSideEffectsPopup(){
+function contraindicators(){
     regimen_concept_id = document.getElementById('regimen_concept_id')
     selectedRegimenIndex = regimen_concept_id.options[regimen_concept_id.selectedIndex].text.split(" ")[1];
     selectedRegimenContraindications = adverse_events[selectedRegimenIndex]["contraindications"];
