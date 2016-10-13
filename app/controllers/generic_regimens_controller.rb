@@ -391,7 +391,7 @@ class GenericRegimensController < ApplicationController
           ['Jaundice', 'Jaundice']
 				],
 				'contraindications' => [
-					['Anaemia <8g/dl','Anaemia <8g/dl'],
+					['Anemia <8g/dl','Anemia <8g/dl'],
           ['Patient on rifampicin','Patient on rifampicin'],
           ['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
@@ -447,7 +447,7 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure', 'Treatment failure']
 				],
 				'contraindications' => [
-					['Anaemia <8g/dl', 'Anaemia <8g/dl']
+					['Anemia <8g/dl', 'Anemia <8g/dl']
 				],
 				'alt1' => [
           ['Anaemia, vomiting, appetite loss', '10'],
