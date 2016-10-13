@@ -577,7 +577,7 @@
 
   function changeRegimen(){
     id = document.getElementById("regimen_concept_id").value
-<% unless @found_symptoms.blank? %>
+<% unless @side_effects_answers.blank? %>
       element = document.getElementById('nextButton')
       element.setAttribute("onmousedown", "contraindicators()")
 <% else %>
