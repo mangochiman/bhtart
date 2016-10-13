@@ -1338,7 +1338,7 @@ class GenericRegimensController < ApplicationController
 	  prescribe_medication = Concept.find_by_name("Medication orders").concept_id
 	  medication_concept = Concept.find_by_name(medication_type).concept_id
 
-    found = Observation.find(:first, :conditions => ["concept_id = ? AND
+    found = Observation.find(:first, :joins => [:encounter], :conditions => ["concept_id = ? AND
         person_id = ? AND value_coded = ? AND DATE(obs_datetime) = ?",
         prescribe_medication, patient.id, medication_concept, date.to_date])
 
