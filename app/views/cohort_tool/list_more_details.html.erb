@@ -263,60 +263,62 @@
     <div style="border: 3px solid #80890F">
         <table id="table_id" class="display">
             <thead>
-            <tr>
-                <th>ARV Number</th>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Registration Date</th>
-                <th>Start Reason</th>
-                <th>Outcome Status</th>
-                <th>&nbsp;<br></th>
-            </tr>
-
+                <tr>
+                    <th>ARV Number</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Registration Date</th>
+                    <th>Start Reason</th>
+                    <th>Outcome Status</th>
+                    <th>&nbsp;<br></th>
+                </tr>
             </thead>
             <tbody>
-            <% @patient_ids.each do |patient_id|
-                person = Person.find(patient_id)
-                patient = PatientService.get_patient(person)
-            %>
-            <%# @report.each do |data_row| %>
-                <tr>
-                    <td align='center'>
-                        <%= patient.arv_number %>
-                    </td>
-                    <td align='center'>
-                        <%= patient.name %>
-                    </td>
+                <%
+                    (@patient_ids.split(',') || []).each do |patient_id|
+                    person = Person.find(patient_id)
+                    patient = PatientService.get_patient(person)
+                    if patient_id == 7876
+                        raise'ehetu'
+                    end
+                %>
+                    <tr>
+                        <td align='center'>
+                            <%= patient.arv_number %>
+                        </td>
+                        <td align='center'>
+                            <%= patient.name %>
+                        </td>
 
-                    <% if ! patient.age.nil? %>
-                        <% if patient.age > 0 %>
-                            <td align='center'>
-                                <%= patient.age %>
-                            </td>
+                        <% if ! patient.age.nil? %>
+                            <% if patient.age > 0 %>
+                                <td align='center'>
+                                    <%= patient.age %>
+                                </td>
+                            <% else %>
+                                <td align='center'>
+                                    <%= patient.age_in_months %> Months
+                                </td>
+                            <% end %>
                         <% else %>
                             <td align='center'>
                                 <%= patient.age_in_months %> Months
                             </td>
                         <% end %>
-                    <% else %>
-                        <td align='center'>
-                            <%= patient.age_in_months %> Months
-                        </td>
-                    <% end %>
 
-                    <td align='center'>
-                        <%#= link_to "<span class='clinic_data_value' >
-                            #{session[:cohort]["Earliest_start_dates"][data_row.patient_id].to_date rescue session[:pre_art]["earliest_start_date"][data_row.patient_id.to_i].to_date rescue 0}</span>", "/patients/show/#{data_row.person_id}?session=#{session[:cohort]["Earliest_start_dates"][data_row.patient_id] rescue session[:pre_art]["earliest_start_date"][data_row.patient_id.to_i] rescue 0}" -%>
-                    </td>
-                    <td><%#= "#{session[:cohort]["start_reason"][data_row.patient_id.to_s] rescue "None"}" %></td>
-                    <td><%#= "#{session[:cohort]["outcomes"][data_row.patient_id.to_s] rescue session[:pre_art]["outcomes"][data_row.patient_id.to_s]}" %></td>
-                    <td align='center' class="create_button">
-                        <%#= link_to_onmousedown "View",{:controller =>"patients", :action => 'mastercard',
-                                                                                             :patient_id => "#{data_row.person_id}" ,:source =>"out_of_range_arv_number", :quarter => "#{@report_quarter}",
-                                                                                             :arv_start_number => "#{params[:arv_start_number]}",:arv_end_number => "#{params[:arv_end_number]}"}%>
-                    </td>
-                </tr>
-            <% end %>
+                        <td align='center'>
+                            <%#= link_to "<span class='clinic_data_value' >
+                                #{session[:cohort]["Earliest_start_dates"][data_row.patient_id].to_date rescue session[:pre_art]["earliest_start_date"][data_row.patient_id.to_i].to_date rescue 0}</span>", "/patients/show/#{data_row.person_id}?session=#{session[:cohort]["Earliest_start_dates"][data_row.patient_id] rescue session[:pre_art]["earliest_start_date"][data_row.patient_id.to_i] rescue 0}" -%>
+                        </td>
+                        <td><%#= "#{session[:cohort]["start_reason"][data_row.patient_id.to_s] rescue "None"}" %></td>
+                        <td><%#= "#{session[:cohort]["outcomes"][data_row.patient_id.to_s] rescue session[:pre_art]["outcomes"][data_row.patient_id.to_s]}" %></td>
+                        <td align='center' class="create_button">
+                            <%#= link_to_onmousedown "View",{:controller =>"patients", :action => 'mastercard',
+                                                                                                 :patient_id => "#{data_row.person_id}" ,:source =>"out_of_range_arv_number", :quarter => "#{@report_quarter}",
+                                                                                                 :arv_start_number => "#{params[:arv_start_number]}",:arv_end_number => "#{params[:arv_end_number]}"}%>
+                        </td>
+                    </tr>
+                <% end %>
             </tbody>
         </table>
     </div>

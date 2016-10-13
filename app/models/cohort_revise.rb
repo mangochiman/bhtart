@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-#=begin
+=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -628,7 +628,7 @@ EOF
       rate = ad['value_numeric'].to_f unless ad['value_numeric'].blank?
       rate = 0 if rate.blank?
 
-      if rate >= 95 
+      if rate >= 95
         adherent << ad['person_id'].to_i ; adherent = adherent.uniq
       else
         not_adherent << ad['person_id'].to_i ; not_adherent = not_adherent.uniq
@@ -728,29 +728,36 @@ EOF
     return [] if patient_ids.blank?
     result = []
 
+    without_side_effects = []
+    self.total_patients_without_side_effects(data, start_date, end_date).each do |person|
+      without_side_effects << person['person_id'].to_i
+    end
+
+    return [] if without_side_effects.blank?
+
   	drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
     malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
     no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
 
     malawi_art_side_effects =  ActiveRecord::Base.connection.select_all <<EOF
             SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id IN (#{malawi_art_side_effects_concept_id})
-            AND o.person_id IN (#{patient_ids.join(',')})
+            AND (o.person_id IN (#{patient_ids.join(',')}) AND (o.person_id NOT IN (#{without_side_effects.join(',')})))
             AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             AND o.obs_datetime = (
               SELECT max(obs_datetime) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id})
               AND voided = 0 AND person_id = o.person_id
-              AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+              AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             ) GROUP BY person_id
 EOF
 
     data = ActiveRecord::Base.connection.select_all <<EOF
         SELECT * FROM obs o WHERE o.voided = 0 AND o.concept_id = #{drug_induced_concept_id}
-        AND o.person_id IN (#{patient_ids.join(',')}) AND
-        o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND (o.person_id IN (#{patient_ids.join(',')}) AND (o.person_id NOT IN (#{without_side_effects.join(',')})))
+        AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
         AND o.obs_datetime = (
           SELECT max(obs_datetime) FROM obs WHERE concept_id = #{drug_induced_concept_id}
           AND voided = 0 AND person_id = o.person_id
-          AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+          AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
         ) GROUP BY person_id
 EOF
     (data || []).each do |row|
@@ -791,7 +798,7 @@ EOF
               SELECT max(obs_datetime) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id})
               AND value_coded = #{no_side_effects_concept_id}
               AND voided = 0 AND person_id = o.person_id
-              AND obs_datetime BETWEEN  '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+              AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             ) GROUP BY person_id
 EOF
   drug_induced = ActiveRecord::Base.connection.select_all <<EOF
