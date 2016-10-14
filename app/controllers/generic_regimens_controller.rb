@@ -756,11 +756,11 @@ class GenericRegimensController < ApplicationController
 				:obs_datetime => start_date)
 
 			next if concept == 'NO'
-
+      weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
       if ! params[:cpt_duration].blank?
-        #params[:cpt_duration] =  params[:duration]
         auto_cpt_ipt_expire_date = session[:datetime] + params[:cpt_duration].to_i.days + arvs_buffer.days rescue Time.now + params[:cpt_duration].to_i.days + arvs_buffer.days
       end
+
 			if concept_name == 'CPT STARTED'
 				if params[:cpt_mgs] == "960"
 					drug = Drug.find_by_name('Cotrimoxazole (960mg)')
@@ -771,6 +771,9 @@ class GenericRegimensController < ApplicationController
 				else
 					drug = Drug.find_by_name('Cotrimoxazole (480mg tablet)')
 				end
+
+        order = MedicationService.other_medications('Cotrimoxazole', weight).first
+
       else
 				if params[:ipt_mgs] == "300"
           drug = Drug.find_by_name('INH or H (Isoniazid 300mg tablet)')
@@ -783,29 +786,41 @@ class GenericRegimensController < ApplicationController
         else
           drug = Drug.find_by_name('INH or H (Isoniazid 100mg tablet)')
 				end
+
+        order = MedicationService.other_medications('Isoniazid', weight).first
+
 			end
 
-			weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
-			regimen_id = Regimen.all(:conditions =>  ['min_weight <= ? AND max_weight >= ? AND concept_id = ?', weight, weight, drug.concept_id]).first.regimen_id
-			orders = RegimenDrugOrder.all(:conditions => {:regimen_id => regimen_id, :drug_inventory_id => drug.id})
-      #=begin
-      #raise auto_cpt_ipt_expire_date.to_yaml
-      orders.each do |order|
-        regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept_names.typed("FULLY_SPECIFIED").first).name
-        DrugOrder.write_order(
-          encounter,
-          @patient,
-          obs,
-          drug,
-          start_date,
-          auto_cpt_ipt_expire_date,
-          order.dose,
-          order.frequency,
-          order.prn,
-          "#{drug.name}: #{order.instructions} (#{regimen_name})",
-          order.equivalent_daily_dose)
+      morning_tabs = order[:am]
+      evening_tabs = order[:pm]
+
+      instructions = "#{drug.name}:- Morning: #{morning_tabs} tab(s), Evening: #{evening_tabs} tabs"
+      frequency = "ONCE A DAY (OD)"
+      equivalent_daily_dose = morning_tabs.to_f + evening_tabs.to_f
+      dose = morning_tabs if evening_tabs.to_i == 0
+      dose = evening_tabs if morning_tabs.to_i == 0
+
+      if (morning_tabs.to_i > 0 && evening_tabs.to_i > 0)
+        frequency = "TWICE A DAY (BD)"
+        dose = (morning_tabs.to_f + evening_tabs.to_f)/2
       end
-      #=end
+      
+      prn = 0
+
+      DrugOrder.write_order(
+        encounter,
+        @patient,
+        obs,
+        drug,
+        start_date,
+        auto_cpt_ipt_expire_date,
+        dose,
+        frequency,
+        prn,
+        instructions,
+        equivalent_daily_dose
+      )
+      
 		end
 
     unless prescribe_pyridoxine .blank?
