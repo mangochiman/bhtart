@@ -278,9 +278,6 @@
                     (@patient_ids.split(',') || []).each do |patient_id|
                     person = Person.find(patient_id)
                     patient = PatientService.get_patient(person)
-                    if patient_id == 7876
-                        raise'ehetu'
-                    end
                 %>
                     <tr>
                         <td align='center'>
