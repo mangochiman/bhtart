@@ -708,8 +708,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                                            regimens.push('<%=data[0].split(" ").first%>');
-                                                                                                            display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                                              regimens.push('<%=data[0].split(" ").first%>');
+                                                                                                              display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -912,7 +912,7 @@
 
   function set_patient_posible_all_suggestions(programId) {
     //var program_id = encodeURIComponent($('patient_program').value);
-    $('touchscreenInput'+tstCurrentPage).setAttribute('ajaxURL', "/regimens/suggest_all?patient_age=<%= @patient_bean.age %>&current_weight=<%= @current_weight %>&id=" + programId + "&search_string=");
+    $('touchscreenInput'+tstCurrentPage).setAttribute('ajaxURL', "/regimens/suggest_all?patient_id=<%= @patient.patient_id %>&patient_age=<%= @patient_bean.age %>&current_weight=<%= @current_weight %>&id=" + programId + "&search_string=");
     listSuggestions(tstCurrentPage);
     //$("regimen_concept_id").setAttribute("onmousedown", alert('yes'))
   }
@@ -996,34 +996,8 @@
             $('touchscreenInput'+tstCurrentPage).value += " " + data[2] ;
             selectedDrugsHash[data[0]] = {am: '', pm: ''};
             createHiddenInputsForDoses(data[0])
-            console.log('Data[0] = ' + data[0] + ' Data[1]=' + data[1] + ' Data[3]=' + data[3])
           }
 
-<% unless @cpt_dose.blank? %>
-            cptDrugName = '<%= @cpt_dose[:drug_name]%>';
-            html += "<tr><td>" + cptDrugName + "</td>"
-            html += "<td> Tabs </td>"
-            html += "<td><input key='" + cptDrugName + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
-            html += "<td><input key='" + cptDrugName + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
-            html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
-            html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
-            selectedDrugsHash[cptDrugName] = {am: '', pm: ''};
-            $('cpt_given').value = '';
-            createHiddenInputsForDoses(cptDrugName);
-<% end %>
-
-<% unless @ipt_dose.blank? %>
-            IPTDrugName = '<%= @ipt_dose[:drug_name] %>';
-            html += "<tr><td>" + IPTDrugName + "</td>"
-            html += "<td> Tabs </td>"
-            html += "<td><input key='" + IPTDrugName + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
-            html += "<td><input key='" + IPTDrugName + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
-            html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
-            html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
-            selectedDrugsHash[IPTDrugName] = {am: '', pm: ''};
-            $('ipt_given').value = '';
-            createHiddenInputsForDoses(IPTDrugName);
-<% end %>
 
           html += "</table>";
           prescription_container.innerHTML = html
