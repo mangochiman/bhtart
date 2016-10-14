@@ -119,6 +119,14 @@ class GenericRegimensController < ApplicationController
     hiv_additional_symptoms_ids = Patient.concept_set("ADDITIONAL MALAWI ART SYMPTOM SET")#chunked
 
 		hiv_symptoms_ids += hiv_additional_symptoms_ids
+
+    side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
+    symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
+
+    @side_effects_answers = @patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
+        DATE(obs_datetime) =?", [side_effects_concept_id, symptom_present_conept_id], session_date]
+    ).collect{|o|o.answer_string.squish}
+
 		@found_symptoms = []
 
 		@prescribe_art_drugs = false
@@ -280,7 +288,7 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure','Treatment failure']
         ],
 				'contraindications' => [
-					['History of psychiatric illness','History of psychiatric illness']
+					['History of psychosis','History of psychosis']
 				],
 				'alt1' => [
           ['Neuropathy','5'],
@@ -301,7 +309,7 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure','Treatment failure']
         ],
 				'contraindications' => [
-					['History of psychiatric illness','History of psychiatric illness'],
+					['History of psychosis','History of psychosis'],
 					['Anaemia <8g/dl','Anaemia <8g/dl']
 				],
 				'alt1' => [
@@ -317,61 +325,59 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure','9']
 				]},
 			'5' => { 'adverse' =>[
-          ['Renal Failure','Renal Failure'],
-          ['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
+          ['Kidney Failure','Kidney Failure'],
+          ['Hepatitis, Skin rash, psychosis','Hepatitis, Skin rash, psychosis'],
           ['Persistent dizziness, Visual disturbances', 'Persistent dizziness, Visual disturbances'],
           ['Treatment failure','Treatment failure']
 				],
 				'contraindications' => [
-					['History of psychiatric illness','History of psychiatric illness'],
-					['Renal failure','Renal failure'],
-					['Child under 3 years','Child under 3 years']
+					['History of psychosis','History of psychosis'],
+					['Renal failure','Renal failure']
 				],
 				'alt1' => [
-          ['Renal Failure','0'],
-          ['Hepatitis, Skin rash, psychiat disorder','6'],
+          ['Kidney Failure','0'],
+          ['Hepatitis, Skin rash, psychosis','6'],
           ['Persistent dizziness, Visual disturbances', '6'],
           ['Treatment failure','8']
 				],
 				'alt2'=> [
           ['Renal Failure','2'],
-          ['Hepatitis, Skin rash, psychiat disorder','0 or 2'],
+          ['Hepatitis, Skin rash, psychosis','0 or 2'],
           ['Persistent dizziness, Visual disturbances', '0 or 2'],
           ['Treatment failure','NS']
 				]},
 			'6' => { 'adverse' =>[
-          ['Renal failure','Renal failure'],
+          ['Kidney failure','Kidney failure'],
           ['Hepatitis, Skin rash','Hepatitis, Skin rash'],
           ['Treatment failure','Treatment failure']
 				],
 				'contraindications' => [
 					['Hepatitis/Jaundice','Hepatitis/Jaundice'],
-					['Renal failure','Renal failure'],
-					['Child under 3 years','Child under 3 years']
+					['Kidney failure','Kidney failure']
 				],
 				'alt1' => [
-          ['Renal failure','0'],
+          ['Kidney failure','0'],
           ['Hepatitis, Skin rash','5'],
           ['Treatment failure','8']
 				],
 				'alt2'=> [
-          ['Renal failure','2'],
+          ['Kidney failure','2'],
           ['Hepatitis, Skin rash','NS'],
           ['Treatment failure','NS']
 				]},
 			'7' =>{ 'adverse' =>[
           ['Nausia, vomiting','Nausia, vomiting'],
-          ['Renal failure','Renal failure'],
+          ['Kidney failure','Kidney failure'],
           ['Jaundice','Jaundice']
 				],
 				'contraindications' => [
-					['Renal failure','Renal failure'],
+					['Kidney failure','Kidney failure'],
 					['Patient on rifampicin','Patient on rifampicin'],
           ['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
 				'alt1' => [
           ['Nausia, vomiting','NS'],
-          ['Renal failure','8'],
+          ['Kidney failure','8'],
           ['Jaundice','TDF/3TC + LPV/r']
 				],
 				'alt2'=> [
@@ -385,7 +391,7 @@ class GenericRegimensController < ApplicationController
           ['Jaundice', 'Jaundice']
 				],
 				'contraindications' => [
-					['Anaemia <8g/dl','Anaemia <8g/dl'],
+					['Anemia <8g/dl','Anemia <8g/dl'],
           ['Patient on rifampicin','Patient on rifampicin'],
           ['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
@@ -416,20 +422,20 @@ class GenericRegimensController < ApplicationController
 				]
       },
       '10' => { 'adverse' =>[
-          ['Renal failure', 'Renal failure'],
+          ['Kidney failure', 'Kidney failure'],
           ['Diarrhoea, vomiting, dizziness, headache', 'Diarrhoea, vomiting, dizziness, headache'],
           ['Treatment failure', 'Treatment failure']
 				],
 				'contraindications' => [
-					['Renal failure', 'Renal failure']
+					['Kidney failure', 'Kidney failure']
 				],
 				'alt1' => [
-          ['Renal failure', '11'],
+          ['Kidney failure', '11'],
           ['Diarrhoea, vomiting, dizziness, headache', '7'],
           ['Treatment failure', '12']
 				],
 				'alt2'=> [
-          ['Renal failure', '8'],
+          ['Kidney failure', '8'],
           ['Diarrhoea, vomiting, dizziness, headache', '8'],
           ['Treatment failure', 'None']
 				]
@@ -441,7 +447,7 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure', 'Treatment failure']
 				],
 				'contraindications' => [
-					['Anaemia <8g/dl', 'Anaemia <8g/dl']
+					['Anemia <8g/dl', 'Anemia <8g/dl']
 				],
 				'alt1' => [
           ['Anaemia, vomiting, appetite loss', '10'],
@@ -1332,7 +1338,7 @@ class GenericRegimensController < ApplicationController
 	  prescribe_medication = Concept.find_by_name("Medication orders").concept_id
 	  medication_concept = Concept.find_by_name(medication_type).concept_id
 
-    found = Observation.find(:first, :conditions => ["concept_id = ? AND
+    found = Observation.find(:first, :joins => [:encounter], :conditions => ["concept_id = ? AND
         person_id = ? AND value_coded = ? AND DATE(obs_datetime) = ?",
         prescribe_medication, patient.id, medication_concept, date.to_date])
 

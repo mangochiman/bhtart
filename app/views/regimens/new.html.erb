@@ -565,6 +565,7 @@
   var regimen_id = null;
   var tb_regimen_id = null;
   var other_regimen = null;
+  var sideEffectsAnswers = <%= @side_effects_answers.to_json %>;
 
   var reasons = ['Treatment failure', 'Jandice/hepatitis','Anaemia < 8g/dl','Renal failure', 'Abacavir hypersensitivity', 'Lypodystrophy', 'Lactic Acidosis', 'Drug Rash', 'Other'] ;
 <% if @patient_bean.age < 12 %>
@@ -576,7 +577,7 @@
 
   function changeRegimen(){
     id = document.getElementById("regimen_concept_id").value
-<% unless @found_symptoms.blank? %>
+<% unless @side_effects_answers.blank? %>
       element = document.getElementById('nextButton')
       element.setAttribute("onmousedown", "contraindicators()")
 <% else %>
@@ -652,7 +653,7 @@
     }
   }
 
-  function contraindicators(){
+  function contraindicators_rewritten(){
     var foundEvents = []
     symptoms = '<%= @found_symptoms.join(',').humanize %>';
     symptoms = symptoms.split(',');
@@ -2649,6 +2650,7 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
   <div class="stock_level_details" style="display: none;">
 
   </div>
+  <script src="/javascripts/regimenSideEfectsPopup.js?version=<%=Time.now.to_i%>" type="text/javascript"></script>
 </body>
 <script>
 
