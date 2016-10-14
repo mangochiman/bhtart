@@ -316,38 +316,38 @@ module MedicationService
     #Isoniazid section
     (regimen_medications || []).each do |medication|
       if medication[:drug_name].match(/Isoniazid/i) and medication[:drug_name].match(/300/i)
-        return medication
+        return [medication]
       end
     end
 
     (regimen_medications || []).each do |medication|
       if medication[:drug_name].match(/Isoniazid/i) and medication[:drug_name].match(/100/i)
-        return medication
+        return [medication]
       end
     end
 
     # section
     (regimen_medications || []).each do |medication|
       if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/960/i)
-        return medication
+        return [medication]
       end
     end
 
     (regimen_medications || []).each do |medication|
       if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/480/i)
-        return medication
+        return [medication]
       end
     end
 
     (regimen_medications || []).each do |medication|
       if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/120/i)
-        return medication
+        return [medication]
       end
     end
 
 
 
-    return regimen_medications.first unless regimen_medications.blank?
+    return regimen_medications
   end
 
 end
