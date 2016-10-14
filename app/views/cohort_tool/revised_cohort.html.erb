@@ -1096,11 +1096,41 @@
         <td class="index">
             35.
         </td>
-        <td class="text-bold border-left-dotted border-bottom-dotted border-null-top border-null-right">
+        <td class="text-bold border-left-dotted border-null-top border-null-bottom border-null-right">
             C
         </td>
-        <td class="border-bottom-dotted border-null-top border-null-left">
+        <td class="border-null-left border-null-top border-null-bottom">
             Adults 15 years or older at ART initiation
+        </td>
+        <td class="number">
+            <a href="javascript:drillDown('adults_at_art_initiation');">
+                <%= @cohort.adults_at_art_initiation.count %>
+            </a>
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td class="column-break">
+            &nbsp;
+        </td>
+        <td class="number">
+            <a href="javascript:drillDown('cum_adults_at_art_initiation');">
+                <%= @cohort.cum_adults_at_art_initiation.count %>
+            </a>
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            &nbsp;
+        </td>
+        <td class="text-bold border-left-dotted border-bottom-dotted border-null-top border-null-right">
+            &nbsp;
+        </td>
+        <td class="border-bottom-dotted border-null-top border-null-left">
+            Unknown age
         </td>
         <td class="number">
             <a href="javascript:drillDown('adults_at_art_initiation');">
