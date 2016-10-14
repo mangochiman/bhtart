@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-#=begin
+=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -613,7 +613,7 @@ Unique PatientProgram entries at the current location for those patients with at
       ) AND (SELECT CONCAT(max(obs_datetime),' 23:59:59') FROM obs
         WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
         AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}'
-      ) AND person_id IN(#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}';
+      ) AND person_id IN (#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}';
 EOF
 
     adherent = [] ; not_adherent = [] ; unknown_adherence = [];
@@ -1250,7 +1250,7 @@ EOF
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND age_at_initiation IS NULL GROUP BY patient_id;
+      AND (age_at_initiation IS NULL OR AND age_at_initiation < 0) GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1295,7 +1295,7 @@ EOF
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND age_at_initiation < 2 GROUP BY patient_id;
+      AND (age_at_initiation >= 0 AND age_at_initiation < 2) GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|

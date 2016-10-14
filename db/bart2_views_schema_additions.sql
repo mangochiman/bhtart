@@ -104,7 +104,7 @@ BEGIN
 
 DECLARE date_started DATE;
 
-SET date_started = (SELECT LEFT(value_datetime,10) FROM obs WHERE concept_id = 2516 AND person_id = set_patient_id LIMIT 1);
+SET date_started = (SELECT LEFT(value_datetime,10) FROM obs WHERE concept_id = 2516 AND person_id = set_patient_id AND voided = 0 LIMIT 1);
 
 if date_started is NULL then
 SET date_started = min_state_date;
