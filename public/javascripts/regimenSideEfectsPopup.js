@@ -46,7 +46,7 @@ function contraindicators(){
         data += "</tr>";
         data += "</table>";
 
-        sideEffectsData = "<b><span style='color: green;'>Patient with Side Effects</span>: <i>" + sideEffectsAnswers.join(", ") + "</i></b><br /><br />";
+        sideEffectsData = "<b><span style='color: green;'>Side Effects</span>: <i>" + sideEffectsAnswers.join(", ") + "</i></b><br /><br />";
         sideEffectsData += "<b><span style='color: green;'>Regimen " + selectedRegimenIndex + " Contraindications</span>: <i>" + flattedContraindications.join(", ") + "</i></b><br /><br />";
         if (alt_one_drugs.length > 0) sideEffectsData += "<b><span style='color: green;'>Regimen Alternative 1</span>: <i> " + alt_one_drugs_data + "</i></b><br /><br />";
         if (alt_two_drugs.length > 0) sideEffectsData += "<b><span style='color: green;'>Regimen Alternative 2</span>: <i> " + alt_two_drugs_data + "</i></b><br /><br />";
@@ -70,7 +70,7 @@ function contraindicators(){
 
         popupHeader = document.createElement('div');
         popupHeader.className = 'popup-header';
-        popupHeader.innerHTML = 'SIDE EFFECTS FOUND <br /><br />';
+        popupHeader.innerHTML = 'PATIENT WITH SIDE EFFECTS <br />';
         popupHeader.style.borderBottom = '2px solid #7D9EC0';
         popupHeader.style.backgroundColor = '#FFFFFF';
         popupHeader.style.paddingTop = '5px';
