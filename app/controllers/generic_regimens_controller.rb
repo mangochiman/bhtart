@@ -521,6 +521,16 @@ class GenericRegimensController < ApplicationController
 			end
 
 		end
+
+    unless params[:drug_names].blank?
+      #This is non standard regimen
+      #Do not automatically create CPT/IPT prescription. It has to be manually selected from the list of drugs
+      prescribe_cpt = false
+      prescribe_ipt = false
+    end
+
+
+    #raise params.inspect
 		#raise prescribe_pyridoxine.to_yaml
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		session_date = session[:datetime] || Time.now()
@@ -913,6 +923,35 @@ class GenericRegimensController < ApplicationController
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*", 
       :group => 'drug.drug_id')
 
+    session_date = session[:datetime].to_date rescue Date.today
+    patient = Patient.find(params[:patient_id])
+    allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date)
+
+    if allergic_to_sulphur == 'Yes'
+      prescribe_cpt_set = false
+    else
+      prescribe_cpt_set = prescribe_medication_set(patient, session_date, 'CPT')
+    end
+    prescribe_ipt_set = prescribe_medication_set(patient, session_date, 'Isoniazid')
+
+    if prescribe_cpt_set == true
+      cpt_drug_names = ['TMP/SMX (Cotrimoxazole 120mg tablet)', 'TMP/SMX (Cotrimoxazole 240mg tablet)',
+        'Cotrimoxazole (480mg tablet)', 'Cotrimoxazole (960mg)'
+      ]
+      cpt_drugs = Drug.find(:all, :conditions => ["name IN (?)", cpt_drug_names])
+      cpt_drugs.each do |cpt_drug|
+        medications << cpt_drug
+      end
+    end
+
+    if prescribe_ipt_set == true
+      pyridoxine_ipt_drug_names = ['INH or H (Isoniazid 100mg tablet)', 'Pyridoxine (50mg)']
+      pyridoxine_ipt_drugs = Drug.find(:all, :conditions => ["name IN (?)", pyridoxine_ipt_drug_names])
+      pyridoxine_ipt_drugs.each do |drug|
+        medications << drug
+      end
+    end
+    
     @options = (medications || []).map do | m |
       [m.name , m.drug_id ]
     end
@@ -1043,10 +1082,18 @@ class GenericRegimensController < ApplicationController
 
   def formulations_all
     names = params[:names].split('::')
-
     medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i 
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
       :conditions => ["drug.name IN(?)", names], :group => "drug.drug_id")
+
+    names.each do |drug_name|
+      if (drug_name.match(/Cotrimoxazole|Isoniazid|Pyridoxine/i))
+        #These drugs are not in moh_regimen_ingredient
+        medications = [] if medications.blank?
+        drug = Drug.find_by_name(drug_name)
+        medications << drug
+      end
+    end
 
     @options = (medications || []).map do | m |
       [m.name , m.units, m.drug_id ]
