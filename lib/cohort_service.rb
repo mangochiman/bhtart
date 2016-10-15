@@ -29,7 +29,7 @@ class CohortService
 
   #Secondary Outcomes (Cumulative)
   attr_accessor :zero_a, :zero_p, :one_a, :one_p, :two_a, :two_p, :three_a, :three_p, :four_a, :four_p, :five_a, :six_a,
-                :seven_a, :eight_a, :nine_p, :ten_a, :elleven_a, :elleven_p, :twelve_a, :unknown_regimen
+                :seven_a, :eight_a, :nine_a, :nine_p, :ten_a, :elleven_a, :elleven_p, :twelve_a, :unknown_regimen
 
   #Adherence
   attr_accessor :patients_with_0_6_doses_missed_at_their_last_visit, :patients_with_7_plus_doses_missed_at_their_last_visit,

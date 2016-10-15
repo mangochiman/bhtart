@@ -551,6 +551,7 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.seven_a          = self.get_regimen_category('7A')
     cohort.eight_a          = self.get_regimen_category('8A')
     cohort.nine_p           = self.get_regimen_category('9P')
+    cohort.nine_a           = self.get_regimen_category('9A')
     cohort.ten_a            = self.get_regimen_category('10A')
     cohort.elleven_a        = self.get_regimen_category('11A')
     cohort.elleven_p        = self.get_regimen_category('11P')
