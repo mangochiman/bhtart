@@ -2800,7 +2800,7 @@
                 break;
             case 'total_patients_without_side_effects':
                 <% (@cohort.total_patients_without_side_effects || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             case 'total_patients_with_side_effects':
