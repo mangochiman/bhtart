@@ -550,8 +550,8 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.six_a            = self.get_regimen_category('6A')
     cohort.seven_a          = self.get_regimen_category('7A')
     cohort.eight_a          = self.get_regimen_category('8A')
-    cohort.nine_p           = self.get_regimen_category('9P')
     cohort.nine_a           = self.get_regimen_category('9A')
+    cohort.nine_p           = self.get_regimen_category('9P')
     cohort.ten_a            = self.get_regimen_category('10A')
     cohort.elleven_a        = self.get_regimen_category('11A')
     cohort.elleven_p        = self.get_regimen_category('11P')
@@ -985,7 +985,7 @@ EOF
   end
 
   def self.children_12_23_months(start_date, end_date)
-    reason_concept_id = ConceptName.find_by_name('HIV DNA POLYMERASE CHAIN REACTION').concept_id
+    reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
 
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
