@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-=begin
+#=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -1250,7 +1250,8 @@ EOF
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (age_at_initiation IS NULL OR AND age_at_initiation < 0) GROUP BY patient_id;
+      AND (age_at_initiation IS NULL OR age_at_initiation < 0 OR birthdate IS NULL) 
+      GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
