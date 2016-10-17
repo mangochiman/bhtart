@@ -170,7 +170,7 @@
             Clinic name
         </td>
         <td colspan="6" class="bolder">
-            &nbsp;
+          <%= Location.current_health_center.name %>
         </td>
     </tr>
     <tr>
@@ -239,10 +239,12 @@
             Quarter evaluated
         </td>
         <td class="bolder">
-            Year
+            <%year = @quarter.match(/[0-9](.*)/i)[1].to_i rescue nil%>
+            Year <%= (year.blank? == true ? nil : ": #{year}") %>
         </td>
         <td colspan="4" class="bolder">
-            Quarter
+            <%year = @quarter.match(/[0-9](.*)/i)[0].to_i rescue nil%>
+            Quarter <%= (year.blank? == true ? nil : ": #{year}") %>
         </td>
     </tr>
     <tr class="row-break">
@@ -1096,10 +1098,10 @@
         <td class="index">
             35.
         </td>
-        <td class="text-bold border-left-dotted border-bottom-dotted border-null-top border-null-right">
+        <td class="text-bold border-left-dotted border-null-top border-null-bottom border-null-right">
             C
         </td>
-        <td class="border-bottom-dotted border-null-top border-null-left">
+        <td class="border-null-left border-null-top border-null-bottom">
             Adults 15 years or older at ART initiation
         </td>
         <td class="number">
@@ -1116,6 +1118,36 @@
         <td class="number">
             <a href="javascript:drillDown('cum_adults_at_art_initiation');">
                 <%= @cohort.cum_adults_at_art_initiation.count %>
+            </a>
+        </td>
+        <td>
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            &nbsp;
+        </td>
+        <td class="text-bold border-left-dotted border-bottom-dotted border-null-top border-null-right">
+            &nbsp;
+        </td>
+        <td class="border-bottom-dotted border-null-top border-null-left">
+            Unknown age
+        </td>
+        <td class="number">
+            <a href="javascript:drillDown('adults_at_art_initiation');">
+                <%= @cohort.unknown_age.count %>
+            </a>
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        <td class="column-break">
+            &nbsp;
+        </td>
+        <td class="number">
+            <a href="javascript:drillDown('cum_adults_at_art_initiation');">
+                <%= @cohort.cum_unknown_age.count %>
             </a>
         </td>
         <td>
@@ -2053,6 +2085,22 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
+            Regimen <b>9A</b>
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('nine_a');">
+                <%= @cohort.nine_a.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            78.
+        </td>
+        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
             Regimen <b>10A</b>
         </td>
         <td colspan="2" class="number">
@@ -2063,7 +2111,7 @@
     </tr>
     <tr>
         <td class="index">
-            78.
+            79.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -2079,7 +2127,7 @@
     </tr>
     <tr>
         <td class="index">
-            79.
+            80.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -2095,7 +2143,7 @@
     </tr>
     <tr>
         <td class="index">
-            80.
+            81.
         </td>
         <td colspan="3" class="text-center border-left-dotted border-bottom-dotted border-null-top border-null-right">
             Specify above regimens counted as 'Other'
@@ -2116,7 +2164,7 @@
     </tr>
     <tr>
         <td class="index">
-            81.
+            82.
         </td>
         <td class="text-bold border-top-dotted border-left-dotted border-null-bottom border-null-right">
             Side effects
@@ -2135,7 +2183,7 @@
     </tr>
     <tr>
         <td class="index">
-            82.
+            83.
         </td>
         <td class="border-left-dotted border-null-bottom border-null-top border-null-right">
             &nbsp;
@@ -2154,7 +2202,7 @@
     </tr>
     <tr>
         <td class="index">
-            83.
+            84.
         </td>
         <td class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;
@@ -2178,7 +2226,7 @@
     </tr>
     <tr>
         <td class="index">
-            84.
+            85.
         </td>
         <td class="text-bold border-left-dotted border-top-dotted border-null-bottom border-null-right">
             Adherence
@@ -2197,7 +2245,7 @@
     </tr>
     <tr>
         <td class="index">
-            85.
+            86.
         </td>
         <td class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -2216,7 +2264,7 @@
     </tr>
     <tr>
         <td class="index">
-            86.
+            87.
         </td>
         <td class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;
@@ -2240,7 +2288,7 @@
     </tr>
     <tr>
         <td class="index">
-            87.
+            88.
         </td>
         <td class="border-top-dotted border-left-dotted border-null-bottom border-null-right">
             <b>Current TB status</b> any form of TB
@@ -2259,7 +2307,7 @@
     </tr>
     <tr>
         <td class="index">
-            88.
+            89.
         </td>
         <td class="border-left-dotted border-null-bottom border-null-top border-null-right">
             &nbsp;
@@ -2278,7 +2326,7 @@
     </tr>
     <tr>
         <td class="index">
-            89.
+            90.
         </td>
         <td colspan="3" class="border-left-dotted border-null-bottom border-null-top border-null-right">
             &nbsp;
@@ -2294,7 +2342,7 @@
     </tr>
     <tr>
         <td class="index">
-            90.
+            91.
         </td>
         <td colspan="3" class="border-left-dotted border-null-right border-null-bottom border-null-top">
             &nbsp;
@@ -2310,7 +2358,7 @@
     </tr>
     <tr>
         <td class="index">
-            91.
+            92.
         </td>
         <td colspan="3" class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;
@@ -2353,6 +2401,7 @@
 
 <form id="patients" method="post" action="/cohort_tool/list_more_details">
   <input id='patient_ids' type='hidden' name = 'patient_ids' />
+  <input id='indicator' type='hidden' name = 'indicator' />
 </form>
 
 <script>
@@ -2646,113 +2695,118 @@
                 <% end %>
                 break;
             case 'zero_p':
-                <% (@cohort.zero_p || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.zero_p || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'one_p':
-                <% (@cohort.one_p || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.one_p || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'two_p':
-                <% (@cohort.two_p || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.two_p || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'three_p':
-                <% (@cohort.three_p || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.three_p || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'four_p':
-                <% (@cohort.four_p || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.four_p || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'nine_p':
-                <% (@cohort.nine_p || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.nine_p || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'elleven_p':
-                <% (@cohort.elleven_p || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.elleven_p || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'zero_a':
-                <% (@cohort.zero_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.zero_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'one_a':
-                <% (@cohort.one_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.one_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'two_a':
-                <% (@cohort.two_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.two_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'three_a':
-                <% (@cohort.three_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.three_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'four_a':
-                <% (@cohort.four_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.four_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'five_a':
-                <% (@cohort.five_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.five_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'six_a':
-                <% (@cohort.six_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.six_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'seven_a':
-                <% (@cohort.seven_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.seven_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'eight_a':
-                <% (@cohort.eight_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.eight_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
+                <% end %>
+                break;
+            case 'nine_a':
+                <% (@cohort.nine_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'ten_a':
-                <% (@cohort.ten_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.ten_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'elleven_a':
-                <% (@cohort.elleven_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.elleven_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'twelve_a':
-                <% (@cohort.twelve_a || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.twelve_a || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'unknown_regimen':
-                <% (@cohort.unknown_regimen || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.unknown_regimen || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'total_patients_without_side_effects':
                 <% (@cohort.total_patients_without_side_effects || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                    patient_ids.push(<%= patient_id %>);
                 <% end %>
                 break;
             case 'total_patients_with_side_effects':
-                <% (@cohort.total_patients_with_side_effects || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.total_patients_with_side_effects || []).each do |data| %>
+                    patient_ids.push(<%= data['person_id'] %>);
                 <% end %>
                 break;
             case 'unknown_side_effects':
@@ -2776,8 +2830,8 @@
                 <% end %>
                 break;
             case 'tb_not_suspected':
-                <% (@cohort.tb_not_suspected || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.tb_not_suspected || []).each do |data| %>
+                    patient_ids.push(<%= data[:patient_id] %>);
                 <% end %>
                 break;
             case 'tb_suspected':
@@ -2805,6 +2859,7 @@
         }
 
         document.getElementById('patient_ids').value = patient_ids.join(',');
+        document.getElementById('indicator').value = indicator;
         document.getElementById('patients').submit();
     }
 

@@ -752,7 +752,7 @@ class Cohort
 
 	def patients_with_start_cause(patient_list, start_date = @start_date, end_date = @end_date, concept_ids = nil)
 		patients = []
-    patients_list = patient_list #.map(&:patient_id)
+    patients_list = patient_list.map(&:patient_id)
 
 		who_stg_crit_concept_id = ConceptName.find_by_name("WHO STAGES CRITERIA PRESENT").concept_id
 		yes_concept_id = ConceptName.find_by_name("YES").concept_id

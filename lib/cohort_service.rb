@@ -8,7 +8,7 @@ class CohortService
                :tb_within_the_last_two_years, :current_episode_of_tb, :kaposis_sarcoma,
                :presumed_severe_hiv_disease_in_infants, :confirmed_hiv_infection_in_infants_pcr,:asymptomatic,
                :who_stage_two, :children_12_23_months, :breastfeeding_mothers, :pregnant_women,
-               :who_stage_three, :who_stage_four, :unknown_other_reason_outside_guidelines, :all_males
+               :who_stage_three, :who_stage_four, :unknown_other_reason_outside_guidelines, :all_males, :unknown_age
 
 
  #Cumulative ever registered
@@ -19,7 +19,7 @@ class CohortService
                :cum_tb_within_the_last_two_years, :cum_current_episode_of_tb, :cum_kaposis_sarcoma, :no_tb, :cum_no_tb,
                :cum_presumed_severe_hiv_disease_in_infants, :cum_confirmed_hiv_infection_in_infants_pcr, :cum_asymptomatic,
                :cum_who_stage_two, :cum_children_12_23_months, :cum_breastfeeding_mothers, :cum_pregnant_women,
-               :cum_who_stage_three, :cum_who_stage_four, :cum_unknown_other_reason_outside_guidelines, :cum_all_males
+               :cum_who_stage_three, :cum_who_stage_four, :cum_unknown_other_reason_outside_guidelines, :cum_all_males, :cum_unknown_age
 
   #Primary Outcomes (Cumulative)
   attr_accessor :total_alive_and_on_art, :died_within_the_1st_month_of_art_initiation,
@@ -29,7 +29,7 @@ class CohortService
 
   #Secondary Outcomes (Cumulative)
   attr_accessor :zero_a, :zero_p, :one_a, :one_p, :two_a, :two_p, :three_a, :three_p, :four_a, :four_p, :five_a, :six_a,
-                :seven_a, :eight_a, :nine_p, :ten_a, :elleven_a, :elleven_p, :twelve_a, :unknown_regimen
+                :seven_a, :eight_a, :nine_a, :nine_p, :ten_a, :elleven_a, :elleven_p, :twelve_a, :unknown_regimen
 
   #Adherence
   attr_accessor :patients_with_0_6_doses_missed_at_their_last_visit, :patients_with_7_plus_doses_missed_at_their_last_visit,
