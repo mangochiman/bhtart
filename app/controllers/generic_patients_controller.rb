@@ -2185,7 +2185,7 @@ The following block of code should be replaced by a more cleaner function
       "BODY MASS INDEX, MEASURED", "RESPONSIBLE PERSON PRESENT",
       "PATIENT PRESENT FOR CONSULTATION", "TB STATUS",
       "AMOUNT DISPENSED", "ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT",
-      "DRUG INDUCED", "AMOUNT OF DRUG BROUGHT TO CLINIC",
+      "DRUG INDUCED", "MALAWI ART SIDE EFFECTS", "AMOUNT OF DRUG BROUGHT TO CLINIC",
       "WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER",
       "CLINICAL NOTES CONSTRUCT", "REGIMEN CATEGORY"]
     concept_ids = ConceptName.find(:all, :conditions => ["name in (?)", concept_names]).map(&:concept_id)
@@ -2211,7 +2211,6 @@ The following block of code should be replaced by a more cleaner function
 
     return if patient_in_programs.blank?
 
-
     gave_hash = Hash.new(0)
     observations.map do |obs|
       drug = Drug.find(obs.order.drug_order.drug_inventory_id) rescue nil
@@ -2220,6 +2219,7 @@ The following block of code should be replaced by a more cleaner function
       #next if tb_medical == true
       #end
       encounter_name = obs.encounter.name rescue []
+
       next if encounter_name.blank?
       next if encounter_name.match(/REGISTRATION/i)
       next if encounter_name.match(/HIV STAGING/i)
@@ -2293,13 +2293,16 @@ The following block of code should be replaced by a more cleaner function
 
       elsif concept_name.upcase == 'REGIMEN CATEGORY'
         #patient_visits[visit_date].reg = 'Unknown' if obs.value_coded == ConceptName.find_by_name("Unknown antiretroviral drug").concept_id
-        patient_visits[visit_date].reg = obs.value_text if !patient_visits[visit_date].reg
-
-      elsif concept_name.upcase == 'DRUG INDUCED'
-        symptoms = obs.to_s.split(':').map do | sy |
-          sy.sub(concept_name,'').strip.capitalize
-        end rescue []
-        patient_visits[visit_date].s_eff = symptoms.join("<br/>") unless symptoms.blank?
+        #patient_visits[visit_date].reg = obs.value_text if !patient_visits[visit_date].reg
+        patient_visits[visit_date].reg = obs.value_text.gsub('Unknown', 'Non Standard') if !patient_visits[visit_date].reg
+      elsif (concept_name.upcase == 'DRUG INDUCED' || concept_name.upcase == 'MALAWI ART SIDE EFFECTS')
+        #symptoms = obs.to_s.split(':').map do | sy |
+          #sy.sub(concept_name,'').strip.capitalize
+        #end rescue []
+        symptom = obs.answer_string.squish
+        patient_visits[visit_date].s_eff += "<br/>" + symptom unless patient_visits[visit_date].s_eff.blank?
+        patient_visits[visit_date].s_eff = symptom if patient_visits[visit_date].s_eff.blank?
+        
 
       elsif concept_name.upcase == 'AMOUNT OF DRUG BROUGHT TO CLINIC'
         drug = Drug.find(obs.order.drug_order.drug_inventory_id) rescue nil
@@ -2401,7 +2404,6 @@ The following block of code should be replaced by a more cleaner function
         patient_visits[encounter_date].date_of_outcome = state.start_date rescue nil
       end
     end
-
     patient_visits
   end
 
