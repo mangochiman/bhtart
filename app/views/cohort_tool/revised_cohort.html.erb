@@ -2401,6 +2401,7 @@
 
 <form id="patients" method="post" action="/cohort_tool/list_more_details">
   <input id='patient_ids' type='hidden' name = 'patient_ids' />
+  <input id='indicator' type='hidden' name = 'indicator' />
 </form>
 
 <script>
@@ -2804,8 +2805,8 @@
                 <% end %>
                 break;
             case 'total_patients_with_side_effects':
-                <% (@cohort.total_patients_with_side_effects || []).each do |patient_id| %>
-                    patient_ids.push(<%= patient_id['patient_id'] %>);
+                <% (@cohort.total_patients_with_side_effects || []).each do |data| %>
+                    patient_ids.push(<%= data['person_id'] %>);
                 <% end %>
                 break;
             case 'unknown_side_effects':
@@ -2858,6 +2859,7 @@
         }
 
         document.getElementById('patient_ids').value = patient_ids.join(',');
+        document.getElementById('indicator').value = indicator;
         document.getElementById('patients').submit();
     }
 
