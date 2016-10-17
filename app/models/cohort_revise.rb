@@ -84,7 +84,7 @@ BEGIN
     WHERE encounter_id = @encounter_id
     AND voided = 0
     AND concept_id = my_regimem_given
-    AND value_coded = unknown_regimen_value
+    AND (value_coded = unknown_regimen_value OR value_text = 'Unknown')
     AND voided = 0 LIMIT 1;
   END IF;
 
@@ -610,11 +610,11 @@ Unique PatientProgram entries at the current location for those patients with at
       SELECT person_id, value_numeric, value_text FROM obs t WHERE concept_id = 6987 AND voided = 0
       AND obs_datetime BETWEEN (SELECT CONCAT(max(obs_datetime),' 00:00:00') FROM obs
         WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
-        AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND obs_datetime <= '#{end_date}'
       ) AND (SELECT CONCAT(max(obs_datetime),' 23:59:59') FROM obs
         WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
-        AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}'
-      ) AND person_id IN (#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date.strftime('%Y-%m-%d 23:59:59')}';
+        AND obs_datetime <= '#{end_date}'
+      ) AND person_id IN (#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date}';
 EOF
 
     adherent = [] ; not_adherent = [] ; unknown_adherence = [];
@@ -809,7 +809,7 @@ EOF
 EOF
     (data || []).each do |regimen_attr|
         regimen = regimen_attr['regimen_category']
-        regimen = 'unknown_regimen' if regimen.blank?
+        regimen = 'unknown_regimen' if regimen.blank? || regimen == 'Unknown'
         regimens << {
           :patient_id => regimen_attr['patient_id'].to_i,
           :regimen_category => regimen
