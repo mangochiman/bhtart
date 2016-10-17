@@ -566,6 +566,7 @@
   var tb_regimen_id = null;
   var other_regimen = null;
   var sideEffectsAnswers = <%= @side_effects_answers.to_json %>;
+  var currentRegimenIndex = "<%= @current_regimen.to_i rescue '' %>";
 
   var reasons = ['Treatment failure', 'Jandice/hepatitis','Anaemia < 8g/dl','Renal failure', 'Abacavir hypersensitivity', 'Lypodystrophy', 'Lactic Acidosis', 'Drug Rash', 'Other'] ;
 <% if @patient_bean.age < 12 %>
@@ -708,8 +709,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                                              regimens.push('<%=data[0].split(" ").first%>');
-                                                                                                              display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                                                  regimens.push('<%=data[0].split(" ").first%>');
+                                                                                                                  display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -1561,6 +1562,8 @@
     $('keyboard').style.display = 'none';
     $('viewport').style.display = 'none';
     $('helpText'+tstCurrentPage).innerHTML = "Current patient weight:&nbsp;<b><%=@current_weight%></b>";
+    arv_change_input = document.getElementById('reason_antiretrovirals_changed_or_stopped');
+    if (arv_change_input) arv_change_input.value = '' //clear the reason. Issues of clicking Back button
 
 <% if @fast_track_patient == true && !@current_regimen.blank? %>
       $('backButton').style.display = 'none';
@@ -2020,8 +2023,76 @@ end
     jQuery('#inputFrame' + tstCurrentPage + '> .options').css({
       height: '90%'
     });
-
+   
   }
+
+  function setOptionsForRegimenChange(){
+<% unless @current_regimen.blank? %>
+      liElements = jQuery('li');
+      for (var i=0; i<=liElements.length - 1; i++){
+        liElements[i].onmouseup = function(){
+          tstvalue = this.getAttribute('tstvalue');
+          regIndex = tstvalue.replace( /^\D+/g, ''); // replace all leading non-digits with nothing. Copied from stack overflow #mangochiman
+          if (parseInt(regIndex) != parseInt(currentRegimenIndex)){
+            changeRegimenPopup();
+          }
+
+        }
+        if (liElements){
+          stopRegimenChangeInterval();
+        }
+
+      }
+<% end %>
+  }
+
+var regimenChangeInterval;
+function startRegimenChangeInterval(){
+  regimenChangeInterval = window.setInterval("setOptionsForRegimenChange()", 500);
+}
+
+function stopRegimenChangeInterval(){
+  clearInterval(regimenChangeInterval)
+}
+
+  function changeRegimenPopup(){
+
+    var ele = document.getElementById('cover')
+    ele.style.display = "inline";
+    document.body.appendChild(ele);
+
+    var newDiv = document.createElement('div');
+    newDiv.id = "alertPage";
+    newDiv.style.left = "32%";
+    newDiv.style.top = "30%";
+    newDiv.style.width = "840px";
+    newDiv.style.height = "500px";
+
+    var display = "<div id='main_head'><span>Reason for regimen change</span></div>";
+    display += "<div height='800'><select id='reason_for_change' size='6'>";
+    display += "<option value=''></option>"
+    for (x=0; x < reasons.length; x++){
+      display += "<option value='" + reasons[x] + "' onmousedown='removeObs(this)' class='reasons'>" + reasons[x] + "</option>";
+    }
+    display += "</select></div>";
+    newDiv.innerHTML = '<div id="popup">' + display + '</div>' ;
+    document.body.appendChild(newDiv);
+
+    var newBtn = document.createElement('button');
+    newBtn.className = "navButton red";
+    newBtn.id = "cancel";
+    newBtn.innerHTML = "<span>Cancel</span>";
+    newDiv.appendChild(newBtn);
+    newBtn.setAttribute('onclick', "document.getElementById('cover').style.display='none'; this.parentNode.style.display='none';")
+
+    var newBtn = document.createElement('button');
+    newBtn.className = "green navButton";
+    newBtn.id = "ok";
+    newBtn.innerHTML = "<span>Next</span>";
+    newDiv.appendChild(newBtn);
+    newBtn.setAttribute('onclick', "updateForm(this);")
+  }
+
 </script>
 
 <%
@@ -2258,11 +2329,11 @@ pyridoxine_options = ["","25", "50"]
       <%= select_tag :regimen_concept_id, nil, {
         :ajaxUrl => "",
         :allowFreeText => 'false',
-        :tt_onLoad => "checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);showCategory('Regimen'); modifyPage();",
+        :tt_onLoad => "checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);showCategory('Regimen'); modifyPage(); startRegimenChangeInterval();",
         :condition => 'hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value != "YES"',
-        :helpText => "Select ART regimen. Current patient weight: <b>#{@current_weight}</b>",
+        :helpText => "Select ART regimen.#{@current_regimen_text} Current patient weight: <b>#{@current_weight}</b>",
         :optional => true,
-        :tt_onUnload => "resetRegimen();removeButton();"}%>
+        :tt_onUnload => "resetRegimen();removeButton(); stopRegimenChangeInterval();"}%>
     <% end %>
 
     <%= select_tag :regimen_concept_id_all, nil, {

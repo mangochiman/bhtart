@@ -48,8 +48,8 @@ function contraindicators(){
 
         sideEffectsData = "<b><span style='color: green;'>Side Effects</span>: <i>" + sideEffectsAnswers.join(", ") + "</i></b><br /><br />";
         sideEffectsData += "<b><span style='color: green;'>Regimen " + selectedRegimenIndex + " Contraindications</span>: <i>" + flattedContraindications.join(", ") + "</i></b><br /><br />";
-        if (alt_one_drugs.length > 0) sideEffectsData += "<b><span style='color: green;'>Regimen Alternative 1</span>: <i> " + alt_one_drugs_data + "</i></b><br /><br />";
-        if (alt_two_drugs.length > 0) sideEffectsData += "<b><span style='color: green;'>Regimen Alternative 2</span>: <i> " + alt_two_drugs_data + "</i></b><br /><br />";
+        if (alt_one_drugs.length > 0) sideEffectsData += "<b><span style='color: green;'>Alternative Regimen 1</span>: <i> " + alt_one_drugs_data + "</i></b><br /><br />";
+        if (alt_two_drugs.length > 0) sideEffectsData += "<b><span style='color: green;'>Alternative Regimen 2</span>: <i> " + alt_two_drugs_data + "</i></b><br /><br />";
 
         content = document.getElementById('content');
         popupDiv = document.createElement('div');
