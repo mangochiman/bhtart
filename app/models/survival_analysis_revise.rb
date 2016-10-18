@@ -1,6 +1,6 @@
 class SurvivalAnalysisRevise
 
-  def self.get_indicators(start_date, end_date)
+  def self.get_indicators(start_date, end_date, quarter_type)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
 =begin
     ActiveRecord::Base.connection.execute <<EOF
@@ -33,6 +33,16 @@ EOF
     date_ranges = []
     cohort = CohortService.new(cum_start_date)
 
+    if quarter_type == "Women"
+			start_of_6_months = survival_start_date - 6.months
+			end_of_6_months = survival_end_date.to_date - 6.months
+
+			if end_of_6_months >= cum_start_date
+		    date_ranges << {:start_date => start_of_6_months.to_date,
+		                    :end_date   => end_of_6_months.to_date}
+			end
+		end
+
     while (survival_start_date -= 1.year) >= cum_start_date
       survival_end_date   -= 1.year
       date_ranges << {:start_date => survival_start_date,
@@ -47,7 +57,16 @@ EOF
     interval = ""
     date_ranges.sort_by {|x,i| x[:end_date] <=>  x[:start_date]}.each_with_index do |range, i|
 
-      interval = "#{(i + 1)*12}"
+      if quarter_type == "Women"
+        if i == 0
+      	   interval = "#{(i + 1)*6}"
+      	else
+      		 x = i - 1
+      		 interval = "#{(x + 1)*12}"
+      	end
+      else
+      	  interval = "#{(i + 1)*12}"
+       end
 
       states[interval.to_i] = self.general_analysis(range[:start_date], range[:end_date])
       pregnant_and_breast_feeding_women[interval.to_i] = self.pregnant_and_breast_feeding_women(range[:start_date], range[:end_date])
