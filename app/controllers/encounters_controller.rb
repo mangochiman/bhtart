@@ -3,6 +3,7 @@ class EncountersController < GenericEncountersController
 		#raise params.to_yaml
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
 		@patient_bean = PatientService.get_patient(@patient.person)
+    @gender = @patient.person.gender.upcase
 		session_date = session[:datetime].to_date rescue Date.today
 
     fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
@@ -538,12 +539,12 @@ class EncountersController < GenericEncountersController
           ["Pulmonary tuberculosis (current)", "Pulmonary tuberculosis (current)"],
           ["Tuberculosis (PTB or EPTB) within the last 2 years", "Tuberculosis (PTB or EPTB) within the last 2 years"],
           ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
+          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
+          ["Oral candidiasis", "Oral candidiasis"],
+          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
           ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
           ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
           ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
-          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
-          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
-          ["Oral candidiasis", "Oral candidiasis"],
           ["Hepatitis B or C infection", "Hepatitis B or C infection"],
           ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
           ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],

@@ -172,6 +172,7 @@
   var patientOnTBTreatment = '<%= @patient_on_tb_treatment %>';
   var patientTBSuspected = '<%= @patient_tb_suspected %>';
   var patientTBConfirmed = '<%= @patient_tb_confirmed %>';
+  var gender = '<%= @gender %>';
 
   function dateCreate(date_str){
     intyear = 0 ; intmonth = 0 ; intday = 0;
@@ -455,7 +456,7 @@
       :id => 'fast_track',
       :condition => "fastTrackPatient == 'true' && hivReceptionOnlyAvailable == 'true'",
       :tt_onUnLoad => "setFastTrackYesNoValue()",
-      :helpText => 'This patient is currently on Fast Track Visit. Continue with Fast Track?'
+      :helpText => 'Booked for Fast Track. Continue?'
     } %>
 
     <%= touch_select_tag "STOP REASON", @patient, options_for_select(@fast_track_stop_reasons),{

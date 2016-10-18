@@ -297,11 +297,11 @@ module MedicationService
   def self.other_medications(drug_name, current_weight)
     drug_ids = Drug.find(:all, :conditions =>['name LIKE ?', "%#{drug_name}%"]).map(&:drug_id)
 
-    regimen_medications = Drug.find(:all,:joins => "INNER JOIN moh_other_medications o 
+    regimen_medications = (Drug.find(:all,:joins => "INNER JOIN moh_other_medications o 
       ON o.drug_inventory_id = drug.drug_id AND o.drug_inventory_id IN (#{drug_ids.join(',')})
       INNER JOIN moh_regimen_doses d ON d.dose_id = o.dose_id",
       :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
-      :select => "drug.*, o.*, d.*", :limit => 1, :order => "drug.name DESC").map do |medication|
+      :select => "drug.*, o.*, d.*", :limit => 10, :order => "drug.name DESC") || []).map do |medication|
         {
           :drug_name => medication.name,
           :am => medication.am,
@@ -313,7 +313,57 @@ module MedicationService
         }
       end
 
-    return regimen_medications    
+    #Isoniazid section
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Isoniazid/i) and medication[:drug_name].match(/300/i)
+        return [medication]
+      end
+    end
+
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Isoniazid/i) and medication[:drug_name].match(/100/i)
+        return [medication]
+      end
+    end
+
+    #Cotrimoxazole section
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/960/i)
+        return [medication]
+      end
+    end
+
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/480/i)
+        return [medication]
+      end
+    end
+
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/120/i)
+        return [medication]
+      end
+    end
+
+
+
+    return regimen_medications
+  end
+
+  def self.calculate_days_base_on_pills(drug_id, current_weight, number_of_pills)
+    doses = Drug.find(:all,:joins => "INNER JOIN moh_regimen_ingredient i 
+      ON i.drug_inventory_id = drug.drug_id AND i.drug_inventory_id = #{drug_id}
+      INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
+      :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
+      :select => "drug.*, i.*, d.*").map do |medication|
+        {
+          :am => medication.am, :pm => medication.pm
+        }
+    end
+
+    return 0 if doses.blank?
+    total_pills_per_day = doses.first[:am].to_f + doses.first[:pm].to_f
+    return ((number_of_pills)/total_pills_per_day).to_i
   end
 
 end

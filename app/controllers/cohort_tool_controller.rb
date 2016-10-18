@@ -1560,7 +1560,30 @@ class CohortToolController < GenericCohortToolController
 
 	def list_more_details
 		@patient_ids = params[:patient_ids]
+    @report_name = params[:indicator].upcase.gsub('_', ' ')
 		@logo = CoreService.get_global_property_value('logo').to_s
+    @people = {}
+    (@patient_ids.split(',') || []).each do |patient_id|
+      names =  PersonName.find_last_by_person_id(patient_id.to_i)
+      patient = Patient.find(patient_id.to_i)
+      temp_earliest = ActiveRecord::Base.connection.select_one <<EOF
+        Select e.*, o.cum_outcome From temp_earliest_start_date e 
+        RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+        Where e.patient_id = #{patient_id.to_i};
+EOF
+
+      @people[patient_id.to_i] = {
+        :arv_number => PatientService.get_patient_identifier(patient, 'ARV Number'),
+        :name => "#{names.given_name} #{names.family_name}",
+        :gender => (temp_earliest['gender'] rescue 'Unknown'),
+        :birthdate => temp_earliest['birthdate'],
+        :date_enrolled => temp_earliest['date_enrolled'],
+        :earliest_start_date => temp_earliest['earliest_start_date'],
+        :reason_for_starting => PatientService.reason_for_art_eligibility(patient),
+        :outcome => temp_earliest['cum_outcome']
+      }
+    end
+		render :layout => false
 	end
 
 	def finish

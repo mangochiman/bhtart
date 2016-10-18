@@ -9,6 +9,7 @@ class GenericRegimensController < ApplicationController
 		end
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		@patient_bean = PatientService.get_patient(@patient.person)
+    @gender = @patient.person.gender.upcase
 		@programs = @patient.patient_programs.all
 
     ################################################################################################################
@@ -28,6 +29,8 @@ class GenericRegimensController < ApplicationController
     ################################################################################################################
 
 		@current_regimen = current_regimen(@patient.id) rescue nil
+    @current_regimen_text = "Current Regimen: <b>#{@current_regimen}</b> " unless @current_regimen.blank?
+
     @current_regimen_index = @current_regimen.to_i unless @current_regimen.blank?
 		#@hiv_programs = @patient.patient_programs.not_completed.in_programs('HIV PROGRAM')
     @hiv_programs = []
@@ -118,6 +121,14 @@ class GenericRegimensController < ApplicationController
     hiv_additional_symptoms_ids = Patient.concept_set("ADDITIONAL MALAWI ART SYMPTOM SET")#chunked
 
 		hiv_symptoms_ids += hiv_additional_symptoms_ids
+
+    side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
+    symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
+
+    @side_effects_answers = @patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
+        DATE(obs_datetime) =?", [side_effects_concept_id, symptom_present_conept_id], session_date]
+    ).collect{|o|o.answer_string.squish}
+
 		@found_symptoms = []
 
 		@prescribe_art_drugs = false
@@ -279,7 +290,7 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure','Treatment failure']
         ],
 				'contraindications' => [
-					['History of psychiatric illness','History of psychiatric illness']
+					['History of psychosis','History of psychosis']
 				],
 				'alt1' => [
           ['Neuropathy','5'],
@@ -300,7 +311,7 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure','Treatment failure']
         ],
 				'contraindications' => [
-					['History of psychiatric illness','History of psychiatric illness'],
+					['History of psychosis','History of psychosis'],
 					['Anaemia <8g/dl','Anaemia <8g/dl']
 				],
 				'alt1' => [
@@ -316,61 +327,59 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure','9']
 				]},
 			'5' => { 'adverse' =>[
-          ['Renal Failure','Renal Failure'],
-          ['Hepatitis, Skin rash, psychiat disorder','Hepatitis, Skin rash, psychiat disorder'],
+          ['Kidney Failure','Kidney Failure'],
+          ['Hepatitis, Skin rash, psychosis','Hepatitis, Skin rash, psychosis'],
           ['Persistent dizziness, Visual disturbances', 'Persistent dizziness, Visual disturbances'],
           ['Treatment failure','Treatment failure']
 				],
 				'contraindications' => [
-					['History of psychiatric illness','History of psychiatric illness'],
-					['Renal failure','Renal failure'],
-					['Child under 3 years','Child under 3 years']
+					['History of psychosis','History of psychosis'],
+					['Renal failure','Renal failure']
 				],
 				'alt1' => [
-          ['Renal Failure','0'],
-          ['Hepatitis, Skin rash, psychiat disorder','6'],
+          ['Kidney Failure','0'],
+          ['Hepatitis, Skin rash, psychosis','6'],
           ['Persistent dizziness, Visual disturbances', '6'],
           ['Treatment failure','8']
 				],
 				'alt2'=> [
           ['Renal Failure','2'],
-          ['Hepatitis, Skin rash, psychiat disorder','0 or 2'],
+          ['Hepatitis, Skin rash, psychosis','0 or 2'],
           ['Persistent dizziness, Visual disturbances', '0 or 2'],
           ['Treatment failure','NS']
 				]},
 			'6' => { 'adverse' =>[
-          ['Renal failure','Renal failure'],
+          ['Kidney failure','Kidney failure'],
           ['Hepatitis, Skin rash','Hepatitis, Skin rash'],
           ['Treatment failure','Treatment failure']
 				],
 				'contraindications' => [
 					['Hepatitis/Jaundice','Hepatitis/Jaundice'],
-					['Renal failure','Renal failure'],
-					['Child under 3 years','Child under 3 years']
+					['Kidney failure','Kidney failure']
 				],
 				'alt1' => [
-          ['Renal failure','0'],
+          ['Kidney failure','0'],
           ['Hepatitis, Skin rash','5'],
           ['Treatment failure','8']
 				],
 				'alt2'=> [
-          ['Renal failure','2'],
+          ['Kidney failure','2'],
           ['Hepatitis, Skin rash','NS'],
           ['Treatment failure','NS']
 				]},
 			'7' =>{ 'adverse' =>[
           ['Nausia, vomiting','Nausia, vomiting'],
-          ['Renal failure','Renal failure'],
+          ['Kidney failure','Kidney failure'],
           ['Jaundice','Jaundice']
 				],
 				'contraindications' => [
-					['Renal failure','Renal failure'],
+					['Kidney failure','Kidney failure'],
 					['Patient on rifampicin','Patient on rifampicin'],
           ['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
 				'alt1' => [
           ['Nausia, vomiting','NS'],
-          ['Renal failure','8'],
+          ['Kidney failure','8'],
           ['Jaundice','TDF/3TC + LPV/r']
 				],
 				'alt2'=> [
@@ -384,7 +393,7 @@ class GenericRegimensController < ApplicationController
           ['Jaundice', 'Jaundice']
 				],
 				'contraindications' => [
-					['Anaemia <8g/dl','Anaemia <8g/dl'],
+					['Anemia <8g/dl','Anemia <8g/dl'],
           ['Patient on rifampicin','Patient on rifampicin'],
           ['Hepatitis/Jaundice','Hepatitis/Jaundice']
 				],
@@ -415,20 +424,20 @@ class GenericRegimensController < ApplicationController
 				]
       },
       '10' => { 'adverse' =>[
-          ['Renal failure', 'Renal failure'],
+          ['Kidney failure', 'Kidney failure'],
           ['Diarrhoea, vomiting, dizziness, headache', 'Diarrhoea, vomiting, dizziness, headache'],
           ['Treatment failure', 'Treatment failure']
 				],
 				'contraindications' => [
-					['Renal failure', 'Renal failure']
+					['Kidney failure', 'Kidney failure']
 				],
 				'alt1' => [
-          ['Renal failure', '11'],
+          ['Kidney failure', '11'],
           ['Diarrhoea, vomiting, dizziness, headache', '7'],
           ['Treatment failure', '12']
 				],
 				'alt2'=> [
-          ['Renal failure', '8'],
+          ['Kidney failure', '8'],
           ['Diarrhoea, vomiting, dizziness, headache', '8'],
           ['Treatment failure', 'None']
 				]
@@ -440,7 +449,7 @@ class GenericRegimensController < ApplicationController
           ['Treatment failure', 'Treatment failure']
 				],
 				'contraindications' => [
-					['Anaemia <8g/dl', 'Anaemia <8g/dl']
+					['Anemia <8g/dl', 'Anemia <8g/dl']
 				],
 				'alt1' => [
           ['Anaemia, vomiting, appetite loss', '10'],
@@ -514,6 +523,16 @@ class GenericRegimensController < ApplicationController
 			end
 
 		end
+
+    unless params[:drug_names].blank?
+      #This is non standard regimen
+      #Do not automatically create CPT/IPT prescription. It has to be manually selected from the list of drugs
+      prescribe_cpt = false
+      prescribe_ipt = false
+    end
+
+
+    #raise params.inspect
 		#raise prescribe_pyridoxine.to_yaml
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		session_date = session[:datetime] || Time.now()
@@ -749,11 +768,11 @@ class GenericRegimensController < ApplicationController
 				:obs_datetime => start_date)
 
 			next if concept == 'NO'
-
+      weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
       if ! params[:cpt_duration].blank?
-        #params[:cpt_duration] =  params[:duration]
         auto_cpt_ipt_expire_date = session[:datetime] + params[:cpt_duration].to_i.days + arvs_buffer.days rescue Time.now + params[:cpt_duration].to_i.days + arvs_buffer.days
       end
+
 			if concept_name == 'CPT STARTED'
 				if params[:cpt_mgs] == "960"
 					drug = Drug.find_by_name('Cotrimoxazole (960mg)')
@@ -764,6 +783,9 @@ class GenericRegimensController < ApplicationController
 				else
 					drug = Drug.find_by_name('Cotrimoxazole (480mg tablet)')
 				end
+
+        order = MedicationService.other_medications('Cotrimoxazole', weight).first
+
       else
 				if params[:ipt_mgs] == "300"
           drug = Drug.find_by_name('INH or H (Isoniazid 300mg tablet)')
@@ -776,29 +798,41 @@ class GenericRegimensController < ApplicationController
         else
           drug = Drug.find_by_name('INH or H (Isoniazid 100mg tablet)')
 				end
+
+        order = MedicationService.other_medications('Isoniazid', weight).first
+
 			end
 
-			weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
-			regimen_id = Regimen.all(:conditions =>  ['min_weight <= ? AND max_weight >= ? AND concept_id = ?', weight, weight, drug.concept_id]).first.regimen_id
-			orders = RegimenDrugOrder.all(:conditions => {:regimen_id => regimen_id, :drug_inventory_id => drug.id})
-      #=begin
-      #raise auto_cpt_ipt_expire_date.to_yaml
-      orders.each do |order|
-        regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept_names.typed("FULLY_SPECIFIED").first).name
-        DrugOrder.write_order(
-          encounter,
-          @patient,
-          obs,
-          drug,
-          start_date,
-          auto_cpt_ipt_expire_date,
-          order.dose,
-          order.frequency,
-          order.prn,
-          "#{drug.name}: #{order.instructions} (#{regimen_name})",
-          order.equivalent_daily_dose)
+      morning_tabs = order[:am]
+      evening_tabs = order[:pm]
+
+      instructions = "#{drug.name}:- Morning: #{morning_tabs} tab(s), Evening: #{evening_tabs} tabs"
+      frequency = "ONCE A DAY (OD)"
+      equivalent_daily_dose = morning_tabs.to_f + evening_tabs.to_f
+      dose = morning_tabs if evening_tabs.to_i == 0
+      dose = evening_tabs if morning_tabs.to_i == 0
+
+      if (morning_tabs.to_i > 0 && evening_tabs.to_i > 0)
+        frequency = "TWICE A DAY (BD)"
+        dose = (morning_tabs.to_f + evening_tabs.to_f)/2
       end
-      #=end
+      
+      prn = 0
+
+      DrugOrder.write_order(
+        encounter,
+        @patient,
+        obs,
+        drug,
+        start_date,
+        auto_cpt_ipt_expire_date,
+        dose,
+        frequency,
+        prn,
+        instructions,
+        equivalent_daily_dose
+      )
+      
 		end
 
     unless prescribe_pyridoxine .blank?
@@ -810,7 +844,7 @@ class GenericRegimensController < ApplicationController
       elsif prescribe_tb_drugs
         auto_cpt_ipt_expire_date = auto_tb_expire_date
       else
-        auto_cpt_ipt_expire_date = auto_tb_continuation_expire_date
+        auto_cpt_ipt_expire_date = ((session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days) rescue auto_tb_continuation_expire_date)
       end
       concept_name = "pyridoxine"
       yes_no = ConceptName.find_by_name(prescribe_pyridoxine)
@@ -891,6 +925,35 @@ class GenericRegimensController < ApplicationController
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*", 
       :group => 'drug.drug_id')
 
+    session_date = session[:datetime].to_date rescue Date.today
+    patient = Patient.find(params[:patient_id])
+    allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date)
+
+    if allergic_to_sulphur == 'Yes'
+      prescribe_cpt_set = false
+    else
+      prescribe_cpt_set = prescribe_medication_set(patient, session_date, 'CPT')
+    end
+    prescribe_ipt_set = prescribe_medication_set(patient, session_date, 'Isoniazid')
+
+    if prescribe_cpt_set == true
+      cpt_drug_names = ['TMP/SMX (Cotrimoxazole 120mg tablet)', 'TMP/SMX (Cotrimoxazole 240mg tablet)',
+        'Cotrimoxazole (480mg tablet)', 'Cotrimoxazole (960mg)'
+      ]
+      cpt_drugs = Drug.find(:all, :conditions => ["name IN (?)", cpt_drug_names])
+      cpt_drugs.each do |cpt_drug|
+        medications << cpt_drug
+      end
+    end
+
+    if prescribe_ipt_set == true
+      pyridoxine_ipt_drug_names = ['INH or H (Isoniazid 100mg tablet)', 'Pyridoxine (50mg)']
+      pyridoxine_ipt_drugs = Drug.find(:all, :conditions => ["name IN (?)", pyridoxine_ipt_drug_names])
+      pyridoxine_ipt_drugs.each do |drug|
+        medications << drug
+      end
+    end
+    
     @options = (medications || []).map do | m |
       [m.name , m.drug_id ]
     end
@@ -946,6 +1009,21 @@ class GenericRegimensController < ApplicationController
       unless dose.blank?
         regimen_medications = (regimen_medications + dose)
       end
+      category = regimen_medications.last[:category] rescue nil
+      drug = Drug.find_by_name('Pyridoxine (50mg)')
+      
+      pyridoxine_dose = [{
+          :drug_name => 'Pyridoxine (50mg)',
+          :am => '0',
+          :pm => '1',
+          :units => 'Tab(s)',
+          :drug_id => drug.drug_id,
+          :regimen_index => nil,
+          :category => category
+        }]
+
+      regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+      
     end
     ################################################################################################################
 
@@ -953,6 +1031,7 @@ class GenericRegimensController < ApplicationController
     @options = (regimen_medications || []).each do | r |
       [r[:drug_name] , r[:am] , r[:pm], r[:units] , r[:regimen_index] , r[:category]]
     end
+
     render :text => @options.to_json
 	end
 
@@ -978,6 +1057,20 @@ class GenericRegimensController < ApplicationController
     if @prescribe_ipt_set == true
       dose = MedicationService.other_medications('Isoniazid', current_weight)
       regimen_medications = (regimen_medications + dose) unless dose.blank?
+      category = regimen_medications.last[:category] rescue nil
+      drug = Drug.find_by_name('Pyridoxine (50mg)')
+
+      pyridoxine_dose = [{
+          :drug_name => 'Pyridoxine (50mg)',
+          :am => '0',
+          :pm => '1',
+          :units => 'Tab(s)',
+          :drug_id => drug.drug_id,
+          :regimen_index => nil,
+          :category => category
+        }]
+
+      regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
     end
 
     ################################################################################################################
@@ -991,10 +1084,18 @@ class GenericRegimensController < ApplicationController
 
   def formulations_all
     names = params[:names].split('::')
-
     medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i 
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
       :conditions => ["drug.name IN(?)", names], :group => "drug.drug_id")
+
+    names.each do |drug_name|
+      if (drug_name.match(/Cotrimoxazole|Isoniazid|Pyridoxine/i))
+        #These drugs are not in moh_regimen_ingredient
+        medications = [] if medications.blank?
+        drug = Drug.find_by_name(drug_name)
+        medications << drug
+      end
+    end
 
     @options = (medications || []).map do | m |
       [m.name , m.units, m.drug_id ]
@@ -1301,7 +1402,7 @@ class GenericRegimensController < ApplicationController
 	  prescribe_medication = Concept.find_by_name("Medication orders").concept_id
 	  medication_concept = Concept.find_by_name(medication_type).concept_id
 
-    found = Observation.find(:first, :conditions => ["concept_id = ? AND
+    found = Observation.find(:first, :joins => [:encounter], :conditions => ["concept_id = ? AND
         person_id = ? AND value_coded = ? AND DATE(obs_datetime) = ?",
         prescribe_medication, patient.id, medication_concept, date.to_date])
 
