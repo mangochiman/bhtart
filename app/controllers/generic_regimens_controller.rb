@@ -536,7 +536,6 @@ class GenericRegimensController < ApplicationController
 		#raise prescribe_pyridoxine.to_yaml
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		session_date = session[:datetime] || Time.now()
-
 		if !params[:filter][:provider].blank?
 			user_person_id = User.find_by_username(params[:filter][:provider]).person_id
 		else
@@ -552,6 +551,7 @@ class GenericRegimensController < ApplicationController
 		auto_tb_expire_date = session[:datetime] + params[:tb_duration].to_i.days rescue Time.now + params[:tb_duration].to_i.days
 		auto_tb_continuation_expire_date = session[:datetime] + params[:tb_continuation_duration].to_i.days rescue Time.now + params[:tb_continuation_duration].to_i.days
 		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
+    amought_of_drugs_brought_to_clinic_today = Patient.amought_brought_to_clinic_today(@patient, session_date)
 
 		orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:tb_regimen]})
 		ActiveRecord::Base.transaction do
@@ -735,6 +735,12 @@ class GenericRegimensController < ApplicationController
           dose = (morning_tabs.to_f + evening_tabs.to_f)/2
         end
         prn = 0
+
+        unless amought_of_drugs_brought_to_clinic_today[drug.drug_id].blank?
+          number_of_pills = amought_of_drugs_brought_to_clinic_today[drug.drug_id]
+          days_based_on_pills = MedicationService.calculate_days_base_on_pills(drug.drug_id, weight, number_of_pills)
+          auto_expire_date = ((auto_expire_date + days_based_on_pills.days) rescue auto_expire_date)
+        end
 
 				DrugOrder.write_order(
           encounter,
