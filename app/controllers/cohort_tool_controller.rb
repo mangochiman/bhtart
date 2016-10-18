@@ -1506,7 +1506,7 @@ class CohortToolController < GenericCohortToolController
 			start_date,end_date = Report.generate_cohort_date_range(@quarter)
 		end
 
-		cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date)
+		cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date, params[:quarter_type])
 		logger.info("cohort")
 
 		if session[:cohort].blank?
@@ -1567,7 +1567,7 @@ class CohortToolController < GenericCohortToolController
       names =  PersonName.find_last_by_person_id(patient_id.to_i)
       patient = Patient.find(patient_id.to_i)
       temp_earliest = ActiveRecord::Base.connection.select_one <<EOF
-        Select e.*, o.cum_outcome From temp_earliest_start_date e 
+        Select e.*, o.cum_outcome From temp_earliest_start_date e
         RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
         Where e.patient_id = #{patient_id.to_i};
 EOF
