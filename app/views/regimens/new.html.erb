@@ -979,9 +979,9 @@
           //formulations = formulations[0]
           prescription_container = $(prescriptionContainer);
           html = "<table>"
-          html += "<tr><th>&nbsp;</th><th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th><th>&nbsp;</th></tr>"
-          html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 5px;'>";
-          html += "AM</th><th style='text-align: right; padding-right: 5px;'>PM</th><th></th></tr>"
+          html += "<tr><th>&nbsp;</th><th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th></tr>"
+          html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 9px;'>";
+          html += "AM</th><th style='text-align: right; padding-right: 9px;'>PM</th></tr>"
           for (i = 0 ; i < formulations.length ; i++) {
             data = formulations[i]
             regimen_id = data[2]
@@ -989,8 +989,8 @@
             html += "<td>" + data[1] + "</td>"
             html += "<td><input key='" + data[0] + "_am' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
             html += "<td><input key='" + data[0] + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
-            html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
-            html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
+            //html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
+            //html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
             $('touchscreenInput'+tstCurrentPage).value += data[0] + ':';
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
