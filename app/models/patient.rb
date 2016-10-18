@@ -398,7 +398,7 @@ def self.vl_result_hash(patient)
     amount_of_drug_brought_to_clinic_concept_id = Concept.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id
 
     todays_amought_brought_to_clinic_observations = patient.person.observations.find(:all, :joins => [:encounter],
-        :conditions => ["DATE(obs_datetime) = ? AND concept_id =?", session_date,
+        :conditions => ["DATE(obs_datetime) = ? AND concept_id =?", session_date.to_date,
           amount_of_drug_brought_to_clinic_concept_id]
     )
     
