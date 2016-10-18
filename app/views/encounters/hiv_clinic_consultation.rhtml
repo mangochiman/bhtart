@@ -480,7 +480,7 @@
   <%end%>
 
   <% if ask_standard_art_side_effects == false %>
-    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, concept_set_options('MALAWI ART SIDE EFFECTS'),
+    <%= touch_select_tag "MALAWI ART SIDE EFFECTS", @patient, concept_set_options('MALAWI ART SIDE EFFECTS').gsub("Hepatitis", "Jaundice"),
       {:id => 'side_effects',
       :multiple => true,
       :conditions => @art_first_visit == false,
