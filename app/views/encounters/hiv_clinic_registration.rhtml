@@ -1162,8 +1162,8 @@ function checkConfirmDate(){
   }
 
   function setUnknownConfirmatoryTestForPopup(){
-    unknown_confirmatory_option_input = jQuery("[tstvalue='UNKNOWN']")[0];
-
+    unknown_confirmatory_option_input = jQuery("li[tstvalue='UNKNOWN']")[0];
+    console.log(unknown_confirmatory_option_input)
       if (unknown_confirmatory_option_input){
         unknown_confirmatory_option_input.onmouseup = function(){
           if (!unknown_confirmatory_option_input.style.backgroundColor.match(/lightBlue/i)){
