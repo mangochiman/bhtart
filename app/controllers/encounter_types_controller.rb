@@ -29,6 +29,12 @@ class EncounterTypesController < GenericEncounterTypesController
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true" && patient_present(Patient.find(params[:patient_id]), (session[:datetime].to_date rescue Date.today)) && htn_client?(Patient.find(params[:patient_id]))
       @available_encounter_types << "BP Management"
     end
+
+    app_name = (what_app? rescue 'ART')
+    if app_name == 'ART'
+      @available_encounter_types.delete_if{|e|e.match(/TB|lab|Sputum|Update hiv status|referral/i)}
+    end
+
     @available_encounter_types = @available_encounter_types.sort
 
   end
