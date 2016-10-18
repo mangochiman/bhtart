@@ -1287,7 +1287,7 @@ EOF
     preg_at_initiation_concept_id = ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id
 
     (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-      result = ActiveRecord::Base.connection.select_value <<EOF
+      result = ActiveRecord::Base.connection.select_all <<EOF
         SELECT * FROM obs
         WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
         AND '#{(date_enrolled + 30.days).strftime('%Y-%m-%d 23:59:59')}'
@@ -1296,7 +1296,6 @@ EOF
         AND concept_id IN (#{preg_concept_id}, #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
         AND voided = 0 GROUP BY person_id;
 EOF
-
       registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
     end
 
