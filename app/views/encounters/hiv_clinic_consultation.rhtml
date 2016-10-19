@@ -953,7 +953,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%#= touch_hidden_tag "TB STATUS", @patient, @consultation_tb_status, {:id => "tb_status", :value_datetime => true}%>
       
     <% tb_status_options =  concept_set_options_unknown('TB STATUS').split("\n").collect{|option|
-      next if option.match(/confirmed/i)
+      next if option.match(/TB ON/i)
       option
     }.join("\n")%>
 

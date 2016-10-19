@@ -546,12 +546,13 @@ class EncountersController < GenericEncountersController
           ["Oral candidiasis", "Oral candidiasis"],
           ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
           ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
+          ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"],
           ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
           ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
           ["Hepatitis B or C infection", "Hepatitis B or C infection"],
           ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
-          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
-          ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"]
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"]
+          
         ]
 
         @who_stage_iv = [
