@@ -354,7 +354,11 @@
     <div id="content" style = "position : relative; width : 96%; margin-left : -48%">
         <%= image_tag(@logo, :class => "logo")%>
         <br /><b style="margin-left:175px; margin-top: 0px"><%= @current_location_name %></b><br />
-        <b style="position:relative; top:0px; margin-left:175px"><%= @report_name.humanize.split.map{|w| w.capitalize}.join(' ') %></b><br />
+        <b style="position:relative; top:0px; margin-left:175px">
+            Total patients
+            <%= @report_name.gsub(/cum/i, '').humanize.split.map{|w| w.capitalize}.join(' ') %>
+        </b>
+        <br />
         <br /><br />
 
         <table id="table_id" width="99%">
