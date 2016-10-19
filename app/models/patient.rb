@@ -411,4 +411,14 @@ def self.vl_result_hash(patient)
     return drugs_data
   end
 
+  def self.type_of_hiv_confirmatory_test(patient, session_date = Date.today)
+    hiv_confirmatory_test_concept_id = Concept.find_by_name('CONFIRMATORY HIV TEST TYPE').concept_id
+
+    hiv_confirmatory_answer_string = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) <= ? AND concept_id =?",
+        session_date, hiv_confirmatory_test_concept_id]
+    ).answer_string.squish.upcase rescue nil
+
+    return hiv_confirmatory_answer_string
+  end
+  
 end

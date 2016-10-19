@@ -40,6 +40,8 @@ class GenericPatientsController < ApplicationController
       @tb_registration_date = definitive_state_date(@patient, "TB PROGRAM")
     end
 
+    @confirmatory_hiv_test_type = Patient.type_of_hiv_confirmatory_test(@patient, session_date) rescue ""
+
     session[:active_patient_id] = @patient.patient_id
     if @location.downcase == "outpatient" || params[:source]== 'opd'
       render :template => 'dashboards/opdtreatment_dashboard', :layout => false
