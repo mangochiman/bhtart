@@ -735,13 +735,13 @@ class GenericRegimensController < ApplicationController
           dose = (morning_tabs.to_f + evening_tabs.to_f)/2
         end
         prn = 0
-
+=begin
         unless amought_of_drugs_brought_to_clinic_today[drug.drug_id].blank?
           number_of_pills = amought_of_drugs_brought_to_clinic_today[drug.drug_id]
           days_based_on_pills = MedicationService.calculate_days_base_on_pills(drug.drug_id, weight, number_of_pills)
           auto_expire_date = ((auto_expire_date + days_based_on_pills.days) rescue auto_expire_date)
         end
-
+=end
 				DrugOrder.write_order(
           encounter,
           @patient,
