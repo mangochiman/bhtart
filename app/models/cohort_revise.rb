@@ -1114,8 +1114,8 @@ EOF
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND concept_id = #{reason_for_art}
-      AND (value_coded = #{reason3_concept_id} 
-      OR value_coded = #{reason4_concept_id} OR value_coded = #{reason2_concept_id}) 
+      AND (value_coded = #{reason3_concept_id}
+      OR value_coded = #{reason4_concept_id} OR value_coded = #{reason2_concept_id})
       AND voided = 0 GROUP BY patient_id;
 EOF
 
@@ -1325,7 +1325,7 @@ EOF
     re_initiated_on_art_patient_ids = []
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT re_initiated_check(patient_id, date_enrolled) re_initiated FROM temp_earliest_start_date
+      SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated FROM temp_earliest_start_date
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND DATE(date_enrolled) != DATE(earliest_start_date)
       GROUP BY patient_id
@@ -1342,7 +1342,7 @@ EOF
   def self.re_initiated_on_art(start_date, end_date)
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT re_initiated_check(patient_id, date_enrolled) re_initiated FROM temp_earliest_start_date
+      SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated FROM temp_earliest_start_date
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND DATE(date_enrolled) != DATE(earliest_start_date)
       GROUP BY patient_id
