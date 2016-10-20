@@ -386,9 +386,17 @@
                     <td style="text-align: center;"><%= data[:birthdate] %></td>
                     <td style="padding-left: 10px;"><%= data[:reason_for_starting].capitalize %></td>
                     <td style="padding-left: 10px;"><%= data[:outcome].capitalize %></td>
-                    <td align='center' class="create_button"><%= link_to_onmousedown "View",{:controller =>"patients", :action => 'mastercard',
-                                                                                             :patient_id => patient_id ,:source =>"out_of_range_arv_number", :quarter => "#{@report_quarter}",
-                                                                                             :arv_start_number => "#{params[:arv_start_number]}",:arv_end_number => "#{params[:arv_end_number]}"}%></td>
+                    <td align='center' class="create_button">
+                        <%= link_to_onmousedown "View",{
+                                :controller =>"patients",
+                                :action => 'mastercard',
+                                :patient_id => patient_id ,
+                                :source =>"out_of_range_arv_number",
+                                :quarter => "#{@report_quarter}",
+                                :arv_start_number => "#{params[:arv_start_number]}",
+                                :arv_end_number => "#{params[:arv_end_number]}"
+                        }%>
+                    </td>
                 </tr>
             <% end %>
             </tbody>

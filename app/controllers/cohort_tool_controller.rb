@@ -1475,6 +1475,7 @@ class CohortToolController < GenericCohortToolController
   end
 
   def revised_cohort_to_print
+	  @logo = CoreService.get_global_property_value('logo').to_s
 	  quarter = params[:quarter]
 
 	  start_date,end_date = Report.generate_cohort_date_range(quarter)
@@ -1532,28 +1533,31 @@ class CohortToolController < GenericCohortToolController
 	end
 
 	def revised_cohort_survival_analysis_to_print
+		@logo = CoreService.get_global_property_value('logo').to_s
 		@quarter = params[:quarter]
 		start_date,end_date = Report.generate_cohort_date_range(@quarter)
 
-		@cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date)
+		@cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date, @quarter)
 		logger.info("cohort")
 		render :layout => false
 	end
 
 	def revised_women_cohort_survival_analysis_to_print
+		@logo = CoreService.get_global_property_value('logo').to_s
 		@quarter = params[:quarter]
 		start_date,end_date = Report.generate_cohort_date_range(@quarter)
 
-		@cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date)
+		@cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date, @quarter)
 		logger.info("cohort")
 		render :layout => false
 	end
 
 	def revised_children_cohort_survival_analysis_to_print
+		@logo = CoreService.get_global_property_value('logo').to_s
 		@quarter = params[:quarter]
 		start_date,end_date = Report.generate_cohort_date_range(@quarter)
 
-		@cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date)
+		@cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date, @quarter)
 		logger.info("cohort")
 		render :layout => false
 	end
@@ -1596,7 +1600,11 @@ EOF
         file_directory = params[:file_directory]
         file_name = params[:file_name]
         output = "#{file_name}.pdf"
-        print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
+        if file_name.include? 'analysis'
+          print_url = "wkhtmltopdf --zoom #{zoom} -s A4 -O landscape http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
+        else
+          print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
+        end  
         Kernel.system print_url
         pdf_filename = File.join(Rails.root, "tmp/#{output}")
         send_file(pdf_filename, :filename => "#{output}", :type => "application/pdf")
