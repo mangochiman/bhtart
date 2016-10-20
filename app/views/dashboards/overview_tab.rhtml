@@ -53,7 +53,7 @@
           <% for prog in @programs do %>
               <li class="data <%= cycle('even', 'odd') %>" program="<%= prog.id %>">
                 <div class="program">
-                  <%=(h prog.program.name.humanize).gsub('Hiv','HIV').gsub('Tb','TB').gsub('program','Care') %> started <%=h prog.date_enrolled.strftime("%b-%Y") rescue 'Unknown' %>
+                  <%=(h prog.program.name.humanize).gsub('Hiv','HIV').gsub('Tb','TB').gsub('program','Care') %> started <%=h prog.date_enrolled.strftime("%b/%Y") rescue 'Unknown' %>
                   <br /><font class='patient_state'>Current state: <%=h prog.patient_states.last.to_s.humanize.gsub('-art','-ART').gsub('arvs','ARVs') %></font>
                 </div>
               </li>
