@@ -5,7 +5,7 @@
 <style>
 
   #reason_for_adherence{
-    height:379px;
+    height:404px;
     width:100%;
     background:none repeat scroll 0 0 light-grey;
     border-color: -moz-use-text-color -moz-use-text-color silver;
@@ -613,7 +613,8 @@
 
   function checkAdherence(){
     if (abnormalAdherence != 0){
-      var reasonForLowerAdherence = ['Run out of drugs','Sharing of drugs','Overdose','Pills misplaced','Other']
+      var reasonForLowerAdherence = ['Run out of drugs','Sharing of drugs','Overdose','Pills misplaced',
+              'Side Effects', 'Forgot', 'Taking Alternative drugs', 'Felling Sick', 'Feeling Well','Other']
       var ele = document.getElementById('cover')
       ele.style.display = "inline";
       document.body.appendChild(ele);
@@ -624,7 +625,7 @@
       newDiv.style.left = "32%";
       newDiv.style.top = "30%";
       newDiv.style.width = "840px";
-      newDiv.style.height = "500px";
+      newDiv.style.height = "548px";
 
       var display = "<div id='main_head'><span>Reason for patient not adherent</span></div>";
       display += "<div height='800'><select id='reason_for_adherence' size='6'>";
