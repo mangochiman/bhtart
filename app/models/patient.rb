@@ -434,4 +434,42 @@ def self.vl_result_hash(patient)
     return ""
   end
 
+  def self.cpt_prescribed_in_the_last_prescription?(patient, session_date = Date.today)
+    last_order_date = patient.orders.find(:last, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) < ?",
+        session_date]).encounter.encounter_datetime.to_date rescue nil
+    return false if last_order_date.blank?
+    last_orders = patient.orders.find(:all, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) =?",
+        last_order_date])
+
+    last_orders.each do |order|
+      drug_name = order.drug_order.drug.name rescue nil
+      next if drug_name.blank?
+      if drug_name.match(/COTRI/i)
+        return true
+        break
+      end
+    end
+
+    return false
+  end
+
+  def self.ipt_prescribed_in_the_last_prescription?(patient, session_date = Date.today)
+    last_order_date = patient.orders.find(:last, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) < ?",
+        session_date]).encounter.encounter_datetime.to_date rescue nil
+    return false if last_order_date.blank?
+    last_orders = patient.orders.find(:all, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) =?",
+        last_order_date])
+
+    last_orders.each do |order|
+      drug_name = order.drug_order.drug.name rescue nil
+      next if drug_name.blank?
+      if drug_name.match(/ISONIAZID/i)
+        return true
+        break
+      end
+    end
+
+    return false
+  end
+
 end
