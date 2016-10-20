@@ -205,7 +205,7 @@ module MedicationService
     ingrients = MohRegimenIngredient.all
 
     (ingrients || []).each do |r|
-      if current_weight >= r.min_weight and current_weight <= r.max_weight
+      if current_weight.to_f >= r.min_weight and current_weight.to_f <= r.max_weight
         regimen_ingrients << r.drug_inventory_id 
       end
     end
@@ -300,7 +300,7 @@ module MedicationService
     regimen_medications = (Drug.find(:all,:joins => "INNER JOIN moh_other_medications o 
       ON o.drug_inventory_id = drug.drug_id AND o.drug_inventory_id IN (#{drug_ids.join(',')})
       INNER JOIN moh_regimen_doses d ON d.dose_id = o.dose_id",
-      :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
+      :conditions => "#{current_weight.to_f} >= min_weight AND #{current_weight.to_f} <= max_weight",
       :select => "drug.*, o.*, d.*", :limit => 10, :order => "drug.name DESC") || []).map do |medication|
         {
           :drug_name => medication.name,

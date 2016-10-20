@@ -570,7 +570,7 @@
 
   var reasons = ['Treatment failure', 'Jandice/hepatitis','Anaemia < 8g/dl','Renal failure', 'Abacavir hypersensitivity', 'Lypodystrophy', 'Lactic Acidosis', 'Drug Rash', 'Other'] ;
 <% if @patient_bean.age < 12 %>
-    reason += "Child under 12 years";
+    reasons.push("Child under 12 years");
 <% end %>
 
   var regimens = [];
