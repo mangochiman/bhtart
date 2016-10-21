@@ -1600,12 +1600,15 @@ EOF
         file_directory = params[:file_directory]
         file_name = params[:file_name]
         output = "#{file_name}.pdf"
-        if file_name.include? 'analysis'
+
+        if file_name.include? 'analysis' # Check if report is for survival analysis & print in landscape orientation
           print_url = "wkhtmltopdf --zoom #{zoom} -s A4 -O landscape http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
         else
           print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
-        end  
+        end
+
         Kernel.system print_url
+
         pdf_filename = File.join(Rails.root, "tmp/#{output}")
         send_file(pdf_filename, :filename => "#{output}", :type => "application/pdf")
 	    return

@@ -226,8 +226,8 @@
             all ages
         </td>
         <td class="number table-main-data">
-            <a href="/cohort_tool/list_more_details?">
-                <%= data['Number of new registered']%>
+            <a href="javascript:drillDown(<%= data['Number of new registered'] %>);">
+                <%= data['Number of new registered'] %>
             </a>
         </td>
         <td class="number table-main-data">
@@ -283,3 +283,21 @@
     </div>
 </div>
 <!- ###   ### -->
+
+<script>
+    function drillDown(indicator) {
+        var patient_ids = [];
+        switch(indicator) {
+            alert(indicator);
+                return;
+            case "<%# data['Number of new registered'] %>":
+                <%# raise data['Number of new registered'].inspect %>
+            <%# (@cohort.total_registered || []).each do |data| %>
+                //patient_ids.push(<%#= data['patient_id'] %>);
+            <%# end %>
+                break;
+            default:
+                break;
+        }
+    }
+</script>
