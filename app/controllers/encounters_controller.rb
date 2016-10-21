@@ -1381,7 +1381,7 @@ class EncountersController < GenericEncountersController
       AND drug_order.drug_inventory_id = #{order.drug_order.drug_inventory_id}  
       AND obs.obs_datetime >= '#{session_date.to_date}'                         
       AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND person_id = #{patient.id}")                                           
+      AND person_id = #{patient.id} AND value_numeric IS NOT NULL")                                           
                                                                                 
     total_brought_to_clinic = amounts_brought_to_clinic.sum{|amount| amount.value_numeric}
                                                                                 
