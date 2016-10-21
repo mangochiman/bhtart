@@ -2224,17 +2224,17 @@ pyridoxine_options = ["","25", "50"]
   <form id='regimen_form' action="/regimens/create" method='post'>
     <%= hidden_field_tag :patient_id, @patient.id %>
 
-    <%if not @allergic_to_sulphur.blank?
-      if @allergic_to_sulphur.upcase == 'YES'
+    <%###if not @allergic_to_sulphur.blank?
+      #if @allergic_to_sulphur.upcase == 'YES'
       %>
-        <%= text_field "allergic_to_sulphur_summary" , '',
+        <%#= text_field "allergic_to_sulphur_summary" , '',
           :tt_onLoad => "$('clearButton').style.display='none'; $('inputFrame' + tstCurrentPage).style.display='none'; $('keyboard').style.display = 'none'",
           :tt_onUnLoad => "$('clearButton').style.display='';",
           :optional => "true",
           :helpText => "<div class='custom-helptext' style='text-align:center;'>Patient is <b style='color:red'>allergic</b> to Cotrimoxazole</div>"
       %>
-      <%end
-    end%>
+      <%#end
+    #end%>
 
 
     <!-- TB regimen -->
