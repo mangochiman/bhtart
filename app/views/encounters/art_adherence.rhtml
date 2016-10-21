@@ -606,6 +606,7 @@ session_date = session[:datetime] || Time.now()
         for(i in drug_names){
           if ($("amount_brought_" + i).value == "Unknown"){
             amount_brought = 0;
+            continue;
           } else {
             amount_brought = $("amount_brought_" + i).value;
           }
