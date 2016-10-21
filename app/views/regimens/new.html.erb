@@ -710,8 +710,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                                                  regimens.push('<%=data[0].split(" ").first%>');
-                                                                                                                  display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                                                    regimens.push('<%=data[0].split(" ").first%>');
+                                                                                                                    display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -2047,14 +2047,14 @@ end
 <% end %>
   }
 
-var regimenChangeInterval;
-function startRegimenChangeInterval(){
-  regimenChangeInterval = window.setInterval("setOptionsForRegimenChange()", 500);
-}
+  var regimenChangeInterval;
+  function startRegimenChangeInterval(){
+    regimenChangeInterval = window.setInterval("setOptionsForRegimenChange()", 500);
+  }
 
-function stopRegimenChangeInterval(){
-  clearInterval(regimenChangeInterval)
-}
+  function stopRegimenChangeInterval(){
+    clearInterval(regimenChangeInterval)
+  }
 
   function changeRegimenPopup(){
 
@@ -2098,21 +2098,23 @@ function stopRegimenChangeInterval(){
     table = document.createElement('table');
     table.setAttribute('id', 'fast-track-table');
     /* 
-    */
+     */
     attr = [
-      ['Adult 10 years +','No side Effects, OI/TB'],
-      ['on ART for 12 months','No BP/diabetes treatment'],
-      ['on 1st Line ART',''],
-      ['Last VL < 1000',''],
-      ['Good adherence','']
+      [['Adult 10 years +', '9533'],['No side Effects, OI/TB', '9539']],
+      [['on ART for 12 months', '9534'],['No BP/diabetes treatment', '9540']],
+      [['on 1st Line ART','9535'], ['Not Pregnant / Breastfeeding', '9538']],
+      [['Last VL < 1000','9536']],
+      [['Good adherence','9537']]
     ];
 
     counter = 1;
     for(var i = 0; i < attr.length; i++){
       tr = document.createElement('tr');
       td = document.createElement('td');
-      td.innerHTML = attr[i][0];
+      concept_id = attr[i][0][1];
+      td.innerHTML = attr[i][0][0];
       tr.appendChild(td);
+      
       td = document.createElement('td');
       checkBox = document.createElement('img');
       checkBox.setAttribute('src','/touchscreentoolkit/lib/images/unticked.jpg');
@@ -2121,23 +2123,34 @@ function stopRegimenChangeInterval(){
       td.appendChild(checkBox);
       td.setAttribute('id','td_' + counter);
       td.setAttribute('onmousedown','checkBoxClicked(this);');
+      td.setAttribute('concept_id',concept_id);
       tr.appendChild(td);
       counter += 1;
 
       td = document.createElement('td');
-      td.innerHTML = attr[i][1];
+      data = attr[i][1];
+      if (data){
+        data = attr[i][1][0];
+      }
+
+      td.innerHTML = (data || '&nbsp;');
       tr.appendChild(td);
       td = document.createElement('td');
-      if(attr[i][1].length > 0) {
+
+      if(attr[i].length == 2) {
+        concept_id = attr[i][1][1];
+        td.setAttribute('concept_id',concept_id);
         checkBox = document.createElement('img');
         checkBox.setAttribute('src','/touchscreentoolkit/lib/images/unticked.jpg');
         checkBox.setAttribute('class', 'fast_track_checkbox');
         checkBox.setAttribute('id', 'checkBox_' + counter);
         td.setAttribute('onmousedown','checkBoxClicked(this);');
         td.setAttribute('id','td_' + counter);
+        
         td.appendChild(checkBox);
         counter += 1;
       }
+
       tr.appendChild(td);
 
 
@@ -2151,11 +2164,25 @@ function stopRegimenChangeInterval(){
   function checkBoxClicked(e) {
     checkBoxNum = (e.id).replace('td_','');
     checkBox = document.getElementById('checkBox_' + checkBoxNum);
+    fast_tracK_obs_input = document.getElementById("fast_tracK_obs");
+    fast_track_answers = fast_tracK_obs_input.value.split(", ");
+    
+    concept_id = e.getAttribute('concept_id');
+    console.log('Concept ID = ' + concept_id )
     if(checkBox.getAttribute('src').match('unticked')) {
+		fast_track_answers.push(concept_id)
       checkBox.setAttribute('src','/touchscreentoolkit/lib/images/ticked.jpg');
     }else{
+
+      fast_track_answers  = jQuery.grep(fast_track_answers , function(value) {
+  			return value != concept_id;
+		});
+		
       checkBox.setAttribute('src','/touchscreentoolkit/lib/images/unticked.jpg');
     }
+    
+    fast_tracK_obs_input.value = fast_track_answers.join(", ")
+    console.log(fast_track_answers)
   }
 
 </script>
@@ -2466,20 +2493,20 @@ pyridoxine_options = ["","25", "50"]
 
     <!-- Fast  track questions -->
     <% if not @fast_track_patient == true %>
-     <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
-          {:id => "book_for_fast_track",
-          :multiple => false,
-          :helpText => "Book fast track visit (next clinic visit)",
-          :optional => false } %>
+      <%= select_tag "fast_track_yes_no", options_for_select([['Yes','Yes'],['No','No']]),
+        {:id => "book_for_fast_track",
+        :multiple => false,
+        :helpText => "Book fast track visit (next clinic visit)"
+      } %>
 
-        <%= text_field "fast_track_attributes" , '',
-          :tt_onLoad => "$('clearButton').style.display='none'; 
-          $('keyboard').style.display = 'none';buildFastTrackTable();",
-          :tt_onUnLoad => "$('clearButton').style.display='';",
-          :optional => "false",
-          :helpText => "<div class='custom-helptext' style='text-align:center;'>
-          Check eligibility for <b style='color:green'>Fast Track</b> at next visit</div>"
-       %>
+      <%= text_field "fast_track_attributes" , '',
+        :tt_onLoad => "$('clearButton').style.display='none'; $('keyboard').style.display = 'none';buildFastTrackTable();",
+        :tt_onUnLoad => "$('clearButton').style.display='';",
+        :condition => "$('book_for_fast_track').value.toUpperCase() == 'YES'",
+        :optional => "false",
+        :helpText => "<div class='custom-helptext' style='text-align:center;'>
+  Check eligibility for <b style='color:green'>Fast Track</b> at next visit</div>"
+    %>
 
     <%end%>
     <!-- Fast  track questions ends -->
@@ -2719,6 +2746,7 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
     <% else %>
       <%= hidden_field_tag "filter[provider]", nil %>
     <%end%>
+      <input type="hidden" name="fast_track_concept_ids" id="fast_tracK_obs" />
   </form>
   <div id="previous_drugs_dispensed">
   </div>
