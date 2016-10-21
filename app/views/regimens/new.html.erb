@@ -8,6 +8,7 @@
 <%= stylesheet_link_tag("miscellaneous")%>
 <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
 <%= javascript_include_tag("numericKeypad")%>
+<%= stylesheet_link_tag("fast_track_table")%>
 <style type="text/css">
 
 
@@ -2093,6 +2094,70 @@ function stopRegimenChangeInterval(){
     newBtn.setAttribute('onclick', "updateForm(this);")
   }
 
+  function buildFastTrackTable() {
+    table = document.createElement('table');
+    table.setAttribute('id', 'fast-track-table');
+    /* 
+    */
+    attr = [
+      ['Adult 10 years +','No side Effects, OI/TB'],
+      ['on ART for 12 months','No BP/diabetes treatment'],
+      ['on 1st Line ART',''],
+      ['Last VL < 1000',''],
+      ['Good adherence','']
+    ];
+
+    counter = 1;
+    for(var i = 0; i < attr.length; i++){
+      tr = document.createElement('tr');
+      td = document.createElement('td');
+      td.innerHTML = attr[i][0];
+      tr.appendChild(td);
+      td = document.createElement('td');
+      checkBox = document.createElement('img');
+      checkBox.setAttribute('src','/touchscreentoolkit/lib/images/unticked.jpg');
+      checkBox.setAttribute('class', 'fast_track_checkbox');
+      checkBox.setAttribute('id', 'checkBox_' + counter);
+      td.appendChild(checkBox);
+      td.setAttribute('id','td_' + counter);
+      td.setAttribute('onmousedown','checkBoxClicked(this);');
+      tr.appendChild(td);
+      counter += 1;
+
+      td = document.createElement('td');
+      td.innerHTML = attr[i][1];
+      tr.appendChild(td);
+      td = document.createElement('td');
+      if(attr[i][1].length > 0) {
+        checkBox = document.createElement('img');
+        checkBox.setAttribute('src','/touchscreentoolkit/lib/images/unticked.jpg');
+        checkBox.setAttribute('class', 'fast_track_checkbox');
+        checkBox.setAttribute('id', 'checkBox_' + counter);
+        td.setAttribute('onmousedown','checkBoxClicked(this);');
+        td.setAttribute('id','td_' + counter);
+        td.appendChild(checkBox);
+        counter += 1;
+      }
+      tr.appendChild(td);
+
+
+
+      table.appendChild(tr);
+    }
+    
+    $('inputFrame'+tstCurrentPage).appendChild(table);
+  }
+
+  function checkBoxClicked(e) {
+    checkBoxNum = (e.id).replace('td_','');
+    checkBox = document.getElementById('checkBox_' + checkBoxNum);
+    if(checkBox.getAttribute('src').match('unticked')) {
+      checkBox.setAttribute('src','/touchscreentoolkit/lib/images/ticked.jpg');
+    }else{
+      checkBox.setAttribute('src','/touchscreentoolkit/lib/images/unticked.jpg');
+    }
+  }
+
 </script>
 
 <%
@@ -2398,6 +2463,26 @@ pyridoxine_options = ["","25", "50"]
       :tt_onLoad => "__$('keyboard').style.display = 'none';showCategory('Regimen'); showAvailableStock($('regimen_concept_id').value);",
       :tt_onUnLoad => "hideStockLevelDetails(); removeOnclickEvent();",
       :helpText => 'Duration of prescribed drugs' } %>
+
+    <!-- Fast  track questions -->
+    <% if not @fast_track_patient == true %>
+     <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
+          {:id => "book_for_fast_track",
+          :multiple => false,
+          :helpText => "Book fast track visit (next clinic visit)",
+          :optional => false } %>
+
+        <%= text_field "fast_track_attributes" , '',
+          :tt_onLoad => "$('clearButton').style.display='none'; 
+          $('keyboard').style.display = 'none';buildFastTrackTable();",
+          :tt_onUnLoad => "$('clearButton').style.display='';",
+          :optional => "false",
+          :helpText => "<div class='custom-helptext' style='text-align:center;'>
+          Check eligibility for <b style='color:green'>Fast Track</b> at next visit</div>"
+       %>
+
+    <%end%>
+    <!-- Fast  track questions ends -->
 
     <!-- CPT & IPT-->
     <%if not @allergic_to_sulphur.blank?
