@@ -521,6 +521,8 @@ session_date = session[:datetime] || Time.now()
         
         tr = document.createElement('tr'); 
         th = document.createElement('th');
+        th.setAttribute('id', 'last_visit_date');
+        th.setAttribute('style', 'text-align: left; padding-left: 5px;');
         tr.appendChild(th); 
         for(order_id in drug_names) {
           th = document.createElement('th');
@@ -535,7 +537,7 @@ session_date = session[:datetime] || Time.now()
           'Prescription','Tabs given','Tabs per day','Doses per day',
           'blank','Tabs remaining','Expected','Actual(counted)',
           'blank','Adherence','Doses missed/Unaccounted for','Doses consumed',
-          'blank','&nbsp;'
+          'blank','Status (medication adherence)'
           ]
 
         for(var i = 0; i < tr_names.length; i++){
@@ -670,6 +672,16 @@ session_date = session[:datetime] || Time.now()
             }else if(x == 8){
               data_tds[x].innerHTML = adherence + '%';
             }else if(x == 10){
+              last_visit = document.getElementById('last_visit_date');
+
+              months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              curr_date = last_visit_date.getDate();
+              var curr_month = last_visit_date.getMonth(); //Months are zero based
+              var curr_year = last_visit_date.getFullYear();
+              last_visit_date = (curr_date + "/" + months[curr_month] + "/" + curr_year);
+
+              last_visit.innerHTML = "Last visit: " + last_visit_date + " Day(s) gone: " + num_days;
+              
               if(warning == 'warning'){
                 try {
                   data_tds[x].setAttribute('class','warning set-data order_' + i);
@@ -679,16 +691,20 @@ session_date = session[:datetime] || Time.now()
                   e.setAttribute('class','recommendation');
                   data_tds[x].appendChild(e);
                 }catch(s) {};
+              }else{
+                data_tds[x].setAttribute('class','all-clear set-data order_' + i);
+                e = document.createElement('span');
+                e.setAttribute('style','color:green');
+                e.innerHTML = 'Patient is adherent';
+                e.setAttribute('class','recommendation');
+                data_tds[x].appendChild(e);
               }
             }
           }	
           
 
         }
-      //summary += "</div>"
 
-      //$('inputFrame'+tstCurrentPage).innerHTML = '<div id="summary">' + summary + '</div>' ;
-      //$('inputFrame'+tstCurrentPage).appendChild(summaryDiv);
       $("clearButton").style.display = 'none';
   }
 
