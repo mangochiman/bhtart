@@ -513,9 +513,6 @@ session_date = session[:datetime] || Time.now()
 	   
       }
 
-
-
-
       function buildAdherenceTab(adherence_report_table, drug_names) {
         available_order_ids = [];
         
@@ -546,6 +543,7 @@ session_date = session[:datetime] || Time.now()
           if(tr_names[i] != 'blank') {
             if(tr_names[i].match(/Tabs remaining|Prescription|Adherence/)){
               td.setAttribute('class','row-headers');
+              tr.setAttribute('class','tr-headers');
             }else{
               td.setAttribute('class','row-data');
             }
@@ -567,20 +565,6 @@ session_date = session[:datetime] || Time.now()
           adherence_report_table.appendChild(tr);
         }
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
       function adherenceReport(){
         var i = 0;
@@ -681,7 +665,7 @@ session_date = session[:datetime] || Time.now()
               var curr_year = last_visit_date.getFullYear();
               last_visit_date = (curr_date + "/" + months[curr_month] + "/" + curr_year);
 
-              last_visit.innerHTML = "Last visit: " + last_visit_date + " Day(s) gone: " + num_days;
+              last_visit.innerHTML = "Last visit: " + last_visit_date + " Day(s) gone since: " + num_days;
               
               if(warning == 'warning'){
                 try {
