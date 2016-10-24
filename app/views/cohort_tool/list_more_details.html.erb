@@ -354,7 +354,11 @@
     <div id="content" style = "position : relative; width : 96%; margin-left : -48%">
         <%= image_tag(@logo, :class => "logo")%>
         <br /><b style="margin-left:175px; margin-top: 0px"><%= @current_location_name %></b><br />
-        <b style="position:relative; top:0px; margin-left:175px"><%= @report_name.humanize.split.map{|w| w.capitalize}.join(' ') %></b><br />
+        <b style="position:relative; top:0px; margin-left:175px">
+            Total patients
+            <%= @report_name.gsub(/cum/i, '').humanize.split.map{|w| w.capitalize}.join(' ') %>
+        </b>
+        <br />
         <br /><br />
 
         <table id="table_id" width="99%">
@@ -382,9 +386,17 @@
                     <td style="text-align: center;"><%= data[:birthdate] %></td>
                     <td style="padding-left: 10px;"><%= data[:reason_for_starting].capitalize %></td>
                     <td style="padding-left: 10px;"><%= data[:outcome].capitalize %></td>
-                    <td align='center' class="create_button"><%= link_to_onmousedown "View",{:controller =>"patients", :action => 'mastercard',
-                                                                                             :patient_id => patient_id ,:source =>"out_of_range_arv_number", :quarter => "#{@report_quarter}",
-                                                                                             :arv_start_number => "#{params[:arv_start_number]}",:arv_end_number => "#{params[:arv_end_number]}"}%></td>
+                    <td align='center' class="create_button">
+                        <%= link_to_onmousedown "View",{
+                                :controller =>"patients",
+                                :action => 'mastercard',
+                                :patient_id => patient_id ,
+                                :source =>"out_of_range_arv_number",
+                                :quarter => "#{@report_quarter}",
+                                :arv_start_number => "#{params[:arv_start_number]}",
+                                :arv_end_number => "#{params[:arv_end_number]}"
+                        }%>
+                    </td>
                 </tr>
             <% end %>
             </tbody>
