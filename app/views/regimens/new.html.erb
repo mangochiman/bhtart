@@ -294,7 +294,7 @@
 
   .prescription_container {
     border-style: solid;
-    height: 350px;
+    height: 85%;
     width: 96%;
     margin-left: 26px;
     overflow: auto;
@@ -2504,7 +2504,7 @@ pyridoxine_options = ["","25", "50"]
       <%= select_tag "fast_track_yes_no", options_for_select([['Yes','Yes'],['No','No']]),
         {:id => "book_for_fast_track",
         :multiple => false,
-        :helpText => "Book fast track visit (for next clinic visit)"
+        :helpText => "Book fast track visit (next appointment)"
       } %>
 
       <%= text_field "fast_track_attributes" , '',

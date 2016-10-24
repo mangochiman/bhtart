@@ -533,7 +533,7 @@ session_date = session[:datetime] || Time.now()
         tr_names = [
           'Prescription','Tabs given','Tabs per day','Doses per day',
           'blank','Tabs remaining','Expected','Actual(counted)',
-          'blank','Adherence','','Doses consumed',
+          'blank','Adherence','Doses missed/unaccounted for','Doses consumed',
           'ART adherence'
           ]
 
@@ -546,10 +546,6 @@ session_date = session[:datetime] || Time.now()
               tr.setAttribute('class','tr-headers');
             }else{
               td.setAttribute('class','row-data');
-              if(tr_names[i].length < 1)
-                td.setAttribute('id','doses-missed-unaccounted');
-
-
             }
 
             td.innerHTML = tr_names[i];
@@ -658,23 +654,12 @@ session_date = session[:datetime] || Time.now()
               data_tds[x].innerHTML = amount_remaining;
             }else if(x == 7){
               doses_missed_unaccounted = ((amount_remaining - expected_amount_remaining)/dose[i]);
-              doses_missed_unaccountedTD = document.getElementById('doses-missed-unaccounted');
-              if(doses_missed_unaccounted < 0) {
-                if(doses_missed_unaccountedTD.innerHTML == 'Doses missed') {
-                  doses_missed_unaccountedTD.innerHTML = 'Doses missed/unaccounted for';
-                }else if(doses_missed_unaccountedTD.innerHTML.length < 1){
-                  doses_missed_unaccountedTD.innerHTML = 'Doses unaccounted for';
-                }
-
+              if(doses_missed_unaccounted < 0) { 
                 doses_missed_unaccounted = (doses_missed_unaccounted * -1);
+                data_tds[x].innerHTML = doses_missed_unaccounted + " unacc.";
               }else{
-                if(doses_missed_unaccountedTD.innerHTML == 'Doses unaccounted for') {
-                  doses_missed_unaccountedTD.innerHTML = 'Doses missed/unaccounted for';
-                }else if(doses_missed_unaccountedTD.innerHTML.length < 1){
-                  doses_missed_unaccountedTD.innerHTML = 'Doses missed';
-                }
+                data_tds[x].innerHTML = doses_missed_unaccounted + " missed";
               }
-              data_tds[x].innerHTML = doses_missed_unaccounted;
             }else if(x == 8){
               data_tds[x].innerHTML = adherence + '%';
             }else if(x == 9){
@@ -787,6 +772,7 @@ session_date = session[:datetime] || Time.now()
   }
 
   function addFastTrackAssesmentButton(){
+    return
     if (fastTrackPatient == 'false'){
       html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
       jQuery("#fastTrackAssesmentButton").remove();
@@ -796,6 +782,7 @@ session_date = session[:datetime] || Time.now()
   }
 
   function removeFastTrackAssesmentButton(){
+    return
     jQuery("#fastTrackAssesmentButton").remove();
   }
 

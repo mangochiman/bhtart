@@ -162,7 +162,7 @@
                             <%
                                amounts_dispensed = Observation.all(:conditions => ['concept_id = ? AND order_id = ?',
                                                                                    ConceptName.find_by_name("AMOUNT DISPENSED").concept_id , order.id])
-                               total_dispensed = amounts_dispensed.sum{|amount| amount.value_numeric}
+                               total_dispensed = amounts_dispensed.sum{|amount| amount.value_numeric.to_i}
                             %>
                             <script>
                                 total_dispensed += parseFloat("<%=total_dispensed%>");
@@ -171,7 +171,7 @@
                               <td style="text-align:center;vertical-align: middle;" onmousedown = "voiding('<%=order.id%>');">
                                 <img src="/images/cancel_flat_small.png"/>
                               </td>
-                              <% total_required = order.drug_order.total_required
+                              <% total_required = order.drug_order.total_required.to_i
                                  drug_unit  =  order.drug_order.units
                                  if total_required > total_dispensed then color = 'red' else color = '' end
                               %>

@@ -312,6 +312,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
   function addFastTrackAssesmentButton(){
+    return;
     if (hivFirstVisit == 'true' || patientEverHadDrugs == 'false'){
       html = '<button style="float: left;" onmousedown="fastTrackAssesmentPopup();" id="fastTrackAssesmentButton" class="button navButton green"><span>Fast Track Assesment</span></button>';
       jQuery("#fastTrackAssesmentButton").remove();
@@ -321,6 +322,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
   function removeFastTrackAssesmentButton(){
+    return;
     jQuery("#fastTrackAssesmentButton").remove();
   }
 
