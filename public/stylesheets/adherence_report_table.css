@@ -36,3 +36,12 @@
   background-color: lightgrey;
 }
 
+#header-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-width: 0px;
+}
+
+#header-table td {
+  border-style: none;
+}

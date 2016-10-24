@@ -661,7 +661,7 @@ session_date = session[:datetime] || Time.now()
               doses_missed_unaccountedTD = document.getElementById('doses-missed-unaccounted');
               if(doses_missed_unaccounted < 0) {
                 doses_missed_unaccountedTD.innerHTML = 'Doses unaccounted for'
-                doses_missed_unaccounted = (doses_missed_unaccounted * 1);
+                doses_missed_unaccounted = (doses_missed_unaccounted * -1);
               }else{
                 doses_missed_unaccountedTD.innerHTML = 'Doses missed'
               }
@@ -677,7 +677,23 @@ session_date = session[:datetime] || Time.now()
               var curr_year = last_visit_date.getFullYear();
               last_visit_date = (curr_date + "/" + months[curr_month] + "/" + curr_year);
 
-              last_visit.innerHTML = "Last visit: " + last_visit_date + "  Days elapsed: " + num_days;
+              //last_visit.innerHTML = "Last visit: " + last_visit_date + "  Days elapsed: " + num_days;
+              if(last_visit.innerHTML.length < 1) {
+                header_table = document.createElement('table');
+                header_table.setAttribute('id','header-table');
+                tr = document.createElement('tr');
+                td = document.createElement('td');
+                td.innerHTML =  "Last visit: " + last_visit_date;
+                tr.appendChild(td);
+                tr = document.createElement('tr');
+                tr.appendChild(td)
+                td = document.createElement('td');
+                td.innerHTML =  "Days elapsed: " + num_days;
+                td.setAttribute('style','text-align: right; padding-right: 5px;');
+                tr.appendChild(td)
+                header_table.appendChild(tr);
+                last_visit.appendChild(header_table);
+              } 
               
               if(warning == 'warning'){
                 try {
