@@ -534,7 +534,7 @@ session_date = session[:datetime] || Time.now()
           'Prescription','Tabs given','Tabs per day','Doses per day',
           'blank','Tabs remaining','Expected','Actual(counted)',
           'blank','Adherence','Doses missed/Unaccounted for','Doses consumed',
-          'blank','Status (medication adherence)'
+          'ART adherence'
           ]
 
         for(var i = 0; i < tr_names.length; i++){
@@ -546,6 +546,10 @@ session_date = session[:datetime] || Time.now()
               tr.setAttribute('class','tr-headers');
             }else{
               td.setAttribute('class','row-data');
+              if(tr_names[i].match(/Unaccounted for/))
+                td.setAttribute('id','doses-missed-unaccounted');
+
+
             }
 
             td.innerHTML = tr_names[i];
@@ -653,10 +657,18 @@ session_date = session[:datetime] || Time.now()
             }else if(x == 5){
               data_tds[x].innerHTML = amount_remaining;
             }else if(x == 7){
-              data_tds[x].innerHTML = ((amount_remaining - expected_amount_remaining)/dose[i]);
+              doses_missed_unaccounted = ((amount_remaining - expected_amount_remaining)/dose[i]);
+              doses_missed_unaccountedTD = document.getElementById('doses-missed-unaccounted');
+              if(doses_missed_unaccounted < 0) {
+                doses_missed_unaccountedTD.innerHTML = 'Doses unaccounted for'
+                doses_missed_unaccounted = (doses_missed_unaccounted * 1);
+              }else{
+                doses_missed_unaccountedTD.innerHTML = 'Doses missed'
+              }
+              data_tds[x].innerHTML = doses_missed_unaccounted;
             }else if(x == 8){
               data_tds[x].innerHTML = adherence + '%';
-            }else if(x == 10){
+            }else if(x == 9){
               last_visit = document.getElementById('last_visit_date');
 
               months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -665,14 +677,14 @@ session_date = session[:datetime] || Time.now()
               var curr_year = last_visit_date.getFullYear();
               last_visit_date = (curr_date + "/" + months[curr_month] + "/" + curr_year);
 
-              last_visit.innerHTML = "Last visit: " + last_visit_date + " Day(s) gone since: " + num_days;
+              last_visit.innerHTML = "Last visit: " + last_visit_date + "  Days elapsed: " + num_days;
               
               if(warning == 'warning'){
                 try {
                   data_tds[x].setAttribute('class','warning set-data order_' + i);
                   e = document.createElement('span');
                   e.setAttribute('style','color:red');
-                  e.innerHTML = 'Patient needs counseling';
+                  e.innerHTML = 'Explore problems';
                   e.setAttribute('class','recommendation');
                   data_tds[x].appendChild(e);
                 }catch(s) {};
@@ -680,7 +692,7 @@ session_date = session[:datetime] || Time.now()
                 data_tds[x].setAttribute('class','all-clear set-data order_' + i);
                 e = document.createElement('span');
                 e.setAttribute('style','color:green');
-                e.innerHTML = 'Patient is adherent';
+                e.innerHTML = 'Good adherence';
                 e.setAttribute('class','recommendation');
                 data_tds[x].appendChild(e);
               }
