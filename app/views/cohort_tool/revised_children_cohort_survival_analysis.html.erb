@@ -226,7 +226,7 @@
             all ages
         </td>
         <td class="number table-main-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_of_new_patients_registered')">
                 <%= data['number_of_new_patients_registered'].count %>
             </a>
         </td>
@@ -234,7 +234,7 @@
 
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_alive_and_on_arvs')">
                 <%= data['number_alive_and_on_arvs'].count %>
             </a>
         </td>
@@ -254,7 +254,7 @@
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_transferred_out')">
                 <%= data['number_transferred_out'].count %>
             </a>
         </td>
@@ -284,20 +284,49 @@
 </div>
 <!- ###   ### -->
 
+<form id="patients" method="post" action="/cohort_tool/list_more_details">
+    <input id='patient_ids' type='hidden' name = 'patient_ids' />
+    <input id='indicator' type='hidden' name = 'indicator' />
+</form>
+
 <script>
     function drillDown(indicator) {
         var patient_ids = [];
+
         switch(indicator) {
-            alert(indicator);
-                return;
-            case "<%# data['Number of new registered'] %>":
-                <%# raise data['Number of new registered'].inspect %>
-            <%# (@cohort.total_registered || []).each do |data| %>
-                //patient_ids.push(<%#= data['patient_id'] %>);
-            <%# end %>
+            case "number_of_new_patients_registered":
+                <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
+                    <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                        <% (data['number_of_new_patients_registered'] || []).each do |patient_id| %>
+                            patient_ids.push(<%= patient_id %>);
+                        <% end %>
+                    <% end %>
+                <% end %>
+                break;
+            case "number_alive_and_on_arvs":
+                <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
+                    <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                        <% (data['number_alive_and_on_arvs'] || []).each do |patient| %>
+                            patient_ids.push(<%= patient['patient_id'] %>);
+                        <% end %>
+                    <% end %>
+                <% end %>
+                break;
+            case "number_transferred_out":
+                <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
+                    <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                        <% (data['number_transferred_out'] || []).each do |patient| %>
+                            patient_ids.push(<%= patient['patient_id'] %>);
+                        <% end %>
+                    <% end %>
+                <% end %>
                 break;
             default:
                 break;
         }
+
+        document.getElementById('patient_ids').value = patient_ids.join(',');
+        document.getElementById('indicator').value = indicator;
+        document.getElementById('patients').submit();
     }
 </script>
