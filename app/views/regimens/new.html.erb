@@ -2107,6 +2107,16 @@ end
       [['Good adherence','9537']]
     ];
 
+    <%if @patient.person.gender.first.upcase == 'M'%>
+    attr = [
+      [['Adult 10 years +', '9533'],['No side Effects, OI/TB', '9539']],
+      [['on ART for 12 months', '9534'],['No BP/diabetes treatment', '9540']],
+      [['on 1st Line ART','9535']],
+      [['Last VL < 1000','9536']],
+      [['Good adherence','9537']]
+    ];
+    <%end%>
+
     counter = 1;
     for(var i = 0; i < attr.length; i++){
       tr = document.createElement('tr');
@@ -2168,7 +2178,6 @@ end
     fast_track_answers = fast_tracK_obs_input.value.split(", ");
     
     concept_id = e.getAttribute('concept_id');
-    console.log('Concept ID = ' + concept_id )
     if(checkBox.getAttribute('src').match('unticked')) {
 		fast_track_answers.push(concept_id)
       checkBox.setAttribute('src','/touchscreentoolkit/lib/images/ticked.jpg');
@@ -2182,7 +2191,6 @@ end
     }
     
     fast_tracK_obs_input.value = fast_track_answers.join(", ")
-    console.log(fast_track_answers)
   }
 
 </script>
@@ -2496,7 +2504,7 @@ pyridoxine_options = ["","25", "50"]
       <%= select_tag "fast_track_yes_no", options_for_select([['Yes','Yes'],['No','No']]),
         {:id => "book_for_fast_track",
         :multiple => false,
-        :helpText => "Book fast track visit (next clinic visit)"
+        :helpText => "Book fast track visit (for next clinic visit)"
       } %>
 
       <%= text_field "fast_track_attributes" , '',

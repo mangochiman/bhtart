@@ -729,6 +729,17 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
   }
 
+  function tbSymptomsHashSelects() {
+    for(k in tbSymptomsHash) {
+      if(tbSymptomsHash[k]['yes'].length > 0) {
+        $('tb_status_hack').value = '';
+        return 'YES'
+      }
+    }
+
+    $('tb_status_hack').value = 'TB Not suspected';
+    return 'NO'
+  }
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -962,7 +973,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       :multiple => false,
       :helpText => "TB Status",
       :tt_onLoad => 'checkTbHivStatus(); checkAndSelectTBSuspected(); checkAndSelectConfirmedTBOnTreatment();',
-      :condition => "#{@show_tb_types  == true} && __$('tb_treatment_question').value.toUpperCase() == 'NO'"} %>
+      :condition => "#{@show_tb_types  == true} && __$('tb_treatment_question').value.toUpperCase() == 'NO' 
+      && tbSymptomsHashSelects() == 'YES'"} %>
   <% else %>
     <%= touch_hidden_tag "TB STATUS" , @patient, ConceptName.find_by_name("#{@patient_tb_status}").name, {:id => "tb_status"} %>
   <% end %>

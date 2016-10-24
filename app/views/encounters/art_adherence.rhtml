@@ -533,7 +533,7 @@ session_date = session[:datetime] || Time.now()
         tr_names = [
           'Prescription','Tabs given','Tabs per day','Doses per day',
           'blank','Tabs remaining','Expected','Actual(counted)',
-          'blank','Adherence','Doses missed/Unaccounted for','Doses consumed',
+          'blank','Adherence','','Doses consumed',
           'ART adherence'
           ]
 
@@ -546,7 +546,7 @@ session_date = session[:datetime] || Time.now()
               tr.setAttribute('class','tr-headers');
             }else{
               td.setAttribute('class','row-data');
-              if(tr_names[i].match(/Unaccounted for/))
+              if(tr_names[i].length < 1)
                 td.setAttribute('id','doses-missed-unaccounted');
 
 
@@ -639,7 +639,7 @@ session_date = session[:datetime] || Time.now()
           $('adherence_'+ i ).value = adherence;
 
           var drug_name = drug_names[i];
-          var warning = (adherence < 95) ? 'warning' : '';
+          var warning = (adherence < 95 || adherence > 105) ? 'warning' : '';
 
           data_tds = document.getElementsByClassName('order_' + i);
           for(var x = 0; x < data_tds.length; x++){
@@ -660,10 +660,19 @@ session_date = session[:datetime] || Time.now()
               doses_missed_unaccounted = ((amount_remaining - expected_amount_remaining)/dose[i]);
               doses_missed_unaccountedTD = document.getElementById('doses-missed-unaccounted');
               if(doses_missed_unaccounted < 0) {
-                doses_missed_unaccountedTD.innerHTML = 'Doses unaccounted for'
+                if(doses_missed_unaccountedTD.innerHTML == 'Doses missed') {
+                  doses_missed_unaccountedTD.innerHTML = 'Doses missed/unaccounted for';
+                }else if(doses_missed_unaccountedTD.innerHTML.length < 1){
+                  doses_missed_unaccountedTD.innerHTML = 'Doses unaccounted for';
+                }
+
                 doses_missed_unaccounted = (doses_missed_unaccounted * -1);
               }else{
-                doses_missed_unaccountedTD.innerHTML = 'Doses missed'
+                if(doses_missed_unaccountedTD.innerHTML == 'Doses unaccounted for') {
+                  doses_missed_unaccountedTD.innerHTML = 'Doses missed/unaccounted for';
+                }else if(doses_missed_unaccountedTD.innerHTML.length < 1){
+                  doses_missed_unaccountedTD.innerHTML = 'Doses missed';
+                }
               }
               data_tds[x].innerHTML = doses_missed_unaccounted;
             }else if(x == 8){
