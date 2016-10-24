@@ -93,29 +93,43 @@ EOF
   end
 
   def self.pregnant_and_breast_feeding_women(start_date, end_date)
-    registered = [] ; patient_id_plus_date_enrolled = []; outcomes = []
+    patient_details = []; registered = {} ; patient_id_plus_date_enrolled = []; outcomes = []
 
     number_of_new_patients_registered = []; number_alive_and_on_arvs = []
     number_dead = []; number_defaulted = []; number_stopped_treatment = []
     number_transferred_out = []; number_unknown =[]
-    data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
-EOF
-
-    (data || []).each do |patient|
-      patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
-    end
 
     yes_concept_id = ConceptName.find_by_name('Yes').concept_id
 
-    concept_ids =[ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id,
-                  ConceptName.find_by_name('PATIENT PREGNANT').concept_id,
-                  ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id,
-                  ConceptName.find_by_name('Breastfeeding').concept_id,
+    #breastfeeding_women
+    breastfeeding_concept_ids = [ConceptName.find_by_name('Breastfeeding').concept_id,
                   ConceptName.find_by_name('Is patient breast feeding?').concept_id,
                   ConceptName.find_by_name('Breast feeding?').concept_id]
+
+    breastfeeding_women = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+        INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND (o.concept_id IN (#{breastfeeding_concept_ids.join(', ')}) AND o.value_coded = #{yes_concept_id})
+      AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
+EOF
+
+    #pregnant women
+    pregnant_concept_ids =[ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id,
+                  ConceptName.find_by_name('PATIENT PREGNANT').concept_id,
+                  ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id]
+
+    pregnant_women = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date t
+        INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND (o.concept_id IN (#{pregnant_concept_ids.join(', ')}) AND o.value_coded = #{yes_concept_id})
+      AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
+EOF
+
+    (pregnant_women || []).each do |patient|
+      patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
+    end
 
     (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
       result = ActiveRecord::Base.connection.select_value <<EOF
@@ -124,49 +138,41 @@ EOF
         AND '#{(date_enrolled.to_date + 30.days).strftime('%Y-%m-%d 23:59:59')}'
         AND person_id = #{patient_id}
         AND value_coded = #{yes_concept_id}
-        AND concept_id IN (#{concept_ids.join(', ')})
+        AND concept_id IN (#{pregnant_concept_ids.join(', ')})
         AND voided = 0 GROUP BY person_id;
 EOF
-      registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
+      patient_details << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
     end
 
     patient_ids = []
-    (registered || []).each do |row|
+    (patient_details || []).each do |row|
       patient_ids << row[:patient_id].to_i
     end
 
-    states = {
-        'Quarter' => start_date.to_date.strftime("%Y"),
-        'Number of new registered' => patient_ids.count,
-        'Number Alive and on ART' => 0,
-        'Number Dead' => 0, 'Number Defaulted' => 0 ,
-        'Number Stopped Treatment' => 0, 'Number Transferred out' => 0,
-        'Unknown' => 0}
+    (breastfeeding_women || []).each do |aRow|
+      patient_ids << aRow['person_id'].to_i
+    end
 
     outcomes = self.get_survival_analysis_outcome(patient_ids, start_date, end_date)
+
     (outcomes || []).each do |row|
-      #raise row['cum_outcome'].inspect
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
-        states['Number Alive and on ART']+=1
       elsif row['cum_outcome'] == 'Defaulted'
         number_defaulted << row
-        states['Number Defaulted']+=1
       elsif row['cum_outcome'] == 'Patient transferred out'
         number_transferred_out << row
-        states['Number Transferred out']+=1
       elsif row['cum_outcome'] == 'Patient died'
         number_dead << row
-        states['Number Dead']+=1
       elsif row['cum_outcome'] == 'Treatment stopped'
         number_stopped_treatment << row
-        states['Number Stopped Treatment']+=1
       else
       end
     end
 
-    patient_outcomes = {
-      "number_of_new_patients_registered" => data,
+    registered = {
+      'Quarter' => start_date.to_date.strftime("%Y"),
+      "number_of_new_patients_registered" => patient_ids.uniq,
       "number_alive_and_on_arvs" => number_alive_and_on_arvs,
       "number_defaulted" => number_defaulted,
       "number_dead" => number_dead,
@@ -174,7 +180,7 @@ EOF
       "number_transferred_out" => number_transferred_out
     }
 
-    return states #, patient_outcomes
+    return registered
   end
 
   def self.children_analysis(start_date, end_date, min_age, max_age)
@@ -197,38 +203,26 @@ EOF
 
     data = [] if data.blank?
 
-    registered = {
-        'Quarter' => start_date.to_date.strftime("%Y"),
-        'Number of new registered' => data.count,
-        'Number Alive and on ART' => 0,
-        'Number Dead' => 0, 'Number Defaulted' => 0 ,
-        'Number Stopped Treatment' => 0, 'Number Transferred out' => 0,
-        'Unknown' => 0}
-
     outcomes = self.get_survival_analysis_outcome(data, start_date, end_date)
 
     (outcomes || []).each do |row|
       #raise row['cum_outcome'].inspect
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
-        registered['Number Alive and on ART']+=1
       elsif row['cum_outcome'] == 'Defaulted'
         number_defaulted << row
-        registered['Number Defaulted']+=1
       elsif row['cum_outcome'] == 'Patient transferred out'
         number_transferred_out << row
-        registered['Number Transferred out']+=1
       elsif row['cum_outcome'] == 'Patient died'
         number_dead << row
-        registered['Number Dead']+=1
       elsif row['cum_outcome'] == 'Treatment stopped'
         number_stopped_treatment << row
-        registered['Number Stopped Treatment']+=1
       else
       end
     end
 
-    states = {
+    registered = {
+      'Quarter' => start_date.to_date.strftime("%Y"),
       "number_of_new_patients_registered" => data,
       "number_alive_and_on_arvs" => number_alive_and_on_arvs,
       "number_defaulted" => number_defaulted,
@@ -236,7 +230,7 @@ EOF
       "number_stopped_treatment" => number_stopped_treatment,
       "number_transferred_out" => number_transferred_out
     }
-    return registered #, states
+    return registered
   end
 
   def self.general_analysis(start_date, end_date)
@@ -257,36 +251,24 @@ EOF
 
     data = [] if data.blank?
 
-    registered = {
-        'Quarter' => start_date.to_date.strftime("%Y"),
-        'Number of new registered' => data.count,
-        'Number Alive and on ART' => 0,
-        'Number Dead' => 0, 'Number Defaulted' => 0 ,
-        'Number Stopped Treatment' => 0, 'Number Transferred out' => 0,
-        'Unknown' => 0}
-
     outcomes = self.get_survival_analysis_outcome(data, start_date, end_date)
     (outcomes || []).each do |row|
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
-        registered['Number Alive and on ART']+=1
       elsif row['cum_outcome'] == 'Defaulted'
         number_defaulted << row
-        registered['Number Defaulted']+=1
       elsif row['cum_outcome'] == 'Patient transferred out'
         number_transferred_out << row
-        registered['Number Transferred out']+=1
       elsif row['cum_outcome'] == 'Patient died'
         number_dead << row
-        registered['Number Dead']+=1
       elsif row['cum_outcome'] == 'Treatment stopped'
         number_stopped_treatment << row
-        registered['Number Stopped Treatment']+=1
       else
       end
     end
 
-    states = {
+    registered = {
+      'Quarter' => start_date.to_date.strftime("%Y"),
       "number_of_new_patients_registered" => data,
       "number_alive_and_on_arvs" => number_alive_and_on_arvs,
       "number_defaulted" => number_defaulted,
@@ -294,7 +276,7 @@ EOF
       "number_stopped_treatment" => number_stopped_treatment,
       "number_transferred_out" => number_transferred_out
     }
-    return registered #, states
+    return registered
   end
 
   def self.get_survival_analysis_outcome(data, start_date, end_date)
