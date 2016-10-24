@@ -239,17 +239,17 @@
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_dead')">
                 <%= data['number_dead'].count %>
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_defaulted')">
                 <%= data['number_defaulted'].count %>
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_stopped_treatment')">
                 <%= data['number_stopped_treatment'].count %>
             </a>
         </td>
@@ -307,6 +307,33 @@
                 <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
                     <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
                         <% (data['number_alive_and_on_arvs'] || []).each do |patient| %>
+                            patient_ids.push(<%= patient['patient_id'] %>);
+                        <% end %>
+                    <% end %>
+                <% end %>
+                break;
+            case "number_dead":
+                <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
+                    <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                        <% (data['number_dead'] || []).each do |patient| %>
+                            patient_ids.push(<%= patient['patient_id'] %>);
+                        <% end %>
+                    <% end %>
+                <% end %>
+                break;
+            case "number_defaulted":
+                <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
+                    <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                        <% (data['number_defaulted'] || []).each do |patient| %>
+                            patient_ids.push(<%= patient['patient_id'] %>);
+                        <% end %>
+                    <% end %>
+                <% end %>
+                break;
+            case "number_stopped_treatment":
+                <%  (@cohort.children_survival_analysis.sort || []).each do |range, data| %>
+                    <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                        <% (data['number_stopped_treatment'] || []).each do |patient| %>
                             patient_ids.push(<%= patient['patient_id'] %>);
                         <% end %>
                     <% end %>
