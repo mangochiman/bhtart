@@ -308,9 +308,15 @@
               <% if (@reason_for_art_eligibility rescue nil) != nil && (@reason_for_art_eligibility) != "" %>
                 <span value="<%= @reason_for_art_eligibility rescue "" %>">Reason for Starting</span>
               <% end %>
-              <% if (@hiv_status rescue nil) != nil && (@hiv_status) != "" %>
+
+              <!--<% if (@hiv_status rescue nil) != nil && (@hiv_status) != "" %>
                 <span value="<%= @hiv_status rescue "" %>">HIV Status</span>
+              <% end %>-->
+
+               <% if (@confirmatory_hiv_test_type rescue nil) != nil && (@confirmatory_hiv_test_type) != "" %>
+                <span value="<%= @confirmatory_hiv_test_type rescue "" %>">HIV Confirmatory Test</span>
               <% end %>
+
               <% if (@arv_number rescue nil) != nil && (@arv_number) != " " %>
                 <span value="<%= @arv_number rescue "" %>">ARV Number</span>
               <% end %>

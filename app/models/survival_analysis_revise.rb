@@ -135,37 +135,24 @@ EOF
       patient_ids << row[:patient_id].to_i
     end
 
-    states = {
-        'Quarter' => start_date.to_date.strftime("%Y"),
-        'Number of new registered' => patient_ids.count,
-        'Number Alive and on ART' => 0,
-        'Number Dead' => 0, 'Number Defaulted' => 0 ,
-        'Number Stopped Treatment' => 0, 'Number Transferred out' => 0,
-        'Unknown' => 0}
-
     outcomes = self.get_survival_analysis_outcome(patient_ids, start_date, end_date)
     (outcomes || []).each do |row|
-      #raise row['cum_outcome'].inspect
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
-        states['Number Alive and on ART']+=1
       elsif row['cum_outcome'] == 'Defaulted'
         number_defaulted << row
-        states['Number Defaulted']+=1
       elsif row['cum_outcome'] == 'Patient transferred out'
         number_transferred_out << row
-        states['Number Transferred out']+=1
       elsif row['cum_outcome'] == 'Patient died'
         number_dead << row
-        states['Number Dead']+=1
       elsif row['cum_outcome'] == 'Treatment stopped'
         number_stopped_treatment << row
-        states['Number Stopped Treatment']+=1
       else
       end
     end
 
-    patient_outcomes = {
+    states = {
+      'Quarter' => start_date.to_date.strftime("%Y"),
       "number_of_new_patients_registered" => data,
       "number_alive_and_on_arvs" => number_alive_and_on_arvs,
       "number_defaulted" => number_defaulted,
@@ -174,7 +161,7 @@ EOF
       "number_transferred_out" => number_transferred_out
     }
 
-    return states #, patient_outcomes
+    return states
   end
 
   def self.children_analysis(start_date, end_date, min_age, max_age)
@@ -197,38 +184,26 @@ EOF
 
     data = [] if data.blank?
 
-    registered = {
-        'Quarter' => start_date.to_date.strftime("%Y"),
-        'Number of new registered' => data.count,
-        'Number Alive and on ART' => 0,
-        'Number Dead' => 0, 'Number Defaulted' => 0 ,
-        'Number Stopped Treatment' => 0, 'Number Transferred out' => 0,
-        'Unknown' => 0}
-
     outcomes = self.get_survival_analysis_outcome(data, start_date, end_date)
 
     (outcomes || []).each do |row|
       #raise row['cum_outcome'].inspect
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
-        registered['Number Alive and on ART']+=1
       elsif row['cum_outcome'] == 'Defaulted'
         number_defaulted << row
-        registered['Number Defaulted']+=1
       elsif row['cum_outcome'] == 'Patient transferred out'
         number_transferred_out << row
-        registered['Number Transferred out']+=1
       elsif row['cum_outcome'] == 'Patient died'
         number_dead << row
-        registered['Number Dead']+=1
       elsif row['cum_outcome'] == 'Treatment stopped'
         number_stopped_treatment << row
-        registered['Number Stopped Treatment']+=1
       else
       end
     end
 
-    states = {
+    registered = {
+      'Quarter' => start_date.to_date.strftime("%Y"),
       "number_of_new_patients_registered" => data,
       "number_alive_and_on_arvs" => number_alive_and_on_arvs,
       "number_defaulted" => number_defaulted,
@@ -236,7 +211,7 @@ EOF
       "number_stopped_treatment" => number_stopped_treatment,
       "number_transferred_out" => number_transferred_out
     }
-    return registered #, states
+    return registered
   end
 
   def self.general_analysis(start_date, end_date)
@@ -257,36 +232,24 @@ EOF
 
     data = [] if data.blank?
 
-    registered = {
-        'Quarter' => start_date.to_date.strftime("%Y"),
-        'Number of new registered' => data.count,
-        'Number Alive and on ART' => 0,
-        'Number Dead' => 0, 'Number Defaulted' => 0 ,
-        'Number Stopped Treatment' => 0, 'Number Transferred out' => 0,
-        'Unknown' => 0}
-
     outcomes = self.get_survival_analysis_outcome(data, start_date, end_date)
     (outcomes || []).each do |row|
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
-        registered['Number Alive and on ART']+=1
       elsif row['cum_outcome'] == 'Defaulted'
         number_defaulted << row
-        registered['Number Defaulted']+=1
       elsif row['cum_outcome'] == 'Patient transferred out'
         number_transferred_out << row
-        registered['Number Transferred out']+=1
       elsif row['cum_outcome'] == 'Patient died'
         number_dead << row
-        registered['Number Dead']+=1
       elsif row['cum_outcome'] == 'Treatment stopped'
         number_stopped_treatment << row
-        registered['Number Stopped Treatment']+=1
       else
       end
     end
 
-    states = {
+    registered = {
+      'Quarter' => start_date.to_date.strftime("%Y"),
       "number_of_new_patients_registered" => data,
       "number_alive_and_on_arvs" => number_alive_and_on_arvs,
       "number_defaulted" => number_defaulted,
@@ -294,7 +257,7 @@ EOF
       "number_stopped_treatment" => number_stopped_treatment,
       "number_transferred_out" => number_transferred_out
     }
-    return registered #, states
+    return registered
   end
 
   def self.get_survival_analysis_outcome(data, start_date, end_date)

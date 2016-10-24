@@ -411,4 +411,65 @@ def self.vl_result_hash(patient)
     return drugs_data
   end
 
+  def self.type_of_hiv_confirmatory_test(patient, session_date = Date.today)
+    hiv_confirmatory_test_concept_id = Concept.find_by_name('CONFIRMATORY HIV TEST TYPE').concept_id
+
+    hiv_confirmatory_answer_string = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) <= ? AND concept_id =?",
+        session_date, hiv_confirmatory_test_concept_id]
+    ).answer_string.squish.upcase rescue nil
+
+    return hiv_confirmatory_answer_string
+  end
+
+  def self.date_of_hiv_clinic_registration(patient, session_date = Date.today)
+    encounter_type_id = EncounterType.find_by_name("HIV CLINIC REGISTRATION").encounter_type_id
+    hiv_clinic_reg_enc = patient.encounters.find(:last, :conditions => ["encounter_type =? AND 
+        DATE(encounter_datetime) < ?", encounter_type_id, session_date])
+
+    unless hiv_clinic_reg_enc.blank?
+      reg_date = (hiv_clinic_reg_enc.encounter_datetime.to_date rescue hiv_clinic_reg_enc.encounter_datetime)
+      return reg_date
+    end
+
+    return ""
+  end
+
+  def self.cpt_prescribed_in_the_last_prescription?(patient, session_date = Date.today)
+    last_order_date = patient.orders.find(:last, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) < ?",
+        session_date]).encounter.encounter_datetime.to_date rescue nil
+    return false if last_order_date.blank?
+    last_orders = patient.orders.find(:all, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) =?",
+        last_order_date])
+
+    last_orders.each do |order|
+      drug_name = order.drug_order.drug.name rescue nil
+      next if drug_name.blank?
+      if drug_name.match(/COTRI/i)
+        return true
+        break
+      end
+    end
+
+    return false
+  end
+
+  def self.ipt_prescribed_in_the_last_prescription?(patient, session_date = Date.today)
+    last_order_date = patient.orders.find(:last, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) < ?",
+        session_date]).encounter.encounter_datetime.to_date rescue nil
+    return false if last_order_date.blank?
+    last_orders = patient.orders.find(:all, :joins => [:encounter], :conditions => ["DATE(encounter_datetime) =?",
+        last_order_date])
+
+    last_orders.each do |order|
+      drug_name = order.drug_order.drug.name rescue nil
+      next if drug_name.blank?
+      if drug_name.match(/ISONIAZID/i)
+        return true
+        break
+      end
+    end
+
+    return false
+  end
+
 end

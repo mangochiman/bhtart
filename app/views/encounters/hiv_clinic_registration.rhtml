@@ -918,7 +918,7 @@ function checkConfirmDate(){
 					  :condition => '$("ever_received_art").value == "YES" && $("ever_registered_at_ART_clinic").value == "YES" && showARTstartDate();',
 					  :id => "year_started_art" }  %>
 
-		   <%estimates = ["6 months ago","12 months ago","18 months ago","24 months","Over 2 years ago"]%>
+		   <%estimates = ["", "6 months ago","12 months ago","18 months ago","24 months","Over 2 years ago"]%>
 		   <%= select_tag(:art_start_date_estimation, options_for_select(estimates ,[]),
 			  :helpText =>"Estimate ART start period",
 			  :id => "art_start_date_estimation",
@@ -1002,13 +1002,14 @@ function checkConfirmDate(){
 			{	:id => "agrees_to_followup",
 				:helpText => "Patient agrees to be contacted by phone/visited at home?" } %>
 
-		<%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['HIV Rapid Test','HIV RAPID TEST'],['HIV PCR','HIV DNA polymerase chain reaction'],['Unknown','UNKNOWN']]),
+		<%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['HIV Rapid Test','HIV RAPID TEST'],['HIV PCR','HIV DNA polymerase chain reaction'],['NOT Done','NOT DONE']]),
 			{	:id => "type_of_confirmatory_hiv_test",
                                 :tt_onLoad => "setUnknownConfirmatoryTestForPopup();",
-			 	:helpText => "Type of confirmatory HIV test" } %>
+			 	:helpText => "Confirmatory HIV test" } %>
 
 		<%= touch_location_tag "CONFIRMATORY HIV TEST LOCATION", @patient, nil,
 			{	:id => "confirmatory_hiv_test_location",
+                                :condition => '$("type_of_confirmatory_hiv_test").value != "NOT DONE"',
 			 	:helpText => "Location of confirmatory HIV test"} %>
 
 		<%#= touch_date_tag "CONFIRMATORY HIV TEST DATE", @patient, nil,
@@ -1073,7 +1074,7 @@ function checkConfirmDate(){
       </center>
     </span>
     <div style="padding-top: 65px;">
-      <span id="confirmatory-test-yes" onclick="hideConfirmatoryTestPopup();" class="confirmatory-test-my_button" style="position: relative;">Okay</span>
+      <span id="confirmatory-test-yes" onclick="hideConfirmatoryTestPopup();" class="confirmatory-test-my_button" style="position: relative;">Ok</span>
     </div>
   </div>
 </div>
@@ -1162,8 +1163,7 @@ function checkConfirmDate(){
   }
 
   function setUnknownConfirmatoryTestForPopup(){
-    unknown_confirmatory_option_input = jQuery("li[tstvalue='UNKNOWN']")[0];
-    console.log(unknown_confirmatory_option_input)
+    unknown_confirmatory_option_input = jQuery("li[tstvalue='NOT DONE']")[0];
       if (unknown_confirmatory_option_input){
         unknown_confirmatory_option_input.onmouseup = function(){
           if (!unknown_confirmatory_option_input.style.backgroundColor.match(/lightBlue/i)){

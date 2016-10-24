@@ -40,6 +40,8 @@ class GenericPatientsController < ApplicationController
       @tb_registration_date = definitive_state_date(@patient, "TB PROGRAM")
     end
 
+    @confirmatory_hiv_test_type = Patient.type_of_hiv_confirmatory_test(@patient, session_date) rescue ""
+
     session[:active_patient_id] = @patient.patient_id
     if @location.downcase == "outpatient" || params[:source]== 'opd'
       render :template => 'dashboards/opdtreatment_dashboard', :layout => false
@@ -1174,12 +1176,13 @@ The following block of code should be replaced by a more cleaner function
         type.id, patient.id,session_date.strftime("%Y-%m-%d 00:00:00"),
         session_date.strftime("%Y-%m-%d 23:59:59")]) != nil
 
+    #old format "%a %d %B %Y" new_forma "%d/%b/%Y"
     next_appt = Observation.find(:first,:order => "encounter_datetime DESC,encounter.date_created DESC",
       :joins => "INNER JOIN encounter ON obs.encounter_id = encounter.encounter_id",
       :conditions => ["concept_id = ? AND encounter_type = ? AND patient_id = ?
                AND obs_datetime <= ?",ConceptName.find_by_name('Appointment date').concept_id,
         type.id,patient.id,session_date.strftime("%Y-%m-%d 23:59:59")
-      ]).value_datetime.strftime("%a %d %B %Y") rescue nil
+      ]).value_datetime.strftime("%d/%b/%Y") rescue nil
 
     #raise next_appt.to_yaml
     alerts << ('Next appointment: ' + next_appt) unless next_appt.blank?
@@ -1216,7 +1219,7 @@ The following block of code should be replaced by a more cleaner function
     patient.encounters.find_last_by_encounter_type(type.id, :order => "encounter_datetime").observations.each do | obs |
       next if obs.order.blank?
       next if obs.order.auto_expire_date.blank?
-      alerts << "Drugs runout date: #{obs.order.drug_order.drug.name} #{obs.order.auto_expire_date.to_date.strftime('%d-%b-%Y')}"
+      alerts << "Drugs runout date: #{obs.order.drug_order.drug.name} #{obs.order.auto_expire_date.to_date.strftime('%d/%b/%Y')}"
     end rescue []
 
     # BMI alerts
@@ -3427,7 +3430,7 @@ The following block of code should be replaced by a more cleaner function
     count = appointments.first.count unless appointments.blank?
     count = '0' if count.blank?
 
-    render :text => "Next appointment: #{date.strftime('%d %B %Y')} (#{count})"
+    render :text => "Next appointment: #{date.strftime('%d/%b/%Y')} (#{count})"
   end
 
 

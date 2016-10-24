@@ -59,6 +59,9 @@ class EncountersController < GenericEncountersController
     @patient_tb_suspected = tb_suspected_today?(@patient, session_date)
     @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
 
+    @confirmatory_hiv_test_type = Patient.type_of_hiv_confirmatory_test(@patient, session_date) rescue ""
+    @hiv_clinic_registration_date = Patient.date_of_hiv_clinic_registration(@patient, session_date) rescue ""
+    
     #@fast_track_patient = false
     #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     #@fast_track_patient = true if @latest_fast_track_answer == 'YES'
@@ -543,12 +546,13 @@ class EncountersController < GenericEncountersController
           ["Oral candidiasis", "Oral candidiasis"],
           ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
           ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
+          ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"],
           ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
           ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
           ["Hepatitis B or C infection", "Hepatitis B or C infection"],
           ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
-          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
-          ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"]
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"]
+          
         ]
 
         @who_stage_iv = [
@@ -1377,7 +1381,7 @@ class EncountersController < GenericEncountersController
       AND drug_order.drug_inventory_id = #{order.drug_order.drug_inventory_id}  
       AND obs.obs_datetime >= '#{session_date.to_date}'                         
       AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND person_id = #{patient.id}")                                           
+      AND person_id = #{patient.id} AND value_numeric IS NOT NULL")                                           
                                                                                 
     total_brought_to_clinic = amounts_brought_to_clinic.sum{|amount| amount.value_numeric}
                                                                                 

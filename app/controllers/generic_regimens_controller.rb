@@ -190,6 +190,22 @@ class GenericRegimensController < ApplicationController
     end
 
     @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+    fast_track_obs_date = fast_track_obs_date(@patient, session_date)
+
+    if @fast_track_patient
+      unless fast_track_obs_date.blank?
+        if (fast_track_obs_date < session_date)
+          #Ignore this logic if Fast Track has been enrolled today
+          if (Patient.cpt_prescribed_in_the_last_prescription?(@patient, session_date))
+            @prescribe_cpt_set = true
+          end
+
+          if (Patient.ipt_prescribed_in_the_last_prescription?(@patient, session_date))
+            @prescribe_ipt_set = true
+          end
+        end
+      end
+    end
 
     @cpt_dose = ""
     @ipt_dose = ""
@@ -493,6 +509,7 @@ class GenericRegimensController < ApplicationController
 
 	def create
 		#raise params[:observation][].to_yaml
+ 
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
@@ -553,6 +570,41 @@ class GenericRegimensController < ApplicationController
 		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
     amought_of_drugs_brought_to_clinic_today = Patient.amought_brought_to_clinic_today(@patient, session_date)
 
+    ######################################################################################
+    unless params[:fast_track_yes_no].blank?
+      fast_track_status = params[:fast_track_yes_no]
+      fast_track_encounter_type = EncounterType.find_by_name("FAST TRACK ASSESMENT")
+      concept_ids = params[:fast_track_concept_ids].split(",")
+
+      ActiveRecord::Base.transaction do
+        fast_track_encounter = @patient.encounters.find(:last, :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
+            fast_track_encounter_type, session_date.to_date])
+        fast_track_encounter.void unless fast_track_encounter.blank?
+        fast_track_encounter = Encounter.new
+        fast_track_encounter.encounter_type = fast_track_encounter_type.encounter_type_id
+        fast_track_encounter.patient_id = params[:patient_id]
+        fast_track_encounter.encounter_datetime = session_date
+        fast_track_encounter.save
+
+        concept_ids.each do |concept_id|
+          fast_track_encounter.observations.create({
+              :person_id => params[:patient_id],
+              :concept_id => concept_id,
+              :value_coded => Concept.find_by_name("YES").concept_id,
+              :obs_datetime => fast_track_encounter.encounter_datetime
+            }) unless concept_id.blank?
+        end
+
+        fast_track_encounter.observations.create({
+            :person_id => @patient.patient_id,
+            :concept_id => Concept.find_by_name("FAST").concept_id,
+            :value_coded => Concept.find_by_name(fast_track_status).concept_id,
+            :obs_datetime => encounter.encounter_datetime
+          })
+      end
+      
+    end
+    ######################################################################################
 		orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:tb_regimen]})
 		ActiveRecord::Base.transaction do
 			# Need to write an obs for the regimen they are on, note that this is ARV
@@ -996,6 +1048,40 @@ class GenericRegimensController < ApplicationController
 
     ################################################################################################################
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked
+    @fast_track_patient = fast_track_patient?(@patient, session_date)
+    fast_track_obs_date = fast_track_obs_date(@patient, session_date)
+
+    if @fast_track_patient
+      unless fast_track_obs_date.blank?
+        if (fast_track_obs_date < session_date)
+          #Ignore this logic if Fast Track has been enrolled today
+          if (Patient.cpt_prescribed_in_the_last_prescription?(@patient, session_date))
+            dose = MedicationService.other_medications('Cotrimoxazole', current_weight)
+            regimen_medications = (regimen_medications + dose) unless dose.blank?
+          end
+      
+          if (Patient.ipt_prescribed_in_the_last_prescription?(@patient, session_date))
+            dose = MedicationService.other_medications('Isoniazid', current_weight)
+            regimen_medications = (regimen_medications + dose) unless dose.blank?
+            category = regimen_medications.last[:category] rescue nil
+            drug = Drug.find_by_name('Pyridoxine (50mg)')
+
+            pyridoxine_dose = [{
+                :drug_name => 'Pyridoxine (50mg)',
+                :am => '0',
+                :pm => '1',
+                :units => 'Tab(s)',
+                :drug_id => drug.drug_id,
+                :regimen_index => nil,
+                :category => category
+              }]
+            regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+
+          end
+        end
+      end
+    end
+    
     if @allergic_to_sulphur == 'Yes'
       @prescribe_medication_set = false
     else
@@ -1009,6 +1095,7 @@ class GenericRegimensController < ApplicationController
         regimen_medications = (regimen_medications + dose)
       end
     end
+
 
     if @prescribe_ipt_set == true
       dose = MedicationService.other_medications('Isoniazid', current_weight)

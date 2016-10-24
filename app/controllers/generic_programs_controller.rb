@@ -5,27 +5,27 @@ class GenericProgramsController < ApplicationController
     session[:return_to] = nil
     session[:return_to] = params[:return_to] unless params[:return_to].blank?
     program_names = PatientProgram.find(:all,
-                                    :joins => "INNER JOIN location l ON l.location_id = patient_program.location_id
+      :joins => "INNER JOIN location l ON l.location_id = patient_program.location_id
                                                INNER JOIN program p ON p.program_id = patient_program.program_id",
-                                    :select => "p.name program_name ,l.name location_name,patient_program.date_completed date_completed",
-                                    :conditions =>["voided = 0 AND patient_id = ? AND date_completed IS NULL",params[:patient_id]]
-                                    ).map{|pat_program|
-                                      [pat_program.program_name,pat_program.location_name] if pat_program.date_completed.blank?
-                                    }
+      :select => "p.name program_name ,l.name location_name,patient_program.date_completed date_completed",
+      :conditions =>["voided = 0 AND patient_id = ? AND date_completed IS NULL",params[:patient_id]]
+    ).map{|pat_program|
+      [pat_program.program_name,pat_program.location_name] if pat_program.date_completed.blank?
+    }
     @enrolled_program_names = program_names.to_json                                
     @patient_program = PatientProgram.new
   end
 
   def create
     active_programs = PatientProgram.find(:all,:conditions =>["voided = 0 AND patient_id = ? AND location_id = ? AND program_id = ?",
-                                    @patient.id,params[:location_id],params[:program_id]])
+        @patient.id,params[:location_id],params[:program_id]])
     invalid_date = false
     initial_date = params[:initial_date].to_date
     active_programs.map{ | program |
-		if !(program.date_completed.blank? and program.date_enrolled.blank?)
-			#raise "Initial date -> " + initial_date.to_s + " Date enrolled -> " + program.date_enrolled.to_date.to_s + " Date completed -> " + program.date_completed.to_date.to_s
-      		invalid_date = (initial_date >= program.date_enrolled.to_date and initial_date < program.date_completed.to_date)
-		end
+      if !(program.date_completed.blank? and program.date_enrolled.blank?)
+        #raise "Initial date -> " + initial_date.to_s + " Date enrolled -> " + program.date_enrolled.to_date.to_s + " Date completed -> " + program.date_completed.to_date.to_s
+        invalid_date = (initial_date >= program.date_enrolled.to_date and initial_date < program.date_completed.to_date)
+      end
     }
 
     if invalid_date
@@ -68,33 +68,45 @@ class GenericProgramsController < ApplicationController
       encounter = Encounter.find_by_sql("
         SELECT encounter_id FROM obs WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = 'PATIENT TRACKING STATE')
         AND value_numeric = #{state}").first rescue []
-        if not encounter.blank?
-          voided_encounter  = Encounter.find(encounter)
-          voided_encounter.void
-        end
+      if not encounter.blank?
+        voided_encounter  = Encounter.find(encounter)
+        voided_encounter.void
+      end
     end
     head :ok
   end  
   
   def locations
     search = params[:q] || ''
+    current_location = Location.current_health_center
+
     unless search.blank?
       @locations = Location.find(:all, :conditions=>["location.retired = 0 AND name LIKE ?", "#{search}%"], :limit => 10)
-    else
-        search = params[:q] || ''
-        location_tag_id = LocationTag.find_by_name("#{params[:transfer_type]}").id rescue nil
-        unless location_tag_id.blank?
-          location_ids = LocationTagMap.find(:all,:conditions => ["location_tag_id = (?)",location_tag_id]).map{|e|e.location_id}
-          @locations = Location.find(:all, :conditions=>["location.retired = 0 AND location_id IN (?) AND name LIKE ? AND name != ''", location_ids, "#{search}%"])
-        else
-          @locations = most_common_locations(params[:q] || '')
+      unless current_location.blank?
+        if (current_location.name.start_with?(search))
+          @locations.delete_if{|l|l.location_id == current_location.location_id}
+          @locations = @locations.unshift(current_location)
         end
+      end
+    else
+      search = params[:q] || ''
+      location_tag_id = LocationTag.find_by_name("#{params[:transfer_type]}").id rescue nil
+      unless location_tag_id.blank?
+        location_ids = LocationTagMap.find(:all,:conditions => ["location_tag_id = (?)",location_tag_id]).map{|e|e.location_id}
+        @locations = Location.find(:all, :conditions=>["location.retired = 0 AND location_id IN (?) AND name LIKE ? AND name != ''", location_ids, "#{search}%"])
+      else
+        @locations = most_common_locations(params[:q] || '')
+      end
+      unless current_location.blank?
+        @locations = @locations.unshift(current_location)
+      end
     end
 
     @names = @locations.map do | location | 
       next if generic_locations.include?(location.name)
       "<li value='#{location.location_id}'>#{location.name}</li>" 
     end
+
     render :text => @names.join('')
   end
   
@@ -106,16 +118,16 @@ class GenericProgramsController < ApplicationController
   
   def states
     if params[:show_non_terminal_states_only].to_s == true.to_s
-       @states = ProgramWorkflowState.all(:conditions => ['program_workflow_id = ? AND terminal = 0', params[:workflow]], :include => :concept)
+      @states = ProgramWorkflowState.all(:conditions => ['program_workflow_id = ? AND terminal = 0', params[:workflow]], :include => :concept)
     else
-       @states = ProgramWorkflowState.all(:conditions => ['program_workflow_id = ?', params[:workflow]], :include => :concept)
+      @states = ProgramWorkflowState.all(:conditions => ['program_workflow_id = ?', params[:workflow]], :include => :concept)
     end
     
     @names = @states.map{|state|
 
       name = state.concept.concept_names.typed("SHORT").first.name rescue state.concept.fullname
       next if name.blank?
-				 "<li value='#{state.id}'>#{name}</li>" unless name == params[:current_state]
+      "<li value='#{state.id}'>#{name}</li>" unless name == params[:current_state]
     }
     render :text => @names.join('')  
   end
@@ -126,12 +138,12 @@ class GenericProgramsController < ApplicationController
     if request.method == :post
 
       patient_program = PatientProgram.find(params[:patient_program_id])
-			 #we don't want to have more than one open states - so we have to close the current active on before opening/creating a new one
+      #we don't want to have more than one open states - so we have to close the current active on before opening/creating a new one
 
       current_active_state = patient_program.patient_states.last
       current_active_state.end_date = params[:current_date].to_date
 
-       # set current location via params if given
+      # set current location via params if given
       Location.current_location = Location.find(params[:location]) if params[:location]
 
       patient_state = patient_program.patient_states.build(
@@ -139,7 +151,7 @@ class GenericProgramsController < ApplicationController
         :start_date => params[:current_date])
       if patient_state.save
 		    # Close and save current_active_state if a new state has been created
-		   current_active_state.save
+        current_active_state.save
 
         if patient_state.program_workflow_state.concept.fullname.upcase == 'PATIENT TRANSFERRED OUT' 
           encounter = Encounter.new(params[:encounter])
@@ -170,8 +182,8 @@ class GenericProgramsController < ApplicationController
         updated_state = patient_state.program_workflow_state.concept.fullname
         
                      
-		#disabled redirection during import in the code below
-		# Changed the terminal state conditions from hardcoded ones to terminal indicator from the updated state object
+        #disabled redirection during import in the code below
+        # Changed the terminal state conditions from hardcoded ones to terminal indicator from the updated state object
         if patient_state.program_workflow_state.terminal == 1
           #the following code updates the person table to died yes if the state is Died/Death
           if updated_state.match(/DIED/i)
@@ -193,56 +205,56 @@ class GenericProgramsController < ApplicationController
                 Location.current_location = Location.find(params[:location]) if params[:location]
 
                 patient_state = program.patient_states.build(
-                    :state => params[:current_state],
-                    :start_date => params[:current_date])
+                  :state => params[:current_state],
+                  :start_date => params[:current_date])
                 if patient_state.save
 		              current_active_state.save
 
-		          # date_completed = session[:datetime].to_time rescue Time.now()
-                date_completed = params[:current_date].to_date rescue Time.now()
-                PatientProgram.update_all "date_completed = '#{date_completed.strftime('%Y-%m-%d %H:%M:%S')}'",
-                                       "patient_program_id = #{program.patient_program_id}"
+                  # date_completed = session[:datetime].to_time rescue Time.now()
+                  date_completed = params[:current_date].to_date rescue Time.now()
+                  PatientProgram.update_all "date_completed = '#{date_completed.strftime('%Y-%m-%d %H:%M:%S')}'",
+                    "patient_program_id = #{program.patient_program_id}"
                 end
-             end
+              end
             end
           end
 
           # date_completed = session[:datetime].to_time rescue Time.now()
           date_completed = params[:current_date].to_date rescue Time.now()
           PatientProgram.update_all "date_completed = '#{date_completed.strftime('%Y-%m-%d %H:%M:%S')}'",
-                                     "patient_program_id = #{patient_program.patient_program_id}"
+            "patient_program_id = #{patient_program.patient_program_id}"
         else
           person = patient_program.patient.person
           person.dead = 0
           person.save
           date_completed = nil
           PatientProgram.update_all "date_completed = NULL",
-                                     "patient_program_id = #{patient_program.patient_program_id}"
+            "patient_program_id = #{patient_program.patient_program_id}"
         end
         #for import
-         if params[:location].blank?
-            redirect_to :controller => :patients, :action => :programs_dashboard, :patient_id => params[:patient_id]
-         else
-            render :text => "import suceeded" and return
-         end
+        if params[:location].blank?
+          redirect_to :controller => :patients, :action => :programs_dashboard, :patient_id => params[:patient_id]
+        else
+          render :text => "import suceeded" and return
+        end
         
       else
         #for import
         if params[:location].blank?
           redirect_to :controller => :patients, :action => :programs_dashboard, :patient_id => params[:patient_id],:error => "Unable to update state"
         else
-            render :text => "import suceeded" and return
+          render :text => "import suceeded" and return
         end
       end
       
     else
       patient_program = PatientProgram.find(params[:id])
       unless patient_program.date_completed.blank?
-       if params[:location].blank?
+        if params[:location].blank?
           flash[:error] = "The patient has already completed this program!"
-       else
+        else
           render :text => "import suceeded" and return
-       end   
+        end
       end
       @patient = patient_program.patient
       @patient_program_id = patient_program.patient_program_id
@@ -276,24 +288,24 @@ class GenericProgramsController < ApplicationController
   # Looks for the most commonly used element in the database and sorts the results based on the first part of the string
   def most_common_program_locations(search)
     return (Location.find_by_sql([
-      "SELECT DISTINCT location.name AS name, location.location_id AS location_id \
+          "SELECT DISTINCT location.name AS name, location.location_id AS location_id \
        FROM location \
        INNER JOIN patient_program ON patient_program.location_id = location.location_id AND patient_program.voided = 0 \
        WHERE location.retired = 0 AND name LIKE ? AND name != '' \
        GROUP BY patient_program.location_id \
        ORDER BY INSTR(name, ?) ASC, COUNT(name) DESC, name ASC \
        LIMIT 10",
-       "%#{search}%","#{search}"]) + [Location.current_health_center]).uniq
+          "%#{search}%","#{search}"]) + [Location.current_health_center]).uniq
   end
 
   def most_common_locations(search)
     return (Location.find_by_sql([
-      "SELECT DISTINCT location.name AS name, location.location_id AS location_id \
+          "SELECT DISTINCT location.name AS name, location.location_id AS location_id \
        FROM location \
        WHERE location.retired = 0 AND name LIKE ? AND name != '' \
        ORDER BY name ASC \
        LIMIT 10",
-       "%#{search}%"])).uniq
+          "%#{search}%"])).uniq
   end
 
 end

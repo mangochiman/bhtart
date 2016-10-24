@@ -205,7 +205,7 @@ module MedicationService
     ingrients = MohRegimenIngredient.all
 
     (ingrients || []).each do |r|
-      if current_weight >= r.min_weight and current_weight <= r.max_weight
+      if current_weight.to_f >= r.min_weight.to_f and current_weight.to_f <= r.max_weight.to_f
         regimen_ingrients << r.drug_inventory_id 
       end
     end
@@ -234,7 +234,8 @@ module MedicationService
       valid_medication_ids = []
       (regimen_possible_drug_ids).each do |drug_id|
         medication = MohRegimenIngredient.find(:first, :conditions =>["drug_inventory_id = ? 
-          AND #{current_weight} >= min_weight AND #{current_weight} <= max_weight", drug_id])
+          AND #{current_weight.to_f} >= FORMAT(min_weight,2) 
+          AND #{current_weight.to_f} <= FORMAT(max_weight,2)", drug_id])
 
         unless medication.blank?
           valid_medication_ids << drug_id
@@ -258,8 +259,8 @@ module MedicationService
     regimen_medications = Drug.find(:all,:joins => "INNER JOIN moh_regimen_ingredient i 
       ON i.drug_inventory_id = drug.drug_id AND i.regimen_id = #{regimen_id}
       INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
-      :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
-      :select => "drug.*, i.*, d.*").map do |medication|
+      :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
+      AND #{current_weight.to_f} <= FORMAT(max_weight,2)", :select => "drug.*, i.*, d.*").map do |medication|
         {
           :drug_name => medication.name,
           :am => medication.am,
@@ -300,7 +301,8 @@ module MedicationService
     regimen_medications = (Drug.find(:all,:joins => "INNER JOIN moh_other_medications o 
       ON o.drug_inventory_id = drug.drug_id AND o.drug_inventory_id IN (#{drug_ids.join(',')})
       INNER JOIN moh_regimen_doses d ON d.dose_id = o.dose_id",
-      :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
+      :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
+      AND #{current_weight.to_f} <= FORMAT(max_weight,2)",
       :select => "drug.*, o.*, d.*", :limit => 10, :order => "drug.name DESC") || []).map do |medication|
         {
           :drug_name => medication.name,
@@ -354,7 +356,8 @@ module MedicationService
     doses = Drug.find(:all,:joins => "INNER JOIN moh_regimen_ingredient i 
       ON i.drug_inventory_id = drug.drug_id AND i.drug_inventory_id = #{drug_id}
       INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
-      :conditions => "#{current_weight} >= min_weight AND #{current_weight} <= max_weight",
+      :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
+      AND #{current_weight.to_f} <= FORMAT(max_weight,2)",
       :select => "drug.*, i.*, d.*").map do |medication|
         {
           :am => medication.am, :pm => medication.pm
@@ -364,6 +367,29 @@ module MedicationService
     return 0 if doses.blank?
     total_pills_per_day = doses.first[:am].to_f + doses.first[:pm].to_f
     return ((number_of_pills)/total_pills_per_day).to_i
+  end
+
+  def self.get_medication_dose(order)
+    instructions = order.instructions
+    return 0 if instructions.blank?
+    medication_name = order.drug_order.drug.name
+    num_of_tabs = instructions.sub("#{medication_name}:-",'').gsub('tab(s)','').gsub('tabs','').\
+      squish.gsub('Morning:','').sub('Evening:','').squish.split(',').collect {| n | n.to_f }
+
+    dose = 0
+    (num_of_tabs || []).each do |n|
+      dose += 1 if n > 0
+    end
+
+    if dose == 0
+      return 2 if instructions.match(/EVENING/i) and instructions.match(/MORNING/i)
+      return 1 if instructions.match(/EVENING/i) and not instructions.match(/MORNING/i)
+      return 1 if not instructions.match(/EVENING/i) and instructions.match(/MORNING/i)
+      return 1 if not instructions.match(/ONCE/i) 
+      return 2 if not instructions.match(/TWICE/i) 
+    end
+
+    return dose
   end
 
 end
