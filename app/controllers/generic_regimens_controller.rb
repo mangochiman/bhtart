@@ -509,6 +509,7 @@ class GenericRegimensController < ApplicationController
 
 	def create
 		#raise params[:observation][].to_yaml
+ 
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
@@ -569,6 +570,41 @@ class GenericRegimensController < ApplicationController
 		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
     amought_of_drugs_brought_to_clinic_today = Patient.amought_brought_to_clinic_today(@patient, session_date)
 
+    ######################################################################################
+    unless params[:fast_track_yes_no].blank?
+      fast_track_status = params[:fast_track_yes_no]
+      fast_track_encounter_type = EncounterType.find_by_name("FAST TRACK ASSESMENT")
+      concept_ids = params[:fast_track_concept_ids].split(",")
+
+      ActiveRecord::Base.transaction do
+        fast_track_encounter = @patient.encounters.find(:last, :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
+            fast_track_encounter_type, session_date.to_date])
+        fast_track_encounter.void unless fast_track_encounter.blank?
+        fast_track_encounter = Encounter.new
+        fast_track_encounter.encounter_type = fast_track_encounter_type.encounter_type_id
+        fast_track_encounter.patient_id = params[:patient_id]
+        fast_track_encounter.encounter_datetime = session_date
+        fast_track_encounter.save
+
+        concept_ids.each do |concept_id|
+          fast_track_encounter.observations.create({
+              :person_id => params[:patient_id],
+              :concept_id => concept_id,
+              :value_coded => Concept.find_by_name("YES").concept_id,
+              :obs_datetime => fast_track_encounter.encounter_datetime
+            }) unless concept_id.blank?
+        end
+
+        fast_track_encounter.observations.create({
+            :person_id => @patient.patient_id,
+            :concept_id => Concept.find_by_name("FAST").concept_id,
+            :value_coded => Concept.find_by_name(fast_track_status).concept_id,
+            :obs_datetime => encounter.encounter_datetime
+          })
+      end
+      
+    end
+    ######################################################################################
 		orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:tb_regimen]})
 		ActiveRecord::Base.transaction do
 			# Need to write an obs for the regimen they are on, note that this is ARV
