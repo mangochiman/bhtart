@@ -1895,7 +1895,8 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     end
   end
 
-  def self.period_on_treatment(start_date, today = Date.today)
+  def self.period_on_treatment(start_date, today = session_date)
+		today = Date.today if today.blank?
     years = (today.year - start_date.year)
     months = (today.month - start_date.month)
     (years * 12) + months
@@ -2374,7 +2375,7 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
 
   def self.earliest_start_date_patient_data(patient_id)
     record = ActiveRecord::Base.connection.select_all("
-    select 
+    select
         `p`.`patient_id` AS `patient_id`,
         cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
         date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
@@ -2397,13 +2398,13 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     {
       :birthdate => (p['birthdate'].to_date rescue nil),
       :date_enrolled => (p['date_enrolled'].to_date rescue nil),
-      :earliest_start_date => (p['earliest_start_date'].to_date rescue nil), 
-      :death_date => (p['death_date'].to_date rescue nil), 
-      :age_at_initiation => (p['age_at_initiation'].to_i rescue nil), 
+      :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+      :death_date => (p['death_date'].to_date rescue nil),
+      :age_at_initiation => (p['age_at_initiation'].to_i rescue nil),
       :age_in_days => (p['age_in_days'].to_i rescue nil)
     }
     end
-    
+
     return record.first rescue nil
   end
 
