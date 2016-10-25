@@ -608,13 +608,14 @@ Unique PatientProgram entries at the current location for those patients with at
 
     adherence = ActiveRecord::Base.connection.select_all <<EOF
       SELECT person_id, value_numeric, value_text FROM obs t WHERE concept_id = 6987 AND voided = 0
-      AND obs_datetime BETWEEN (SELECT CONCAT(max(obs_datetime),' 00:00:00') FROM obs
+      AND obs_datetime BETWEEN (SELECT CONCAT(date(max(obs_datetime)),' 00:00:00') FROM obs
         WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
-        AND obs_datetime <= '#{end_date}'
-      ) AND (SELECT CONCAT(max(obs_datetime),' 23:59:59') FROM obs
+        AND obs_datetime <= '#{end_date} 23:59:59'
+      ) AND (SELECT CONCAT(date(max(obs_datetime)),' 23:59:59') FROM obs
         WHERE concept_id = 6987 AND voided = 0 AND person_id = t.person_id
-        AND obs_datetime <= '#{end_date}'
-      ) AND person_id IN (#{patient_ids.join(',')}) AND obs_datetime <= '#{end_date}';
+        AND obs_datetime <= '#{end_date} 23:59:59'
+      ) AND person_id IN (#{patient_ids.join(',')}) 
+      AND obs_datetime <= '#{end_date} 23:59:59';
 EOF
 
     adherent = [] ; not_adherent = [] ; unknown_adherence = [];
