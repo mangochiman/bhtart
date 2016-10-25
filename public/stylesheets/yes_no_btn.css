@@ -1,110 +1,69 @@
 
-#yes_no_table .button {
-  width: 100px;
-  height: 100px;  
-  border-bottom: 2px solid #eee;
-  
-  background-image: -webkit-linear-gradient(top, #999, #d0d0d0 80% );
-  background-image: -moz-linear-gradient(top, #999, #d0d0d0 80% );
-  background-image: -ms-linear-gradient(top, #999, #d0d0d0 80% );
-  background-image: -o-linear-gradient(top, #999, #d0d0d0 80% );
-  background-image: linear-gradient(top, #999, #d0d0d0 80% );
-  
-  -moz-border-radius: 100px;  
-  -webkit-border-radius: 100px;  
-  border-radius: 100px;
-  
-  box-shadow: inset rgba(0,0,0,0.2) 0px 5px 6px ;
-  margin-left: 48px;
-  margin-top: -50px;
+.switch {
+  height: 65px;
   position: relative;
- /* 
-  left: 50%;
-  top: 50%;
-  margin-left: -50px;
-  margin-top: -50px;
-  position: absolute;*/
-
--webkit-user-select: none;  /* Chrome 49+ */
--moz-user-select: none;     /* Firefox 43+ */
--ms-user-select: none;      /* No support yet */
-user-select: none;   
+  width: 65px;
 }
-
-.butt {
-  position: absolute;
-  width: 80px;
-  height: 52px;
-  left: 10px;
-  top: 10px;
-  cursor: pointer;
-  font-family: "Lucida Sans";
-  font-weight: bold;
-  font-size: 23px;
-  /*color: #888;*/
-  text-shadow: 0px 1px 0px #fff;
-  text-align: center;
-  padding-top: 28px;
-  
-  -moz-border-radius: 100px;  
-  -webkit-border-radius: 100px;  
-  border-radius: 100px;  
-  
-  background-image: -webkit-linear-gradient(top, #eee, #bbb 70%, #9f9f9f 100% );
-  background-image: -moz-linear-gradient(top, #eee, #bbb 70%, #9f9f9f 100% );
-  background-image: -ms-linear-gradient(top, #eee, #bbb 70%, #9f9f9f 100% );
-  background-image: -o-linear-gradient(top, #eee, #bbb 70%, #9f9f9f 100% );
-  background-image: linear-gradient(top, #eee, #bbb 70%, #9f9f9f 100% );
-  
-  background-position: 0 6px;
-  background-color: #eee;
-  background-repeat: no-repeat;
-  
-  -webkit-box-shadow: rgba(0,0,0,.4) 0 3px 6px;  
-  -moz-box-shadow: rgba(0,0,0,.4) 0 3px 6px;  
-  box-shadow: rgba(0,0,0,.4) 0 3px 6px;
-  
-  -webkit-transition: all .1s ease-in;
-  -moz-transition: all .1s ease-in;
-  -ms-transition: all .1s ease-in;
-  -o-transition: all .1s ease-in;
-  transition: all .1s ease-in;
-}
-
-/*
-.butt:hover {
-  background-position: 0 0px;
-  
-  -webkit-box-shadow: rgba(0,0,0,.4) 0 3px 8px;  
-  -moz-box-shadow: rgba(0,0,0,.4) 0 3px 8px;  
-  box-shadow: rgba(0,0,0,.4) 0 3px 8px;
-}
-
-.butt:active {
-  width: 76px;
-  height: 48px;
-  margin: 2px 0 0 2px;   
-  border-bottom: 1px solid #fff;
-  font-size: 21px;
-  color: #777;
-
-  -webkit-box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;
-  -moz-box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;
-  box-shadow: inset rgba(0,0,0,.5) 0px 5px 10px;
-}
-*/
-
-#yes_no_table {
-/*  left: 10%;
-  top: 50%;
+.switch label {
+  background: #eaeaea none repeat scroll 0 0;
+  border-radius: 50%;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 -5px 5px rgba(100, 100, 100, 0.1) inset, 0 5px 5px rgba(255, 255, 255, 0.3) inset;
+  display: block;
+  height: 100%;
+  position: relative;
   width: 100%;
-  margin-left: -50px;
-  margin-top: -50px;
-  position: absolute; */
-  padding-top: 23px;
+}
+.switch label::after {
+  /*background: rgba(0, 0, 0, 0) linear-gradient(#ccc, #fff) repeat scroll 0 0;*/
+  border-radius: inherit;
+  bottom: -8%;
+  /*box-shadow: 0 2px 1px rgba(0, 0, 0, 0.15) inset, 0 2px 5px rgba(200, 200, 200, 0.1);*/
+  content: "";
+  left: -8%;
+  position: absolute;
+  right: -8%;
+  top: -8%;
+  z-index: -1;
+}
+.switch label::before {
+  /*background: rgba(0, 0, 0, 0) radial-gradient(40% 35%, #ccc, #969696 60%) repeat scroll 0 0;*/
+  border-radius: inherit;
+  /*box-shadow: 0 2px 4px 1px rgba(0, 0, 0, 0.3) inset, 0 1px 0 rgba(255, 255, 255, 1), 0 1px 0 white inset;*/
+  content: "";
+  height: 20%;
+  left: 40%;
+  position: absolute;
+  top: 40%;
+  width: 20%;
+}
+.switch input:checked ~ label {
+  /*background: rgba(0, 0, 0, 0) linear-gradient(#dedede, #fdfdfd) repeat scroll 0 0;*/
+}
+.switch input:checked ~ label::before {
+  /*background: rgba(0, 0, 0, 0) radial-gradient(40% 35%, #5aef5a, #25d025 60%) repeat scroll 0 0;*/
+  /*box-shadow: 0 3px 5px 1px rgba(0, 0, 0, 0.1) inset, 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 10px 2px rgba(0, 210, 0, 0.5);*/
 }
 
-.btn-containers {
-  height: 100px;
+.hidden-checkbox {
+  visibility: hidden;
+  position: absolute;
 }
 
+.btn-table td {
+  text-align: right;
+  padding-left: 175px;
+}
+
+.switch-no label:before, label:after {
+  content: "NO";
+  left: 22px !important;
+}
+
+.switch-yes label:before, label:after {
+  content: "YES";
+  left: 15px !important;
+}
+
+.switch label {
+  font-weight: bold;
+}
