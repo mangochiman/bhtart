@@ -11,16 +11,16 @@
       tstCurrentDate = "<%= @date %>";
       //tt_cancel_destination = '/clinic';
       tt_cancel_show = '/clinic';
-      
+
       function removeUpdateVlMenu(){
         try {
           content = window.parent.document.getElementById('content');
           vl_menu = document.getElementById('new_vl_menu');
           vl_menu.style.display='none';
-          
+
           viral_load_frame_body = window.frames['hiv_viral_load'].contentDocument.body;
           viral_load_frame_body.appendChild(vl_menu);
-          
+
           vl_lab_trail_cover = document.getElementById('vl_lab_trail_cover');
           vl_lab_trail_cover.style.display='none';
           viral_load_frame_body.appendChild(vl_lab_trail_cover);
@@ -45,7 +45,7 @@
           location.reload();
         }
       }
-      
+
       function newVlResultPath(){
         window.location = "/lab/viral_load_result?patient_id=<%= @patient.id %>&go_to_patient_dashboard=true"
       }
@@ -281,14 +281,15 @@
             <span id='patient_gender'><%= @patient_bean.sex rescue "" %></span>
 
             <div id="patient_card">
+              <% session_date = session[:datetime].to_date rescue Date.today %>
               <% if !@art_start_date.blank?  %>
-                <span value="<%= "#{PatientService.period_on_treatment(@art_start_date).to_i} month(s)" %>"> Period on ART </span>
+                <span value="<%= "#{PatientService.period_on_treatment(@art_start_date, session_date).to_i} month(s)" %>"> Period on ART </span>
               <% end %>
               <% unless @second_line_treatment_start_date.blank? %>
-                <span value="<%= "#{PatientService.period_on_treatment(@second_line_treatment_start_date).to_i} month(s)" %>"> Period on 2<sup>nd</sup>Line</span>
+                <span value="<%= "#{PatientService.period_on_treatment(@second_line_treatment_start_date, session_date).to_i} month(s)" %>"> Period on 2<sup>nd</sup>Line</span>
               <% end %>
               <% if !@tb_registration_date.blank? and @show_period == true %>
-                <span value="<%= "#{PatientService.period_on_treatment(@tb_registration_date.to_date).to_i} month(s)" %>"> Period on TB </span>
+                <span value="<%= "#{PatientService.period_on_treatment(@tb_registration_date.to_date, session_date).to_i} month(s)" %>"> Period on TB </span>
               <% end %>
 
               <% unless @current_regimen.blank?  %>
@@ -335,7 +336,7 @@
               <% end %>
 
               <% if @art_start_date.blank? and @pre_art_start_date != "" and @pre_art_start_date != nil %>
-                <span value="<%= "#{PatientService.period_on_treatment(@pre_art_start_date.to_date).to_i} month(s)" %>">Period on Pre-ART</span>
+                <span value="<%= "#{PatientService.period_on_treatment(@pre_art_start_date.to_date, session_date).to_i} month(s)" %>">Period on Pre-ART</span>
               <% end %>
               <% if (@patient_bean.pre_art_number rescue nil) != nil && (@patient_bean.pre_art_number) != " " %>
                 <span value="<%= @patient_bean.pre_art_number rescue "" %>">Pre-ART Number</span>
