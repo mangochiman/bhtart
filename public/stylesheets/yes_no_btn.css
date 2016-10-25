@@ -54,12 +54,12 @@
   padding-left: 175px;
 }
 
-.switch-no label:before, label:after {
+.switch-no label:before, .switch-no label:after {
   content: "NO";
   left: 22px !important;
 }
 
-.switch-yes label:before, label:after {
+.switch-yes label:before, .switch-yes label:after {
   content: "YES";
   left: 15px !important;
 }
