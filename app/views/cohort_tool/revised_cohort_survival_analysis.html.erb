@@ -228,7 +228,7 @@
             all ages
         </td>
         <td class="number table-main-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_of_new_patients_registered',<%= range %>)">
                 <%= data['number_of_new_patients_registered'].count %>
             </a>
         </td>
@@ -236,27 +236,27 @@
 
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_alive_and_on_arvs',<%= range %>)">
                 <%= data['number_alive_and_on_arvs'].count %>
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_dead',<%= range %>)">
                 <%= data['number_dead'].count %>
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_defaulted',<%= range %>)">
                 <%= data['number_defaulted'].count %>
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_stopped_treatment',<%= range %>)">
                 <%= data['number_stopped_treatment'].count %>
             </a>
         </td>
         <td class="number table-inner-data">
-            <a href="/cohort_tool/list_more_details?">
+            <a href="javascript:drillDown('number_transferred_out',<%= range %>)">
                 <%= data['number_transferred_out'].count %>
             </a>
         </td>
@@ -285,3 +285,96 @@
     </div>
 </div>
 <!- ###   ### -->
+
+<form id="patients" method="post" action="/cohort_tool/list_more_details">
+    <input id='patient_ids' type='hidden' name = 'patient_ids' />
+    <input id='indicator' type='hidden' name = 'indicator' />
+</form>
+
+<script>
+    function drillDown(indicator, ref_range) {
+        var range;
+        var patient_ids = [];
+
+        switch(indicator) {
+            case "number_of_new_patients_registered":
+            <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+                range = <%= range %>;
+            <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                if( range == ref_range) {
+                    <% (data['number_of_new_patients_registered'] || []).each do |patient_id| %>
+                    patient_ids.push(<%= patient_id %>);
+                    <% end %>
+                }
+            <% end %>
+            <% end %>
+                break;
+            case "number_alive_and_on_arvs":
+            <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+                range = <%= range %>;
+            <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                if( range == ref_range) {
+                    <% (data['number_alive_and_on_arvs'] || []).each do |patient| %>
+                    patient_ids.push(<%= patient['patient_id'] %>);
+                    <% end %>
+                }
+            <% end %>
+            <% end %>
+                break;
+            case "number_dead":
+            <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+                range = <%= range %>;
+            <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                if( range == ref_range) {
+                    <% (data['number_dead'] || []).each do |patient| %>
+                    patient_ids.push(<%= patient['patient_id'] %>);
+                    <% end %>
+                }
+            <% end %>
+            <% end %>
+                break;
+            case "number_defaulted":
+            <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+                range = <%= range %>;
+            <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                if( range == ref_range) {
+                    <% (data['number_defaulted'] || []).each do |patient| %>
+                    patient_ids.push(<%= patient['patient_id'] %>);
+                    <% end %>
+                }
+            <% end %>
+            <% end %>
+                break;
+            case "number_stopped_treatment":
+            <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+                range = <%= range %>;
+            <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                if( range == ref_range) {
+                    <% (data['number_stopped_treatment'] || []).each do |patient| %>
+                    patient_ids.push(<%= patient['patient_id'] %>);
+                    <% end %>
+                }
+            <% end %>
+            <% end %>
+                break;
+            case "number_transferred_out":
+            <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
+                range = <%= range %>;
+            <% if data['number_of_new_patients_registered'].count.to_i > 1 %>
+                if( range == ref_range) {
+                    <% (data['number_transferred_out'] || []).each do |patient| %>
+                    patient_ids.push(<%= patient['patient_id'] %>);
+                    <% end %>
+                }
+            <% end %>
+            <% end %>
+                break;
+            default:
+                break;
+        }
+
+        document.getElementById('patient_ids').value = patient_ids.join(',');
+        document.getElementById('indicator').value = indicator;
+        document.getElementById('patients').submit();
+    }
+</script>
