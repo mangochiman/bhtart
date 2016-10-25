@@ -90,6 +90,13 @@ class ApplicationController < GenericApplicationController
     return fast_track_obs_date
   end
 
+  def fast_track_done_today(patient, session_date = Date.today)
+    fast_track_done_obs = patient.person.observations.find(:last, :joins => [:encounter],
+      :conditions => ["DATE(obs_datetime) = ? AND comments =?", session_date, 'fast track done'])
+    return false if fast_track_done_obs.blank?
+    return true
+  end
+
   def fast_track_patient?(patient, session_date = Date.today)
     fast_track_patient = false
     latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
@@ -1202,7 +1209,8 @@ class ApplicationController < GenericApplicationController
     #fast_track_patient = false if (tb_suspected_or_confirmed?(patient, session_date) == true)
     #fast_track_patient = false if (is_patient_on_htn_treatment?(patient, session_date) == true)
     
-    if fast_track_patient?(patient, session_date)
+    if (fast_track_patient?(patient, session_date) || fast_track_done_today(patient, session_date))
+      #fast_track_done_today method: this is to for tracking a patient if the patient is a fast track after even the visit is done on that day
       return fast_track_next_form(location , patient , session_date)
     end
     ########### FAST TRACK END ##############

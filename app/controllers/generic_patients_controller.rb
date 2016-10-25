@@ -70,6 +70,7 @@ class GenericPatientsController < ApplicationController
             uniq_fast_track_answers = last_two_fast_track_answers.uniq
             if (uniq_fast_track_answers.length == 1 && uniq_fast_track_answers.include?('YES'))
               latest_fast_track.value_coded = Concept.find_by_name('NO').concept_id
+              latest_fast_track.comments = 'fast track done' #DO NOT REMOVE THIS SECTION PLIZ. THAT'S A HACK. #mangochiman 25/oct/2016
               latest_fast_track.save
             end
           end

@@ -460,7 +460,8 @@ class GenericPeopleController < ApplicationController
     #raise patient_is_htn_client.inspect
     if patient_is_htn_client
       task = main_next_task(Location.current_location, patient, session_date)
-      if task.url.match(/VITALS/i)
+      task_url =  task.url.match(/VITALS/i) rescue ''
+      if task_url.match(/VITALS/i)
         @htn_alert = "Screen this patient for High Blood Pressure"
       end
     end
