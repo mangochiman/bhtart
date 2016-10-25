@@ -710,8 +710,8 @@
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                                                    regimens.push('<%=data[0].split(" ").first%>');
-                                                                                                                    display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                                                        regimens.push('<%=data[0].split(" ").first%>');
+                                                                                                                        display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -2035,12 +2035,13 @@ end
           tstvalue = this.getAttribute('tstvalue');
           regIndex = tstvalue.replace( /^\D+/g, ''); // replace all leading non-digits with nothing. Copied from stack overflow #mangochiman
           if (parseInt(regIndex) != parseInt(currentRegimenIndex)){
-            changeRegimenPopup();
+            showRegimenChangePopup(); //Modified version
+            //changeRegimenPopup();
           }
 
         }
         if (liElements){
-          stopRegimenChangeInterval();
+          //stopRegimenChangeInterval();
         }
 
       }
@@ -2107,15 +2108,15 @@ end
       [['Good adherence','9537']]
     ];
 
-    <%if @patient.person.gender.first.upcase == 'M'%>
-    attr = [
-      [['Adult 10 years +', '9533'],['No side Effects, OI/TB', '9539']],
-      [['on ART for 12 months', '9534'],['No BP/diabetes treatment', '9540']],
-      [['on 1st Line ART','9535']],
-      [['Last VL < 1000','9536']],
-      [['Good adherence','9537']]
-    ];
-    <%end%>
+<%if @patient.person.gender.first.upcase == 'M'%>
+      attr = [
+        [['Adult 10 years +', '9533'],['No side Effects, OI/TB', '9539']],
+        [['on ART for 12 months', '9534'],['No BP/diabetes treatment', '9540']],
+        [['on 1st Line ART','9535']],
+        [['Last VL < 1000','9536']],
+        [['Good adherence','9537']]
+      ];
+<%end%>
 
     counter = 1;
     for(var i = 0; i < attr.length; i++){
@@ -2179,13 +2180,13 @@ end
     
     concept_id = e.getAttribute('concept_id');
     if(checkBox.getAttribute('src').match('unticked')) {
-		fast_track_answers.push(concept_id)
+      fast_track_answers.push(concept_id)
       checkBox.setAttribute('src','/touchscreentoolkit/lib/images/ticked.jpg');
     }else{
 
       fast_track_answers  = jQuery.grep(fast_track_answers , function(value) {
-  			return value != concept_id;
-		});
+        return value != concept_id;
+      });
 		
       checkBox.setAttribute('src','/touchscreentoolkit/lib/images/unticked.jpg');
     }
@@ -2232,17 +2233,17 @@ pyridoxine_options = ["","25", "50"]
   <form id='regimen_form' action="/regimens/create" method='post'>
     <%= hidden_field_tag :patient_id, @patient.id %>
 
-    <%###if not @allergic_to_sulphur.blank?
-      #if @allergic_to_sulphur.upcase == 'YES'
-      %>
-        <%#= text_field "allergic_to_sulphur_summary" , '',
-          :tt_onLoad => "$('clearButton').style.display='none'; $('inputFrame' + tstCurrentPage).style.display='none'; $('keyboard').style.display = 'none'",
-          :tt_onUnLoad => "$('clearButton').style.display='';",
-          :optional => "true",
-          :helpText => "<div class='custom-helptext' style='text-align:center;'>Patient is <b style='color:red'>allergic</b> to Cotrimoxazole</div>"
-      %>
-      <%#end
-    #end%>
+<%###if not @allergic_to_sulphur.blank?
+#if @allergic_to_sulphur.upcase == 'YES'
+%>
+<%#= text_field "allergic_to_sulphur_summary" , '',
+:tt_onLoad => "$('clearButton').style.display='none'; $('inputFrame' + tstCurrentPage).style.display='none'; $('keyboard').style.display = 'none'",
+:tt_onUnLoad => "$('clearButton').style.display='';",
+:optional => "true",
+:helpText => "<div class='custom-helptext' style='text-align:center;'>Patient is <b style='color:red'>allergic</b> to Cotrimoxazole</div>"
+%>
+<%#end
+#end%>
 
 
     <!-- TB regimen -->
@@ -2754,7 +2755,7 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
     <% else %>
       <%= hidden_field_tag "filter[provider]", nil %>
     <%end%>
-      <input type="hidden" name="fast_track_concept_ids" id="fast_tracK_obs" />
+    <input type="hidden" name="fast_track_concept_ids" id="fast_tracK_obs" />
   </form>
   <div id="previous_drugs_dispensed">
   </div>
@@ -2867,6 +2868,128 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
     setTextToAppear(" (MoH Recommended)");
     setTextToAppear();
   }, 100);
+
+</script>
+
+<div id="regimen-change-popup-div">
+  <div id="regimen-change-popup-header">
+    <center>Regimen Change </center>
+  </div><br />
+  <div>
+
+    <span style="font-size: 16pt;">
+      <center>
+        <i><b id="regimen-change-header">CONFIRM REGIMEN CHANGE</b></i><br />
+        Are you sure you want to change regimen?
+      </center>
+    </span>
+    <div style="padding-top: 65px;">
+
+      <span id="regimen-change-yes" onclick="continueWithRegimenChange();" class="regimen-change-my_button">Yes, Am sure</span>
+      <span id="regimen-change-no" onclick="hideRegimenChangePopup();" class="regimen-change-my_button">No, Am not sure</span>
+    </div>
+  </div>
+</div>
+
+
+<div id="regimen-change-cover"></div>
+
+<style type="text/css">
+
+  .regimen-change-my_button {
+    -moz-user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bolder;
+    line-height: 2.29;
+    margin-bottom: 0;
+    padding: 6px 56px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    color: #fff;
+    float: right;
+    margin-top: -5px;
+  }
+
+
+  #regimen-change-popup-div {
+    display: none;
+    background-color: #F4F4F4;
+    border: 2px solid #E0E0E0;
+    border-radius: 15px;
+    height: 240px;
+    padding: 5px;
+    position: absolute;
+    margin-top: 100px;
+    width: 560px;
+    margin-left: 430px;
+    z-index: 991;
+  }
+
+  #regimen-change-popup-header{
+    border-bottom: 2px solid #7D9EC0;
+    margin-left: -5px;
+    width: 101.5%;
+    background-color: #FFFFFF;
+    margin-top: -5px;
+    padding-top: 5px;
+    border-radius: 15px 15px 0 0;
+    font-size: 14pt;
+    font-weight: bolder;
+  }
+
+  #regimen-change-cover{
+    display: none;
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.65;
+  }
+
+  #regimen-change-yes{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+  }
+
+  #regimen-change-no{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+    margin-right: 27px;
+  }
+</style>
+
+<script type="text/javascript">
+  function hideRegimenChangePopup(){
+    clearInput();
+    document.getElementById("regimen-change-popup-div").style.display = 'none';
+    document.getElementById("regimen-change-cover").style.display = 'none';
+  }
+
+  function continueWithRegimenChange(){
+    document.getElementById("regimen-change-popup-div").style.display = 'none';
+    document.getElementById("regimen-change-cover").style.display = 'none';
+    gotoNextPage();
+  }
+
+  function showRegimenChangePopup(){
+    document.getElementById("regimen-change-popup-div").style.display = 'inline';
+    document.getElementById("regimen-change-cover").style.display = 'inline';
+  }
 
 </script>
 
