@@ -1002,7 +1002,7 @@ function checkConfirmDate(){
 			{	:id => "agrees_to_followup",
 				:helpText => "Patient agrees to be contacted by phone/visited at home?" } %>
 
-		<%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['HIV Rapid Test','HIV RAPID TEST'],['HIV PCR','HIV DNA polymerase chain reaction'],['NOT Done','NOT DONE']]),
+		<%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['Rapid Antibody Test','HIV RAPID TEST'],['DNA PCR','HIV DNA polymerase chain reaction'],['Not Done','NOT DONE']]),
 			{	:id => "type_of_confirmatory_hiv_test",
                                 :tt_onLoad => "setUnknownConfirmatoryTestForPopup();",
 			 	:helpText => "Confirmatory HIV test" } %>

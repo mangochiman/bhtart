@@ -427,6 +427,15 @@ class EncountersController < GenericEncountersController
 		end
 
     if  ['HIV_CLINIC_CONSULTATION', 'TB_VISIT', 'HIV_STAGING'].include?((params[:encounter_type].upcase rescue ''))
+      
+      if @patient.person.age(session_date.to_date) >= 6 
+        @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
+        @current_height = PatientService.get_patient_attribute_value(@patient, "current_height", session_date)
+        if @current_height > 0 and @current_weight > 0
+          @current_patient_bmi =  (@current_weight/(@current_height*@current_height)*10000).round(1)
+        end
+      end
+
 			@local_tb_dot_sites_tag = tb_dot_sites_tag 
 			for encounter in @current_encounters.reverse do
 				if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation') 
@@ -538,37 +547,56 @@ class EncountersController < GenericEncountersController
 					end
 				end
 
+        @who_stage_i = [
+            ["Asymptomatic HIV infection", "Asymptomatic HIV infection"], 
+            ["Persistent generalized lymphadenopathy", "Persistent generalized lymphadenopathy"]
+          ]
+
+        @who_stage_ii = [
+            ["Moderate weight loss less than or equal to 10 percent, unexplained", "Moderate weight loss less than or equal to 10 percent, unexplained"],
+            ["Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)", "Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)"], 
+            ["Seborrhoeic dermatitis", "Seborrhoeic dermatitis"],
+            ["Papular pruritic eruptions / Fungal nail infections", "Papular pruritic eruptions / Fungal nail infections"], 
+            ["Herpes zoster", "Herpes zoster"], 
+            ["Angular cheilitis", "Angular cheilitis"], 
+            ["Oral ulcerations, recurrent", "Oral ulcerations, recurrent"], 
+            ["Unspecified stage 2 condition","Unspecified stage 2 condition"]
+          ]
+        
+
         @who_stage_iii = [
+          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
+          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
+          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
           ["Pulmonary tuberculosis (current)", "Pulmonary tuberculosis (current)"],
           ["Tuberculosis (PTB or EPTB) within the last 2 years", "Tuberculosis (PTB or EPTB) within the last 2 years"],
-          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
-          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
           ["Oral candidiasis", "Oral candidiasis"],
-          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
-          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
           ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"],
+          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
           ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
+          ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
           ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
           ["Hepatitis B or C infection", "Hepatitis B or C infection"],
-          ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
-          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"]
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
+          ["Unspecified stage 3 condition", "Unspecified stage 3 condition"]
           
         ]
 
         @who_stage_iv = [
-          ["Kaposis sarcoma", "Kaposis sarcoma"],
-          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
-          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
           ["Cryptococcal meningitis or other extrapulmonary cryptococcosis", "Cryptococcal meningitis or other extrapulmonary cryptococcosis"],
+          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
+          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
+          ["Kaposis sarcoma", "Kaposis sarcoma"],
+          ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"],
+          ["Non-typhoidal Salmonella bacteraemia, recurrent", "Non-typhoidal Salmonella bacteraemia, recurrent"],
           ["Symptomatic HIV-associated nephropathy or cardiomyopathy", "Symptomatic HIV-associated nephropathy or cardiomyopathy"],
           ["Cerebral or B-cell non Hodgkin lymphoma", "Cerebral or B-cell non Hodgkin lymphoma"],
           ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
-          ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"],
           ["Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)", "Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)"],
           ["Cytomegalovirus infection (retinitis or infection or other organs)", "Cytomegalovirus infection (retinitis or infection or other organs)"],
           ["Toxoplasmosis of the brain", "Toxoplasmosis of the brain"],
-          ["Non-typhoidal Salmonella bacteraemia, recurrent", "Non-typhoidal Salmonella bacteraemia, recurrent"],
           ["Invasive cancer of cervix", "Invasive cancer of cervix"],
+          ["Unspecified stage 4 condition", "Unspecified stage 4 condition"],
           ["Other", "Other"]
         ]
         #@who_stage_iv.delete_if{|stage_condition|who_stage_iv_to_be_removed.include?(stage_condition[0])} << ["Other", "Other"]

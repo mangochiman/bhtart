@@ -243,7 +243,7 @@ module MedicationService
       end  
        
       if (valid_medication_ids.count == num_of_drug_combination)
-        recommended_regimens << "Regimen #{regimen_index}"
+        recommended_regimens << "Regimen #{regimen_index} (#{self.get_regimen_formulation(regimen_index)})"
       end
 
 
@@ -251,6 +251,23 @@ module MedicationService
 
     
     return recommended_regimens.sort_by{|x| x.gsub('Regimen ','').to_i}.uniq
+  end
+
+  def self.get_regimen_formulation(index)
+    regimen_formulations = {
+      0 => "ABC / 3TC + NVP",
+      2 => "AZT / 3TC / NVP",
+      4 => "AZT / 3TC + EFV",
+      5 => "TDF / 3TC / EFV",
+      6 => "TDF / 3TC + NVP",
+      7 => "TDF / 3TC + ATV/r",
+      8 => "AZT / 3TC + ATV/r",
+      9 => "ABC / 3TC + ATV/r",
+      10 => "TDF / 3TC + LPV/r",
+      11 => "AZT / 3TC + LPV/r",
+      12 => "DRV + r + ETV + RAL"
+    }
+    return regimen_formulations[index]
   end
 
   def self.regimen_medications(regimen_index, current_weight)
