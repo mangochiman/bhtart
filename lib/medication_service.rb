@@ -35,8 +35,8 @@ module MedicationService
   # into select options. 
 	def self.regimen_options(weight, program)
 		regimens = Regimen.find(	:all,
-									:order => 'regimen_index',
-									:conditions => ['? >= min_weight AND ? < max_weight AND program_id = ?', weight, weight, program.program_id])
+      :order => 'regimen_index',
+      :conditions => ['? >= min_weight AND ? < max_weight AND program_id = ?', weight, weight, program.program_id])
 
 		options = regimens.map { |r|
 			concept_name = (r.concept.concept_names.typed("SHORT").first ||	r.concept.concept_names.typed("FULLY_SPECIFIED").first).name
@@ -52,8 +52,8 @@ module MedicationService
 
   def self.all_regimen_options(program)
 		regimens = Regimen.find(	:all,
-									:order => 'regimen_index',
-									:conditions => ['program_id = ?', program.program_id])
+      :order => 'regimen_index',
+      :conditions => ['program_id = ?', program.program_id])
 
 		options = regimens.map { |r|
 			concept_name = (r.concept.concept_names.typed("SHORT").first ||	r.concept.concept_names.typed("FULLY_SPECIFIED").first).name
@@ -110,8 +110,8 @@ module MedicationService
                         IN (SELECT concept_name_id FROM concept_name_tag_map \
                         WHERE concept_name_tag_id = (SELECT concept_name_tag_id \
                         FROM concept_name_tag WHERE tag = 'preferred_dmht'))").collect {|freq|
-                            freq.name rescue nil
-                        }.compact rescue []
+      freq.name rescue nil
+    }.compact rescue []
   end
   
 	def self.fully_specified_frequencies
@@ -199,7 +199,7 @@ module MedicationService
   def self.moh_arv_regimen_options(current_weight)
     regimen_categories = {}
     #regimens = MohRegimen.find(:all, :joins => "INNER JOIN moh_regimen_lookup l 
-     # ON l.regimen_id = moh_regimens.regimen_id", :select => "moh_regimens.*, l.*")
+    # ON l.regimen_id = moh_regimens.regimen_id", :select => "moh_regimens.*, l.*")
 
     regimen_ingrients = []
     ingrients = MohRegimenIngredient.all
@@ -261,21 +261,21 @@ module MedicationService
       INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
       :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
       AND #{current_weight.to_f} <= FORMAT(max_weight,2)", :select => "drug.*, i.*, d.*").map do |medication|
-        {
-          :drug_name => medication.name,
-          :am => medication.am,
-          :pm => medication.pm,
-          :units => medication.units,
-          :drug_id => medication.drug_id,
-          :regimen_index => regimen_index,
-          :category => MohRegimenLookup.find_by_drug_inventory_id(medication.drug_id).regimen_name.match(/A|P/i)[0]
-        }
-      end
+      {
+        :drug_name => medication.name,
+        :am => medication.am,
+        :pm => medication.pm,
+        :units => medication.units,
+        :drug_id => medication.drug_id,
+        :regimen_index => regimen_index,
+        :category => MohRegimenLookup.find_by_drug_inventory_id(medication.drug_id).regimen_name.match(/A|P/i)[0]
+      }
+    end
 
     return regimen_medications    
   end
 
-  def self.regimen_interpreter(medication_ids = [])
+  def self.regimen_interpreter_old(medication_ids = [])
     return nil if medication_ids.blank?
     moh_regimen_ingredients = {}
 
@@ -295,25 +295,103 @@ module MedicationService
     return regimen_name
   end
 
+  def self.regimen_interpreter(medication_ids = [])
+    regimen_name = 'Unknown'
+    regimen_codes = self.regimen_codes
+    
+    regimen_codes.each do |regimen_code, data|
+      data.each do |row|
+        drugs = [row].flatten
+        drug_ids = Drug.find(:all, :conditions => ["drug_id IN (?)", drugs]).map(&:drug_id)
+        if (drug_ids - medication_ids) == [] and (drug_ids.count == medication_ids.count)
+          regimen_name = regimen_code
+          break;
+        end
+      end
+    end
+    
+    return regimen_name
+  end
+
+  def self.regimen_codes
+    #ABC/3TC (Abacavir and Lamivudine 60/30mg tablet) = 733
+    #NVP (Nevirapine 50 mg tablet) = 968
+    #NVP (Nevirapine 200 mg tablet) = 22
+    #ABC/3TC (Abacavir and Lamivudine 600/300mg tablet) = 969
+    #AZT/3TC/NVP (60/30/50mg tablet) = 732
+    #AZT/3TC/NVP (300/150/200mg tablet) = 731
+    #AZT/3TC (Zidovudine and Lamivudine 60/30 tablet) = 736
+    #EFV (Efavirenz 200mg tablet) = 30
+    #EFV (Efavirenz 600mg tablet) = 11
+    #AZT/3TC (Zidovudine and Lamivudine 300/150mg) = 39
+    #TDF/3TC/EFV (300/300/600mg tablet) = 735
+    #TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet = 734
+    #ATV/r (Atazanavir 300mg/Ritonavir 100mg) = 932
+    #LPV/r (Lopinavir and Ritonavir 100/25mg tablet) = 74
+    #LPV/r (Lopinavir and Ritonavir 200/50mg tablet) = 73
+    #Darunavir 600mg = 976
+    #Ritonavir 100mg = 977
+    #Etravirine 100mg = 978
+    #RAL (Raltegravir 400mg) = 954
+    #NVP (Nevirapine 200 mg tablet) = 22
+
+    regimens = {
+      "0P" => [[733, 968], [733, 22]],
+      
+      "0A" =>[[969, 22],[969, 968]],
+      
+      "2P" => [[732]],
+      
+      "2A" => [[731]],
+      
+      "4P" => [[736, 30],[736, 11]],
+      
+      "4A" => [[39, 11],[39, 30]],
+      
+      "5A" => [[735]],
+      
+      "6A" => [[734, 22]],
+      
+      "7A" => [[734, 932]],
+
+      "8A" => [[39, 932]],
+
+      "9P" => [[733, 74],[733, 73]],
+
+      "9A" => [[969, 73],[969, 74]],
+
+      "10A" => [[734, 73]],
+
+      "11P" => [[736, 74],[736, 73]],
+
+      "11A" => [[39, 73],[39, 74]],
+
+      "12A" => [[976, 977, 978, 954]]
+      
+    }
+
+    return regimens
+  end
+
   def self.other_medications(drug_name, current_weight)
     drug_ids = Drug.find(:all, :conditions =>['name LIKE ?', "%#{drug_name}%"]).map(&:drug_id)
 
     regimen_medications = (Drug.find(:all,:joins => "INNER JOIN moh_other_medications o 
       ON o.drug_inventory_id = drug.drug_id AND o.drug_inventory_id IN (#{drug_ids.join(',')})
       INNER JOIN moh_regimen_doses d ON d.dose_id = o.dose_id",
-      :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
+        :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2)
       AND #{current_weight.to_f} <= FORMAT(max_weight,2)",
-      :select => "drug.*, o.*, d.*", :limit => 10, :order => "drug.name DESC") || []).map do |medication|
-        {
-          :drug_name => medication.name,
-          :am => medication.am,
-          :pm => medication.pm,
-          :units => medication.units,
-          :drug_id => medication.drug_id,
-          :regimen_index => nil,
-          :category => medication.category
-        }
-      end
+        :select => "drug.*, o.*, d.*", :limit => 10, :order => "drug.name DESC") || []).map do |medication|
+      {
+        :drug_name => medication.name,
+        :am => medication.am,
+        :pm => medication.pm,
+        :units => medication.units,
+        :drug_id => medication.drug_id,
+        :regimen_index => nil,
+        :category => medication.category
+      }
+    end
 
     #Isoniazid section
     (regimen_medications || []).each do |medication|
@@ -359,9 +437,9 @@ module MedicationService
       :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
       AND #{current_weight.to_f} <= FORMAT(max_weight,2)",
       :select => "drug.*, i.*, d.*").map do |medication|
-        {
-          :am => medication.am, :pm => medication.pm
-        }
+      {
+        :am => medication.am, :pm => medication.pm
+      }
     end
 
     return 0 if doses.blank?
