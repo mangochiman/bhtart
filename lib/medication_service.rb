@@ -487,4 +487,13 @@ module MedicationService
     return dose
   end
 
+  def self.prescription_interval(order)
+    start_date, end_date = order.start_date.to_date, order.auto_expire_date.to_date
+    prescription_interval = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT timestampdiff(day, DATE('#{start_date.to_s}'), DATE('#{end_date.to_s}')) AS days;
+EOF
+
+    return prescription_interval['days'].to_i 
+  end
+
 end
