@@ -427,6 +427,15 @@ class EncountersController < GenericEncountersController
 		end
 
     if  ['HIV_CLINIC_CONSULTATION', 'TB_VISIT', 'HIV_STAGING'].include?((params[:encounter_type].upcase rescue ''))
+      
+      if @patient.person.age(session_date.to_date) >= 6 
+        @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
+        @current_height = PatientService.get_patient_attribute_value(@patient, "current_height", session_date)
+        if @current_height > 0 and @current_weight > 0
+          @current_patient_bmi =  (@current_weight/(@current_height*@current_height)*10000).round(1)
+        end
+      end
+
 			@local_tb_dot_sites_tag = tb_dot_sites_tag 
 			for encounter in @current_encounters.reverse do
 				if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation') 
@@ -538,37 +547,56 @@ class EncountersController < GenericEncountersController
 					end
 				end
 
+        @who_stage_i = [
+            ["Asymptomatic HIV infection", "Asymptomatic HIV infection"], 
+            ["Persistent generalized lymphadenopathy", "Persistent generalized lymphadenopathy"]
+          ]
+
+        @who_stage_ii = [
+            ["Moderate weight loss less than or equal to 10 percent, unexplained", "Moderate weight loss less than or equal to 10 percent, unexplained"],
+            ["Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)", "Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)"], 
+            ["Seborrhoeic dermatitis", "Seborrhoeic dermatitis"],
+            ["Papular pruritic eruptions / Fungal nail infections", "Papular pruritic eruptions / Fungal nail infections"], 
+            ["Herpes zoster", "Herpes zoster"], 
+            ["Angular cheilitis", "Angular cheilitis"], 
+            ["Oral ulcerations, recurrent", "Oral ulcerations, recurrent"], 
+            ["Unspecified stage 2 condition","Unspecified stage 2 condition"]
+          ]
+        
+
         @who_stage_iii = [
+          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
+          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
+          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
           ["Pulmonary tuberculosis (current)", "Pulmonary tuberculosis (current)"],
           ["Tuberculosis (PTB or EPTB) within the last 2 years", "Tuberculosis (PTB or EPTB) within the last 2 years"],
-          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
-          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
           ["Oral candidiasis", "Oral candidiasis"],
-          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
-          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
           ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"],
+          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
           ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
+          ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
           ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
           ["Hepatitis B or C infection", "Hepatitis B or C infection"],
-          ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
-          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"]
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
+          ["Unspecified stage 3 condition", "Unspecified stage 3 condition"]
           
         ]
 
         @who_stage_iv = [
-          ["Kaposis sarcoma", "Kaposis sarcoma"],
-          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
-          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
           ["Cryptococcal meningitis or other extrapulmonary cryptococcosis", "Cryptococcal meningitis or other extrapulmonary cryptococcosis"],
+          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
+          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
+          ["Kaposis sarcoma", "Kaposis sarcoma"],
+          ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"],
+          ["Non-typhoidal Salmonella bacteraemia, recurrent", "Non-typhoidal Salmonella bacteraemia, recurrent"],
           ["Symptomatic HIV-associated nephropathy or cardiomyopathy", "Symptomatic HIV-associated nephropathy or cardiomyopathy"],
           ["Cerebral or B-cell non Hodgkin lymphoma", "Cerebral or B-cell non Hodgkin lymphoma"],
           ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
-          ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"],
           ["Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)", "Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)"],
           ["Cytomegalovirus infection (retinitis or infection or other organs)", "Cytomegalovirus infection (retinitis or infection or other organs)"],
           ["Toxoplasmosis of the brain", "Toxoplasmosis of the brain"],
-          ["Non-typhoidal Salmonella bacteraemia, recurrent", "Non-typhoidal Salmonella bacteraemia, recurrent"],
           ["Invasive cancer of cervix", "Invasive cancer of cervix"],
+          ["Unspecified stage 4 condition", "Unspecified stage 4 condition"],
           ["Other", "Other"]
         ]
         #@who_stage_iv.delete_if{|stage_condition|who_stage_iv_to_be_removed.include?(stage_condition[0])} << ["Other", "Other"]
@@ -1251,7 +1279,6 @@ class EncountersController < GenericEncountersController
 
 		dispensed_date = session[:datetime].to_date rescue Date.today
 		expiry_date = prescription_expiry_date(@patient, dispensed_date)
-		
 		return revised_suggested_date(expiry_date)
 	end
 
@@ -1277,11 +1304,11 @@ class EncountersController < GenericEncountersController
     encounter_type = EncounterType.find_by_name('APPOINTMENT')
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
 
-    appointments = {} ; sdate = (expiry_date.to_date + 1.day)
-    1.upto(5).each do |num|
+    appointments = {} ; sdate = (end_date.to_date + 1.day)
+    1.upto(4).each do |num|
       appointments[(sdate - num.day)] = 0
     end
-
+    
     Observation.find_by_sql("SELECT value_datetime appointment_date, count(value_datetime) AS count FROM obs
       INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
       AND encounter_type = #{encounter_type.id} AND value_datetime BETWEEN '#{start_date}'
@@ -1289,7 +1316,7 @@ class EncountersController < GenericEncountersController
       appointments[appointment.appointment_date.to_date] = appointment.count.to_i
     end
 
-    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+    (appointments || {}).sort_by {|x, y| x.to_date }.reverse.each do |date, count|
       next unless clinic_days.include?(date.to_date.strftime('%A'))
       next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
 
@@ -1322,91 +1349,74 @@ class EncountersController < GenericEncountersController
 	def prescription_expiry_date(patient, dispensed_date)
     session_date = dispensed_date.to_date
         
-    arvs_given = false
-		
     #get all drug dispensed on set clinic day
-		drugs_given_on = PatientService.drugs_given_on(patient, session_date)
+    medication = PatientService.drugs_given_on(patient, session_date)
+    return session_date if medication.blank?
 
-		orders_made = drugs_given_on.reject do |o|
-      !MedicationService.tb_medication(o.drug_order.drug) 
+    #==========================================get the min auto_expire_date 
+    medication_order_ids = []
+    (medication || []).each do |order|
+      next unless MedicationService.arv(order.drug_order.drug)
+      medication_order_ids << order.id
     end
 
-		auto_expire_date = Date.today + 2.days
-		
-		if orders_made.blank?
-			orders_made = drugs_given_on
-			auto_expire_date = orders_made.sort_by(&:auto_expire_date).first.auto_expire_date.to_date unless orders_made.blank?
-      
-      regimen_type_concept = nil
-      (orders_made || []).each do |o|
-        next unless MedicationService.arv(o.drug_order.drug)
-        regimen_type_concept = ConceptName.find_by_name("ARV regimens received abstracted construct").concept_id 
-        arvs_given = true
-        break
+
+    ############################################# a hack if no ARV are dispensed #############################################
+    if medication_order_ids.blank?
+      (medication || []).each do |order|
+        medication_order_ids << order.id
       end
+      medication_order_ids = [0] if medication_order_ids.blank?
+      smallest_expire_date_attr = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT MIN(auto_expire_date) AS auto_expire_date FROM orders 
+      WHERE order_id IN(#{medication_order_ids.join(',')})
+EOF
 
-      auto_expire_date = recalculation_auto_expire_date(orders_made, auto_expire_date)
-		else
-			auto_expire_date = orders_made.sort_by(&:auto_expire_date).first.auto_expire_date.to_date
-      regimen_type_concept = ConceptName.find_by_name("TB REGIMEN TYPE").concept_id
-		end
-		
-		treatment_encounter = orders_made.first
+      return (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day) rescue session_date
+    end
+    ############################################# a hack if no ARV are dispensed ends ########################################
 
-		treatment_encounter = treatment_encounter.encounter.id rescue treatment_encounter.encounter_id
-		#raise treatment_encounter.to_yaml
-    arv_regimen_obs = Observation.find_by_sql("SELECT * FROM obs 
-      WHERE concept_id = #{regimen_type_concept} 
-      AND encounter_id = #{treatment_encounter} LIMIT 1") rescue []
 
-		arv_regimen_type = "" 
-		unless arv_regimen_obs.blank?
-			arv_regimen_type = arv_regimen_obs.to_s
-		end
 
-		starter_pack = false
-		if arv_regimen_type.match(/STARTER PACK/i)
-			starter_pack = true
-		end
+    smallest_expire_date_attr = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT MIN(auto_expire_date) AS auto_expire_date FROM orders 
+    WHERE order_id IN(#{medication_order_ids.join(',')})
+EOF
 
-    #==========================================================================================
-    calculated_expire_date = auto_expire_date
+    smallest_expire_date = smallest_expire_date_attr['auto_expire_date'].to_date
+    #==========================================get the min auto_expire_date end
 
-    order = orders_made.sort_by(&:auto_expire_date).first 
-
-    #............................................................................................ 
-    amounts_brought_to_clinic = Observation.find_by_sql("SELECT * FROM obs      
-      INNER JOIN drug_order USING (order_id)                                    
+    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order USING (order_id)                                    
       WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
-      AND drug_order.drug_inventory_id = #{order.drug_order.drug_inventory_id}  
-      AND obs.obs_datetime >= '#{session_date.to_date}'                         
+      AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
       AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND person_id = #{patient.id} AND value_numeric IS NOT NULL")                                           
-                                                                                
-    total_brought_to_clinic = amounts_brought_to_clinic.sum{|amount| amount.value_numeric}
-                                                                                
-    total_brought_to_clinic = total_brought_to_clinic + amounts_brought_to_clinic.sum{|amount| (amount.value_text.to_f rescue 0)}
-                                                                                
-    hanging_pills_duration = ((total_brought_to_clinic)/order.drug_order.equivalent_daily_dose).to_i
-                                                                                
-    expire_date = auto_expire_date + hanging_pills_duration.days        
-                                                                                
-    calculated_expire_date = expire_date.to_date if expire_date.to_date > calculated_expire_date
+      AND person_id = #{patient.id} AND value_numeric IS NOT NULL
+EOF
 
-    #............................................................................................ 
+    #suggested return dates
+    suggest_appointment_dates = []
 
+    (medication || []).each do |order|
+      amounts_brought_to_clinic.each do |amounts_brought|
+        if amounts_brought['drug_inventory_id'].to_i == order.drug_order.drug_inventory_id
+          pills_per_day = MedicationService.get_medication_pills_per_day(order)
+          days = (amounts_brought['value_numeric'].to_i/pills_per_day) if pills_per_day > 0
+          unless days.blank?
+            suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
+          else
+            suggest_appointment_dates << smallest_expire_date
+          end
+        end
+      end
+    end unless amounts_brought_to_clinic.blank?
+   
+    unless suggest_appointment_dates.blank?
+      return (suggest_appointment_dates.sort.first - 2.day).to_date 
+    else
+      return (smallest_expire_date - 2.day).to_date
+    end
 
-    auto_expire_date = calculated_expire_date
-		
-		buffer = 0		
-		if starter_pack
-			buffer = 1
-		else			
-			buffer = 2
-		end
-
-		buffer = 0 if !arvs_given
-		return auto_expire_date - buffer.days
 	end
 
   def recalculation_auto_expire_date(orders, auto_expire_date)

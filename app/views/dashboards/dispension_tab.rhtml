@@ -11,6 +11,10 @@
         font-size: 1.2em;
     }
 
+    #dispensation {
+      border-collapse: collapse;
+    }
+
     .dispensation_data td {
         border-style: solid;
         border-width: 1px;
@@ -68,6 +72,7 @@
 
 
     function showAppointmentButton(){
+        return
         /*amount_needed = 0 //<%#=amount_needed%>
          try {
          first_dispension = document.getElementsByClassName("subtotal")
@@ -100,8 +105,8 @@
                       <table id = 'dispensation' style = "width:100%;">
                         <tr style="text-align:left;">
                           <th>&nbsp;</th>
-                          <th>Amount needed</th>
                           <th>Drug</th>
+                          <th>Amount needed</th>
                           <th style="text-align:right;">Amount dispensed</th>
                           <th style="text-align:right;">Available Stock (tins)</th>
                         </tr>
@@ -132,8 +137,8 @@
                                  drug_name = order.drug_order.drug.name
 
                               %>
-                              <td style="color:<%=color%>;"><%="#{total_required} #{drug_unit}"%></td>
                               <td><%=drug_name%></td>
+                              <td style="color:<%=color%>;"><%="#{total_required} #{drug_unit}"%></td>
                               <td style="text-align:right;"><%= total_dispensed %></td>
                               <td style="text-align:right;">
                                 <% if (preformat_regimens.include?(drug_name))
@@ -152,10 +157,11 @@
                   <%  else %>
                       <table id = 'dispensation' style = "width:100%;">
                         <tr style="text-align:left;">
-                          <th>&nbsp;</th>
-                          <th>Amount needed</th>
-                          <th>Drug</th>
-                          <th style="text-align:right;">Amount dispensed</th>
+                          <!--th>&nbsp;</th-->
+                          <th style="padding-left: 5px;">Medication</th>
+                          <th style="text-align: right; padding-right: 10px;">Prescription intervals (days)</th>
+                          <th style="text-align: right; padding-right: 10px;">Prescribed</th>
+                          <th style="text-align:right; padding-right: 10px;">Dispensed</th>
                         </tr>
                         <% @prescriptions.each do |order| %>
                             <!--div class="void"><img src="/images/cancel_flat_small.png"/></div-->
@@ -168,17 +174,30 @@
                                 total_dispensed += parseFloat("<%=total_dispensed%>");
                             </script>
                             <tr class = 'dispensation_data' id = "<%=order.id%>">
-                              <td style="text-align:center;vertical-align: middle;" onmousedown = "voiding('<%=order.id%>');">
+                              <!--td style="text-align:center;vertical-align: middle;" onmousedown = "voiding('<%#=order.id%>');">
                                 <img src="/images/cancel_flat_small.png"/>
-                              </td>
+                              </td-->
                               <% total_required = order.drug_order.total_required.to_i
                                  drug_unit  =  order.drug_order.units
                                  if total_required > total_dispensed then color = 'red' else color = '' end
                               %>
-                              <td style="color:<%=color%>;"><%="#{total_required} #{drug_unit}"%></td>
-                              <td><%=order.drug_order.drug.name%></td>
-                              <td style="text-align:right;"><%= total_dispensed %></td>
+                              <td style="padding-left: 5px;"><%=order.drug_order.drug.name%></td>
+                              <td style="text-align: right; padding-right: 10px;"><%=MedicationService.prescription_interval(order)%></td>
+                              <td style="text-align: right; padding-right: 10px;color:<%=color%>;"><%="#{total_required} #{drug_unit}"%></td>
+                              <td style="text-align:right; padding-right: 10px;"><%= total_dispensed %></td>
                             </tr>
+                            <script>
+                               var row = document.getElementById('<%=order.id%>');
+                               var total_dispensed = <%=total_dispensed%>;
+                               var total_required = <%=total_required%>;
+                               if (total_dispensed >= total_required){
+                                row.setAttribute('style','background-color: lightgreen;');
+                               }else if (total_dispensed > 0 && total_dispensed < total_required){
+                                row.setAttribute('style','background-color: lightgray;');
+                               }else{
+                                row.setAttribute('style','background-color: "";');
+                               }
+                            </script>
                         <% end %>
                       </table>
                   <% end %>
@@ -220,18 +239,14 @@
 
 
     <% @prescriptions.each do | order | %>
-    row = document.getElementById("<%=order.id%>")
-    <% if MedicationService.tb_medication(order.drug_order.drug) %>
-    row.style.background = 'lightBlue';
-    <%else%>
-    row.style.background = '';
-    <% end %>
+      row = document.getElementById("<%=order.id%>")
+      <% if MedicationService.tb_medication(order.drug_order.drug) %>
+        row.style.background = 'lightBlue';
+      <%else%>
+        //row.style.background = '';
+      <% end %>
     <% end %>
 
     order_id = "<%=params[:dispensed_order_id]%>";
-
-    if (order_id.length > 0)
-        document.getElementById(order_id).style.background = 'lightGreen';
-
 
 </script>

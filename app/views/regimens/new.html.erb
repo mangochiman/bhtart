@@ -142,9 +142,9 @@
 
   #tt_page_duration_of_art_drugs .inputFrameClass {  height: 86%; }
 
-  #tt_page_duration_of_prescribed_drugs .options {  height: 90%; }
+  #tt_page_interval_to_next_visit .options {  height: 90%; }
 
-  #tt_page_duration_of_prescribed_drugs .inputFrameClass {
+  #tt_page_interval_to_next_visit .inputFrameClass {
     height: 86%;
     <% if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false) %>
       width: 35%;
@@ -2101,18 +2101,18 @@ end
     /* 
      */
     attr = [
-      [['Adult 10 years +', '9533'],['No side Effects, OI/TB', '9539']],
-      [['on ART for 12 months', '9534'],['No BP/diabetes treatment', '9540']],
-      [['on 1st Line ART','9535'], ['Not Pregnant / Breastfeeding', '9538']],
+      [['Adult 18 years +', '9533'],['No side effects, OI/TB', '9539']],
+      [['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540']],
+      [['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538']],
       [['Last VL < 1000','9536']],
       [['Good adherence','9537']]
     ];
 
 <%if @patient.person.gender.first.upcase == 'M'%>
       attr = [
-        [['Adult 10 years +', '9533'],['No side Effects, OI/TB', '9539']],
-        [['on ART for 12 months', '9534'],['No BP/diabetes treatment', '9540']],
-        [['on 1st Line ART','9535']],
+        [['Adult 18 years +', '9533'],['No side effects, OI/TB', '9539']],
+        [['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540']],
+        [['On 1st Line ART','9535']],
         [['Last VL < 1000','9536']],
         [['Good adherence','9537']]
       ];
@@ -2498,7 +2498,7 @@ pyridoxine_options = ["","25", "50"]
       :condition => '$("prescribe_arvs").value == "YES" || $("cpt_given").value == "YES" || $("ipt_given").value == "YES"',
       :tt_onLoad => "__$('keyboard').style.display = 'none';showCategory('Regimen'); showAvailableStock($('regimen_concept_id').value);",
       :tt_onUnLoad => "hideStockLevelDetails(); removeOnclickEvent();",
-      :helpText => 'Duration of prescribed drugs' } %>
+      :helpText => 'Interval to next visit' } %>
 
     <!-- Fast  track questions -->
     <% if not @fast_track_patient == true %>

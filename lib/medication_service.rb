@@ -243,7 +243,7 @@ module MedicationService
       end  
        
       if (valid_medication_ids.count == num_of_drug_combination)
-        recommended_regimens << "Regimen #{regimen_index}"
+        recommended_regimens << "Regimen #{regimen_index} (#{self.get_regimen_formulation(regimen_index)})"
       end
 
 
@@ -251,6 +251,23 @@ module MedicationService
 
     
     return recommended_regimens.sort_by{|x| x.gsub('Regimen ','').to_i}.uniq
+  end
+
+  def self.get_regimen_formulation(index)
+    regimen_formulations = {
+      0 => "ABC / 3TC + NVP",
+      2 => "AZT / 3TC / NVP",
+      4 => "AZT / 3TC + EFV",
+      5 => "TDF / 3TC / EFV",
+      6 => "TDF / 3TC + NVP",
+      7 => "TDF / 3TC + ATV/r",
+      8 => "AZT / 3TC + ATV/r",
+      9 => "ABC / 3TC + ATV/r",
+      10 => "TDF / 3TC + LPV/r",
+      11 => "AZT / 3TC + LPV/r",
+      12 => "DRV + r + ETV + RAL"
+    }
+    return regimen_formulations[index]
   end
 
   def self.regimen_medications(regimen_index, current_weight)
@@ -468,6 +485,30 @@ module MedicationService
     end
 
     return dose
+  end
+
+  def self.prescription_interval(order)
+    start_date, end_date = order.start_date.to_date, order.auto_expire_date.to_date
+    prescription_interval = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT timestampdiff(day, DATE('#{start_date.to_s}'), DATE('#{end_date.to_s}')) AS days;
+EOF
+
+    return prescription_interval['days'].to_i 
+  end
+
+  def self.get_medication_pills_per_day(order)
+    instructions = order.instructions
+    return 0 if instructions.blank?
+    medication_name = order.drug_order.drug.name
+    num_of_tabs = instructions.sub("#{medication_name}:-",'').gsub('tab(s)','').gsub('tabs','').\
+      squish.gsub('Morning:','').sub('Evening:','').squish.split(',').collect {| n | n.to_f }
+
+    num_pills = 0
+    (num_of_tabs || []).each do |n|
+      num_pills += 1 if n > 0
+    end
+
+    return num_pills
   end
 
 end

@@ -114,6 +114,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   var sideEffectsHash = {};
   var tbSymptomsHash = {};
   var gender = '<%= @gender %>';
+  var current_patient_bmi = '<%= @current_patient_bmi %>'
 
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
@@ -547,6 +548,15 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     html += "<tbody>";
 
     for (var i=0; i <= tbSymptomsOptions.length - 1; i++){
+      if(tbSymptomsOptions[i].match(/Weight loss/i) && current_patient_bmi.length > 0) {
+        var low_mbi = false;
+        if(parseFloat(current_patient_bmi) <= 18.5)
+          low_mbi = true;
+
+      else
+        var low_mbi = false;
+      }
+
       html += "<tr>";
       html += "<td class='labelText'>" + tbSymptomsOptions[i] + "</td>";
 
@@ -563,8 +573,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       html += "</td>";
      
       html += "<td>";
-        html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
-        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='clicked(this);'>";
+        if(low_mbi == true) {
+          html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+          html += "lowBMI=" + parseFloat(current_patient_bmi) + " "; 
+          html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
+        }else{
+          html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+          html += "key='" + tbSymptomsOptions[i] + "' onmousedown='clicked(this);'>";
+        }
         html += "<input class='hidden-checkbox' id='no_checkbox_" + i + "' type='checkbox'>";
         html +="<label id='no_lable_" + i + "'><i></i></label>";
       html += "</td>";
@@ -1063,7 +1079,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%  if session_date %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() != 'YES'" ,
         :multiple => true,
@@ -1071,7 +1087,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
@@ -1081,7 +1097,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <% else %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
@@ -1089,7 +1105,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
         :tt_onUnLoad => "removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
@@ -1291,9 +1307,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     ipt_message_header = "PATIENT IS ON TB TREATMENT";
     if (tb_status == 'TB SUSPECTED'){
       ipt_message_header = "PATIENT IS A TB SUSPECT";
+    }else if (tb_status == 'CONFIRMED TB NOT ON TREATMENT'){
+      ipt_message_header = "PATIENT IS CONFIRMED TB BUT NOT ON TREATMENT";
     }
 
-    if (tb_treatment__status == 'YES' || tb_status == 'TB SUSPECTED' || tb_status == 'CONFIRMED TB ON TREATMENT'){
+    if (tb_treatment__status == 'YES' || tb_status == 'CONFIRMED TB NOT ON TREATMENT' || tb_status == 'TB SUSPECTED' || tb_status == 'CONFIRMED TB ON TREATMENT'){
       if (ipt_option_input){
         ipt_option_input.onmouseup = function(){
           if (!ipt_option_input.style.backgroundColor.match(/lightBlue/i)){
@@ -1466,3 +1484,185 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     bottom: 0px;
   }
 </style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="regimen-change-popup-div">
+  <div id="regimen-change-popup-header">
+    <center>Low BMI </center>
+  </div><br />
+  <div>
+
+    <span style="font-size: 16pt;">
+      <center>
+        <!--i><b id="regimen-change-header">Patient has a low BMI: <span id='low-bmi'></span></b></i><br /-->
+        <table class="bmi-alert" style="width: 100%;">
+          <tr>
+            <td>Height</td><td class='bmi-data' id="current-height"></td>
+          </tr>
+          <tr>
+            <td>Weight</td><td class='bmi-data' id="current-weight"></td>
+          </tr>
+          <tr>
+            <td>BMI</td><td class='bmi-data' id="low-bmi"></td>
+          </tr>
+        </table>
+      </center>
+    </span>
+    <div style="padding-top: 65px;">
+
+      <span id="regimen-change-yes" onclick="continueWithRegimenChange();" class="regimen-change-my_button">Select weight loss</span>
+      <span id="regimen-change-no" onclick="hideRegimenChangePopup();" class="regimen-change-my_button">Recheck Height / Weight</span>
+    </div>
+  </div>
+</div>
+
+
+<div id="regimen-change-cover"></div>
+
+<style type="text/css">
+
+  .bmi-alert td {
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+  }
+
+  .bmi-alert {
+    border-collapse: collapse;
+  }
+
+  .bmi-data {
+    text-align: right;
+    padding-right: 20px;
+  }
+
+  .regimen-change-my_button {
+    -moz-user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bolder;
+    line-height: 2.29;
+    margin-bottom: 0;
+    padding: 6px 56px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    color: #fff;
+    float: right;
+    margin-top: -5px;
+  }
+
+
+  #regimen-change-popup-div {
+    display: none;
+    background-color: #F4F4F4;
+    border: 2px solid #E0E0E0;
+    border-radius: 15px;
+    height: 270px;
+    padding: 5px;
+    position: absolute;
+    margin-top: 100px;
+    width: 600px;
+    margin-left: 430px;
+    z-index: 991;
+  }
+
+  #regimen-change-popup-header{
+    border-bottom: 2px solid #7D9EC0;
+    margin-left: -5px;
+    width: 101.5%;
+    background-color: #FFFFFF;
+    margin-top: -5px;
+    padding-top: 5px;
+    border-radius: 15px 15px 0 0;
+    font-size: 14pt;
+    font-weight: bolder;
+  }
+
+  #regimen-change-cover{
+    display: none;
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.65;
+  }
+
+  #regimen-change-yes{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+  }
+
+  #regimen-change-no{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+    margin-right: 27px;
+  }
+</style>
+
+<script type="text/javascript">
+  function hideRegimenChangePopup(){
+    document.getElementById("regimen-change-popup-div").style.display = 'none';
+    document.getElementById("regimen-change-cover").style.display = 'none';
+    e = document.getElementsByClassName('low_bmi_found')[0];
+    clicked(e);
+  }
+
+  function continueWithRegimenChange(){
+    document.getElementById("regimen-change-popup-div").style.display = 'none';
+    document.getElementById("regimen-change-cover").style.display = 'none';
+    e = document.getElementsByClassName('low_bmi_found')[0];
+    index = e.id.replace('no_btn_container_','');
+    e = document.getElementById('yes_btn_container_' + index);
+    clicked(e);
+  }
+
+  function alertOnLowBMI(e){
+    document.getElementById("regimen-change-popup-div").style.display = 'inline';
+    document.getElementById("regimen-change-cover").style.display = 'inline';
+    document.getElementById('low-bmi').innerHTML = e.getAttribute('lowBMI');
+    document.getElementById('current-height').innerHTML = '<%=@current_height%>';
+    document.getElementById('current-weight').innerHTML = '<%=@current_weight%>';
+  }
+
+
+</script>
+
