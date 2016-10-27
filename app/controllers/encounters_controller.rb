@@ -1383,7 +1383,7 @@ EOF
     WHERE order_id IN(#{medication_order_ids.join(',')})
 EOF
 
-    smallest_expire_date = (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day)
+    smallest_expire_date = smallest_expire_date_attr['auto_expire_date'].to_date
     #==========================================get the min auto_expire_date end
 
     amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
@@ -1411,8 +1411,12 @@ EOF
       end
     end unless amounts_brought_to_clinic.blank?
    
-    smallest_expire_date = (suggest_appointment_dates.sort.first).to_date unless suggest_appointment_dates.blank?
-    return smallest_expire_date 
+    unless suggest_appointment_dates.blank?
+      return (suggest_appointment_dates.sort.first - 2.day).to_date 
+    else
+      return (smallest_expire_date - 2.day).to_date
+    end
+
 	end
 
   def recalculation_auto_expire_date(orders, auto_expire_date)
