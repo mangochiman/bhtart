@@ -182,6 +182,18 @@
                               <td style="text-align: right; padding-right: 10px;color:<%=color%>;"><%="#{total_required} #{drug_unit}"%></td>
                               <td style="text-align:right;"><%= total_dispensed %></td>
                             </tr>
+                            <script>
+                               var row = document.getElementById('<%=order.id%>');
+                               var total_dispensed = <%=total_dispensed%>;
+                               var total_required = <%=total_required%>;
+                               if (total_dispensed >= total_required){
+                                row.setAttribute('style','background-color: lightgreen;');
+                               }else if (total_dispensed >= 0 && total_dispensed < total_required){
+                                row.setAttribute('style','background-color: lightgray;');
+                               }else{
+                                row.setAttribute('style','background-color: gray;');
+                               }
+                            </script>
                         <% end %>
                       </table>
                   <% end %>
@@ -223,18 +235,14 @@
 
 
     <% @prescriptions.each do | order | %>
-    row = document.getElementById("<%=order.id%>")
-    <% if MedicationService.tb_medication(order.drug_order.drug) %>
-    row.style.background = 'lightBlue';
-    <%else%>
-    row.style.background = '';
-    <% end %>
+      row = document.getElementById("<%=order.id%>")
+      <% if MedicationService.tb_medication(order.drug_order.drug) %>
+        row.style.background = 'lightBlue';
+      <%else%>
+        //row.style.background = '';
+      <% end %>
     <% end %>
 
     order_id = "<%=params[:dispensed_order_id]%>";
-
-    if (order_id.length > 0)
-        document.getElementById(order_id).style.background = 'lightGreen';
-
 
 </script>
