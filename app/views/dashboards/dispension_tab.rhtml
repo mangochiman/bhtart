@@ -161,7 +161,7 @@
                           <th style="padding-left: 5px;">Medication</th>
                           <th style="text-align: right; padding-right: 10px;">Prescription intervals (days)</th>
                           <th style="text-align: right; padding-right: 10px;">Prescribed</th>
-                          <th style="text-align:right;">Dispensed</th>
+                          <th style="text-align:right; padding-right: 10px;">Dispensed</th>
                         </tr>
                         <% @prescriptions.each do |order| %>
                             <!--div class="void"><img src="/images/cancel_flat_small.png"/></div-->
@@ -184,7 +184,7 @@
                               <td style="padding-left: 5px;"><%=order.drug_order.drug.name%></td>
                               <td style="text-align: right; padding-right: 10px;"><%=MedicationService.prescription_interval(order)%></td>
                               <td style="text-align: right; padding-right: 10px;color:<%=color%>;"><%="#{total_required} #{drug_unit}"%></td>
-                              <td style="text-align:right;"><%= total_dispensed %></td>
+                              <td style="text-align:right; padding-right: 10px;"><%= total_dispensed %></td>
                             </tr>
                             <script>
                                var row = document.getElementById('<%=order.id%>');
@@ -192,10 +192,10 @@
                                var total_required = <%=total_required%>;
                                if (total_dispensed >= total_required){
                                 row.setAttribute('style','background-color: lightgreen;');
-                               }else if (total_dispensed >= 0 && total_dispensed < total_required){
+                               }else if (total_dispensed > 0 && total_dispensed < total_required){
                                 row.setAttribute('style','background-color: lightgray;');
                                }else{
-                                row.setAttribute('style','background-color: gray;');
+                                row.setAttribute('style','background-color: "";');
                                }
                             </script>
                         <% end %>
