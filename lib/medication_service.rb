@@ -496,4 +496,19 @@ EOF
     return prescription_interval['days'].to_i 
   end
 
+  def self.get_medication_pills_per_day(order)
+    instructions = order.instructions
+    return 0 if instructions.blank?
+    medication_name = order.drug_order.drug.name
+    num_of_tabs = instructions.sub("#{medication_name}:-",'').gsub('tab(s)','').gsub('tabs','').\
+      squish.gsub('Morning:','').sub('Evening:','').squish.split(',').collect {| n | n.to_f }
+
+    num_pills = 0
+    (num_of_tabs || []).each do |n|
+      num_pills += 1 if n > 0
+    end
+
+    return num_pills
+  end
+
 end
