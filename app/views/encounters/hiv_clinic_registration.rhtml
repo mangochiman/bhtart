@@ -751,8 +751,6 @@
       :helpText => "Has staging information?" } %>
 
 
-
-
     <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv),
       {:id => "stage_4_conditions",
       :multiple => true,
@@ -783,6 +781,7 @@
       :multiple => true,
       :optional => true,
       :tt_onLoad => "setOptionsForContraindicationsPopup();",
+      :condition => 'showConditions() == true',
       :helpText => "Stage 1 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
 
