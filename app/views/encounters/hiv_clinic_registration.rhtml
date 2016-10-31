@@ -72,6 +72,7 @@
 
   .tt_controls_year_started_art #Unknown { display: inline; }
 
+
 </style>
 
 <%#= javascript_include_tag "dateformat" %>
@@ -747,11 +748,13 @@
       :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
     <% @arv_drugs.each do |key, arv_drug| %>
-      <%= touch_numeric_tag "AMOUNT OF DRUG BROUGHT TO CLINIC", @patient, nil,
+      <%= touch_numeric_tag "#{arv_drug}", @patient, nil,
         {
         :id => "#{arv_drug}",
+        :field_type => 'number',
+        :tt_pageStyleClass => "NumbersOnly",
+        :tt_onLoad => "jQuery('#Unknown').show();",
         :condition => "lastARTDrugs.split(';').indexOf('#{arv_drug}') != -1",
-        :tt_pageStyleClass => "unknownButton",
         :helpText  => "Total tabs of #{arv_drug} brought to clinic"} %>
     <% end %>
 
