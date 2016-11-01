@@ -188,10 +188,20 @@ dateToday = session[:datetime].to_date rescue Date.today
     });
   }
 
+  function getDateWithFormat(d) {
+    newDate = new Date(d);
+    var day = newDate.getDate();
+    var monthIndex = newDate.getMonth();
+    var year = newDate.getFullYear();
+ 
+    months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return day + "/" + months[monthIndex] + '/' + year;
+  }
+
   function getDates(obs) {
     dates = [];
     for(var i = 0; i < obs.length; i++) {
-      dates.push(obs[i][0]);
+      dates.push(getDateWithFormat(obs[i][0]));
 
     }
     return dates;

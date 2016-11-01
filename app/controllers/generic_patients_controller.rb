@@ -348,11 +348,7 @@ The following block of code should be replaced by a more cleaner function
 
       weight_trail[year][month] <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
       smallest_date_after = weight.obs_datetime.to_date if smallest_date_after.blank? or (smallest_date_after > weight.obs_datetime.to_date)
-      #obs <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
     }
-    weight_trail[session_date.to_date.year][session_date.to_date.month] << [session_date.to_date, current_weight.to_f]
-
-    obs = []
 
     (weight_trail || []).each do |year, months|
       (months).each do |month, data|
