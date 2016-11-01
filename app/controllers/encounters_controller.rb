@@ -1372,7 +1372,7 @@ class EncountersController < GenericEncountersController
       WHERE order_id IN(#{medication_order_ids.join(',')})
 EOF
 
-      return (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day) rescue session_date
+      return (smallest_expire_date_attr['auto_expire_date'].to_date) rescue session_date
     end
     ############################################# a hack if no ARV are dispensed ends ########################################
 
@@ -1412,9 +1412,9 @@ EOF
     end unless amounts_brought_to_clinic.blank?
    
     unless suggest_appointment_dates.blank?
-      return (suggest_appointment_dates.sort.first - 2.day).to_date 
+      return (suggest_appointment_dates.sort.first).to_date 
     else
-      return (smallest_expire_date - 2.day).to_date
+      return (smallest_expire_date).to_date
     end
 
 	end
