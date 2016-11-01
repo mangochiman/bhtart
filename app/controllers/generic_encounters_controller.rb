@@ -132,6 +132,15 @@ class GenericEncountersController < ApplicationController
               obs[:value_datetime] = (session_date - 2.weeks)
             elsif last_month == true
               obs[:value_datetime] = (session_date.to_date - 2.months)
+            else
+              year_art_last_taken = params['year_art_last_taken'].to_i
+              month_art_last_taken = params['month_art_last_taken']
+              day_art_last_taken = params['day_art_last_taken'].to_i
+              if year_art_last_taken > 1 and month_art_last_taken == 'Unknown'
+                obs[:value_datetime] = "#{year_art_last_taken}/July/01".to_date
+              elsif year_art_last_taken > 1 and month_art_last_taken != 'Unknown' and day_art_last_taken < 1
+                obs[:value_datetime] = "#{year_art_last_taken}/#{month_art_last_taken}/15".to_date
+              end
             end
             obs[:value_text] ='Estimated'
           end
@@ -219,10 +228,23 @@ class GenericEncountersController < ApplicationController
           date_started_art = ob["value_datetime"].to_date rescue nil
           if date_started_art.blank?
             date_started_art = ob["value_coded_or_text"].to_date rescue nil
+            if date_started_art.blank?
+              year_started_art = params[:year_started_art].to_i 
+              month_started_art = params[:month_started_art]
+              day_started_art = params[:day_started_art].to_i 
+              if year_started_art > 1 and month_started_art == 'Unknown'
+                ob[:value_datetime] = "#{year_started_art}/July/01".to_date 
+                ob[:value_text] = 'Estimated'
+              elsif year_started_art > 1 and month_started_art != 'Unknown' and day_started_art < 1
+                ob[:value_datetime] = "#{year_started_art}/#{month_started_art}/15".to_date 
+                ob[:value_text] = 'Estimated'
+              end
+            end
           end
         end
       end
       
+          
       unless vitals_observations.blank?
         encounter = Encounter.new()
         encounter.encounter_type = EncounterType.find_by_name("VITALS").id

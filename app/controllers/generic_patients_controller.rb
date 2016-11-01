@@ -324,11 +324,51 @@ The following block of code should be replaced by a more cleaner function
     session_date = (session[:datetime].to_date rescue Date.today).strftime('%Y-%m-%d 23:59:59')
     obs = []
 
+    weight_trail = {} ; current_date = (session_date.to_date - 2.year)
+    while current_date < session_date.to_date
+      year = current_date.year ; month = current_date.month
+      weight_trail[year] = {} if weight_trail[year].blank?
+      weight_trail[year][month] = [] if weight_trail[year][month].blank?
+      current_date += 1.month
+    end
+
+    if weight_trail[session_date.to_date.year][session_date.to_date.month].blank?
+      weight_trail[session_date.to_date.year][session_date.to_date.month] = []
+    end
+
+    smallest_date_after = nil
+
     Observation.find_by_sql("
           SELECT * FROM obs WHERE person_id = #{patient.id}
-          AND concept_id = #{concept_id} AND voided = 0 AND obs_datetime <= '#{session_date}' LIMIT 10").each {|weight|
-      obs <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
+          AND concept_id = #{concept_id} AND voided = 0 AND 
+    obs_datetime BETWEEN '#{(session_date.to_date - 2.year).strftime('%Y-%m-%d 00:00:00')}' 
+    AND '#{session_date}' LIMIT 100").each {|weight|
+      current_date = weight.obs_datetime.to_date
+      year = current_date.year ; month = current_date.month
+
+      weight_trail[year][month] <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
+      smallest_date_after = weight.obs_datetime.to_date if smallest_date_after.blank? or (smallest_date_after > weight.obs_datetime.to_date)
+      #obs <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
     }
+    weight_trail[session_date.to_date.year][session_date.to_date.month] << [session_date.to_date, current_weight.to_f]
+
+    obs = []
+
+    (weight_trail || []).each do |year, months|
+      (months).each do |month, data|
+        if data.blank?
+          date = "#{year}/#{month}/01".to_date
+          next if date < smallest_date_after
+          obs << [date, nil]
+          next
+        end
+
+        (data || []).each do |weight|
+          obs << [weight.first, weight.last]
+        end
+      end
+    end
+
 
     obs << [session_date.to_date, current_weight.to_f]
     obs = obs.sort_by{|atr| atr[0]}.to_json

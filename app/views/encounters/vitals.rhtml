@@ -39,9 +39,10 @@
   .medHeightForAge {color:black;background:yellow;}
   .goodHeightForAge {color:black;}
 
-  #tt_page_summary .inputFrameClass { height:90%;}
-  .inputFrameClass, .touchscreenTextInput, .keyboard, .inputPage{
-    width: 96%;
+  #tt_page_summary .inputFrameClass { height: 87%;}
+  
+  #tt_page_summary .inputPage{
+    width: 98.7%;
   }
 
   #qwerty{ display:none; }
@@ -103,12 +104,12 @@ dateToday = session[:datetime].to_date rescue Date.today
     document.getElementById('inputFrame'+tstCurrentPage).innerHTML = '<div id="summary">' + displayText + '</div><div id="charts" style="height:185px;margin:2px 6px 6px;padding:2px;width:380px;"></div>' ;
 
 
-    if (age < 6){
+    if (age < 5){
       jQuery('#keyboard').empty();
       jQuery('#charts').load('/patients/baby_chart/<%= @patient.id -%>?patient_id=<%= @patient.id -%>&cur_weight=' + currentWeight, null, function(){jQuery('#keyboard').hide(); hookKeyboard()});
 
     }else{
-      jQuery('#keyboard').empty();
+      //jQuery('#keyboard').empty();
       //jQuery('#charts').empty().load('/patients/graphs/<%= @patient.id -%>?data=weight&currentWeight=' + currentWeight);
       jQuery.ajax({
         method: "POST",
@@ -145,8 +146,14 @@ dateToday = session[:datetime].to_date rescue Date.today
       xAxis: {
         categories:  getDates(obs),
         title: {
-          text: 'Visit Date'
-        }
+            text: null
+        },
+        labels: {
+         enabled:false,//default is true
+         y : 20, rotation: -45, align: 'right' }
+      },
+      credits: {
+        enabled: false
       },
       yAxis: {
         alternateGridColor: 'rgba(255, 255, 255, .5)',
@@ -197,7 +204,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       correctedWeights.push(obs[i][1]);
     }
     start_point = obs[0][0].split('/')
-    //alert(correctedWeights)
+    
     return [{name: 'Weight', data: correctedWeights}];
   }
   
@@ -301,7 +308,6 @@ dateToday = session[:datetime].to_date rescue Date.today
     if (currentDBPValue.length === 0) currentDBPValue = '&nbsp;'
     jQuery("#helpText" + tstCurrentPage + ">#sbp").html(currentSBPValue);
     jQuery("#helpText" + tstCurrentPage + ">#dbp").html(currentDBPValue);
-    console.log('DBP = ' + currentDBPValue)
   }
   
 </script>
@@ -436,11 +442,10 @@ dateToday = session[:datetime].to_date rescue Date.today
     <%= touch_hidden_tag "HT FOR AGE", @patient, nil, {:id => 'height_for_age'} %>
   <% end %>
 
-  <%= text_field_tag :showSummary, nil,
-    {	:tt_onLoad => "growthIndicators();  $('clearButton').style.display = 'none';  ",
-    :tt_onUnLoad => " $('clearButton').style.display = 'inline';",
+  <%= text_field_tag :showSummary, nil, { 
+    :tt_onLoad => "growthIndicators();__$('keyboard').style.display = 'none';", 
     :helpText => "Summary",
-    :optional => "true"
+    :optional => "true", :tt_pageStyleClass => "NoControls" 
   } %>
 
   <% if @retrospective %>

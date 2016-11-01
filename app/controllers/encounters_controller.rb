@@ -1401,7 +1401,8 @@ EOF
       amounts_brought_to_clinic.each do |amounts_brought|
         if amounts_brought['drug_inventory_id'].to_i == order.drug_order.drug_inventory_id
           pills_per_day = MedicationService.get_medication_pills_per_day(order)
-          days = (amounts_brought['value_numeric'].to_i/pills_per_day) if pills_per_day > 0
+          brought_to_clinic = amounts_brought['value_numeric'].to_i
+          days = (brought_to_clinic.to_i/pills_per_day) if pills_per_day > 0
           unless days.blank?
             suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
           else
@@ -1410,7 +1411,21 @@ EOF
         end
       end
     end unless amounts_brought_to_clinic.blank?
-   
+
+    #################################################### if a patient is transferring in on the current visit and has brought pills back  ###
+    (medication || []).each do |order|
+      amounts_brought_if_transfer_in = get_amounts_brought_if_transfer_in(order.drug_order.drug.concept_id, order.start_date.to_date)
+      pills_per_day = MedicationService.get_medication_pills_per_day(order)
+      days = (amounts_brought_if_transfer_in.to_i/pills_per_day) if pills_per_day > 0 and amounts_brought_if_transfer_in > 0
+      unless days.blank?
+        suggest_appointment_dates << (smallest_expire_date + days.day).to_date
+      else
+        suggest_appointment_dates << smallest_expire_date
+      end
+    end if suggest_appointment_dates.blank?
+    ########################################################################################################################################
+
+
     unless suggest_appointment_dates.blank?
       return (suggest_appointment_dates.sort.first).to_date 
     else
@@ -2220,5 +2235,12 @@ EOF
     current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date) rescue []
     return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
   end
-  
+
+  def get_amounts_brought_if_transfer_in(drug_concept_id, date)
+    amount = Observation.find(:first, :conditions =>["concept_id = ? AND (obs_datetime BETWEEN ? AND ?)",
+      drug_concept_id , date.strftime('%Y-%m-%d 00:00:00'), date.strftime('%Y-%m-%d 23:59:59')])
+    return 0 if amount.blank?
+    return amount.value_numeric
+  end
+    
 end
