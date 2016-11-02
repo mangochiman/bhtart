@@ -193,17 +193,7 @@
                                  if total_required > total_dispensed then color = 'red' else color = '' end
 
                                  drug = order.drug_order.drug
-                                 category = nil
-                                 categories = MedicationService.regimen_codes
-                                 (categories || {}).each do |cat, medications|
-                                  (medications || []).each do |medication|
-                                    if medication.include?(drug.id)
-                                      category = 'A' if cat.match(/A/i)
-                                      category = 'P' if cat.match(/P/i)
-                                      break
-                                    end
-                                  end
-                                 end  
+                                 category = MedicationService.medication_category(drug.id)
                               %>
                               <td style="padding-left: 5px;" class="medication_category_<%=category%>"><%=drug.name%></td>
                               <td style="text-align: right; padding-right: 10px;"><%=MedicationService.prescription_interval(order)%></td>

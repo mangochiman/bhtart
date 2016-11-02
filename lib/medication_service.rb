@@ -511,4 +511,34 @@ EOF
     return num_pills
   end
 
+  def self.medication_category(medication_id)
+    #ABC/3TC (Abacavir and Lamivudine 60/30mg tablet) = 733
+    #NVP (Nevirapine 50 mg tablet) = 968
+    #NVP (Nevirapine 200 mg tablet) = 22
+    #ABC/3TC (Abacavir and Lamivudine 600/300mg tablet) = 969
+    #AZT/3TC/NVP (60/30/50mg tablet) = 732
+    #AZT/3TC/NVP (300/150/200mg tablet) = 731
+    #AZT/3TC (Zidovudine and Lamivudine 60/30 tablet) = 736
+    #EFV (Efavirenz 200mg tablet) = 30
+    #EFV (Efavirenz 600mg tablet) = 11
+    #AZT/3TC (Zidovudine and Lamivudine 300/150mg) = 39
+    #TDF/3TC/EFV (300/300/600mg tablet) = 735
+    #TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet = 734
+    #ATV/r (Atazanavir 300mg/Ritonavir 100mg) = 932
+    #LPV/r (Lopinavir and Ritonavir 100/25mg tablet) = 74
+    #LPV/r (Lopinavir and Ritonavir 200/50mg tablet) = 73
+    #Darunavir 600mg = 976
+    #Ritonavir 100mg = 977
+    #Etravirine 100mg = 978
+    #RAL (Raltegravir 400mg) = 954
+    #NVP (Nevirapine 200 mg tablet) = 22
+    category = {} ; category['P'] = [733, 968, 732, 736, 30, 74]
+    category['A'] = [976, 977, 978, 954, 22,969, 731, 39, 11, 735, 734, 932, 73]
+
+    (category).each do |cat, medication_ids|
+      return cat if medication_ids.include?(medication_id)
+    end
+
+  end
+
 end
