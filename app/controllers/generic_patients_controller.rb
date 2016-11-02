@@ -353,6 +353,7 @@ The following block of code should be replaced by a more cleaner function
     (weight_trail || []).each do |year, months|
       (months).each do |month, data|
         if data.blank?
+          next if smallest_date_after.blank?
           date = "#{year}/#{month}/01".to_date
           next if date < smallest_date_after
           obs << [date, nil]
