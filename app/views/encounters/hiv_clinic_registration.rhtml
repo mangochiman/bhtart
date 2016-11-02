@@ -1392,7 +1392,7 @@ function updateCD4Count() {
       :tt_pageStyleClass => "NoControls"
     } %>
 
-    <%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['HIV Rapid Test','HIV RAPID TEST'],['HIV PCR','HIV DNA polymerase chain reaction'],['NOT Done','NOT DONE']]),
+    <%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['Rapid antibody test','HIV RAPID TEST'],['DNA PCR','HIV DNA polymerase chain reaction'],['Not done','NOT DONE']]),
       {	:id => "type_of_confirmatory_hiv_test",
       :tt_onLoad => "setUnknownConfirmatoryTestForPopup();",
       :helpText => "Confirmatory HIV test" } %>
