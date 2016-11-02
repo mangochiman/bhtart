@@ -181,7 +181,8 @@ class GenericRegimensController < ApplicationController
     @patient_tb_suspected = tb_suspected_today?(@patient, session_date)
     @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
-
+    @history_of_side_effects = Patient.history_of_side_effects(@patient, session_date)
+    @today = session_date.to_date.strftime("%d/%b/%Y")
 
     if @allergic_to_sulphur == 'Yes'
       @prescribe_medication_set = false

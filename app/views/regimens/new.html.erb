@@ -568,6 +568,9 @@
   var other_regimen = null;
   var sideEffectsAnswers = <%= @side_effects_answers.to_json %>;
   var currentRegimenIndex = "<%= @current_regimen.to_i rescue '' %>";
+  var today = "<%= @today %>";
+  var history_of_side_effects = <%= @history_of_side_effects.to_json -%>
+  
 
   var reasons = ['Treatment failure', 'Jandice/hepatitis','Anaemia < 8g/dl','Renal failure', 'Abacavir hypersensitivity', 'Lypodystrophy', 'Lactic Acidosis', 'Drug Rash', 'Other'] ;
 <% if @patient_bean.age < 12 %>

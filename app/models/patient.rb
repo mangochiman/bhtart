@@ -472,4 +472,22 @@ def self.vl_result_hash(patient)
     return false
   end
 
+  def self.history_of_side_effects(patient, session_date = Date.today)
+    side_effects = {}
+    encounter_type_id = EncounterType.find_by_name("HIV CLINIC CONSULTATION").encounter_type_id
+    side_effects_concept_id = Concept.find_by_name("MLW ART SIDE EFFECTS").concept_id
+    
+    hiv_clinic_consultation_encounters = patient.encounters.find(:all, :conditions => ["encounter_type =? AND
+      DATE(encounter_datetime) <= ?", encounter_type_id, session_date.to_date])
+
+    hiv_clinic_consultation_encounters.each do |enc|
+      encounter_datetime = enc.encounter_datetime.to_date.strftime("%d/%b/%Y")
+      observation_answers = enc.observations.find(:all, :conditions => ["concept_id =?",
+          side_effects_concept_id]).collect{|o|o.answer_string.squish}.compact
+      side_effects[encounter_datetime] = observation_answers unless observation_answers.blank?
+    end
+
+    return side_effects
+  end
+
 end

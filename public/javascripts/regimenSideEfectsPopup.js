@@ -1,3 +1,41 @@
+var new_table;
+
+function viewMoreSideEffects(){
+    //popup-data
+    buttonText = 'View More <br />Side Effects';
+    moreButton = document.getElementsByClassName("more")[0];
+    if (moreButton.innerHTML.match(/MORE/i)){
+        moreButton.innerHTML = 'View Less <br />Side Effects';
+        moreSideEffects()
+    }else{
+        moreButton.innerHTML = 'View More <br />Side Effects';
+        lessSideEffects();
+    }
+}
+
+function moreSideEffects(){
+    new_table = "<table cellspacing='0px'>";
+    for (var date in history_of_side_effects){
+        new_table += "<tr>";
+        new_table += "<td>" + date + "</td>";
+        new_table += "<td>" + history_of_side_effects[date].join('<br />') + "</td>";
+        new_table += "</tr>";
+    }
+
+    new_table += "</table>";
+    document.getElementsByClassName("popup-data")[0].innerHTML = new_table;
+}
+
+function lessSideEffects(){
+    new_table = "<table cellspacing='0px'>";
+    new_table += "<tr>";
+    new_table += "<td>" + today + "</td>";
+    new_table += "<td>" + flattedContraindications.join('<br />') + "</td>";
+    new_table += "</tr>";
+    new_table += "</table>";
+
+    document.getElementsByClassName("popup-data")[0].innerHTML = new_table;
+}
 
 function contraindicators(){
     regimen_concept_id = document.getElementById('regimen_concept_id')
@@ -18,6 +56,14 @@ function contraindicators(){
             }
         }
     }
+
+    new_table = "<table cellspacing='0px'>";
+    new_table += "<tr>";
+    new_table += "<td>" + today + "</td>";
+    new_table += "<td>" + flattedContraindications.join('<br />') + "</td>";
+    new_table += "</tr>";
+    new_table += "</table>";
+
     if (matchedSideEffects){
         alt_one_drugs = [];
         alt_one_drugs_data = "";
@@ -83,7 +129,9 @@ function contraindicators(){
         popupDiv.appendChild(popupHeader);
         popupData = document.createElement('div');
         popupData.className = 'popup-data';
-        popupData.innerHTML = sideEffectsData;
+        popupData.innerHTML = new_table;//sideEffectsData;
+        popupData.style.overflow = "auto";
+        popupData.style.height = "69%";
         popupData.style.fontSize = "16pt";
         popupData.style.marginTop = '20px';
         popupData.style.marginLeft = '20px';
@@ -106,7 +154,7 @@ function contraindicators(){
         cancelButton.style.lineHeight = '1.94857';
         cancelButton.style.position = 'absolute';
         cancelButton.style.bottom = '10px';
-        cancelButton.style.padding = '3px 86px';
+        cancelButton.style.padding = '3px 40px';
         cancelButton.style.left = '10px';
         cancelButton.style.textAlign = 'center';
         cancelButton.style.verticalAlign = 'middle';
@@ -120,6 +168,32 @@ function contraindicators(){
     
         popupDiv.appendChild(cancelButton);
 
+        viewMoreButton = document.createElement('span');
+        viewMoreButton.className = 'clinicVisitButton FastTrackBtn more';
+        viewMoreButton.innerHTML = 'View More <br />Side Effects';
+        viewMoreButton.style.backgroundImage = 'none';
+        viewMoreButton.style.border = '1px solid transparent';
+        viewMoreButton.style.borderRadius = '4px';
+        viewMoreButton.style.cursor = 'pointer';
+        viewMoreButton.style.display = 'inline-block';
+        viewMoreButton.style.fontSize = '20px';
+        viewMoreButton.style.fontWeight = 'bolder';
+        viewMoreButton.style.lineHeight = '1.94857';
+        viewMoreButton.style.position = 'absolute';
+        viewMoreButton.style.bottom = '10px';
+        viewMoreButton.style.padding = '3px 64px';
+        viewMoreButton.style.left = '33%';
+        viewMoreButton.style.textAlign = 'center';
+        viewMoreButton.style.verticalAlign = 'middle';
+        viewMoreButton.style.whiteSpace = 'nowrap';
+        viewMoreButton.style.backgroundColor = '#4F94CD';
+        viewMoreButton.style.color = 'white';
+
+        viewMoreButton.onclick = function(){
+            viewMoreSideEffects();
+        }
+
+        popupDiv.appendChild(viewMoreButton);
 
         nextButton = document.createElement('span');
         nextButton.className = 'fastTrackVisitButton FastTrackBtn';
@@ -134,7 +208,7 @@ function contraindicators(){
         nextButton.style.lineHeight = '1.94857';
         nextButton.style.position = 'absolute';
         nextButton.style.bottom = '10px';
-        nextButton.style.padding = '3px 83px';
+        nextButton.style.padding = '3px 40px';
         nextButton.style.right = '10px';
         nextButton.style.textAlign = 'center';
         nextButton.style.verticalAlign = 'middle';
