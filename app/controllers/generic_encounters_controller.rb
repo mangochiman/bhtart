@@ -127,7 +127,7 @@ class GenericEncountersController < ApplicationController
                 last_month = true
               end
             end 
-            
+           
             if last_week == true
               obs[:value_datetime] = (session_date - 2.weeks)
             elsif last_month == true
@@ -140,6 +140,8 @@ class GenericEncountersController < ApplicationController
                 obs[:value_datetime] = "#{year_art_last_taken}/July/01".to_date
               elsif year_art_last_taken > 1 and month_art_last_taken != 'Unknown' and day_art_last_taken < 1
                 obs[:value_datetime] = "#{year_art_last_taken}/#{month_art_last_taken}/15".to_date
+              elsif last_month == false and last_week == false
+                obs[:value_datetime] = (session_date.to_date - 3.months)
               end
             end
             obs[:value_text] ='Estimated'

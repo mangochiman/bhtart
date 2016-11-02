@@ -324,8 +324,8 @@ The following block of code should be replaced by a more cleaner function
     session_date = (session[:datetime].to_date rescue Date.today).strftime('%Y-%m-%d 23:59:59')
     obs = []
 
-    weight_trail = {} ; current_date = (session_date.to_date - 2.year)
-    while current_date < session_date.to_date
+    weight_trail = {} ; current_date = (session_date.to_date - 2.year).to_date
+    while not (current_date.year == session_date.to_date.year and current_date.month == session_date.to_date.month)
       year = current_date.year ; month = current_date.month
       weight_trail[year] = {} if weight_trail[year].blank?
       weight_trail[year][month] = [] if weight_trail[year][month].blank?
@@ -333,7 +333,7 @@ The following block of code should be replaced by a more cleaner function
     end
 
     if weight_trail[session_date.to_date.year][session_date.to_date.month].blank?
-      weight_trail[session_date.to_date.year][session_date.to_date.month] = []
+      #weight_trail[session_date.to_date.year][session_date.to_date.month] = []
     end
 
     smallest_date_after = nil
