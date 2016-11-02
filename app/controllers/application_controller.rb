@@ -1,4 +1,15 @@
 class ApplicationController < GenericApplicationController
+  def patient_has_stopped_fast_track_at_adherence?(patient, session_date = Date.today)
+    stop_reason_concept_id = Concept.find_by_name('STOP REASON').concept_id
+    fast_track_stop_reason_obs = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) = ? AND
+        concept_id =?", session_date, stop_reason_concept_id]
+    )
+    return false if fast_track_stop_reason_obs.blank?
+    encounter_type = fast_track_stop_reason_obs.encounter.type.name rescue nil
+    return false if encounter_type.blank?
+    return true if encounter_type.match(/ADHERENCE/i)
+    return false
+  end
 
   def tb_suspected_today?(patient, session_date = Date.today)
     tb_status_concept_id = Concept.find_by_name('TB STATUS').concept_id

@@ -38,7 +38,7 @@ class EncountersController < GenericEncountersController
     @fast_track_patient = fast_track_patient?(@patient, session_date)
     @last_appointment_date = patient_last_appointment_date(@patient,  session_date)
     @fast_track_patient_but_missed_appointment = fast_track_patient_but_missed_appointment?(@patient, session_date)
-
+    @patient_has_stopped_fast_track_at_adherence = patient_has_stopped_fast_track_at_adherence?(@patient, session_date)
     @fast_track_message = ""
     if (session_date == @last_appointment_date.to_date)
       @fast_track_message = "Patient is on time"
@@ -198,7 +198,8 @@ class EncountersController < GenericEncountersController
           :order => "obs_datetime DESC,date_created DESC",
           :conditions => ["person_id = ? AND concept_id = ? AND DATE(obs_datetime) = ?",
             @patient.id,ConceptName.find_by_name("Prescribe drugs").concept_id,session_date])).to_s.strip.squish rescue ''
-            
+
+      @obs_ans = '' if @patient_has_stopped_fast_track_at_adherence #Just a hack. Do not remove this please.By mangochiman
     end
         
     if (params[:encounter_type].upcase rescue '') == 'UPDATE HIV STATUS'
