@@ -364,7 +364,7 @@
     }
   }
 
-function updateCD4Count() {
+  function updateCD4Count() {
     var cd4_available = $('new_cd4_count_available').value == 'YES';
     var cd4_count = cd4_available ? $('cd4_count').value : null;
     var cd4_count_modifier = '';
@@ -1288,12 +1288,12 @@ function updateCD4Count() {
     end
   %>
 
-    <%#= touch_select_tag "REASON FOR ART ELIGIBILITY", @patient, options_for_select(art_reasons,[]),
-      {	:id => "reason_for_art_eligibility",
-      :condition => 'showConditions()',
-      :helpText => "Reason for ART eligibility",
-      :tt_onLoad => "__$('keyboard').style.display = 'none';calculateWHOstage();",
-      :tt_pageStyleClass => 'NoKeyboard' } %>
+  <%#= touch_select_tag "REASON FOR ART ELIGIBILITY", @patient, options_for_select(art_reasons,[]),
+  {	:id => "reason_for_art_eligibility",
+  :condition => 'showConditions()',
+  :helpText => "Reason for ART eligibility",
+  :tt_onLoad => "__$('keyboard').style.display = 'none';calculateWHOstage();",
+  :tt_pageStyleClass => 'NoKeyboard' } %>
 
     <%= touch_hidden_tag "WHO STAGE", @patient, "", :id => "who_stage" %>
 
@@ -1302,7 +1302,7 @@ function updateCD4Count() {
     <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 500", @patient, "", :id => "cd4_count_less_than_500" %>
     <%= touch_hidden_tag "CD4 PERCENT LESS THAN 25", @patient, "", :id => "cd4_percent_less_than_25" %>
     <%= touch_hidden_tag "REASON FOR ART ELIGIBILITY", @patient, "", :id => "reason_for_art_eligibility" %>
-    
+
     <%= select_tag "new_cd4_count_available", options_for_select([['Yes','YES'],['No','NO']]),
       :id => 'new_cd4_count_available',
       :condition => 'showConditions()',
@@ -1721,7 +1721,8 @@ function updateCD4Count() {
     position: absolute;
     margin-top: 100px;
     width: 560px;
-    margin-left: 430px;
+    /*margin-left: 430px;*/
+    left: 40%;
     z-index: 991;
   }
 
@@ -1881,8 +1882,8 @@ function updateCD4Count() {
     stageTwoConditions = __$('stage_2_conditions').value;
     asymptomatic_option_input = jQuery("[tstvalue='Asymptomatic HIV infection']")[0];
     if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
-      asymptomatic_option_input.onmouseup = function(){
-        showContraindicatingConditionsConfirmationPopup();
+        asymptomatic_option_input.onmouseup = function(){
+          showContraindicatingConditionsConfirmationPopup();
       }
     }
   }
