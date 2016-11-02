@@ -332,10 +332,6 @@ The following block of code should be replaced by a more cleaner function
       current_date += 1.month
     end
 
-    if weight_trail[session_date.to_date.year][session_date.to_date.month].blank?
-      #weight_trail[session_date.to_date.year][session_date.to_date.month] = []
-    end
-
     smallest_date_after = nil
 
     Observation.find_by_sql("
@@ -345,9 +341,12 @@ The following block of code should be replaced by a more cleaner function
     AND '#{session_date}' LIMIT 100").each {|weight|
       current_date = weight.obs_datetime.to_date
       year = current_date.year ; month = current_date.month
-
-      weight_trail[year][month] <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
-      smallest_date_after = weight.obs_datetime.to_date if smallest_date_after.blank? or (smallest_date_after > weight.obs_datetime.to_date)
+      begin
+        weight_trail[year][month] <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
+        smallest_date_after = weight.obs_datetime.to_date if smallest_date_after.blank? or (smallest_date_after > weight.obs_datetime.to_date)
+      rescue
+        next
+      end
     }
 
     (weight_trail || []).each do |year, months|
