@@ -1416,7 +1416,11 @@ EOF
     (medication || []).each do |order|
       amounts_brought_if_transfer_in = get_amounts_brought_if_transfer_in(order.drug_order.drug.concept_id, order.start_date.to_date)
       pills_per_day = MedicationService.get_medication_pills_per_day(order)
-      days = (amounts_brought_if_transfer_in.to_i/pills_per_day) if pills_per_day > 0 and amounts_brought_if_transfer_in > 0
+      
+      if pills_per_day > 0 and amounts_brought_if_transfer_in > 0
+        days = (amounts_brought_if_transfer_in.to_i/pills_per_day) 
+      end unless amounts_brought_if_transfer_in.blank?
+
       unless days.blank?
         suggest_appointment_dates << (smallest_expire_date + days.day).to_date
       else
