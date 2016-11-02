@@ -265,7 +265,7 @@
     <% @prescriptions.each do | order | %>
       row = document.getElementById("<%=order.id%>")
       <% if MedicationService.tb_medication(order.drug_order.drug) %>
-        row.style.background = 'lightBlue';
+        //row.style.background = 'lightBlue';
       <%else%>
         //row.style.background = '';
       <% end %>
