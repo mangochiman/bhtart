@@ -116,7 +116,7 @@ function contraindicators(){
 
         popupHeader = document.createElement('div');
         popupHeader.className = 'popup-header';
-        popupHeader.innerHTML = 'PATIENT WITH SIDE EFFECTS <br />';
+        popupHeader.innerHTML = 'CONTRAINDICATIONS/SIDE EFFECTS <br />';
         popupHeader.style.borderBottom = '2px solid #7D9EC0';
         popupHeader.style.backgroundColor = '#FFFFFF';
         popupHeader.style.paddingTop = '5px';
