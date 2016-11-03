@@ -1250,7 +1250,7 @@
       {:id => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "setOptionsForContraindicationsPopup();",
+      :tt_onLoad => "setOptionsForContraindicationsPopup(); resetStageDefiningConditions();",
       :tt_onUnLoad => 'setSelectedStageConditions(1);',
       :condition => 'showConditions() == true',
       :helpText => "Stage 1 Conditions",
