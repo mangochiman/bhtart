@@ -270,6 +270,24 @@ module MedicationService
     return regimen_formulations[index]
   end
 
+  def self.regimen_formulations
+    regimen_formulations = {
+      0 => "ABC/3TC + NVP",
+      2 => "AZT/3TC/NVP",
+      4 => "AZT/3TC + EFV",
+      5 => "TDF/3TC/EFV",
+      6 => "TDF/3TC + NVP",
+      7 => "TDF/3TC + ATV/r",
+      8 => "AZT/3TC + ATV/r",
+      9 => "ABC/3TC + ATV/r",
+      10 => "TDF/3TC + LPV/r",
+      11 => "AZT/3TC + LPV/r",
+      12 => "DRV + r + ETV + RAL"
+    }
+    
+    return regimen_formulations
+  end
+
   def self.regimen_medications(regimen_index, current_weight)
     regimen_index = regimen_index.to_s.gsub('Regimen ','').to_i 
     regimen_id = MohRegimen.find(:first, :conditions =>['regimen_index = ?', regimen_index]).regimen_id

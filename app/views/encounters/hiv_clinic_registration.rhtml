@@ -99,7 +99,8 @@
   var tstCurrentDate = '<%= session[:datetime].to_date.strftime("%Y-%m-%d") rescue Date.today.strftime("%Y-%m-%d") %>';
   var firstPositiveHivTestType = "<%= @confirmatory_hiv_test_type -%>";
   var age = <%= @patient_bean.age -%>;
-
+  var regimen_formulations = <%= @regimen_formulations.to_json -%>;
+  
   function checkTestDate(td){
     var testDate = createDates($('year_art_last_taken').value, $('month_art_last_taken').value , td.value);
     var years = testDate.getFullYear();
@@ -1094,22 +1095,29 @@
 
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
       {	:id => "last_art_drugs_taken",
-      :multiple => true,
       :condition => '$("ever_received_art").value == "YES"',
       :tt_onUnLoad => 'updateLastARVDrugs();',
       :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
-    <% @arv_drugs.each do |key, arv_drug| %>
-      <%= touch_numeric_tag "#{arv_drug}", @patient, nil,
-        {
-        :id => "#{arv_drug}",
-        :field_type => 'number',
-        :tt_pageStyleClass => "NumbersOnly",
-        :tt_onLoad => "jQuery('#Unknown').show();",
-        :condition => "lastARTDrugs.split(';').indexOf('#{arv_drug}') != -1",
-        :helpText  => "Total tabs of #{arv_drug} brought to clinic"} %>
-    <% end %>
+    <% @regimen_formulations.each do |regimen_index, formulations| %>
 
+      <% formulations.split('+').each do |formulation| %>
+        <%
+          formulation = 'Darunavir' if formulation.squish.upcase == 'DRV'
+          formulation = 'Ritonavir' if formulation.squish.upcase == 'R'
+        %>
+    
+        <%= touch_numeric_tag "#{formulation.squish}", @patient, nil,
+          {
+          :id => "#{formulation}",
+          :field_type => 'number',
+          :tt_pageStyleClass => "NumbersOnly",
+          :tt_onLoad => "jQuery('#Unknown').show();",
+          :condition => "parseInt($('last_art_drugs_taken').value) == parseInt(#{regimen_index})",
+          :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
+      <% end %>
+    <% end %>
+    
     <%= touch_yes_no_tag "Ever registered at ART clinic", @patient, nil,
       {	:id => "ever_registered_at_ART_clinic",
       :condition => "$('ever_received_art').value == 'YES'",
