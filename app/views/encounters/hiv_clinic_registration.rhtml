@@ -982,7 +982,7 @@
     }
   }
 
-  function resetStageDefiningConditions(){
+  /*function resetStageDefiningConditions(){
     selected_stage_conditions = JSON.parse(JSON.stringify(selected_stage_conditions_copy))
     stage_defining_conditions = __$('touchscreenInput' + tstCurrentPage).value;
 
@@ -993,7 +993,7 @@
         if (selected_stage_conditions[2]) delete selected_stage_conditions[2]; //Delete Stage 2 conditions
       }
     }
-  }
+  }*/
   
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
@@ -1250,8 +1250,8 @@
       {:id => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "setOptionsForContraindicationsPopup(); resetStageDefiningConditions();",
-      :tt_onUnLoad => 'setSelectedStageConditions(1);',
+      :tt_onLoad => "setOptionsForContraindicationsPopup();",
+      :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
       :condition => 'showConditions() == true',
       :helpText => "Stage 1 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1876,21 +1876,31 @@
   }
 
   function setOptionsForContraindicationsPopup(){
-    //stage_4_conditions, stage_3_conditions, stage_2_conditions;
     stageFourConditions = __$('stage_4_conditions').value;
     stageThreeConditions = __$('stage_3_conditions').value;
     stageTwoConditions = __$('stage_2_conditions').value;
-    asymptomatic_option_input = jQuery("[tstvalue='Asymptomatic HIV infection']")[0];
+    asymptomatic_option_input = jQuery("li[tstvalue='Asymptomatic HIV infection']")[0];
+
     if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
-        asymptomatic_option_input.onmouseup = function(){
-          showContraindicatingConditionsConfirmationPopup();
+      asymptomatic_option_input.onmouseup = function(){
+        showContraindicatingConditionsConfirmationPopup();
       }
     }
   }
 
   function showContraindicatingConditionsConfirmationPopup(){
-    document.getElementById("popup-div").style.display = 'inline';
-    document.getElementById("cover").style.display = 'inline';
+    stageFourConditions = __$('stage_4_conditions').value;
+    stageThreeConditions = __$('stage_3_conditions').value;
+    stageTwoConditions = __$('stage_2_conditions').value;
+    
+    asymptomatic_option_input = jQuery("li[tstvalue='Asymptomatic HIV infection']")[0];
+    if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
+      if (!asymptomatic_option_input.style.backgroundColor.match(/lightBlue/i)){
+        document.getElementById("popup-div").style.display = 'inline';
+        document.getElementById("cover").style.display = 'inline';
+      }
+    }
+    
   }
 
   function hidePopup(){
