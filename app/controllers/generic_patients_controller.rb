@@ -325,7 +325,10 @@ The following block of code should be replaced by a more cleaner function
     obs = []
 
     weight_trail = {} ; current_date = (session_date.to_date - 2.year).to_date
-    while not (current_date.year == session_date.to_date.year and current_date.month == session_date.to_date.month)
+    weight_trail[session_date.to_date.year] = {} 
+    weight_trail[session_date.to_date.year][session_date.to_date.month] = [] 
+    
+    while not ((current_date.year == session_date.to_date.year) and (current_date.month == session_date.to_date.month))
       year = current_date.year ; month = current_date.month
       weight_trail[year] = {} if weight_trail[year].blank?
       weight_trail[year][month] = [] if weight_trail[year][month].blank?
@@ -334,16 +337,19 @@ The following block of code should be replaced by a more cleaner function
 
     smallest_date_after = nil
 
-    Observation.find_by_sql("
+    weight_trail_data = ActiveRecord::Base.connection.select_all <<EOF
           SELECT * FROM obs WHERE person_id = #{patient.id}
           AND concept_id = #{concept_id} AND voided = 0 AND 
     obs_datetime BETWEEN '#{(session_date.to_date - 2.year).strftime('%Y-%m-%d 00:00:00')}' 
-    AND '#{session_date}' LIMIT 100").each {|weight|
-      current_date = weight.obs_datetime.to_date
+    AND '#{session_date}' LIMIT 100
+EOF
+   
+    (weight_trail_data || []).each {|weight|
+      current_date = weight['obs_datetime'].to_date
       year = current_date.year ; month = current_date.month
       begin
-        weight_trail[year][month] <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
-        smallest_date_after = weight.obs_datetime.to_date if smallest_date_after.blank? or (smallest_date_after > weight.obs_datetime.to_date)
+        weight_trail[year][month] <<  [weight['obs_datetime'].to_date, weight['value_numeric'].squish.to_f]
+        smallest_date_after = weight['obs_datetime'].to_date if smallest_date_after.blank? or (smallest_date_after > weight['obs_datetime'].to_date)
       rescue
         next
       end
@@ -352,10 +358,6 @@ The following block of code should be replaced by a more cleaner function
     (weight_trail || []).each do |year, months|
       (months).each do |month, data|
         if data.blank?
-          next if smallest_date_after.blank?
-          date = "#{year}/#{month}/01".to_date
-          next if date < smallest_date_after
-          obs << [date, nil]
           next
         end
 

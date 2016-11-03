@@ -124,68 +124,79 @@ dateToday = session[:datetime].to_date rescue Date.today
   }
 
   function plotGraph(obs){
-    jQuery('#charts').highcharts({
-      chart: {
-        type: 'column',
-        className: 'skies',
-        borderWidth: 0,
-        plotShadow: true,
-        backgroundColor: 'lightyellow',
-        plotBackgroundColor: {
-          linearGradient: [0, 0, 250, 500],
-          stops: [
-            [0, 'rgba(255, 255, 255, 1)'],
-            [1, 'rgba(255, 255, 255, 0)']
-          ]
-        },
-        plotBorderWidth: 1
-      },
-      title: {
-        text: "Weight Chart"
-      },
-      xAxis: {
-        categories:  getDates(obs),
-        title: {
-            text: null
-        },
-        labels: {
-         enabled:false,//default is true
-         y : 20, rotation: -45, align: 'right' }
-      },
-      credits: {
-        enabled: false
-      },
-      yAxis: {
-        alternateGridColor: 'rgba(255, 255, 255, .5)',
-        lineColor: '#C0D0E0',
-        tickColor: '#C0D0E0',
-        tickWidth: 1,
-        title: {
-          text: 'Kg'
-        },
-        labels: {
-          formatter: function() {
-            return this.value;
-          }
-        }
-      },
-      tooltip: {
-        shared: true,
-        valueSuffix: ' Kg'
-      },
-      plotOptions: {
-        column: {
-          color: "lightblue",
-          dataLabels: {
-            color: "black",
-            enabled: true
-          },
-          pointPadding: 0.2,
-          borderWidth: 0
-        }
-      },
-      series: dataG(obs)
-    });
+
+    //jQuery.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=usdeur.json&callback=?', function (data) {
+
+        jQuery('#charts').highcharts({
+            chart: {
+                zoomType: 'x'
+            },
+            title: {
+                text: 'Weight history'
+            },
+            subtitle: {
+                text: document.ontouchstart === undefined ?
+                        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+            },
+            xAxis: {
+                type: 'datetime'
+            },
+            yAxis: {
+              min: 0,
+                title: {
+                    text: 'Weight (kg)'
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            credits: {
+                enabled: false
+            },
+            plotOptions: {
+                area: {
+                    fillColor: {
+                        linearGradient: {
+                            x1: 0,
+                            y1: 0,
+                            x2: 0,
+                            y2: 1
+                        },
+                        stops: [
+                            [0, Highcharts.getOptions().colors[0]],
+                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                        ]
+                    },
+                    marker: {
+                        radius: 2
+                    },
+                    lineWidth: 1,
+                    states: {
+                        hover: {
+                            lineWidth: 1
+                        }
+                    },
+                    threshold: null
+                }
+            },
+            series: [{
+                type: 'area',
+                name: 'Weight',
+                data: formatData(obs)
+            }]
+        });
+    //});
+
+
+  }
+
+
+  function formatData(obs) {
+    data = [];
+    for(var i = 0; i < obs.length; i++) {
+      data.push([ getDateWithFormat(obs[i][0]), obs[i][1] ]);
+    }
+    return data;
   }
 
   function getDateWithFormat(d) {
@@ -193,14 +204,23 @@ dateToday = session[:datetime].to_date rescue Date.today
     var day = newDate.getDate();
     var monthIndex = newDate.getMonth();
     var year = newDate.getFullYear();
+
+    return Date.UTC(year,monthIndex,day);
  
     months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return day + "/" + months[monthIndex] + '/' + year;
     return day + "/" + months[monthIndex] + '/' + year;
   }
 
   function getDates(obs) {
     dates = [];
     for(var i = 0; i < obs.length; i++) {
+      if(getDateWithFormat(obs[i][1]).length < 1)
+        continue;
+
+      //alert(getDateWithFormat(obs[i][1]).length < 1)
+      console.log(getDateWithFormat(obs[i][1]))
+      
       dates.push(getDateWithFormat(obs[i][0]));
 
     }
@@ -280,7 +300,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     currentBmi = (currentWeight/(currentHeight*currentHeight)*10000).toFixed(1);
     document.getElementById('bmi').value = currentBmi;
 
-    displayText = "<div><span class='title'>BMI:</span>";
+    displayText = "<div><span class='title'>Current BMI:</span>";
     if (currentBmi > 18.5) {
       displayText += currentBmi;
     } else if (currentBmi <= 18.5) {
