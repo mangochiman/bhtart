@@ -1322,7 +1322,7 @@ class EncountersController < GenericEncountersController
       next unless clinic_days.include?(date.to_date.strftime('%A'))
       next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
 
-      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
+      if count < clinic_appointment_limit
         return date
       end
     end
@@ -1331,18 +1331,12 @@ class EncountersController < GenericEncountersController
     the following block of code will only run if the recommended date is full
     Its a hack, we need to find a better way of cleaning up the code but it works :)
 =end
-    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+    (appointments || {}).sort_by {|x, y| y.to_i }.each do |date, count|
       next unless clinic_days.include?(date.to_date.strftime('%A'))
       next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
 
-      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
-        return date
-      else
-        recommended_date = date
-        if count < clinic_appointment_limit
-          break
-        end
-      end
+      recommended_date = date
+      break
     end
 
     return recommended_date
@@ -1385,7 +1379,8 @@ EOF
     WHERE order_id IN(#{medication_order_ids.join(',')})
 EOF
 
-    smallest_expire_date = smallest_expire_date_attr['auto_expire_date'].to_date
+    #We get the smallest_expire_date but we also give the patient a 2 day buffer
+    smallest_expire_date = (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day)
     #==========================================get the min auto_expire_date end
 
     amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
