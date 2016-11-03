@@ -99,7 +99,8 @@
   var tstCurrentDate = '<%= session[:datetime].to_date.strftime("%Y-%m-%d") rescue Date.today.strftime("%Y-%m-%d") %>';
   var firstPositiveHivTestType = "<%= @confirmatory_hiv_test_type -%>";
   var age = <%= @patient_bean.age -%>;
-
+  var regimen_formulations = <%= @regimen_formulations.to_json -%>;
+  
   function checkTestDate(td){
     var testDate = createDates($('year_art_last_taken').value, $('month_art_last_taken').value , td.value);
     var years = testDate.getFullYear();
@@ -982,7 +983,7 @@
     }
   }
 
-  function resetStageDefiningConditions(){
+  /*function resetStageDefiningConditions(){
     selected_stage_conditions = JSON.parse(JSON.stringify(selected_stage_conditions_copy))
     stage_defining_conditions = __$('touchscreenInput' + tstCurrentPage).value;
 
@@ -993,7 +994,7 @@
         if (selected_stage_conditions[2]) delete selected_stage_conditions[2]; //Delete Stage 2 conditions
       }
     }
-  }
+  }*/
   
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
@@ -1094,22 +1095,29 @@
 
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
       {	:id => "last_art_drugs_taken",
-      :multiple => true,
       :condition => '$("ever_received_art").value == "YES"',
       :tt_onUnLoad => 'updateLastARVDrugs();',
       :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
-    <% @arv_drugs.each do |key, arv_drug| %>
-      <%= touch_numeric_tag "#{arv_drug}", @patient, nil,
-        {
-        :id => "#{arv_drug}",
-        :field_type => 'number',
-        :tt_pageStyleClass => "NumbersOnly",
-        :tt_onLoad => "jQuery('#Unknown').show();",
-        :condition => "lastARTDrugs.split(';').indexOf('#{arv_drug}') != -1",
-        :helpText  => "Total tabs of #{arv_drug} brought to clinic"} %>
-    <% end %>
+    <% @regimen_formulations.each do |regimen_index, formulations| %>
 
+      <% formulations.split('+').each do |formulation| %>
+        <%
+          formulation = 'Darunavir' if formulation.squish.upcase == 'DRV'
+          formulation = 'Ritonavir' if formulation.squish.upcase == 'R'
+        %>
+    
+        <%= touch_numeric_tag "#{formulation.squish}", @patient, nil,
+          {
+          :id => "#{formulation}",
+          :field_type => 'number',
+          :tt_pageStyleClass => "NumbersOnly",
+          :tt_onLoad => "jQuery('#Unknown').show();",
+          :condition => "parseInt($('last_art_drugs_taken').value.trim().match(/\\d+/)) == parseInt(#{regimen_index})",
+          :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
+      <% end %>
+    <% end %>
+    
     <%= touch_yes_no_tag "Ever registered at ART clinic", @patient, nil,
       {	:id => "ever_registered_at_ART_clinic",
       :condition => "$('ever_received_art').value == 'YES'",
@@ -1251,7 +1259,7 @@
       :multiple => true,
       :optional => true,
       :tt_onLoad => "setOptionsForContraindicationsPopup();",
-      :tt_onUnLoad => 'setSelectedStageConditions(1);',
+      :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
       :condition => 'showConditions() == true',
       :helpText => "Stage 1 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1876,21 +1884,31 @@
   }
 
   function setOptionsForContraindicationsPopup(){
-    //stage_4_conditions, stage_3_conditions, stage_2_conditions;
     stageFourConditions = __$('stage_4_conditions').value;
     stageThreeConditions = __$('stage_3_conditions').value;
     stageTwoConditions = __$('stage_2_conditions').value;
-    asymptomatic_option_input = jQuery("[tstvalue='Asymptomatic HIV infection']")[0];
+    asymptomatic_option_input = jQuery("li[tstvalue='Asymptomatic HIV infection']")[0];
+
     if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
-        asymptomatic_option_input.onmouseup = function(){
-          showContraindicatingConditionsConfirmationPopup();
+      asymptomatic_option_input.onmouseup = function(){
+        showContraindicatingConditionsConfirmationPopup();
       }
     }
   }
 
   function showContraindicatingConditionsConfirmationPopup(){
-    document.getElementById("popup-div").style.display = 'inline';
-    document.getElementById("cover").style.display = 'inline';
+    stageFourConditions = __$('stage_4_conditions').value;
+    stageThreeConditions = __$('stage_3_conditions').value;
+    stageTwoConditions = __$('stage_2_conditions').value;
+    
+    asymptomatic_option_input = jQuery("li[tstvalue='Asymptomatic HIV infection']")[0];
+    if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
+      if (!asymptomatic_option_input.style.backgroundColor.match(/lightBlue/i)){
+        document.getElementById("popup-div").style.display = 'inline';
+        document.getElementById("cover").style.display = 'inline';
+      }
+    }
+    
   }
 
   function hidePopup(){

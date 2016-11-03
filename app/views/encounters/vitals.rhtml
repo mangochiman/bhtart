@@ -339,6 +339,12 @@ dateToday = session[:datetime].to_date rescue Date.today
     jQuery("#helpText" + tstCurrentPage + ">#sbp").html(currentSBPValue);
     jQuery("#helpText" + tstCurrentPage + ">#dbp").html(currentDBPValue);
   }
+
+  function updateAbsoluteMaxValue(){
+    sbpValue = jQuery('#systolic_blood_pressure')[0].value;
+    sbpValue = (parseInt(sbpValue) - 10); //DBP has to be less than SPB at least by 10.
+    jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", sbpValue);
+  }
   
 </script>
 
@@ -452,12 +458,11 @@ dateToday = session[:datetime].to_date rescue Date.today
 
       <%= touch_text_field_tag "DIASTOLIC BLOOD PRESSURE", @patient, nil,{
         :id => "diastolic_blood_pressure",
-        :tt_onLoad => "updateDBPValues();",
+        :tt_onLoad => "updateDBPValues(); updateAbsoluteMaxValue()",
         :tt_onUnLoad => "clearInterval(dbpInterval);",
         :field_type => "number",
         :helpText => "Diastolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",
         :absoluteMin => 30,
-        :absoluteMax => 160,
         :validationRule => "^([0-9]+)|Unknown$",
         :validationMessage => "You must enter numbers only (for example 157)",
         :tt_pageStyleClass => "Keyboard Numeric NumbersOnly"} %>

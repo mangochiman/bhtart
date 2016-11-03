@@ -519,7 +519,7 @@ class EncountersController < GenericEncountersController
 				end
 			end
 
-			if (params[:encounter_type].upcase rescue '') == 'HIV_STAGING'
+			if ((params[:encounter_type].upcase rescue '') == 'HIV_STAGING') || (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION'
 				#added current weight to use on HIV staging for infants
 				@current_weight = PatientService.get_patient_attribute_value(@patient,
           "current_weight")
@@ -654,6 +654,8 @@ class EncountersController < GenericEncountersController
 			@arv_drugs = @arv_drugs.sort {|a,b| a.to_s.downcase <=> b.to_s.downcase}
 			@arv_drugs = @arv_drugs + other
 
+      @arv_drugs = MedicationService.moh_arv_regimen_options(100)
+      @regimen_formulations = MedicationService.regimen_formulations
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 
