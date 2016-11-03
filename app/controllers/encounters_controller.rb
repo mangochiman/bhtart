@@ -519,7 +519,7 @@ class EncountersController < GenericEncountersController
 				end
 			end
 
-			if (params[:encounter_type].upcase rescue '') == 'HIV_STAGING'
+			if ((params[:encounter_type].upcase rescue '') == 'HIV_STAGING') || (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION'
 				#added current weight to use on HIV staging for infants
 				@current_weight = PatientService.get_patient_attribute_value(@patient,
           "current_weight")
