@@ -1103,10 +1103,10 @@
 
       <% formulations.split('+').each do |formulation| %>
         <%
-          formulation = 'Darunavir' if formulation.squish.upcase == 'DRV'
-          formulation = 'Ritonavir' if formulation.squish.upcase == 'R'
-        %>
-    
+        formulation = 'Darunavir' if formulation.squish.upcase == 'DRV'
+        formulation = 'Ritonavir' if formulation.squish.upcase == 'R'
+      %>
+
         <%= touch_numeric_tag "#{formulation.squish}", @patient, nil,
           {
           :id => "#{formulation}",
@@ -1117,7 +1117,7 @@
           :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
       <% end %>
     <% end %>
-    
+
     <%= touch_yes_no_tag "Ever registered at ART clinic", @patient, nil,
       {	:id => "ever_registered_at_ART_clinic",
       :condition => "$('ever_received_art').value == 'YES'",
@@ -1421,7 +1421,8 @@
     <%= text_field_tag "year_confirmatory_hiv_test", nil,
       {	:helpText => 'Confirmatory HIV test year',
       :field_type => 'number',
-      :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
+      :tt_onLoad => "changeNextButtonForConfirmatoryYear(); changeAbsoluteMinForConfirmatoryYear();",
+      :absoluteMax => Date.today.year,
       :tt_pageStyleClass => "Numeric NumbersOnly",
       :condition => '$("ever_registered_at_ART_clinic").value == "YES"',
       :id => "confirmatory_hiv_test_year"}  %>
@@ -1429,14 +1430,15 @@
     <%= select_tag "month_confirmatory_hiv_test", month_name_options,
       {	:helpText => 'Confirmatory HIV test month',
       :condition => '$("confirmatory_hiv_test_year").value.toLowerCase() != "unknown" && $("ever_registered_at_ART_clinic").value == "YES"',
-      :tt_onLoad => "__$('keyboard').style.display = 'none'",
+      :tt_onLoad => "__$('keyboard').style.display = 'none'; validateConfirmatoryMonth();",
+      :validationMessage => 'Please enter a valid date',
       :id => "confirmatory_hiv_test_month"} %>
 
     <%= text_field_tag "day_confirmatory_hiv_test",  nil,
       :field_type => 'number', :helpText => 'Confirmatory HIV test day',
       :tt_onUnLoad => "updateConfirmDate();",
       :condition => '($("confirmatory_hiv_test_year").value !="Unknown") && ($("confirmatory_hiv_test_month").value != "Unknown") && $("ever_registered_at_ART_clinic").value == "YES"',
-      :tt_onLoad => "getDayOfMonthPicker($('confirmatory_hiv_test_year').value, $('confirmatory_hiv_test_month').value);$('nextButton').style.display = 'block';",
+      :tt_onLoad => "getDayOfMonthPicker($('confirmatory_hiv_test_year').value, $('confirmatory_hiv_test_month').value);$('nextButton').style.display = 'block'; validateConfirmatoryDay();",
       :validationCode => "checkConfirmDate()",
       :id => "confirmatory_hiv_test_day" ,
       :validationMessage => "Confirmatory Test Date out of range #{@hiv_test_date.to_date rescue nil} and #{@todayDate.to_date rescue nil}"%>
@@ -1622,7 +1624,8 @@
   <%= select_tag "month_confirmatory_hiv_test", month_name_options,
     {	:helpText => 'Confirmatory HIV test month',
     :condition => '$("confirmatory_hiv_test_year").value.toLowerCase() != "unknown" && $("ever_registered_at_ART_clinic").value == "YES"',
-    :tt_onLoad => "__$('keyboard').style.display = 'none'",
+    :tt_onLoad => "__$('keyboard').style.display = 'none';",
+    :validationMessage => 'Please enter a valid date',
     :id => "confirmatory_hiv_test_month"} %>
 
   <%= text_field_tag "day_confirmatory_hiv_test",  nil,
@@ -1923,6 +1926,62 @@
     $('stage_2_conditions').value = '';
     jQuery("#popup-div").hide();
     jQuery("#cover").hide();
+  }
+  function changeNextButtonForConfirmatoryYear(){
+  
+  }
+
+  function changeAbsoluteMinForConfirmatoryYear(){
+    year_started_art = jQuery('#year_started_art')[0].value;
+    if (parseInt(year_started_art)){
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMin", year_started_art);
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("min", year_started_art);
+    }else{
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMin", '1840');
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("min", '1940');
+    }
+  }
+
+  function validateConfirmatoryMonth() {
+    confirmatoryYear = parseInt(jQuery('#confirmatory_hiv_test_year')[0].value);
+    date = new Date;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if (confirmatoryYear == currYear){
+      currentMonth = [];
+      numOfloops = ((new Date).getMonth() + 1);
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+    if (confirmatoryYear != currYear) {
+      rule = availableMonths.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+    
+  }
+
+  function validateConfirmatoryDay(){
+    date = new Date
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    currMonth = date.getMonth() + 1;
+    
+    confirmatoryMonth = parseInt(jQuery('#confirmatory_hiv_test_month')[0].value);
+    confirmatoryYear = parseInt(jQuery('#confirmatory_hiv_test_year')[0].value);
+
+    if (confirmatoryYear == currYear) {
+      if (confirmatoryMonth == currMonth){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+      }
+     }
   }
 
 </script>
