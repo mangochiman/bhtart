@@ -1113,7 +1113,7 @@
           :field_type => 'number',
           :tt_pageStyleClass => "NumbersOnly",
           :tt_onLoad => "jQuery('#Unknown').show();",
-          :condition => "parseInt($('last_art_drugs_taken').value) == parseInt(#{regimen_index})",
+          :condition => "parseInt($('last_art_drugs_taken').value.trim().match(/\\d+/)) == parseInt(#{regimen_index})",
           :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
       <% end %>
     <% end %>
