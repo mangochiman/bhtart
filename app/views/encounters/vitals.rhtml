@@ -39,9 +39,9 @@
   .medHeightForAge {color:black;background:yellow;}
   .goodHeightForAge {color:black;}
 
-  #tt_page_summary .inputFrameClass { height: 87%;}
+  #tt_page_nutritional_status .inputFrameClass { height: 87%;}
   
-  #tt_page_summary .inputPage{
+  #tt_page_nutritional_status .inputPage{
     width: 98.7%;
   }
 
@@ -474,7 +474,7 @@ dateToday = session[:datetime].to_date rescue Date.today
 
   <%= text_field_tag :showSummary, nil, { 
     :tt_onLoad => "growthIndicators();__$('keyboard').style.display = 'none';", 
-    :helpText => "Summary",
+    :helpText => "Nutritional status",
     :optional => "true", :tt_pageStyleClass => "NoControls" 
   } %>
 
