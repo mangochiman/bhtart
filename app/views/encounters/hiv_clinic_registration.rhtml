@@ -995,7 +995,11 @@
       }
     }
   }*/
-  
+ 
+  function hideCategory() {
+    document.getElementById('category').style = 'display: none;'
+  }
+ 
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
 <%# if @patient.patient_programs.current.local.map(&:program).map(&:name).include?('HIV PROGRAM') %>
@@ -1130,6 +1134,8 @@
       <%= touch_location_tag "LOCATION OF ART INITIATION", @patient, nil,
         {	:id => "location_of_art_initialization",
         :condition => '$("ever_registered_at_ART_clinic").value == "YES" && $("ever_received_art").value == "YES"',
+        :tt_onLoad => "showCategory('when starting ART')" ,
+        :tt_onUnLoad => "hideCategory()",
         :helpText => "Location of ART initiation" } %>
 
 
@@ -1138,6 +1144,8 @@
         :field_type => 'number',
         :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
         :tt_pageStyleClass => "Numeric NumbersOnly",
+        :tt_onLoad => "showCategory('when starting ART')" ,
+        :tt_onUnLoad => "hideCategory()",
         :condition => '$("ever_received_art").value == "YES" && $("ever_registered_at_ART_clinic").value == "YES"',
         :id => "year_started_art" }  %>
 
@@ -1146,8 +1154,8 @@
         :helpText =>"Estimate ART start period",
         :id => "art_start_date_estimation",
         :allowFreeText => false,
-        :tt_onUnLoad => "setUnkownStage();",
-        :tt_onLoad => "setReasonForStarting();",
+        :tt_onUnLoad => "hideCategory();setUnkownStage();",
+        :tt_onLoad => "showCategory('when starting ART');setReasonForStarting();",
         :condition => '$("year_started_art").value.toUpperCase() == "UNKNOWN"',
         :ttMatchFromBeginning => "true")%>
 
@@ -1156,18 +1164,18 @@
       <%= select_tag "month_started_art", month_name_options,
         {	:helpText => 'Month started ART',
         :condition => '$("ever_received_art").value == "YES" && $("year_started_art").value.toLowerCase() != "unknown"',
-        :tt_onLoad => "__$('keyboard').style.display = 'none';",
-        :tt_onUnLoad => "setUnkownStage();",
+        :tt_onLoad => "showCategory('when starting ART'); __$('keyboard').style.display = 'none';",
+        :tt_onUnLoad => "hideCategory(); setUnkownStage();",
         :id => "month_started_art" ,
         :validationMessage => 'Please enter a valid date'}%>
 
       <%= text_field_tag "day_started_art",  nil,
         :field_type => 'number', :helpText => 'Day started ART',
         :condition => '$("ever_received_art").value == "YES" && ($("year_started_art").value !="Unknown") && ($("month_started_art").value != "Unknown")',
-        :tt_onLoad => "getDayOfMonthPicker($('year_started_art').value, $('month_started_art').value);$('nextButton').style.display = 'block';",
+        :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_started_art').value, $('month_started_art').value);$('nextButton').style.display = 'block';",
         :validationCode => "checkStartDate();",
         :id => "day_started_art" ,
-        :tt_onUnLoad => "updateStartDate();setUnkownStage();",
+        :tt_onUnLoad => "hideCategory();updateStartDate();setUnkownStage();",
         :validationMessage => "Date ART started out of range #{@hiv_test_date.to_date rescue nil} and #{@todayDate.to_date rescue nil}"%>
 
       <%= touch_hidden_tag "Date antiretrovirals started", @patient, "", :id => "date_started_art", :value_datetime => true %>
@@ -1177,6 +1185,8 @@
     <%= touch_text_field_tag "ART NUMBER AT PREVIOUS LOCATION", @patient, nil,
       {	:id => "previous_art_number",
       :condition => '$("ever_registered_at_ART_clinic").value == "YES" && $("ever_received_art").value == "YES"',
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onUnLoad => "hideCategory()",
       :helpText => "ART number at previous location" } %>
 
     <%= touch_yes_no_tag "HAS TRANSFER LETTER", @patient, nil,
@@ -1194,6 +1204,8 @@
       :absoluteMin => 10,
       :absoluteMax => 228,
       :helpText => "Initial Height (CM)",
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onUnLoad => "hideCategory()",
       :units => 'cm',
       :validationRule => "^([0-9]+)|Unknown$",
       :validationMessage => "You must enter numbers only (for example 157)",
@@ -1213,7 +1225,8 @@
       :units => 'kg',
       :validationRule => "([0-9]+\\.[0-9])|Unknown$",
       :validationMessage => "You must enter a decimal between 0 and 9 (for example: 54<b>.6</b>)",
-      :tt_onUnLoad => "calculateBMI();",
+      :tt_onUnLoad => "hideCategory();calculateBMI();",
+      :tt_onLoad => "showCategory('when starting ART')",
       :tt_pageStyleClass => "Numeric NumbersOnlyWithDecimal"} %>
     <%= hidden_field_tag("observations[][concept_name]", "WEIGHT (KG)") %>
     <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
@@ -1230,7 +1243,8 @@
       {:id => "stage_4_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onUnLoad => 'setSelectedStageConditions(4);',
+      :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
+      :tt_onLoad => "showCategory('when starting ART');",
       :condition => 'showConditions() == true',
       :helpText => "Stage 4 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1240,7 +1254,8 @@
       {:id => "stage_3_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onUnLoad => 'setSelectedStageConditions(3);',
+      :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
+      :tt_onLoad => "showCategory('when starting ART')" ,
       :condition => 'showConditions() == true',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1249,7 +1264,8 @@
       {:id => "stage_2_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onUnLoad => 'setSelectedStageConditions(2);',
+      :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
+      :tt_onLoad => "showCategory('when starting ART')" ,
       :condition => 'showConditions() == true',
       :helpText => "Stage 2 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1258,8 +1274,8 @@
       {:id => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "setOptionsForContraindicationsPopup();",
-      :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
+      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup();",
+      :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
       :condition => 'showConditions() == true',
       :helpText => "Stage 1 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1320,6 +1336,8 @@
     <%= touch_location_tag "CD4 COUNT LOCATION", @patient, nil,
       {	:id => "cd4_count_location",
       :condition => '$("new_cd4_count_available").value == "YES" && showConditions()',
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onUnLoad => "hideCategory();" ,
       :helpText => "CD4 Count Location"} %>
 
 
@@ -1328,6 +1346,8 @@
       :field_type => 'number',
       :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
       :tt_pageStyleClass => "Numeric NumbersOnly",
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onUnLoad => "hideCategory();" ,
       :condition => '$("new_cd4_count_available").value == "YES" && showConditions()',
       :id => "year_of_cd4" }  %>
 
@@ -1335,6 +1355,8 @@
       { :tt_onLoad => "__$('keyboard').style.display = 'none'",
       :helpText => 'Month of CD4 count',
       :condition => '$("year_of_cd4").value.toLowerCase() != "unknown" && $("new_cd4_count_available").value == "YES" && showConditions()',
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onUnLoad => "hideCategory();" ,
       :id => "month_of_cd4" ,
       :validationMessage => 'Please enter a valid date'}%>
 
@@ -1342,8 +1364,8 @@
       :field_type => 'number',
       :helpText => 'Day of CD4 count',
       :condition => '($("year_of_cd4").value !="Unknown") && ($("month_of_cd4").value != "Unknown") && ($("new_cd4_count_available").value == "YES") && showConditions()',
-      :tt_onLoad => "getDayOfMonthPicker($('year_of_cd4').value, $('month_of_cd4').value);$('nextButton').style.display = 'block';",
-      :tt_onUnLoad => 'checkCd4Date();',
+      :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_of_cd4').value, $('month_of_cd4').value);$('nextButton').style.display = 'block';",
+      :tt_onUnLoad => 'hideCategory();checkCd4Date();',
       :id => "day_of_cd4" %>
 
     <%= touch_hidden_tag "CD4 COUNT DATETIME", @patient, nil, {:id => "cd4_count_date", :value_datetime => true}%>
@@ -1362,8 +1384,8 @@
       :helpText => "CD4 Count",
       :max => 1000 ,
       :min => 1 ,
-      :tt_onLoad => "updateCD4CountKeyPad();",
-      :tt_onUnLoad => "updateCD4Count();"} %>
+      :tt_onLoad => "showCategory('when starting ART');updateCD4CountKeyPad();",
+      :tt_onUnLoad => "hideCategory();updateCD4Count();"} %>
 
     <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 250", @patient, "", :id => "cd4_count_less_than_250" %>
     <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 350", @patient, "", :id => "cd4_count_less_than_350" %>
@@ -1372,14 +1394,16 @@
       :id => 'new_cd4_percent_available',
       :condition => 'showConditions() == true',
       :helpText => "Initial CD4 percent available",
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onUnLoad => "hideCategory();" ,
       :tt_pageStyleClass => 'NoKeyboard' %>
 
     <%= touch_cd4_count_numeric_tag "CD4 PERCENT", @patient, nil,
       {	:id => "cd4_percent",
       :condition => '$("new_cd4_percent_available").value == "YES" && showConditions()',
       :helpText => "CD4 Percent",
-      :tt_onLoad => "updateCD4CountKeyPad();",
-      :tt_onUnLoad => 'updateCD4Percent()'} %>
+      :tt_onLoad => "showCategory('when starting ART');updateCD4CountKeyPad();",
+      :tt_onUnLoad => 'hideCategory();updateCD4Percent()'} %>
 
     <%= touch_hidden_tag "CD4 PERCENT LESS THAN 25", @patient, "", :id => "cd4_percent_less_than_25" %>
 
@@ -1424,12 +1448,11 @@
       :tt_onLoad => "changeNextButtonForConfirmatoryYear(); changeAbsoluteMinForConfirmatoryYear();",
       :absoluteMax => Date.today.year,
       :tt_pageStyleClass => "Numeric NumbersOnly",
-      :condition => '$("ever_registered_at_ART_clinic").value == "YES"',
       :id => "confirmatory_hiv_test_year"}  %>
 
     <%= select_tag "month_confirmatory_hiv_test", month_name_options,
       {	:helpText => 'Confirmatory HIV test month',
-      :condition => '$("confirmatory_hiv_test_year").value.toLowerCase() != "unknown" && $("ever_registered_at_ART_clinic").value == "YES"',
+      :condition => '$("confirmatory_hiv_test_year").value.toLowerCase() != "unknown"',
       :tt_onLoad => "__$('keyboard').style.display = 'none'; validateConfirmatoryMonth();",
       :validationMessage => 'Please enter a valid date',
       :id => "confirmatory_hiv_test_month"} %>
@@ -1437,7 +1460,7 @@
     <%= text_field_tag "day_confirmatory_hiv_test",  nil,
       :field_type => 'number', :helpText => 'Confirmatory HIV test day',
       :tt_onUnLoad => "updateConfirmDate();",
-      :condition => '($("confirmatory_hiv_test_year").value !="Unknown") && ($("confirmatory_hiv_test_month").value != "Unknown") && $("ever_registered_at_ART_clinic").value == "YES"',
+      :condition => '($("confirmatory_hiv_test_year").value !="Unknown") && ($("confirmatory_hiv_test_month").value != "Unknown");',
       :tt_onLoad => "getDayOfMonthPicker($('confirmatory_hiv_test_year').value, $('confirmatory_hiv_test_month').value);$('nextButton').style.display = 'block'; validateConfirmatoryDay();",
       :validationCode => "checkConfirmDate()",
       :id => "confirmatory_hiv_test_day" ,
@@ -1927,6 +1950,7 @@
     jQuery("#popup-div").hide();
     jQuery("#cover").hide();
   }
+
   function changeNextButtonForConfirmatoryYear(){
   
   }

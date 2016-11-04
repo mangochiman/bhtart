@@ -1289,8 +1289,9 @@ class GenericPeopleController < ApplicationController
       break if count > 12
       count+=1
     end
+
     (weights || {}).sort{|a,b|a[0].to_date <=> b[0].to_date}.each do |date,weight|
-      @weights << [date.to_date.strftime('%d.%b.%y') , weight]
+      @weights << [date.to_date , weight]
     end
 
     @weights = @weights.to_json
