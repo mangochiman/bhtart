@@ -1164,7 +1164,7 @@
       <%= select_tag "month_started_art", month_name_options,
         {	:helpText => 'Month started ART',
         :condition => '$("ever_received_art").value == "YES" && $("year_started_art").value.toLowerCase() != "unknown"',
-        :tt_onLoad => "showCategory('when starting ART'); __$('keyboard').style.display = 'none';",
+        :tt_onLoad => "showCategory('when starting ART'); __$('keyboard').style.display = 'none'; validateMonthStartedART();",
         :tt_onUnLoad => "hideCategory(); setUnkownStage();",
         :id => "month_started_art" ,
         :validationMessage => 'Please enter a valid date'}%>
@@ -1172,7 +1172,7 @@
       <%= text_field_tag "day_started_art",  nil,
         :field_type => 'number', :helpText => 'Day started ART',
         :condition => '$("ever_received_art").value == "YES" && ($("year_started_art").value !="Unknown") && ($("month_started_art").value != "Unknown")',
-        :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_started_art').value, $('month_started_art').value);$('nextButton').style.display = 'block';",
+        :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_started_art').value, $('month_started_art').value);$('nextButton').style.display = 'block';validateDayStartedART();",
         :validationCode => "checkStartDate();",
         :id => "day_started_art" ,
         :tt_onUnLoad => "hideCategory();updateStartDate();setUnkownStage();",
@@ -1973,9 +1973,35 @@
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+
+    if ((confirmatoryYear != currYear) && (year_started_art == confirmatoryYear)){
+      currentMonth = [];
+      numOfloops = month_started_art;
+      for(var i = month_started_art - 1; i < 12; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
     if (confirmatoryYear == currYear){
       currentMonth = [];
       numOfloops = ((new Date).getMonth() + 1);
+      cMonth = ((new Date).getMonth() + 1);
+
+      if (month_started_art <= cMonth){
+        //start from month started_art to c_month
+        for(var i = month_started_art - 1; i < cMonth; i++){
+          currentMonth.push(availableMonths[i]);
+        }
+        rule = currentMonth.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }
+
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);
       }
@@ -1992,6 +2018,45 @@
     
   }
 
+  function validateMonthStartedART(){
+    date = new Date;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    if (year_started_art == currYear){
+      currentMonth = [];
+      numOfloops = ((new Date).getMonth() + 1);
+
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+  }
+
+  function validateDayStartedART(){
+    date = new Date;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    currMonth = date.getMonth() + 1;
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+
+    if (year_started_art == currYear) {
+      if (month_started_art == currMonth){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+      }
+    }
+  }
+
   function validateConfirmatoryDay(){
     date = new Date
     currYear = date.getFullYear();
@@ -2001,11 +2066,24 @@
     confirmatoryMonth = parseInt(jQuery('#confirmatory_hiv_test_month')[0].value);
     confirmatoryYear = parseInt(jQuery('#confirmatory_hiv_test_year')[0].value);
 
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+    day_started_art = parseInt(jQuery('#day_started_art')[0].value);
+
+    if ((confirmatoryYear != currYear) && (year_started_art == confirmatoryYear)){
+      if (confirmatoryMonth == month_started_art){
+        $('touchscreenInput'+tstCurrentPage).setAttribute('min',day_started_art);
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMin',day_started_art);
+      }
+    }
+
     if (confirmatoryYear == currYear) {
       if (confirmatoryMonth == currMonth){
         return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
       }
-     }
+    }
+
+
   }
 
 </script>
