@@ -1,6 +1,7 @@
 <script>
   var tt_cancel_destination = "/patients/show/<%= @patient.patient_id %>";
 </script>
+
 <style type="text/css">
   #summary {
     padding: 0px;
@@ -368,7 +369,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       :validationRule => "([0-9]+\\.[0-9])|Unknown$",
       :validationMessage => "You must enter a decimal between 0 and 9 (for example: 36<b>.6</b>)",
       :tt_pageStyleClass => "Numeric NumbersOnlyWithDecimal",
-      :tt_onLoad => "showCategory('Vitals capture');",
+      :tt_onLoad => "showCategory2('Vitals capture');",
       :helpText => "Temperature (C)" } %>
   <% end %>
 
@@ -376,7 +377,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     <%= touch_numeric_tag "WEIGHT (KG)", @patient, nil,
       {	:id => "weight",
       :field_type => "number",
-      :tt_onLoad => "showCategory('Vitals capture');$('clearButton').style.display = 'inline';",
+      :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
       :min => number_with_precision(@min_weight, :precision => 1),
       :max => number_with_precision(@max_weight, :precision => 1),
       :absoluteMin => 0,
@@ -398,7 +399,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       <%= touch_numeric_tag "HEIGHT (CM)", @patient, nil,
         {	:id => "height",
         :field_type => "number",
-        :tt_onLoad => "showCategory('Vitals capture');$('clearButton').style.display = 'inline';",
+        :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
         :min => number_with_precision(@min_height, :precision => 1),
         :max => number_with_precision(@max_height, :precision => 1),
         :absoluteMin => 10,
@@ -413,7 +414,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     <%= touch_numeric_tag "WEIGHT (KG)", @patient, nil,
       {	:id => "weight",
       :field_type => "number",
-      :tt_onLoad => "showCategory('Vitals capture');$('clearButton').style.display = 'inline';",
+      :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
       :min => number_with_precision(@min_weight, :precision => 1),
       :max => number_with_precision(@max_weight, :precision => 1),
       :absoluteMin => 0,
@@ -430,7 +431,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       <%= touch_numeric_tag "HEIGHT (CM)", @patient, nil,
         {	:id => "height",
         :field_type => "number",
-        :tt_onLoad => "showCategory('Vitals capture');$('clearButton').style.display = 'inline';",
+        :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
         :min => number_with_precision(@min_height, :precision => 1),
         :max => number_with_precision(@max_height, :precision => 1),
         :absoluteMin => 10,
@@ -449,7 +450,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       <%= touch_text_field_tag "SYSTOLIC BLOOD PRESSURE", @patient, nil,{
         :id => "systolic_blood_pressure",
         :field_type => "number",
-        :tt_onLoad => "showCategory('Vitals capture');updateSBPValues();",
+        :tt_onLoad => "showCategory2('Vitals capture');updateSBPValues();",
         :tt_onUnLoad => "clearInterval(sbpInterval);", 
         :helpText => "Systolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",
         :absoluteMin => 70,
@@ -461,7 +462,7 @@ dateToday = session[:datetime].to_date rescue Date.today
 
       <%= touch_text_field_tag "DIASTOLIC BLOOD PRESSURE", @patient, nil,{
         :id => "diastolic_blood_pressure",
-        :tt_onLoad => "showCategory('Vitals capture');updateDBPValues(); updateAbsoluteMaxValue()",
+        :tt_onLoad => "showCategory2('Vitals capture');updateDBPValues(); updateAbsoluteMaxValue()",
         :tt_onUnLoad => "clearInterval(dbpInterval);",
         :field_type => "number",
         :helpText => "Diastolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",
@@ -496,3 +497,5 @@ dateToday = session[:datetime].to_date rescue Date.today
 
   <%= submit_tag "Finish" %>
 </form>
+
+<script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>
