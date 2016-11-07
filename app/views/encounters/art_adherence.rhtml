@@ -177,6 +177,7 @@ session_date = session[:datetime] || Time.now()
   var patientTBSuspected = '<%= @patient_tb_suspected %>';
   var patientTBConfirmed = '<%= @patient_tb_confirmed %>';
   var gender = '<%= @gender %>';
+  var allergicToSuphur = '<%= @allergic_to_sulphur %>';
 
   function dateCreate(date_str){
     intyear = 0 ; intmonth = 0 ; intday = 0;
@@ -535,7 +536,7 @@ session_date = session[:datetime] || Time.now()
           'blank','Tabs remaining','Expected','Actual (counted)',
           'blank','Adherence','Doses missed / unaccounted for','Doses consumed',
           'ART adherence'
-          ]
+        ]
 
         for(var i = 0; i < tr_names.length; i++){
           tr = document.createElement('tr'); 
@@ -601,118 +602,118 @@ session_date = session[:datetime] || Time.now()
             amount_others = $("amount_other_" + i).value;
           }
 
-          <% if ask_pills_remaining_at_home %>
-            amount_remaining = parseFloat(amount_brought);
-            amount_remaining += parseFloat(amount_others);
-          <%else%>
-            amount_remaining = parseFloat(amount_brought);
-          <%end%>
+<% if ask_pills_remaining_at_home %>
+        amount_remaining = parseFloat(amount_brought);
+        amount_remaining += parseFloat(amount_others);
+<%else%>
+        amount_remaining = parseFloat(amount_brought);
+<%end%>
 
-          var days_overdue_for_visit = since(auto_expire_date[i]);
-          var doses_missed = 0;
-          var last_visit_date = dateCreate(order_start_date[i]);
-          var num_days = since(last_visit_date);
-          var expected_amount_remaining = parseFloat(amount_given_last_time[i] - (num_days * daily_consumption[i]));
-          m = daily_consumption[i].split('.')[1]
-          if (m == 0){
-            expected_amount_remaining = parseInt(expected_amount_remaining);
-          }
-          else{
-            expected_amount_remaining = expected_amount_remaining.toFixed(2);
-          }
+      var days_overdue_for_visit = since(auto_expire_date[i]);
+      var doses_missed = 0;
+      var last_visit_date = dateCreate(order_start_date[i]);
+      var num_days = since(last_visit_date);
+      var expected_amount_remaining = parseFloat(amount_given_last_time[i] - (num_days * daily_consumption[i]));
+      m = daily_consumption[i].split('.')[1]
+      if (m == 0){
+        expected_amount_remaining = parseInt(expected_amount_remaining);
+      }
+      else{
+        expected_amount_remaining = expected_amount_remaining.toFixed(2);
+      }
 	  	
 
-          if(expected_amount_remaining == amount_remaining) {
-            doses_missed = 0;
+      if(expected_amount_remaining == amount_remaining) {
+        doses_missed = 0;
+      }else{
+        doses_missed = parseFloat((expected_amount_remaining - amount_remaining) / daily_consumption[i]);
+        doses_missed = Math.round(doses_missed);
+      }
+
+      var adherence = Math.round(100*(amount_given_last_time[i] - amount_remaining) / (amount_given_last_time[i] - expected_amount_remaining))
+
+
+      $('adherence_'+ i ).value = adherence;
+
+      var drug_name = drug_names[i];
+      var warning = (adherence < 95 || adherence > 105) ? 'warning' : '';
+
+      data_tds = document.getElementsByClassName('order_' + i);
+      for(var x = 0; x < data_tds.length; x++){
+        if(x == 0) {
+          data_tds[x].innerHTML = amount_given_last_time[i];
+        }else if(x == 1){
+          data_tds[x].innerHTML = (Math.round(daily_consumption[i] * 100) / 100);
+        }else if(x == 2){
+          data_tds[x].innerHTML = (Math.round(dose[i] * 100) / 100);
+        }else if(x == 4){
+          if(expected_amount_remaining < 0)
+            expected_amount_remaining = 0;
+
+          data_tds[x].innerHTML = expected_amount_remaining;
+        }else if(x == 5){
+          data_tds[x].innerHTML = amount_remaining;
+        }else if(x == 7){
+          doses_missed_unaccounted = ((amount_remaining - expected_amount_remaining)/dose[i]);
+          if(doses_missed_unaccounted < 0) {
+            doses_missed_unaccounted = (doses_missed_unaccounted * -1);
+            data_tds[x].innerHTML = doses_missed_unaccounted + " unacc.";
           }else{
-            doses_missed = parseFloat((expected_amount_remaining - amount_remaining) / daily_consumption[i]);
-            doses_missed = Math.round(doses_missed);
+            data_tds[x].innerHTML = doses_missed_unaccounted + " missed";
           }
+        }else if(x == 8){
+          data_tds[x].innerHTML = adherence + '%';
+        }else if(x == 9){
+          last_visit = document.getElementById('last_visit_date');
 
-          var adherence = Math.round(100*(amount_given_last_time[i] - amount_remaining) / (amount_given_last_time[i] - expected_amount_remaining))
+          months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          curr_date = last_visit_date.getDate();
+          var curr_month = last_visit_date.getMonth(); //Months are zero based
+          var curr_year = last_visit_date.getFullYear();
+          last_visit_date = (curr_date + "/" + months[curr_month] + "/" + curr_year);
 
-
-          $('adherence_'+ i ).value = adherence;
-
-          var drug_name = drug_names[i];
-          var warning = (adherence < 95 || adherence > 105) ? 'warning' : '';
-
-          data_tds = document.getElementsByClassName('order_' + i);
-          for(var x = 0; x < data_tds.length; x++){
-            if(x == 0) {
-              data_tds[x].innerHTML = amount_given_last_time[i];
-            }else if(x == 1){
-              data_tds[x].innerHTML = (Math.round(daily_consumption[i] * 100) / 100);
-            }else if(x == 2){
-              data_tds[x].innerHTML = (Math.round(dose[i] * 100) / 100);
-            }else if(x == 4){
-              if(expected_amount_remaining < 0)
-                expected_amount_remaining = 0;
-
-              data_tds[x].innerHTML = expected_amount_remaining;
-            }else if(x == 5){
-              data_tds[x].innerHTML = amount_remaining;
-            }else if(x == 7){
-              doses_missed_unaccounted = ((amount_remaining - expected_amount_remaining)/dose[i]);
-              if(doses_missed_unaccounted < 0) { 
-                doses_missed_unaccounted = (doses_missed_unaccounted * -1);
-                data_tds[x].innerHTML = doses_missed_unaccounted + " unacc.";
-              }else{
-                data_tds[x].innerHTML = doses_missed_unaccounted + " missed";
-              }
-            }else if(x == 8){
-              data_tds[x].innerHTML = adherence + '%';
-            }else if(x == 9){
-              last_visit = document.getElementById('last_visit_date');
-
-              months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-              curr_date = last_visit_date.getDate();
-              var curr_month = last_visit_date.getMonth(); //Months are zero based
-              var curr_year = last_visit_date.getFullYear();
-              last_visit_date = (curr_date + "/" + months[curr_month] + "/" + curr_year);
-
-              //last_visit.innerHTML = "Last visit: " + last_visit_date + "  Days elapsed: " + num_days;
-              if(last_visit.innerHTML.length < 1) {
-                header_table = document.createElement('table');
-                header_table.setAttribute('id','header-table');
-                tr = document.createElement('tr');
-                td = document.createElement('td');
-                td.innerHTML =  "Last visit: " + last_visit_date;
-                tr.appendChild(td);
-                tr = document.createElement('tr');
-                tr.appendChild(td)
-                td = document.createElement('td');
-                td.innerHTML =  "Days elapsed: " + num_days;
-                td.setAttribute('style','text-align: right; padding-right: 5px;');
-                tr.appendChild(td)
-                header_table.appendChild(tr);
-                last_visit.appendChild(header_table);
-              } 
+          //last_visit.innerHTML = "Last visit: " + last_visit_date + "  Days elapsed: " + num_days;
+          if(last_visit.innerHTML.length < 1) {
+            header_table = document.createElement('table');
+            header_table.setAttribute('id','header-table');
+            tr = document.createElement('tr');
+            td = document.createElement('td');
+            td.innerHTML =  "Last visit: " + last_visit_date;
+            tr.appendChild(td);
+            tr = document.createElement('tr');
+            tr.appendChild(td)
+            td = document.createElement('td');
+            td.innerHTML =  "Days elapsed: " + num_days;
+            td.setAttribute('style','text-align: right; padding-right: 5px;');
+            tr.appendChild(td)
+            header_table.appendChild(tr);
+            last_visit.appendChild(header_table);
+          }
               
-              if(warning == 'warning'){
-                try {
-                  data_tds[x].setAttribute('class','warning set-data order_' + i);
-                  e = document.createElement('span');
-                  e.setAttribute('style','color:red');
-                  e.innerHTML = 'Explore problems';
-                  e.setAttribute('class','recommendation');
-                  data_tds[x].appendChild(e);
-                }catch(s) {};
-              }else{
-                data_tds[x].setAttribute('class','all-clear set-data order_' + i);
-                e = document.createElement('span');
-                e.setAttribute('style','color:green');
-                e.innerHTML = 'Good adherence';
-                e.setAttribute('class','recommendation');
-                data_tds[x].appendChild(e);
-              }
-            }
-          }	
+          if(warning == 'warning'){
+            try {
+              data_tds[x].setAttribute('class','warning set-data order_' + i);
+              e = document.createElement('span');
+              e.setAttribute('style','color:red');
+              e.innerHTML = 'Explore problems';
+              e.setAttribute('class','recommendation');
+              data_tds[x].appendChild(e);
+            }catch(s) {};
+          }else{
+            data_tds[x].setAttribute('class','all-clear set-data order_' + i);
+            e = document.createElement('span');
+            e.setAttribute('style','color:green');
+            e.innerHTML = 'Good adherence';
+            e.setAttribute('class','recommendation');
+            data_tds[x].appendChild(e);
+          }
+        }
+      }
           
 
-        }
+    }
 
-      $("clearButton").style.display = 'none';
+    $("clearButton").style.display = 'none';
   }
 
   function checkAdherence(){
@@ -894,6 +895,8 @@ session_date = session[:datetime] || Time.now()
             help_text = '<b style="color:red;"> Patient allergic to sulphur</b>'
           end
         end%>
+
+        <% medication_options = ['ARVs','CPT','IPT','NONE OF THE ABOVE'] %>
         <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
           {:id => "prescribe_drugs",
           :tt_onLoad => "addFastTrackAssesmentButton(); controlNoneSelection(); setIPTOptionForPopup()",
@@ -1050,9 +1053,49 @@ session_date = session[:datetime] || Time.now()
 
   function setIPTOptionForPopup(){
     ipt_option_input = jQuery("[tstvalue='IPT']")[0];
+    cpt_option_input = jQuery("[tstvalue='CPT']")[0];
+    ipt_id = ipt_option_input.id;
+    cpt_id = cpt_option_input.id;
+    ipt_input = document.getElementById('optionValue' + ipt_id);
+    cpt_input = document.getElementById('optionValue' + cpt_id);
     ipt_message_header = "PATIENT IS ON TB TREATMENT";
 
-    if (patientTBSuspected){
+    if (allergicToSuphur.toUpperCase() == 'YES'){
+      cpt_option_input.style.backgroundColor = '#CDBA96';
+      cpt_input.innerHTML = 'CPT (Allergic To Suplhur)';
+      cpt_option_input.onclick = null;
+      cpt_option_input.onmousedown = null;
+      cpt_option_input.onmouseup = null;
+    }
+    
+    if (patientTBSuspected == 'true'){
+      ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = 'IPT (TB Suspected)';
+      //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
+      ipt_option_input.onclick = null;
+      ipt_option_input.onmousedown = null;
+      ipt_option_input.onmouseup = null;
+    }
+
+    if (patientTBConfirmed == 'true'){
+      ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = 'IPT (TB Confirmed)';
+      //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
+      ipt_option_input.onclick = function(){
+
+      }
+    }
+
+    if (patientOnTBTreatment == 'true'){
+      ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = 'IPT (TB On Treatment)';
+      //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
+      ipt_option_input.onclick = function(){
+
+      }
+    }
+    
+    /*if (patientTBSuspected){
       ipt_message_header = "PATIENT IS A TB SUSPECT";
     }
     
@@ -1070,7 +1113,7 @@ session_date = session[:datetime] || Time.now()
           }
         }
       }
-    }
+    }*/
 
   }
 
@@ -1231,5 +1274,9 @@ session_date = session[:datetime] || Time.now()
     -moz-box-sizing: border-box;
     box-sizing: border-box;
     bottom: 0px;
+  }
+
+  .unselectable{
+    height: 50px !important;
   }
 </style>
