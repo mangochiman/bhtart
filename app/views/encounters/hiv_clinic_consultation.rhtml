@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/stylesheets/yes_no_btn.css" type="text/css">
+<link rel="stylesheet" href="/stylesheets/yes_no_btn.css" type="text/css"/>
 
 <style type="text/css">
   .summary {
@@ -451,17 +451,17 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       html += "<tr>";
       
       html += "<td>";
-        html += "<div class='switch switch-yes' id='yes_btn_container_" + i + "' category='side_effects' ";
-        html += "key='" + sideEffectsOptions[i] + "' onmousedown='clicked(this);'>";
-        html += "<input class='hidden-checkbox' id='yes_checkbox_" + i + "' type='checkbox'>";
-        html +="<label id='yes_lable_" + i + "'><i></i></label>";
+      html += "<div class='switch switch-yes' id='yes_btn_container_" + i + "' category='side_effects' ";
+      html += "key='" + sideEffectsOptions[i] + "' onmousedown='clicked(this);'>";
+      html += "<input class='hidden-checkbox' id='yes_checkbox_" + i + "' type='checkbox'>";
+      html +="<label id='yes_lable_" + i + "'><i></i></label>";
       html += "</td>";
      
       html += "<td>";
-        html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='side_effects' ";
-        html += "key='" + sideEffectsOptions[i] + "' onmousedown='clicked(this);'>";
-        html += "<input class='hidden-checkbox' id='no_checkbox_" + i + "' type='checkbox'>";
-        html +="<label id='no_lable_" + i + "'><i></i></label>";
+      html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='side_effects' ";
+      html += "key='" + sideEffectsOptions[i] + "' onmousedown='clicked(this);'>";
+      html += "<input class='hidden-checkbox' id='no_checkbox_" + i + "' type='checkbox'>";
+      html +="<label id='no_lable_" + i + "'><i></i></label>";
       html += "</td>";
      
       html += "</tr>";
@@ -553,8 +553,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         if(parseFloat(current_patient_bmi) <= 18.5)
           low_mbi = true;
 
-      else
-        var low_mbi = false;
+        else
+          var low_mbi = false;
       }
 
       html += "<tr>";
@@ -566,23 +566,23 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       html += "<tr>";
       
       html += "<td>";
-        html += "<div class='switch switch-yes' id='yes_btn_container_" + i + "' category='TB' ";
-        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='clicked(this);'>";
-        html += "<input class='hidden-checkbox' id='yes_checkbox_" + i + "' type='checkbox'>";
-        html +="<label id='yes_lable_" + i + "'><i></i></label>";
+      html += "<div class='switch switch-yes' id='yes_btn_container_" + i + "' category='TB' ";
+      html += "key='" + tbSymptomsOptions[i] + "' onmousedown='clicked(this);'>";
+      html += "<input class='hidden-checkbox' id='yes_checkbox_" + i + "' type='checkbox'>";
+      html +="<label id='yes_lable_" + i + "'><i></i></label>";
       html += "</td>";
      
       html += "<td>";
-        if(low_mbi == true) {
-          html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
-          html += "lowBMI=" + parseFloat(current_patient_bmi) + " "; 
-          html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
-        }else{
-          html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
-          html += "key='" + tbSymptomsOptions[i] + "' onmousedown='clicked(this);'>";
-        }
-        html += "<input class='hidden-checkbox' id='no_checkbox_" + i + "' type='checkbox'>";
-        html +="<label id='no_lable_" + i + "'><i></i></label>";
+      if(low_mbi == true) {
+        html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+        html += "lowBMI=" + parseFloat(current_patient_bmi) + " ";
+        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
+      }else{
+        html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='clicked(this);'>";
+      }
+      html += "<input class='hidden-checkbox' id='no_checkbox_" + i + "' type='checkbox'>";
+      html +="<label id='no_lable_" + i + "'><i></i></label>";
       html += "</td>";
      
       html += "</tr>";
@@ -1007,7 +1007,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   <%  if @tb_programs_state.nil? %>
   <%#= touch_hidden_tag "TB STATUS", @patient, @consultation_tb_status, {:id => "tb_status", :value_datetime => true}%>
-      
+
     <% tb_status_options =  concept_set_options_unknown('TB STATUS').split("\n").collect{|option|
       next if option.match(/TB ON/i)
       option
@@ -1018,8 +1018,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       :multiple => false,
       :helpText => "TB Status",
       :tt_onLoad => "showCategory('Clinic consultation');checkTbHivStatus(); checkAndSelectTBSuspected(); checkAndSelectConfirmedTBOnTreatment();",
-      :condition => "#{@show_tb_types  == true} && __$('tb_treatment_question').value.toUpperCase() == 'NO' 
-      && tbSymptomsHashSelects() == 'YES'"} %>
+      :condition => "#{@show_tb_types  == true} && __$('tb_treatment_question').value.toUpperCase() == 'NO'
+    && tbSymptomsHashSelects() == 'YES'"} %>
   <% else %>
     <%= touch_hidden_tag "TB STATUS" , @patient, ConceptName.find_by_name("#{@patient_tb_status}").name, {:id => "tb_status"} %>
   <% end %>
@@ -1077,17 +1077,18 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%end unless art_adherence_to_be_done %>
 
   <%if not @allergic_to_sulphur.blank?
-      if @allergic_to_sulphur.upcase == 'YES'
-        help_text = '<b style="color:red;"> Patient allergic to sulphur</b>'
-      end
-    end%>
+    if @allergic_to_sulphur.upcase == 'YES'
+      help_text = '<b style="color:red;"> Patient allergic to sulphur</b>'
+    end
+  end%>
 
   <%if @obs_ans.match(/Prescribe drugs: Yes/i) %>
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%else%>
     <%  session_date = session[:datetime].to_date rescue nil
     medication_options_allergic_to_sulphur_no = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
-    medication_options_allergic_to_sulphur_yes = ['ARVs','IPT','NONE OF THE ABOVE']
+    #medication_options_allergic_to_sulphur_yes = ['ARVs','IPT','NONE OF THE ABOVE']
+    medication_options_allergic_to_sulphur_yes = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
   %>
     <%  if session_date %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
@@ -1313,7 +1314,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     document.getElementById("tb-treatment-cover").style.display = 'inline';
   }
 
-  function setIPTOptionForPopup(){
+  /*function setIPTOptionForPopup(){
     ipt_option_input = jQuery("[tstvalue='IPT']")[0];
     tb_treatment__status = __$('tb_treatment_question').value.toUpperCase();
     tb_status = __$('tb_status').value.toUpperCase();
@@ -1335,8 +1336,60 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       }
     }
     
-  }
+  }*/
 
+  function setIPTOptionForPopup(){
+    ipt_option_input = jQuery("[tstvalue='IPT']")[0];
+    cpt_option_input = jQuery("[tstvalue='CPT']")[0];
+    ipt_id = ipt_option_input.id;
+    cpt_id = cpt_option_input.id;
+    ipt_input = document.getElementById('optionValue' + ipt_id);
+    cpt_input = document.getElementById('optionValue' + cpt_id);
+    tb_treatment__status = __$('tb_treatment_question').value.toUpperCase();
+    tb_status = __$('tb_status').value.toUpperCase();
+    allergicToSulphur = $('allergic_to_sulphur').value.toUpperCase();
+
+    if (allergicToSulphur.toUpperCase() == 'YES'){
+      cpt_option_input.style.backgroundColor = '#CDBA96';
+      cpt_input.innerHTML = 'CPT (Allergic To Suplhur)';
+      cpt_option_input.onclick = null;
+      cpt_option_input.onmousedown = null;
+      cpt_option_input.onmouseup = null;
+    }
+
+    if (tb_treatment__status == 'YES'){
+      ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = 'IPT (PATIENT IS ON TB TREATMENT)';
+      ipt_option_input.onclick = null;
+      ipt_option_input.onmousedown = null;
+      ipt_option_input.onmouseup = null;
+    }
+
+    if (tb_status == 'CONFIRMED TB ON TREATMENT'){
+      ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = 'IPT (CONFIRMED TB ON TREATMENT)';
+      ipt_option_input.onclick = null;
+      ipt_option_input.onmousedown = null;
+      ipt_option_input.onmouseup = null;
+    }
+
+    if (tb_status == 'CONFIRMED TB NOT ON TREATMENT'){
+      ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = 'IPT (CONFIRMED TB NOT ON TREATMENT)';
+      ipt_option_input.onclick = null;
+      ipt_option_input.onmousedown = null;
+      ipt_option_input.onmouseup = null;
+    }
+    
+    if (tb_status == 'TB SUSPECTED'){
+      ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = 'IPT (TB Suspected)';
+      ipt_option_input.onclick = null;
+      ipt_option_input.onmousedown = null;
+      ipt_option_input.onmouseup = null;
+    }
+
+  }
 </script>
 
 <style type="text/css">
