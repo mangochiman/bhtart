@@ -774,6 +774,10 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     $('tb_status_hack').value = 'TB Not suspected';
     return 'NO'
   }
+  
+  function hideCategory() {
+    document.getElementById('category').style = 'display: none;'
+  } 
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -800,6 +804,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
           {:id => "pregnant",
           :validationCode => "checkPregnancyAndAge() == 'false'",
           :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she pregnant?",
+          :tt_onLoad => "showCategory('Clinic consultation');",
           :helpText => "Is patient pregnant?"} %>
 
       <%else%>
@@ -811,6 +816,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
           {:id => "breast_feeding",
           :validationCode => "checkBreastfeedingAndAge() == 'false'",
+          :tt_onLoad => "showCategory('Clinic consultation');",
           :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she breastfeeding?",
           :helpText => "Is patient breast feeding?" } %>
 
@@ -824,6 +830,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         {:id => "breast_feeding",
         :validationCode => "checkBreastfeedingAndAge() == 'false'",
         :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she breastfeeding?",
+        :tt_onLoad => "showCategory('Clinic consultation');",
         :helpText => "Is patient breast feeding?" } %>
       <!-- CURRENTLY ON FAMILY PLANNING METHOD END -->
     <% end %>
@@ -843,14 +850,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       <%= touch_yes_no_unknown_tag "CURRENTLY USING FAMILY PLANNING METHOD", @patient, nil,
         {:id => "on_fpm",
-        :tt_onLoad =>"on_fpm=false",
+        :tt_onLoad =>"showCategory('Clinic consultation'); on_fpm=false",
         :condition => "$('pregnant').value != 'YES' && terminalFamilyPlanningMethod() == 'false'",
         :helpText => "Currently using family planning method" } %>
 
       <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
         {:id => "fpm_used",
         :condition => "$('on_fpm').value == 'YES' && $('pregnant').value != 'YES'",
-        :tt_onLoad => "fpm_used=false",
+        :tt_onLoad => "showCategory('Clinic consultation'); fpm_used=false",
         :multiple => true,
         :tt_pageStyleClass => "NoKeyboard",
         :helpText => "What method?" } %>
@@ -859,7 +866,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
         <%= touch_select_tag "REASON FOR NO FAMILY PLANNING", @patient, options_for_select(@select_options['why_no_family_planning_method']),
           { :id => "reason_not_using_contraceptive",
-          :tt_onLoad => "reason_not_using_contraceptive=''",
+          :tt_onLoad => "showCategory('Clinic consultation'); reason_not_using_contraceptive=''",
           :condition => '$("on_fpm").value == "NO"',
           :multiple => false,
           :helpText => "Main reason for not using family planning methods"
@@ -869,7 +876,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
         <%= touch_select_tag "REASON FOR NO FAMILY PLANNING", @patient, options_for_select(@select_options['why_no_family_planning_method_specific']),
           { :id => "reason_not_using_contraceptive_specific",
-          :tt_onLoad => "reason_not_using_contraceptive_specific=''",
+          :tt_onLoad => "showCategory('Clinic consultation'); reason_not_using_contraceptive_specific=''",
           :condition => '$("reason_not_using_contraceptive").value == "AT RISK OF UNPLANNED PREGNANCY"',
           :multiple => false,
           :helpText => "Reason for not using family planning methods (specific)",
@@ -880,7 +887,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         <%= touch_select_tag "Offer contraception", @patient,
           options_for_select([['Accepted','YES'],['Declined','NO'],['Discuss with spouse','Wants to discuss with spouse']]),
           { :id => "offer_fpm",
-          :tt_onLoad => "offer_fpm = false",
+          :tt_onLoad => "showCategory('Clinic consultation'); offer_fpm = false",
           :condition => "check_offer_contraceptive()",
           :helpText => "Offer patient contraception"
         }
@@ -888,7 +895,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
         <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods_int']),
           {:id => "fpm_used_intervened",
-          :tt_onLoad => "fpm_used_intervened=''",
+          :tt_onLoad => "showCategory('Clinic consultation'); fpm_used_intervened=''",
           :condition => '$("offer_fpm").value == "YES"',
           :multiple => true,
           :tt_pageStyleClass => "NoKeyboard",
@@ -898,7 +905,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         <%=  touch_select_tag "OFFER DUAL PROTECTION", @patient,
           options_for_select([['Accepted','YES'],['Declined','NO'],['Discuss with spouse','Wants to discuss with spouse']]),
           { :id => "dual_method",
-          :tt_onLoad => "dual_method=''",
+          :tt_onLoad => "showCategory('Clinic consultation'); dual_method=''",
           :condition => "condom_only();",
           :helpText => "Offer dual protection"
         }
@@ -907,7 +914,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['dual_options']),
           { :id => "other_method",
           :condition => '$("dual_method").value == "YES"',
-          :tt_onLoad => "other_method =''",
+          :tt_onLoad => "showCategory('Clinic consultation'); other_method =''",
           :multiple => true,
           :tt_pageStyleClass => "NoKeyboard",
           :helpText => "Select other contraceptive method"
@@ -941,7 +948,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
     <%= text_field_tag "advanced_side_effects", nil, {
       :id => 'side_effects',
-      :tt_onLoad => "advancedSideEffects(); __$('keyboard').style.display = 'none';",
+      :tt_onLoad => "showCategory('Clinic consultation'); advancedSideEffects(); __$('keyboard').style.display = 'none';",
       :helpText => "#{@hiv_clinic_consultation_side_efects_label}",
       :optional => "true",
       :conditions => @art_first_visit == false,
@@ -951,12 +958,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('COMMON MALAWI ART SYMPTOM SET'),
       {:id => 'symptoms',
       :optional => true,
+      :tt_onLoad => "showCategory('Clinic consultation');",
       :multiple => true,
       :helpText => "ART related symptoms (select all that apply)" } %>
 
     <%= touch_select_tag "SYMPTOM PRESENT", @patient, concept_set_options('ADDITIONAL MALAWI ART SYMPTOM SET'),
       {:id => 'additional_symptoms',
       :optional => true,
+      :tt_onLoad => "showCategory('Clinic consultation');",
       :multiple => true,
       :helpText => "More ART related symptoms (select all that apply)" } %>
 
@@ -964,6 +973,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       <%= touch_select_tag "DRUG INDUCED", @patient, options_for_select([['', '']]),
         {:id => 'drug_induced_effects',
         :optional => true,
+        :tt_onLoad => "showCategory('Clinic consultation');",
         :multiple => true,
         :condition => 'getNumberOfSymptoms() > 0',
         :helpText => "Select which of these symptoms are likely drug induced<br />(select all that apply)",
@@ -974,13 +984,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%= touch_select_tag "TB TREATMENT", @patient, options_for_select(['', 'Yes', 'No']),
     {
     :id => 'tb_treatment_question',
-    :tt_onUnLoad => "hideTBStatusQuestion();",
+    :tt_onUnLoad => "showCategory('Clinic consultation'); hideTBStatusQuestion();",
+    :tt_onLoad => "showCategory('Clinic consultation');",
     :helpText => "Is the patient on TB Treatment?" } %>
 
   <% if @avilable_status == '' %>
     <%= text_field_tag "advanced_tb_symptoms", nil, {
       :id => 'routine_tb_screening',
-      :tt_onLoad => "advancedTBSymptoms(); __$('keyboard').style.display = 'none';",
+      :tt_onLoad => "showCategory('Clinic consultation'); advancedTBSymptoms(); __$('keyboard').style.display = 'none';",
       :helpText => "TB associated symptoms",
       :optional => "true",
       :condition => "__$('tb_treatment_question').value == 'No'",
@@ -1006,7 +1017,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       {:id => 'tb_status',
       :multiple => false,
       :helpText => "TB Status",
-      :tt_onLoad => 'checkTbHivStatus(); checkAndSelectTBSuspected(); checkAndSelectConfirmedTBOnTreatment();',
+      :tt_onLoad => "showCategory('Clinic consultation');checkTbHivStatus(); checkAndSelectTBSuspected(); checkAndSelectConfirmedTBOnTreatment();",
       :condition => "#{@show_tb_types  == true} && __$('tb_treatment_question').value.toUpperCase() == 'NO' 
       && tbSymptomsHashSelects() == 'YES'"} %>
   <% else %>
@@ -1049,6 +1060,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <% if !current_user_roles.include?('Clinician') and patient_present %>
     <%= touch_yes_no_tag "REFER TO ART CLINICIAN", @patient, nil,
       {:id => "refer_to_clinician",
+      :tt_onLoad => "showCategory('Clinic consultation');",
       :helpText => "Refer patient to clinician?" } %>
   <%else%>
     <%= touch_hidden_tag "REFER TO ART CLINICIAN", @patient, "NO", :id => "refer_to_clinician" %>
@@ -1058,6 +1070,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%= touch_yes_no_unknown_tag "Allergic to sulphur", @patient, nil,
       {	:id => "allergic_to_sulphur",
       :condition => "$('refer_to_clinician').value == 'NO'" ,
+      :tt_onLoad => "showCategory('Clinic consultation');",
       :helpText => "Is patient allergic to cotrimoxazole" } %>
   <%else%>
     <input type="hidden" id='allergic_to_sulphur' value="<%=@allergic_to_sulphur.upcase%>" />
@@ -1079,16 +1092,16 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <%  if session_date %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
-        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
+        :tt_onLoad => "showCategory('Prescription');controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() != 'YES'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
 
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
-        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
+        :tt_onLoad => "showCategory('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
@@ -1097,16 +1110,16 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     <% else %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
-        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
+        :tt_onLoad => "showCategory('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
 
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
         {:id => "prescribe_drugs",
-        :tt_onLoad => "controlNoneSelection(); setIPTOptionForPopup();",
-        :tt_onUnLoad => "removeFastTrackAssesmentButton();",
+        :tt_onLoad => "showCategory('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
         :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit: #{help_text}" } %>

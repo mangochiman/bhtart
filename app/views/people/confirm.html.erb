@@ -288,9 +288,9 @@ function cancelOperation(action){
       <%
       dateToday = session[:datetime].to_date rescue Date.today
       %>
-      age = "<%=  @patient_bean.age_in_months rescue 99999%>";
+      age = "<%=  @patient_bean.age rescue 6 %>";
       document.getElementById('tabPageContainer').innerHTML = "<div style='text-align: center; color: red; font-size: 14pt;'><%= @htn_alert %> </div><div id='summary' style='background: width:100%;'></div>" ;
-      if (age <= 60){
+      if (age < 5){
         jQuery('#summary').empty();
         jQuery('#summary').load('/patients/baby_chart/<%= @patient_bean.patient_id %>?patient_id=<%= @patient_bean.patient_id %>&tab=true');
       }else{
