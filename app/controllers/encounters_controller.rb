@@ -656,6 +656,9 @@ class EncountersController < GenericEncountersController
 
       @arv_drugs = MedicationService.moh_arv_regimen_options(100)
       @regimen_formulations = MedicationService.regimen_formulations
+      @other_medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i
+      ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
+      :group => 'drug.drug_id').collect{|d|[d.name, d.concept.fullname]}.sort_by{|k, v|k}
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 

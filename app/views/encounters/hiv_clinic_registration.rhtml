@@ -696,9 +696,14 @@
   }
 
   var lastARTDrugs = "";
-  
+  var lastOtherDrugs = "";
+
   function updateLastARVDrugs(){
     lastARTDrugs = $('touchscreenInput'+tstCurrentPage).value;
+  }
+
+  function updateLastOtherMedications(){
+    lastOtherDrugs = $('touchscreenInput'+tstCurrentPage).value;
   }
 
   function updateReasonForArtEligibility() {
@@ -1019,6 +1024,31 @@
     }
   }
 
+  var otherRegimen = false;
+
+  function addCustomRegimenButton(){
+    var button = document.createElement("button");
+    button.id = "customRegimen";
+    button.innerHTML = "<span>Customize Regimen</span>";
+    button.style.cssFloat = "right";
+    otherRegimen = false;
+    __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
+    button.onclick = function(){
+      otherRegimen = true;
+      __$('touchscreenInput' + tstCurrentPage).value = null;
+      __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
+      gotoNextPage();
+    }
+
+    if(__$("buttons")){
+      __$("buttons").appendChild(button);
+    }
+  }
+
+  function removeCustomRegimenButton(){
+    jQuery("#customRegimen").remove();
+  }
+  
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
 <%# if @patient.patient_programs.current.local.map(&:program).map(&:name).include?('HIV PROGRAM') %>
@@ -1119,7 +1149,8 @@
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
       {	:id => "last_art_drugs_taken",
       :condition => '$("ever_received_art").value == "YES"',
-      :tt_onUnLoad => 'updateLastARVDrugs();',
+      :tt_onLoad => "addCustomRegimenButton();",
+      :tt_onUnLoad => 'updateLastARVDrugs(); removeCustomRegimenButton();',
       :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
     <% @regimen_formulations.each do |regimen_index, formulations| %>
@@ -1139,6 +1170,27 @@
           :condition => "parseInt($('last_art_drugs_taken').value.trim().match(/\\d+/)) == parseInt(#{regimen_index})",
           :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
       <% end %>
+    <% end %>
+
+    <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
+      {
+      :id => "otherMedications",
+      :field_type => 'number',
+      :tt_onLoad => "jQuery('#Unknown').show();",
+      :tt_onUnLoad => 'updateLastOtherMedications();',
+      :condition => "otherRegimen == true",
+      :multiple => true,
+      :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
+
+    <% @other_medications.each do |key, value|  %>
+      <%= touch_numeric_tag "#{value}", @patient, nil,
+        {
+        :id => "#{key}",
+        :field_type => 'number',
+        :tt_pageStyleClass => "NumbersOnly",
+        :tt_onLoad => "jQuery('#Unknown').show();",
+        :condition => "lastOtherDrugs.split(';').indexOf('#{key}') != -1",
+        :helpText  => "Total tabs of #{key.squish} brought to clinic"} %>
     <% end %>
 
     <%= touch_yes_no_tag "Ever registered at ART clinic", @patient, nil,
