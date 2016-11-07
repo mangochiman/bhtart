@@ -903,7 +903,7 @@ session_date = session[:datetime] || Time.now()
         <% medication_options = ['ARVs','CPT','IPT','NONE OF THE ABOVE'] %>
         <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options),
           {:id => "prescribe_drugs",
-          :tt_onLoad => "showCategory('Prescription');addFastTrackAssesmentButton(); controlNoneSelection(); setIPTOptionForPopup()",
+          :tt_onLoad => "showCategory2('Prescription');addFastTrackAssesmentButton(); controlNoneSelection(); setIPTOptionForPopup()",
           :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
           :condition => "$('refer_to_clinician').value == 'NO'" ,
           :multiple => true,
@@ -1284,3 +1284,5 @@ session_date = session[:datetime] || Time.now()
     height: 50px !important;
   }
 </style>
+
+<script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>

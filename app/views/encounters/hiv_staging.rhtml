@@ -817,7 +817,7 @@ end %>
         :optional => true,
         :selected => @who_stage_iv_selected,
         :tt_onUnLoad => 'setSelectedStageConditions(4);',
-        :tt_onLoad => 'checkEptb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkEptb();',
         :condition => 'showConditions() == true',
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -829,7 +829,7 @@ end %>
         :optional => true,
         :condition => 'showConditions() == true',
         :tt_onUnLoad => 'setSelectedStageConditions(3);',
-        :tt_onLoad => 'checkPtb();checkPastTb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb();',
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -840,13 +840,14 @@ end %>
         :condition => 'showConditions() == true',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
+        :tt_onLoad => 'showCategory2("HIV staging");',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i),
         {:id => "stage_1_conditions",
         :multiple => true,
         :optional => true,
-        :tt_onLoad => "setOptionsForContraindicationsPopup();",
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup();",
         :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
         :helpText => "Stage 1 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1084,3 +1085,5 @@ end %>
   }
 
 </script>
+
+<script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>
