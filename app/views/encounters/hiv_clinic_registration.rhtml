@@ -41,7 +41,7 @@
   .tt_controls_cd4_count #lessthan, .tt_controls_cd4_count #greaterthan { display:block; float:right }
   .tt_controls_cd4_percent #lessthan, .tt_controls_cd4_percent #greaterthan { display:block; float:right }
 
-  .tt_controls_initial_weight_kg #qwerty , .tt_controls_initial_height_cm #qwerty {
+  .tt_controls_weight_kg #qwerty , .tt_controls_height_cm #qwerty {
     display: none;
   }
 
@@ -1214,6 +1214,8 @@
       {	:id => "has_transfer_letter",
       :tt_onUnload=>  "$('programs__states__state').value = 'Patient transferred in'",
       :condition => "$('ever_registered_at_ART_clinic').value == 'YES' && $('ever_received_art').value == 'YES'",
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onUnLoad => "hideCategory()",
       :helpText => "Has staging information?" } %>
 
     <%= text_field_tag "observations[][value_numeric]", nil,
@@ -1224,7 +1226,7 @@
       :max => number_with_precision(183, :precision => 1),
       :absoluteMin => 10,
       :absoluteMax => 228,
-      :helpText => "Initial Height (CM)",
+      :helpText => "Height (CM)",
       :tt_onLoad => "showCategory('when starting ART')" ,
       :tt_onUnLoad => "hideCategory()",
       :units => 'cm',
@@ -1240,7 +1242,7 @@
       :min => number_with_precision(0, :precision => 1),
       :max => number_with_precision(80, :precision => 1),
       :condition => 'showConditions()',
-      :helpText => "Initial Weight (Kg)",
+      :helpText => "Weight (Kg)",
       :absoluteMin => 0,
       :absoluteMax => 250,
       :units => 'kg',
@@ -1364,7 +1366,7 @@
     <%= select_tag "new_cd4_count_available", options_for_select([['Yes','YES'],['No','NO']]),
       :id => 'new_cd4_count_available',
       :condition => 'showConditions()',
-      :helpText => "Initial CD4 Count available",
+      :helpText => "CD4 Count available",
       :tt_pageStyleClass => 'NoKeyboard' %>
 
     <%= touch_location_tag "CD4 COUNT LOCATION", @patient, nil,
@@ -1427,7 +1429,7 @@
     <%= select_tag "new_cd4_percent_available", options_for_select([['Yes','YES'],['No','NO']]),
       :id => 'new_cd4_percent_available',
       :condition => 'showConditions() == true',
-      :helpText => "Initial CD4 percent available",
+      :helpText => "CD4 percent available",
       :tt_onLoad => "showCategory('when starting ART')" ,
       :tt_onUnLoad => "hideCategory();" ,
       :tt_pageStyleClass => 'NoKeyboard' %>
@@ -1608,7 +1610,7 @@
     :max => number_with_precision(183, :precision => 1),
     :absoluteMin => 10,
     :absoluteMax => 228,
-    :helpText => "Initial Height (CM)",
+    :helpText => "Height (CM)",
     :units => 'cm',
     :validationRule => "^([0-9]+)|Unknown$",
     :validationMessage => "You must enter numbers only (for example 157)",
@@ -1622,7 +1624,7 @@
     :min => number_with_precision(0, :precision => 1),
     :max => number_with_precision(80, :precision => 1),
     :condition => 'showConditions()',
-    :helpText => "Initial Weight (Kg)",
+    :helpText => "Weight (Kg)",
     :absoluteMin => 0,
     :absoluteMax => 250,
     :units => 'kg',
