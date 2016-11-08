@@ -286,7 +286,7 @@ class GenericRegimensController < ApplicationController
         ],
 				'contraindications' => [
 					['Hepatitis/Jaundice','Hepatitis/Jaundice'],
-					['Anaemia <8g/dl','Anaemia <8g/dl']
+					['Anemia <8g/dl','Anemia <8g/dl']
 				],
 				'alt1' => [
           ['Hepatitis, Skin rash','4'],
