@@ -209,27 +209,14 @@ dateToday = session[:datetime].to_date rescue Date.today
     var year = newDate.getFullYear();
 
     return Date.UTC(year,monthIndex,day);
- 
+/* 
     months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return day + "/" + months[monthIndex] + '/' + year;
     return day + "/" + months[monthIndex] + '/' + year;
+*/
   }
 
-  function getDates(obs) {
-    dates = [];
-    for(var i = 0; i < obs.length; i++) {
-      if(getDateWithFormat(obs[i][1]).length < 1)
-        continue;
-
-      //alert(getDateWithFormat(obs[i][1]).length < 1)
-      console.log(getDateWithFormat(obs[i][1]))
-      
-      dates.push(getDateWithFormat(obs[i][0]));
-
-    }
-    return dates;
-  }
-
+/* 
   function dataG(obs) {
     var correctedWeights = [];
 
@@ -241,6 +228,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     return [{name: 'Weight', data: correctedWeights}];
   }
   
+*/
   function hookKeyboard(){
 
     __$("nextButton").onclick = function(){
