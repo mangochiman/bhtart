@@ -369,6 +369,7 @@ module MedicationService
     #Etravirine 100mg = 978
     #RAL (Raltegravir 400mg) = 954
     #NVP (Nevirapine 200 mg tablet) = 22
+    #LPV/r pellets = 979
 
     regimens = {
       "0P" => [[733, 968], [733, 22]],
@@ -391,7 +392,7 @@ module MedicationService
 
       "8A" => [[39, 932]],
 
-      "9P" => [[733, 74],[733, 73]],
+      "9P" => [[733, 74],[733, 73],[733, 979]],
 
       "9A" => [[969, 73],[969, 74]],
 
@@ -550,13 +551,14 @@ EOF
     #Etravirine 100mg = 978
     #RAL (Raltegravir 400mg) = 954
     #NVP (Nevirapine 200 mg tablet) = 22
-    category = {} ; category['P'] = [733, 968, 732, 736, 30, 74]
+    #LPV/r pellets = 979
+
+    category = {} ; category['P'] = [733, 968, 732, 736, 30, 74, 979]
     category['A'] = [976, 977, 978, 954, 22,969, 731, 39, 11, 735, 734, 932, 73]
 
     (category).each do |cat, medication_ids|
       return cat if medication_ids.include?(medication_id)
     end
-
   end
 
 end
