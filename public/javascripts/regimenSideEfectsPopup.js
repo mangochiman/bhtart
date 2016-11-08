@@ -5,10 +5,10 @@ function viewMoreSideEffects(){
     buttonText = 'View More <br />Side Effects';
     moreButton = document.getElementsByClassName("more")[0];
     if (moreButton.innerHTML.match(/MORE/i)){
-        moreButton.innerHTML = 'View Less <br />Side Effects';
+        moreButton.innerHTML = 'Show Less <br />Side Effects';
         moreSideEffects()
     }else{
-        moreButton.innerHTML = 'View More <br />Side Effects';
+        moreButton.innerHTML = 'Show More <br />Side Effects';
         lessSideEffects();
     }
 }
@@ -48,11 +48,12 @@ function contraindicators(){
     matchedSideEffects = false;
 
     for (var i=0; i<=selectedRegimenContraindications.length - 1; i++){
-        flattedContraindications.push(selectedRegimenContraindications[i][0]);
+        //flattedContraindications.push(selectedRegimenContraindications[i][0]);
         for (var z=0; z<=sideEffectsAnswers.length - 1; z++){
             if (selectedRegimenContraindications[i][0].toUpperCase().match(sideEffectsAnswers[z].toUpperCase())){
                 matchedSideEffects = true;
-                break;
+                flattedContraindications.push(sideEffectsAnswers[z]);
+                //break;
             }
         }
     }
