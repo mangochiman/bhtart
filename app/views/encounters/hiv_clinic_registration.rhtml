@@ -1129,7 +1129,7 @@
       :id => "year_art_last_taken" }  %>
 
     <%= select_tag "month_art_last_taken", month_name_options,
-      { :tt_onLoad => "__$('keyboard').style.display = 'none'",
+      { :tt_onLoad => "__$('keyboard').style.display = 'none'; validateMonthARTTaken()",
       :helpText => 'Month ART last taken<span style="font-size:0.7em;font-style:italic"> (Mwezi umene munamwa ma ARV komaliza ndi uti?)</span>',
       :condition => '$("year_art_last_taken").value.toLowerCase() != "unknown" && $("ever_received_art").value == "YES"',
       :id => "month_art_last_taken" ,
@@ -1139,7 +1139,7 @@
       :field_type => 'number',
       :helpText => 'Day ART last taken<span style="font-size:0.7em;font-style:italic"> (Tsiku limene munamwa ma ARV komaliza ndi liti?)</span>',
       :condition => '($("year_art_last_taken").value !="Unknown") && ($("month_art_last_taken").value != "Unknown") && $("ever_received_art"). value == "YES"',
-      :tt_onLoad => "getDayOfMonthPicker($('year_art_last_taken').value, $('month_art_last_taken').value);$('nextButton').style.display = 'block';",
+      :tt_onLoad => "getDayOfMonthPicker($('year_art_last_taken').value, $('month_art_last_taken').value);$('nextButton').style.display = 'block'; validateDayARTTaken();",
       :tt_onUnLoad => 'updateTestDate();',
       :validationCode => 'checkTestDate(this);',
       :id => "day_art_last_taken" ,
@@ -1225,9 +1225,9 @@
       <%= text_field_tag "year_started_art", nil,
         {	:helpText => 'Year started ART',
         :field_type => 'number',
-        :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
+        :absoluteMin => "1890", :min => "1940",
         :tt_pageStyleClass => "Numeric NumbersOnly",
-        :tt_onLoad => "showCategory('when starting ART')" ,
+        :tt_onLoad => "showCategory('when starting ART'); setAbsoluteMaxYearStartedART();" ,
         :tt_onUnLoad => "hideCategory()",
         :condition => '$("ever_received_art").value == "YES" && $("ever_registered_at_ART_clinic").value == "YES"',
         :id => "year_started_art" }  %>
@@ -1326,21 +1326,21 @@
 
     <% if @patient_bean.age > 8 %>
 
-    <%= touch_yes_no_unknown_tag "IS PATIENT PREGNANT?", @patient, nil,
-      {:id => "pregnant" ,
-      :optional => false ,
-      :validationCode => "checkPregnancyAndAge() == 'false'",
-      :condition => "patientGender != 'MALE';showConditions() == true",
-      :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she pregnant?",
-      :helpText => "Patient pregnant at initiation?" } %>
+      <%= touch_yes_no_unknown_tag "IS PATIENT PREGNANT?", @patient, nil,
+        {:id => "pregnant" ,
+        :optional => false ,
+        :validationCode => "checkPregnancyAndAge() == 'false'",
+        :condition => "patientGender != 'MALE';showConditions() == true",
+        :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she pregnant?",
+        :helpText => "Patient pregnant at initiation?" } %>
 
-    <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
-      {	:id => "breast_feeding" ,
-      :optional => false ,
-      :validationCode => "checkBreastfeedingAndAge() == 'false'",
-      :condition => "patientGender != 'MALE';showConditions() == true",
-      :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she breastfeeding?",
-      :helpText => "Patient breast feeding at initiation?" } %>
+      <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
+        {	:id => "breast_feeding" ,
+        :optional => false ,
+        :validationCode => "checkBreastfeedingAndAge() == 'false'",
+        :condition => "patientGender != 'MALE';showConditions() == true",
+        :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she breastfeeding?",
+        :helpText => "Patient breast feeding at initiation?" } %>
 
     <% end %>
 
@@ -2081,31 +2081,9 @@
     year_started_art = parseInt(jQuery('#year_started_art')[0].value);
     month_started_art = parseInt(jQuery('#month_started_art')[0].value);
 
-    if ((confirmatoryYear != currYear) && (year_started_art == confirmatoryYear)){
-      currentMonth = [];
-      numOfloops = month_started_art;
-      for(var i = month_started_art - 1; i < 12; i++){
-        currentMonth.push(availableMonths[i]);
-      }
-      rule = currentMonth.join("|");
-      rule = rule + "|Unknown";
-      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    }
-
     if (confirmatoryYear == currYear){
       currentMonth = [];
       numOfloops = ((new Date).getMonth() + 1);
-      cMonth = ((new Date).getMonth() + 1);
-
-      if (month_started_art <= cMonth){
-        //start from month started_art to c_month
-        for(var i = month_started_art - 1; i < cMonth; i++){
-          currentMonth.push(availableMonths[i]);
-        }
-        rule = currentMonth.join("|");
-        rule = rule + "|Unknown";
-        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-      }
 
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);
@@ -2123,7 +2101,7 @@
     
   }
 
-  function validateMonthStartedART(){
+  /*function validateMonthStartedART(){
     date = new Date;
     currYear = date.getFullYear();
     currDay = date.getDate();
@@ -2143,6 +2121,98 @@
       return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
     }
 
+  }*/
+
+  function validateMonthStartedART() {
+    year_art_last_taken = parseInt(jQuery('#year_art_last_taken')[0].value);
+    month_art_last_taken = parseInt(jQuery('#month_art_last_taken')[0].value);
+    date = new Date;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+
+
+    if ((year_art_last_taken != currYear) && (year_started_art == year_art_last_taken)){
+      currentMonth = [];
+      numOfloops = month_art_last_taken;
+      for(var i = 0; i < month_art_last_taken; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+    if (year_art_last_taken == currYear){
+      currentMonth = [];
+      numOfloops = ((new Date).getMonth() + 1);
+ 
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+    if (year_art_last_taken != currYear) {
+      rule = availableMonths.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+  }
+
+  function setAbsoluteMaxYearStartedART(){
+    year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
+    date = new Date;
+    currYear = date.getFullYear();
+
+    if (parseInt(year_taken_art)){
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", year_taken_art);
+    }else{
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", currYear);
+    }
+  }
+
+  function validateMonthARTTaken(){
+    date = new Date;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
+    if (year_taken_art == currYear){
+      currentMonth = [];
+      numOfloops = ((new Date).getMonth() + 1);
+
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+  }
+
+  function validateDayARTTaken(){
+    date = new Date;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    currMonth = date.getMonth() + 1;
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
+    month_taken_art = parseInt(jQuery('#month_art_last_taken')[0].value);
+
+    if (year_taken_art == currYear) {
+      if (month_taken_art == currMonth){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+      }
+    }
   }
 
   function validateDayStartedART(){
@@ -2154,6 +2224,16 @@
 
     year_started_art = parseInt(jQuery('#year_started_art')[0].value);
     month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+
+    year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
+    month_taken_art = parseInt(jQuery('#month_art_last_taken')[0].value);
+    day_taken_art = parseInt(jQuery('#day_art_last_taken')[0].value);
+
+    if ((year_taken_art != currYear) && (year_started_art == year_taken_art)){
+      if (month_taken_art == month_started_art){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',day_taken_art);
+      }
+    }
 
     if (year_started_art == currYear) {
       if (month_started_art == currMonth){
@@ -2175,19 +2255,11 @@
     month_started_art = parseInt(jQuery('#month_started_art')[0].value);
     day_started_art = parseInt(jQuery('#day_started_art')[0].value);
 
-    if ((confirmatoryYear != currYear) && (year_started_art == confirmatoryYear)){
-      if (confirmatoryMonth == month_started_art){
-        $('touchscreenInput'+tstCurrentPage).setAttribute('min',day_started_art);
-        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMin',day_started_art);
-      }
-    }
-
     if (confirmatoryYear == currYear) {
       if (confirmatoryMonth == currMonth){
         return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
       }
     }
-
 
   }
 
