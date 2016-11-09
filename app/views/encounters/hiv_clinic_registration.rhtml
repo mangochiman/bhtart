@@ -1123,7 +1123,7 @@
     <%= text_field_tag "year_art_last_taken", nil,
       { :helpText => 'Year ART last taken<span style="font-size:0.7em;font-style:italic"> (Chaka chimene munamwa ma ARV komaliza ndi chiti?)</span>',
       :field_type => 'number',
-      :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
+      :absoluteMin => "1890", :min => "1940", :absoluteMax => (session[:datetime].to_date.year rescue Date.today.year),
       :tt_pageStyleClass => "Numeric NumbersOnly",
       :condition => '$("ever_received_art").value == "YES"',
       :id => "year_art_last_taken" }  %>
@@ -1628,7 +1628,7 @@
     <%= text_field_tag "year_started_art", nil,
       {	:helpText => 'Year started ART',
       :field_type => 'number',
-      :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
+      :absoluteMin => "1890", :min => "1940", :absoluteMax => (session[:datetime].to_date.year rescue Date.today.year),
       :tt_pageStyleClass => "Numeric NumbersOnly",
       :condition => '$("ever_received_art").value == "YES" && $("ever_registered_at_ART_clinic").value == "YES" && showARTstartDate();',
       :id => "year_started_art" }  %>
@@ -2174,14 +2174,14 @@
 
   function validateMonthARTTaken(){
     date = new Date;
-    currYear = date.getFullYear();
+    currYear = <%=(session[:datetime].to_date.year rescue Date.today.year)%>; //date.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
     if (year_taken_art == currYear){
       currentMonth = [];
-      numOfloops = ((new Date).getMonth() + 1);
+      numOfloops = <%=(session[:datetime].to_date.month rescue Date.today.month)%>;//((new Date).getMonth() + 1);
 
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);

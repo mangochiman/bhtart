@@ -1217,7 +1217,7 @@ class ApplicationController < GenericApplicationController
 
     art_reason = patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue nil
     reason_for_art = PatientService.reason_for_art_eligibility(patient)
-    if not reason_for_art.blank? && reason_for_art.upcase == 'NONE'
+    if not reason_for_art.blank? and reason_for_art.upcase == 'NONE'
       reason_for_art = nil
     end
     #raise encounters.to_yaml
