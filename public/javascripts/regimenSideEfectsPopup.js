@@ -2,22 +2,31 @@ var new_table;
 
 function viewMoreSideEffects(){
     //popup-data
-    buttonText = 'View More <br />Side Effects';
     moreButton = document.getElementsByClassName("more")[0];
-    if (moreButton.innerHTML.match(/MORE/i)){
-        moreButton.innerHTML = 'Show Less <br />Side Effects';
+    headerpopup = document.getElementById("header-popup");
+    if (moreButton.innerHTML.match(/whole/i)){
+        moreButton.innerHTML = 'Back to <br />current status';
+        headerpopup.innerHTML = "Contraindications / Side effects (ever recorded)<br />"
         moreSideEffects()
     }else{
-        moreButton.innerHTML = 'Show More <br />Side Effects';
+        moreButton.innerHTML = 'View whole <br />side effect history';
+        headerpopup.innerHTML = "Contraindications / Side effects for selected regimen <br />"
         lessSideEffects();
     }
 }
 
 function moreSideEffects(){
     new_table = "<table cellspacing='0px'>";
+    new_table += "<tr class='contraindications_row'>";
+      new_table += "<th>Date</th>";
+      new_table += "<th>Contraindications / Side effect</th>";
+      new_table += "<th>Condition</th>";
+    new_table += "</tr>";
+
     for (var date in history_of_side_effects){
         new_table += "<tr>";
         new_table += "<td>" + date + "</td>";
+        new_table += "<td>&nbsp;</td>";
         new_table += "<td>" + history_of_side_effects[date].join('<br />') + "</td>";
         new_table += "</tr>";
     }
@@ -27,13 +36,29 @@ function moreSideEffects(){
 }
 
 function lessSideEffects(){
+/*  
     new_table = "<table cellspacing='0px'>";
     new_table += "<tr>";
     new_table += "<td>" + today + "</td>";
     new_table += "<td>" + flattedContraindications.join('<br />') + "</td>";
     new_table += "</tr>";
     new_table += "</table>";
+*/
+    new_table = "<table cellspacing='0px'>";
+    new_table += "<tr class='contraindications_row'>";
+      new_table += "<th>Date</th>";
+      new_table += "<th>Contraindications / Side effect</th>";
+      new_table += "<th>Condition</th>";
+    new_table += "</tr>";
 
+    for(var i = 0; i < flattedContraindications.length; i++) {
+      new_table += "<tr>";
+        new_table += "<td>" + today + "</td>";
+        new_table += "<td>&nbsp;</td>";
+        new_table += "<td>" + flattedContraindications[i] + "</td>";
+      new_table += "</tr>";
+    }
+    new_table += "</table>";
     document.getElementsByClassName("popup-data")[0].innerHTML = new_table;
 }
 
@@ -59,10 +84,19 @@ function contraindicators(){
     }
 
     new_table = "<table cellspacing='0px'>";
-    new_table += "<tr>";
-    new_table += "<td>" + today + "</td>";
-    new_table += "<td>" + flattedContraindications.join('<br />') + "</td>";
+    new_table += "<tr class='contraindications_row'>";
+      new_table += "<th>Date</th>";
+      new_table += "<th>Contraindications / Side effect</th>";
+      new_table += "<th>Condition</th>";
     new_table += "</tr>";
+
+    for(var i = 0; i < flattedContraindications.length; i++) {
+      new_table += "<tr>";
+        new_table += "<td>" + today + "</td>";
+        new_table += "<td>&nbsp;</td>";
+        new_table += "<td>" + flattedContraindications[i] + "</td>";
+      new_table += "</tr>";
+    }
     new_table += "</table>";
 
     if (matchedSideEffects){
@@ -117,7 +151,7 @@ function contraindicators(){
 
         popupHeader = document.createElement('div');
         popupHeader.className = 'popup-header';
-        popupHeader.innerHTML = 'CONTRAINDICATIONS/SIDE EFFECTS <br />';
+        popupHeader.innerHTML = '<span id="header-popup">Contraindications / Side effects for selected regimen <br /></span>';
         popupHeader.style.borderBottom = '2px solid #7D9EC0';
         popupHeader.style.backgroundColor = '#FFFFFF';
         popupHeader.style.paddingTop = '5px';
@@ -171,7 +205,7 @@ function contraindicators(){
 
         viewMoreButton = document.createElement('span');
         viewMoreButton.className = 'clinicVisitButton FastTrackBtn more';
-        viewMoreButton.innerHTML = 'View More <br />Side Effects';
+        viewMoreButton.innerHTML = 'View whole <br />side effect history';
         viewMoreButton.style.backgroundImage = 'none';
         viewMoreButton.style.border = '1px solid transparent';
         viewMoreButton.style.borderRadius = '4px';
