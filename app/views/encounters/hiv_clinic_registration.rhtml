@@ -1027,22 +1027,35 @@
   var otherRegimen = false;
 
   function addCustomRegimenButton(){
-    var button = document.createElement("button");
+    /*var button = document.createElement("button");
     button.id = "customRegimen";
     button.innerHTML = "<span>Customize Regimen</span>";
     button.style.cssFloat = "right";
     otherRegimen = false;
     __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
+
+    button.onmousedown = function(){
+      __$('touchscreenInput' + tstCurrentPage).value = '';
+    }
+    
     button.onclick = function(){
+      __$('last_art_drugs_taken').value = '';
+      __$('touchscreenInput' + tstCurrentPage).value = '';
       otherRegimen = true;
-      __$('touchscreenInput' + tstCurrentPage).value = null;
+
+
+      var selectedLi = jQuery('li').filter(function () {
+        return this.style.backgroundColor == 'lightblue'
+      });
+
+      __$('touchscreenInput' + tstCurrentPage).value = '';
       __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
       gotoNextPage();
     }
 
     if(__$("buttons")){
       __$("buttons").appendChild(button);
-    }
+    }*/
   }
 
   function removeCustomRegimenButton(){
@@ -1181,8 +1194,19 @@
           :tt_onLoad => "jQuery('#Unknown').show();",
           :condition => "parseInt($('last_art_drugs_taken').value.trim().match(/\\d+/)) == parseInt(#{regimen_index})",
           :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
+
       <% end %>
     <% end %>
+
+    <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
+      {
+      :id => "otherMedications",
+      :field_type => 'number',
+      :tt_onLoad => "jQuery('#Unknown').show();",
+      :tt_onUnLoad => 'updateLastOtherMedications();',
+      :condition => "otherRegimen == true",
+      :multiple => true,
+      :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
 
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
       {
@@ -1190,7 +1214,7 @@
       :field_type => 'number',
       :tt_onLoad => "jQuery('#Unknown').show();",
       :tt_onUnLoad => 'updateLastOtherMedications();',
-      :condition => "otherRegimen == true",
+      :condition => "$('last_art_drugs_taken').value.trim().toUpperCase() == 'OTHER'",
       :multiple => true,
       :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
 

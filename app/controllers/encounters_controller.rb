@@ -654,7 +654,7 @@ class EncountersController < GenericEncountersController
 			@arv_drugs = @arv_drugs.sort {|a,b| a.to_s.downcase <=> b.to_s.downcase}
 			@arv_drugs = @arv_drugs + other
 
-      @arv_drugs = MedicationService.moh_arv_regimen_options(100)
+      @arv_drugs = MedicationService.moh_arv_regimen_options(100) + [["Other", "Other"]]
       @regimen_formulations = MedicationService.regimen_formulations
       @other_medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
