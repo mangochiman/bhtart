@@ -1217,7 +1217,7 @@ class ApplicationController < GenericApplicationController
 
     art_reason = patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue nil
     reason_for_art = PatientService.reason_for_art_eligibility(patient)
-    if !reason_for_art.nil? && reason_for_art.upcase == 'NONE'
+    if not reason_for_art.blank? && reason_for_art.upcase == 'NONE'
       reason_for_art = nil
     end
     #raise encounters.to_yaml
@@ -1318,7 +1318,7 @@ class ApplicationController < GenericApplicationController
           end
         end if clinician_or_doctor
       when 'HIV STAGING'
-         
+        next unless reason_for_art.blank? 
         staging = session["#{patient.id}"]["#{session_date.to_date}"][:stage_patient] rescue []
         if ! staging.blank?
           next if staging == "No"
