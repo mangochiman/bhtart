@@ -1934,9 +1934,16 @@ function updateWhoStagePaeds() {
   }
 
   function setOptionsForContraindicationsPopup(){
-    stageFourConditions = __$('stage_4_conditions').value;
-    stageThreeConditions = __$('stage_3_conditions').value;
-    stageTwoConditions = __$('stage_2_conditions').value;
+    if (age >= 15){
+      stageFourConditions = __$('stage_4_conditions').value;
+      stageThreeConditions = __$('stage_3_conditions').value;
+      stageTwoConditions = __$('stage_2_conditions').value;
+    }else{
+      stageFourConditions = jQuery('.stage_4_conditions')[0].value;
+      stageThreeConditions = jQuery('.stage_3_conditions')[0].value;
+      stageTwoConditions = jQuery('.stage_2_conditions')[0].value;
+    }
+
     asymptomatic_option_input = jQuery("li[tstvalue='Asymptomatic HIV infection']")[0];
 
     if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
