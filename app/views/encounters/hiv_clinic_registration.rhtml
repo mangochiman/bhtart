@@ -1089,7 +1089,19 @@
       __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional");
     }
   }
-  
+
+  function forceStageOneAvailabePaeds(){
+    stage_four_conditions = jQuery('.stage_4_conditions')[0];
+    stage_three_conditions = jQuery('.stage_3_conditions')[0];
+    stage_two_conditions = jQuery('.stage_2_conditions')[0];
+
+    __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
+
+    if ((stage_four_conditions.value.length == 0) && (stage_three_conditions.value.length == 0) && stage_two_conditions.value.length == 0){
+      __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional");
+    }
+  }
+
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
 <%# if @patient.patient_programs.current.local.map(&:program).map(&:name).include?('HIV PROGRAM') %>
@@ -1391,6 +1403,7 @@
 
     <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv_paeds),
       {:id => "stage_4_conditions",
+      :class => "stage_4_conditions",
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
@@ -1411,6 +1424,7 @@
 
     <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii_paeds),
       {:id => "stage_3_conditions",
+      :class => "stage_3_conditions",
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
@@ -1431,6 +1445,7 @@
 
     <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
       {:id => "stage_2_conditions",
+      :class => "stage_2_conditions",
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
@@ -1451,9 +1466,10 @@
 
     <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i_paeds),
       {:id => "stage_1_conditions",
+      :class => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
+      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds();",
       :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 1 Conditions",
