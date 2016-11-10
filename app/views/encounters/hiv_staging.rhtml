@@ -553,22 +553,22 @@
     /*
         if (stage == 3) {
 <%  if @patient.person.observations.to_s.include?('Pulmonary tuberculosis' || 'Smear +ve')%>
-                                                                                          if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                                selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
-                                                                                          }
-                                                                                          else{
-                                                                                                selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
-                                                                                          }
+                                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                                                  selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
+                                                                                            }
+                                                                                            else{
+                                                                                                  selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
+                                                                                            }
 <%end%>
         }
         if (stage == 4) {
 <% if @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
-                                                                                          if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                                selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
-                                                                                          }
-                                                                                          else{
-                                                                                                selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
-                                                                                          }
+                                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
+                                                                                                  selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
+                                                                                            }
+                                                                                            else{
+                                                                                                  selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
+                                                                                            }
 <%end%>
         }
      */
@@ -820,16 +820,35 @@ end %>
         :selected => @who_stage_iv_selected,
         :tt_onUnLoad => 'setSelectedStageConditions(4);',
         :tt_onLoad => 'showCategory2("HIV staging");checkEptb();',
-        :condition => 'showConditions() == true',
+        :condition => 'showConditions() == true && age >= 15',
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
-      <%= #raise @who_stage_iv.to_yaml
-      touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii, @moderate_wasting),
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv_paeds),
+        {:id => "stage_4_conditions",
+        :multiple => true,
+        :optional => true,
+        :tt_onUnLoad => 'setSelectedStageConditions(4);',
+        :tt_onLoad => 'showCategory2("HIV staging");checkEptb();',
+        :condition => 'showConditions() == true && age <= 14',
+        :helpText => "Stage 4 Conditions",
+        :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii, @moderate_wasting),
         {:id => "stage_3_conditions",
         :multiple => true,
         :optional => true,
-        :condition => 'showConditions() == true',
+        :condition => 'showConditions() == true && age >= 15',
+        :tt_onUnLoad => 'setSelectedStageConditions(3);',
+        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb();',
+        :helpText => "Stage 3 Conditions",
+        :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii_paeds),
+        {:id => "stage_3_conditions",
+        :multiple => true,
+        :optional => true,
+        :condition => 'showConditions() == true && age <= 14',
         :tt_onUnLoad => 'setSelectedStageConditions(3);',
         :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb();',
         :helpText => "Stage 3 Conditions",
@@ -839,7 +858,17 @@ end %>
         {:id => "stage_2_conditions",
         :multiple => true,
         :optional => true,
-        :condition => 'showConditions() == true',
+        :condition => 'showConditions() == true && age >= 15',
+        :tt_onUnLoad => 'setSelectedStageConditions(2);',
+        :helpText => "Stage 2 Conditions",
+        :tt_onLoad => 'showCategory2("HIV staging");',
+        :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
+        {:id => "stage_2_conditions",
+        :multiple => true,
+        :optional => true,
+        :condition => 'showConditions() == true && age <= 14',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
         :tt_onLoad => 'showCategory2("HIV staging");',
@@ -849,7 +878,18 @@ end %>
         {:id => "stage_1_conditions",
         :multiple => true,
         :optional => true,
-        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup();",
+        :condition => 'age >= 15',
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
+        :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
+        :helpText => "Stage 1 Conditions",
+        :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
+
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i_paeds),
+        {:id => "stage_1_conditions",
+        :multiple => true,
+        :optional => true,
+        :condition => 'age <= 14',
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
         :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
         :helpText => "Stage 1 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1086,6 +1126,17 @@ end %>
     jQuery("#cover").hide();
   }
 
+  function forceStageOneAvailabe(){
+    stage_four_conditions = $('stage_4_conditions');
+    stage_three_conditions = $('stage_3_conditions');
+    stage_two_conditions = $('stage_2_conditions');
+
+    __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
+
+    if ((stage_four_conditions.value.length == 0) && (stage_three_conditions.value.length == 0) && stage_two_conditions.value.length == 0){
+      __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional");
+    }
+  }
 </script>
 
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>

@@ -547,21 +547,72 @@ class EncountersController < GenericEncountersController
 					end
 				end
 
+        @who_stage_iv_paeds = [
+          ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
+          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
+          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
+          ["Kaposis sarcoma", "Kaposis sarcoma"],
+          ["HIV encephalopathy", "HIV encephalopathy"],
+          ["Cryptococcal meningitis or other extrapulmonary cryptococcosis", "Cryptococcal meningitis or other extrapulmonary cryptococcosis"],
+          ["Disseminated non-tuberculosis mycobacterial infection", "Disseminated non-tuberculosis mycobacterial infection"],
+          ["Cryptosporidiosis, chronic with diarroea", "Cryptosporidiosis, chronic with diarroea"],
+          ["Isosporiasis >1 month", "Isosporiasis >1 month"],
+          ["Disseminated mycosis (coccidiomycosis or histoplasmosis)", "Disseminated mycosis (coccidiomycosis or histoplasmosis)"],
+          ["Symptomatic HIV-associated nephropathy or cardiomyopathy", "Symptomatic HIV-associated nephropathy or cardiomyopathy"],
+          ["Progressive multifocal leukoencephalopathy", "Progressive multifocal leukoencephalopathy"],
+          ["Cerebral or B-cell non Hodgkin lymphoma", "Cerebral or B-cell non Hodgkin lymphoma"],
+          ["Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)", "Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)"],
+          ["Bacterial infections, severe recurrent  (empyema, pyomyositis, meningitis, bone/joint infections but EXCLUDING pneumonia)", "Bacterial infections, severe recurrent  (empyema, pyomyositis, meningitis, bone/joint infections but EXCLUDING pneumonia)"],
+          ["Chronic herpes simplex infection (orolabial or cutaneous >1 month or visceral at any site)", "Chronic herpes simplex infection (orolabial or cutaneous >1 month or visceral at any site)"],
+          ["Cytomegalovirus infection: rentinitis or other organ (from age 1 month)", "Cytomegalovirus infection: rentinitis or other organ (from age 1 month)"],
+          ["Toxoplasmosis of the brain (from age 1 month)", "Toxoplasmosis of the brain (from age 1 month)"],
+          ["Recto-vaginal fistula, HIV-associated", "Recto-vaginal fistula, HIV-associated"]
+        ]
+
+        @who_stage_iii_paeds = [
+          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
+          ["Pulmonary tuberculosis (current)", "Pulmonary tuberculosis (current)"],
+          ["Tuberculosis (PTB or EPTB) within the last 2 years", "Tuberculosis (PTB or EPTB) within the last 2 years"],
+          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
+          ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
+          ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
+          ["Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)", "Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)"], ["Diarrhoea, persistent unexplained (14 days or more)", "Diarrhoea, persistent unexplained (14 days or more)"], ["Oral candidiasis (from age 2 months)", "Oral candidiasis (from age 2 months)"], ["Acute necrotizing ulcerative gingivitis or periodontitis", "Acute necrotizing ulcerative gingivitis or periodontitis"], ["Lymph node tuberculosis", "Lymph node tuberculosis"], ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"], ["Symptomatic lymphoid interstitial pneumonia", "Symptomatic lymphoid interstitial pneumonia"], ["Chronic HIV-associated lung disease, including bronchiectasis", "Chronic HIV-associated lung disease, including bronchiectasis"]
+        ]
+
+        @who_stage_ii_paeds = [
+          ["Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)", "Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)"],
+          ["Herpes zoster", "Herpes zoster"],
+          ["Angular cheilitis", "Angular cheilitis"],
+          ["Oral ulcerations, recurrent", "Oral ulcerations, recurrent"],
+          ["Papular pruritic eruptions / Fungal nail infections", "Papular pruritic eruptions / Fungal nail infections"],
+          ["Hepatosplenomegaly, persistent unexplained", "Hepatosplenomegaly, persistent unexplained"],
+          ["Lineal gingival erythema", "Lineal gingival erythema"],
+          ["Wart virus infection, extensive", "Wart virus infection, extensive"],
+          ["Molluscum contagiosum, extensive", "Molluscum contagiosum, extensive"],
+          ["Parotid enlargement, persistent unexplained", "Parotid enlargement, persistent unexplained"]
+        ]
+
+        @who_stage_i_paeds = [
+          ["Asymptomatic HIV infection", "Asymptomatic HIV infection"],
+          ["Persistent generalized lymphadenopathy", "Persistent generalized lymphadenopathy"]
+        ]
+
         @who_stage_i = [
-            ["Asymptomatic HIV infection", "Asymptomatic HIV infection"], 
-            ["Persistent generalized lymphadenopathy", "Persistent generalized lymphadenopathy"]
-          ]
+          ["Asymptomatic HIV infection", "Asymptomatic HIV infection"],
+          ["Persistent generalized lymphadenopathy", "Persistent generalized lymphadenopathy"]
+        ]
 
         @who_stage_ii = [
-            ["Moderate weight loss less than or equal to 10 percent, unexplained", "Moderate weight loss less than or equal to 10 percent, unexplained"],
-            ["Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)", "Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)"], 
-            ["Seborrhoeic dermatitis", "Seborrhoeic dermatitis"],
-            ["Papular pruritic eruptions / Fungal nail infections", "Papular pruritic eruptions / Fungal nail infections"], 
-            ["Herpes zoster", "Herpes zoster"], 
-            ["Angular cheilitis", "Angular cheilitis"], 
-            ["Oral ulcerations, recurrent", "Oral ulcerations, recurrent"], 
-            ["Unspecified stage 2 condition","Unspecified stage 2 condition"]
-          ]
+          ["Moderate weight loss less than or equal to 10 percent, unexplained", "Moderate weight loss less than or equal to 10 percent, unexplained"],
+          ["Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)", "Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)"],
+          ["Seborrhoeic dermatitis", "Seborrhoeic dermatitis"],
+          ["Papular pruritic eruptions / Fungal nail infections", "Papular pruritic eruptions / Fungal nail infections"],
+          ["Herpes zoster", "Herpes zoster"],
+          ["Angular cheilitis", "Angular cheilitis"],
+          ["Oral ulcerations, recurrent", "Oral ulcerations, recurrent"],
+          ["Unspecified stage 2 condition","Unspecified stage 2 condition"]
+        ]
         
 
         @who_stage_iii = [
@@ -658,7 +709,7 @@ class EncountersController < GenericEncountersController
       @regimen_formulations = MedicationService.regimen_formulations
       @other_medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
-      :group => 'drug.drug_id').collect{|d|[d.name, d.concept.fullname]}.sort_by{|k, v|k}
+        :group => 'drug.drug_id').collect{|d|[d.name, d.concept.fullname]}.sort_by{|k, v|k}
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 
@@ -2243,7 +2294,7 @@ EOF
   def get_amounts_brought_if_transfer_in(person_id, drug_concept_id, date)
     amount = Observation.find(:first, :conditions =>["concept_id = ? AND (obs_datetime BETWEEN ? AND ?)
       AND person_id = ?", drug_concept_id , date.strftime('%Y-%m-%d 00:00:00'), 
-      date.strftime('%Y-%m-%d 23:59:59'), person_id])
+        date.strftime('%Y-%m-%d 23:59:59'), person_id])
     return 0 if amount.blank?
     return amount.value_numeric
   end
