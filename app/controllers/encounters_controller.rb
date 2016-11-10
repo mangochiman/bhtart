@@ -1414,7 +1414,7 @@ EOF
 
     #################################################### if a patient is transferring in on the current visit and has brought pills back  ###
     (medication || []).each do |order|
-      amounts_brought_if_transfer_in = get_amounts_brought_if_transfer_in(patient.id, order.drug_order.drug.concept_id, order.start_date.to_date)
+      amounts_brought_if_transfer_in = MedicationService.get_amounts_brought_if_transfer_in(patient.id, order.drug_order.drug.concept_id, order.start_date.to_date)
       pills_per_day = MedicationService.get_medication_pills_per_day(order)
       
       if pills_per_day > 0 and amounts_brought_if_transfer_in > 0
@@ -2240,12 +2240,4 @@ EOF
     return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
   end
 
-  def get_amounts_brought_if_transfer_in(person_id, drug_concept_id, date)
-    amount = Observation.find(:first, :conditions =>["concept_id = ? AND (obs_datetime BETWEEN ? AND ?)
-      AND person_id = ?", drug_concept_id , date.strftime('%Y-%m-%d 00:00:00'), 
-      date.strftime('%Y-%m-%d 23:59:59'), person_id])
-    return 0 if amount.blank?
-    return amount.value_numeric
-  end
-    
 end

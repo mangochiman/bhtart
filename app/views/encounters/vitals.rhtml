@@ -140,13 +140,20 @@ dateToday = session[:datetime].to_date rescue Date.today
                         'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
             },
             xAxis: {
-                type: 'datetime'
+              type: 'datetime',
+              dateTimeLabelFormats:{
+                month: '%b, %Y'
+              } 
             },
             yAxis: {
               min: 0,
                 title: {
                     text: 'Weight (kg)'
                 }
+            },
+            tooltip: {
+              headerFormat: '<b>{series.name}</b><br>',
+              pointFormat: '{point.x:%e. %b, %Y}: {point.y:.1f} Kg'
             },
             legend: {
                 enabled: false

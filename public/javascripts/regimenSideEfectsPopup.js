@@ -6,7 +6,7 @@ function viewMoreSideEffects(){
     headerpopup = document.getElementById("header-popup");
     if (moreButton.innerHTML.match(/whole/i)){
         moreButton.innerHTML = 'Back to <br />current status';
-        headerpopup.innerHTML = "Contraindications / Side effects (ever recorded)<br />"
+        headerpopup.innerHTML = "Contraindications / Side effects (whole history)<br />"
         moreSideEffects()
     }else{
         moreButton.innerHTML = 'View whole <br />side effect history';

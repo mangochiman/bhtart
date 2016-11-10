@@ -561,4 +561,12 @@ EOF
     end
   end
 
+  def self.get_amounts_brought_if_transfer_in(person_id, drug_concept_id, date)
+    amount = Observation.find(:first, :conditions =>["concept_id = ? AND (obs_datetime BETWEEN ? AND ?)
+      AND person_id = ?", drug_concept_id , date.strftime('%Y-%m-%d 00:00:00'),
+      date.strftime('%Y-%m-%d 23:59:59'), person_id])
+    return 0 if amount.blank?
+    return amount.value_numeric
+  end
+  
 end
