@@ -3,10 +3,153 @@
 <%=  stylesheet_link_tag  'miscellaneous.css'%>
 
 <script>
+
+  var pills_remaining = {}
+  <%(@amounts_brought_to_clinic || {}).each do |drug_name, amount| %>
+    pills_remaining['<%=drug_name%>'] = <%=amount%>;
+  <%end%>
+  
   function hideCategory() {
     document.getElementById('category').style = 'display: none;'
   }
 
+  function showPillsRemainingTable() {
+    for(medication_name in selectedDrugsHash) {
+      for(drug_name in pills_remaining) {
+        if(drug_name == medication_name)
+          return true;
+ 
+      }
+    }
+    //prescribed_medication.push([data['drug_name'], data['units'], data['am'], data['pm']]);
+
+    for(medication_name in pills_remaining) {
+      for(var i = 0; i < prescribed_medication.length; i++) {
+        if(prescribed_medication[i][0] == medication_name)
+          return true;
+ 
+      }
+    }
+
+    return false
+  }
+
+  function buildPillsRemainingTable() {
+    var target = document.getElementById('helpText' + tstCurrentPage);
+    var session_date = '<%= "#{@session_date.month}/#{@session_date.day}/#{@session_date.year}" %>';
+    var interval_to_next_visit = document.getElementById('interval_to_next_visit').value;
+    var newdate = new Date(session_date);
+    newdate.setDate(newdate.getDate() + parseInt(interval_to_next_visit));
+ 
+    var dd = newdate.getDate();
+    var mm = newdate.getMonth();
+    var y = newdate.getFullYear();
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var runout_date = dd + '/' + months[mm] + '/' + y;
+
+    table = document.createElement('table');
+    table.setAttribute('id','pills_remaining')
+    tr = document.createElement('tr');
+
+    th = document.createElement('th');
+    th.innerHTML = '&nbsp;'
+    tr.appendChild(th)
+    th = document.createElement('th');
+    th.innerHTML = 'Estimated runout date'
+    tr.appendChild(th)
+/*    
+    th = document.createElement('th');
+    th.setAttribute('style','text-align: right; padding-right: 5px;')
+    th.innerHTML = 'Pills to take/day'
+    tr.appendChild(th)
+*/
+    th = document.createElement('th');
+    th.innerHTML = 'Pills remaining'
+    th.setAttribute('style','text-align: right; padding-right: 5px;')
+    tr.appendChild(th)
+
+    th = document.createElement('th');
+    th.innerHTML = 'Estimated runout date if pills remaining are included'
+    th.setAttribute('style','text-align: center;')
+    tr.appendChild(th)
+
+    th = document.createElement('th');
+    th.innerHTML = 'Day(s) added'
+    th.setAttribute('style','text-align: right; padding-right: 5px;')
+    tr.appendChild(th)
+
+    table.appendChild(tr)
+   
+    if(prescribed_medication.length < 1) { 
+      for(medication_name in selectedDrugsHash) {
+        prescribed_medication.push([medication_name, 'N/A', selectedDrugsHash[medication_name]['am'], selectedDrugsHash[medication_name]['pm']]);
+      }
+    }
+
+    for(var i = 0; i < prescribed_medication.length; i++) {
+      pills_a_day = (parseFloat(prescribed_medication[i][2]) + parseFloat(prescribed_medication[i][3]));
+      if(pills_remaining[prescribed_medication[i][0]] === undefined) {
+        amount_remaining = 'N/A'
+      }else{
+        remaining_amount = pills_remaining[prescribed_medication[i][0]];
+        amount_remaining = parseInt(pills_remaining[prescribed_medication[i][0]]/pills_a_day);
+      }
+      
+
+      if(amount_remaining == 'N/A'){
+        estimated_runout_date = runout_date 
+      }else{
+        var estimated_newdate = new Date(newdate);
+        estimated_newdate.setDate(estimated_newdate.getDate() + parseInt(amount_remaining));
+        var dd = estimated_newdate.getDate();
+        var mm = estimated_newdate.getMonth();
+        var y = estimated_newdate.getFullYear();
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var estimated_runout_date = dd + '/' + months[mm] + '/' + y;
+      }
+
+
+      tr = document.createElement('tr');
+      tr.setAttribute('class','pills_remaining_tr');
+
+      td = document.createElement('td');
+      td.innerHTML = prescribed_medication[i][0];
+      td.setAttribute('style','padding-left: 10px;;');
+      tr.appendChild(td);
+      
+      td = document.createElement('td');
+      td.setAttribute('style','text-align: center;');
+      td.innerHTML = runout_date;
+      tr.appendChild(td);
+  /*    
+      td = document.createElement('td');
+      td.setAttribute('style','text-align: right; padding-right: 5px;')
+      td.innerHTML = pills_a_day;
+      tr.appendChild(td);
+ */     
+      td = document.createElement('td');
+      td.innerHTML = remaining_amount;
+      td.setAttribute('style','text-align: right; padding-right: 5px;')
+      tr.appendChild(td);
+
+      td = document.createElement('td');
+      td.innerHTML = estimated_runout_date;
+      td.setAttribute('style','text-align: center;')
+      tr.appendChild(td);
+      
+      td = document.createElement('td');
+      if(amount_remaining == 'N/A')
+        amount_remaining = 0;
+
+      td.innerHTML = amount_remaining;
+      td.setAttribute('style','text-align: right; padding-right: 5px;')
+      tr.appendChild(td);
+      
+      table.appendChild(tr);
+    }
+
+    target.appendChild(table)
+  }
 </script>
 <%= javascript_include_tag("miscellaneous")%>
 <%= stylesheet_link_tag("miscellaneous")%>
@@ -14,7 +157,20 @@
 <%= javascript_include_tag("numericKeypad")%>
 <%= stylesheet_link_tag("fast_track_table")%>
 <style type="text/css">
+  #pills_remaining {
+    padding-left: 25px;
+  }
 
+  .pills_remaining_tr td {
+    font-size: 14px;
+    border-collapse: collapse;
+  }
+
+  .contraindications_row th {
+    font-size: 18px;
+    text-align: left;
+    padding-left: 5px;
+  }
 
   #popup {
     top: 50px;
@@ -962,6 +1118,8 @@
   }
 
   var selectedDrugsHash = {};
+  var prescribed_medication = [];
+
   function buildPrescriptionPage_all(continueExistingRegimen, patientProgram, regimenConceptId, prescriptionContainer) {
     $('touchscreenInput'+tstCurrentPage).setAttribute('type','hidden');
     $('clearButton').style.display = 'none';
@@ -990,6 +1148,9 @@
           html += "<!--tr><th>&nbsp;</th><th>&nbsp;</th><th colspan='2' style='text-align: center;'>Daily dose</th></tr-->"
           html += "<tr><th>Drug name</th><th>Units</th><th style='text-align: right; padding-right: 9px;'>";
           html += "AM</th><th style='text-align: right; padding-right: 9px;'>PM</th></tr>"
+        
+          prescribed_medication = [];
+      
           for (i = 0 ; i < formulations.length ; i++) {
             data = formulations[i]
             regimen_id = data[2]
@@ -999,6 +1160,7 @@
             html += "<td><input key='" + data[0] + "_pm' onmousedown='numericKepadPopup(this)' type='text' size='4' class='dose-input'></input></td>"
             //html += "<td style='text-align: center;'><button class='btn-custom'><span>AM</span>";
             //html += "</button>&nbsp;<button class='btn-custom'><span>PM</span></button></td></tr>";
+            
             $('touchscreenInput'+tstCurrentPage).value += data[0] + ':';
             $('touchscreenInput'+tstCurrentPage).value += " " + data[1] ;
             $('touchscreenInput'+tstCurrentPage).value += " " + data[3] ;
@@ -1591,6 +1753,9 @@
     html += "</tr></table></div>"
     current_page.innerHTML += html;
 
+    prescribed_medication = [];
+    selectedDrugsHash = {};
+
     new Ajax.Request("/regimens/formulations?patient_id=<%=@patient.id %>&id=" + reg_id ,{method:'get',onSuccess: function(transport){
         formulations = JSON.parse(transport.responseText) || "";
         if(formulations.length > 0 && formulations != "[[[]]]" && formulations != "[]"){
@@ -1619,6 +1784,8 @@
 
             if (data['regimen_index']) regimen_id = data['regimen_index']
             
+            prescribed_medication.push([data['drug_name'], data['units'], data['am'], data['pm']]);
+
             html += "<tr class='regimen_category_" + regimen_category + "'><td>" + data['drug_name'] + "</td>"
             html += "<td style='text-align: left; padding-left: 5px;'>" + data['units'] + "</td>"
             html += "<td style='text-align: right; padding-right: 5px;'>" + data['am'] + "</td>"
@@ -2440,7 +2607,7 @@ pyridoxine_options = ["","25", "50"]
         :tt_onLoad => "hideCategory();checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);modifyPage(); startRegimenChangeInterval();",
         :condition => 'hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value != "YES"',
         :helpText => "Select ART regimen.#{@current_regimen_text} Current patient weight: <b>#{@current_weight}</b>",
-        :optional => true,
+        :optional => 'false' ,
         :tt_onUnload => "resetRegimen();removeButton(); stopRegimenChangeInterval();"}%>
     <% end %>
 
@@ -2502,10 +2669,24 @@ pyridoxine_options = ["","25", "50"]
 
 
     <%= select_tag :duration, optionsString, {
+      :id => "interval_to_next_visit",
       :condition => '$("prescribe_arvs").value == "YES" || $("cpt_given").value == "YES" || $("ipt_given").value == "YES"',
       :tt_onLoad => "__$('keyboard').style.display = 'none';showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value);",
       :tt_onUnLoad => "hideStockLevelDetails(); removeOnclickEvent();",
       :helpText => 'Interval to next visit' } %>
+
+    <!-- Pills remaining -->
+    <% unless @amounts_brought_to_clinic.blank? %>
+      <%= select_tag "pills_remaining", options_for_select([['Yes','Yes'],['No','No']]),
+        {:id => "pills_remaining",
+        :multiple => false,
+        :tt_onLoad => "buildPillsRemainingTable();",
+        :tt_onUnLoad =>'hideCategory();',
+        :condition => "showPillsRemainingTable() == true",
+        :helpText => "Adjust next clinic visit date based on pills remaining"
+      } %>
+    <%end%>
+    <!-- Pills remaining -->
 
     <!-- Fast  track questions -->
     <% if not @fast_track_patient == true %>

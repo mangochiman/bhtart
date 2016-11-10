@@ -12,6 +12,35 @@ class GenericRegimensController < ApplicationController
     @gender = @patient.person.gender.upcase
 		@programs = @patient.patient_programs.all
 
+
+    ############################################# check for pills remaining #########################################
+		session_date = session[:datetime].to_date rescue Date.today
+    @amounts_brought_to_clinic = Hash.new(0)
+    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order USING (order_id)                                    
+      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
+      AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
+      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND person_id = #{@patient.id} AND value_numeric IS NOT NULL
+EOF
+
+    (amounts_brought_to_clinic || []).each do |amount|
+      drug = Drug.find(amount['drug_inventory_id'])
+      @amounts_brought_to_clinic[drug.name] += (amount['value_numeric'].to_f rescue 0)
+    end
+
+    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id                               
+      WHERE obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
+      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND person_id = #{@patient.id} AND value_numeric IS NOT NULL
+EOF
+
+    (amounts_brought_to_clinic || []).each do |amount|
+      @amounts_brought_to_clinic[amount['name']] += (amount['value_numeric'].to_f rescue 0)
+    end
+    #################################################################################################################
+
     ################################################################################################################
 		allergic_to_sulphur_session_date = session[:datetime].to_date rescue Date.today
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, allergic_to_sulphur_session_date) #chunked
@@ -510,7 +539,7 @@ class GenericRegimensController < ApplicationController
 	end
 
 	def create
-		#raise params[:observation][].to_yaml
+		raise params[:pills_remaining].inspect
  
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false

@@ -140,13 +140,20 @@ dateToday = session[:datetime].to_date rescue Date.today
                         'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
             },
             xAxis: {
-                type: 'datetime'
+              type: 'datetime',
+              dateTimeLabelFormats:{
+                month: '%b, %Y'
+              } 
             },
             yAxis: {
               min: 0,
                 title: {
                     text: 'Weight (kg)'
                 }
+            },
+            tooltip: {
+              headerFormat: '<b>{series.name}</b><br>',
+              pointFormat: '{point.x:%e. %b, %Y}: {point.y:.1f} Kg'
             },
             legend: {
                 enabled: false
@@ -357,7 +364,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       :validationRule => "([0-9]+\\.[0-9])|Unknown$",
       :validationMessage => "You must enter a decimal between 0 and 9 (for example: 36<b>.6</b>)",
       :tt_pageStyleClass => "Numeric NumbersOnlyWithDecimal",
-      :tt_onLoad => "showCategory2('Vitals capture');",
+      :tt_onLoad => "showCategory2('Current vitals');",
       :helpText => "Temperature (C)" } %>
   <% end %>
 
@@ -365,7 +372,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     <%= touch_numeric_tag "WEIGHT (KG)", @patient, nil,
       {	:id => "weight",
       :field_type => "number",
-      :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
+      :tt_onLoad => "showCategory2('Current vitals');$('clearButton').style.display = 'inline';",
       :min => number_with_precision(@min_weight, :precision => 1),
       :max => number_with_precision(@max_weight, :precision => 1),
       :absoluteMin => 0,
@@ -387,7 +394,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       <%= touch_numeric_tag "HEIGHT (CM)", @patient, nil,
         {	:id => "height",
         :field_type => "number",
-        :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
+        :tt_onLoad => "showCategory2('Current vitals');$('clearButton').style.display = 'inline';",
         :min => number_with_precision(@min_height, :precision => 1),
         :max => number_with_precision(@max_height, :precision => 1),
         :absoluteMin => 10,
@@ -402,7 +409,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     <%= touch_numeric_tag "WEIGHT (KG)", @patient, nil,
       {	:id => "weight",
       :field_type => "number",
-      :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
+      :tt_onLoad => "showCategory2('Current vitals');$('clearButton').style.display = 'inline';",
       :min => number_with_precision(@min_weight, :precision => 1),
       :max => number_with_precision(@max_weight, :precision => 1),
       :absoluteMin => 0,
@@ -419,7 +426,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       <%= touch_numeric_tag "HEIGHT (CM)", @patient, nil,
         {	:id => "height",
         :field_type => "number",
-        :tt_onLoad => "showCategory2('Vitals capture');$('clearButton').style.display = 'inline';",
+        :tt_onLoad => "showCategory2('Current vitals');$('clearButton').style.display = 'inline';",
         :min => number_with_precision(@min_height, :precision => 1),
         :max => number_with_precision(@max_height, :precision => 1),
         :absoluteMin => 10,
@@ -438,7 +445,7 @@ dateToday = session[:datetime].to_date rescue Date.today
       <%= touch_text_field_tag "SYSTOLIC BLOOD PRESSURE", @patient, nil,{
         :id => "systolic_blood_pressure",
         :field_type => "number",
-        :tt_onLoad => "showCategory2('Vitals capture');updateSBPValues();",
+        :tt_onLoad => "showCategory2('Current vitals');updateSBPValues();",
         :tt_onUnLoad => "clearInterval(sbpInterval);", 
         :helpText => "Systolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",
         :absoluteMin => 70,
@@ -450,7 +457,7 @@ dateToday = session[:datetime].to_date rescue Date.today
 
       <%= touch_text_field_tag "DIASTOLIC BLOOD PRESSURE", @patient, nil,{
         :id => "diastolic_blood_pressure",
-        :tt_onLoad => "showCategory2('Vitals capture');updateDBPValues(); updateAbsoluteMaxValue()",
+        :tt_onLoad => "showCategory2('Current vitals');updateDBPValues(); updateAbsoluteMaxValue()",
         :tt_onUnLoad => "clearInterval(dbpInterval);",
         :field_type => "number",
         :helpText => "Diastolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",

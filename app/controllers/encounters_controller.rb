@@ -1465,7 +1465,7 @@ EOF
 
     #################################################### if a patient is transferring in on the current visit and has brought pills back  ###
     (medication || []).each do |order|
-      amounts_brought_if_transfer_in = get_amounts_brought_if_transfer_in(patient.id, order.drug_order.drug.concept_id, order.start_date.to_date)
+      amounts_brought_if_transfer_in = MedicationService.get_amounts_brought_if_transfer_in(patient.id, order.drug_order.drug.concept_id, order.start_date.to_date)
       pills_per_day = MedicationService.get_medication_pills_per_day(order)
       
       if pills_per_day > 0 and amounts_brought_if_transfer_in > 0
