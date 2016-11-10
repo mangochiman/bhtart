@@ -905,7 +905,12 @@
 
   function summary() {
     //calculateWHOstage(); //For calculating date started ART - Transfer in patients
-    updateWhoStage();
+    if (age >= 15 ){
+      updateWhoStage();
+    }else{
+      updateWhoStagePaeds() //This is a hack. Take note
+    }
+    
     updateReasonForArtEligibility();
     var conditions = selectedConditions();
     var display = "<div><span class='title'>WHO Stage: " + $('who_stage').value + "</span></div>";
@@ -988,6 +993,7 @@
     whoStage = 1;
     for (var i=1; i<=4; i++) {
       try {
+
         if ( $("stage_" + i + "_conditions").value != '') whoStage = i;
       } catch(e) {
 
@@ -1002,6 +1008,23 @@
     } else {
       $('who_stage').value = whoStageConcept(whoStage, adultOrPeds);
     }
+  }
+
+function updateWhoStagePaeds() {
+    // Everyone is supposed to be HIV positive so start them at 1
+    whoStage = 1;
+    for (var i=1; i<=4; i++) {
+      try {
+
+        if ( jQuery(".stage_" + i + "_conditions")[0].value != '') whoStage = i;
+      } catch(e) {
+
+      }
+
+    }
+
+    var adultOrPeds = "PEDS";
+    $('who_stage').value = whoStageConcept(whoStage, adultOrPeds);
   }
 
   /*function resetStageDefiningConditions(){
