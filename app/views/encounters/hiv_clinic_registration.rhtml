@@ -100,7 +100,10 @@
   var firstPositiveHivTestType = "<%= @confirmatory_hiv_test_type -%>";
   var age = <%= @patient_bean.age -%>;
   var regimen_formulations = <%= @regimen_formulations.to_json -%>;
-  
+  var birthdate = new Date("<%= @patient.person.birthdate.to_date.strftime("%m/%d/%Y") %>")
+  var dateCreated = new Date("<%=@patient.person.date_created %>");
+  var patientBirthdateEstimated = "<%=@patient.person.birthdate_estimated %>";
+
   function checkTestDate(td){
     var testDate = createDates($('year_art_last_taken').value, $('month_art_last_taken').value , td.value);
     var years = testDate.getFullYear();
@@ -201,9 +204,22 @@
 
 
   //checks if the patient needs to be referred to HTC basesd on the test date
+
+  function calculateAge(birthdate,birthdate_estimated,date_created,today) {
+    patient_age = (today.getFullYear() - birthdate.getFullYear()) + ((today.getFullYear() - (birthdate.getMonth() + 1)) + ((today.getDate() - birthdate.getDate()) < 0 ? -1 : 0) < 0 ? - 1 : 0)
+    birth_date= birthdate
+    estimate = birthdate_estimated
+    if (birth_date.month == 7 && birth_date.day == 1 && estimate == 1 && Time.now.month < birth_date.month && date_created.getFullYear() == (new Date().getFullYear())) {
+      return patient_age + 1
+    }else{
+      return patient_age
+    }
+  }
+  
   function updateStartDate(){
     var testDate = createDates($('year_started_art').value, $('month_started_art').value , $('day_started_art').value);
     $('date_started_art').value = testDate;
+    age = calculateAge(birthdate , patientBirthdateEstimated , dateCreated, testDate);
     if (testDate == 'Invalid Date'){
       return true
     }
@@ -1134,7 +1150,7 @@
     <!--
     -->
     <%= text_field_tag "year_art_last_taken", nil,
-      { :helpText => 'Year ART last taken<span style="font-size:0.7em;font-style:italic"> (Chaka chimene munamwa ma ARV komaliza ndi chiti?)</span>',
+      { :helpText => 'Year ARV&apos;s last taken<span style="font-size:0.7em;font-style:italic"> (Chaka chimene munamwa ma ARV komaliza ndi chiti?)</span>',
       :field_type => 'number',
       :absoluteMin => "1890", :min => "1940", :absoluteMax => (session[:datetime].to_date.year rescue Date.today.year),
       :tt_pageStyleClass => "Numeric NumbersOnly",
@@ -1156,7 +1172,7 @@
       :tt_onUnLoad => 'updateTestDate();',
       :validationCode => 'checkTestDate(this);',
       :id => "day_art_last_taken" ,
-      :validationMessage => "Date ART last taken out of range"%>
+      :validationMessage => "Date ARV last taken out of range"%>
 
     <%= touch_hidden_tag "DATE ART LAST TAKEN", @patient, nil, {:id => "date_art_last_taken", :value_datetime => true}%>
 
@@ -1164,12 +1180,12 @@
     <%= touch_yes_no_unknown_tag "HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS", @patient, nil,
       {	:id => "taken_art_in_last_two_months",
       :condition => '$("year_art_last_taken").value.toUpperCase() == "UNKNOWN"',
-      :helpText => "Taken ART in the last two months? <span style='font-size:0.7em;font-style:italic'>(Kodi mwamwa ma ARV m'miyezi iwiri yapitayi?)</span>" } %>
+      :helpText => "Taken ARV&apos;s in the last two months? <span style='font-size:0.7em;font-style:italic'>(Kodi mwamwa ma ARV m'miyezi iwiri yapitayi?)</span>" } %>
 
     <%= touch_yes_no_unknown_tag "HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS", @patient, nil,
       {	:id => "taken_art_in_last_two_weeks",
       :condition => '$("taken_art_in_last_two_months").value == "YES" && $("year_art_last_taken").value.toUpperCase() == "UNKNOWN"',
-      :helpText => "Taken ART in the last two weeks? <span style='font-size:0.7em;font-style:italic'>(Kodi mwamwa ma ARV sabata ziwiri zapitazi?)</span>" } %>
+      :helpText => "Taken ARV's in the last two weeks? <span style='font-size:0.7em;font-style:italic'>(Kodi mwamwa ma ARV sabata ziwiri zapitazi?)</span>" } %>
 
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
       {	:id => "last_art_drugs_taken",
@@ -1198,15 +1214,15 @@
       <% end %>
     <% end %>
 
-    <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
-      {
-      :id => "otherMedications",
-      :field_type => 'number',
-      :tt_onLoad => "jQuery('#Unknown').show();",
-      :tt_onUnLoad => 'updateLastOtherMedications();',
-      :condition => "otherRegimen == true",
-      :multiple => true,
-      :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
+  <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
+  {
+  :id => "otherMedications",
+  :field_type => 'number',
+  :tt_onLoad => "jQuery('#Unknown').show();",
+  :tt_onUnLoad => 'updateLastOtherMedications();',
+  :condition => "otherRegimen == true",
+  :multiple => true,
+  :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
 
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
       {
@@ -1369,7 +1385,17 @@
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
       :tt_onLoad => "showCategory('when starting ART');",
-      :condition => 'showConditions() == true',
+      :condition => 'showConditions() == true && age >= 15',
+      :helpText => "Stage 4 Conditions",
+      :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
+    <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv_paeds),
+      {:id => "stage_4_conditions",
+      :multiple => true,
+      :optional => true,
+      :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
+      :tt_onLoad => "showCategory('when starting ART');",
+      :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 4 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -1379,7 +1405,17 @@
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
       :tt_onLoad => "showCategory('when starting ART')" ,
-      :condition => 'showConditions() == true',
+      :condition => 'showConditions() == true && age >= 15',
+      :helpText => "Stage 3 Conditions",
+      :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
+    <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii_paeds),
+      {:id => "stage_3_conditions",
+      :multiple => true,
+      :optional => true,
+      :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -1389,7 +1425,17 @@
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
       :tt_onLoad => "showCategory('when starting ART')" ,
-      :condition => 'showConditions() == true',
+      :condition => 'showConditions() == true && age >= 15',
+      :helpText => "Stage 2 Conditions",
+      :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
+
+    <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
+      {:id => "stage_2_conditions",
+      :multiple => true,
+      :optional => true,
+      :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
+      :tt_onLoad => "showCategory('when starting ART')" ,
+      :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 2 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -1399,7 +1445,17 @@
       :optional => true,
       :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
       :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
-      :condition => 'showConditions() == true',
+      :condition => 'showConditions() == true && age >= 15',
+      :helpText => "Stage 1 Conditions",
+      :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
+
+    <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i_paeds),
+      {:id => "stage_1_conditions",
+      :multiple => true,
+      :optional => true,
+      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
+      :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
+      :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 1 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
 
