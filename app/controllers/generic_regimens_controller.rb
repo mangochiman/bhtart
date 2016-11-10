@@ -158,6 +158,7 @@ EOF
         DATE(obs_datetime) =?", [side_effects_concept_id, symptom_present_conept_id], session_date]
     ).collect{|o|o.answer_string.squish}
 
+    @patient_contraindications = Patient.contraindications(@patient, session_date)
 		@found_symptoms = []
 
 		@prescribe_art_drugs = false
