@@ -60,6 +60,8 @@ class EncountersController < GenericEncountersController
     @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
 
     @confirmatory_hiv_test_type = Patient.type_of_hiv_confirmatory_test(@patient, session_date) rescue ""
+    @hiv_clinic_registration_date = Patient.date_of_hiv_clinic_registration(@patient, session_date) rescue ""
+    
     #@fast_track_patient = false
     #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     #@fast_track_patient = true if @latest_fast_track_answer == 'YES'

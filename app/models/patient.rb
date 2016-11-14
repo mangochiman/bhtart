@@ -420,5 +420,18 @@ def self.vl_result_hash(patient)
 
     return hiv_confirmatory_answer_string
   end
-  
+
+  def self.date_of_hiv_clinic_registration(patient, session_date = Date.today)
+    encounter_type_id = EncounterType.find_by_name("HIV CLINIC REGISTRATION").encounter_type_id
+    hiv_clinic_reg_enc = patient.encounters.find(:last, :conditions => ["encounter_type =? AND 
+        DATE(encounter_datetime) < ?", encounter_type_id, session_date])
+
+    unless hiv_clinic_reg_enc.blank?
+      reg_date = (hiv_clinic_reg_enc.encounter_datetime.to_date rescue hiv_clinic_reg_enc.encounter_datetime)
+      return reg_date
+    end
+
+    return ""
+  end
+
 end
