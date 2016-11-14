@@ -26,7 +26,12 @@ function moreSideEffects(){
     for (var date in history_of_side_effects){
         new_table += "<tr>";
         new_table += "<td>" + date + "</td>";
-        new_table += "<td>&nbsp;</td>";
+
+        if (date_of_first_hiv_clinic_enc.getTime() == new Date(date).getTime()){
+            new_table += "<td>Contraindications</td>";
+        }else{
+            new_table += "<td>Side Effects</td>";
+        }
         new_table += "<td>" + history_of_side_effects[date].join('<br />') + "</td>";
         new_table += "</tr>";
     }
@@ -53,7 +58,7 @@ function lessSideEffects(){
     new_table += "</tr>";
 
     for(var i = 0; i < flattedContraindications.length; i++) {
-        if (patient_contraindications.indexOf(flattedContraindications[i]) != -1){
+        if (date_of_first_hiv_clinic_enc.getTime() == new Date(today).getTime()){
             type = 'Contraindication';
         }
       new_table += "<tr>";
@@ -95,7 +100,7 @@ function contraindicators(){
     new_table += "</tr>";
     type = 'Side Effect';
     for(var i = 0; i < flattedContraindications.length; i++) {
-        if (patient_contraindications.indexOf(flattedContraindications[i]) != -1){
+        if (date_of_first_hiv_clinic_enc.getTime() == new Date(today).getTime()){
             type = 'Contraindication';
         }
       new_table += "<tr>";
