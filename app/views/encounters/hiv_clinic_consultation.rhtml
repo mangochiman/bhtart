@@ -1040,7 +1040,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   <%
   art_adherence_to_be_done = false
-  (PatientService.art_drug_given_before(@patient,date) || []).uniq.each do |order|
+  (MedicationService.art_drug_given_before(@patient,date) || []).uniq.each do |order|
     #next unless MedicationService.arv(order.drug_order.drug)
     art_adherence_to_be_done = true
     break

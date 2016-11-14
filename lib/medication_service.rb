@@ -568,5 +568,211 @@ EOF
     return 0 if amount.blank?
     return amount.value_numeric
   end
-  
+
+  def self.amounts_brought_to_clinic(patient, session_date)
+     @amounts_brought_to_clinic = Hash.new(0)
+    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order USING (order_id)                                    
+      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
+      AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
+      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND person_id = #{patient.id} AND value_numeric IS NOT NULL
+EOF
+
+    (amounts_brought_to_clinic || []).each do |amount|
+      @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+    end
+
+    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id                               
+      WHERE obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
+      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND person_id = #{patient.id} AND value_numeric IS NOT NULL
+EOF
+
+    (amounts_brought_to_clinic || []).each do |amount|
+      @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+    end
+
+    return @amounts_brought_to_clinic
+  end  
+
+  def self.recalculate_auto_expire_dates(orders)
+    amounts_brought_to_clinic = self.amounts_brought_to_clinic(orders.first.patient, orders.first.encounter.encounter_datetime.to_date)
+    return if amounts_brought_to_clinic.blank?
+    
+    reseted_auto_expire_date_order_ids = []
+    
+    (orders || []).each do |order|
+      drug = order.drug_order.drug
+      next unless MedicationService.arv(drug)
+      pills_a_day = self.get_medication_pills_per_day(order)
+      (amounts_brought_to_clinic || {}).each do |drug_id, amount|
+        days = (amount / pills_a_day)
+        if days > 0 and drug_id == drug.id
+          next_auto_expire_date = (order.start_date.to_date + days.days).to_date
+          if next_auto_expire_date >= order.auto_expire_date.to_date
+            next_auto_expire_date = order.start_date
+            reseted_auto_expire_date_order_ids << order.id
+            ActiveRecord::Base.connection.execute <<EOF
+          UPDATE orders SET auto_expire_date = '#{next_auto_expire_date.to_date}',
+          discontinued_date = '#{order.auto_expire_date.to_date}'
+          WHERE order_id = #{order.order_id};
+EOF
+
+          end
+        end
+      end
+    end
+    
+    
+    
+    days_added = [] ; amount_dispensed_order_ids = [0]
+
+    (orders || []).each do |order|
+      next if reseted_auto_expire_date_order_ids.include?(order.id)
+      amount_dispensed_order_ids << order.id
+      pills_a_day = self.get_medication_pills_per_day(order)
+      (amounts_brought_to_clinic || {}).each do |drug_id, amount|
+        if drug_id == order.drug_order.drug_inventory_id
+          days_added << (amount / pills_a_day)
+        end
+      end
+    end
+   
+    return if days_added.blank? or days_added.sort.first < 1 
+    days_added = days_added.sort.first.to_i
+     
+    (Order.find(:all, :conditions =>['order_id IN(?)', amount_dispensed_order_ids]) || []).each do |order|
+      drug = order.drug_order.drug
+      next if MedicationService.arv(drug)
+      if order.discontinued_date.blank?
+        new_auto_expire_date = (order.auto_expire_date.to_date + days_added.day)
+        ActiveRecord::Base.connection.execute <<EOF
+        UPDATE orders SET discontinued_date = '#{order.auto_expire_date.to_date}',
+        auto_expire_date = '#{new_auto_expire_date}'
+        WHERE order_id = #{order.order_id};
+EOF
+
+      end
+    end
+
+  end
+
+  def self.art_drug_given_before(patient, date = Date.today)
+    clinic_encounters  =  ['DISPENSING']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+
+    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
+        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
+    orders = Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
+        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
+        AND obs_datetime >=? AND obs_datetime <=?",
+        patient.id,concept_id,start_date,end_date],
+        :order =>"obs_datetime")
+
+    (orders || []).reject do |order|
+      drug = order.drug_order.drug
+      !self.arv(drug)
+    end
+  end
+
+  def self.drug_given_before(patient, date = Date.today)
+    clinic_encounters = ['HIV CLINIC REGISTRATION','HIV STAGING','DISPENSING','TREATMENT',
+                      'HIV CLINIC CONSULTATION','ART ADHERENCE','HIV RECEPTION','VITALS']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+
+    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
+        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
+    Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
+        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
+        AND (obs_datetime BETWEEN ? AND ?)",
+        patient.id,concept_id,start_date,end_date],
+        :order =>"obs_datetime")
+  end
+
+  def self.drugs_given_on(patient, date = Date.today)
+    clinic_encounters = ['HIV CLINIC REGISTRATION','HIV STAGING','DISPENSING','TREATMENT',
+                      'HIV CLINIC CONSULTATION','ART ADHERENCE','HIV RECEPTION','VITALS']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+=begin
+    latest_encounter_date = Encounter.find(:first,
+        :conditions =>["patient_id = ? AND encounter_datetime >= ?
+        AND encounter_datetime <=? AND encounter_type IN(?)",
+        patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        date.strftime('%Y-%m-%d 23:59:59'),encounter_type_ids],
+        :order =>"encounter_datetime DESC").encounter_datetime rescue nil
+=end
+    latest_encounter_date = Encounter.find_by_sql("SELECT * FROM encounter
+    WHERE patient_id = #{patient.id} AND encounter_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
+    AND '#{date.strftime('%Y-%m-%d 23:59:59')}' AND encounter_type IN(#{encounter_type_ids.join(',')}) 
+    AND voided = 0 ORDER BY encounter_datetime DESC LIMIT 1").first.encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
+=begin
+    Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
+        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
+        AND obs_datetime >=? AND obs_datetime <=?",
+        patient.id,concept_id,start_date,end_date],
+        :order =>"obs_datetime")
+=end
+
+    Order.find_by_sql("SELECT * FROM orders INNER JOIN obs ON obs.order_id = orders.order_id
+      WHERE obs.person_id = #{patient.id} AND obs.concept_id = #{concept_id} AND obs.voided = 0
+      AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date}' ORDER BY obs_datetime")
+
+  end
+
+  def self.art_drug_prescribed_before(patient, date = Date.today)
+
+    clinic_encounters  =  ['TREATMENT']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+
+    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
+        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    orders = Order.find(:all,:joins =>"INNER JOIN drug_order d ON d.order_id = orders.order_id
+        INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}",
+        :conditions =>["e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+        patient.id, start_date, end_date], :order =>"encounter_datetime")
+
+    (orders || []).reject do |order|
+      drug = order.drug_order.drug
+      !self.arv(drug)
+    end
+
+  end
+
 end

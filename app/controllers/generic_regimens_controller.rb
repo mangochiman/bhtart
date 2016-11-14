@@ -12,35 +12,6 @@ class GenericRegimensController < ApplicationController
     @gender = @patient.person.gender.upcase
 		@programs = @patient.patient_programs.all
 
-
-    ############################################# check for pills remaining #########################################
-		session_date = session[:datetime].to_date rescue Date.today
-    @amounts_brought_to_clinic = Hash.new(0)
-    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order USING (order_id)                                    
-      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
-      AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
-      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND person_id = #{@patient.id} AND value_numeric IS NOT NULL
-EOF
-
-    (amounts_brought_to_clinic || []).each do |amount|
-      drug = Drug.find(amount['drug_inventory_id'])
-      @amounts_brought_to_clinic[drug.name] += (amount['value_numeric'].to_f rescue 0)
-    end
-
-    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id                               
-      WHERE obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
-      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND person_id = #{@patient.id} AND value_numeric IS NOT NULL
-EOF
-
-    (amounts_brought_to_clinic || []).each do |amount|
-      @amounts_brought_to_clinic[amount['name']] += (amount['value_numeric'].to_f rescue 0)
-    end
-    #################################################################################################################
-
     ################################################################################################################
 		allergic_to_sulphur_session_date = session[:datetime].to_date rescue Date.today
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, allergic_to_sulphur_session_date) #chunked
@@ -158,7 +129,6 @@ EOF
         DATE(obs_datetime) =?", [side_effects_concept_id, symptom_present_conept_id], session_date]
     ).collect{|o|o.answer_string.squish}
 
-    @patient_contraindications = Patient.contraindications(@patient, session_date)
 		@found_symptoms = []
 
 		@prescribe_art_drugs = false
@@ -539,8 +509,12 @@ EOF
 	end
 
 	def create
-		raise params[:pills_remaining].inspect
- 
+    #raise params.inspect
+		#raise prescribe_pyridoxine.to_yaml
+		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
+		session_date = session[:datetime] || Time.now()
+    weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
+
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
@@ -579,11 +553,6 @@ EOF
       prescribe_ipt = false
     end
 
-
-    #raise params.inspect
-		#raise prescribe_pyridoxine.to_yaml
-		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
-		session_date = session[:datetime] || Time.now()
 		if !params[:filter][:provider].blank?
 			user_person_id = User.find_by_username(params[:filter][:provider]).person_id
 		else
@@ -593,13 +562,28 @@ EOF
 		user_person_id = user_person_id rescue User.find_by_user_id(current_user.user_id).person_id
 
 		encounter = PatientService.current_treatment_encounter(@patient, session_date, user_person_id)
+
+    ############################################# set next appointment interval type #########################################
+		(params[:observations] || []).each do |observation|
+			if observation['concept_name'].upcase == 'APPOINTMENT TYPE'
+        Observation.create(:person_id => @patient.id, 
+          :obs_datetime => encounter.encounter_datetime,
+          :concept_id => ConceptName.find_by_name('Appointment type').concept_id,
+          :value_text => observation[:value_coded_or_text], 
+          :encounter_id => encounter.id) 
+      end
+    end
+    ################################################################################################### 
+ 
 		start_date = session[:datetime] || Time.now
 		arvs_buffer = 2
+
 		auto_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
+		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
+
 		auto_tb_expire_date = session[:datetime] + params[:tb_duration].to_i.days rescue Time.now + params[:tb_duration].to_i.days
 		auto_tb_continuation_expire_date = session[:datetime] + params[:tb_continuation_duration].to_i.days rescue Time.now + params[:tb_continuation_duration].to_i.days
-		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
-    amought_of_drugs_brought_to_clinic_today = Patient.amought_brought_to_clinic_today(@patient, session_date)
+
 
     ######################################################################################
     unless params[:fast_track_yes_no].blank?
@@ -738,7 +722,7 @@ EOF
 
     params[:regimen] = params[:regimen_all] if ! params[:regimen_all].blank?
 		reduced = false
-    weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
+    #weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
 
     unless params[:regimen_concept_id_all].blank?
       drug_names = params[:drug_names].keys
@@ -818,14 +802,9 @@ EOF
           dose = (morning_tabs.to_f + evening_tabs.to_f)/2
         end
         prn = 0
-=begin
-        unless amought_of_drugs_brought_to_clinic_today[drug.drug_id].blank?
-          number_of_pills = amought_of_drugs_brought_to_clinic_today[drug.drug_id]
-          days_based_on_pills = MedicationService.calculate_days_base_on_pills(drug.drug_id, weight, number_of_pills)
-          auto_expire_date = ((auto_expire_date + days_based_on_pills.days) rescue auto_expire_date)
-        end
-=end
-				DrugOrder.write_order(
+				
+
+        DrugOrder.write_order(
           encounter,
           @patient,
           obs,

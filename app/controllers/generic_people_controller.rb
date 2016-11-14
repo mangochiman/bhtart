@@ -377,7 +377,7 @@ class GenericPeopleController < ApplicationController
 		@transferred_out = @current_hiv_program_state.upcase == "PATIENT TRANSFERRED OUT"? true : nil
 
     arv_drugs_given = false
-    PatientService.art_drug_given_before(patient,session_date).each do |order|
+    MedicationService.art_drug_given_before(patient,session_date).each do |order|
       arv_drugs_given = true
       break
     end

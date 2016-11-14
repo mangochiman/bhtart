@@ -930,13 +930,27 @@ EOF
     @patient_bean = PatientService.get_patient(@patient.person)
     @amount_needed = 0
     @amounts_required = 0
-
     type = EncounterType.find_by_name('TREATMENT')
     session_date = session[:datetime].to_date rescue Date.today
-    Order.find(:all,
+
+    orders = Order.find(:all,
       :joins => "INNER JOIN encounter e USING (encounter_id)",
       :conditions => ["encounter_type = ? AND e.patient_id = ? AND DATE(encounter_datetime) = ?",
-        type.id,@patient.id,session_date]).each{|order|
+        type.id,@patient.id,session_date])
+    
+    ################################# Recalculate auto_expire_date ##########################
+    unless orders.blank?
+      appointment_type_id = ConceptName.find_by_name('Appointment type').concept_id
+      appointment_type = Observation.find(:first, :conditions => ["concept_id = ? AND person_id = ?
+      AND obs_datetime BETWEEN ? AND ?", appointment_type_id, @patient.id,
+      session_date.strftime('%Y-%m-%d 00:00:00'), session_date.strftime('%Y-%m-%d 23:59:59')])
+      if appointment_type.value_text == 'Optimize - including hanging pills'
+        MedicationService.recalculate_auto_expire_dates(orders) 
+      end unless appointment_type.blank?
+    end
+    #########################################################################################
+
+    (orders || []).each{|order|
 
       @amount_needed = @amount_needed + (order.drug_order.amount_needed.to_i rescue 0)
 
@@ -1705,7 +1719,7 @@ EOF
 
     # Print information on current treatment of the patient transfering out!
     demographics.reg = []
-    PatientService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
+    MedicationService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
       next unless MedicationService.arv(order.drug_order.drug)
       demographics.reg << order.drug_order.drug.concept.shortname
     end
@@ -1801,7 +1815,7 @@ EOF
     label.draw_multi_text("#{first} #{second}", {:font_reverse => false})
     # Print information on current treatment of the patient transfering out!
     reg = []
-    PatientService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
+    MedicationService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
       next unless MedicationService.tb_medication(order.drug_order.drug)
       reg << order.drug_order.drug.concept.shortname
     end

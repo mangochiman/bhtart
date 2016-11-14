@@ -914,7 +914,7 @@ class ApplicationController < GenericApplicationController
         end if not reason_for_art.upcase ==  'UNKNOWN'
       when 'TB ADHERENCE'
         drugs_given_before = false
-        PatientService.drug_given_before(patient,session_date).each do |order|
+        MedicationService.drug_given_before(patient,session_date).each do |order|
           next unless MedicationService.tb_medication(order.drug_order.drug)
           drugs_given_before = true
         end
@@ -933,11 +933,16 @@ class ApplicationController < GenericApplicationController
       when 'ART ADHERENCE'
         next unless continue_tb_treatment(patient,session_date)
         art_drugs_given_before = false
-        PatientService.drug_given_before(patient,session_date).each do |order|
+        MedicationService.drug_given_before(patient,session_date).each do |order|
           next unless MedicationService.arv(order.drug_order.drug)
           art_drugs_given_before = true
         end
 
+        MedicationService.art_drug_prescribed_before(patient,session_date).each do |order|
+          arv_drugs_given = true
+          break
+        end unless arv_drugs_given
+          
         art_adherence = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
           :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
             session_date.to_date,patient.id,EncounterType.find_by_name(type).id])
@@ -1097,7 +1102,7 @@ class ApplicationController < GenericApplicationController
         task.url = "/patients/show/#{patient.id}"
         return task
       end
-    end if not PatientService.art_drug_given_before(patient,session_date).blank?
+    end if not MedicationService.art_drug_given_before(patient,session_date).blank?
 
     unless prescribe_drugs_question.blank?
 
@@ -1277,7 +1282,7 @@ class ApplicationController < GenericApplicationController
             :order =>'encounter_datetime DESC,date_created DESC',:limit => 1)
 
           arv_drugs_given = false
-          PatientService.art_drug_given_before(patient,session_date).each do |order|
+          MedicationService.art_drug_given_before(patient,session_date).each do |order|
             arv_drugs_given = true
             break
           end
@@ -1291,7 +1296,7 @@ class ApplicationController < GenericApplicationController
               task.encounter_type = "ART ADHERENCE"
               task.url = "/patients/show/#{patient.id}"
               return task
-            end if not PatientService.art_drug_given_before(patient,session_date).blank?
+            end if not MedicationService.art_drug_given_before(patient,session_date).blank?
           end
         end if refer_to_clinician
 
@@ -1324,7 +1329,7 @@ class ApplicationController < GenericApplicationController
           next if staging == "No"
         end
         arv_drugs_given = false
-        PatientService.drug_given_before(patient,session_date).each do |order|
+        MedicationService.drug_given_before(patient,session_date).each do |order|
           next unless MedicationService.arv(order.drug_order.drug)
           arv_drugs_given = true
         end
@@ -1417,20 +1422,27 @@ class ApplicationController < GenericApplicationController
         end if show_treatment
       when 'ART ADHERENCE'
         arv_drugs_given = false
-        PatientService.art_drug_given_before(patient,session_date).each do |order|
+        MedicationService.art_drug_given_before(patient,session_date).each do |order|
           arv_drugs_given = true
           break
         end
+      
+        MedicationService.art_drug_prescribed_before(patient,session_date).each do |order|
+          arv_drugs_given = true
+          break
+        end unless arv_drugs_given
           
         next unless arv_drugs_given
-
-        if encounter_available.blank? and user_selected_activities.match(/Manage ART adherence/i)
-          task.url = "/encounters/new/art_adherence?show&patient_id=#{patient.id}"
-          return task
-        elsif encounter_available.blank? and not user_selected_activities.match(/Manage ART adherence/i)
-          task.url = "/patients/show/#{patient.id}"
-          return task
-        end if not PatientService.art_drug_given_before(patient,session_date).blank?
+         
+        if arv_drugs_given
+          if encounter_available.blank? and user_selected_activities.match(/Manage ART adherence/i)
+            task.url = "/encounters/new/art_adherence?show&patient_id=#{patient.id}"
+            return task
+          elsif encounter_available.blank? and not user_selected_activities.match(/Manage ART adherence/i)
+            task.url = "/patients/show/#{patient.id}"
+            return task
+          end 
+        end
       end
     end
     #task.encounter_type = 'Visit complete ...'
@@ -1542,7 +1554,7 @@ class ApplicationController < GenericApplicationController
       end
 
       arv_drugs_given = false
-      PatientService.art_drug_given_before(patient,session_date).each do |order|
+      MedicationService.art_drug_given_before(patient,session_date).each do |order|
         arv_drugs_given = true                                              
         break
       end
@@ -1690,7 +1702,7 @@ class ApplicationController < GenericApplicationController
     end
 
     arv_drugs_given = false
-    PatientService.drug_given_before(patient,session_date).each do |order|
+    MedicationService.drug_given_before(patient,session_date).each do |order|
       next unless MedicationService.arv(order.drug_order.drug)            
       arv_drugs_given = true                                              
     end

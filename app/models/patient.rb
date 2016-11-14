@@ -393,24 +393,6 @@ EOF
       '#{eal_dispension_date.to_date.to_s}');").to_date rescue nil
   end
 
-  def self.amought_brought_to_clinic_today(patient, session_date = Date.today)
-    drugs_data = {}
-    amount_of_drug_brought_to_clinic_concept_id = Concept.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id
-
-    todays_amought_brought_to_clinic_observations = patient.person.observations.find(:all, :joins => [:encounter],
-      :conditions => ["DATE(obs_datetime) = ? AND concept_id =?", session_date.to_date,
-        amount_of_drug_brought_to_clinic_concept_id]
-    )
-    
-    todays_amought_brought_to_clinic_observations.each do |obs|
-      drug_id = obs.order.drug_order.drug_inventory_id
-      answer_string = obs.answer_string.squish.to_i
-      drugs_data[drug_id] = answer_string
-    end
-
-    return drugs_data
-  end
-
   def self.type_of_hiv_confirmatory_test(patient, session_date = Date.today)
     hiv_confirmatory_test_concept_id = Concept.find_by_name('CONFIRMATORY HIV TEST TYPE').concept_id
 
