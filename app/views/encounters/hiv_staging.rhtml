@@ -262,6 +262,23 @@
     }
   }
 
+function updateWhoStagePaeds() {
+    // Everyone is supposed to be HIV positive so start them at 1
+    whoStage = 1;
+    for (var i=1; i<=4; i++) {
+      try {
+
+        if ( jQuery(".stage_" + i + "_conditions")[0].value != '') whoStage = i;
+      } catch(e) {
+
+      }
+
+    }
+
+    var adultOrPeds = "PEDS";
+    $('who_stage').value = whoStageConcept(whoStage, adultOrPeds);
+  }
+  
   function oldReasonForEligibility(){
     var reasonForArtEligibility = "NONE";
     // Lymphocyte thresholds for ages 0-15
@@ -480,8 +497,12 @@
   }
 
   function summary() {
-
-    updateWhoStage();
+    if (age >= 15 ){
+      updateWhoStage();
+    }else{
+      updateWhoStagePaeds() //This is a hack. Take note
+    }
+    
     updateReasonForArtEligibility();
     var conditions = selectedConditions();
     var display = "<div><span class='title'>WHO Stage: " + $('who_stage').value + "</span></div>";
@@ -826,6 +847,7 @@ end %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv_paeds),
         {:id => "stage_4_conditions",
+        :class => "stage_4_conditions",
         :multiple => true,
         :optional => true,
         :tt_onUnLoad => 'setSelectedStageConditions(4);',
@@ -846,6 +868,7 @@ end %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii_paeds),
         {:id => "stage_3_conditions",
+        :class => "stage_3_conditions",
         :multiple => true,
         :optional => true,
         :condition => 'showConditions() == true && age <= 14',
@@ -866,6 +889,7 @@ end %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
         {:id => "stage_2_conditions",
+        :class => "stage_2_conditions",
         :multiple => true,
         :optional => true,
         :condition => 'showConditions() == true && age <= 14',
@@ -886,10 +910,11 @@ end %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i_paeds),
         {:id => "stage_1_conditions",
+        :class => "stage_1_conditions",
         :multiple => true,
         :optional => true,
         :condition => 'age <= 14',
-        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds();",
         :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
         :helpText => "Stage 1 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1096,9 +1121,17 @@ end %>
 
   function setOptionsForContraindicationsPopup(){
     //stage_4_conditions, stage_3_conditions, stage_2_conditions;
-    stageFourConditions = __$('stage_4_conditions').value;
-    stageThreeConditions = __$('stage_3_conditions').value;
-    stageTwoConditions = __$('stage_2_conditions').value;
+    if (age >= 15){
+      stageFourConditions = __$('stage_4_conditions').value;
+      stageThreeConditions = __$('stage_3_conditions').value;
+      stageTwoConditions = __$('stage_2_conditions').value;
+    }else{
+      stageFourConditions = jQuery('.stage_4_conditions')[0].value;
+      stageThreeConditions = jQuery('.stage_3_conditions')[0].value;
+      stageTwoConditions = jQuery('.stage_2_conditions')[0].value;
+    }
+
+
     asymptomatic_option_input = jQuery("[tstvalue='Asymptomatic HIV infection']")[0];
     if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
       asymptomatic_option_input.onmouseup = function(){
@@ -1137,6 +1170,19 @@ end %>
       __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional");
     }
   }
+
+  function forceStageOneAvailabePaeds(){
+    stage_four_conditions = jQuery('.stage_4_conditions')[0];
+    stage_three_conditions = jQuery('.stage_3_conditions')[0];
+    stage_two_conditions = jQuery('.stage_2_conditions')[0];
+
+    __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
+
+    if ((stage_four_conditions.value.length == 0) && (stage_three_conditions.value.length == 0) && stage_two_conditions.value.length == 0){
+      __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional");
+    }
+  }
+  
 </script>
 
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>

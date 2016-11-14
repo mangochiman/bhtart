@@ -905,7 +905,12 @@
 
   function summary() {
     //calculateWHOstage(); //For calculating date started ART - Transfer in patients
-    updateWhoStage();
+    if (age >= 15 ){
+      updateWhoStage();
+    }else{
+      updateWhoStagePaeds() //This is a hack. Take note
+    }
+    
     updateReasonForArtEligibility();
     var conditions = selectedConditions();
     var display = "<div><span class='title'>WHO Stage: " + $('who_stage').value + "</span></div>";
@@ -988,6 +993,7 @@
     whoStage = 1;
     for (var i=1; i<=4; i++) {
       try {
+
         if ( $("stage_" + i + "_conditions").value != '') whoStage = i;
       } catch(e) {
 
@@ -1002,6 +1008,23 @@
     } else {
       $('who_stage').value = whoStageConcept(whoStage, adultOrPeds);
     }
+  }
+
+function updateWhoStagePaeds() {
+    // Everyone is supposed to be HIV positive so start them at 1
+    whoStage = 1;
+    for (var i=1; i<=4; i++) {
+      try {
+
+        if ( jQuery(".stage_" + i + "_conditions")[0].value != '') whoStage = i;
+      } catch(e) {
+
+      }
+
+    }
+
+    var adultOrPeds = "PEDS";
+    $('who_stage').value = whoStageConcept(whoStage, adultOrPeds);
   }
 
   /*function resetStageDefiningConditions(){
@@ -1911,9 +1934,16 @@
   }
 
   function setOptionsForContraindicationsPopup(){
-    stageFourConditions = __$('stage_4_conditions').value;
-    stageThreeConditions = __$('stage_3_conditions').value;
-    stageTwoConditions = __$('stage_2_conditions').value;
+    if (age >= 15){
+      stageFourConditions = __$('stage_4_conditions').value;
+      stageThreeConditions = __$('stage_3_conditions').value;
+      stageTwoConditions = __$('stage_2_conditions').value;
+    }else{
+      stageFourConditions = jQuery('.stage_4_conditions')[0].value;
+      stageThreeConditions = jQuery('.stage_3_conditions')[0].value;
+      stageTwoConditions = jQuery('.stage_2_conditions')[0].value;
+    }
+
     asymptomatic_option_input = jQuery("li[tstvalue='Asymptomatic HIV infection']")[0];
 
     if (stageFourConditions.length > 0 || stageThreeConditions.length > 0 || stageTwoConditions.length > 0){
