@@ -60,6 +60,7 @@ class GenericEncountersController < ApplicationController
     end
 
     if params['encounter']['encounter_type_name'] == 'HIV CLINIC REGISTRATION'
+      session_date = session[:datetime].to_date rescue Date.today
 
       has_tranfer_letter = false
       (params["observations"]).each do |ob|
@@ -68,27 +69,72 @@ class GenericEncountersController < ApplicationController
           break
         end
       end
+          
+      observations = []
       
-      if params[:observations][0]['concept_name'].upcase == 'EVER RECEIVED ART' and params[:observations][0]['value_coded_or_text'].upcase == 'NO'
-        observations = []
-        (params[:observations] || []).each do |observation|
-          next if observation['concept_name'].upcase == 'HAS TRANSFER LETTER'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-          next if observation['concept_name'].upcase == 'ART NUMBER AT PREVIOUS LOCATION'
-          next if observation['concept_name'].upcase == 'DATE ART LAST TAKEN'
-          next if observation['concept_name'].upcase == 'LAST ART DRUGS TAKEN'
-          next if observation['concept_name'].upcase == 'TRANSFER IN'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-          observations << observation
-        end
-      elsif params[:observations][4]['concept_name'].upcase == 'DATE ART LAST TAKEN' and params[:observations][4]['value_datetime'] != 'Unknown'
-        observations = []
-        (params[:observations] || []).each do |observation|
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-          observations << observation
+      (params[:observations] || []).each do |obs|
+        if obs['concept_name'].upcase == 'EVER RECEIVED ART' and obs['value_coded_or_text'].upcase == 'NO'
+          (params[:observations] || []).each do |observation|
+            next if observation['concept_name'].upcase == 'HAS TRANSFER LETTER'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+            next if observation['concept_name'].upcase == 'ART NUMBER AT PREVIOUS LOCATION'
+            next if observation['concept_name'].upcase == 'DATE ART LAST TAKEN'
+            next if observation['concept_name'].upcase == 'LAST ART DRUGS TAKEN'
+            next if observation['concept_name'].upcase == 'TRANSFER IN'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+            observations << observation
+          end
+        elsif obs['concept_name'].upcase == 'Date antiretrovirals started'.upcase 
+          date_art_started = obs['value_datetime'].to_date rescue nil
+          art_start_date_estimation = params[:art_start_date_estimation]
+          if date_art_started.blank? and not art_start_date_estimation.blank?
+            case art_start_date_estimation
+              when '6 months ago'
+                obs[:value_datetime] = session_date - 6.months
+                obs[:value_modifier] = '='
+              when '12 months ago'
+                obs[:value_datetime] = session_date - 12.months
+                obs[:value_modifier] = '='
+              when '18 months ago'
+                obs[:value_datetime] = session_date - 18.months
+                obs[:value_modifier] = '='
+              when '24 months'
+                obs[:value_datetime] = session_date - 24.months
+                obs[:value_modifier] = '='
+              when 'Over 2 years ago'
+                obs[:value_datetime] = session_date - 24.months
+                obs[:value_modifier] = '>'
+            end
+            obs[:value_text] = art_start_date_estimation
+          end
+        elsif obs['concept_name'].upcase == 'DATE ART LAST TAKEN' 
+          date_art_last_taken = obs['value_datetime'].to_date rescue nil
+          observations = []
+          (params[:observations] || []).each do |observation|
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+            observations << observation
+          end unless date_art_last_taken.blank?
+          
+            if date_art_last_taken.blank?
+            last_month = false ; last_week = false
+            (params[:observations] || []).each do |observation|
+              if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS' and  observation['value_coded_or_text'].upcase == 'YES'
+                last_week = true
+              elsif observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' and  observation['value_coded_or_text'].upcase == 'YES'
+                last_month = true
+              end
+            end 
+            
+            if last_week == true
+              obs[:value_datetime] = (session_date - 2.weeks)
+            elsif last_month == true
+              obs[:value_datetime] = (session_date.to_date - 2.months)
+            end
+            obs[:value_text] ='Estimated'
+          end
         end
       end
 
