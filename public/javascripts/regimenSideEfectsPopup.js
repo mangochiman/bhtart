@@ -23,7 +23,9 @@ function moreSideEffects(){
       new_table += "<th>Condition</th>";
     new_table += "</tr>";
 
-    for (var date in history_of_side_effects){
+    sorted_dates = sortDates(Object.keys(history_of_side_effects));
+    for (var i=0; i<=sorted_dates.length - 1; i++){
+        date = sorted_dates[i];
         new_table += "<tr>";
         new_table += "<td>" + date + "</td>";
 
@@ -35,6 +37,19 @@ function moreSideEffects(){
         new_table += "<td>" + history_of_side_effects[date].join('<br />') + "</td>";
         new_table += "</tr>";
     }
+
+    /*for (var date in history_of_side_effects){
+        new_table += "<tr>";
+        new_table += "<td>" + date + "</td>";
+
+        if (date_of_first_hiv_clinic_enc.getTime() == new Date(date).getTime()){
+            new_table += "<td>Contraindications</td>";
+        }else{
+            new_table += "<td>Side Effects</td>";
+        }
+        new_table += "<td>" + history_of_side_effects[date].join('<br />') + "</td>";
+        new_table += "</tr>";
+    }*/
 
     new_table += "</table>";
     document.getElementsByClassName("popup-data")[0].innerHTML = new_table;
@@ -300,4 +315,11 @@ function hideLibPopup(){
 
 function cancelRegimenSideEffectsPopup(){
     hideLibPopup();
+}
+
+function sortDates(array) {
+    return array.sort(function(a, b) {
+      var x = new Date(a).getTime(); var y = new Date(b).getTime();
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
 }

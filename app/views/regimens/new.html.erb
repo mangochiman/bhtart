@@ -3056,5 +3056,12 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
     document.getElementById("regimen-change-cover").style.display = 'inline';
   }
 
+function sortDates(array) {
+    return array.sort(function(a, b) {
+      var x = new Date(a).getTime(); var y = new Date(b).getTime();
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+}
+
 </script>
 
