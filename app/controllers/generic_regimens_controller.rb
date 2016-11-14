@@ -66,6 +66,7 @@ class GenericRegimensController < ApplicationController
     
 		pre_hiv_clinic_consultation = Patient.hiv_encounter(@patient, 'PART_FOLLOWUP', session_date)# chunked
 		hiv_clinic_consultation = Patient.hiv_encounter(@patient, 'HIV CLINIC CONSULTATION', session_date)# chunked
+    @date_of_first_hiv_clinic_enc = Patient.date_of_first_hiv_clinic_enc(@patient, session_date)
 
 		@hiv_clinic_consultation = false
 

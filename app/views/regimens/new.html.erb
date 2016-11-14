@@ -585,7 +585,8 @@
   var today = "<%= @today %>";
   var history_of_side_effects = <%= @history_of_side_effects.to_json -%>;
   var patient_contraindications = <%= @patient_contraindications.to_json -%>;
-
+  var date_of_first_hiv_clinic_enc = new Date('<%= @date_of_first_hiv_clinic_enc %>');
+  
   var reasons = ['Treatment failure', 'Jandice/hepatitis','Anaemia < 8g/dl','Renal failure', 'Abacavir hypersensitivity', 'Lypodystrophy', 'Lactic Acidosis', 'Drug Rash', 'Other'] ;
 <% if @patient_bean.age < 12 %>
     reasons.push("Child under 12 years");

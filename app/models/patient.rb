@@ -497,4 +497,14 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return contraindications
   end
 
+  def self.date_of_first_hiv_clinic_enc(patient, session_date = Date.today)
+    
+    encounter_type_id = EncounterType.find_by_name("HIV CLINIC CONSULTATION").encounter_type_id
+    encounter_datetime = patient.encounters.find(:first, :conditions => ["encounter_type =? AND 
+        DATE(encounter_datetime) <= ?", encounter_type_id, session_date]
+    ).encounter_datetime.to_date.strftime("%d/%b/%Y") rescue nil
+
+    return encounter_datetime
+  end
+
 end
