@@ -44,6 +44,7 @@ function lessSideEffects(){
     new_table += "</tr>";
     new_table += "</table>";
 */
+    type = 'Side Effect';
     new_table = "<table cellspacing='0px'>";
     new_table += "<tr class='contraindications_row'>";
       new_table += "<th>Date</th>";
@@ -52,9 +53,12 @@ function lessSideEffects(){
     new_table += "</tr>";
 
     for(var i = 0; i < flattedContraindications.length; i++) {
+        if (patient_contraindications.indexOf(flattedContraindications[i]) != -1){
+            type = 'Contraindication';
+        }
       new_table += "<tr>";
         new_table += "<td>" + today + "</td>";
-        new_table += "<td>&nbsp;</td>";
+        new_table += "<td>" + type + "</td>";
         new_table += "<td>" + flattedContraindications[i] + "</td>";
       new_table += "</tr>";
     }
@@ -89,11 +93,15 @@ function contraindicators(){
       new_table += "<th>Contraindications / Side effect</th>";
       new_table += "<th>Condition</th>";
     new_table += "</tr>";
-
+    type = 'Side Effect';
     for(var i = 0; i < flattedContraindications.length; i++) {
+        if (patient_contraindications.indexOf(flattedContraindications[i]) != -1){
+            type = 'Contraindication';
+        }
       new_table += "<tr>";
         new_table += "<td>" + today + "</td>";
-        new_table += "<td>&nbsp;</td>";
+
+        new_table += "<td>" + type + "</td>";
         new_table += "<td>" + flattedContraindications[i] + "</td>";
       new_table += "</tr>";
     }
