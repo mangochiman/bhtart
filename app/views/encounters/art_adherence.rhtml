@@ -372,7 +372,23 @@ session_date = session[:datetime] || Time.now()
     <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
     <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
 
-    <% PatientService.art_drug_given_before(@patient, session_date.to_date).uniq.each do |order|
+    <% art_drugs_given_before = MedicationService.art_drug_given_before(@patient, session_date.to_date).uniq
+       art_drugs_prescribed_before =  MedicationService.art_drug_prescribed_before(@patient,session_date).uniq
+
+       art_drug_order_ids = [] ; art_drug_orders = []
+       (art_drugs_given_before || []).uniq.each do |order|
+         art_drug_orders << order
+         art_drug_order_ids << order.id
+       end
+
+       (art_drugs_prescribed_before || []).uniq.each do |order|
+         next if art_drug_order_ids.include?(order.id)
+         art_drug_orders << order
+       end
+
+
+    %>
+    <% (art_drug_orders || []).each do |order|
     %>
       <% if @retrospective %>
         <%= touch_numeric_tag "AMOUNT OF DRUG BROUGHT TO CLINIC", @patient, nil,
@@ -439,8 +455,15 @@ session_date = session[:datetime] || Time.now()
         drug_names['<%=order.order_id%>'] = "<%=order.drug_order.drug.name %>";
         daily_consumption['<%=order.order_id%>'] = "<%=order.drug_order.equivalent_daily_dose %>";
         order_start_date['<%=order.order_id%>'] = "<%=order.start_date.strftime('%Y-%m-%d') %>";
-        order_auto_expire_date['<%=order.order_id%>'] = "<%= order.auto_expire_date.strftime('%Y-%m-%d') %>";
-        amount_given_last_time['<%=order.order_id%>'] = <%= order.drug_order.quantity %>;
+        <%
+          if(order.auto_expire_date.to_date == order.start_date.to_date) and not order.discontinued_date.blank?
+            auto_expire_date = order.discontinued_date.strftime('%Y-%m-%d')
+          else
+            auto_expire_date = order.auto_expire_date.strftime('%Y-%m-%d')
+          end
+        %>
+        order_auto_expire_date['<%=order.order_id%>'] = "<%= auto_expire_date %>";
+        amount_given_last_time['<%=order.order_id%>'] = <%= (order.drug_order.quantity.to_f rescue 0) %>;
         <%
           transfer_in_amount = MedicationService.get_amounts_brought_if_transfer_in(@patient.id, order.drug_order.drug.concept_id,order.start_date.to_date)
         %>

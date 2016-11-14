@@ -4,152 +4,6 @@
 
 <script>
 
-  var pills_remaining = {}
-  <%(@amounts_brought_to_clinic || {}).each do |drug_name, amount| %>
-    pills_remaining['<%=drug_name%>'] = <%=amount%>;
-  <%end%>
-  
-  function hideCategory() {
-    document.getElementById('category').style = 'display: none;'
-  }
-
-  function showPillsRemainingTable() {
-    for(medication_name in selectedDrugsHash) {
-      for(drug_name in pills_remaining) {
-        if(drug_name == medication_name)
-          return true;
- 
-      }
-    }
-    //prescribed_medication.push([data['drug_name'], data['units'], data['am'], data['pm']]);
-
-    for(medication_name in pills_remaining) {
-      for(var i = 0; i < prescribed_medication.length; i++) {
-        if(prescribed_medication[i][0] == medication_name)
-          return true;
- 
-      }
-    }
-
-    return false
-  }
-
-  function buildPillsRemainingTable() {
-    var target = document.getElementById('helpText' + tstCurrentPage);
-    var session_date = '<%= "#{@session_date.month}/#{@session_date.day}/#{@session_date.year}" %>';
-    var interval_to_next_visit = document.getElementById('interval_to_next_visit').value;
-    var newdate = new Date(session_date);
-    newdate.setDate(newdate.getDate() + parseInt(interval_to_next_visit));
- 
-    var dd = newdate.getDate();
-    var mm = newdate.getMonth();
-    var y = newdate.getFullYear();
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var runout_date = dd + '/' + months[mm] + '/' + y;
-
-    table = document.createElement('table');
-    table.setAttribute('id','pills_remaining')
-    tr = document.createElement('tr');
-
-    th = document.createElement('th');
-    th.innerHTML = '&nbsp;'
-    tr.appendChild(th)
-    th = document.createElement('th');
-    th.innerHTML = 'Estimated runout date'
-    tr.appendChild(th)
-/*    
-    th = document.createElement('th');
-    th.setAttribute('style','text-align: right; padding-right: 5px;')
-    th.innerHTML = 'Pills to take/day'
-    tr.appendChild(th)
-*/
-    th = document.createElement('th');
-    th.innerHTML = 'Pills remaining'
-    th.setAttribute('style','text-align: right; padding-right: 5px;')
-    tr.appendChild(th)
-
-    th = document.createElement('th');
-    th.innerHTML = 'Estimated runout date if pills remaining are included'
-    th.setAttribute('style','text-align: center;')
-    tr.appendChild(th)
-
-    th = document.createElement('th');
-    th.innerHTML = 'Day(s) added'
-    th.setAttribute('style','text-align: right; padding-right: 5px;')
-    tr.appendChild(th)
-
-    table.appendChild(tr)
-   
-    if(prescribed_medication.length < 1) { 
-      for(medication_name in selectedDrugsHash) {
-        prescribed_medication.push([medication_name, 'N/A', selectedDrugsHash[medication_name]['am'], selectedDrugsHash[medication_name]['pm']]);
-      }
-    }
-
-    for(var i = 0; i < prescribed_medication.length; i++) {
-      pills_a_day = (parseFloat(prescribed_medication[i][2]) + parseFloat(prescribed_medication[i][3]));
-      if(pills_remaining[prescribed_medication[i][0]] === undefined) {
-        amount_remaining = 'N/A'
-      }else{
-        remaining_amount = pills_remaining[prescribed_medication[i][0]];
-        amount_remaining = parseInt(pills_remaining[prescribed_medication[i][0]]/pills_a_day);
-      }
-      
-
-      if(amount_remaining == 'N/A'){
-        estimated_runout_date = runout_date 
-      }else{
-        var estimated_newdate = new Date(newdate);
-        estimated_newdate.setDate(estimated_newdate.getDate() + parseInt(amount_remaining));
-        var dd = estimated_newdate.getDate();
-        var mm = estimated_newdate.getMonth();
-        var y = estimated_newdate.getFullYear();
-        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        var estimated_runout_date = dd + '/' + months[mm] + '/' + y;
-      }
-
-
-      tr = document.createElement('tr');
-      tr.setAttribute('class','pills_remaining_tr');
-
-      td = document.createElement('td');
-      td.innerHTML = prescribed_medication[i][0];
-      td.setAttribute('style','padding-left: 10px;;');
-      tr.appendChild(td);
-      
-      td = document.createElement('td');
-      td.setAttribute('style','text-align: center;');
-      td.innerHTML = runout_date;
-      tr.appendChild(td);
-  /*    
-      td = document.createElement('td');
-      td.setAttribute('style','text-align: right; padding-right: 5px;')
-      td.innerHTML = pills_a_day;
-      tr.appendChild(td);
- */     
-      td = document.createElement('td');
-      td.innerHTML = remaining_amount;
-      td.setAttribute('style','text-align: right; padding-right: 5px;')
-      tr.appendChild(td);
-
-      td = document.createElement('td');
-      td.innerHTML = estimated_runout_date;
-      td.setAttribute('style','text-align: center;')
-      tr.appendChild(td);
-      
-      td = document.createElement('td');
-      if(amount_remaining == 'N/A')
-        amount_remaining = 0;
-
-      td.innerHTML = amount_remaining;
-      td.setAttribute('style','text-align: right; padding-right: 5px;')
-      tr.appendChild(td);
-      
-      table.appendChild(tr);
-    }
-
-    target.appendChild(table)
-  }
 </script>
 <%= javascript_include_tag("miscellaneous")%>
 <%= stylesheet_link_tag("miscellaneous")%>
@@ -2368,6 +2222,37 @@ end
     fast_tracK_obs_input.value = fast_track_answers.join(", ")
   }
 
+  function addPrescriptionBtn() {
+    optimizeInterval = document.createElement('button');
+    optimizeInterval.setAttribute('onmousedown','onSetAppointmentIntervalType("Optimize - including hanging pills");');
+    optimizeInterval.innerHTML = "<span>Optimize interval</span>";
+    optimizeInterval.setAttribute('class','button green navButton');
+    optimizeInterval.setAttribute('id','optimize_interval');
+
+    btnDiv = document.getElementById('buttons');
+
+    setInterval = document.getElementById('nextButton');
+    btnDiv.insertBefore(optimizeInterval, setInterval)
+    setInterval.setAttribute('onmousedown','onSetAppointmentIntervalType("Exact - excluding hanging pills");');
+    setInterval.innerHTML = "<span>Exact interval</span>";
+  }
+
+  function removePrescriptionBtn() {
+
+    setInterval = document.getElementById('nextButton');
+    setInterval.setAttribute('onmousedown','gotoNextPage();');
+    setInterval.innerHTML = "<span>Next</span>";
+
+    btnDiv = document.getElementById('buttons');
+    child = document.getElementById('optimize_interval');
+    btnDiv.removeChild(child);
+  }
+
+  function onSetAppointmentIntervalType(val) {
+    document.getElementById('appointment_interval_type').value = val;
+    gotoNextPage();
+  }
+
 </script>
 
 <%
@@ -2671,22 +2556,12 @@ pyridoxine_options = ["","25", "50"]
     <%= select_tag :duration, optionsString, {
       :id => "interval_to_next_visit",
       :condition => '$("prescribe_arvs").value == "YES" || $("cpt_given").value == "YES" || $("ipt_given").value == "YES"',
-      :tt_onLoad => "__$('keyboard').style.display = 'none';showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value);",
-      :tt_onUnLoad => "hideStockLevelDetails(); removeOnclickEvent();",
+      :tt_onLoad => "addPrescriptionBtn();__$('keyboard').style.display = 'none';
+      showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value);",
+      :tt_onUnLoad => "removePrescriptionBtn();hideStockLevelDetails(); removeOnclickEvent();",
       :helpText => 'Interval to next visit' } %>
 
-    <!-- Pills remaining -->
-    <% unless @amounts_brought_to_clinic.blank? %>
-      <%= select_tag "pills_remaining", options_for_select([['Yes','Yes'],['No','No']]),
-        {:id => "pills_remaining",
-        :multiple => false,
-        :tt_onLoad => "buildPillsRemainingTable();",
-        :tt_onUnLoad =>'hideCategory();',
-        :condition => "showPillsRemainingTable() == true",
-        :helpText => "Adjust next clinic visit date based on pills remaining"
-      } %>
-    <%end%>
-    <!-- Pills remaining -->
+    <%= touch_hidden_tag "Appointment type", @patient, nil, :id => "appointment_interval_type" %>
 
     <!-- Fast  track questions -->
     <% if not @fast_track_patient == true %>

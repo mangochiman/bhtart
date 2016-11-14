@@ -296,7 +296,7 @@ class EncountersController < GenericEncountersController
 		end
 
     @patient_ever_had_drugs = false
-		@drug_given_before = PatientService.drug_given_before(@patient, session[:datetime])
+		@drug_given_before = MedicationService.drug_given_before(@patient, session[:datetime])
     @patient_ever_had_drugs = true unless @drug_given_before.blank?
 
     todays_seen_encounters = @patient.encounters.find(:all, :conditions => ["DATE(encounter_datetime) =?",
@@ -1400,7 +1400,7 @@ class EncountersController < GenericEncountersController
     session_date = dispensed_date.to_date
         
     #get all drug dispensed on set clinic day
-    medication = PatientService.drugs_given_on(patient, session_date)
+    medication = MedicationService.drugs_given_on(patient, session_date)
     return session_date if medication.blank?
 
     #==========================================get the min auto_expire_date 
@@ -1419,10 +1419,10 @@ class EncountersController < GenericEncountersController
       medication_order_ids = [0] if medication_order_ids.blank?
       smallest_expire_date_attr = ActiveRecord::Base.connection.select_one <<EOF
       SELECT MIN(auto_expire_date) AS auto_expire_date FROM orders 
-      WHERE order_id IN(#{medication_order_ids.join(',')})
+      WHERE order_id IN(#{medication_order_ids.uniq.join(',')})
 EOF
 
-      return (smallest_expire_date_attr['auto_expire_date'].to_date) rescue session_date
+      return (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day) rescue session_date
     end
     ############################################# a hack if no ARV are dispensed ends ########################################
 
@@ -1437,22 +1437,16 @@ EOF
     smallest_expire_date = (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day)
     #==========================================get the min auto_expire_date end
 
-    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order USING (order_id)                                    
-      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
-      AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
-      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND person_id = #{patient.id} AND value_numeric IS NOT NULL
-EOF
-
     #suggested return dates
     suggest_appointment_dates = []
+    amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
+
 
     (medication || []).each do |order|
-      amounts_brought_to_clinic.each do |amounts_brought|
-        if amounts_brought['drug_inventory_id'].to_i == order.drug_order.drug_inventory_id
+      amounts_brought_to_clinic.each do |drug_id, amounts_brought|
+        if drug_id == order.drug_order.drug_inventory_id
           pills_per_day = MedicationService.get_medication_pills_per_day(order)
-          brought_to_clinic = amounts_brought['value_numeric'].to_i
+          brought_to_clinic = amounts_brought
           days = (brought_to_clinic.to_i/pills_per_day) if pills_per_day > 0
           unless days.blank?
             suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
@@ -1463,23 +1457,7 @@ EOF
       end
     end unless amounts_brought_to_clinic.blank?
 
-    #################################################### if a patient is transferring in on the current visit and has brought pills back  ###
-    (medication || []).each do |order|
-      amounts_brought_if_transfer_in = MedicationService.get_amounts_brought_if_transfer_in(patient.id, order.drug_order.drug.concept_id, order.start_date.to_date)
-      pills_per_day = MedicationService.get_medication_pills_per_day(order)
-      
-      if pills_per_day > 0 and amounts_brought_if_transfer_in > 0
-        days = (amounts_brought_if_transfer_in.to_i/pills_per_day) 
-      end unless amounts_brought_if_transfer_in.blank?
-
-      unless days.blank?
-        suggest_appointment_dates << (smallest_expire_date + days.day).to_date
-      else
-        suggest_appointment_dates << smallest_expire_date
-      end
-    end if suggest_appointment_dates.blank?
-    ########################################################################################################################################
-
+    #raise "dispensed_date: #{dispensed_date}  #{suggest_appointment_dates.inspect}"
 
     unless suggest_appointment_dates.blank?
       return (suggest_appointment_dates.sort.first).to_date 
