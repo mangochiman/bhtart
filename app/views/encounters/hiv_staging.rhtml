@@ -568,31 +568,10 @@ function updateWhoStagePaeds() {
   }
 
   var selected_stage_conditions_copy = {}
+
   function setSelectedStageConditions(stage) {
     selected_stage_conditions[stage] = $("touchscreenInput" + tstCurrentPage).value;
     selected_stage_conditions_copy[stage] = $("touchscreenInput" + tstCurrentPage).value;
-    /*
-        if (stage == 3) {
-<%  if @patient.person.observations.to_s.include?('Pulmonary tuberculosis' || 'Smear +ve')%>
-                                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                                  selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
-                                                                                            }
-                                                                                            else{
-                                                                                                  selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
-                                                                                            }
-<%end%>
-        }
-        if (stage == 4) {
-<% if @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
-                                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                                  selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
-                                                                                            }
-                                                                                            else{
-                                                                                                  selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
-                                                                                            }
-<%end%>
-        }
-     */
   }
 
   function showConditions() {
@@ -1033,15 +1012,15 @@ end %>
   </div><br />
   <div>
 
-    <span style="font-size: 16pt;">
+    <!--span style="font-size: 16pt;">
       <center>
         <br />
         Selecting <b>Yes</b> will clear previous selected conditions. Are you sure?
       </center>
-    </span>
+    </span-->
     <div style="padding-top: 65px;">
-      <span id="yes" onclick="continueProcess();" class="my_button" style="position: relative;">Yes</span>
-      <span id="no" onclick="hidePopup();" class="my_button" style=" position: relative; right: 20px;">No</span>
+      <span id="yes" onclick="continueProcess();" class="my_button" style="position: relative;">Keep &quot;Asymptomatic&quot;</span>
+      <span id="no" onclick="hidePopup();" class="my_button" style=" position: relative; right: 20px;">Keep &quot;Other&quot; conditions</span>
     </div>
   </div>
 </div>
@@ -1076,11 +1055,11 @@ end %>
     background-color: #F4F4F4;
     border: 2px solid #E0E0E0;
     border-radius: 15px;
-    height: 279px;
+    height: 185px;
     padding: 5px;
     position: absolute;
     margin-top: 100px;
-    width: 560px;
+    width: 630px;
     margin-left: 430px;
     z-index: 991;
   }
@@ -1115,6 +1094,11 @@ end %>
     box-sizing: border-box;
     bottom: 0px;
   }
+
+  #yes {
+    margin-right: 13px;
+  }
+
 </style>
 
 <script type="text/javascript">
