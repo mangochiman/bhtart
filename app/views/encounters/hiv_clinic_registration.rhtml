@@ -2057,7 +2057,7 @@ function updateWhoStagePaeds() {
   function validateMonthStartedART() {
     year_art_last_taken = parseInt(jQuery('#year_art_last_taken')[0].value);
     month_art_last_taken = parseInt(jQuery('#month_art_last_taken')[0].value);
-    date = new Date;
+    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
     currYear = date.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2078,7 +2078,7 @@ function updateWhoStagePaeds() {
 
     if (year_art_last_taken == currYear){
       currentMonth = [];
-      numOfloops = ((new Date).getMonth() + 1);
+      numOfloops = ((new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>")).getMonth() + 1);
  
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);
@@ -2098,7 +2098,7 @@ function updateWhoStagePaeds() {
 
   function setAbsoluteMaxYearStartedART(){
     year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
-    date = new Date;
+    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
     currYear = date.getFullYear();
 
     if (parseInt(year_taken_art)){
@@ -2147,7 +2147,7 @@ function updateWhoStagePaeds() {
   }
 
   function validateDayStartedART(){
-    date = new Date;
+    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
