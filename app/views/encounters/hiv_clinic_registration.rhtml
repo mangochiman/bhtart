@@ -1440,7 +1440,7 @@ function updateWhoStagePaeds() {
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLoss();" ,
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1461,7 +1461,7 @@ function updateWhoStagePaeds() {
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLoss();" ,
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 2 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -2194,4 +2194,58 @@ function updateWhoStagePaeds() {
 
   }
 
+  function preselectSevereWeightLoss(){
+    if (parseFloat(currentBmi) < 16){
+        console.log("It's a bit funny now")
+        severe_weight_loss_text = 'Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained';
+        severe_weight_loss_option_input = jQuery("li[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
+        severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+        weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+        current_input_values = $('touchscreenInput'+tstCurrentPage).value.split(';');
+        if (current_input_values.indexOf(severe_weight_loss_text) == -1){
+          updateTouchscreenInputForSelect(weight_loss_input); //Run this only when the option is not selected;
+        }
+        
+    }
+  }
+
+  function preselectModerateWeightLoss(){
+    if (parseFloat(currentBmi) >= 16.0 && parseFloat(currentBmi) <= 18.5){
+        moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+        moderate_weight_loss_option_id = moderate_weight_loss_option_input.id;
+        weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_id);
+
+        selected_stage_three_conditions = selected_stage_conditions[3].split(';');
+        severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+        if (selected_stage_conditions[3]){
+          if (selected_stage_three_conditions.indexOf(severe_weight_loss) == -1){
+            updateTouchscreenInputForSelect(weight_loss_input); //Preselect moderate if severe weight loss not selected
+          }
+        }
+    }
+    
+    disableModerateWeightLossOption();
+  }
+
+  function disableModerateWeightLossOption(){
+    moderate_wight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+    moderate_wight_loss_option_id = moderate_wight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + moderate_wight_loss_option_id);
+    severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+    
+    if (selected_stage_conditions[3]){
+      selected_stage_three_conditions = selected_stage_conditions[3].split(';');
+      if (selected_stage_three_conditions.indexOf(severe_weight_loss) != -1){
+        //weight_loss_input.style.backgroundColor = '#CDBA96';
+        moderate_wight_loss_option_input.style.backgroundColor = '#CDBA96';
+        moderate_weight_loss_text = weight_loss_input.innerHTML;
+        weight_loss_input.innerHTML = moderate_weight_loss_text + " ( Severe weight loss already selected )"
+        moderate_wight_loss_option_input.onclick = null;
+        moderate_wight_loss_option_input.onmousedown = null;
+        moderate_wight_loss_option_input.onmouseup = null;
+      }
+    }
+
+  }
 </script>
