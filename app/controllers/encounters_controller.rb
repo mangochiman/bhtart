@@ -545,7 +545,21 @@ class EncountersController < GenericEncountersController
 						@who_stage_iv = @who_stage_iv.flatten.uniq if CoreService.get_global_property_value('use.extended.staging.questions').to_s != "true"
 						@moderate_wasting = []
 					end
+        elsif @patient_bean.age >= 15
+          current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
+          current_height = PatientService.get_patient_attribute_value(@patient, "current_height")
+          currentBmi = (current_weight/(current_height * current_height)*10000).round(1) rescue 0
+
+					if currentBmi >= 16.0 && currentBmi <= 18.5
+						@moderate_wasting = ["Moderate weight loss less than or equal to 10 percent, unexplained"]
+						@severe_wasting = []
+					elsif currentBmi < 16
+						@severe_wasting = ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"]
+						@moderate_wasting = []
+					end
 				end
+
+        #raise "moderate_wasting: #{@moderate_wasting.inspect}   severe_wasting:#{@severe_wasting}"
 
         @who_stage_iv_paeds = [
           ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
@@ -1439,25 +1453,30 @@ EOF
 
     #suggested return dates
     suggest_appointment_dates = []
-    amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
+    
 
+    ######################################## If the user selected "Optimize appointment" #######################
+    appointment_type = PatientService.appointment_type(patient, session_date)
+    if(appointment_type.value_text == 'Optimize - including hanging pills')    
+      amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
 
-    (medication || []).each do |order|
-      amounts_brought_to_clinic.each do |drug_id, amounts_brought|
-        if drug_id == order.drug_order.drug_inventory_id
-          pills_per_day = MedicationService.get_medication_pills_per_day(order)
-          brought_to_clinic = amounts_brought
-          days = (brought_to_clinic.to_i/pills_per_day) if pills_per_day > 0
-          unless days.blank?
-            suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
-          else
-            suggest_appointment_dates << smallest_expire_date
+      (medication || []).each do |order|
+        amounts_brought_to_clinic.each do |drug_id, amounts_brought|
+          if drug_id == order.drug_order.drug_inventory_id
+            pills_per_day = MedicationService.get_medication_pills_per_day(order)
+            brought_to_clinic = amounts_brought
+            days = (brought_to_clinic.to_i/pills_per_day) if pills_per_day > 0
+            unless days.blank?
+              suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
+            else
+              suggest_appointment_dates << smallest_expire_date
+            end
           end
         end
-      end
-    end unless amounts_brought_to_clinic.blank?
+      end unless amounts_brought_to_clinic.blank?
+    end unless appointment_type.blank?
+    ##############################################################################################################
 
-    #raise "dispensed_date: #{dispensed_date}  #{suggest_appointment_dates.inspect}"
 
     unless suggest_appointment_dates.blank?
       return (suggest_appointment_dates.sort.first).to_date 

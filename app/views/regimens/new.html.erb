@@ -2228,7 +2228,7 @@ end
   function addPrescriptionBtn() {
     optimizeInterval = document.createElement('button');
     optimizeInterval.setAttribute('onmousedown','onSetAppointmentIntervalType("Optimize - including hanging pills");');
-    optimizeInterval.innerHTML = "<span>Optimize interval</span>";
+    optimizeInterval.innerHTML = "<span>Optimize appointment</span>";
     optimizeInterval.setAttribute('class','button green navButton');
     optimizeInterval.setAttribute('id','optimize_interval');
 
@@ -2237,7 +2237,7 @@ end
     setInterval = document.getElementById('nextButton');
     btnDiv.insertBefore(optimizeInterval, setInterval)
     setInterval.setAttribute('onmousedown','onSetAppointmentIntervalType("Exact - excluding hanging pills");');
-    setInterval.innerHTML = "<span>Exact interval</span>";
+    setInterval.innerHTML = "<span>Fixed appointment</span>";
   }
 
   function removePrescriptionBtn() {

@@ -104,10 +104,6 @@
     font-style:italic;
   }
 
-  .warning {
-    color:red;
-  }
-
   .values {
     font-size:25px;
   }
@@ -727,7 +723,7 @@ session_date = session[:datetime] || Time.now()
             try {
               data_tds[x].setAttribute('class','warning set-data order_' + i);
               e = document.createElement('span');
-              e.setAttribute('style','color:red');
+              e.setAttribute('style','color:red;');
               e.innerHTML = 'Explore problems';
               e.setAttribute('class','recommendation');
               data_tds[x].appendChild(e);

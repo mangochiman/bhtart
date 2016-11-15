@@ -940,10 +940,7 @@ EOF
     
     ################################# Recalculate auto_expire_date ##########################
     unless orders.blank?
-      appointment_type_id = ConceptName.find_by_name('Appointment type').concept_id
-      appointment_type = Observation.find(:first, :conditions => ["concept_id = ? AND person_id = ?
-      AND obs_datetime BETWEEN ? AND ?", appointment_type_id, @patient.id,
-      session_date.strftime('%Y-%m-%d 00:00:00'), session_date.strftime('%Y-%m-%d 23:59:59')])
+      appointment_type = PatientService.appointment_type(@patient, session_date) 
       if appointment_type.value_text == 'Optimize - including hanging pills'
         MedicationService.recalculate_auto_expire_dates(orders) 
       end unless appointment_type.blank?

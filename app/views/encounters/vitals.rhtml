@@ -301,12 +301,13 @@ dateToday = session[:datetime].to_date rescue Date.today
     displayText = "<div><span class='title'>Current BMI:</span>";
     if (currentBmi > 18.5) {
       displayText += currentBmi;
-    } else if (currentBmi <= 18.5) {
+    } else if (currentBmi >= 16.0 && currentBmi <= 18.5) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
-      displayText +="Underweight: WHO III. Moderate weight loss less than or equal to 10 percent, unexplained</span>";
-    /*} else if (currentBmi > 17.0) {
-      displayText += "<span class='lowBMIcounselling'>" + currentBmi + "</span>" + "<br/><span class='recommendation'> Eligible for counseling</span>";
-    } else {
+      displayText +="Underweight: Moderate weight loss less than or equal to 10 percent, unexplained</span>";
+    } else if (currentBmi < 16.0) {
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText +="Underweight: Severe wasting or malnutrition</span>";
+    /*} else {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>Eligible for therapeutic feeding</span>";*/
     }
     displayText += "</div>";

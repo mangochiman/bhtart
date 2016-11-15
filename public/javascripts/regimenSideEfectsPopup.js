@@ -18,7 +18,7 @@ function viewMoreSideEffects(){
 function moreSideEffects(){
     new_table = "<table cellspacing='0px'>";
     new_table += "<tr class='contraindications_row'>";
-      new_table += "<th>Date</th>";
+      new_table += "<th>&nbsp;</th>";
       new_table += "<th>Contraindications / Side effect</th>";
       new_table += "<th>Condition</th>";
     new_table += "</tr>";
@@ -67,7 +67,7 @@ function lessSideEffects(){
     type = 'Side Effect';
     new_table = "<table cellspacing='0px'>";
     new_table += "<tr class='contraindications_row'>";
-      new_table += "<th>Date</th>";
+      new_table += "<th>&nbsp;</th>";
       new_table += "<th>Contraindications / Side effect</th>";
       new_table += "<th>Condition</th>";
     new_table += "</tr>";
@@ -118,7 +118,7 @@ function contraindicators(){
 
     new_table = "<table cellspacing='0px'>";
     new_table += "<tr class='contraindications_row'>";
-      new_table += "<th>Date</th>";
+      new_table += "<th>&nbsp;</th>";
       new_table += "<th>Contraindications / Side effect</th>";
       new_table += "<th>Condition</th>";
     new_table += "</tr>";

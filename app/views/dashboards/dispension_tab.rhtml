@@ -194,7 +194,7 @@
                                  category = MedicationService.medication_category(drug.id)
                               %>
                               <td style="padding-left: 5px;" class="medication_category_<%=category%>"><%=drug.name%></td>
-                              <td style="text-align: right; padding-right: 10px;"><%=MedicationService.prescription_interval(order)%></td>
+                              <td style="text-align: right; padding-right: 10px;"><%=MedicationService.prescription_interval(order)%>&nbsp;day(s)</td>
                               <td style="text-align: right; padding-right: 10px;"><%="#{total_required} #{drug_unit}"%></td>
                               <td style="text-align:right; padding-right: 10px;" id = "<%=order.id%>"><%= total_dispensed %></td>
                             </tr>
