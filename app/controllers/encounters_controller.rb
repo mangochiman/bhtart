@@ -545,7 +545,21 @@ class EncountersController < GenericEncountersController
 						@who_stage_iv = @who_stage_iv.flatten.uniq if CoreService.get_global_property_value('use.extended.staging.questions').to_s != "true"
 						@moderate_wasting = []
 					end
+        elsif @patient_bean.age >= 15
+          current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
+          current_height = PatientService.get_patient_attribute_value(@patient, "current_height")
+          currentBmi = (current_weight/(current_height * current_height)*10000).round(1) rescue 0
+
+					if currentBmi >= 16.0 && currentBmi <= 18.5
+						@moderate_wasting = ["Moderate weight loss less than or equal to 10 percent, unexplained"]
+						@severe_wasting = []
+					elsif currentBmi < 16
+						@severe_wasting = ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"]
+						@moderate_wasting = []
+					end
 				end
+
+        #raise "moderate_wasting: #{@moderate_wasting.inspect}   severe_wasting:#{@severe_wasting}"
 
         @who_stage_iv_paeds = [
           ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
