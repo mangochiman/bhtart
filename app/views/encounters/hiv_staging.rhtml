@@ -863,7 +863,7 @@ end %>
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
-        :tt_onLoad => 'showCategory2("HIV staging");',
+        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption();',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
@@ -1166,7 +1166,28 @@ end %>
       __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional");
     }
   }
-  
+
+  function disableModerateWeightLossOption(){
+    moderate_wight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+    moderate_wight_loss_option_id = moderate_wight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + moderate_wight_loss_option_id);
+    severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+
+    if (selected_stage_conditions[3]){
+      selected_stage_three_conditions = selected_stage_conditions[3].split(';');
+      if (selected_stage_three_conditions.indexOf(severe_weight_loss) != -1){
+        //weight_loss_input.style.backgroundColor = '#CDBA96';
+        moderate_wight_loss_option_input.style.backgroundColor = '#CDBA96';
+        moderate_weight_loss_text = weight_loss_input.innerHTML;
+        weight_loss_input.innerHTML = moderate_weight_loss_text + " ( Severe weight loss already selected )"
+        moderate_wight_loss_option_input.onclick = null;
+        moderate_wight_loss_option_input.onmousedown = null;
+        moderate_wight_loss_option_input.onmouseup = null;
+      }
+    }
+
+  }
 </script>
 
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>
