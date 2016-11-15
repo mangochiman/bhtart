@@ -1965,6 +1965,7 @@ end
   }
 
   function addButton(){
+   // __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
     var button = document.createElement("button");
     button.id = "addHere";
     button.innerHTML = "<span>Customize regimen</span>";
@@ -1973,6 +1974,7 @@ end
     other_regimen = "no"
 
     button.onclick = function(){
+      __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
       other_regimen = "yes"
       concept =document.getElementById("regimen_concept_id");
       concept.value = null

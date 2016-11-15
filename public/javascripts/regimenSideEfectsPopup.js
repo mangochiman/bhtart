@@ -88,7 +88,16 @@ function lessSideEffects(){
 
 function contraindicators(){
     regimen_concept_id = document.getElementById('regimen_concept_id')
-    selectedRegimenIndex = regimen_concept_id.options[regimen_concept_id.selectedIndex].text.split(" ")[1];
+    try {
+            selectedRegimenIndex = regimen_concept_id.options[regimen_concept_id.selectedIndex].text.split(" ")[1];
+        }
+    catch(err) {
+        __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
+        gotoNextPage();//This section is just a hack to alert the error message when nothing is selected.
+        return false;
+    }
+
+
     selectedRegimenContraindications = adverse_events[selectedRegimenIndex]["contraindications"];
     regimenAltOne = adverse_events[selectedRegimenIndex]["alt1"];
     regimenAltTwo = adverse_events[selectedRegimenIndex]["alt2"];
