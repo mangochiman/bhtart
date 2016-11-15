@@ -182,6 +182,13 @@ The following block of code should be replaced by a more cleaner function
     @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
     @arv_number = PatientService.get_patient_identifier(@patient, 'ARV Number')
 
+    unless @prescriptions.blank?
+      @appointment_type = PatientService.appointment_type(@patient, session_date)
+      if @appointment_type.value_text == 'Optimize - including hanging pills'
+        @hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, session_date)
+      end
+    end
+
     render :template => 'dashboards/dispension_tab', :layout => false
   end
 

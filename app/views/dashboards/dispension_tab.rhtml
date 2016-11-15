@@ -169,8 +169,11 @@
                       <table id = 'dispensation' style = "width:100%;">
                         <tr style="text-align:left;">
                           <!--th>&nbsp;</th-->
-                          <th style="padding-left: 5px;">Medication</th>
-                          <th style="text-align: right; padding-right: 10px;">Prescription interval (2 day buffer included)</th>
+                          <th style="padding-left: 5px;">&nbsp;</th>
+                          <%if @appointment_type.value_text == 'Optimize - including hanging pills'%>
+                            <th style="text-align: right; padding-right: 5px;">Hanging pill(s)</th>
+                          <%end unless @appointment_type.blank?%>
+                          <th style="text-align: right; padding-right: 10px;">Prescription interval <!--(2 day buffer included)--></th>
                           <th style="text-align: right; padding-right: 10px;">Prescribed</th>
                           <th style="text-align:right; padding-right: 10px;">Dispensed</th>
                         </tr>
@@ -192,8 +195,16 @@
                                  drug_unit  =  order.drug_order.units
                                  drug = order.drug_order.drug
                                  category = MedicationService.medication_category(drug.id)
+                                
+                                 if @appointment_type.value_text == 'Optimize - including hanging pills'  
+                                 hanging_pills = @hanging_pills[drug.id].to_i unless @hanging_pills[drug.id].blank?
+                                 hanging_pills = 'N/A' unless @hanging_pills.keys.include?(drug.id)
+                                 end unless @appointment_type.blank?
                               %>
                               <td style="padding-left: 5px;" class="medication_category_<%=category%>"><%=drug.name%></td>
+                              <%if @appointment_type.value_text == 'Optimize - including hanging pills'%>
+                                <td style="text-align: right; padding-right: 10px;"><%=hanging_pills%></td>
+                              <%end unless @appointment_type.blank?%>
                               <td style="text-align: right; padding-right: 10px;"><%=MedicationService.prescription_interval(order)%>&nbsp;day(s)</td>
                               <td style="text-align: right; padding-right: 10px;"><%="#{total_required} #{drug_unit}"%></td>
                               <td style="text-align:right; padding-right: 10px;" id = "<%=order.id%>"><%= total_dispensed %></td>
