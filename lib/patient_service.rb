@@ -2315,6 +2315,15 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     return record.first rescue nil
   end
 
+  def self.appointment_type(patient, session_date)
+    appointment_type_id = ConceptName.find_by_name('Appointment type').concept_id
+
+    Observation.find(:first, :conditions => ["concept_id = ? AND person_id = ?
+      AND obs_datetime BETWEEN ? AND ?", appointment_type_id, patient.id,
+      session_date.strftime('%Y-%m-%d 00:00:00'), 
+      session_date.strftime('%Y-%m-%d 23:59:59')])
+  end
+
   private
 
   def self.current_program_location

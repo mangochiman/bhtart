@@ -1439,25 +1439,30 @@ EOF
 
     #suggested return dates
     suggest_appointment_dates = []
-    amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
+    
 
+    ######################################## If the user selected "Optimize appointment" #######################
+    appointment_type = PatientService.appointment_type(patient, session_date)
+    if(appointment_type.value_text == 'Optimize - including hanging pills')    
+      amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
 
-    (medication || []).each do |order|
-      amounts_brought_to_clinic.each do |drug_id, amounts_brought|
-        if drug_id == order.drug_order.drug_inventory_id
-          pills_per_day = MedicationService.get_medication_pills_per_day(order)
-          brought_to_clinic = amounts_brought
-          days = (brought_to_clinic.to_i/pills_per_day) if pills_per_day > 0
-          unless days.blank?
-            suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
-          else
-            suggest_appointment_dates << smallest_expire_date
+      (medication || []).each do |order|
+        amounts_brought_to_clinic.each do |drug_id, amounts_brought|
+          if drug_id == order.drug_order.drug_inventory_id
+            pills_per_day = MedicationService.get_medication_pills_per_day(order)
+            brought_to_clinic = amounts_brought
+            days = (brought_to_clinic.to_i/pills_per_day) if pills_per_day > 0
+            unless days.blank?
+              suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
+            else
+              suggest_appointment_dates << smallest_expire_date
+            end
           end
         end
-      end
-    end unless amounts_brought_to_clinic.blank?
+      end unless amounts_brought_to_clinic.blank?
+    end unless appointment_type.blank?
+    ##############################################################################################################
 
-    #raise "dispensed_date: #{dispensed_date}  #{suggest_appointment_dates.inspect}"
 
     unless suggest_appointment_dates.blank?
       return (suggest_appointment_dates.sort.first).to_date 
