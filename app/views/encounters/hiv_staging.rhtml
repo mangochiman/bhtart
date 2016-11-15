@@ -568,31 +568,10 @@ function updateWhoStagePaeds() {
   }
 
   var selected_stage_conditions_copy = {}
+
   function setSelectedStageConditions(stage) {
     selected_stage_conditions[stage] = $("touchscreenInput" + tstCurrentPage).value;
     selected_stage_conditions_copy[stage] = $("touchscreenInput" + tstCurrentPage).value;
-    /*
-        if (stage == 3) {
-<%  if @patient.person.observations.to_s.include?('Pulmonary tuberculosis' || 'Smear +ve')%>
-                                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                                  selected_stage_conditions[stage] = "Pulmonary tuberculosis (current)"
-                                                                                            }
-                                                                                            else{
-                                                                                                  selected_stage_conditions[stage] += ';Pulmonary tuberculosis (current)'
-                                                                                            }
-<%end%>
-        }
-        if (stage == 4) {
-<% if @patient.person.observations.to_s.include?('Extrapulmonary tuberculosis (EPTB)') %>
-                                                                                            if ($("touchscreenInput" + tstCurrentPage).value == "") {
-                                                                                                  selected_stage_conditions[stage] = "Extrapulmonary tuberculosis (EPTB)"
-                                                                                            }
-                                                                                            else{
-                                                                                                  selected_stage_conditions[stage] += ';Extrapulmonary tuberculosis (EPTB)'
-                                                                                            }
-<%end%>
-        }
-     */
   }
 
   function showConditions() {
