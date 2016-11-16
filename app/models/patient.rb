@@ -507,4 +507,14 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return encounter_datetime
   end
 
+  def self.todays_side_effects(patient, session_date = Date.today)
+     side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
+    symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
+
+    side_effects_contraindications = patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
+        DATE(obs_datetime) = ?", [side_effects_concept_id, symptom_present_conept_id], session_date]
+    ).collect{|o|o.answer_string.squish}
+    return side_effects_contraindications
+  end
+
 end

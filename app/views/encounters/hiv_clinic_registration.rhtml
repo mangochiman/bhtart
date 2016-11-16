@@ -1010,7 +1010,7 @@
     }
   }
 
-function updateWhoStagePaeds() {
+  function updateWhoStagePaeds() {
     // Everyone is supposed to be HIV positive so start them at 1
     whoStage = 1;
     for (var i=1; i<=4; i++) {
@@ -2196,32 +2196,35 @@ function updateWhoStagePaeds() {
 
   function preselectSevereWeightLoss(){
     if (parseFloat(currentBmi) < 16){
-        console.log("It's a bit funny now")
-        severe_weight_loss_text = 'Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained';
-        severe_weight_loss_option_input = jQuery("li[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
-        severe_weight_loss_option_id = severe_weight_loss_option_input.id;
-        weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
-        current_input_values = $('touchscreenInput'+tstCurrentPage).value.split(';');
-        if (current_input_values.indexOf(severe_weight_loss_text) == -1){
-          updateTouchscreenInputForSelect(weight_loss_input); //Run this only when the option is not selected;
-        }
+      console.log("It's a bit funny now")
+      severe_weight_loss_text = 'Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained';
+      severe_weight_loss_option_input = jQuery("li[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
+      severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+      weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+      current_input_values = $('touchscreenInput'+tstCurrentPage).value.split(';');
+      if (current_input_values.indexOf(severe_weight_loss_text) == -1){
+        updateTouchscreenInputForSelect(weight_loss_input); //Run this only when the option is not selected;
+      }
         
     }
   }
 
   function preselectModerateWeightLoss(){
     if (parseFloat(currentBmi) >= 16.0 && parseFloat(currentBmi) <= 18.5){
-        moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
-        moderate_weight_loss_option_id = moderate_weight_loss_option_input.id;
-        weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_id);
-
-        selected_stage_three_conditions = selected_stage_conditions[3].split(';');
-        severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
-        if (selected_stage_conditions[3]){
-          if (selected_stage_three_conditions.indexOf(severe_weight_loss) == -1){
+      moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+      moderate_weight_loss_option_id = moderate_weight_loss_option_input.id;
+      weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_id);
+      moderate_weight_loss_text = 'Moderate weight loss less than or equal to 10 percent, unexplained'
+      selected_stage_three_conditions = selected_stage_conditions[3].split(';');
+      severe_weight_loss_text = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+      current_input_values = $('touchscreenInput'+tstCurrentPage).value.split(';');
+      if (selected_stage_conditions[3]){
+        if (selected_stage_three_conditions.indexOf(severe_weight_loss) == -1){
+          if (current_input_values.indexOf(moderate_weight_loss_text) == -1){
             updateTouchscreenInputForSelect(weight_loss_input); //Preselect moderate if severe weight loss not selected
           }
         }
+      }
     }
     
     disableModerateWeightLossOption();

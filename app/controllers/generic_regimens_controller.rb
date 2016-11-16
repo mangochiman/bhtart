@@ -126,9 +126,25 @@ class GenericRegimensController < ApplicationController
     side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
     symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
 
-    @side_effects_answers = @patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
-        DATE(obs_datetime) =?", [side_effects_concept_id, symptom_present_conept_id], session_date]
-    ).collect{|o|o.answer_string.squish}
+    side_effects_contraindications = @patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
+        DATE(obs_datetime) <= ?", [side_effects_concept_id, symptom_present_conept_id], session_date])
+
+    @side_effects_answers = Patient.todays_side_effects(@patient, session_date)
+    contraindication_date = Patient.date_of_first_hiv_clinic_enc(@patient, session_date)
+
+    @side_effects_contraindications = {}
+    (side_effects_contraindications || []).each do |obs|
+      date = obs.obs_datetime.to_date
+      answer = obs
+      @side_effects_contraindications[date] = {} if @side_effects_contraindications[date].blank?
+      if date <= contraindication_date.to_date
+        type = 'contraindication'
+      else
+        type = 'side effect'
+      end
+      @side_effects_contraindications[date][type] = [] if @side_effects_contraindications[date][type].blank?
+      @side_effects_contraindications[date][type] << obs.answer_string.squish
+    end
 
 		@found_symptoms = []
 
