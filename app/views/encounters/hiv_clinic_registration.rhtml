@@ -103,6 +103,7 @@
   var birthdate = new Date("<%= @patient.person.birthdate.to_date.strftime("%m/%d/%Y") %>")
   var dateCreated = new Date("<%=@patient.person.date_created %>");
   var patientBirthdateEstimated = "<%=@patient.person.birthdate_estimated %>";
+  var median_weight_height = <%= @median_weight_height.to_json -%>
 
   function checkTestDate(td){
     var testDate = createDates($('year_art_last_taken').value, $('month_art_last_taken').value , td.value);
@@ -1430,7 +1431,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
-      :tt_onLoad => "showCategory('when starting ART');",
+      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLossPaeds();",
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 4 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1451,7 +1452,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLossPaeds();" ,
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -2209,16 +2210,33 @@
     }
   }
 
+  function preselectSevereWeightLossPaeds(){
+    currentWeight = parseFloat($("weight").value);
+    current_weight_percentile = (currentWeight/(median_weight_height[0])*100)
+    severe_weight_loss_text = "Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)"
+    if (current_weight_percentile < 70){
+      console.log("It's a bit funny now")
+      severe_weight_loss_option_input = jQuery("li[tstvalue='Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)']")[0];
+      severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+      weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+      current_input_values = $('touchscreenInput'+tstCurrentPage).value.split(';');
+      if (current_input_values.indexOf(severe_weight_loss_text) == -1){
+        updateTouchscreenInputForSelect(weight_loss_input); //Run this only when the option is not selected;
+      }
+    }
+  }
+
   function preselectModerateWeightLoss(){
     if (parseFloat(currentBmi) >= 16.0 && parseFloat(currentBmi) <= 18.5){
       moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
       moderate_weight_loss_option_id = moderate_weight_loss_option_input.id;
       weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_id);
       moderate_weight_loss_text = 'Moderate weight loss less than or equal to 10 percent, unexplained'
-      selected_stage_three_conditions = selected_stage_conditions[3].split(';');
+      
       severe_weight_loss_text = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
       current_input_values = $('touchscreenInput'+tstCurrentPage).value.split(';');
       if (selected_stage_conditions[3]){
+        selected_stage_three_conditions = selected_stage_conditions[3].split(';');
         if (selected_stage_three_conditions.indexOf(severe_weight_loss) == -1){
           if (current_input_values.indexOf(moderate_weight_loss_text) == -1){
             updateTouchscreenInputForSelect(weight_loss_input); //Preselect moderate if severe weight loss not selected
@@ -2230,8 +2248,32 @@
     disableModerateWeightLossOption();
   }
 
+function preselectModerateWeightLossPaeds(){
+    currentWeight = parseFloat($("weight").value);
+    current_weight_percentile = (currentWeight/(median_weight_height[0])*100)
+
+    if (current_weight_percentile >= 70 && current_weight_percentile <= 79){
+      moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)'")[0];
+      moderate_weight_loss_option_id = moderate_weight_loss_option_input.id;
+      weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_id);
+      moderate_weight_loss_text = 'Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm'
+      severe_weight_loss_text = "Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)";
+      current_input_values = $('touchscreenInput'+tstCurrentPage).value.split(';');
+      if (selected_stage_conditions[4]){
+        selected_stage_four_conditions = selected_stage_conditions[4].split(';');
+        if (selected_stage_four_conditions.indexOf(severe_weight_loss) == -1){
+          if (current_input_values.indexOf(moderate_weight_loss_text) == -1){
+            updateTouchscreenInputForSelect(weight_loss_input); //Preselect moderate if severe weight loss not selected
+          }
+        }
+      }
+    }
+
+    disableModerateWeightLossOptionPaeds();
+  }
+
   function disableModerateWeightLossOption(){
-    moderate_wight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+    moderate_wight_loss_option_input = jQuery("[tstvalue='Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)']")[0];
     moderate_wight_loss_option_id = moderate_wight_loss_option_input.id;
 
     weight_loss_input = document.getElementById('optionValue' + moderate_wight_loss_option_id);
@@ -2251,4 +2293,27 @@
     }
 
   }
+
+  function disableModerateWeightLossOptionPaeds(){
+    moderate_wight_loss_option_input = jQuery("[tstvalue='Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)']")[0];
+    moderate_wight_loss_option_id = moderate_wight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + moderate_wight_loss_option_id);
+    severe_weight_loss = "Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)";
+
+    if (selected_stage_conditions[4]){
+      selected_stage_four_conditions = selected_stage_conditions[4].split(';');
+      if (selected_stage_four_conditions.indexOf(severe_weight_loss) != -1){
+        //weight_loss_input.style.backgroundColor = '#CDBA96';
+        moderate_wight_loss_option_input.style.backgroundColor = '#CDBA96';
+        moderate_weight_loss_text = weight_loss_input.innerHTML;
+        weight_loss_input.innerHTML = moderate_weight_loss_text + " ( Severe weight loss already selected )"
+        moderate_wight_loss_option_input.onclick = null;
+        moderate_wight_loss_option_input.onmousedown = null;
+        moderate_wight_loss_option_input.onmouseup = null;
+      }
+    }
+
+  }
+
 </script>
