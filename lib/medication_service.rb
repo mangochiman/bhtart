@@ -805,8 +805,17 @@ EOF
         amount_dispensed[amount.value_drug] = (amount.value_numeric + tranfer_in_amount_remaining.value_numeric)
       end
 
-      num_pills_a_day = self.get_medication_pills_per_day(Order.find(amount.order_id))
-      amount_dispensed[amount.value_drug] = start_date.to_date + (amount_dispensed[amount.value_drug] / num_pills_a_day).day
+      order = Order.find(amount.order_id)
+
+      unless tranfer_in_amount_remaining.blank?
+        num_pills_a_day = self.get_medication_pills_per_day(order)
+        days = (tranfer_in_amount_remaining.value_numeric.to_f / num_pills_a_day).to_i rescue 0
+        if days > 0
+          amount_dispensed[amount.value_drug] = order.auto_expire_date + (days).day
+        end
+      else
+        amount_dispensed[amount.value_drug] = order.auto_expire_date 
+      end
     end
 
     return amount_dispensed.sort_by{|drug_id, auto_expire_date| auto_expire_date.to_date}.first
