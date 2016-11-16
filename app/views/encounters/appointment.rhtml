@@ -283,8 +283,8 @@ end
       {
         :field_type => 'calendar',
         :tt_onLoad => "setAttributes();showSelectedDates();showCategory('Next Appointment'); __$('category').style.display = 'none'; __$('cover').style.display = 'none';",
-        :minDate => "#{ ((session[:datetime] ? session[:datetime].to_date : Date.today) + 6.month).strftime("%Y-%m-%d") }",
-        :ajaxCalendarUrl => "/patients/number_of_booked_patients?date=",
+        :ajaxCalendarUrl => "/patients/number_of_booked_patients?date=#{(@suggested_appointment_date.to_date rescue nil)}",
+        :min => "#{(session[:datetime].to_date rescue Date.to_date)}", :max => "#{@max_date.to_date}",
         :tt_onUnLoad => "__$('observations__value_datetime').value = hideInfo();"
       }) %>
 

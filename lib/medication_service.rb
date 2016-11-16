@@ -775,4 +775,41 @@ EOF
 
   end
 
+  def self.earliest_auto_expire_medication(patient_id, date)
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
+    concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
+
+    orders = Order.find(:all,:joins =>"INNER JOIN drug_order d ON d.order_id = orders.order_id
+        INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}",
+        :conditions =>["e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+        patient_id, start_date, end_date], :order =>"encounter_datetime")
+
+    amount_dispensed = {}
+
+    amounts = Observation.find(:all,
+        :conditions =>["person_id = ? AND (obs_datetime BETWEEN ? AND ?)
+        AND concept_id = #{concept_id}", patient_id, start_date, end_date])
+
+    return [] if amounts.blank?
+
+    (amounts || []).each do |amount|
+      tranfer_in_amount_remaining = Observation.find(:first, :conditions =>["concept_id = ? AND
+        (obs_datetime BETWEEN ? AND ?) AND person_id = ?",
+        Drug.find(amount.value_drug).concept_id, start_date, end_date, patient_id])
+
+      if tranfer_in_amount_remaining.blank?
+        amount_dispensed[amount.value_drug] = amount.value_numeric
+      else
+        amount_dispensed[amount.value_drug] = (amount.value_numeric + tranfer_in_amount_remaining.value_numeric)
+      end
+
+      num_pills_a_day = self.get_medication_pills_per_day(Order.find(amount.order_id))
+      amount_dispensed[amount.value_drug] = start_date.to_date + (amount_dispensed[amount.value_drug] / num_pills_a_day).day
+    end
+
+    return amount_dispensed.sort_by{|drug_id, auto_expire_date| auto_expire_date.to_date}.first
+  end
+
 end

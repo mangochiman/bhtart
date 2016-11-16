@@ -29,6 +29,12 @@ class EncountersController < GenericEncountersController
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
 			@suggested_appointment_date = suggest_appointment_date
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
+
+      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_medication(@patient.id, session_date.to_date)
+      unless earliest_auto_expire_medication.blank?
+        @max_date = earliest_auto_expire_medication[1].to_date
+      end 
+
       render :action => params[:encounter_type] and return
 		end
 
