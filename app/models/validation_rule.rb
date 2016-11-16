@@ -76,6 +76,9 @@ class ValidationRule < ActiveRecord::Base
 =end
 
     #We substitute mysql with couch DB for storing results
+  end
+
+  def self.patients_without_outcomes(visit_date)
     data = {
       "date_checked" => date,
       "rule_id" => rule.id,
@@ -83,9 +86,6 @@ class ValidationRule < ActiveRecord::Base
     }
 
     ValidationResult.add_record(data)
-  end
-
-  def self.patients_without_outcomes(visit_date)
 
     visit_date = visit_date.to_date
     connection = ActiveRecord::Base.connection
