@@ -134,10 +134,9 @@ class GenericRegimensController < ApplicationController
 
     @side_effects_contraindications = {}
     (side_effects_contraindications || []).each do |obs|
-      date = obs.obs_datetime.to_date
-      answer = obs
+      date = obs.obs_datetime.to_date.strftime("%d/%b/%Y")
       @side_effects_contraindications[date] = {} if @side_effects_contraindications[date].blank?
-      if date <= contraindication_date.to_date
+      if date.to_date <= contraindication_date.to_date
         type = 'contraindication'
       else
         type = 'side effect'
