@@ -115,6 +115,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   var tbSymptomsHash = {};
   var gender = '<%= @gender %>';
   var current_patient_bmi = '<%= @current_patient_bmi %>'
+  var current_weight_percentile = '<%= @current_weight_percentile %>'
 
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
@@ -555,7 +556,17 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
         else
           var low_mbi = false;
+      }else if(tbSymptomsOptions[i].match(/Weight loss/i) && current_weight_percentile.length > 0) {
+        var low_weight_percentile = false;
+        if(parseFloat(current_weight_percentile) <= 79)
+          low_weight_percentile = true;
+
+        else
+          var low_weight_percentile = false;
       }
+
+
+
 
       html += "<tr>";
       html += "<td class='labelText'>" + tbSymptomsOptions[i] + "</td>";
@@ -576,6 +587,10 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       if(low_mbi == true) {
         html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
         html += "lowBMI=" + parseFloat(current_patient_bmi) + " ";
+        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
+      }else if(low_weight_percentile == true) {
+        html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+        html += "lowBMI=" + parseFloat(current_weight_percentile).toFixed(1) + " ";
         html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
       }else{
         html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
@@ -1580,7 +1595,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
 <div id="regimen-change-popup-div">
   <div id="regimen-change-popup-header">
-    <center>Low BMI </center>
+    <%if @current_weight_percentile.blank?%>
+      <center>Low BMI </center>
+    <%else%>
+      <center>Low weight percentile</center>
+    <%end%>
   </div><br />
   <div>
 
@@ -1595,7 +1614,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
             <td>Weight</td><td class='bmi-data' id="current-weight"></td>
           </tr>
           <tr>
-            <td>BMI</td><td class='bmi-data' id="low-bmi"></td>
+            <%if @current_weight_percentile.blank?%>
+              <td>BMI</td><td class='bmi-data' id="low-bmi"></td>
+            <%else%>
+              <td>Weight percentile</td><td class='bmi-data' id="low-bmi"></td>
+            <%end%>
           </tr>
         </table>
       </center>
