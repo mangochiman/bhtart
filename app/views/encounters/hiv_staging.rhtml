@@ -824,7 +824,7 @@ end %>
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv_paeds),
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv_paeds,@severe_wasting),
         {:id => "stage_4_conditions",
         :class => "stage_4_conditions",
         :multiple => true,
@@ -845,7 +845,7 @@ end %>
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
-      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii_paeds),
+      <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iii_paeds, @moderate_wasting),
         {:id => "stage_3_conditions",
         :class => "stage_3_conditions",
         :multiple => true,

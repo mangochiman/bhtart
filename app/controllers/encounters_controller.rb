@@ -434,11 +434,16 @@ class EncountersController < GenericEncountersController
 
     if  ['HIV_CLINIC_CONSULTATION', 'TB_VISIT', 'HIV_STAGING'].include?((params[:encounter_type].upcase rescue ''))
       
+      @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
+      @current_height = PatientService.get_patient_attribute_value(@patient, "current_height", session_date)
       if @patient.person.age(session_date.to_date) >= 6 
-        @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
-        @current_height = PatientService.get_patient_attribute_value(@patient, "current_height", session_date)
         if @current_height > 0 and @current_weight > 0
           @current_patient_bmi =  (@current_weight/(@current_height*@current_height)*10000).round(1)
+        end
+      else
+        median_weight_height = WeightHeightForAge.median_weight_height(@patient_bean.age_in_months, @patient.person.gender) rescue []
+        if @current_weight > 0
+          @current_weight_percentile = (@current_weight/(median_weight_height[0])*100) rescue 0
         end
       end
 

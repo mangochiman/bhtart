@@ -255,7 +255,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     displayText = "<div><span class='title'>Weight for age:</span>";
     if (currentWeightPercentile >= 80){
       displayText += "<span class='goodWeightForAge'>" + currentWeightPercentile + "%</span><br>";
-    } else if (currentWeightPercentile >= 75) {
+    } else if (currentWeightPercentile >= 70 && currentWeightPercentile < 80) {
       displayText += "<span class='medWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Moderate wasting </span><br>";
     } else {
       displayText += "<span class='lowWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Severe wasting</span><br>";
