@@ -63,6 +63,7 @@ class ValidationRule < ActiveRecord::Base
   end
 
   def self.create_update_validation_result(rule, date, patient_ids)
+=begin
     date_checked = date.to_date                                                 
     v = ValidationResult.find(:first,                                           
       :conditions =>["date_checked = ? AND rule_id = ?", date_checked,rule.id]) 
@@ -72,6 +73,16 @@ class ValidationRule < ActiveRecord::Base
                                                                                 
     v.failures = patient_ids.length                                             
     v.save
+=end
+
+    #We substitute mysql with couch DB for storing results
+    data = {
+      "date_checked" => date,
+      "rule_id" => rule.id,
+      "failures" => patient_ids.length
+    }
+
+    ValidationResult.add_record(data)
   end
 
   def self.patients_without_outcomes(visit_date)
