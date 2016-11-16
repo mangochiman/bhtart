@@ -16,73 +16,174 @@ function viewMoreSideEffects(){
 }
 
 function moreSideEffects(){
-    new_table = "<table cellspacing='0px'>";
-    new_table += "<tr class='contraindications_row'>";
-    new_table += "<th>&nbsp;</th>";
-    new_table += "<th>Contraindications / Side effect</th>";
-    new_table += "<th>Condition</th>";
-    new_table += "</tr>";
+    span = document.createElement('span');
+    new_table = document.createElement('table');
+    new_table.setAttribute("cellspacing", '0px');
+    tr = document.createElement('tr');
+    tr.setAttribute("class", 'contraindications_row');
+    new_table.appendChild(tr);
+    th = document.createElement('th');
+    th.innerHTML = '&nbsp;';
+    tr.appendChild(th);
 
-    sorted_dates = sortDates(Object.keys(history_of_side_effects));
-    for (var i=0; i<=sorted_dates.length - 1; i++){
-        date = sorted_dates[i];
-        new_table += "<tr>";
-        new_table += "<td>" + date + "</td>";
+    th = document.createElement('th');
+    th.innerHTML = 'Contraindication';
+    tr.appendChild(th);
 
-        if (date_of_first_hiv_clinic_enc.getTime() == new Date(date).getTime()){
-            new_table += "<td>Contraindications</td>";
-        }else{
-            new_table += "<td>Side Effects</td>";
+    th = document.createElement('th');
+    th.innerHTML = 'Side effect';
+    tr.appendChild(th);
+    new_table.appendChild(tr);
+
+    sorted_dates = sortDates(Object.keys(side_effects_contraindications));
+
+    while (sorted_dates.length > 0){
+        for (sdate in side_effects_contraindications){
+            if (sdate != sorted_dates[0]){
+                continue;
+            }else{
+                sorted_dates.shift();
+            }
+            for (type in side_effects_contraindications[sdate]){
+                found = false;
+
+                for (var i = 0; i < flattedContraindications.length; i++){
+                    if (type == 'side effect'){
+                        sideEffects = side_effects_contraindications[sdate][type];
+                        if (sideEffects.indexOf(flattedContraindications[i]) != -1){
+                            found = true;
+                        }
+                    }else{
+                        found = true;
+                    }
+                }
+
+                if (!found){
+                //continue;
+                }
+
+                tr = document.createElement('tr')
+                td = document.createElement('td');
+                td.innerHTML = sdate;
+                tr.appendChild(td);
+
+                td = document.createElement('td');
+                td.innerHTML = '&nbsp;'//side_effects_contraindications[sdate][i];
+                tr.appendChild(td);
+
+                td2 = document.createElement('td');
+                td2.innerHTML = '';
+                tr.appendChild(td2);
+                new_table.appendChild(tr);
+
+                for (var i = 0; i < side_effects_contraindications[sdate][type].length; i++){
+                    if (type == 'side effect'){
+
+                        if (td2.innerHTML.length < 1){
+                            td2.innerHTML = side_effects_contraindications[sdate][type][i];
+                        }else{
+                            td2.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
+                        }
+                    }else{
+                        if (td.innerHTML.length < 1){
+                            td.innerHTML = side_effects_contraindications[sdate][type][i];
+                        }else{
+                            td.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
+                        }
+                    }
+                }
+            }
         }
-        new_table += "<td>" + history_of_side_effects[date].join('<br />') + "</td>";
-        new_table += "</tr>";
     }
 
-    /*for (var date in history_of_side_effects){
-        new_table += "<tr>";
-        new_table += "<td>" + date + "</td>";
-
-        if (date_of_first_hiv_clinic_enc.getTime() == new Date(date).getTime()){
-            new_table += "<td>Contraindications</td>";
-        }else{
-            new_table += "<td>Side Effects</td>";
-        }
-        new_table += "<td>" + history_of_side_effects[date].join('<br />') + "</td>";
-        new_table += "</tr>";
-    }*/
-
-    new_table += "</table>";
+    span.appendChild(new_table);
+    new_table = span.innerHTML;
     document.getElementsByClassName("popup-data")[0].innerHTML = new_table;
 }
 
 function lessSideEffects(){
-    /*
-    new_table = "<table cellspacing='0px'>";
-    new_table += "<tr>";
-    new_table += "<td>" + today + "</td>";
-    new_table += "<td>" + flattedContraindications.join('<br />') + "</td>";
-    new_table += "</tr>";
-    new_table += "</table>";
-*/
-    type = 'Side Effect';
-    new_table = "<table cellspacing='0px'>";
-    new_table += "<tr class='contraindications_row'>";
-    new_table += "<th>&nbsp;</th>";
-    new_table += "<th>Contraindications / Side effect</th>";
-    new_table += "<th>Condition</th>";
-    new_table += "</tr>";
+    span = document.createElement('span');
+    new_table = document.createElement('table');
+    new_table.setAttribute("cellspacing", '0px');
+    tr = document.createElement('tr');
+    tr.setAttribute("class", 'contraindications_row');
+    new_table.appendChild(tr);
+    th = document.createElement('th');
+    th.innerHTML = '&nbsp;';
+    tr.appendChild(th);
 
-    for(var i = 0; i < flattedContraindications.length; i++) {
-        if (date_of_first_hiv_clinic_enc.getTime() == new Date(today).getTime()){
-            type = 'Contraindication';
+    th = document.createElement('th');
+    th.innerHTML = 'Contraindication';
+    tr.appendChild(th);
+
+    th = document.createElement('th');
+    th.innerHTML = 'Side effect';
+    tr.appendChild(th);
+    new_table.appendChild(tr);
+
+    sorted_dates = sortDates(Object.keys(side_effects_contraindications));
+
+    while (sorted_dates.length > 0){
+        for (sdate in side_effects_contraindications){
+            if (sdate != sorted_dates[0]){
+                continue;
+            }else{
+                sorted_dates.shift();
+            }
+            for (type in side_effects_contraindications[sdate]){
+                found = false;
+
+                for (var i = 0; i < flattedContraindications.length; i++){
+                    if (type == 'side effect'){
+                        sideEffects = side_effects_contraindications[sdate][type];
+                        if (sideEffects.indexOf(flattedContraindications[i]) != -1){
+                            found = true;
+                        }
+                    }else{
+                        found = true;
+                    }
+                }
+
+                if (!found){
+                    continue;
+                }
+
+                tr = document.createElement('tr')
+                td = document.createElement('td');
+                td.innerHTML = sdate;
+                tr.appendChild(td);
+
+                td = document.createElement('td');
+                td.innerHTML = '&nbsp;'//side_effects_contraindications[sdate][i];
+                tr.appendChild(td);
+
+                td2 = document.createElement('td');
+                td2.innerHTML = '';
+                tr.appendChild(td2);
+                new_table.appendChild(tr);
+
+                for (var i = 0; i < side_effects_contraindications[sdate][type].length; i++){
+                    if (type == 'side effect'){
+
+                        if (td2.innerHTML.length < 1){
+                            td2.innerHTML = side_effects_contraindications[sdate][type][i];
+                        }else{
+                            td2.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
+                        }
+                    }else{
+                        if (td.innerHTML.length < 1){
+                            td.innerHTML = side_effects_contraindications[sdate][type][i];
+                        }else{
+                            td.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
+                        }
+                    }
+                }
+            }
         }
-        new_table += "<tr>";
-        new_table += "<td>" + today + "</td>";
-        new_table += "<td>" + type + "</td>";
-        new_table += "<td>" + flattedContraindications[i] + "</td>";
-        new_table += "</tr>";
     }
-    new_table += "</table>";
+
+    span.appendChild(new_table);
+    new_table = span.innerHTML;
     document.getElementsByClassName("popup-data")[0].innerHTML = new_table;
 }
 
