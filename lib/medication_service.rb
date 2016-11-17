@@ -582,8 +582,16 @@ EOF
     #NVP (Nevirapine 200 mg tablet) = 22
     #LPV/r pellets = 979
 
-    category = {} ; category['P'] = [733, 968, 732, 736, 30, 74, 979]
-    category['A'] = [976, 977, 978, 954, 22,969, 731, 39, 11, 735, 734, 932, 73]
+    #Non ARVs
+    #Cotrimoxazole (960mg) = 576
+    #Cotrimoxazole (480mg tablet) = 297
+    #TMP/SMX (Cotrimoxazole 120mg tablet) = 963
+    #INH or H (Isoniazid 300mg tablet) = 931
+    #INH or H (Isoniazid 100mg tablet) = 24
+
+
+    category = {} ; category['P'] = [733, 968, 732, 736, 30, 74, 979, 963, 24]
+    category['A'] = [976, 977, 978, 954, 22,969, 731, 39, 11, 735, 734, 932, 73, 576, 297, 931]
 
     (category).each do |cat, medication_ids|
       return cat if medication_ids.include?(medication_id)
@@ -864,19 +872,18 @@ EOF
 
     amount_prescriped = {}
     return [] if orders.blank?
-    #pills_remainig = self.amounts_brought_to_clinic(patient, date.to_date)
+    pills_remainig = self.amounts_brought_to_clinic(patient, date.to_date)
 
     (orders || []).each do |order|
+      drug = order.drug_order.drug
+      next unless self.arv(drug)  
+          
+      amount_prescriped[order.id] = order.auto_expire_date
+
       
-      if order.auto_expire_date.to_date == order.start_date.to_date
-        amount_prescriped[order.id] = order.discontinued_date
-      elsif order.discontinued_date.blank?
-        amount_prescriped[order.id] = order.auto_expire_date
-      elsif order.auto_expire_date.to_date != order.start_date.to_date and not order.discontinued_date.blank?
-        amount_prescriped[order.id] = order.auto_expire_date
-      else
-        amount_prescriped[order.id] = order.auto_expire_date
-      end
+      pills_a_day = self.get_medication_pills_per_day(order)
+      days = ((pills_remainig[drug.id] / pills_a_day).to_i rescue 0)
+      amount_prescriped[order.id] = (amount_prescriped[order.id].to_date + days.day) if days > 0
 
     end
 
