@@ -1358,9 +1358,12 @@ class EncountersController < GenericEncountersController
 		#in the browser - the method is suggested_return_date
 		#@number_of_days_to_add_to_next_appointment_date = number_of_days_to_add_to_next_appointment_date(@patient, session[:datetime] || Date.today)
 
+=begin
 		dispensed_date = session[:datetime].to_date rescue Date.today
 		expiry_date = prescription_expiry_date(@patient, dispensed_date, max_date)
 		return revised_suggested_date(expiry_date)
+=end
+		return revised_suggested_date((max_date - 2.day))
 	end
 
   def revised_suggested_date(expiry_date)

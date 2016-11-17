@@ -152,7 +152,7 @@ session_date = session[:datetime] || Time.now()
   var daily_consumption = {}
   var order_start_date = {}
   var amount_given_last_time = {}
-  var transfer_in_amount = {}
+  var amount_counted = {}
   var order_auto_expire_date = {}
   var amount_brought_ids = {}
   var amount_other_ids = {}
@@ -461,10 +461,16 @@ session_date = session[:datetime] || Time.now()
         order_auto_expire_date['<%=order.order_id%>'] = "<%= auto_expire_date %>";
         amount_given_last_time['<%=order.order_id%>'] = <%= (order.drug_order.quantity.to_f rescue 0) %>;
         <%
-          transfer_in_amount = MedicationService.get_amounts_brought_if_transfer_in(@patient.id, order.drug_order.drug.concept_id,order.start_date.to_date)
+          given_last_time = order.drug_order.quantity.to_f rescue 0
+          if given_last_time > 0
+            pills_remaining = MedicationService.get_amounts_brought_if_transfer_in(@patient.id, order.drug_order.drug.concept_id,order.start_date.to_date)
+          else
+             amount = MedicationService.amounts_brought_to_clinic(@patient, order.start_date.to_date)
+             pills_remaining = amount[order.drug_order.drug_inventory_id].to_i rescue 0
+          end
         %>
-        transfer_in_amount['<%=order.order_id%>'] = <%= transfer_in_amount %>;
-        amount_given_last_time['<%=order.order_id%>'] += transfer_in_amount['<%=order.order_id%>'];
+        amount_counted['<%=order.order_id%>'] = <%= pills_remaining %>;
+        amount_given_last_time['<%=order.order_id%>'] += amount_counted['<%=order.order_id%>'];
         dose['<%=order.order_id%>'] = "<%= MedicationService.get_medication_dose(order) %>";
       </script>
 
