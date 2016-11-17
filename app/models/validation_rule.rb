@@ -11,9 +11,9 @@ class ValidationRule < ActiveRecord::Base
     rules.flatten.uniq
   end
 
-  def self.data_consistency_checks(date = Date.today)
+  def self.data_consistency_checks(date = Time.now)
     date = date.to_date
-    require 'colorize'
+    # require 'colorize'
     data_consistency_checks = {}
     #All methods for now should be here:
     data_consistency_checks['Patients without outcomes'] = "self.patients_without_outcomes(date)"
@@ -63,22 +63,13 @@ class ValidationRule < ActiveRecord::Base
   end
 
   def self.create_update_validation_result(rule, date, patient_ids)
-=begin
-    date_checked = date.to_date                                                 
-    v = ValidationResult.find(:first,                                           
-      :conditions =>["date_checked = ? AND rule_id = ?", date_checked,rule.id]) 
-
-    return ValidationResult.create(:rule_id => rule.id, :failures => patient_ids.length,
-      :date_checked => date_checked) if v.blank?                                
-                                                                                
-    v.failures = patient_ids.length                                             
-    v.save
-=end
 
     #We substitute mysql with couch DB for storing results
     data = {
-      "date_checked" => date,
-      "rule_id" => rule.id,
+      "date_checked" => date.strftime("%Y%m%d%H%M%S"),
+      "rule" => rule.desc,
+      "site_code" => "BBC", #to come from config
+      "site_name" => "Balaka BLM Clinic", #to come from config file
       "failures" => patient_ids.length
     }
 
