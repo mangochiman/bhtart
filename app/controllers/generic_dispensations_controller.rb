@@ -67,8 +67,10 @@ class GenericDispensationsController < ApplicationController
 
     @encounter = current_dispensation_encounter(@patient, session_date, user_person_id)
 
-    @order = PatientService.current_treatment_encounter( @patient, session_date, user_person_id).drug_orders.find(:first,:conditions => ['drug_order.drug_inventory_id = ?', 
-             params[:drug_id]]).order rescue []
+    @order = PatientService.current_treatment_encounter(@patient, session_date, 
+      user_person_id).drug_orders.find(:first,
+      :conditions => ['drug_order.drug_inventory_id = ?', 
+      params[:drug_id]]).order rescue []
 
     # Do we have an order for the specified drug?
 		if @order.blank?

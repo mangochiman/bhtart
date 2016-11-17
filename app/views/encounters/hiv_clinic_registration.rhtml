@@ -2,7 +2,7 @@
 <style>
   .tt_controls_date_of_confirmatory_hiv_test #num { display:none; }
 
-  .tt_controls_date_art_last_taken #num { display:none; }
+  .tt_controls_date_last_taken #num { display:none; }
 
   .tt_controls_date_of_confirmatory_hiv_test table {  position: absolute; top: -360px; }
 
@@ -1186,7 +1186,7 @@
     <!--
     -->
     <%= text_field_tag "year_art_last_taken", nil,
-      { :helpText => 'Year ARV&apos;s last taken<span style="font-size:0.7em;font-style:italic"> (Chaka chimene munamwa ma ARV komaliza ndi chiti?)</span>',
+      { :helpText => 'Year last taken ARVs<span style="font-size:0.7em;font-style:italic"> (Chaka chimene munamwa ma ARV komaliza ndi chiti?)</span>',
       :field_type => 'number',
       :absoluteMin => "1890", :min => "1940", :absoluteMax => (session[:datetime].to_date.year rescue Date.today.year),
       :tt_pageStyleClass => "Numeric NumbersOnly",
@@ -1195,14 +1195,14 @@
 
     <%= select_tag "month_art_last_taken", month_name_options,
       { :tt_onLoad => "__$('keyboard').style.display = 'none'; validateMonthARTTaken()",
-      :helpText => 'Month ART last taken<span style="font-size:0.7em;font-style:italic"> (Mwezi umene munamwa ma ARV komaliza ndi uti?)</span>',
+      :helpText => 'Month last taken ARVs<span style="font-size:0.7em;font-style:italic"> (Mwezi umene munamwa ma ARV komaliza ndi uti?)</span>',
       :condition => '$("year_art_last_taken").value.toLowerCase() != "unknown" && $("ever_received_art").value == "YES"',
       :id => "month_art_last_taken" ,
       :validationMessage => 'Please enter a valid date'}%>
 
     <%= text_field_tag "day_art_last_taken",  nil,
       :field_type => 'number',
-      :helpText => 'Day ART last taken<span style="font-size:0.7em;font-style:italic"> (Tsiku limene munamwa ma ARV komaliza ndi liti?)</span>',
+      :helpText => 'Day last taken ARVs<span style="font-size:0.7em;font-style:italic"> (Tsiku limene munamwa ma ARV komaliza ndi liti?)</span>',
       :condition => '($("year_art_last_taken").value !="Unknown") && ($("month_art_last_taken").value != "Unknown") && $("ever_received_art"). value == "YES"',
       :tt_onLoad => "getDayOfMonthPicker($('year_art_last_taken').value, $('month_art_last_taken').value);$('nextButton').style.display = 'block'; validateDayARTTaken();",
       :tt_onUnLoad => 'updateTestDate();',

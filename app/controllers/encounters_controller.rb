@@ -27,13 +27,11 @@ class EncountersController < GenericEncountersController
 		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
-			@suggested_appointment_date = suggest_appointment_date
-			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
+      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_medication(@patient, session_date.to_date)
+      @max_date = earliest_auto_expire_medication[1].to_date
 
-      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_medication(@patient.id, session_date.to_date)
-      unless earliest_auto_expire_medication.blank?
-        @max_date = earliest_auto_expire_medication[1].to_date
-      end 
+			@suggested_appointment_date = suggest_appointment_date(@max_date)
+			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 
       render :action => params[:encounter_type] and return
 		end
@@ -1355,13 +1353,13 @@ class EncountersController < GenericEncountersController
     return set_date
   end
 
-	def suggest_appointment_date
+	def suggest_appointment_date(max_date)
 		#for now we disable this because we are already checking for this
 		#in the browser - the method is suggested_return_date
 		#@number_of_days_to_add_to_next_appointment_date = number_of_days_to_add_to_next_appointment_date(@patient, session[:datetime] || Date.today)
 
 		dispensed_date = session[:datetime].to_date rescue Date.today
-		expiry_date = prescription_expiry_date(@patient, dispensed_date)
+		expiry_date = prescription_expiry_date(@patient, dispensed_date, max_date)
 		return revised_suggested_date(expiry_date)
 	end
 
@@ -1423,7 +1421,7 @@ class EncountersController < GenericEncountersController
     return recommended_date
   end
 	
-	def prescription_expiry_date(patient, dispensed_date)
+	def prescription_expiry_date(patient, dispensed_date, max_date)
     session_date = dispensed_date.to_date
         
     #get all drug dispensed on set clinic day
@@ -1490,11 +1488,16 @@ EOF
     end unless appointment_type.blank?
     ##############################################################################################################
 
-
     unless suggest_appointment_dates.blank?
-      return (suggest_appointment_dates.sort.first).to_date 
+      suggest_appointment = (suggest_appointment_dates.sort.first).to_date 
     else
-      return (smallest_expire_date).to_date
+      suggest_appointment = (smallest_expire_date).to_date
+    end
+
+    if suggest_appointment > max_date
+      return max_date
+    else
+      return suggest_appointment
     end
 
 	end

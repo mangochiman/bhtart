@@ -947,8 +947,13 @@ EOF
     
     ################################# Recalculate auto_expire_date ##########################
     unless orders.blank?
-      appointment_type = PatientService.appointment_type(@patient, session_date) 
-      if appointment_type.value_text == 'Optimize - including hanging pills'
+      appointment_type = PatientService.appointment_type(@patient, session_date)
+      discontinued_dates = []
+      orders.each do |o|
+        discontinued_dates << o.discontinued_date unless o.discontinued_date.blank?
+      end 
+
+      if appointment_type.value_text == 'Optimize - including hanging pills' and discontinued_dates.blank?
         MedicationService.recalculate_auto_expire_dates(orders) 
       end unless appointment_type.blank?
     end
