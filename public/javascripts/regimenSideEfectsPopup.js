@@ -81,13 +81,13 @@ function moreSideEffects(){
                 for (var i = 0; i < side_effects_contraindications[sdate][type].length; i++){
                     if (type == 'side effect'){
 
-                        if (td2.innerHTML.length < 1){
+                        if (td2.innerHTML.length < 1 || td2.innerHTML == '&nbsp;'){
                             td2.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td2.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
                         }
                     }else{
-                        if (td.innerHTML.length < 1){
+                        if (td.innerHTML.length < 1 || td.innerHTML == '&nbsp;'){
                             td.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
@@ -168,13 +168,13 @@ function lessSideEffects(){
                 for (var i = 0; i < side_effects_contraindications[sdate][type].length; i++){
                     if (type == 'side effect'){
 
-                        if (td2.innerHTML.length < 1){
+                        if (td2.innerHTML.length < 1 || td2.innerHTML == '&nbsp;'){
                             td2.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td2.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
                         }
                     }else{
-                        if (td.innerHTML.length < 1){
+                        if (td.innerHTML.length < 1 || td.innerHTML == '&nbsp;'){
                             td.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
@@ -324,13 +324,13 @@ function contraindicators(){
                 for (var i = 0; i < side_effects_contraindications[sdate][type].length; i++){
                     if (type == 'side effect'){
 
-                        if (td2.innerHTML.length < 1){
+                        if (td2.innerHTML.length < 1 || td.innerHTML == '&nbsp;'){
                             td2.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td2.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
                         }
                     }else{
-                        if (td.innerHTML.length < 1){
+                        if (td.innerHTML.length < 1 || td.innerHTML == '&nbsp;'){
                             td.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
@@ -423,7 +423,7 @@ function contraindicators(){
 
         cancelButton = document.createElement('span');
         cancelButton.className = 'clinicVisitButton FastTrackBtn';
-        cancelButton.innerHTML = 'Select Another <br />Regimen';
+        cancelButton.innerHTML = 'Select other <br />regimen';
         cancelButton.style.backgroundImage = 'none';
         cancelButton.style.border = '1px solid transparent';
         cancelButton.style.borderRadius = '4px';
@@ -477,7 +477,7 @@ function contraindicators(){
 
         nextButton = document.createElement('span');
         nextButton.className = 'fastTrackVisitButton FastTrackBtn';
-        nextButton.innerHTML = 'Continue With The <br />Selected Regimen';
+        nextButton.innerHTML = 'Keep selected<br />regimen';
         nextButton.style.backgroundImage = 'none';
         nextButton.style.border = '1px solid transparent';
         nextButton.style.borderRadius = '4px';
