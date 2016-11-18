@@ -19,6 +19,8 @@ function moreSideEffects(){
     span = document.createElement('span');
     new_table = document.createElement('table');
     new_table.setAttribute("cellspacing", '0px');
+    new_table.setAttribute("class", 'regimen_side_effect_popup');
+
     tr = document.createElement('tr');
     tr.setAttribute("class", 'contraindications_row');
     new_table.appendChild(tr);
@@ -105,6 +107,7 @@ function lessSideEffects(){
     span = document.createElement('span');
     new_table = document.createElement('table');
     new_table.setAttribute("cellspacing", '0px');
+    new_table.setAttribute("class", 'regimen_side_effect_popup');
     tr = document.createElement('tr');
     tr.setAttribute("class", 'contraindications_row');
     new_table.appendChild(tr);
@@ -260,6 +263,7 @@ function contraindicators(){
     span = document.createElement('span');
     new_table = document.createElement('table');
     new_table.setAttribute("cellspacing", '0px');
+    new_table.setAttribute("class", 'regimen_side_effect_popup');
     tr = document.createElement('tr');
     tr.setAttribute("class", 'contraindications_row');
     new_table.appendChild(tr);
@@ -361,7 +365,7 @@ function contraindicators(){
             }
         }
 
-        data = "<table cellspacing='0px' style='width:40%; left:10%; margin-left: 101px; font-size: 14pt;'>";
+        data = "<table cellspacing='0px' style='width:40%; left:10%; margin-left: 101px; font-size: 14pt;' class = 'regimen_side_effect_popup'>";
         data += "<tr>";
         data += "<td style='border-bottom: 1px solid black; padding:8px;'>&nbsp;</td>"
         data += "<td style='border: 0px solid black; padding:8px;'>&nbsp;</td>"
@@ -446,7 +450,7 @@ function contraindicators(){
 
         viewMoreButton = document.createElement('span');
         viewMoreButton.className = 'clinicVisitButton FastTrackBtn more';
-        viewMoreButton.innerHTML = 'View whole <br />side effect history';
+        viewMoreButton.innerHTML = 'View whole <br />history';
         viewMoreButton.style.backgroundImage = 'none';
         viewMoreButton.style.border = '1px solid transparent';
         viewMoreButton.style.borderRadius = '4px';

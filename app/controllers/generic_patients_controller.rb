@@ -382,6 +382,14 @@ EOF
   
   def void
     @encounter = Encounter.find(params[:encounter_id])
+    (@encounter.observations || []).each do |ob|
+      ob.void
+    end
+
+    (@encounter.orders || []).each do |od|
+      od.void
+    end
+
     @encounter.void
     show and return
   end
@@ -802,7 +810,6 @@ EOF
     @encounters = @patient.encounters.find_by_date(session_date)
     @prescriptions = @patient.orders.unfinished.prescriptions.all
     @programs = @patient.patient_programs.all
-    #raise @programs.first.patient_states.last.to_s
     @alerts = alerts(@patient, session_date) rescue nil
     # This code is pretty hacky at the moment
     @restricted = ProgramLocationRestriction.all(:conditions => {:location_id => Location.current_health_center.id })
@@ -823,7 +830,27 @@ EOF
 					prog.program_id, session_date, @patient.id],:order => "patient_state_id ASC")
      @program_state << [prog.to_s,  patient_states.last.to_s, prog.program_id, prog.date_enrolled]
     end
+    #################################### treatment encounter ####################################
+    @prescriptions = {}
+    start_date = session_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = session_date.strftime('%Y-%m-%d 23:59:59')
+
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    orders = Order.find(:all,:joins =>"INNER JOIN drug_order d ON d.order_id = orders.order_id
+        INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}",
+        :conditions =>["e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+        @patient.id, start_date, end_date], :order =>"encounter_datetime")
+
+    (orders || []).reject do |order|
+      drug = order.drug_order.drug
+      @prescriptions[order] = {
+        :medication => drug.name,
+        :instructions => order.instructions
+      }
+    end
+    ##############################################################################################
 =end
+
     render :template => 'dashboards/overview_tab', :layout => false
   end
 
@@ -1281,7 +1308,8 @@ EOF
     patient.encounters.find_last_by_encounter_type(type.id, :order => "encounter_datetime").observations.each do | obs |
       next if obs.order.blank?
       next if obs.order.auto_expire_date.blank?
-      alerts << "Drugs runout date: #{obs.order.drug_order.drug.name} #{obs.order.auto_expire_date.to_date.strftime('%d/%b/%Y')}"
+      auto_expire_date = obs.order.discontinued_date.to_date rescue obs.order.auto_expire_date.to_date
+      alerts << "Runout date: #{obs.order.drug_order.drug.name} #{auto_expire_date.to_date.strftime('%d/%b/%Y')}"
     end rescue []
 
     # BMI alerts
@@ -3471,9 +3499,19 @@ EOF
 
   def void_encounter
     @encounter = Encounter.find(params[:encounter_id])
+    
+    (@encounter.observations || []).each do |ob|
+      ob.void
+    end
+
+    (@encounter.orders || []).each do |od|
+      od.void
+    end
+
     ActiveRecord::Base.transaction do
       @encounter.void
     end
+
     return
   end
 

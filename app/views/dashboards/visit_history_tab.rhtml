@@ -34,7 +34,7 @@
     
 </script>
   <div id="encounters" style="border: 1px solid #eee; padding: 10px; border-radius: 15px;">
-    <% current_day = session[:datetime].strftime('%Y-%m-%d') rescue 'Today'%>
+    <% current_day = session[:datetime].strftime('%d/%b/%Y') rescue 'Today'%>
     <h2 style="margin: 0px;">Visit summary on <%=current_day %></h2>
     
     <div  style="display: table; width: 99%;">
@@ -45,9 +45,9 @@
                 <li class="data <%= cycle('even', 'odd') %>" encounter="<%= encounter.id %>" enc_name="<%= encounter.type.name %>">
                   <div class="void"><img src="/images/cancel_flat_small.png"/></div>
                   <% if encounter.name.humanize.include?('Hiv') %>
-                    <div class="encounter"><%=(h encounter.name.humanize).gsub('Hiv','HIV').gsub('Tb','TB') %> at <%=h encounter.encounter_datetime.strftime("%k:%M") %> by <%=@creator_name[encounter.creator]%></div>
+                    <div class="encounter"><%=h encounter.encounter_datetime.           strftime("%k:%M") %> <%=(h encounter.name.humanize).gsub('Hiv','HIV').gsub('Tb','TB') %>  <%=@creator_name[encounter.creator]%></div>
                   <% else %>
-                    <div class="encounter"><%=(h encounter.name.humanize).gsub('Art','ART').gsub('hiv','HIV').gsub('Tb','TB') %> at <%=h encounter.encounter_datetime.strftime("%k:%M") %> by <%=@creator_name[encounter.creator]%></div>
+                    <div class="encounter"><%=h encounter.encounter_datetime.strftime("%k:%M") %> <%=(h encounter.name.humanize).gsub('Art','ART').gsub('hiv','HIV').gsub('Tb','TB') %> <%=@creator_name[encounter.creator]%></div>
                   <% end %>
                 </li>
               <% end %>
