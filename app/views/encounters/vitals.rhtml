@@ -257,8 +257,10 @@ dateToday = session[:datetime].to_date rescue Date.today
       displayText += "<span class='goodWeightForAge'>" + currentWeightPercentile + "%</span><br>";
     } else if (currentWeightPercentile >= 70 && currentWeightPercentile < 80) {
       displayText += "<span class='medWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Moderate wasting </span><br>";
-    } else {
+    } else if (currentWeightPercentile < 70) {
       displayText += "<span class='lowWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Severe wasting</span><br>";
+    } else {
+      displayText += "<span class='lowWeightForAge'>N/A</span><span class='recommendation'> Failed to calculate</span><br>";
     }
     displayText += "</div>";
 
@@ -288,8 +290,10 @@ dateToday = session[:datetime].to_date rescue Date.today
       displayText += "<span class='goodWeightForHeight'>" + weightForHeightPercentile + "%</span><br>";
     } else if (weightForHeightPercentile >= 75) {
       displayText += "<span class='medWeightForHeight'>" + weightForHeightPercentile + "%</span>" + " <span class='recommendation'> Moderate wasting</span><br>";
-    } else {
+    } else if (weightForHeightPercentile < 75) {
       displayText += "<span class='lowWeightForHeight'>" + weightForHeightPercentile + "%</span>" + "<span class='recommendation'> Severe wasting</span><br>";
+    } else {
+      displayText += "<span class='lowWeightForHeight'>N/A: </span>" + "<span class='recommendation'> Failed to calculate</span><br>";
     }
     displayText += "</div>";
   }
@@ -299,7 +303,19 @@ dateToday = session[:datetime].to_date rescue Date.today
     document.getElementById('bmi').value = currentBmi;
 
     displayText = "<div><span class='title'>Current BMI:</span>";
-    if (currentBmi > 18.5) {
+    if (currentBmi >= 40 ) {
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText +="Overweight: Obese (class III)</span>";
+    }else if (currentBmi > 35) {
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText +="Overweight: Obese (class II)</span>";
+    }else if (currentBmi > 30) {
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText +="Overweight: Obese (class I)</span>";
+    }else if (currentBmi >= 25) {
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText +="Overweight: Pre-obese</span>";
+    }else if (currentBmi > 18.5) {
       displayText += currentBmi;
     } else if (currentBmi >= 16.0 && currentBmi <= 18.5) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
