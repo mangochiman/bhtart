@@ -316,7 +316,9 @@ dateToday = session[:datetime].to_date rescue Date.today
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
       displayText +="Overweight: Pre-obese</span>";
     }else if (currentBmi > 18.5) {
-      displayText += currentBmi;
+      //displayText += currentBmi;
+      displayText += "<span class='normalBMI'>" + currentBmi + "</span>";
+      displayText += "<br/><span class='recommendation'>Normal weight</span>";
     } else if (currentBmi >= 16.0 && currentBmi <= 18.5) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
       displayText +="Underweight: Moderate weight loss less than or equal to 10 percent, unexplained</span>";
