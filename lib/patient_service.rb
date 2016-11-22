@@ -1129,67 +1129,6 @@ EOF
     return true
   end
 
-  def self.drug_given_before(patient, date = Date.today)
-    clinic_encounters = ["APPOINTMENT", "VITALS","ART_INITIAL","HIV RECEPTION",
-      "ART VISIT","TREATMENT","DISPENSING",'ART ADHERENCE','HIV STAGING']
-    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
-
-    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
-        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
-        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
-
-    return [] if latest_encounter_date.blank?
-
-    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
-    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
-
-    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
-    Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
-        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
-        AND obs_datetime >=? AND obs_datetime <=?",
-        patient.id,concept_id,start_date,end_date],
-        :order =>"obs_datetime")
-  end
-
-  def self.drugs_given_on(patient, date = Date.today)
-    clinic_encounters = ["APPOINTMENT", "VITALS","ART_INITIAL","HIV RECEPTION",
-      "ART VISIT","TREATMENT","DISPENSING",'ART ADHERENCE','HIV STAGING']
-    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
-=begin
-    latest_encounter_date = Encounter.find(:first,
-        :conditions =>["patient_id = ? AND encounter_datetime >= ?
-        AND encounter_datetime <=? AND encounter_type IN(?)",
-        patient.id,date.strftime('%Y-%m-%d 00:00:00'),
-        date.strftime('%Y-%m-%d 23:59:59'),encounter_type_ids],
-        :order =>"encounter_datetime DESC").encounter_datetime rescue nil
-=end
-    latest_encounter_date = Encounter.find_by_sql("SELECT * FROM encounter
-    WHERE patient_id = #{patient.id} AND encounter_datetime >= '#{date.strftime('%Y-%m-%d 00:00:00')}'
-    AND encounter_datetime <= '#{date.strftime('%Y-%m-%d 23:59:59')}'
-    AND encounter_type IN(#{encounter_type_ids.join(',')})
-    ORDER BY encounter_datetime DESC LIMIT 1").first.encounter_datetime rescue nil
-
-    return [] if latest_encounter_date.blank?
-
-    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
-    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
-
-    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
-=begin
-    Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
-        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
-        AND obs_datetime >=? AND obs_datetime <=?",
-        patient.id,concept_id,start_date,end_date],
-        :order =>"obs_datetime")
-=end
-
-    Order.find_by_sql("SELECT * FROM orders INNER JOIN obs ON obs.order_id = orders.order_id
-      WHERE obs.person_id = #{patient.id} AND obs.concept_id = #{concept_id}
-      AND obs_datetime >= '#{start_date}' AND obs_datetime <= '#{end_date}'
-      ORDER BY obs_datetime")
-
-  end
-
   def self.get_debugger_details(person, current_date = Date.today)
 		patient = PatientBean.new('')
 		patient.person_id = person.id
@@ -1891,7 +1830,8 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     end
   end
 
-  def self.period_on_treatment(start_date, today = Date.today)
+  def self.period_on_treatment(start_date, today = session_date)
+		today = Date.today if today.blank?
     years = (today.year - start_date.year)
     months = (today.month - start_date.month)
     (years * 12) + months
@@ -2336,36 +2276,48 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     end
   end
 
-  def self.art_drug_given_before(patient, date = Date.today)
-    clinic_encounters  =  [
-                      'HIV CLINIC REGISTRATION','HIV STAGING','DISPENSING',
-                      'HIV CLINIC CONSULTATION','ART ADHERENCE','HIV RECEPTION'
-                     ]
-
-    clinic_encounters  =  ['DISPENSING']
-
-    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
-
-    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
-        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
-        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
-
-    return [] if latest_encounter_date.blank?
-
-    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
-    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
-
-    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
-    orders = Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
-        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
-        AND obs_datetime >=? AND obs_datetime <=?",
-        patient.id,concept_id,start_date,end_date],
-        :order =>"obs_datetime")
-
-    (orders || []).reject do |order|
-      drug = order.drug_order.drug
-      !MedicationService.arv(drug)
+  def self.earliest_start_date_patient_data(patient_id)
+    record = ActiveRecord::Base.connection.select_all("
+    select
+        `p`.`patient_id` AS `patient_id`,
+        cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+        `person`.`death_date` AS `death_date`, `person`.`birthdate`,
+         TIMESTAMPDIFF(YEAR,`person`.`birthdate`,  min(`s`.`start_date`)) AS `age_at_initiation`,
+         TIMESTAMPDIFF(DAY,`person`.`birthdate`,  min(`s`.`start_date`)) AS `age_in_days`
+    from
+        ((`patient_program` `p`
+        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+    where
+        (
+          (`p`.`voided` = 0)
+          and (`s`.`voided` = 0)
+          and (`p`.`program_id` = 1)
+          and (`s`.`state` = 7)
+          and `p`.`patient_id` = #{patient_id}
+        )
+    group by `p`.`patient_id`").collect do |p|
+    {
+      :birthdate => (p['birthdate'].to_date rescue nil),
+      :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+      :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+      :death_date => (p['death_date'].to_date rescue nil),
+      :age_at_initiation => (p['age_at_initiation'].to_i rescue nil),
+      :age_in_days => (p['age_in_days'].to_i rescue nil)
+    }
     end
+
+    return record.first rescue nil
+  end
+
+  def self.appointment_type(patient, session_date)
+    appointment_type_id = ConceptName.find_by_name('Appointment type').concept_id
+
+    Observation.find(:first, :conditions => ["concept_id = ? AND person_id = ?
+      AND obs_datetime BETWEEN ? AND ?", appointment_type_id, patient.id,
+      session_date.strftime('%Y-%m-%d 00:00:00'), 
+      session_date.strftime('%Y-%m-%d 23:59:59')])
   end
 
   private

@@ -1,5 +1,41 @@
 class GenericEncountersController < ApplicationController
   def create(params=params, session=session)
+    
+    #A hack to set concept: Prescribe drugs to No/Yes if Medication orders include any of: ARVs/CPT/IPT
+    if params[:encounter]['encounter_type_name'].match(/HIV CLINIC CONSULTATION|ART ADHERENCE/i) 
+      set_prescribe_drugs_yes = true
+      params[:observations].each do |ob|
+        if ob[:concept_name] == 'Medication orders'
+          ipt_index = ob['value_coded_or_text_multiple'].find_index('IPT') rescue nil
+          ob['value_coded_or_text_multiple'][ipt_index] = 'Isoniazid' unless ipt_index.blank?
+          options_selected = ob['value_coded_or_text_multiple'].join(',') unless ob['value_coded_or_text_multiple'].blank?
+          if options_selected.blank?
+            params[:observations] -= [ob]
+            next
+          end
+
+          if options_selected.match(/None/i)
+            set_prescribe_drugs_yes = false
+            break
+          end
+        end
+      end
+
+      params[:observations].each do |ob|
+        if ob[:concept_name] == 'Prescribe drugs'
+          if (set_prescribe_drugs_yes == true)
+            ob['value_coded_or_text'] = 'Yes'
+          else
+            ob['value_coded_or_text'] = 'NO'
+          end
+          
+          break
+        end
+      end
+
+    end
+    ##########3 hack ends here ######
+
     xpertassay = false
     if params[:change_appointment_date] == "true"
       session_date = session[:datetime].to_date rescue Date.today
@@ -24,6 +60,7 @@ class GenericEncountersController < ApplicationController
     end
 
     if params['encounter']['encounter_type_name'] == 'HIV CLINIC REGISTRATION'
+      session_date = session[:datetime].to_date rescue Date.today
 
       has_tranfer_letter = false
       (params["observations"]).each do |ob|
@@ -32,27 +69,83 @@ class GenericEncountersController < ApplicationController
           break
         end
       end
+          
+      observations = []
       
-      if params[:observations][0]['concept_name'].upcase == 'EVER RECEIVED ART' and params[:observations][0]['value_coded_or_text'].upcase == 'NO'
-        observations = []
-        (params[:observations] || []).each do |observation|
-          next if observation['concept_name'].upcase == 'HAS TRANSFER LETTER'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-          next if observation['concept_name'].upcase == 'ART NUMBER AT PREVIOUS LOCATION'
-          next if observation['concept_name'].upcase == 'DATE ART LAST TAKEN'
-          next if observation['concept_name'].upcase == 'LAST ART DRUGS TAKEN'
-          next if observation['concept_name'].upcase == 'TRANSFER IN'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-          observations << observation
-        end
-      elsif params[:observations][4]['concept_name'].upcase == 'DATE ART LAST TAKEN' and params[:observations][4]['value_datetime'] != 'Unknown'
-        observations = []
-        (params[:observations] || []).each do |observation|
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-          observations << observation
+      (params[:observations] || []).each do |obs|
+        if obs['concept_name'].upcase == 'EVER RECEIVED ART' and obs['value_coded_or_text'].upcase == 'NO'
+          (params[:observations] || []).each do |observation|
+            next if observation['concept_name'].upcase == 'HAS TRANSFER LETTER'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+            next if observation['concept_name'].upcase == 'ART NUMBER AT PREVIOUS LOCATION'
+            next if observation['concept_name'].upcase == 'DATE ART LAST TAKEN'
+            next if observation['concept_name'].upcase == 'LAST ART DRUGS TAKEN'
+            next if observation['concept_name'].upcase == 'TRANSFER IN'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+            observations << observation
+          end
+        elsif obs['concept_name'].upcase == 'Date antiretrovirals started'.upcase 
+          date_art_started = obs['value_datetime'].to_date rescue nil
+          art_start_date_estimation = params[:art_start_date_estimation]
+          if date_art_started.blank? and not art_start_date_estimation.blank?
+            case art_start_date_estimation
+              when '6 months ago'
+                obs[:value_datetime] = session_date - 6.months
+                obs[:value_modifier] = '='
+              when '12 months ago'
+                obs[:value_datetime] = session_date - 12.months
+                obs[:value_modifier] = '='
+              when '18 months ago'
+                obs[:value_datetime] = session_date - 18.months
+                obs[:value_modifier] = '='
+              when '24 months'
+                obs[:value_datetime] = session_date - 24.months
+                obs[:value_modifier] = '='
+              when 'Over 2 years ago'
+                obs[:value_datetime] = session_date - 24.months
+                obs[:value_modifier] = '>'
+            end
+            obs[:value_text] = art_start_date_estimation
+          end
+        elsif obs['concept_name'].upcase == 'DATE ART LAST TAKEN' 
+          date_art_last_taken = obs['value_datetime'].to_date rescue nil
+          observations = []
+          (params[:observations] || []).each do |observation|
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+            observations << observation
+          end unless date_art_last_taken.blank?
+          
+            if date_art_last_taken.blank?
+            last_month = false ; last_week = false
+            (params[:observations] || []).each do |observation|
+              if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS' and  observation['value_coded_or_text'].upcase == 'YES'
+                last_week = true
+              elsif observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' and  observation['value_coded_or_text'].upcase == 'YES'
+                last_month = true
+              end
+            end 
+           
+            if last_week == true
+              obs[:value_datetime] = (session_date - 2.weeks)
+            elsif last_month == true
+              obs[:value_datetime] = (session_date.to_date - 2.months)
+            else
+              year_art_last_taken = params['year_art_last_taken'].to_i
+              month_art_last_taken = params['month_art_last_taken']
+              day_art_last_taken = params['day_art_last_taken'].to_i
+              if year_art_last_taken > 1 and month_art_last_taken == 'Unknown'
+                obs[:value_datetime] = "#{year_art_last_taken}/July/01".to_date
+              elsif year_art_last_taken > 1 and month_art_last_taken != 'Unknown' and day_art_last_taken < 1
+                obs[:value_datetime] = "#{year_art_last_taken}/#{month_art_last_taken}/15".to_date
+              elsif last_month == false and last_week == false
+                obs[:value_datetime] = (session_date.to_date - 3.months)
+              end
+            end
+            obs[:value_text] ='Estimated'
+          end
         end
       end
 
@@ -137,10 +230,23 @@ class GenericEncountersController < ApplicationController
           date_started_art = ob["value_datetime"].to_date rescue nil
           if date_started_art.blank?
             date_started_art = ob["value_coded_or_text"].to_date rescue nil
+            if date_started_art.blank?
+              year_started_art = params[:year_started_art].to_i 
+              month_started_art = params[:month_started_art]
+              day_started_art = params[:day_started_art].to_i 
+              if year_started_art > 1 and month_started_art == 'Unknown'
+                ob[:value_datetime] = "#{year_started_art}/July/01".to_date 
+                ob[:value_text] = 'Estimated'
+              elsif year_started_art > 1 and month_started_art != 'Unknown' and day_started_art < 1
+                ob[:value_datetime] = "#{year_started_art}/#{month_started_art}/15".to_date 
+                ob[:value_text] = 'Estimated'
+              end
+            end
           end
         end
       end
       
+          
       unless vitals_observations.blank?
         encounter = Encounter.new()
         encounter.encounter_type = EncounterType.find_by_name("VITALS").id

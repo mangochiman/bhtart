@@ -35,7 +35,7 @@
                    end
                 %>
                 <%if header == true %>
-                  <%header_title = ( encounter_date.strftime("%d-%b-%Y").to_s + " - ").humanize.titleize %>
+                  <%header_title = ( encounter_date.strftime("%d/%b/%Y").to_s + " - ").humanize.titleize %>
                   <tr> <th class="visit-summary-header" colspan="2" style="height:2px;"><%=h(header_title)%></th> </tr>
                 <%end%>
                 <% previous_encounter = encounter.name %>

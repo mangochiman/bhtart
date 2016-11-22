@@ -104,7 +104,7 @@ BEGIN
 
 DECLARE date_started DATE;
 
-SET date_started = (SELECT LEFT(value_datetime,10) FROM obs WHERE concept_id = 2516 AND person_id = set_patient_id LIMIT 1);
+SET date_started = (SELECT LEFT(value_datetime,10) FROM obs WHERE concept_id = 2516 AND person_id = set_patient_id AND voided = 0 LIMIT 1);
 
 if date_started is NULL then
 SET date_started = min_state_date;
@@ -127,6 +127,80 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   WHERE ((`p`.`voided` = 0) AND (`s`.`voided` = 0) AND (`p`.`program_id` = 1) AND
         (`s`.`state` = 7))
   GROUP BY `p`.`patient_id`;
+
+-- The date of the first On ARVs state for each patient
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+	VIEW `patients_on_arvs` AS
+    select
+        `p`.`patient_id` AS `patient_id`,
+        `person`.`birthdate`,
+        date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+        `person`.`death_date` AS `death_date`,
+        `person`.`gender` AS `gender`,
+        ((to_days(date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`))) - to_days(`person`.`birthdate`)) / 365.25) AS `age_at_initiation`,
+        (to_days(min(`s`.`start_date`)) - to_days(`person`.`birthdate`)) AS `age_in_days`
+    from
+        ((`patient_program` `p`
+        left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+        left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+    where
+        ((`p`.`voided` = 0)
+            and (`s`.`voided` = 0)
+            and (`p`.`program_id` = 1)
+            and (`s`.`state` = 7))
+    group by `p`.`patient_id`;
+
+-- reason_ or art eligibility obs
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+  	VIEW `reason_for_art_eligibility_obs` AS
+    select
+        `o`.`person_id` AS `person_id`,
+        `o`.`concept_id` AS `concept_id`,
+        `o`.`obs_datetime` AS `obs_datetime`,
+        `n`.`name` AS `name`
+    from
+        (`obs` `o`
+        left join `concept_name` `n` ON (((`n`.`concept_id` = `o`.`value_coded`)
+            and (`n`.`concept_name_type` = 'FULLY_SPECIFIED')
+            and (`n`.`voided` = 0))))
+    where
+        ((`o`.`concept_id` = 7563)
+            and (`o`.`voided` = 0))
+    order by `o`.`obs_datetime` desc;
+
+-- The date of the first On ARVs state for each patient
+CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
+VIEW `patient_first_arv_amount_dispensed` AS
+    select
+        `enc`.`encounter_id` AS `encounter_id`,
+        `enc`.`encounter_type` AS `encounter_type`,
+        `enc`.`patient_id` AS `patient_id`,
+        `enc`.`provider_id` AS `provider_id`,
+        `enc`.`location_id` AS `location_id`,
+        `enc`.`form_id` AS `form_id`,
+        `enc`.`encounter_datetime` AS `encounter_datetime`,
+        `enc`.`creator` AS `creator`,
+        `enc`.`date_created` AS `date_created`,
+        `enc`.`voided` AS `voided`,
+        `enc`.`voided_by` AS `voided_by`,
+        `enc`.`date_voided` AS `date_voided`,
+        `enc`.`void_reason` AS `void_reason`,
+        `enc`.`uuid` AS `uuid`,
+        `enc`.`changed_by` AS `changed_by`,
+        `enc`.`date_changed` AS `date_changed`
+    from
+        `encounter` `enc`
+    where
+        ((`enc`.`encounter_type` = 54)
+            and (`enc`.`voided` = 0)
+            and (cast(`enc`.`encounter_datetime` as date) = (select
+                cast(min(`e`.`encounter_datetime`) as date)
+            from
+                `encounter` `e`
+            where
+                ((`e`.`patient_id` = `enc`.`patient_id`)
+                    and (`e`.`encounter_type` = `enc`.`encounter_type`)
+                    and (`e`.`voided` = 0)))));
 
 -- 7937 = Ever registered at ART clinic
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
@@ -1038,7 +1112,7 @@ DECLARE arv_concept INT;
 set dispension_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'AMOUNT DISPENSED');
 set arv_concept = (SELECT concept_id FROM concept_name WHERE name = "ANTIRETROVIRAL DRUGS");
 
-set start_date = (SELECT DATE(obs_datetime) FROM obs WHERE person_id = patient_id AND concept_id = dispension_concept_id AND value_drug IN (SELECT drug_id FROM drug d WHERE d.concept_id IN (SELECT cs.concept_id FROM concept_set cs WHERE cs.concept_set = arv_concept)) ORDER BY DATE(obs_datetime) ASC LIMIT 1);
+set start_date = (SELECT MIN(DATE(obs_datetime)) FROM obs WHERE person_id = patient_id AND concept_id = dispension_concept_id AND value_drug IN (SELECT drug_id FROM drug d WHERE d.concept_id IN (SELECT cs.concept_id FROM concept_set cs WHERE cs.concept_set = arv_concept)));
 
 RETURN start_date;
 END */;;

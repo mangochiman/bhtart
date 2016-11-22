@@ -53,8 +53,14 @@
           <% for prog in @programs do %>
               <li class="data <%= cycle('even', 'odd') %>" program="<%= prog.id %>">
                 <div class="program">
-                  <%=(h prog.program.name.humanize).gsub('Hiv','HIV').gsub('Tb','TB') %> started <%=h prog.date_enrolled.strftime("%b-%Y") rescue 'Unknown' %>
-                  <br /><font class='patient_state'>Current state: <%=h prog.patient_states.last.to_s.humanize.gsub('-art','-ART').gsub('arvs','ARVs') %></font>
+                  <%=(h prog.program.name.humanize).gsub('Hiv','HIV').gsub('Tb','TB').gsub('program','Care') %> started <%=h prog.date_enrolled.strftime("%b/%Y") rescue 'Unknown' %>
+                  <% state = prog.patient_states.last.to_s.humanize.gsub('-art','-ART').gsub('arvs','ARVs') 
+                     date = state[-11..-1].to_date rescue nil
+                     unless date.blank?
+                      state = "#{state[0..-12]} #{date.strftime('%d/%b/%Y')}"
+                     end 
+                  %>
+                  <br /><font class='patient_state'>Current state: <%=h state %></font>
                 </div>
               </li>
             <%
@@ -93,14 +99,14 @@
                 <% end %>
                 <% if @prescriptions.empty? %>
                   <li class="data even">
-                    <div class="prescription">There are no current prescriptions for this patient</div>
+                    <div class="prescription">&nbsp;No alerts</div>
                   </li>
                 <% end %>
               </ul>
             </div>
           </div>
-<div style="display: table-cell; width: 50%; padding: 5px; border: 1px solid #eee; border-radius: 15px;">
-
+          
+          <div style="display: table-cell; width: 50%; padding: 5px; border: 1px solid #eee; border-radius: 15px;">
             <div id="alerts">
               <!-- h2>Alerts</h2 -->
               <ul class="list" style="height:140px; border-radius: 15px;">
@@ -112,6 +118,7 @@
                         <div class="patientState"><%=h alert %></div>
                       </li>
                      <% else %>
+                        <% next if alert.match(/Patient on ART in Local Program/i) %>
                         <li class="data <%= cycle('even', 'odd') %>" >
 
                          <div class="noneWarnings"><%=h alert %></div>
@@ -127,5 +134,6 @@
                 </ul>
               </div>
             </div>
+
           </div>
         </div>

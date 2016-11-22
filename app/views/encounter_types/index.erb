@@ -1,6 +1,17 @@
 <script>
   var tt_cancel_destination = "/patients/show/<%= params[:patient_id] %>"
 </script>
+<style>
+  .keyboard{
+    display: none !important;
+}
+#tt_page_select_task .inputFrameClass{
+  height: 80%;
+}
+#tt_page_select_task #viewport{
+  height: 90%;
+}
+</style>
 <form action="/encounter_types/show">
   <%= hidden_field_tag "patient_id", params[:patient_id] %>
   <label for="encounter_type">Select Task</label>

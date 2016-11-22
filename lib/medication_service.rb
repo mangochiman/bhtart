@@ -35,8 +35,8 @@ module MedicationService
   # into select options. 
 	def self.regimen_options(weight, program)
 		regimens = Regimen.find(	:all,
-									:order => 'regimen_index',
-									:conditions => ['? >= min_weight AND ? < max_weight AND program_id = ?', weight, weight, program.program_id])
+      :order => 'regimen_index',
+      :conditions => ['? >= min_weight AND ? < max_weight AND program_id = ?', weight, weight, program.program_id])
 
 		options = regimens.map { |r|
 			concept_name = (r.concept.concept_names.typed("SHORT").first ||	r.concept.concept_names.typed("FULLY_SPECIFIED").first).name
@@ -52,8 +52,8 @@ module MedicationService
 
   def self.all_regimen_options(program)
 		regimens = Regimen.find(	:all,
-									:order => 'regimen_index',
-									:conditions => ['program_id = ?', program.program_id])
+      :order => 'regimen_index',
+      :conditions => ['program_id = ?', program.program_id])
 
 		options = regimens.map { |r|
 			concept_name = (r.concept.concept_names.typed("SHORT").first ||	r.concept.concept_names.typed("FULLY_SPECIFIED").first).name
@@ -110,8 +110,8 @@ module MedicationService
                         IN (SELECT concept_name_id FROM concept_name_tag_map \
                         WHERE concept_name_tag_id = (SELECT concept_name_tag_id \
                         FROM concept_name_tag WHERE tag = 'preferred_dmht'))").collect {|freq|
-                            freq.name rescue nil
-                        }.compact rescue []
+      freq.name rescue nil
+    }.compact rescue []
   end
   
 	def self.fully_specified_frequencies
@@ -163,6 +163,8 @@ module MedicationService
       AND d.drug_inventory_id IN(SELECT drug_id FROM arv_drug);")  
     
     return if dispensed_arvs_ids.blank?
+
+    return self.regimen_interpreter(dispensed_arvs_ids.collect{|x| x.drug_inventory_id.to_i})
  
     dispensed_regimen = 'Unknown'
     dispensed_arvs_ids = dispensed_arvs_ids.map{|i|i.drug_inventory_id}.uniq
@@ -192,6 +194,654 @@ module MedicationService
      
     return if obs.blank?
     return obs.first.obs_datetime
+  end
+
+  def self.moh_arv_regimen_options(current_weight)
+    regimen_categories = {}
+    #regimens = MohRegimen.find(:all, :joins => "INNER JOIN moh_regimen_lookup l 
+    # ON l.regimen_id = moh_regimens.regimen_id", :select => "moh_regimens.*, l.*")
+
+    regimen_ingrients = []
+    ingrients = MohRegimenIngredient.all
+
+    (ingrients || []).each do |r|
+      if current_weight.to_f >= r.min_weight.to_f and current_weight.to_f <= r.max_weight.to_f
+        regimen_ingrients << r.drug_inventory_id 
+      end
+    end
+
+    moh_regimens = {}
+    moh_regimen_lookup = MohRegimenLookup.find(:all, 
+      :conditions => ["drug_inventory_id IN(?)", regimen_ingrients])
+
+    (moh_regimen_lookup || []).each do |lookup|
+      moh_regimens[lookup.regimen_name] = [] if moh_regimens[lookup.regimen_name].blank?
+      moh_regimens[lookup.regimen_name] << lookup.drug_inventory_id
+    end
+
+    recommended_regimens = []
+
+    (moh_regimens || {}).each do |regimen_name, drug_inventory_ids|
+      regimen_index = regimen_name.to_i
+      regimen_index_s = regimen_name.to_s
+
+      num_of_drug_combination = MohRegimenLookup.find_by_regimen_name(regimen_name).num_of_drug_combination
+      regimen_possible_drug_ids = MohRegimenLookup.find_by_sql("
+        SELECT drug_inventory_id FROM moh_regimen_lookup 
+        WHERE LEFT(regimen_name,#{regimen_index_s.length}) = #{regimen_index}").map(&:drug_inventory_id)
+      found_in_combination = true
+
+      valid_medication_ids = []
+      (regimen_possible_drug_ids).each do |drug_id|
+        medication = MohRegimenIngredient.find(:first, :conditions =>["drug_inventory_id = ? 
+          AND #{current_weight.to_f} >= FORMAT(min_weight,2) 
+          AND #{current_weight.to_f} <= FORMAT(max_weight,2)", drug_id])
+
+        unless medication.blank?
+          valid_medication_ids << drug_id
+        end
+      end  
+       
+      if (valid_medication_ids.count == num_of_drug_combination)
+        recommended_regimens << "Regimen #{regimen_index} (#{self.get_regimen_formulation(regimen_index)})"
+      end
+
+
+    end
+
+    
+    return recommended_regimens.sort_by{|x| x.gsub('Regimen ','').to_i}.uniq
+  end
+
+  def self.get_regimen_formulation(index)
+    regimen_formulations = {
+      0 => "ABC / 3TC + NVP",
+      2 => "AZT / 3TC / NVP",
+      4 => "AZT / 3TC + EFV",
+      5 => "TDF / 3TC / EFV",
+      6 => "TDF / 3TC + NVP",
+      7 => "TDF / 3TC + ATV/r",
+      8 => "AZT / 3TC + ATV/r",
+      9 => "ABC / 3TC + ATV/r",
+      10 => "TDF / 3TC + LPV/r",
+      11 => "AZT / 3TC + LPV/r",
+      12 => "DRV + r + ETV + RAL"
+    }
+    return regimen_formulations[index]
+  end
+
+  def self.regimen_formulations
+    regimen_formulations = {
+      0 => "ABC/3TC + NVP",
+      2 => "AZT/3TC/NVP",
+      4 => "AZT/3TC + EFV",
+      5 => "TDF/3TC/EFV",
+      6 => "TDF/3TC + NVP",
+      7 => "TDF/3TC + ATV/r",
+      8 => "AZT/3TC + ATV/r",
+      9 => "ABC/3TC + ATV/r",
+      10 => "TDF/3TC + LPV/r",
+      11 => "AZT/3TC + LPV/r",
+      12 => "DRV + r + ETV + RAL"
+    }
+    
+    return regimen_formulations
+  end
+
+  def self.regimen_medications(regimen_index, current_weight)
+    regimen_index = regimen_index.to_s.gsub('Regimen ','').to_i 
+    regimen_id = MohRegimen.find(:first, :conditions =>['regimen_index = ?', regimen_index]).regimen_id
+    regimen_medications = Drug.find(:all,:joins => "INNER JOIN moh_regimen_ingredient i 
+      ON i.drug_inventory_id = drug.drug_id AND i.regimen_id = #{regimen_id}
+      INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
+      :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
+      AND #{current_weight.to_f} <= FORMAT(max_weight,2)", :select => "drug.*, i.*, d.*").map do |medication|
+      {
+        :drug_name => medication.name,
+        :am => medication.am,
+        :pm => medication.pm,
+        :units => medication.units,
+        :drug_id => medication.drug_id,
+        :regimen_index => regimen_index,
+        :category => MohRegimenLookup.find_by_drug_inventory_id(medication.drug_id).regimen_name.match(/A|P/i)[0]
+      }
+    end
+
+    return regimen_medications    
+  end
+
+  def self.regimen_interpreter_old(medication_ids = [])
+    return nil if medication_ids.blank?
+    moh_regimen_ingredients = {}
+
+    (MohRegimenLookup.all || []).each do |l|
+      moh_regimen_ingredients[l.regimen_name] = [] if moh_regimen_ingredients[l.regimen_name].blank?
+      moh_regimen_ingredients[l.regimen_name] << l.drug_inventory_id
+    end
+
+    regimen_name = 'Unknown'
+
+    (moh_regimen_ingredients || {}).each do |regimen, drug_inventory_ids|
+      if (drug_inventory_ids - medication_ids) == [] and (drug_inventory_ids.count == medication_ids.count)
+        regimen_name = regimen
+      end
+    end
+
+    return regimen_name
+  end
+
+  def self.regimen_interpreter(medication_ids = [])
+    regimen_name = 'Unknown'
+    regimen_codes = self.regimen_codes
+    
+    regimen_codes.each do |regimen_code, data|
+      data.each do |row|
+        drugs = [row].flatten
+        drug_ids = Drug.find(:all, :conditions => ["drug_id IN (?)", drugs]).map(&:drug_id)
+        if (drug_ids - medication_ids) == [] and (drug_ids.count == medication_ids.count)
+          regimen_name = regimen_code
+          break;
+        end
+      end
+    end
+    
+    return regimen_name
+  end
+
+  def self.regimen_codes
+    #ABC/3TC (Abacavir and Lamivudine 60/30mg tablet) = 733
+    #NVP (Nevirapine 50 mg tablet) = 968
+    #NVP (Nevirapine 200 mg tablet) = 22
+    #ABC/3TC (Abacavir and Lamivudine 600/300mg tablet) = 969
+    #AZT/3TC/NVP (60/30/50mg tablet) = 732
+    #AZT/3TC/NVP (300/150/200mg tablet) = 731
+    #AZT/3TC (Zidovudine and Lamivudine 60/30 tablet) = 736
+    #EFV (Efavirenz 200mg tablet) = 30
+    #EFV (Efavirenz 600mg tablet) = 11
+    #AZT/3TC (Zidovudine and Lamivudine 300/150mg) = 39
+    #TDF/3TC/EFV (300/300/600mg tablet) = 735
+    #TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet = 734
+    #ATV/r (Atazanavir 300mg/Ritonavir 100mg) = 932
+    #LPV/r (Lopinavir and Ritonavir 100/25mg tablet) = 74
+    #LPV/r (Lopinavir and Ritonavir 200/50mg tablet) = 73
+    #Darunavir 600mg = 976
+    #Ritonavir 100mg = 977
+    #Etravirine 100mg = 978
+    #RAL (Raltegravir 400mg) = 954
+    #NVP (Nevirapine 200 mg tablet) = 22
+    #LPV/r pellets = 979
+
+    regimens = {
+      "0P" => [[733, 968], [733, 22]],
+      
+      "0A" =>[[969, 22],[969, 968]],
+      
+      "2P" => [[732]],
+      
+      "2A" => [[731]],
+      
+      "4P" => [[736, 30],[736, 11]],
+      
+      "4A" => [[39, 11],[39, 30]],
+      
+      "5A" => [[735]],
+      
+      "6A" => [[734, 22]],
+      
+      "7A" => [[734, 932]],
+
+      "8A" => [[39, 932]],
+
+      "9P" => [[733, 74],[733, 73],[733, 979]],
+
+      "9A" => [[969, 73],[969, 74]],
+
+      "10A" => [[734, 73]],
+
+      "11P" => [[736, 74],[736, 73]],
+
+      "11A" => [[39, 73],[39, 74]],
+
+      "12A" => [[976, 977, 978, 954]]
+      
+    }
+
+    return regimens
+  end
+
+  def self.other_medications(drug_name, current_weight)
+    drug_ids = Drug.find(:all, :conditions =>['name LIKE ?', "%#{drug_name}%"]).map(&:drug_id)
+
+    regimen_medications = (Drug.find(:all,:joins => "INNER JOIN moh_other_medications o 
+      ON o.drug_inventory_id = drug.drug_id AND o.drug_inventory_id IN (#{drug_ids.join(',')})
+      INNER JOIN moh_regimen_doses d ON d.dose_id = o.dose_id",
+        :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2)
+      AND #{current_weight.to_f} <= FORMAT(max_weight,2)",
+        :select => "drug.*, o.*, d.*", :limit => 10, :order => "drug.name DESC") || []).map do |medication|
+      {
+        :drug_name => medication.name,
+        :am => medication.am,
+        :pm => medication.pm,
+        :units => medication.units,
+        :drug_id => medication.drug_id,
+        :regimen_index => nil,
+        :category => medication.category
+      }
+    end
+
+    #Isoniazid section
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Isoniazid/i) and medication[:drug_name].match(/300/i)
+        return [medication]
+      end
+    end
+
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Isoniazid/i) and medication[:drug_name].match(/100/i)
+        return [medication]
+      end
+    end
+
+    #Cotrimoxazole section
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/960/i)
+        return [medication]
+      end
+    end
+
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/480/i)
+        return [medication]
+      end
+    end
+
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/120/i)
+        return [medication]
+      end
+    end
+
+
+
+    return regimen_medications
+  end
+
+  def self.calculate_days_base_on_pills(drug_id, current_weight, number_of_pills)
+    doses = Drug.find(:all,:joins => "INNER JOIN moh_regimen_ingredient i 
+      ON i.drug_inventory_id = drug.drug_id AND i.drug_inventory_id = #{drug_id}
+      INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
+      :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 
+      AND #{current_weight.to_f} <= FORMAT(max_weight,2)",
+      :select => "drug.*, i.*, d.*").map do |medication|
+      {
+        :am => medication.am, :pm => medication.pm
+      }
+    end
+
+    return 0 if doses.blank?
+    total_pills_per_day = doses.first[:am].to_f + doses.first[:pm].to_f
+    return ((number_of_pills)/total_pills_per_day).to_i
+  end
+
+  def self.get_medication_dose(order)
+    instructions = order.instructions
+    return 0 if instructions.blank?
+    medication_name = order.drug_order.drug.name
+    num_of_tabs = instructions.sub("#{medication_name}:-",'').gsub('tab(s)','').gsub('tabs','').\
+      squish.gsub('Morning:','').sub('Evening:','').squish.split(',').collect {| n | n.to_f }
+
+    dose = 0
+    (num_of_tabs || []).each do |n|
+      dose += 1 if n > 0
+    end
+
+    if dose == 0
+      return 2 if instructions.match(/EVENING/i) and instructions.match(/MORNING/i)
+      return 1 if instructions.match(/EVENING/i) and not instructions.match(/MORNING/i)
+      return 1 if not instructions.match(/EVENING/i) and instructions.match(/MORNING/i)
+      return 1 if not instructions.match(/ONCE/i) 
+      return 2 if not instructions.match(/TWICE/i) 
+    end
+
+    return dose
+  end
+
+  def self.optimized_interval(order)
+    start_date = order.start_date.to_date
+
+    calculated_min_auto_expire_date = self.prescriped_earliest_auto_expire_medication(order.encounter.patient_id, start_date)
+    min_auto_expire_date = calculated_min_auto_expire_date[1].to_date
+
+    prescription_interval = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT timestampdiff(day, DATE('#{start_date.to_s}'), DATE('#{min_auto_expire_date.to_s}')) AS days;
+EOF
+
+    return prescription_interval['days'].to_i 
+  end
+
+  def self.prescription_interval(order)
+    start_date = order.start_date.to_date
+    end_date = order.auto_expire_date.to_date
+
+    if order.discontinued_date.blank?
+      end_date = order.auto_expire_date.to_date
+    else
+      end_date = order.discontinued_date.to_date 
+    end if (order.start_date.to_date == order.auto_expire_date.to_date)
+
+    prescription_interval = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT timestampdiff(day, DATE('#{start_date.to_s}'), DATE('#{end_date.to_s}')) AS days;
+EOF
+
+    selected_interval = prescription_interval['days'].to_i 
+    if selected_interval < 1
+      end_date = order.discontinued_date.to_date
+      prescription_interval = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT timestampdiff(day, DATE('#{start_date.to_s}'), DATE('#{end_date.to_s}')) AS days;
+EOF
+
+      return prescription_interval['days'].to_i 
+    else
+      return selected_interval
+    end
+  end
+
+  def self.get_medication_pills_per_day(order)
+    instructions = order.instructions
+    return 0 if instructions.blank?
+    medication_name = order.drug_order.drug.name
+    num_of_tabs = instructions.sub("#{medication_name}:-",'').gsub('tab(s)','').gsub('tabs','').\
+      squish.gsub('Morning:','').sub('Evening:','').squish.split(',').collect {| n | n.to_f }
+
+    num_pills = 0
+    (num_of_tabs || []).each do |n|
+      num_pills += 1 if n > 0
+    end
+
+    return num_pills
+  end
+
+  def self.medication_category(medication_id)
+    #ABC/3TC (Abacavir and Lamivudine 60/30mg tablet) = 733
+    #NVP (Nevirapine 50 mg tablet) = 968
+    #NVP (Nevirapine 200 mg tablet) = 22
+    #ABC/3TC (Abacavir and Lamivudine 600/300mg tablet) = 969
+    #AZT/3TC/NVP (60/30/50mg tablet) = 732
+    #AZT/3TC/NVP (300/150/200mg tablet) = 731
+    #AZT/3TC (Zidovudine and Lamivudine 60/30 tablet) = 736
+    #EFV (Efavirenz 200mg tablet) = 30
+    #EFV (Efavirenz 600mg tablet) = 11
+    #AZT/3TC (Zidovudine and Lamivudine 300/150mg) = 39
+    #TDF/3TC/EFV (300/300/600mg tablet) = 735
+    #TDF/3TC (Tenofavir and Lamivudine 300/300mg tablet = 734
+    #ATV/r (Atazanavir 300mg/Ritonavir 100mg) = 932
+    #LPV/r (Lopinavir and Ritonavir 100/25mg tablet) = 74
+    #LPV/r (Lopinavir and Ritonavir 200/50mg tablet) = 73
+    #Darunavir 600mg = 976
+    #Ritonavir 100mg = 977
+    #Etravirine 100mg = 978
+    #RAL (Raltegravir 400mg) = 954
+    #NVP (Nevirapine 200 mg tablet) = 22
+    #LPV/r pellets = 979
+
+    #Non ARVs
+    #Cotrimoxazole (960mg) = 576
+    #Cotrimoxazole (480mg tablet) = 297
+    #TMP/SMX (Cotrimoxazole 120mg tablet) = 963
+    #INH or H (Isoniazid 300mg tablet) = 931
+    #INH or H (Isoniazid 100mg tablet) = 24
+
+
+    category = {} ; category['P'] = [733, 968, 732, 736, 30, 74, 979, 963, 24]
+    category['A'] = [976, 977, 978, 954, 22,969, 731, 39, 11, 735, 734, 932, 73, 576, 297, 931]
+
+    (category).each do |cat, medication_ids|
+      return cat if medication_ids.include?(medication_id)
+    end
+  end
+
+  def self.get_amounts_brought_if_transfer_in(person_id, drug_concept_id, date)
+    amount = Observation.find(:first, :conditions =>["concept_id = ? AND (obs_datetime BETWEEN ? AND ?)
+      AND person_id = ?", drug_concept_id , date.strftime('%Y-%m-%d 00:00:00'),
+      date.strftime('%Y-%m-%d 23:59:59'), person_id])
+    return 0 if amount.blank?
+    return amount.value_numeric
+  end
+
+  def self.amounts_brought_to_clinic(patient, session_date)
+     @amounts_brought_to_clinic = Hash.new(0)
+    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order ON obs.order_id = drug_order.order_id
+      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
+      AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
+      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND person_id = #{patient.id} AND obs.voided = 0 AND value_numeric IS NOT NULL;
+EOF
+
+    (amounts_brought_to_clinic || []).each do |amount|
+      @amounts_brought_to_clinic[amount['drug_inventory_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+    end
+
+    amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
+      WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
+      AND '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND person_id = #{patient.id}
+      AND value_numeric IS NOT NULL;
+EOF
+
+    (amounts_brought_to_clinic || []).each do |amount|
+      @amounts_brought_to_clinic[amount['drug_id'].to_i] += (amount['value_numeric'].to_f rescue 0)
+    end
+
+    return @amounts_brought_to_clinic
+  end  
+
+  def self.recalculate_auto_expire_dates(orders)
+    amounts_brought_to_clinic = self.amounts_brought_to_clinic(orders.first.patient, orders.first.encounter.encounter_datetime.to_date)
+    return if amounts_brought_to_clinic.blank?
+    
+    reseted_auto_expire_date_order_ids = [] ; days_added = []
+    
+    (orders || []).each do |order|
+      drug = order.drug_order.drug
+      next unless MedicationService.arv(drug)
+      pills_a_day = self.get_medication_pills_per_day(order)
+      (amounts_brought_to_clinic || {}).each do |drug_id, amount|
+        days = (amount / pills_a_day)
+        if days > 0 and drug_id == drug.id
+          next_auto_expire_date = (order.auto_expire_date.to_date + days.days).to_date
+          if next_auto_expire_date >= order.auto_expire_date.to_date
+            days_added << days
+            reseted_auto_expire_date_order_ids << order.id
+
+            ActiveRecord::Base.connection.execute <<EOF
+          UPDATE orders SET discontinued_date = '#{next_auto_expire_date.to_date}'
+          WHERE order_id = #{order.order_id};
+EOF
+
+          end
+        end
+      end
+    end
+    
+   
+    return if days_added.blank? or days_added.sort.first < 1 
+    days_added = days_added.sort.first.to_i
+     
+    (orders || []).each do |order|
+      drug = order.drug_order.drug
+      next if MedicationService.arv(drug)
+      if order.discontinued_date.blank?
+        new_auto_expire_date = (order.auto_expire_date.to_date + days_added.day)
+        discontinued_date = order.auto_expire_date
+        ActiveRecord::Base.connection.execute <<EOF
+        UPDATE orders SET discontinued_date = '#{new_auto_expire_date}'
+        WHERE order_id = #{order.order_id};
+EOF
+
+      end
+    end
+
+  end
+
+  def self.art_drug_given_before(patient, date = Date.today)
+    clinic_encounters  =  ['DISPENSING']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+
+    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
+        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
+    orders = Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
+        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
+        AND obs_datetime >=? AND obs_datetime <=?",
+        patient.id,concept_id,start_date,end_date],
+        :order =>"obs_datetime")
+
+    (orders || []).reject do |order|
+      drug = order.drug_order.drug
+      !self.arv(drug)
+    end
+  end
+
+  def self.drug_given_before(patient, date = Date.today)
+    clinic_encounters = ['HIV CLINIC REGISTRATION','HIV STAGING','DISPENSING','TREATMENT',
+                      'HIV CLINIC CONSULTATION','ART ADHERENCE','HIV RECEPTION','VITALS']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+
+    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
+        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
+    Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
+        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
+        AND (obs_datetime BETWEEN ? AND ?)",
+        patient.id,concept_id,start_date,end_date],
+        :order =>"obs_datetime")
+  end
+
+  def self.drugs_given_on(patient, date = Date.today)
+    clinic_encounters = ['HIV CLINIC REGISTRATION','HIV STAGING','DISPENSING','TREATMENT',
+                      'HIV CLINIC CONSULTATION','ART ADHERENCE','HIV RECEPTION','VITALS']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+=begin
+    latest_encounter_date = Encounter.find(:first,
+        :conditions =>["patient_id = ? AND encounter_datetime >= ?
+        AND encounter_datetime <=? AND encounter_type IN(?)",
+        patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        date.strftime('%Y-%m-%d 23:59:59'),encounter_type_ids],
+        :order =>"encounter_datetime DESC").encounter_datetime rescue nil
+=end
+    latest_encounter_date = Encounter.find_by_sql("SELECT * FROM encounter
+    WHERE patient_id = #{patient.id} AND encounter_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
+    AND '#{date.strftime('%Y-%m-%d 23:59:59')}' AND encounter_type IN(#{encounter_type_ids.join(',')}) 
+    AND voided = 0 ORDER BY encounter_datetime DESC LIMIT 1").first.encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
+=begin
+    Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
+        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
+        AND obs_datetime >=? AND obs_datetime <=?",
+        patient.id,concept_id,start_date,end_date],
+        :order =>"obs_datetime")
+=end
+
+    Order.find_by_sql("SELECT * FROM orders INNER JOIN obs ON obs.order_id = orders.order_id
+      WHERE obs.person_id = #{patient.id} AND obs.concept_id = #{concept_id} AND obs.voided = 0
+      AND obs_datetime BETWEEN '#{start_date}' AND '#{end_date}' ORDER BY obs_datetime")
+
+  end
+
+  def self.art_drug_prescribed_before(patient, date = Date.today)
+
+    clinic_encounters  =  ['TREATMENT']
+
+    encounter_type_ids = EncounterType.find_all_by_name(clinic_encounters).collect{|e|e.id}
+
+    latest_encounter_date = Encounter.find(:first,:conditions =>["patient_id=? AND encounter_datetime < ? AND
+        encounter_type IN(?)",patient.id,date.strftime('%Y-%m-%d 00:00:00'),
+        encounter_type_ids],:order =>"encounter_datetime DESC").encounter_datetime rescue nil
+
+    return [] if latest_encounter_date.blank?
+
+    start_date = latest_encounter_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = latest_encounter_date.strftime('%Y-%m-%d 23:59:59')
+
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    orders = Order.find(:all,:joins =>"INNER JOIN drug_order d ON d.order_id = orders.order_id
+        INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}",
+        :conditions =>["e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+        patient.id, start_date, end_date], :order =>"encounter_datetime")
+
+    (orders || []).reject do |order|
+      drug = order.drug_order.drug
+      !self.arv(drug)
+    end
+
+  end
+
+  def self.earliest_auto_expire_medication(patient_id, date)
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
+    concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
+
+    orders = Order.find(:all,:joins =>"INNER JOIN drug_order d ON d.order_id = orders.order_id
+      INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}",
+      :conditions =>["e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+      patient_id, start_date, end_date], :order =>"encounter_datetime")
+
+    return [] if orders.blank?
+    amount_dispensed = {}
+
+    (orders || []).each do |order|
+      auto_expire_date = order.discontinued_date.to_date rescue order.auto_expire_date.to_date
+      amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date 
+    end
+
+    return amount_dispensed.sort_by{|drug_id, auto_expire_date| auto_expire_date.to_date}.first
+  end
+
+  def self.prescriped_earliest_auto_expire_medication(patient_id, date)
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
+    patient = Patient.find(patient_id)
+
+    orders = Order.find(:all,:joins =>"INNER JOIN encounter e ON e.encounter_id = orders.encounter_id 
+        AND e.encounter_type = #{encounter_type}", :conditions =>["e.patient_id = ? 
+        AND (encounter_datetime BETWEEN ? AND ?)", patient_id, start_date, end_date])
+
+    amount_prescriped = {}
+    return [] if orders.blank?
+
+    (orders || []).each do |order|
+      drug = order.drug_order.drug
+      next unless self.arv(drug)  
+      amount_prescriped[order.id] = order.discontinued_date.to_date rescue order.auto_expire_date
+    end
+
+    return amount_prescriped.sort_by{|order_id, auto_expire_date| auto_expire_date.to_date}.first
   end
 
 end

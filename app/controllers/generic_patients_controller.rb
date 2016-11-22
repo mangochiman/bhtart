@@ -11,6 +11,7 @@ class GenericPatientsController < ApplicationController
     session.delete(:hiv_viral_load_today_patient) if session[:hiv_viral_load_today_patient]
     session.delete(:cervical_cancer_patient) if session[:cervical_cancer_patient]
     session_date = session[:datetime].to_date rescue Date.today
+
     @patient_bean = PatientService.get_patient(@patient.person)
     @encounters = @patient.encounters.find_by_date(session_date)
     @diabetes_number = DiabetesService.diabetes_number(@patient)
@@ -39,6 +40,9 @@ class GenericPatientsController < ApplicationController
       @tb_registration_date = definitive_state_date(@patient, "TB PROGRAM")
     end
 
+    @confirmatory_hiv_test_type = Patient.type_of_hiv_confirmatory_test(@patient, session_date) rescue ""
+
+    session[:active_patient_id] = @patient.patient_id
     if @location.downcase == "outpatient" || params[:source]== 'opd'
       render :template => 'dashboards/opdtreatment_dashboard', :layout => false
     else
@@ -53,10 +57,31 @@ class GenericPatientsController < ApplicationController
       @arv_number = PatientService.get_patient_identifier(@patient, 'ARV Number')
       @tb_number = PatientService.get_patient_identifier(@patient, 'District TB Number')
 
-#######################
+
+      ############### FAST TRACK ######################
+      latest_fast_track = @patient.person.observations.recent(1).question("FAST").first
+      latest_fast_track_answer = latest_fast_track.answer_string.squish.upcase rescue nil
+      fast_track_answers = @patient.person.observations.question("FAST").all.collect{|o|o.answer_string.squish.upcase}
+
+      if (latest_fast_track_answer == 'YES')
+        if (@task.encounter_type rescue 'NONE').match(/NONE/i)
+          last_two_fast_track_answers = [fast_track_answers[-2], fast_track_answers[-1]].compact #Trying to find for two consecutive YES answers for fast track question
+          if (last_two_fast_track_answers.length > 1)
+            uniq_fast_track_answers = last_two_fast_track_answers.uniq
+            if (uniq_fast_track_answers.length == 1 && uniq_fast_track_answers.include?('YES'))
+              latest_fast_track.value_coded = Concept.find_by_name('NO').concept_id
+              latest_fast_track.comments = 'fast track done' #DO NOT REMOVE THIS SECTION PLIZ. THAT'S A HACK. #mangochiman 25/oct/2016
+              latest_fast_track.save
+            end
+          end
+        end
+      end
+      
+      ############### END FAST TRACK ##################
+      #######################
       regimen_category = Concept.find_by_name("Regimen Category")
 
-    #ToDo
+      #ToDo
 =begin
 The following block of code should be replaced by a more cleaner function
 =end
@@ -87,7 +112,7 @@ The following block of code should be replaced by a more cleaner function
 											SELECT patient_id, current_state_for_program(patient_id, 1, '#{session_date}') AS state, c.name as status
 											FROM patient p INNER JOIN program_workflow_state pw ON pw.program_workflow_state_id = current_state_for_program(patient_id, 1, '#{session_date}')
 											INNER JOIN concept_name c ON c.concept_id = pw.concept_id where p.patient_id = '#{@patient.patient_id}'").first.status rescue "Unknown"
-####################
+      ####################
       render :template => 'patients/index', :layout => false
     end
   end
@@ -100,12 +125,12 @@ The following block of code should be replaced by a more cleaner function
   def opdshow
     session_date = session[:datetime].to_date rescue Date.today
     encounter_types = EncounterType.find(:all,:conditions =>["name IN (?)",
-                                                             ['REGISTRATION','OUTPATIENT DIAGNOSIS','REFER PATIENT OUT?','OUTPATIENT RECEPTION','DISPENSING']]).map{|e|e.id}
+        ['REGISTRATION','OUTPATIENT DIAGNOSIS','REFER PATIENT OUT?','OUTPATIENT RECEPTION','DISPENSING']]).map{|e|e.id}
     @encounters = Encounter.find(:all,:select => "encounter_id , name encounter_type_name, count(*) c",
-                                 :joins => "INNER JOIN encounter_type ON encounter_type_id = encounter_type",
-                                 :conditions =>["patient_id = ? AND encounter_type IN (?) AND DATE(encounter_datetime) = ?",
-                                                params[:id],encounter_types,session_date],
-                                 :group => 'encounter_type').collect do |rec|
+      :joins => "INNER JOIN encounter_type ON encounter_type_id = encounter_type",
+      :conditions =>["patient_id = ? AND encounter_type IN (?) AND DATE(encounter_datetime) = ?",
+        params[:id],encounter_types,session_date],
+      :group => 'encounter_type').collect do |rec|
       if current_user.user_roles.map{|r|r.role}.join(',').match(/Registration|Clerk/i)
         next unless rec.observations[0].to_s.match(/Workstation location:   Outpatient/i)
       end
@@ -121,12 +146,12 @@ The following block of code should be replaced by a more cleaner function
 
   def opdtreatment_tab
     @activities = [
-        ["Visit card","/patients/opdcard/#{params[:id]}"],
-        ["National ID (Print)","/patients/dashboard_print_national_id?id=#{params[:id]}&redirect=patients/opdtreatment"],
-        ["Referrals", "/encounters/referral/#{params[:id]}"],
-        ["Give drugs", "/encounters/opddrug_dispensing/#{params[:id]}"],
-        ["Vitals", "/report/data_cleaning"],
-        ["Outpatient diagnosis","/encounters/new?id=show&patient_id=#{params[:id]}&encounter_type=outpatient_diagnosis"]
+      ["Visit card","/patients/opdcard/#{params[:id]}"],
+      ["National ID (Print)","/patients/dashboard_print_national_id?id=#{params[:id]}&redirect=patients/opdtreatment"],
+      ["Referrals", "/encounters/referral/#{params[:id]}"],
+      ["Give drugs", "/encounters/opddrug_dispensing/#{params[:id]}"],
+      ["Vitals", "/report/data_cleaning"],
+      ["Outpatient diagnosis","/encounters/new?id=show&patient_id=#{params[:id]}&encounter_type=outpatient_diagnosis"]
     ]
     render :template => 'dashboards/opdtreatment_tab', :layout => false
   end
@@ -136,9 +161,9 @@ The following block of code should be replaced by a more cleaner function
     type = EncounterType.find_by_name('TREATMENT')
     session_date = session[:datetime].to_date rescue Date.today
     @prescriptions = Order.find(:all,
-                                :joins => "INNER JOIN encounter e USING (encounter_id)",
-                                :conditions => ["encounter_type = ? AND e.patient_id = ? AND DATE(encounter_datetime) = ?",
-                                                type.id,@patient.id,session_date])
+      :joins => "INNER JOIN encounter e USING (encounter_id)",
+      :conditions => ["encounter_type = ? AND e.patient_id = ? AND DATE(encounter_datetime) = ?",
+        type.id,@patient.id,session_date])
 
     @restricted = ProgramLocationRestriction.all(:conditions => {:location_id => Location.current_health_center.id })
     @restricted.each do |restriction|
@@ -157,6 +182,13 @@ The following block of code should be replaced by a more cleaner function
     @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
     @arv_number = PatientService.get_patient_identifier(@patient, 'ARV Number')
 
+    unless @prescriptions.blank?
+      @appointment_type = PatientService.appointment_type(@patient, session_date)
+      if @appointment_type.value_text == 'Optimize - including hanging pills'
+        @hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, session_date)
+      end
+    end
+
     render :template => 'dashboards/dispension_tab', :layout => false
   end
 
@@ -166,8 +198,8 @@ The following block of code should be replaced by a more cleaner function
     type = EncounterType.find_by_name('TREATMENT')
     session_date = session[:datetime].to_date rescue Date.today
     @prescriptions = Order.find(:all,
-                                :joins => "INNER JOIN encounter e USING (encounter_id)",
-                                :conditions => ["encounter_type = ? AND e.patient_id = ?",type.id,@patient.id])
+      :joins => "INNER JOIN encounter e USING (encounter_id)",
+      :conditions => ["encounter_type = ? AND e.patient_id = ?",type.id,@patient.id])
 
     @historical = @patient.orders.historical.prescriptions.all
     @restricted = ProgramLocationRestriction.all(:conditions => {:location_id => Location.current_health_center.id })
@@ -299,11 +331,49 @@ The following block of code should be replaced by a more cleaner function
     session_date = (session[:datetime].to_date rescue Date.today).strftime('%Y-%m-%d 23:59:59')
     obs = []
 
-    Observation.find_by_sql("
+    weight_trail = {} ; current_date = (session_date.to_date - 2.year).to_date
+    weight_trail[session_date.to_date.year] = {} 
+    weight_trail[session_date.to_date.year][session_date.to_date.month] = [] 
+    
+    while not ((current_date.year == session_date.to_date.year) and (current_date.month == session_date.to_date.month))
+      year = current_date.year ; month = current_date.month
+      weight_trail[year] = {} if weight_trail[year].blank?
+      weight_trail[year][month] = [] if weight_trail[year][month].blank?
+      current_date += 1.month
+    end
+
+    smallest_date_after = nil
+
+    weight_trail_data = ActiveRecord::Base.connection.select_all <<EOF
           SELECT * FROM obs WHERE person_id = #{patient.id}
-          AND concept_id = #{concept_id} AND voided = 0 AND obs_datetime <= '#{session_date}' LIMIT 10").each {|weight|
-      obs <<  [weight.obs_datetime.to_date, weight.to_s.split(':')[1].squish.to_f]
+          AND concept_id = #{concept_id} AND voided = 0 AND 
+    obs_datetime BETWEEN '#{(session_date.to_date - 2.year).strftime('%Y-%m-%d 00:00:00')}' 
+    AND '#{session_date}' LIMIT 100
+EOF
+   
+    (weight_trail_data || []).each {|weight|
+      current_date = weight['obs_datetime'].to_date
+      year = current_date.year ; month = current_date.month
+      begin
+        weight_trail[year][month] <<  [weight['obs_datetime'].to_date, weight['value_numeric'].squish.to_f]
+        smallest_date_after = weight['obs_datetime'].to_date if smallest_date_after.blank? or (smallest_date_after > weight['obs_datetime'].to_date)
+      rescue
+        next
+      end
     }
+
+    (weight_trail || []).each do |year, months|
+      (months).each do |month, data|
+        if data.blank?
+          next
+        end
+
+        (data || []).each do |weight|
+          obs << [weight.first, weight.last]
+        end
+      end
+    end
+
 
     obs << [session_date.to_date, current_weight.to_f]
     obs = obs.sort_by{|atr| atr[0]}.to_json
@@ -312,6 +382,14 @@ The following block of code should be replaced by a more cleaner function
   
   def void
     @encounter = Encounter.find(params[:encounter_id])
+    (@encounter.observations || []).each do |ob|
+      ob.void
+    end
+
+    (@encounter.orders || []).each do |od|
+      od.void
+    end
+
     @encounter.void
     show and return
   end
@@ -414,19 +492,19 @@ The following block of code should be replaced by a more cleaner function
   def transfer_out_label
     print_string = patient_transfer_out_label(params[:patient_id])
     send_data(print_string,
-              :type=>"application/label; charset=utf-8",
-              :stream=> false,
-              :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl",
-              :disposition => "inline")
+      :type=>"application/label; charset=utf-8",
+      :stream=> false,
+      :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl",
+      :disposition => "inline")
   end
 
   def transfer_out_label_tb
     print_string = patient_tb_transfer_out_label(params[:patient_id])
     send_data(print_string,
-              :type=>"application/label; charset=utf-8",
-              :stream=> false,
-              :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl",
-              :disposition => "inline")
+      :type=>"application/label; charset=utf-8",
+      :stream=> false,
+      :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl",
+      :disposition => "inline")
   end
 
   def mastercard_menu
@@ -445,6 +523,13 @@ The following block of code should be replaced by a more cleaner function
     @quarter = params[:quarter]
     @arv_start_number = params[:arv_start_number]
     @arv_end_number = params[:arv_end_number]
+    @active_patient = Patient.find(session[:active_patient_id]) rescue ""
+    @active_patient_age = PatientService.get_patient(@active_patient.person).age rescue ""
+    
+    child_parent_raltionship_type = RelationshipType.find(:first, :conditions => ["a_is_to_b =? AND b_is_to_a =?",
+        'Child', 'Parent']).relationship_type_id
+    @guardian_id = @active_patient.relationships.find(:last, :conditions => ["relationship =?",
+        child_parent_raltionship_type]).person_b rescue nil
 
     if params[:show_mastercard_counter].to_s == "true" && !params[:current].blank?
       @show_mastercard_counter = true
@@ -546,7 +631,7 @@ The following block of code should be replaced by a more cleaner function
 
   def assigned_arv_number
     assigned_arv_number = PatientIdentifier.find(:all,:conditions => ["voided = 0 AND identifier_type = ?",
-                                                                      PatientIdentifierType.find_by_name("ARV Number").id]).collect{|i| i.identifier.gsub("#{PatientIdentifier.site_prefix}-ARV-",'').strip.to_i} rescue nil
+        PatientIdentifierType.find_by_name("ARV Number").id]).collect{|i| i.identifier.gsub("#{PatientIdentifier.site_prefix}-ARV-",'').strip.to_i} rescue nil
     render :text => assigned_arv_number.sort.to_json rescue nil
   end
 
@@ -557,7 +642,7 @@ The following block of code should be replaced by a more cleaner function
 
   def assigned_hcc_number
     assigned_hcc_number = PatientIdentifier.find(:all,:conditions => ["voided = 0 AND identifier_type = ?",
-                                                                      PatientIdentifierType.find_by_name("HCC Number").id]).collect{|i| i.identifier.gsub("#{PatientIdentifier.site_prefix}-HCC-",'').strip.to_i} rescue nil
+        PatientIdentifierType.find_by_name("HCC Number").id]).collect{|i| i.identifier.gsub("#{PatientIdentifier.site_prefix}-HCC-",'').strip.to_i} rescue nil
     render :text => assigned_hcc_number.sort.to_json rescue nil
   end
   
@@ -581,7 +666,7 @@ The following block of code should be replaced by a more cleaner function
         redirect_to "/patients/opdcard/#{@patient_id}" and return
       elsif params[:from_demo] == "true"
         redirect_to :controller => "people" ,
-                    :action => "demographics",:id => @patient_id and return
+          :action => "demographics",:id => @patient_id and return
       else
         redirect_to :action => "mastercard",:patient_id => @patient_id and return
       end
@@ -614,7 +699,7 @@ The following block of code should be replaced by a more cleaner function
     ActiveRecord::Base.transaction do
       archive_identifier_type = PatientIdentifierType.find_by_name("Archived filing number")
       current_filing_numbers =  PatientIdentifier.find(:all,:conditions=>["voided = 0 AND patient_id=? AND identifier_type = ?",
-            patient.id, archive_identifier_type.id])
+          patient.id, archive_identifier_type.id])
       (current_filing_numbers || []).each do | f_number |
         f_number.voided = 1
         f_number.voided_by = User.current.id
@@ -660,8 +745,8 @@ The following block of code should be replaced by a more cleaner function
       end
       # send it to the browsbah
       send_data csv_string.gsub(' ','_'),
-                :type => 'text/csv; charset=iso-8859-1; header=present',
-                :disposition => "attachment:wq
+        :type => 'text/csv; charset=iso-8859-1; header=present',
+        :disposition => "attachment:wq
               ; filename=patient-#{patient.id}.csv"
     end
   end
@@ -670,8 +755,8 @@ The following block of code should be replaced by a more cleaner function
     if @patient
       t1 = Thread.new{
         Kernel.system "htmldoc --webpage --landscape --linkstyle plain --left 1cm --right 1cm --top 1cm --bottom 1cm -f /tmp/output-" +
-                          current_user.user_id.to_s + ".pdf http://" + request.env["HTTP_HOST"] + "\"/patients/mastercard_printable?patient_id=" +
-                          @patient.id.to_s + "\"\n"
+          current_user.user_id.to_s + ".pdf http://" + request.env["HTTP_HOST"] + "\"/patients/mastercard_printable?patient_id=" +
+          @patient.id.to_s + "\"\n"
       }
 
       t2 = Thread.new{
@@ -725,7 +810,6 @@ The following block of code should be replaced by a more cleaner function
     @encounters = @patient.encounters.find_by_date(session_date)
     @prescriptions = @patient.orders.unfinished.prescriptions.all
     @programs = @patient.patient_programs.all
-    #raise @programs.first.patient_states.last.to_s
     @alerts = alerts(@patient, session_date) rescue nil
     # This code is pretty hacky at the moment
     @restricted = ProgramLocationRestriction.all(:conditions => {:location_id => Location.current_health_center.id })
@@ -746,7 +830,27 @@ The following block of code should be replaced by a more cleaner function
 					prog.program_id, session_date, @patient.id],:order => "patient_state_id ASC")
      @program_state << [prog.to_s,  patient_states.last.to_s, prog.program_id, prog.date_enrolled]
     end
+    #################################### treatment encounter ####################################
+    @prescriptions = {}
+    start_date = session_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = session_date.strftime('%Y-%m-%d 23:59:59')
+
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    orders = Order.find(:all,:joins =>"INNER JOIN drug_order d ON d.order_id = orders.order_id
+        INNER JOIN encounter e ON e.encounter_id = orders.encounter_id AND e.encounter_type = #{encounter_type}",
+        :conditions =>["e.patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+        @patient.id, start_date, end_date], :order =>"encounter_datetime")
+
+    (orders || []).reject do |order|
+      drug = order.drug_order.drug
+      @prescriptions[order] = {
+        :medication => drug.name,
+        :instructions => order.instructions
+      }
+    end
+    ##############################################################################################
 =end
+
     render :template => 'dashboards/overview_tab', :layout => false
   end
 
@@ -795,8 +899,8 @@ The following block of code should be replaced by a more cleaner function
     session_date = (session[:datetime].to_date rescue Date.today.to_date) - 1.days
     session_date = session_date.to_s + ' 23:59:59'
     previous_encounters = Encounter.find(:all,
-                                         :conditions => ["encounter.voided = ? and patient_id = ? and encounter.encounter_datetime <= ?", 0, patient_id, session_date],
-                                         :include => [:observations],:order => "encounter.encounter_datetime DESC"
+      :conditions => ["encounter.voided = ? and patient_id = ? and encounter.encounter_datetime <= ?", 0, patient_id, session_date],
+      :include => [:observations],:order => "encounter.encounter_datetime DESC"
     )
 
     return previous_encounters
@@ -831,16 +935,16 @@ The following block of code should be replaced by a more cleaner function
     if @show_history
       last_visit_date = patient.encounters.last.encounter_datetime.to_date rescue Date.today
       latest_encounters = Encounter.find(:all,
-                                         :order => "encounter_datetime ASC,date_created ASC",
-                                         :conditions => ["patient_id = ? AND
+        :order => "encounter_datetime ASC,date_created ASC",
+        :conditions => ["patient_id = ? AND
         encounter_datetime >= ? AND encounter_datetime <= ?",patient.patient_id,
-                                                         last_visit_date.strftime('%Y-%m-%d 00:00:00'),
-                                                         last_visit_date.strftime('%Y-%m-%d 23:59:59')])
+          last_visit_date.strftime('%Y-%m-%d 00:00:00'),
+          last_visit_date.strftime('%Y-%m-%d 23:59:59')])
 
       (latest_encounters || []).each do |encounter|
         next if encounter.name.match(/TREATMENT/i)
         @encounters[encounter.name.upcase] = {:data => nil,
-                                              :time => encounter.encounter_datetime.strftime('%H:%M:%S')}
+          :time => encounter.encounter_datetime.strftime('%H:%M:%S')}
         @encounters[encounter.name.upcase][:data] = encounter.observations.collect{|obs|
           next if obs.to_s.match(/Workstation/i)
           obs.to_s
@@ -860,13 +964,29 @@ The following block of code should be replaced by a more cleaner function
     @patient_bean = PatientService.get_patient(@patient.person)
     @amount_needed = 0
     @amounts_required = 0
-
     type = EncounterType.find_by_name('TREATMENT')
     session_date = session[:datetime].to_date rescue Date.today
-    Order.find(:all,
-               :joins => "INNER JOIN encounter e USING (encounter_id)",
-               :conditions => ["encounter_type = ? AND e.patient_id = ? AND DATE(encounter_datetime) = ?",
-                               type.id,@patient.id,session_date]).each{|order|
+
+    orders = Order.find(:all,
+      :joins => "INNER JOIN encounter e USING (encounter_id)",
+      :conditions => ["encounter_type = ? AND e.patient_id = ? AND DATE(encounter_datetime) = ?",
+        type.id,@patient.id,session_date])
+    
+    ################################# Recalculate auto_expire_date ##########################
+    unless orders.blank?
+      appointment_type = PatientService.appointment_type(@patient, session_date)
+      discontinued_dates = []
+      orders.each do |o|
+        discontinued_dates << o.discontinued_date unless o.discontinued_date.blank?
+      end 
+
+      if appointment_type.value_text == 'Optimize - including hanging pills' and discontinued_dates.blank?
+        MedicationService.recalculate_auto_expire_dates(orders) 
+      end unless appointment_type.blank?
+    end
+    #########################################################################################
+
+    (orders || []).each{|order|
 
       @amount_needed = @amount_needed + (order.drug_order.amount_needed.to_i rescue 0)
 
@@ -900,14 +1020,14 @@ The following block of code should be replaced by a more cleaner function
     @type = nil
 
     case params[:type]
-      when "1"
-        @type = "yellow"
-      when "2"
-        @type = "green"
-      when "3"
-        @type = "pink"
-      when "4"
-        @type = "blue"
+    when "1"
+      @type = "yellow"
+    when "2"
+      @type = "green"
+    when "3"
+      @type = "pink"
+    when "4"
+      @type = "blue"
     end
 
     @mastercard = mastercard_demographics(@patient)
@@ -920,7 +1040,7 @@ The following block of code should be replaced by a more cleaner function
     end
 
     @patient_age_at_initiation = PatientService.patient_age_at_initiation(@patient,
-                                                                          PatientService.patient_art_start_date(@patient.id))
+      PatientService.patient_art_start_date(@patient.id))
 
     @patient_bean = PatientService.get_patient(@patient.person)
     @guardian_phone_number = PatientService.get_attribute(Person.find(@patient.person.relationships.first.person_b), 'Cell phone number') rescue nil
@@ -1137,43 +1257,44 @@ The following block of code should be replaced by a more cleaner function
     type = EncounterType.find_by_name("APPOINTMENT")
 
     @show_change_app_date = Observation.find(:first,
-                                             :order => "encounter_datetime DESC,encounter.date_created DESC",
-                                             :joins => "INNER JOIN encounter ON obs.encounter_id = encounter.encounter_id",
-                                             :conditions => ["concept_id = ? AND encounter_type = ? AND patient_id = ?
+      :order => "encounter_datetime DESC,encounter.date_created DESC",
+      :joins => "INNER JOIN encounter ON obs.encounter_id = encounter.encounter_id",
+      :conditions => ["concept_id = ? AND encounter_type = ? AND patient_id = ?
     AND encounter_datetime >= ? AND encounter_datetime <= ?",
-                                                             ConceptName.find_by_name('Appointment date').concept_id,
-                                                             type.id, patient.id,session_date.strftime("%Y-%m-%d 00:00:00"),
-                                                             session_date.strftime("%Y-%m-%d 23:59:59")]) != nil
+        ConceptName.find_by_name('Appointment date').concept_id,
+        type.id, patient.id,session_date.strftime("%Y-%m-%d 00:00:00"),
+        session_date.strftime("%Y-%m-%d 23:59:59")]) != nil
 
+    #old format "%a %d %B %Y" new_forma "%d/%b/%Y"
     next_appt = Observation.find(:first,:order => "encounter_datetime DESC,encounter.date_created DESC",
-                                 :joins => "INNER JOIN encounter ON obs.encounter_id = encounter.encounter_id",
-                                 :conditions => ["concept_id = ? AND encounter_type = ? AND patient_id = ?
+      :joins => "INNER JOIN encounter ON obs.encounter_id = encounter.encounter_id",
+      :conditions => ["concept_id = ? AND encounter_type = ? AND patient_id = ?
                AND obs_datetime <= ?",ConceptName.find_by_name('Appointment date').concept_id,
-                                                 type.id,patient.id,session_date.strftime("%Y-%m-%d 23:59:59")
-                                 ]).value_datetime.strftime("%a %d %B %Y") rescue nil
+        type.id,patient.id,session_date.strftime("%Y-%m-%d 23:59:59")
+      ]).value_datetime.strftime("%d/%b/%Y") rescue nil
 
     #raise next_appt.to_yaml
     alerts << ('Next appointment: ' + next_appt) unless next_appt.blank?
 
     encounter_dates = Encounter.find_by_sql("SELECT * FROM encounter WHERE patient_id = #{patient.id} AND encounter_type IN (" +
-                                                ("SELECT encounter_type_id FROM encounter_type WHERE name IN ('VITALS', 'TREATMENT', " +
-                                                    "'HIV RECEPTION', 'HIV STAGING', 'HIV CLINIC CONSULTATION', 'DISPENSING')") + ")").collect{|e|
+        ("SELECT encounter_type_id FROM encounter_type WHERE name IN ('VITALS', 'TREATMENT', " +
+          "'HIV RECEPTION', 'HIV STAGING', 'HIV CLINIC CONSULTATION', 'DISPENSING')") + ")").collect{|e|
       e.encounter_datetime.strftime("%Y-%m-%d")
     }.uniq
 
     missed_appt = patient.encounters.find_last_by_encounter_type(type.id,
-                                                                 :conditions => ["NOT (DATE_FORMAT(encounter_datetime, '%Y-%m-%d') IN (?)) AND encounter_datetime < NOW()",
-                                                                                 encounter_dates], :order => "encounter_datetime").observations.last.to_s rescue nil
+      :conditions => ["NOT (DATE_FORMAT(encounter_datetime, '%Y-%m-%d') IN (?)) AND encounter_datetime < NOW()",
+        encounter_dates], :order => "encounter_datetime").observations.last.to_s rescue nil
     alerts << ('Missed ' + missed_appt).capitalize unless missed_appt.blank?
 
     @adherence_level = ConceptName.find_by_name('What was the patients adherence for this drug order').concept_id
     type = EncounterType.find_by_name("ART ADHERENCE")
 
     observations = Observation.find(:all,:joins =>"INNER JOIN encounter e USING(encounter_id)",
-                                    :conditions =>["concept_id = ? AND encounter_type = ? AND patient_id = ? AND
+      :conditions =>["concept_id = ? AND encounter_type = ? AND patient_id = ? AND
       encounter_datetime >= ? AND encounter_datetime <= ?",@adherence_level,type,
-                                                   patient.id,session_date.strftime("%Y-%m-%d 00:00:00"),session_date.strftime("%Y-%m-%d 23:59:59")],
-                                    :order => "obs_datetime DESC")
+        patient.id,session_date.strftime("%Y-%m-%d 00:00:00"),session_date.strftime("%Y-%m-%d 23:59:59")],
+      :order => "obs_datetime DESC")
 
     (observations || []).map do |adh|
       adherence = adh.value_numeric ||= adh.value_text
@@ -1187,7 +1308,8 @@ The following block of code should be replaced by a more cleaner function
     patient.encounters.find_last_by_encounter_type(type.id, :order => "encounter_datetime").observations.each do | obs |
       next if obs.order.blank?
       next if obs.order.auto_expire_date.blank?
-      alerts << "Drugs runout date: #{obs.order.drug_order.drug.name} #{obs.order.auto_expire_date.to_date.strftime('%d-%b-%Y')}"
+      auto_expire_date = obs.order.discontinued_date.to_date rescue obs.order.auto_expire_date.to_date
+      alerts << "Runout date: #{obs.order.drug_order.drug.name} #{auto_expire_date.to_date.strftime('%d/%b/%Y')}"
     end rescue []
 
     # BMI alerts
@@ -1217,9 +1339,9 @@ The following block of code should be replaced by a more cleaner function
     end
     if on_art == "not"
       state = Concept.find(Observation.find(:first,
-                                            :order => "obs_datetime DESC,date_created DESC",
-                                            :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-                                                            patient.id, ConceptName.find_by_name("on art").concept_id]).value_coded).fullname rescue ""
+          :order => "obs_datetime DESC,date_created DESC",
+          :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
+            patient.id, ConceptName.find_by_name("on art").concept_id]).value_coded).fullname rescue ""
       if state.upcase == "YES"
         alerts << "Patient on ART Not in Local Program"
       else
@@ -1242,7 +1364,7 @@ The following block of code should be replaced by a more cleaner function
 
     #raise session_date.to_yaml
     hiv_staging = Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
-                                                      EncounterType.find_by_name("HIV Staging").id,patient.id]) rescue nil
+        EncounterType.find_by_name("HIV Staging").id,patient.id]) rescue nil
 
     if !hiv_staging.blank?
       (hiv_staging.observations).map do |obs|
@@ -1288,9 +1410,9 @@ The following block of code should be replaced by a more cleaner function
 
   def patient_need_sputum_test?(patient_id)
     encounter_date = Encounter.find(:last,
-                                    :conditions => ["encounter_type = ? and patient_id = ?",
-                                                    EncounterType.find_by_name("TB Registration").id,
-                                                    patient_id]).encounter_datetime rescue ''
+      :conditions => ["encounter_type = ? and patient_id = ?",
+        EncounterType.find_by_name("TB Registration").id,
+        patient_id]).encounter_datetime rescue ''
     smear_positive_patient = false
     has_no_results = false
 
@@ -1307,11 +1429,11 @@ The following block of code should be replaced by a more cleaner function
 
         if date_diff > 60 and date_diff < 110
           results = Encounter.find(:last,
-                                   :conditions => ["encounter_type = ? and " \
+            :conditions => ["encounter_type = ? and " \
 								"patient_id = ? AND encounter_datetime BETWEEN ? AND ?",
-                                                   EncounterType.find_by_name("LAB RESULTS").id,
-                                                   patient_id, (encounter_date + 60).to_s, (encounter_date + 110).to_s],
-                                   :include => observations) rescue ''
+              EncounterType.find_by_name("LAB RESULTS").id,
+              patient_id, (encounter_date + 60).to_s, (encounter_date + 110).to_s],
+            :include => observations) rescue ''
 
           if results.blank?
             has_no_results = true
@@ -1321,11 +1443,11 @@ The following block of code should be replaced by a more cleaner function
 
         elsif date_diff > 110 and date_diff < 140
           results = Encounter.find(:last,
-                                   :conditions => ["encounter_type = ? and " \
+            :conditions => ["encounter_type = ? and " \
 								"patient_id = ? AND encounter_datetime BETWEEN ? AND ?",
-                                                   EncounterType.find_by_name("LAB RESULTS").id,
-                                                   patient_id, (encounter_date + 111).to_s, (encounter_date + 140).to_s],
-                                   :include => observations) rescue ''
+              EncounterType.find_by_name("LAB RESULTS").id,
+              patient_id, (encounter_date + 111).to_s, (encounter_date + 140).to_s],
+            :include => observations) rescue ''
 
           if results.blank?
             has_no_results = true
@@ -1348,31 +1470,31 @@ The following block of code should be replaced by a more cleaner function
 
   def previous_sputum_results(registration_date, patient_id)
     sputum_concept_names = ["AAFB(1st) results", "AAFB(2nd) results",
-                            "AAFB(3rd) results", "Culture(1st) Results", "Culture-2 Results"]
+      "AAFB(3rd) results", "Culture(1st) Results", "Culture-2 Results"]
     sputum_concept_ids = ConceptName.find(:all, :conditions => ["name IN (?)",
-                                                                sputum_concept_names]).map(&:concept_id)
+        sputum_concept_names]).map(&:concept_id)
     obs = Observation.find(:all,
-                           :conditions => ["person_id = ? AND concept_id IN (?) AND date_created < ?",
-                                           patient_id, sputum_concept_ids, registration_date],
-                           :order => "obs_datetime desc", :limit => 3)
+      :conditions => ["person_id = ? AND concept_id IN (?) AND date_created < ?",
+        patient_id, sputum_concept_ids, registration_date],
+      :order => "obs_datetime desc", :limit => 3)
   end
 
   def given_sputum_results(patient_id)
     @given_results = []
     Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
-                                        EncounterType.find_by_name("GIVE LAB RESULTS").id,patient_id]).observations.map{|o| @given_results << o.answer_string.to_s.strip if o.to_s.include?("Laboratory results given to patient")} rescue []
+        EncounterType.find_by_name("GIVE LAB RESULTS").id,patient_id]).observations.map{|o| @given_results << o.answer_string.to_s.strip if o.to_s.include?("Laboratory results given to patient")} rescue []
   end
 
   def get_recent_lab_orders_label(patient_id)
     encounters = Encounter.find(:all,:conditions =>["encounter_type = ? and patient_id = ?",
-                                                    EncounterType.find_by_name("LAB ORDERS").id,patient_id]).last(5)
+        EncounterType.find_by_name("LAB ORDERS").id,patient_id]).last(5)
     observations = []
 
     encounters.each{|encounter|
       encounter.observations.each{|observation|
         unless observation['concept_id'] == Concept.find_by_name("Workstation location").concept_id
           observations << ["#{ConceptName.find_by_concept_id(observation['value_coded'].to_i).name} : #{observation['date_created'].strftime("%Y-%m-%d") }",
-                           "#{observation['obs_id']}"]
+            "#{observation['obs_id']}"]
         end
       }
     }
@@ -1439,7 +1561,7 @@ The following block of code should be replaced by a more cleaner function
     patient_bean = PatientService.get_patient(patient.person)
     demographics = mastercard_demographics(patient)
     hiv_staging = Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
-                                                      EncounterType.find_by_name("HIV Staging").id,patient.id])
+        EncounterType.find_by_name("HIV Staging").id,patient.id])
 
     tb_within_last_two_yrs = "tb within last 2 yrs" unless demographics.tb_within_last_two_yrs.blank?
     eptb = "eptb" unless demographics.eptb.blank?
@@ -1451,12 +1573,12 @@ The following block of code should be replaced by a more cleaner function
       concept_name = obs.to_s.split(':')[0].strip rescue nil
       next if concept_name.blank?
       case concept_name
-        when 'CD4 COUNT DATETIME'
-          cd4_count_date = obs.value_datetime.to_date
-        when 'CD4 COUNT'
-          cd4_count = obs.value_numeric
-        when 'IS PATIENT PREGNANT?'
-          pregnant = obs.to_s.split(':')[1] rescue nil
+      when 'CD4 COUNT DATETIME'
+        cd4_count_date = obs.value_datetime.to_date
+      when 'CD4 COUNT'
+        cd4_count = obs.value_numeric
+      when 'IS PATIENT PREGNANT?'
+        pregnant = obs.to_s.split(':')[1] rescue nil
       end
     end rescue []
 
@@ -1634,7 +1756,7 @@ The following block of code should be replaced by a more cleaner function
 
     # Print information on current treatment of the patient transfering out!
     demographics.reg = []
-    PatientService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
+    MedicationService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
       next unless MedicationService.arv(order.drug_order.drug)
       demographics.reg << order.drug_order.drug.concept.shortname
     end
@@ -1695,7 +1817,7 @@ The following block of code should be replaced by a more cleaner function
     tb_number = PatientService.get_patient_identifier(patient, "District TB Number")
 
     transferred_out_to = Observation.find(:last, :conditions =>["concept_id = ? and person_id = ?",
-                                                                ConceptName.find_by_name("TRANSFER OUT TO").concept_id,patient_bean.patient_id]).value_text rescue ""
+        ConceptName.find_by_name("TRANSFER OUT TO").concept_id,patient_bean.patient_id]).value_text rescue ""
 
     label = ZebraPrinter::Label.new(776, 329, 'T')
     label.line_spacing = 2
@@ -1730,7 +1852,7 @@ The following block of code should be replaced by a more cleaner function
     label.draw_multi_text("#{first} #{second}", {:font_reverse => false})
     # Print information on current treatment of the patient transfering out!
     reg = []
-    PatientService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
+    MedicationService.drug_given_before(patient, (date.to_date) + 1.day).uniq.each do |order|
       next unless MedicationService.tb_medication(order.drug_order.drug)
       reg << order.drug_order.drug.concept.shortname
     end
@@ -1748,7 +1870,7 @@ The following block of code should be replaced by a more cleaner function
     patient_bean = PatientService.get_patient(patient.person)
 
     lab_orders = Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
-                                                     EncounterType.find_by_name("LAB ORDERS").id,patient.id]).observations
+        EncounterType.find_by_name("LAB ORDERS").id,patient.id]).observations
     labels = []
     i = 0
 
@@ -1861,7 +1983,7 @@ The following block of code should be replaced by a more cleaner function
     visits.transfer_in == false ? visits.transfer_in = 'NO' : visits.transfer_in = 'YES'
 
     transferred_out_details = Observation.find(:last, :conditions =>["concept_id = ? and person_id = ?",
-                                                                     ConceptName.find_by_name("TRANSFER OUT TO").concept_id,patient_bean.patient_id]) rescue ""
+        ConceptName.find_by_name("TRANSFER OUT TO").concept_id,patient_bean.patient_id]) rescue ""
 
     visits.transferred_out_to = transferred_out_details.value_text if transferred_out_details
     visits.transferred_out_date = transferred_out_details.obs_datetime if transferred_out_details
@@ -1876,12 +1998,12 @@ The following block of code should be replaced by a more cleaner function
     regimen_types.map do | regimen |
       concept_member_ids = ConceptName.find_by_name(regimen).concept.concept_members.collect{|c|c.concept_id}
       case regimen
-        when 'FIRST LINE ANTIRETROVIRAL REGIMEN'
-          regimens[regimen] = concept_member_ids
-        when 'ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN'
-          regimens[regimen] = concept_member_ids
-        when 'SECOND LINE ANTIRETROVIRAL REGIMEN'
-          regimens[regimen] = concept_member_ids
+      when 'FIRST LINE ANTIRETROVIRAL REGIMEN'
+        regimens[regimen] = concept_member_ids
+      when 'ALTERNATIVE FIRST LINE ANTIRETROVIRAL REGIMEN'
+        regimens[regimen] = concept_member_ids
+      when 'SECOND LINE ANTIRETROVIRAL REGIMEN'
+        regimens[regimen] = concept_member_ids
       end
     end
 
@@ -1890,10 +2012,10 @@ The following block of code should be replaced by a more cleaner function
     amount_dispensed_concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
     regimens.map do | regimen_type , ids |
       encounter = Encounter.find(:first,
-                                 :joins => "INNER JOIN obs ON encounter.encounter_id = obs.encounter_id",
-                                 :conditions =>["encounter_type=? AND encounter.patient_id = ? AND concept_id = ?
+        :joins => "INNER JOIN obs ON encounter.encounter_id = obs.encounter_id",
+        :conditions =>["encounter_type=? AND encounter.patient_id = ? AND concept_id = ?
                                  AND encounter.voided = 0 AND value_drug != ?",encounter_type , patient_obj.id , amount_dispensed_concept_id, 297 ],
-                                 :order =>"encounter_datetime")
+        :order =>"encounter_datetime")
       first_treatment_encounters << encounter unless encounter.blank?
     end
 
@@ -1934,7 +2056,7 @@ The following block of code should be replaced by a more cleaner function
     end
 
     hiv_staging_obs = Encounter.find(:last, :conditions =>["encounter_type = ? and patient_id = ?",
-                                     EncounterType.find_by_name("HIV Staging").id,patient_obj.id]).observations rescue []  
+        EncounterType.find_by_name("HIV Staging").id,patient_obj.id]).observations rescue []
 
 
     if !staging_ans.blank?
@@ -1963,58 +2085,58 @@ The following block of code should be replaced by a more cleaner function
         visits.pulmonary_tb = 'Yes'
       end
     else
-     if !hiv_staging_obs.blank?
-       tb_within_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
-       ks_concept_id = ConceptName.find_by_name('Kaposis sarcoma').concept_id
-       pulm_tuber_cur_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis (current)').concept_id
-       pulm_tuber_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis').concept_id
-       eptb_concept_id = ConceptName.find_by_name('Extrapulmonary tuberculosis (EPTB)').concept_id
+      if !hiv_staging_obs.blank?
+        tb_within_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
+        ks_concept_id = ConceptName.find_by_name('Kaposis sarcoma').concept_id
+        pulm_tuber_cur_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis (current)').concept_id
+        pulm_tuber_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis').concept_id
+        eptb_concept_id = ConceptName.find_by_name('Extrapulmonary tuberculosis (EPTB)').concept_id
        
-       (hiv_staging_obs || []).each do |obs|
-         #checking if answer is 'Yes'
-         if obs.value_coded == 1065
-           if obs.concept_id == tb_within_2yrs_concept_id
-             visits.tb_within_last_two_yrs = 'Yes'     
-           end
+        (hiv_staging_obs || []).each do |obs|
+          #checking if answer is 'Yes'
+          if obs.value_coded == 1065
+            if obs.concept_id == tb_within_2yrs_concept_id
+              visits.tb_within_last_two_yrs = 'Yes'
+            end
          
-           if obs.concept_id == eptb_concept_id
-             visits.eptb = 'Yes'     
-           end
+            if obs.concept_id == eptb_concept_id
+              visits.eptb = 'Yes'
+            end
          
-           if obs.concept_id == ks_concept_id
-             visits.ks = 'Yes'     
-           end
+            if obs.concept_id == ks_concept_id
+              visits.ks = 'Yes'
+            end
          
-           if obs.concept_id == pulm_tuber_cur_concept_id
-             visits.pulmonary_tb = 'Yes'          
-           end
+            if obs.concept_id == pulm_tuber_cur_concept_id
+              visits.pulmonary_tb = 'Yes'
+            end
          
-           if obs.concept_id == pulm_tuber_concept_id
-             visits.pulmonary_tb = 'Yes'     
-           end
-         elsif obs.value_coded == 1066
-           if obs.concept_id == tb_within_2yrs_concept_id
-             visits.tb_within_last_two_yrs = 'No'
-           end
+            if obs.concept_id == pulm_tuber_concept_id
+              visits.pulmonary_tb = 'Yes'
+            end
+          elsif obs.value_coded == 1066
+            if obs.concept_id == tb_within_2yrs_concept_id
+              visits.tb_within_last_two_yrs = 'No'
+            end
 
-           if obs.concept_id == eptb_concept_id
-             visits.eptb = 'No'
-           end
+            if obs.concept_id == eptb_concept_id
+              visits.eptb = 'No'
+            end
 
-           if obs.concept_id == ks_concept_id
-             visits.ks = 'No'
-           end
+            if obs.concept_id == ks_concept_id
+              visits.ks = 'No'
+            end
 
-           if obs.concept_id == pulm_tuber_cur_concept_id
-             visits.pulmonary_tb = 'No'
-           end
+            if obs.concept_id == pulm_tuber_cur_concept_id
+              visits.pulmonary_tb = 'No'
+            end
 
-           if obs.concept_id == pulm_tuber_concept_id
-             visits.pulmonary_tb = 'No'
-           end
-         end
-       end
-     end
+            if obs.concept_id == pulm_tuber_concept_id
+              visits.pulmonary_tb = 'No'
+            end
+          end
+        end
+      end
     end
   
 =begin
@@ -2063,7 +2185,7 @@ The following block of code should be replaced by a more cleaner function
     end
 =end
     hiv_staging = Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
-                                                      EncounterType.find_by_name("HIV Staging").id,patient_obj.id])
+        EncounterType.find_by_name("HIV Staging").id,patient_obj.id])
 
     visits.who_clinical_conditions = ""
     (hiv_staging.observations).collect do |obs|
@@ -2086,16 +2208,16 @@ The following block of code should be replaced by a more cleaner function
       concept_name = obs.to_s.split(':')[0].strip rescue nil
       next if concept_name.blank?
       case concept_name.downcase
-        when 'cd4 count datetime'
-          visits.cd4_count_date = obs.value_datetime.to_date
-        when 'cd4 count'
-          visits.cd4_count = "#{obs.value_modifier}#{obs.value_numeric.to_i}"
-        when 'is patient pregnant?'
-          visits.pregnant = obs.to_s.split(':')[1] rescue nil
-        when 'lymphocyte count'
-          visits.tlc = obs.answer_string
-        when 'lymphocyte count date'
-          visits.tlc_date = obs.value_datetime.to_date
+      when 'cd4 count datetime'
+        visits.cd4_count_date = obs.value_datetime.to_date
+      when 'cd4 count'
+        visits.cd4_count = "#{obs.value_modifier}#{obs.value_numeric.to_i}"
+      when 'is patient pregnant?'
+        visits.pregnant = obs.to_s.split(':')[1] rescue nil
+      when 'lymphocyte count'
+        visits.tlc = obs.answer_string
+      when 'lymphocyte count date'
+        visits.tlc_date = obs.value_datetime.to_date
       end
     end rescue []
 
@@ -2104,26 +2226,26 @@ The following block of code should be replaced by a more cleaner function
             "Last 2yrs" : "Never/ >2yrs") : "Never/ >2yrs"))
 
     hiv_clinic_registration = Encounter.find(:last,:conditions =>["encounter_type = ? and patient_id = ?",
-                                                                  EncounterType.find_by_name("HIV CLINIC REGISTRATION").id,patient_obj.id])
+        EncounterType.find_by_name("HIV CLINIC REGISTRATION").id,patient_obj.id])
 
     (hiv_clinic_registration.observations).map do | obs |
       concept_name = obs.to_s.split(':')[0].strip rescue nil
       next if concept_name.blank?
       case concept_name
-        when 'Ever received ART?'
-          visits.ever_received_art = obs.to_s.split(':')[1].strip rescue nil
-        when 'Last ART drugs taken'
-          visits.last_art_drugs_taken = obs.to_s.split(':')[1].strip rescue nil
-        when 'Date ART last taken'
-          visits.last_art_drugs_date_taken = obs.value_datetime.to_date rescue nil
-        when 'Confirmatory HIV test location'
-          visits.first_positive_hiv_test_site = obs.to_s.split(':')[1].strip rescue nil
-        when 'ART number at previous location'
-          visits.first_positive_hiv_test_arv_number = obs.to_s.split(':')[1].strip rescue nil
-        when 'Confirmatory HIV test type'
-          visits.first_positive_hiv_test_type = obs.to_s.split(':')[1].strip rescue nil
-        when 'Confirmatory HIV test date'
-          visits.first_positive_hiv_test_date = obs.value_datetime.to_date rescue nil
+      when 'Ever received ART?'
+        visits.ever_received_art = obs.to_s.split(':')[1].strip rescue nil
+      when 'Last ART drugs taken'
+        visits.last_art_drugs_taken = obs.to_s.split(':')[1].strip rescue nil
+      when 'Date ART last taken'
+        visits.last_art_drugs_date_taken = obs.value_datetime.to_date rescue nil
+      when 'Confirmatory HIV test location'
+        visits.first_positive_hiv_test_site = obs.to_s.split(':')[1].strip rescue nil
+      when 'ART number at previous location'
+        visits.first_positive_hiv_test_arv_number = obs.to_s.split(':')[1].strip rescue nil
+      when 'Confirmatory HIV test type'
+        visits.first_positive_hiv_test_type = obs.to_s.split(':')[1].strip rescue nil
+      when 'Confirmatory HIV test date'
+        visits.first_positive_hiv_test_date = obs.value_datetime.to_date rescue nil
       end
     end rescue []
 
@@ -2142,7 +2264,7 @@ The following block of code should be replaced by a more cleaner function
   def get_current_obs(date, patient, obs)
     concept_id = ConceptName.find_by_name("#{obs}").concept_id
     obs = Observation.find(:last, :conditions => ['person_id = ? and DATE(obs_datetime) <= ? AND concept_id = ?',
-                                                  patient.patient_id, date, concept_id])
+        patient.patient_id, date, concept_id])
   end
 
   def visits(patient_obj, encounter_date = nil)
@@ -2153,24 +2275,24 @@ The following block of code should be replaced by a more cleaner function
     patient_visits = {}
     yes = ConceptName.find_by_name("YES")
     concept_names = ["APPOINTMENT DATE", "HEIGHT (CM)", 'WEIGHT (KG)',
-                     "BODY MASS INDEX, MEASURED", "RESPONSIBLE PERSON PRESENT",
-                     "PATIENT PRESENT FOR CONSULTATION", "TB STATUS",
-                     "AMOUNT DISPENSED", "ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT",
-                     "DRUG INDUCED", "AMOUNT OF DRUG BROUGHT TO CLINIC",
-                     "WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER",
-                     "CLINICAL NOTES CONSTRUCT", "REGIMEN CATEGORY"]
+      "BODY MASS INDEX, MEASURED", "RESPONSIBLE PERSON PRESENT",
+      "PATIENT PRESENT FOR CONSULTATION", "TB STATUS",
+      "AMOUNT DISPENSED", "ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT",
+      "DRUG INDUCED", "MALAWI ART SIDE EFFECTS", "AMOUNT OF DRUG BROUGHT TO CLINIC",
+      "WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER",
+      "CLINICAL NOTES CONSTRUCT", "REGIMEN CATEGORY"]
     concept_ids = ConceptName.find(:all, :conditions => ["name in (?)", concept_names]).map(&:concept_id)
 
     if encounter_date.blank?
       observations = Observation.find(:all,
-                                      :conditions =>["voided = 0 AND person_id = ? AND concept_id IN (?)",
-                                                     patient_obj.patient_id, concept_ids],
-                                      :order =>"obs_datetime").map{|obs| obs if !obs.concept.nil?}
+        :conditions =>["voided = 0 AND person_id = ? AND concept_id IN (?)",
+          patient_obj.patient_id, concept_ids],
+        :order =>"obs_datetime").map{|obs| obs if !obs.concept.nil?}
     else
       observations = Observation.find(:all,
-                                      :conditions =>["voided = 0 AND person_id = ? AND Date(obs_datetime) = ? AND concept_id IN (?)",
-                                                     patient_obj.patient_id,encounter_date.to_date, concept_ids],
-                                      :order =>"obs_datetime").map{|obs| obs if !obs.concept.nil?}
+        :conditions =>["voided = 0 AND person_id = ? AND Date(obs_datetime) = ? AND concept_id IN (?)",
+          patient_obj.patient_id,encounter_date.to_date, concept_ids],
+        :order =>"obs_datetime").map{|obs| obs if !obs.concept.nil?}
     end
     hiv_program = Program.find_by_name("HIV program").id
     tb_program = Program.find_by_name("TB program").id
@@ -2182,7 +2304,6 @@ The following block of code should be replaced by a more cleaner function
 
     return if patient_in_programs.blank?
 
-
     gave_hash = Hash.new(0)
     observations.map do |obs|
       drug = Drug.find(obs.order.drug_order.drug_inventory_id) rescue nil
@@ -2191,6 +2312,7 @@ The following block of code should be replaced by a more cleaner function
       #next if tb_medical == true
       #end
       encounter_name = obs.encounter.name rescue []
+
       next if encounter_name.blank?
       next if encounter_name.match(/REGISTRATION/i)
       next if encounter_name.match(/HIV STAGING/i)
@@ -2264,13 +2386,16 @@ The following block of code should be replaced by a more cleaner function
 
       elsif concept_name.upcase == 'REGIMEN CATEGORY'
         #patient_visits[visit_date].reg = 'Unknown' if obs.value_coded == ConceptName.find_by_name("Unknown antiretroviral drug").concept_id
-        patient_visits[visit_date].reg = obs.value_text if !patient_visits[visit_date].reg
-
-      elsif concept_name.upcase == 'DRUG INDUCED'
-        symptoms = obs.to_s.split(':').map do | sy |
-          sy.sub(concept_name,'').strip.capitalize
-        end rescue []
-        patient_visits[visit_date].s_eff = symptoms.join("<br/>") unless symptoms.blank?
+        #patient_visits[visit_date].reg = obs.value_text if !patient_visits[visit_date].reg
+        patient_visits[visit_date].reg = obs.value_text.gsub('Unknown', 'Non Standard') if !patient_visits[visit_date].reg
+      elsif (concept_name.upcase == 'DRUG INDUCED' || concept_name.upcase == 'MALAWI ART SIDE EFFECTS')
+        #symptoms = obs.to_s.split(':').map do | sy |
+          #sy.sub(concept_name,'').strip.capitalize
+        #end rescue []
+        symptom = obs.answer_string.squish
+        patient_visits[visit_date].s_eff += "<br/>" + symptom unless patient_visits[visit_date].s_eff.blank?
+        patient_visits[visit_date].s_eff = symptom if patient_visits[visit_date].s_eff.blank?
+        
 
       elsif concept_name.upcase == 'AMOUNT OF DRUG BROUGHT TO CLINIC'
         drug = Drug.find(obs.order.drug_order.drug_inventory_id) rescue nil
@@ -2300,14 +2425,14 @@ The following block of code should be replaced by a more cleaner function
     program_id = Program.find_by_name('HIV PROGRAM').id
     if encounter_date.blank?
       patient_states = PatientState.find(:all,
-                                         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
-                                         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
-                                                        program_id,patient_obj.patient_id],:order => "patient_state_id ASC")
+        :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
+        :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
+          program_id,patient_obj.patient_id],:order => "patient_state_id ASC")
     else
       patient_states = PatientState.find(:all,
-                                         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
-                                         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND start_date = ? AND p.patient_id =?",
-                                                        program_id,encounter_date.to_date,patient_obj.patient_id],:order => "patient_state_id ASC")
+        :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
+        :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND start_date = ? AND p.patient_id =?",
+          program_id,encounter_date.to_date,patient_obj.patient_id],:order => "patient_state_id ASC")
     end
 
     all_patient_states = []
@@ -2325,7 +2450,7 @@ The following block of code should be replaced by a more cleaner function
       end
     end
 
-#=begin
+    #=begin
     all_patient_states.each do |outcome, outcome_date|
       visit_date = outcome_date.to_date rescue nil
       next if visit_date.blank?
@@ -2338,7 +2463,7 @@ The following block of code should be replaced by a more cleaner function
 
     end
 
-#=end
+    #=end
 
     patient_visits.sort.each do |visit_date,data|
       next if visit_date.blank?
@@ -2360,9 +2485,9 @@ The following block of code should be replaced by a more cleaner function
       outcome = patient_visits[encounter_date].outcome rescue nil
       if outcome.blank?
         state = PatientState.find(:first,
-                                  :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
-                                  :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
-                                                 program_id,patient_obj.patient_id],:order => "date_enrolled DESC,start_date DESC")
+          :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
+          :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
+            program_id,patient_obj.patient_id],:order => "date_enrolled DESC,start_date DESC")
 
         patient_visits[encounter_date] = Mastercard.new() if patient_visits[encounter_date].blank?
         patient_visits[encounter_date].outcome = state.program_workflow_state.concept.fullname rescue 'Unknown state'
@@ -2372,7 +2497,6 @@ The following block of code should be replaced by a more cleaner function
         patient_visits[encounter_date].date_of_outcome = state.start_date rescue nil
       end
     end
-
     patient_visits
   end
 
@@ -2382,12 +2506,12 @@ The following block of code should be replaced by a more cleaner function
 
     program_id = Program.find_by_name('TB PROGRAM').id
     patient_state = PatientState.find(:first,
-                                      :joins => "INNER JOIN patient_program p
+      :joins => "INNER JOIN patient_program p
        ON p.patient_program_id = patient_state.patient_program_id",
-                                      :conditions =>["patient_state.voided = 0 AND p.voided = 0
+      :conditions =>["patient_state.voided = 0 AND p.voided = 0
        AND p.program_id = ? AND DATE(start_date) <= DATE('#{visit_date}') AND p.patient_id =?",
-                                                     program_id,patient.id],
-                                      :order => "start_date DESC")
+        program_id,patient.id],
+      :order => "start_date DESC")
 
     return state if patient_state.blank?
     return ConceptName.find_by_concept_id(patient_state.program_workflow_state.concept_id).name
@@ -2397,12 +2521,12 @@ The following block of code should be replaced by a more cleaner function
   def hiv_state(patient_obj,visit_date)
     program_id = Program.find_by_name('HIV PROGRAM').id
     patient_state = PatientState.find(:first,
-                                      :joins => "INNER JOIN patient_program p
+      :joins => "INNER JOIN patient_program p
        ON p.patient_program_id = patient_state.patient_program_id",
-                                      :conditions =>["patient_state.voided = 0 AND p.voided = 0
+      :conditions =>["patient_state.voided = 0 AND p.voided = 0
        AND p.program_id = ? AND DATE(start_date) <= DATE('#{visit_date}') AND p.patient_id =?",
-                                                     program_id,patient_obj.id],
-                                      :order => "start_date DESC")
+        program_id,patient_obj.id],
+      :order => "start_date DESC")
 
     #patient_state = PatientState.find(:last,
     #                         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
@@ -2588,7 +2712,7 @@ The following block of code should be replaced by a more cleaner function
       clinic_encounters = ["HIV CLINIC CONSULTATION","HIV STAGING","ART ADHERENCE","TREATMENT",'DISPENSION','HIV RECEPTION']
       encounter_type_ids = EncounterType.find(:all,:conditions =>["name IN (?)",clinic_encounters]).collect{| e | e.id }
       encounter = Encounter.find(:first,:conditions =>["patient_id = ? AND encounter_type In (?)",
-                                                       patient.id,encounter_type_ids],:order => "encounter_datetime DESC")
+          patient.id,encounter_type_ids],:order => "encounter_datetime DESC")
       provider_username = "#{'Recorded by: ' + User.find(encounter.creator).username}" rescue nil
     end
     provider_username
@@ -2596,7 +2720,7 @@ The following block of code should be replaced by a more cleaner function
 
   def art_guardian(patient)
     person_id = Relationship.find(:first,:order => "date_created DESC",
-                                  :conditions =>["person_a = ?",patient.person.id]).person_b rescue nil
+      :conditions =>["person_a = ?",patient.person.id]).person_b rescue nil
 
     #patient_bean = PatientService.get_patient(Person.find(person_id))
     guardian_name = PatientService.name(Person.find(person_id)) rescue nil
@@ -2606,138 +2730,138 @@ The following block of code should be replaced by a more cleaner function
   def save_mastercard_attribute(params)
     patient = Patient.find(params[:patient_id])
     case params[:field]
-      when 'arv_number'
-        type = params['identifiers'][0][:identifier_type]
-        #patient = Patient.find(params[:patient_id])
-        patient_identifiers = PatientIdentifier.find(:all,
-                                                     :conditions => ["voided = 0 AND identifier_type = ? AND patient_id = ?",type.to_i,patient.id])
+    when 'arv_number'
+      type = params['identifiers'][0][:identifier_type]
+      #patient = Patient.find(params[:patient_id])
+      patient_identifiers = PatientIdentifier.find(:all,
+        :conditions => ["voided = 0 AND identifier_type = ? AND patient_id = ?",type.to_i,patient.id])
 
-        patient_identifiers.map{|identifier|
-          identifier.voided = 1
-          identifier.void_reason = "given another number"
-          identifier.date_voided  = Time.now()
-          identifier.voided_by = current_user.id
-          identifier.save
-        }
+      patient_identifiers.map{|identifier|
+        identifier.voided = 1
+        identifier.void_reason = "given another number"
+        identifier.date_voided  = Time.now()
+        identifier.voided_by = current_user.id
+        identifier.save
+      }
 
-        identifier = params['identifiers'][0][:identifier].strip
-        if identifier.match(/(.*)[A-Z]/i).blank?
-          params['identifiers'][0][:identifier] = "#{PatientIdentifier.site_prefix}-ARV-#{identifier}"
+      identifier = params['identifiers'][0][:identifier].strip
+      if identifier.match(/(.*)[A-Z]/i).blank?
+        params['identifiers'][0][:identifier] = "#{PatientIdentifier.site_prefix}-ARV-#{identifier}"
+      end
+      patient.patient_identifiers.create(params[:identifiers])
+    when "name"
+      names_params =  {"given_name" => params[:given_name].to_s,"family_name" => params[:family_name].to_s}
+      patient.person.names.first.update_attributes(names_params) if names_params
+    when "age"
+      birthday_params = params[:person]
+
+      if !birthday_params.empty?
+        if birthday_params["birth_year"] == "Unknown"
+          PatientService.set_birthdate_by_age(patient.person, birthday_params["age_estimate"])
+        else
+          PatientService.set_birthdate(patient.person, birthday_params["birth_year"], birthday_params["birth_month"], birthday_params["birth_day"])
         end
-        patient.patient_identifiers.create(params[:identifiers])
-      when "name"
-        names_params =  {"given_name" => params[:given_name].to_s,"family_name" => params[:family_name].to_s}
-        patient.person.names.first.update_attributes(names_params) if names_params
-      when "age"
-        birthday_params = params[:person]
-
-        if !birthday_params.empty?
-          if birthday_params["birth_year"] == "Unknown"
-            PatientService.set_birthdate_by_age(patient.person, birthday_params["age_estimate"])
-          else
-            PatientService.set_birthdate(patient.person, birthday_params["birth_year"], birthday_params["birth_month"], birthday_params["birth_day"])
-          end
-          patient.person.birthdate_estimated = 1 if params["birthdate_estimated"] == 'true'
-          patient.person.save
-        end
-      when "sex"
-        gender ={"gender" => params[:gender].to_s}
-        patient.person.update_attributes(gender) if !gender.empty?
-      when "location"
-        location = params[:person][:addresses]
+        patient.person.birthdate_estimated = 1 if params["birthdate_estimated"] == 'true'
+        patient.person.save
+      end
+    when "sex"
+      gender ={"gender" => params[:gender].to_s}
+      patient.person.update_attributes(gender) if !gender.empty?
+    when "location"
+      location = params[:person][:addresses]
         
-        addresses = patient.person.addresses.first    
+      addresses = patient.person.addresses.first
 
-        if addresses.blank?
-          PersonAddress.create(:person_id => patient.id,
-                                :city_village => location)
-        else
-          addresses.update_attributes(location)
-        end
+      if addresses.blank?
+        PersonAddress.create(:person_id => patient.id,
+          :city_village => location)
+      else
+        addresses.update_attributes(location)
+      end
 
-      when "occupation"
-        attribute = params[:person][:attributes]
-        occupation_attribute = PersonAttributeType.find_by_name("Occupation")
-        exists_person_attribute = PersonAttribute.find(:first, :conditions => ["person_id = ? AND person_attribute_type_id = ?", patient.person.id, occupation_attribute.person_attribute_type_id]) rescue nil
-        if exists_person_attribute
-          exists_person_attribute.update_attributes({'value' => attribute[:occupation].to_s})
-        else
-          attribute = {'value' => params[:person]["Occupation"],
-                       'person_attribute_type_id' => occupation_attribute.id,
-                       'person_id' => patient.id}
-          PersonAttribute.create(attribute)
+    when "occupation"
+      attribute = params[:person][:attributes]
+      occupation_attribute = PersonAttributeType.find_by_name("Occupation")
+      exists_person_attribute = PersonAttribute.find(:first, :conditions => ["person_id = ? AND person_attribute_type_id = ?", patient.person.id, occupation_attribute.person_attribute_type_id]) rescue nil
+      if exists_person_attribute
+        exists_person_attribute.update_attributes({'value' => attribute[:occupation].to_s})
+      else
+        attribute = {'value' => params[:person]["Occupation"],
+          'person_attribute_type_id' => occupation_attribute.id,
+          'person_id' => patient.id}
+        PersonAttribute.create(attribute)
         
-        end
-      when "guardian"
-        names_params =  {"given_name" => params[:given_name].to_s,"family_name" => params[:family_name].to_s}
-        Person.find(params[:guardian_id].to_s).names.first.update_attributes(names_params) rescue '' if names_params
-      when "address"
-        address2 = params[:person][:addresses]
+      end
+    when "guardian"
+      names_params =  {"given_name" => params[:given_name].to_s,"family_name" => params[:family_name].to_s}
+      Person.find(params[:guardian_id].to_s).names.first.update_attributes(names_params) rescue '' if names_params
+    when "address"
+      address2 = params[:person][:addresses]
         
-        addresses = patient.person.addresses.first    
+      addresses = patient.person.addresses.first
 
-        if addresses.blank?
-          PersonAddress.create(:person_id => patient.id,
-                               :address1 => address2 )
-        else
-          addresses.update_attributes(address2)
-        end
+      if addresses.blank?
+        PersonAddress.create(:person_id => patient.id,
+          :address1 => address2 )
+      else
+        addresses.update_attributes(address2)
+      end
         
-      when "ta"
-        county_district = params[:person][:addresses]
-        addresses = patient.person.addresses.first    
+    when "ta"
+      county_district = params[:person][:addresses]
+      addresses = patient.person.addresses.first
 
-        if addresses.blank?
-          PersonAddress.create(:person_id => patient.id,
-                               :county_district => county_district)
-        else
-          addresses.update_attributes(county_district)
-        end
+      if addresses.blank?
+        PersonAddress.create(:person_id => patient.id,
+          :county_district => county_district)
+      else
+        addresses.update_attributes(county_district)
+      end
 
-      when "home_district"
-        home_district = params[:person][:addresses]
-        addresses = patient.person.addresses.first    
+    when "home_district"
+      home_district = params[:person][:addresses]
+      addresses = patient.person.addresses.first
 
-        if addresses.blank?
-          PersonAddress.create(:person_id => patient.id,
-                               :address2 => home_district)
-        else
-          addresses.update_attributes(home_district)
-        end
+      if addresses.blank?
+        PersonAddress.create(:person_id => patient.id,
+          :address2 => home_district)
+      else
+        addresses.update_attributes(home_district)
+      end
 
-      when "cell_phone_number"
-        attribute_type = PersonAttributeType.find_by_name("Cell Phone Number").id
-        person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
-        if person_attribute.blank?
-          attribute = {'value' => params[:person]["cell_phone_number"],
-                       'person_attribute_type_id' => attribute_type,
-                       'person_id' => patient.id}
-          PersonAttribute.create(attribute)
-        else
-          person_attribute.update_attributes({'value' => params[:person]["cell_phone_number"]})
-        end
-      when "office_phone_number"
-        attribute_type = PersonAttributeType.find_by_name("Office Phone Number").id
-        person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
-        if person_attribute.blank?
-          attribute = {'value' => params[:person]["office_phone_number"],
-                       'person_attribute_type_id' => attribute_type,
-                       'person_id' => patient.id}
-          PersonAttribute.create(attribute)
-        else
-          person_attribute.update_attributes({'value' => params[:person]["office_phone_number"]})
-        end
-      when "home_phone_number"
-        attribute_type = PersonAttributeType.find_by_name("Home Phone Number").id
-        person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
-        if person_attribute.blank?
-          attribute = {'value' => params[:person]["home_phone_number"],
-                       'person_attribute_type_id' => attribute_type,
-                       'person_id' => patient.id}
-          PersonAttribute.create(attribute)
-        else
-          person_attribute.update_attributes({'value' => params[:person]["home_phone_number"]})
-        end
+    when "cell_phone_number"
+      attribute_type = PersonAttributeType.find_by_name("Cell Phone Number").id
+      person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
+      if person_attribute.blank?
+        attribute = {'value' => params[:person]["cell_phone_number"],
+          'person_attribute_type_id' => attribute_type,
+          'person_id' => patient.id}
+        PersonAttribute.create(attribute)
+      else
+        person_attribute.update_attributes({'value' => params[:person]["cell_phone_number"]})
+      end
+    when "office_phone_number"
+      attribute_type = PersonAttributeType.find_by_name("Office Phone Number").id
+      person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
+      if person_attribute.blank?
+        attribute = {'value' => params[:person]["office_phone_number"],
+          'person_attribute_type_id' => attribute_type,
+          'person_id' => patient.id}
+        PersonAttribute.create(attribute)
+      else
+        person_attribute.update_attributes({'value' => params[:person]["office_phone_number"]})
+      end
+    when "home_phone_number"
+      attribute_type = PersonAttributeType.find_by_name("Home Phone Number").id
+      person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
+      if person_attribute.blank?
+        attribute = {'value' => params[:person]["home_phone_number"],
+          'person_attribute_type_id' => attribute_type,
+          'person_id' => patient.id}
+        PersonAttribute.create(attribute)
+      else
+        person_attribute.update_attributes({'value' => params[:person]["home_phone_number"]})
+      end
     end
   end
 
@@ -2746,6 +2870,7 @@ The following block of code should be replaced by a more cleaner function
   end
 
   def set_new_patient_filing_number(patient)
+=begin
     ActiveRecord::Base.transaction do
       global_property_value = GlobalProperty.find_by_property("filing.number.limit").property_value rescue '10'
 
@@ -2755,11 +2880,11 @@ The following block of code should be replaced by a more cleaner function
       next_filing_number = PatientIdentifier.next_filing_number('Filing number')
       if (next_filing_number[5..-1].to_i >= global_property_value.to_i)
         encounter_type_name = ['REGISTRATION','VITALS','HIV CLINIC REGISTRATION','HIV CLINIC CONSULTATION',
-                               'TREATMENT','HIV RECEPTION','HIV STAGING','DISPENSING','APPOINTMENT']
+          'TREATMENT','HIV RECEPTION','HIV STAGING','DISPENSING','APPOINTMENT']
         encounter_type_ids = EncounterType.find(:all,:conditions => ["name IN (?)",encounter_type_name]).map{|n|n.id}
 
         all_filing_numbers = PatientIdentifier.find(:all, :conditions =>["identifier_type = ?",
-                                                                         filing_number_identifier_type.id],:group=>"patient_id")
+            filing_number_identifier_type.id],:group=>"patient_id")
         patient_ids = all_filing_numbers.collect{|i|i.patient_id}
         patient_to_be_archived = Encounter.find_by_sql(["
           SELECT patient_id, MAX(encounter_datetime) AS last_encounter_id
@@ -2772,8 +2897,8 @@ The following block of code should be replaced by a more cleaner function
 
         if patient_to_be_archived.blank?
           patient_to_be_archived = PatientIdentifier.find(:last,:conditions =>["identifier_type = ?",
-                                                                               filing_number_identifier_type.id],
-                                                          :group=>"patient_id",:order => "identifier DESC").patient rescue nil
+              filing_number_identifier_type.id],
+            :group=>"patient_id",:order => "identifier DESC").patient rescue nil
         end
       end
 
@@ -2817,6 +2942,8 @@ The following block of code should be replaced by a more cleaner function
       end
       true
     end
+=end
+
   end
 
   def diabetes_treatments
@@ -2848,14 +2975,14 @@ The following block of code should be replaced by a more cleaner function
     #@encounters   = @patient.encounters.current.active.find(:all)
     @encounters   = @patient.encounters.find(:all, :conditions => ['DATE(encounter_datetime) = ?',session_date.to_date])
     excluded_encounters = ["Registration", "Diabetes history","Complications", #"Diabetes test",
-                           "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
-                           "Hypertension management", "Past diabetes medical history"]
+      "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
+      "Hypertension management", "Past diabetes medical history"]
     @encounter_names = @patient.encounters.active.map{|encounter| encounter.name}.uniq.delete_if{ |encounter| excluded_encounters.include? encounter.humanize } rescue []
     ignored_concept_id = Concept.find_by_name("NO").id;
 
     @observations = Observation.find(:all, :order => 'obs_datetime DESC',
-                                     :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
-                                                                   @patient.patient_id, Time.now.to_date, ignored_concept_id])
+      :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
+        @patient.patient_id, Time.now.to_date, ignored_concept_id])
 
     @observations.delete_if { |obs| obs.value_text.downcase == "no" rescue nil }
 
@@ -2867,8 +2994,8 @@ The following block of code should be replaced by a more cleaner function
     @obs_datetimes = @observations.map { |each|each.obs_datetime.strftime("%d-%b-%Y")}.uniq
 
     @vitals = Encounter.find(:all, :order => 'encounter_datetime DESC',
-                             :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
-                                                           @patient.patient_id, Time.now.to_date])
+      :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
+        @patient.patient_id, Time.now.to_date])
 
     @patient_treatements = DiabetesService.treatments(@patient)
 
@@ -2939,14 +3066,14 @@ The following block of code should be replaced by a more cleaner function
     #@encounters   = @patient.encounters.current.active.find(:all)
     @encounters   = @patient.encounters.find(:all, :conditions => ['DATE(encounter_datetime) = ?',session_date.to_date])
     excluded_encounters = ["Registration", "Diabetes history","Complications", #"Diabetes test",
-                           "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
-                           "Hypertension management", "Past diabetes medical history"]
+      "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
+      "Hypertension management", "Past diabetes medical history"]
     @encounter_names = @patient.encounters.active.map{|encounter| encounter.name}.uniq.delete_if{ |encounter| excluded_encounters.include? encounter.humanize } rescue []
     ignored_concept_id = Concept.find_by_name("NO").id;
 
     @observations = Observation.find(:all, :order => 'obs_datetime DESC',
-                                     :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
-                                                                   @patient.patient_id, Time.now.to_date, ignored_concept_id])
+      :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
+        @patient.patient_id, Time.now.to_date, ignored_concept_id])
 
     @observations.delete_if { |obs| obs.value_text.downcase == "no" rescue nil }
 
@@ -2958,8 +3085,8 @@ The following block of code should be replaced by a more cleaner function
     @obs_datetimes = @observations.map { |each|each.obs_datetime.strftime("%d-%b-%Y")}.uniq
 
     @vitals = Encounter.find(:all, :order => 'encounter_datetime DESC',
-                             :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
-                                                           @patient.patient_id, Time.now.to_date])
+      :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
+        @patient.patient_id, Time.now.to_date])
 
     @patient_treatements = DiabetesService.treatments(@patient)
 
@@ -2998,16 +3125,16 @@ The following block of code should be replaced by a more cleaner function
 
     @encounter_type_ids = []
     encounters_list = ["initial diabetes complications","complications",
-                       "diabetes history", "diabetes treatments",
-                       "hospital admissions", "general health",
-                       "hypertension management",
-                       "past diabetes medical history"]
+      "diabetes history", "diabetes treatments",
+      "hospital admissions", "general health",
+      "hypertension management",
+      "past diabetes medical history"]
 
     @encounter_type_ids = EncounterType.find_all_by_name(encounters_list).each{|e| e.encounter_type_id}
 
     @encounters   = @patient.encounters.find(:all, :order => 'encounter_datetime DESC',
-                                             :conditions => ["patient_id= ? AND encounter_type in (?)",
-                                                             @patient.patient_id,@encounter_type_ids])
+      :conditions => ["patient_id= ? AND encounter_type in (?)",
+        @patient.patient_id,@encounter_type_ids])
 
     @encounter_names = @patient.encounters.map{|encounter| encounter.name}.uniq
 
@@ -3042,14 +3169,14 @@ The following block of code should be replaced by a more cleaner function
     #@encounters   = @patient.encounters.current.active.find(:all)
     @encounters   = @patient.encounters.find(:all, :conditions => ['DATE(encounter_datetime) = ?',session_date.to_date])
     excluded_encounters = ["Registration", "Diabetes history","Complications", #"Diabetes test",
-                           "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
-                           "Hypertension management", "Past diabetes medical history"]
+      "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
+      "Hypertension management", "Past diabetes medical history"]
     @encounter_names = @patient.encounters.active.map{|encounter| encounter.name}.uniq.delete_if{ |encounter| excluded_encounters.include? encounter.humanize } rescue []
     ignored_concept_id = Concept.find_by_name("NO").id;
 
     @observations = Observation.find(:all, :order => 'obs_datetime DESC',
-                                     :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
-                                                                   @patient.patient_id, Time.now.to_date, ignored_concept_id])
+      :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
+        @patient.patient_id, Time.now.to_date, ignored_concept_id])
 
     @observations.delete_if { |obs| obs.value_text.downcase == "no" rescue nil }
 
@@ -3061,8 +3188,8 @@ The following block of code should be replaced by a more cleaner function
     @obs_datetimes = @observations.map { |each|each.obs_datetime.strftime("%d-%b-%Y")}.uniq
 
     @vitals = Encounter.find(:all, :order => 'encounter_datetime DESC',
-                             :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
-                                                           @patient.patient_id, Time.now.to_date])
+      :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
+        @patient.patient_id, Time.now.to_date])
 
     @patient_treatements = DiabetesService.treatments(@patient)
 
@@ -3100,14 +3227,14 @@ The following block of code should be replaced by a more cleaner function
     #@encounters   = @patient.encounters.current.active.find(:all)
     @encounters   = @patient.encounters.find(:all, :conditions => ['DATE(encounter_datetime) = ?',session_date.to_date])
     excluded_encounters = ["Registration", "Diabetes history","Complications", #"Diabetes test",
-                           "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
-                           "Hypertension management", "Past diabetes medical history"]
+      "General health", "Diabetes treatments", "Diabetes admissions","Hospital admissions",
+      "Hypertension management", "Past diabetes medical history"]
     @encounter_names = @patient.encounters.active.map{|encounter| encounter.name}.uniq.delete_if{ |encounter| excluded_encounters.include? encounter.humanize } rescue []
     ignored_concept_id = Concept.find_by_name("NO").id;
 
     @observations = Observation.find(:all, :order => 'obs_datetime DESC',
-                                     :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
-                                                                   @patient.patient_id, Time.now.to_date, ignored_concept_id])
+      :limit => 50, :conditions => ["person_id= ? AND obs_datetime < ? AND value_coded != ?",
+        @patient.patient_id, Time.now.to_date, ignored_concept_id])
 
     @observations.delete_if { |obs| obs.value_text.downcase == "no" rescue nil }
 
@@ -3119,8 +3246,8 @@ The following block of code should be replaced by a more cleaner function
     @obs_datetimes = @observations.map { |each|each.obs_datetime.strftime("%d-%b-%Y")}.uniq
 
     @vitals = Encounter.find(:all, :order => 'encounter_datetime DESC',
-                             :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
-                                                           @patient.patient_id, Time.now.to_date])
+      :limit => 50, :conditions => ["patient_id= ? AND encounter_datetime < ? ",
+        @patient.patient_id, Time.now.to_date])
 
     @patient_treatements = DiabetesService.treatments(@patient)
 
@@ -3196,7 +3323,7 @@ The following block of code should be replaced by a more cleaner function
 
       if(@type)
         @enc = @patient.encounters.find(:all, :joins => :observations,
-                                        :conditions => ['encounter_type = ?', @type])
+          :conditions => ['encounter_type = ?', @type])
 
         if(@enc)
           reason = ""
@@ -3223,7 +3350,7 @@ The following block of code should be replaced by a more cleaner function
 
               if o.value_datetime.to_date == params[:appointmentDate].to_date
                 o.update_attributes(:voided => 1, :date_voided => Time.now.to_date,
-                                    :voided_by => current_user.user_id, :void_reason => reason)
+                  :voided_by => current_user.user_id, :void_reason => reason)
 
                 @voided = true
               end
@@ -3231,7 +3358,7 @@ The following block of code should be replaced by a more cleaner function
 
             if @voided == true
               encounter.update_attributes(:voided => 1, :date_voided => Time.now.to_date,
-                                          :voided_by => current_user.user_id, :void_reason => reason)
+                :voided_by => current_user.user_id, :void_reason => reason)
             end
           end
 
@@ -3256,26 +3383,26 @@ The following block of code should be replaced by a more cleaner function
     # Creatinine
     creatinine_id = Concept.find_by_name('CREATININE').id
     @creatinine_obs = @patient.person.observations.find(:all,
-                                                        :joins => :encounter,
-                                                        :conditions => ['encounter_type = ? AND concept_id = ?',
-                                                                        diabetes_test_id, creatinine_id],
-                                                        :order => 'obs_datetime DESC')
+      :joins => :encounter,
+      :conditions => ['encounter_type = ? AND concept_id = ?',
+        diabetes_test_id, creatinine_id],
+      :order => 'obs_datetime DESC')
 
     # Urine Protein
     urine_protein_id = Concept.find_by_name('URINE PROTEIN').id
     @urine_protein_obs = @patient.person.observations.find(:all,
-                                                           :joins => :encounter,
-                                                           :conditions => ['encounter_type = ? AND concept_id = ?',
-                                                                           diabetes_test_id, urine_protein_id],
-                                                           :order => 'obs_datetime DESC')
+      :joins => :encounter,
+      :conditions => ['encounter_type = ? AND concept_id = ?',
+        diabetes_test_id, urine_protein_id],
+      :order => 'obs_datetime DESC')
 
     # Foot Check
     @foot_check_encounters = @patient.encounters.find(:all,
-                                                      :joins => :observations,
-                                                      :conditions => ['concept_id IN (?)',
-                                                                      ConceptName.find_all_by_name(['RIGHT FOOT/LEG',
-                                                                                                    'LEFT FOOT/LEG', 'LEFT HAND/ARM', 'RIGHT HAND/ARM']).map(&:concept_id)],
-                                                      :order => 'obs_datetime DESC').uniq
+      :joins => :observations,
+      :conditions => ['concept_id IN (?)',
+        ConceptName.find_all_by_name(['RIGHT FOOT/LEG',
+            'LEFT FOOT/LEG', 'LEFT HAND/ARM', 'RIGHT HAND/ARM']).map(&:concept_id)],
+      :order => 'obs_datetime DESC').uniq
 
     if @foot_check_encounters.nil?
       @foot_check_encounters = []
@@ -3285,10 +3412,10 @@ The following block of code should be replaced by a more cleaner function
 
     @foot_check_encounters.each{|e|
       value = @patient.person.observations.find(:all,
-                                                :joins => :encounter,
-                                                :conditions => ['encounter_type = ? AND encounter.encounter_id IN (?)',
-                                                                diabetes_test_id, e.encounter_id],
-                                                :order => 'obs_datetime DESC')
+        :joins => :encounter,
+        :conditions => ['encounter_type = ? AND encounter.encounter_id IN (?)',
+          diabetes_test_id, e.encounter_id],
+        :order => 'obs_datetime DESC')
 
       unless value.nil?
         @foot_check_obs[e.encounter_id] = value
@@ -3297,11 +3424,11 @@ The following block of code should be replaced by a more cleaner function
 
     # Visual Acuity RIGHT EYE FUNDOSCOPY
     @visual_acuity_encounters = @patient.encounters.find(:all,
-                                                         :joins => :observations,
-                                                         :conditions => ['concept_id IN (?)',
-                                                                         ConceptName.find_all_by_name(['LEFT EYE VISUAL ACUITY',
-                                                                                                       'RIGHT EYE VISUAL ACUITY']).map(&:concept_id)],
-                                                         :order => 'obs_datetime DESC').uniq
+      :joins => :observations,
+      :conditions => ['concept_id IN (?)',
+        ConceptName.find_all_by_name(['LEFT EYE VISUAL ACUITY',
+            'RIGHT EYE VISUAL ACUITY']).map(&:concept_id)],
+      :order => 'obs_datetime DESC').uniq
 
     if @visual_acuity_encounters.nil?
       @visual_acuity_encounters = []
@@ -3311,20 +3438,20 @@ The following block of code should be replaced by a more cleaner function
 
     @visual_acuity_encounters.each{|e|
       @visual_acuity_obs[e.encounter_id] = @patient.person.observations.find(:all,
-                                                                             :joins => :encounter,
-                                                                             :conditions => ['encounter_type = ? AND encounter.encounter_id = ?',
-                                                                                             diabetes_test_id, e.encounter_id],
-                                                                             :order => 'obs_datetime DESC')
+        :joins => :encounter,
+        :conditions => ['encounter_type = ? AND encounter.encounter_id = ?',
+          diabetes_test_id, e.encounter_id],
+        :order => 'obs_datetime DESC')
     }
 
 
     # Fundoscopy
     @fundoscopy_encounters = @patient.encounters.find(:all,
-                                                      :joins => :observations,
-                                                      :conditions => ['concept_id IN (?)',
-                                                                      ConceptName.find_all_by_name(['LEFT EYE FUNDOSCOPY',
-                                                                                                    'RIGHT EYE FUNDOSCOPY']).map(&:concept_id)],
-                                                      :order => 'obs_datetime DESC').uniq
+      :joins => :observations,
+      :conditions => ['concept_id IN (?)',
+        ConceptName.find_all_by_name(['LEFT EYE FUNDOSCOPY',
+            'RIGHT EYE FUNDOSCOPY']).map(&:concept_id)],
+      :order => 'obs_datetime DESC').uniq
 
     if @fundoscopy_encounters.nil?
       @fundoscopy_encounters = []
@@ -3334,28 +3461,28 @@ The following block of code should be replaced by a more cleaner function
 
     @fundoscopy_encounters.each{|e|
       @fundoscopy_obs[e.encounter_id] = @patient.person.observations.find(:all,
-                                                                          :joins => :encounter,
-                                                                          :conditions => ['encounter_type = ? AND encounter.encounter_id IN (?)',
-                                                                                          diabetes_test_id, e.encounter_id],
-                                                                          :order => 'obs_datetime DESC')
+        :joins => :encounter,
+        :conditions => ['encounter_type = ? AND encounter.encounter_id IN (?)',
+          diabetes_test_id, e.encounter_id],
+        :order => 'obs_datetime DESC')
     }
 
     # Urea
     urea_id = Concept.find_by_name('UREA').id
     @urea_obs = @patient.person.observations.find(:all,
-                                                  :joins => :encounter,
-                                                  :conditions => ['encounter_type = ? AND concept_id = ?',
-                                                                  diabetes_test_id, urea_id],
-                                                  :order => 'obs_datetime DESC')
+      :joins => :encounter,
+      :conditions => ['encounter_type = ? AND concept_id = ?',
+        diabetes_test_id, urea_id],
+      :order => 'obs_datetime DESC')
 
 
     # Macrovascular
     macrovascular_id = Concept.find_by_name('MACROVASCULAR').id
     @macrovascular_obs = @patient.person.observations.find(:all,
-                                                           :joins => :encounter,
-                                                           :conditions => ['encounter_type = ? AND concept_id = ?',
-                                                                           diabetes_test_id, macrovascular_id],
-                                                           :order => 'obs_datetime DESC')
+      :joins => :encounter,
+      :conditions => ['encounter_type = ? AND concept_id = ?',
+        diabetes_test_id, macrovascular_id],
+      :order => 'obs_datetime DESC')
     render :layout => 'complications'
   end
 
@@ -3372,9 +3499,19 @@ The following block of code should be replaced by a more cleaner function
 
   def void_encounter
     @encounter = Encounter.find(params[:encounter_id])
+    
+    (@encounter.observations || []).each do |ob|
+      ob.void
+    end
+
+    (@encounter.orders || []).each do |od|
+      od.void
+    end
+
     ActiveRecord::Base.transaction do
       @encounter.void
     end
+
     return
   end
 
@@ -3393,7 +3530,7 @@ The following block of code should be replaced by a more cleaner function
     count = appointments.first.count unless appointments.blank?
     count = '0' if count.blank?
 
-    render :text => "Next appointment: #{date.strftime('%d %B %Y')} (#{count})"
+    render :text => "Next appointment: #{date.strftime('%d/%b/%Y')} (#{count})"
   end
 
 
@@ -3436,19 +3573,19 @@ The following block of code should be replaced by a more cleaner function
 
         else if ((params[:sec_id].blank?) && (params[:type] != "pri"))
 
-               pre_fix2 = "pri"
-               person = PatientService.get_patient(Person.find(params["pri_id"]))
-               @values[pre_fix2 + "_name"] = person.name
-               @values[pre_fix2 + "_gender"] = person.sex
-               @values[pre_fix2 + "_birthdate"] = person.birth_date
-               @values[pre_fix2 + "_age"] = person.age
-               @values[pre_fix2 + "_district"] = person.home_district
-               @values[pre_fix2 + "_ta"] = person.traditional_authority
-               @values[pre_fix2 + "_residence"] = person.current_residence
-               @values[pre_fix2 + "_nat_id"] = person.national_id
-               @values[pre_fix2 + "_pat_id"] = person.patient_id
+            pre_fix2 = "pri"
+            person = PatientService.get_patient(Person.find(params["pri_id"]))
+            @values[pre_fix2 + "_name"] = person.name
+            @values[pre_fix2 + "_gender"] = person.sex
+            @values[pre_fix2 + "_birthdate"] = person.birth_date
+            @values[pre_fix2 + "_age"] = person.age
+            @values[pre_fix2 + "_district"] = person.home_district
+            @values[pre_fix2 + "_ta"] = person.traditional_authority
+            @values[pre_fix2 + "_residence"] = person.current_residence
+            @values[pre_fix2 + "_nat_id"] = person.national_id
+            @values[pre_fix2 + "_pat_id"] = person.patient_id
 
-             end
+          end
         end
       end
     end
@@ -3805,7 +3942,7 @@ The following block of code should be replaced by a more cleaner function
     @modifier = @results[1]["Range"] rescue nil
     @reason_for_art = PatientService.reason_for_art_eligibility(patient)
     @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-      patient.patient_id, Concept.find_by_name("Viral load").concept_id]
+        patient.patient_id, Concept.find_by_name("Viral load").concept_id]
     ).answer_string.squish.upcase rescue nil
 
     @high_vl = true
@@ -3825,11 +3962,11 @@ The following block of code should be replaced by a more cleaner function
 
     @repeat_vl_obs_date = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
       AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
-      "Repeat"]).obs_datetime.to_date rescue nil
+        "Repeat"]).obs_datetime.to_date rescue nil
 
     @date_vl_result_given = Observation.find(:last, :conditions => ["
     person_id =? AND concept_id =? AND value_text REGEXP ?", patient.id,
-    Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
+        Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
 
     @enter_lab_results = GlobalProperty.find_by_property('enter.lab.results').property_value == 'true' rescue false
 
@@ -3889,12 +4026,12 @@ The following block of code should be replaced by a more cleaner function
 
     unless search_by_identifier
       patients = PatientIdentifier.find(:all, :conditions => ["voided = 0 AND (identifier LIKE ?)",
-                                                              "%#{search_str}%"],:limit => 10).map{| p |p.patient}
+          "%#{search_str}%"],:limit => 10).map{| p |p.patient}
     else
       given_name = search_str.split(' ')[0] rescue ''
       family_name = search_str.split(' ')[1] rescue ''
       patients = PersonName.find(:all ,:joins => [:person => [:patient]], :conditions => ["person.voided = 0 AND family_name LIKE ? AND given_name LIKE ?",
-                                                                                          "#{family_name}%","%#{given_name}%"],:limit => 10).collect{|pn|pn.person.patient}
+          "#{family_name}%","%#{given_name}%"],:limit => 10).collect{|pn|pn.person.patient}
     end
     @html = <<EOF
 <html>
@@ -3982,7 +4119,7 @@ EOF
         AND s.deleteyn = 0
         AND s.attribute = 'pass'
         ORDER BY DATE(TESTDATE) DESC",patient_identifiers,'HIV_viral_load'
-    ]).first rescue nil
+      ]).first rescue nil
 
     enc = patient.encounters.current.find_by_encounter_type(encounter_type)
     enc ||= patient.encounters.create(:encounter_type => encounter_type)
@@ -3998,5 +4135,55 @@ EOF
 
     render :text => true and return
   end
-  
+
+  def stop_fast_track
+    patient = Patient.find(params[:patient_id])
+    session_date = session[:datetime].to_date rescue Date.today
+    fast_track_concept_id = Concept.find_by_name('FAST').concept_id
+
+    no_concept = ConceptName.find_by_name('NO')
+    value_coded_name_id = no_concept.concept_name_id
+    value_coded = no_concept.concept_id
+
+    today_fast_track_obs = Observation.find(:last, :conditions => ["person_id =? AND DATE(obs_datetime) =?
+        AND concept_id =?", params[:patient_id], session_date, fast_track_concept_id])
+    
+    unless today_fast_track_obs.blank?
+      today_fast_track_obs.value_coded = value_coded
+      today_fast_track_obs.value_coded_name_id = value_coded_name_id
+      today_fast_track_obs.save
+
+      today_fast_track_obs.encounter.observations.create({
+          :person_id => params[:patient_id],
+          :concept_id => Concept.find_by_name("STOP REASON").concept_id,
+          :value_text => params[:fast_track_stop_reason],
+          :value_coded_name_id => ConceptName.find_by_name("STOP REASON").concept_name_id,
+          :obs_datetime => session_date
+        })
+      
+    else
+      encounter_type_id = EncounterType.find_by_name('HIV RECEPTION').encounter_type_id
+      hiv_reception_encounter = patient.encounters.find(:last, :conditions => ["DATE(encounter_datetime) =? AND
+          encounter_type =?", session_date, encounter_type_id])
+
+      hiv_reception_encounter.observations.create({
+          :person_id => params[:patient_id],
+          :concept_id => fast_track_concept_id,
+          :value_coded => value_coded,
+          :value_coded_name_id => value_coded_name_id,
+          :obs_datetime => session_date
+        })
+
+      hiv_reception_encounter.observations.create({
+          :person_id => params[:patient_id],
+          :concept_id => Concept.find_by_name("STOP REASON").concept_id,
+          :value_text => params[:fast_track_stop_reason],
+          :value_coded_name_id => ConceptName.find_by_name("STOP REASON").concept_name_id,
+          :obs_datetime => session_date
+        })
+    end
+
+    redirect_to next_task(patient) and return
+  end
+
 end

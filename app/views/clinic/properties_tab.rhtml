@@ -46,9 +46,15 @@
 </style>
 
 <script>
-  function setInnerHtmlData(id,result,path) {
+  function setInnerHtmlData(id,result,path, target) {
     td = document.getElementById(id);
-    td.innerHTML = "<a href =" + path + ">" +  result + "</a>"
+    if ((result == "Cervical Cancel Module Properties")) {
+      target = "_self"
+      td.innerHTML = "<a href ='" + path + "' target='" + target + "'>" +  result + "</a>"
+      return td.innerHTML
+    }
+
+    td.innerHTML = "<a href ='" + path + "' target='" + target + "'>" +  result + "</a>"
   }
 </script>
 <base target="_parent">
@@ -77,7 +83,7 @@
     count = @settings.length  unless @settings.blank?
     @settings.sort.reverse.map do | name , path | %>
       <script>
-        setInnerHtmlData("<%=count%>","<%=name%>","<%=path%>");
+        setInnerHtmlData("<%=count%>","<%=name%>","<%=path%>", "_parent");
       </script>
       <%count-=1%>
     <%end%>

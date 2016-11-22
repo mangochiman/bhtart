@@ -1892,7 +1892,7 @@ class CohortController < ActionController::Base
     render :text => value.to_json
   end
 
-    def n0a(start_date=Time.now, end_date=Time.now, section=nil)
+  def n0a(start_date=Time.now, end_date=Time.now, section=nil)
     value = []
 
     start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
@@ -2248,26 +2248,26 @@ class CohortController < ActionController::Base
   end
 
   def unk_effects(start_date=Time.now, end_date=Time.now, section=nil)
-     $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
-     effects = check_all_effects(start_date, end_date)
-     none = check_no_effects(start_date, end_date)
-     value = $total_alive_and_on_art - (effects + none)
-     render :text => value.to_json
+    $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
+    effects = check_all_effects(start_date, end_date)
+    none = check_no_effects(start_date, end_date)
+    value = $total_alive_and_on_art - (effects + none)
+    render :text => value.to_json
   end
 
   def no_effects(start_date=Time.now, end_date=Time.now, section=nil)
-     value = check_no_effects(start_date, end_date)
-     render :text => value.to_json
+    value = check_no_effects(start_date, end_date)
+    render :text => value.to_json
   end
 
   def check_all_effects(start_date=Time.now, end_date=Time.now, section=nil)
-  value = []
+    value = []
     patients = []
     end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
 
     $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
-#=begin
-         per_nue = FlatCohortTable.find_by_sql("
+    #=begin
+    per_nue = FlatCohortTable.find_by_sql("
                 SELECT
                     ft2.patient_id,
                     ft2.drug_induced_peripheral_neuropathy_enc_id,
@@ -2387,7 +2387,7 @@ class CohortController < ActionController::Base
                                   AND e1.voided = 0)
                   GROUP BY ft2.patient_id").map(&:patient_id)
 
-                art_side_effects = FlatCohortTable.find_by_sql("select
+    art_side_effects = FlatCohortTable.find_by_sql("select
                                       patient_id
                                   From
                                       flat_table2
@@ -2407,19 +2407,19 @@ class CohortController < ActionController::Base
                                   GROUP BY patient_id").map(&:patient_id)
 
     patients = ((jaundice || []) +
-                (skin_rash || []) +
-                (hepatitis || []) +
-                (leg_pain || []) +
-                (per_nue || []) +
-                (art_side_effects || []))
+        (skin_rash || []) +
+        (hepatitis || []) +
+        (leg_pain || []) +
+        (per_nue || []) +
+        (art_side_effects || []))
 
-     patients = patients.uniq unless patients.blank?
-     return patients
+    patients = patients.uniq unless patients.blank?
+    return patients
   end
 
 
   def check_no_effects(start_date=Time.now, end_date=Time.now, section=nil)
-   patient_with_effect = check_all_effects(start_date, end_date)#.collect{|p| p.patient_id}
+    patient_with_effect = check_all_effects(start_date, end_date)#.collect{|p| p.patient_id}
 
     hiv_clinic_consultation_encounter_id = EncounterType.find_by_name("HIV CLINIC CONSULTATION").id
 
@@ -2687,21 +2687,21 @@ class CohortController < ActionController::Base
   end
 
   def unknown_adherence(start_date=Time.now, end_date=Time.now, section=nil)
-   value = []
-   end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+    value = []
+    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
 
-   $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
+    $total_alive_and_on_art ||= total_alive_and_on_art(defaulted_patients = art_defaulters)
 
-   pats_missed_0_6_doses = total_missed_0_6(end_date)
-   pats_missed_7_plus_doses = total_missed_7_plus(end_date)
+    pats_missed_0_6_doses = total_missed_0_6(end_date)
+    pats_missed_7_plus_doses = total_missed_7_plus(end_date)
 
-   value = (($total_alive_and_on_art.to_a || []) -
-            ((pats_missed_0_6_doses.to_a || []) +
-            (pats_missed_7_plus_doses.to_a || [])))
+    value = (($total_alive_and_on_art.to_a || []) -
+        ((pats_missed_0_6_doses.to_a || []) +
+          (pats_missed_7_plus_doses.to_a || [])))
 
-   value =  value unless value.blank?
-   render :text => value.to_json
- end
+    value =  value unless value.blank?
+    render :text => value.to_json
+  end
 
 
 
@@ -3354,4 +3354,5 @@ class CohortController < ActionController::Base
 
     render :layout => false
   end
+  
 end

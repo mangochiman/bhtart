@@ -23,7 +23,7 @@ class GenericClinicController < ApplicationController
     @user = current_user.name rescue ""
 
     @roles = current_user.user_roles.collect{|r| r.role} rescue []
-     session[:stage_patient] = ""
+    session[:stage_patient] = ""
     render :template => 'clinic/index', :layout => false
   end
 
@@ -82,10 +82,10 @@ class GenericClinicController < ApplicationController
 
   def administration
     @reports =  [
-                  ['/clinic/users','User accounts/settings'],
-                  ['/clinic/management','Drug Management'], 
-                  ['/clinic/location_management','Location Management']
-                ]
+      ['/clinic/users','User accounts/settings'],
+      ['/clinic/management','Drug Management'],
+      ['/clinic/location_management','Location Management']
+    ]
     @landing_dashboard = 'clinic_administration'
     render :template => 'clinic/administration', :layout => 'clinic' 
   end
@@ -105,27 +105,27 @@ class GenericClinicController < ApplicationController
 
     @me = Encounter.statistics(@types,
       :conditions => ['encounter_datetime BETWEEN ? AND ? AND encounter.creator = ?',
-                      Date.today.strftime('%Y-%m-%d 00:00:00'),
-                      Date.today.strftime('%Y-%m-%d 23:59:59'),
-                      current_user.user_id])
+        Date.today.strftime('%Y-%m-%d 00:00:00'),
+        Date.today.strftime('%Y-%m-%d 23:59:59'),
+        current_user.user_id])
     @today = Encounter.statistics(@types,
       :conditions => ['encounter_datetime BETWEEN ? AND ?',
-                      Date.today.strftime('%Y-%m-%d 00:00:00'),
-                      Date.today.strftime('%Y-%m-%d 23:59:59')])
+        Date.today.strftime('%Y-%m-%d 00:00:00'),
+        Date.today.strftime('%Y-%m-%d 23:59:59')])
 
     if !simple_overview
       @year = Encounter.statistics(@types,
         :conditions => ['encounter_datetime BETWEEN ? AND ?',
-                        Date.today.strftime('%Y-01-01 00:00:00'),
-                        Date.today.strftime('%Y-12-31 23:59:59')])
+          Date.today.strftime('%Y-01-01 00:00:00'),
+          Date.today.strftime('%Y-12-31 23:59:59')])
       @ever = Encounter.statistics(@types)
     end
 
     @user = User.find(current_user.user_id).person.name rescue ""
 
     if simple_overview
-        render :template => 'clinic/overview_simple.rhtml' , :layout => false
-        return
+      render :template => 'clinic/overview_simple.rhtml' , :layout => false
+      return
     end
     render :layout => false
   end
@@ -133,6 +133,8 @@ class GenericClinicController < ApplicationController
   def reports_tab
     @reports = [
       ["Cohort","/cohort_tool/cohort_menu"],
+      ["Revised Cohort","/cohort_tool/revised_cohort_menu"],
+      ["Revised Cohort Survival Analysis","/cohort_tool/revised_cohort_survival_analysis_menu"],
       ["Supervision","/clinic/supervision_tab"],
       ["Data Cleaning Tools", "/clinic/data_cleaning_tab"],
       #["View appointments","/report/select_date"],
@@ -142,7 +144,8 @@ class GenericClinicController < ApplicationController
       ["Missed Appointments", "/report/missed_appointment_duration?type=missed"],
       ["Defaulted patients", "/report/missed_appointment_duration?type=defaulter"],
       ["Avg ART clinic duration for patients", "/report/avg_waiting_time_for_art_patients"],
-      ["Flat tables reports", "/cohort/select_date"]
+      ["Flat tables reports", "/cohort/select_date"],
+      ["HTN Reports", "/cohort_tool/select_htn_date"]
     ]
 
 
@@ -153,13 +156,13 @@ class GenericClinicController < ApplicationController
   	end
     @reports = [
       ["Diagnosis","/drug/date_select?goto=/report/age_group_select?type=diagnosis"],
-     # ["Patient Level Data","/drug/date_select?goto=/report/age_group_select?type=patient_level_data"],
+      # ["Patient Level Data","/drug/date_select?goto=/report/age_group_select?type=patient_level_data"],
       ["Disaggregated Diagnosis","/drug/date_select?goto=/report/age_group_select?type=disaggregated_diagnosis"],
       ["Referrals","/drug/date_select?goto=/report/opd?type=referrals"],
       #["Total Visits","/drug/date_select?goto=/report/age_group_select?type=total_visits"],
       #["User Stats","/drug/date_select?goto=/report/age_group_select?type=user_stats"],
       ["User Stats","/"],
-     # ["Total registered","/drug/date_select?goto=/report/age_group_select?type=total_registered"],
+      # ["Total registered","/drug/date_select?goto=/report/age_group_select?type=total_registered"],
       ["Diagnosis (By address)","/drug/date_select?goto=/report/age_group_select?type=diagnosis_by_address"],
       ["Diagnosis + demographics","/drug/date_select?goto=/report/age_group_select?type=diagnosis_by_demographics"]
     ] if Location.current_location.name.match(/Outpatient/i)
@@ -168,12 +171,12 @@ class GenericClinicController < ApplicationController
 
   def data_cleaning_tab
     @reports = [
-                 ['Missing Prescriptions' , '/cohort_tool/select?report_type=dispensations_without_prescriptions'],
-                 ['Missing Dispensations' , '/cohort_tool/select?report_type=prescriptions_without_dispensations'],
-                 ['Multiple Start Reasons' , '/cohort_tool/select?report_type=patients_with_multiple_start_reasons'],
-                 ['Out of range ARV number' , '/cohort_tool/select?report_type=out_of_range_arv_number'],
-                 ['Data Consistency Check' , '/cohort_tool/select?report_type=data_consistency_check']
-               ] 
+      ['Missing Prescriptions' , '/cohort_tool/select?report_type=dispensations_without_prescriptions'],
+      ['Missing Dispensations' , '/cohort_tool/select?report_type=prescriptions_without_dispensations'],
+      ['Multiple Start Reasons' , '/cohort_tool/select?report_type=patients_with_multiple_start_reasons'],
+      ['Out of range ARV number' , '/cohort_tool/select?report_type=out_of_range_arv_number'],
+      ['Data Consistency Check' , '/cohort_tool/select?report_type=data_consistency_check']
+    ]
     render :layout => false
   end
 
@@ -206,16 +209,17 @@ class GenericClinicController < ApplicationController
       @reports = [['/clinic/management_tab','Drug Management']]
     else
       @reports =  [
-          ['/clinic/users_tab','User Accounts/Settings'],
-          ['/clinic/location_management_tab','Location Management'],
-          ['/people/tranfer_patient_in','Transfer Patient in'],
-          #['/patients/patient_merge','Merge Patients'],
-          ['/patients/merge_menu','Merge Patients'],
-          ['/patients/duplicate_menu','Possible patient duplicates']
+        ['/clinic/users_tab','User Accounts/Settings'],
+        ['/clinic/location_management_tab','Location Management'],
+        ['/people/tranfer_patient_in','Transfer Patient in'],
+        #['/patients/patient_merge','Merge Patients'],
+        ['/patients/merge_menu','Merge Patients'],
+        ['/patients/duplicate_menu','Possible patient duplicates']
 
       ]
       if current_user.admin?
         @reports << ['/clinic/management_tab','Drug Management']
+        @reports << ['/clinic/pharmacy_error_correction_menu','Pharmacy Error Correction']
         @reports << ['/clinic/system_configurations','View System Configurations']
       end
     end
@@ -224,6 +228,49 @@ class GenericClinicController < ApplicationController
     render :layout => false
   end
 
+  def pharmacy_error_correction_menu
+    @formatted = GenericDrugController.new.preformat_regimen
+    @drugs = {} 
+    @cms_drugs = {}
+
+    (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
+      drug_name = Drug.find(drug.drug_inventory_id).name
+      @cms_drugs[drug_name] = drug.name
+      @drugs[drug_name] = "#{drug.short_name} #{drug.strength} "
+    end
+    
+    render :layout => "application"
+  end
+
+  def select_pharmacy_obs_date
+    @verification_type = params[:verification]
+    drug = Drug.find_by_name(params[:drug_name])
+    @key_value_data = {}
+    @encounter_dates = []
+
+    pharmacy_observations = Pharmacy.find(:all, :conditions => ["drug_id =? AND value_text =?", drug.drug_id,
+        params[:verification]], :order => "encounter_date DESC"
+    )
+
+    pharmacy_observations.each do |obs|
+      encounter_date = obs.encounter_date.to_date.strftime("%d-%b-%Y") rescue obs.encounter_date
+      next if obs.value_numeric.to_i == 0
+      next if obs.pack_size.to_i == 0
+      tins = obs.value_numeric.to_i/obs.pack_size.to_i
+      @encounter_dates << ["#{encounter_date} - #{tins} tins", obs.id]
+      @key_value_data[obs.id] = tins
+    end
+
+    render :layout => "application"
+  end
+
+  def update_pharmacy_obs
+    pharmacy_obs = Pharmacy.find(params[:pharmacy_obs_id])
+    pharmacy_obs.value_numeric = (params[:number_of_tins].to_i * pharmacy_obs.pack_size.to_i)
+    pharmacy_obs.save
+    redirect_to('/clinic')
+  end
+  
   def system_configurations
     @current_location = Location.current_health_center.name
     @cervical_cancer_property = GlobalProperty.find_by_property("activate.cervical.cancer.screening").property_value.to_s == "true"rescue "Not Set"
@@ -266,11 +313,11 @@ class GenericClinicController < ApplicationController
   
   def supervision_tab
     @reports = [
-                 ["Data that was Updated","/cohort_tool/select?report_type=summary_of_records_that_were_updated"],
-                 ["Drug Adherence Level","/cohort_tool/select?report_type=adherence_histogram_for_all_patients_in_the_quarter"],
-                 ["Visits by Day", "/cohort_tool/select?report_type=visits_by_day"],
-                 ["Non-eligible Patients in Cohort", "/cohort_tool/select?report_type=non_eligible_patients_in_cohort"]
-               ]
+      ["Data that was Updated","/cohort_tool/select?report_type=summary_of_records_that_were_updated"],
+      ["Drug Adherence Level","/cohort_tool/select?report_type=adherence_histogram_for_all_patients_in_the_quarter"],
+      ["Visits by Day", "/cohort_tool/select?report_type=visits_by_day"],
+      ["Non-eligible Patients in Cohort", "/cohort_tool/select?report_type=non_eligible_patients_in_cohort"]
+    ]
     @landing_dashboard = 'clinic_supervision'
     render :layout => false
   end
@@ -281,17 +328,17 @@ class GenericClinicController < ApplicationController
 
   def location_management
     @reports =  [
-                  ['/location/new?act=create','Add location'],
-                  ['/location.new?act=delete','Delete location'], 
-                  ['/location/new?act=print','Print location']
-                ]
+      ['/location/new?act=create','Add location'],
+      ['/location.new?act=delete','Delete location'],
+      ['/location/new?act=print','Print location']
+    ]
     render :template => 'clinic/location_management', :layout => 'clinic' 
   end
 
   def location_management_tab
     @reports =  [
-                  ['/location/new?act=print','Print location']
-                ]
+      ['/location/new?act=print','Print location']
+    ]
     if current_user.admin?
       @reports << ['/location/new?act=create','Add location']
       @reports << ['/location/new?act=delete','Delete location']
@@ -302,15 +349,16 @@ class GenericClinicController < ApplicationController
   def management_tab
     #PB - Removed (from warehouse) From Enter Receipts ....and also deactivated reports from this .
     @reports = [
-        ["Enter <br /> Receipts","delivery"],
-        ["Enter Verified <br /> Physical Stock Count","delivery?id=verification"],
-        ["Print<br />Barcode","print_barcode"],
-        #["Expiring<br />drugs","date_select"],
-        ["Enter Product <br /> Relocation / Disposal","delivery?id=relocation"],
-        #["Stock<br />report","date_select"],
-        #["Stock <br />Charts","stock_movement_menu?goto=stoke_movement"]
-        ["Edit <br /> Product Display Names","capture_cms_drugs"],
-        ["HIV Product <br /> Stock Report","drug_stock_report"]
+      ["Enter <br /> Receipts","delivery"],
+      ["Enter Verified <br /> Physical Stock Count","delivery?id=verification"],
+      ["Print<br />Barcode","print_barcode"],
+      #["Expiring<br />drugs","date_select"],
+      ["Enter Product <br /> Relocation / Disposal","delivery?id=relocation"],
+      #["Stock<br />report","date_select"],
+      #["Stock <br />Charts","stock_movement_menu?goto=stoke_movement"]
+      ["Edit <br /> Product Display Names","capture_cms_drugs"],
+      ["HIV Product <br /> Stock Report","drug_stock_report"],
+      ["Manage <br /> Drug Sets","new_drug_sets"]
     ]
     render :layout => false
   end

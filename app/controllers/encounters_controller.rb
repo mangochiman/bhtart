@@ -3,15 +3,92 @@ class EncountersController < GenericEncountersController
 		#raise params.to_yaml
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
 		@patient_bean = PatientService.get_patient(@patient.person)
+    @gender = @patient.person.gender.upcase
 		session_date = session[:datetime].to_date rescue Date.today
 
+    fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
+      "Last VL < 1000, no VL Result pending, no VL taken at next visit", "Not Pregnant? - no EID needed at next visit",
+      "Adherence on last 2 visits was good", "Patient not suffering from major side effects, signs of TB or HIV associated disease",
+      "Patient do not need hypertension or diabetes care on next visit"]
+
+    fast_track_new_concept_names = ["Adult 18 years +", "on ART for 12 months +", "on 1st Line ART", "Last VL < 1000",
+      "Good adherence last 2 visits", "Not Pregnant / Breastfeeding", "No Side Effects, OI / TB",
+      "No BP / diabetes treatment", "No need for Depo at ART"
+    ]
+
+    @fast_track_assesment_concept_names = {}
+    count = 1
+    fast_track_concepts_names.each do |c_name|
+      concept = Concept.find_by_name(c_name)
+      @fast_track_assesment_concept_names[count] = {:concept_id => concept.concept_id, :concept_name => c_name}
+      count = count + 1
+    end
+      
 		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
-			@suggested_appointment_date = suggest_appointment_date
+      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_medication(@patient, session_date.to_date)
+      @max_date = earliest_auto_expire_medication[1].to_date
+
+			@suggested_appointment_date = suggest_appointment_date(@max_date)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
+
       render :action => params[:encounter_type] and return
 		end
+
+    art_start_date = PatientService.date_antiretrovirals_started(@patient)
+    @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
+    @session_date = session_date
+    @art_duration_in_months = PatientService.period_on_treatment(art_start_date) rescue 0
+    @fast_track_patient = fast_track_patient?(@patient, session_date)
+    @last_appointment_date = patient_last_appointment_date(@patient,  session_date)
+    @fast_track_patient_but_missed_appointment = fast_track_patient_but_missed_appointment?(@patient, session_date)
+    @patient_has_stopped_fast_track_at_adherence = patient_has_stopped_fast_track_at_adherence?(@patient, session_date)
+    @fast_track_message = ""
+    if (session_date == @last_appointment_date.to_date)
+      @fast_track_message = "Patient is on time"
+    end rescue nil
+
+    if (session_date < @last_appointment_date.to_date)
+      days_diff = (@last_appointment_date.to_date - session_date).to_i
+      @fast_track_message = "Patient is #{days_diff} day(s) early"
+    end rescue nil
+
+    if (session_date > @last_appointment_date.to_date)
+      days_diff = (session_date - @last_appointment_date.to_date).to_i
+      @fast_track_message = "Patient is #{days_diff} day(s) late"
+    end rescue nil
+
+    @patient_on_tb_treatment = patient_on_tb_treatment?(@patient, session_date)
+    @patient_tb_suspected = tb_suspected_today?(@patient, session_date)
+    @patient_tb_confirmed = tb_confirmed_today?(@patient, session_date)
+
+    @confirmatory_hiv_test_type = Patient.type_of_hiv_confirmatory_test(@patient, session_date) rescue ""
+    @hiv_clinic_registration_date = Patient.date_of_hiv_clinic_registration(@patient, session_date) rescue ""
+    
+    #@fast_track_patient = false
+    #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
+    #@fast_track_patient = true if @latest_fast_track_answer == 'YES'
+    
+    #if (patient_has_visited_on_scheduled_date(@patient,  session_date) == false)
+    #@fast_track_patient = false
+    # @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
+    #end
+=begin
+    if (tb_suspected_or_confirmed?(@patient, session_date) == true)
+      #Not interested in patients with tb suspect or confirmed tb
+      @fast_track_patient = false
+      @latest_fast_track_answer = 'NO' #if this is No, then Fast Track popups will not be activated
+    end
+
+    if (is_patient_on_htn_treatment?(@patient, session_date) == true)
+      #Not interested in HTN patients
+      @fast_track_patient = false
+      @latest_fast_track_answer = 'NO'
+    end
+=end
+    @fast_track_stop_reasons = ['', 'Poor Adherence', 'Sick', 'Side Effects', 'Other']
+    @latest_vl_result = Lab.latest_viral_load_result(@patient)
 
     session[:return_uri] = params[:return_ip] if ! params[:return_ip].blank?
     
@@ -121,7 +198,7 @@ class EncountersController < GenericEncountersController
           :order => "obs_datetime DESC,date_created DESC",
           :conditions => ["person_id = ? AND concept_id = ?
                             AND DATE(obs_datetime) <= ?",@patient.id,
-            ConceptName.find_by_name("Allergic to sulphur").concept_id,session_date])).to_s.strip.squish rescue ''
+            ConceptName.find_by_name("Allergic to sulphur").concept_id,session_date])).answer_string.strip.squish rescue ''
 
       @use_extended_family_planning = CoreService.get_global_property_value('extended.family.planning') rescue false
 
@@ -129,7 +206,8 @@ class EncountersController < GenericEncountersController
           :order => "obs_datetime DESC,date_created DESC",
           :conditions => ["person_id = ? AND concept_id = ? AND DATE(obs_datetime) = ?",
             @patient.id,ConceptName.find_by_name("Prescribe drugs").concept_id,session_date])).to_s.strip.squish rescue ''
-            
+
+      @obs_ans = '' if @patient_has_stopped_fast_track_at_adherence #Just a hack. Do not remove this please.By mangochiman
     end
         
     if (params[:encounter_type].upcase rescue '') == 'UPDATE HIV STATUS'
@@ -220,9 +298,17 @@ class EncountersController < GenericEncountersController
 			@suggested_appointment_date = suggest_appointment_date
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 		end
-    
-		@drug_given_before = PatientService.drug_given_before(@patient, session[:datetime])
 
+    @patient_ever_had_drugs = false
+		@drug_given_before = MedicationService.drug_given_before(@patient, session[:datetime])
+    @patient_ever_had_drugs = true unless @drug_given_before.blank?
+
+    todays_seen_encounters = @patient.encounters.find(:all, :conditions => ["DATE(encounter_datetime) =?",
+        session_date]).collect{|e|e.name.upcase}
+    @hiv_reception_only_available = false
+    if (todays_seen_encounters.count == 1 && todays_seen_encounters.include?('HIV RECEPTION'))
+      @hiv_reception_only_available = true
+    end
 
 		@hiv_status = PatientService.patient_hiv_status(@patient)
 		@hiv_test_date = PatientService.hiv_test_date(@patient.id)
@@ -250,6 +336,14 @@ class EncountersController < GenericEncountersController
 		sputum_submissons_with_no_results(@patient.id).each{|order| @sputum_submission_waiting_results[order.accession_number] = Concept.find(order.value_coded).fullname rescue order.value_text}
 		sputum_results_not_given(@patient.id).each{|order| @sputum_results_not_given[order.accession_number] = Concept.find(order.value_coded).fullname rescue order.value_text}
 
+    if @art_first_visit
+      @hiv_clinic_consultation_side_efects_label = "Potential Contra-indications (select all that apply)"
+      @hiv_clinic_consultation_side_efects_label_short = "Potential Contra-indications"
+    else
+      @hiv_clinic_consultation_side_efects_label = "Potential Side effects (select all that apply)"
+      @hiv_clinic_consultation_side_efects_label_short = "Potential Side effects"
+    end
+    
 		@tb_status = recent_lab_results(@patient.id, session_date)
     # use @patient_tb_status  for the tb_status moved from the patient model
     @patient_tb_status = PatientService.patient_tb_status(@patient)
@@ -337,6 +431,20 @@ class EncountersController < GenericEncountersController
 		end
 
     if  ['HIV_CLINIC_CONSULTATION', 'TB_VISIT', 'HIV_STAGING'].include?((params[:encounter_type].upcase rescue ''))
+      
+      @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
+      @current_height = PatientService.get_patient_attribute_value(@patient, "current_height", session_date)
+      if @patient.person.age(session_date.to_date) >= 6 
+        if @current_height > 0 and @current_weight > 0
+          @current_patient_bmi =  (@current_weight/(@current_height*@current_height)*10000).round(1)
+        end
+      else
+        median_weight_height = WeightHeightForAge.median_weight_height(@patient_bean.age_in_months, @patient.person.gender) rescue []
+        if @current_weight > 0
+          @current_weight_percentile = (@current_weight/(median_weight_height[0])*100) rescue 0
+        end
+      end
+
 			@local_tb_dot_sites_tag = tb_dot_sites_tag 
 			for encounter in @current_encounters.reverse do
 				if encounter.name.humanize.include?('Hiv staging') || encounter.name.humanize.include?('Tb visit') || encounter.name.humanize.include?('Hiv clinic consultation') 
@@ -395,6 +503,11 @@ class EncountersController < GenericEncountersController
 			@who_stage_adults_iv = concept_set('WHO STAGE IV ADULT')
 		end
 
+    who_stage_iv_to_be_removed = ["HIV encephalopathy", "Disseminated non-tuberculosis mycobacterial infection",
+      "Isosporiasis >1 month",
+      "Disseminated mycosis (coccidiomycosis or histoplasmosis)", "Progressive multifocal leukoencephalopathy",
+      "Cytomegalovirus infection (retinitis or infection or other organs)"]
+
 		if (params[:encounter_type].upcase rescue '') == 'HIV_STAGING' or (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION'
 			if @patient_bean.age > 14 
 				@who_stage_i = concept_set('WHO STAGE I ADULT AND PEDS') + concept_set('WHO STAGE I ADULT')
@@ -415,7 +528,7 @@ class EncountersController < GenericEncountersController
 				end
 			end
 
-			if (params[:encounter_type].upcase rescue '') == 'HIV_STAGING'
+			if ((params[:encounter_type].upcase rescue '') == 'HIV_STAGING') || (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION'
 				#added current weight to use on HIV staging for infants
 				@current_weight = PatientService.get_patient_attribute_value(@patient,
           "current_weight")
@@ -428,10 +541,12 @@ class EncountersController < GenericEncountersController
 
 				@moderate_wasting = []
 				@severe_wasting = []
+        @median_weight_height = []
 				if @patient_bean.age < 15
 					median_weight_height = WeightHeightForAge.median_weight_height(@patient_bean.age_in_months, @patient.person.gender) rescue []
+          @median_weight_height = median_weight_height
 					current_weight_percentile = (@current_weight/(median_weight_height[0])*100) rescue 0
-
+          
 					if current_weight_percentile >= 70 && current_weight_percentile <= 79
 						@moderate_wasting = ["Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)"]
 						@who_stage_iii = @who_stage_iii.flatten.uniq if CoreService.get_global_property_value('use.extended.staging.questions').to_s != "true"       
@@ -441,8 +556,127 @@ class EncountersController < GenericEncountersController
 						@who_stage_iv = @who_stage_iv.flatten.uniq if CoreService.get_global_property_value('use.extended.staging.questions').to_s != "true"
 						@moderate_wasting = []
 					end
+        elsif @patient_bean.age >= 15
+          current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
+          current_height = PatientService.get_patient_attribute_value(@patient, "current_height")
+          currentBmi = (current_weight/(current_height * current_height)*10000).round(1) rescue 0
+
+					if currentBmi >= 16.0 && currentBmi <= 18.5
+						@moderate_wasting = ["Moderate weight loss less than or equal to 10 percent, unexplained"]
+						@severe_wasting = []
+					elsif currentBmi < 16
+						@severe_wasting = ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"]
+						@moderate_wasting = []
+					end
 				end
-				
+
+        #raise "moderate_wasting: #{@moderate_wasting.inspect}   severe_wasting:#{@severe_wasting}"
+
+        @who_stage_iv_paeds = [
+          ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
+          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
+          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
+          ["Kaposis sarcoma", "Kaposis sarcoma"],
+          ["HIV encephalopathy", "HIV encephalopathy"],
+          ["Cryptococcal meningitis or other extrapulmonary cryptococcosis", "Cryptococcal meningitis or other extrapulmonary cryptococcosis"],
+          ["Disseminated non-tuberculosis mycobacterial infection", "Disseminated non-tuberculosis mycobacterial infection"],
+          ["Cryptosporidiosis, chronic with diarroea", "Cryptosporidiosis, chronic with diarroea"],
+          ["Isosporiasis >1 month", "Isosporiasis >1 month"],
+          ["Disseminated mycosis (coccidiomycosis or histoplasmosis)", "Disseminated mycosis (coccidiomycosis or histoplasmosis)"],
+          ["Symptomatic HIV-associated nephropathy or cardiomyopathy", "Symptomatic HIV-associated nephropathy or cardiomyopathy"],
+          ["Progressive multifocal leukoencephalopathy", "Progressive multifocal leukoencephalopathy"],
+          ["Cerebral or B-cell non Hodgkin lymphoma", "Cerebral or B-cell non Hodgkin lymphoma"],
+          ["Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)", "Severe unexplained wasting or malnutrition not responding to treatment (weight-for-height/ -age <70% or MUAC less than 11cm or oedema)"],
+          ["Bacterial infections, severe recurrent  (empyema, pyomyositis, meningitis, bone/joint infections but EXCLUDING pneumonia)", "Bacterial infections, severe recurrent  (empyema, pyomyositis, meningitis, bone/joint infections but EXCLUDING pneumonia)"],
+          ["Chronic herpes simplex infection (orolabial or cutaneous >1 month or visceral at any site)", "Chronic herpes simplex infection (orolabial or cutaneous >1 month or visceral at any site)"],
+          ["Cytomegalovirus infection: rentinitis or other organ (from age 1 month)", "Cytomegalovirus infection: rentinitis or other organ (from age 1 month)"],
+          ["Toxoplasmosis of the brain (from age 1 month)", "Toxoplasmosis of the brain (from age 1 month)"],
+          ["Recto-vaginal fistula, HIV-associated", "Recto-vaginal fistula, HIV-associated"]
+        ]
+
+        @who_stage_iii_paeds = [
+          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
+          ["Pulmonary tuberculosis (current)", "Pulmonary tuberculosis (current)"],
+          ["Tuberculosis (PTB or EPTB) within the last 2 years", "Tuberculosis (PTB or EPTB) within the last 2 years"],
+          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
+          ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
+          ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
+          ["Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)", "Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)"], ["Diarrhoea, persistent unexplained (14 days or more)", "Diarrhoea, persistent unexplained (14 days or more)"], ["Oral candidiasis (from age 2 months)", "Oral candidiasis (from age 2 months)"], ["Acute necrotizing ulcerative gingivitis or periodontitis", "Acute necrotizing ulcerative gingivitis or periodontitis"], ["Lymph node tuberculosis", "Lymph node tuberculosis"], ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"], ["Symptomatic lymphoid interstitial pneumonia", "Symptomatic lymphoid interstitial pneumonia"], ["Chronic HIV-associated lung disease, including bronchiectasis", "Chronic HIV-associated lung disease, including bronchiectasis"]
+        ]
+
+        @who_stage_ii_paeds = [
+          ["Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)", "Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)"],
+          ["Herpes zoster", "Herpes zoster"],
+          ["Angular cheilitis", "Angular cheilitis"],
+          ["Oral ulcerations, recurrent", "Oral ulcerations, recurrent"],
+          ["Papular pruritic eruptions / Fungal nail infections", "Papular pruritic eruptions / Fungal nail infections"],
+          ["Hepatosplenomegaly, persistent unexplained", "Hepatosplenomegaly, persistent unexplained"],
+          ["Lineal gingival erythema", "Lineal gingival erythema"],
+          ["Wart virus infection, extensive", "Wart virus infection, extensive"],
+          ["Molluscum contagiosum, extensive", "Molluscum contagiosum, extensive"],
+          ["Parotid enlargement, persistent unexplained", "Parotid enlargement, persistent unexplained"]
+        ]
+
+        @who_stage_i_paeds = [
+          ["Asymptomatic HIV infection", "Asymptomatic HIV infection"],
+          ["Persistent generalized lymphadenopathy", "Persistent generalized lymphadenopathy"]
+        ]
+
+        @who_stage_i = [
+          ["Asymptomatic HIV infection", "Asymptomatic HIV infection"],
+          ["Persistent generalized lymphadenopathy", "Persistent generalized lymphadenopathy"]
+        ]
+
+        @who_stage_ii = [
+          ["Moderate weight loss less than or equal to 10 percent, unexplained", "Moderate weight loss less than or equal to 10 percent, unexplained"],
+          ["Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)", "Respiratory tract infections, recurrent (sinusitis, tonsilitus, otitis media, pharyngitis)"],
+          ["Seborrhoeic dermatitis", "Seborrhoeic dermatitis"],
+          ["Papular pruritic eruptions / Fungal nail infections", "Papular pruritic eruptions / Fungal nail infections"],
+          ["Herpes zoster", "Herpes zoster"],
+          ["Angular cheilitis", "Angular cheilitis"],
+          ["Oral ulcerations, recurrent", "Oral ulcerations, recurrent"],
+          ["Unspecified stage 2 condition","Unspecified stage 2 condition"]
+        ]
+        
+
+        @who_stage_iii = [
+          ["Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained", "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained"],
+          ["Diarrhoea, chronic (>1 month) unexplained", "Diarrhoea, chronic (>1 month) unexplained"],
+          ["Fever, persistent unexplained, intermittent or constant, >1 month", "Fever, persistent unexplained, intermittent or constant, >1 month"],
+          ["Pulmonary tuberculosis (current)", "Pulmonary tuberculosis (current)"],
+          ["Tuberculosis (PTB or EPTB) within the last 2 years", "Tuberculosis (PTB or EPTB) within the last 2 years"],
+          ["Oral candidiasis", "Oral candidiasis"],
+          ["Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis", "Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis"],
+          ["Anaemia, unexplained < 8 g/dl", "Anaemia, unexplained < 8 g/dl"],
+          ["Neutropaenia, unexplained < 500 /mm(cubed)", "Neutropaenia, unexplained < 500 /mm(cubed)"],
+          ["Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)", "Severe bacterial infections (pneumonia, empyema, pyomyositis, bone/joint, meningitis, bacteraemia)"],
+          ["Thrombocytopaenia, chronic < 50,000 /mm(cubed)", "Thrombocytopaenia, chronic < 50,000 /mm(cubed)"],
+          ["Hepatitis B or C infection", "Hepatitis B or C infection"],
+          ["Oral hairy leukoplakia", "Oral hairy leukoplakia"],
+          ["Unspecified stage 3 condition", "Unspecified stage 3 condition"]
+          
+        ]
+
+        @who_stage_iv = [
+          ["Cryptococcal meningitis or other extrapulmonary cryptococcosis", "Cryptococcal meningitis or other extrapulmonary cryptococcosis"],
+          ["Candidiasis of oseophagus, trachea and bronchi or lungs", "Candidiasis of oseophagus, trachea and bronchi or lungs"],
+          ["Extrapulmonary tuberculosis (EPTB)", "Extrapulmonary tuberculosis (EPTB)"],
+          ["Kaposis sarcoma", "Kaposis sarcoma"],
+          ["Bacterial pneumonia, severe recurrent", "Bacterial pneumonia, severe recurrent"],
+          ["Non-typhoidal Salmonella bacteraemia, recurrent", "Non-typhoidal Salmonella bacteraemia, recurrent"],
+          ["Symptomatic HIV-associated nephropathy or cardiomyopathy", "Symptomatic HIV-associated nephropathy or cardiomyopathy"],
+          ["Cerebral or B-cell non Hodgkin lymphoma", "Cerebral or B-cell non Hodgkin lymphoma"],
+          ["Pneumocystis pneumonia", "Pneumocystis pneumonia"],
+          ["Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)", "Chronic herpes simplex infection (orolabial, gential / anorectal >1 month or visceral at any site)"],
+          ["Cytomegalovirus infection (retinitis or infection or other organs)", "Cytomegalovirus infection (retinitis or infection or other organs)"],
+          ["Toxoplasmosis of the brain", "Toxoplasmosis of the brain"],
+          ["Invasive cancer of cervix", "Invasive cancer of cervix"],
+          ["Unspecified stage 4 condition", "Unspecified stage 4 condition"],
+          ["Other", "Other"]
+        ]
+        #@who_stage_iv.delete_if{|stage_condition|who_stage_iv_to_be_removed.include?(stage_condition[0])} << ["Other", "Other"]
+        
 				reason_for_art = @patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue []
         @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
 				if !@reason_for_art_eligibility.nil? && @reason_for_art_eligibility.upcase == 'NONE'
@@ -496,6 +730,11 @@ class EncountersController < GenericEncountersController
 			@arv_drugs = @arv_drugs.sort {|a,b| a.to_s.downcase <=> b.to_s.downcase}
 			@arv_drugs = @arv_drugs + other
 
+      @arv_drugs = MedicationService.moh_arv_regimen_options(100) + [["Other", "Other"]]
+      @regimen_formulations = MedicationService.regimen_formulations
+      @other_medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i
+      ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
+        :group => 'drug.drug_id').collect{|d|[d.name, d.concept.fullname]}.sort_by{|k, v|k}
 			@require_hiv_clinic_registration = require_hiv_clinic_registration
 		end
 
@@ -506,7 +745,14 @@ class EncountersController < GenericEncountersController
       @remaining_days = 0
       @terminal = false
       @lesion_size_too_big = false
+      @cervical_cancer_first_visit_patient = true
+      @no_cancer = false
+      @patient_went_for_via = false
+      @cryo_delayed = false
+      ##### patient went for via logic START ################
 
+
+      ##### patient went for via logic END###################
       terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
     
       cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
@@ -521,11 +767,32 @@ class EncountersController < GenericEncountersController
 
       positive_cryo_concept_id  = Concept.find_by_name("POSITIVE CRYO").concept_id
 
+      patient_went_for_via_concept_id  = Concept.find_by_name("PATIENT WENT FOR VIA?").concept_id
+
+      yes_concept_id = Concept.find_by_name('YES').concept_id
+
+      latest_patient_went_for_via_obs = Observation.find(:last, :joins => [:encounter],
+        :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
+          @patient.id, cervical_cancer_screening_encounter_type_id, patient_went_for_via_concept_id]
+      ).answer_string.squish.upcase rescue nil
+
+      @patient_went_for_via = true if latest_patient_went_for_via_obs == 'YES'
+
       via_referral_answer_string = Observation.find(:last, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id]
       ).answer_string.squish.upcase rescue ""
 
+      @todays_refferals_count = Observation.find(:all, :select => "DISTINCT(person_id)", 
+        :conditions => ["DATE(obs_datetime) =? AND concept_id =? AND value_coded =?",
+          session_date, via_referral_concept_id, yes_concept_id]).count
+
+      daily_referral_limit_concept = "cervical.cancer.daily.referral.limit"
+      @daily_referral_limit = GlobalProperty.find_by_property(daily_referral_limit_concept).property_value.to_i rescue 1000
+
+
+      cervical_cancer_first_visit_question = @patient.person.observations.recent(1).question("EVER HAD VIA?")
+      @cervical_cancer_first_visit_patient = false unless cervical_cancer_first_visit_question.blank?
       @via_referred = true if via_referral_answer_string == "YES"
 
       latest_via_results_obs_date = Observation.find(:last, :joins => [:encounter],
@@ -548,24 +815,35 @@ class EncountersController < GenericEncountersController
       latest_cervical_cancer_result =  cervical_cancer_result_obs.answer_string.squish.upcase rescue nil
       @latest_cervical_cancer_result = latest_cervical_cancer_result
 
+      three_years = 365 * 3
+      one_year = 365
+
       ############################################################################
       latest_cryo_result = Observation.find(:last, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
           @patient.id, cervical_cancer_screening_encounter_type_id, positive_cryo_concept_id, latest_via_results_obs_date])
+
       unless latest_cryo_result.blank?
         cryo_result_answer = latest_cryo_result.answer_string.squish.upcase
         if cryo_result_answer == "CRYO DELAYED"
+          @cryo_delayed = true
           @has_via_results = false
         end
+
         if cryo_result_answer == "LESION SIZE TOO BIG"
           @lesion_size_too_big = true
+          obs_date = latest_cryo_result.obs_datetime.to_date
+          date_gone_lesion_size_was_big = (Date.today - obs_date).to_i #Total days Between Two Dates
+
+          if (date_gone_lesion_size_was_big >= three_years)
+            @lesion_size_too_big = false
+          end
         end
+        
       end
 
       ############################################################################
 
-      three_years = 365 * 3
-      one_year = 365
 
       unless latest_cervical_cancer_result.blank?
         
@@ -628,10 +906,14 @@ class EncountersController < GenericEncountersController
             next_via_date = via_referral_outcome_obs_date + three_years.days
             date_gone_after_referral_outcome_is_done = (Date.today - via_referral_outcome_obs_date).to_i #Total days Between Two Dates
             @remaining_days = three_years - date_gone_after_referral_outcome_is_done
-          
+            @no_cancer = true
+            @lesion_size_too_big = false
+            
             if (date_gone_after_referral_outcome_is_done >= three_years)
               @via_referred = false
               @has_via_results = false
+              @no_cancer = false
+
               next_via_referral_obs = Observation.find(:last, :joins => [:encounter],
                 :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
                   @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_concept_id, next_via_date])
@@ -644,7 +926,9 @@ class EncountersController < GenericEncountersController
               next_cervical_cancer_result_obs = Observation.find(:last, :joins => [:encounter],
                 :conditions => ["person_id =? AND encounter_type =? AND concept_id =? AND DATE(obs_datetime) >= ?",
                   @patient.id, cervical_cancer_screening_encounter_type_id, via_results_concept_id, next_via_date])
-              @has_via_results = true unless next_cervical_cancer_result_obs.blank?
+              unless next_cervical_cancer_result_obs.blank?
+                @has_via_results = true
+              end
             end
           end
         end
@@ -653,20 +937,37 @@ class EncountersController < GenericEncountersController
 
       end
 
+      #>>>>>>>>>VIA DONE LOGIC>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      @via_results_expired = true
+
+      via_done_date_answer_string = @patient.person.observations.recent(1).question("VIA DONE DATE").last.answer_string.squish.to_date rescue nil
+      unless via_done_date_answer_string.blank?
+        #@cervical_cancer_first_visit_patient = false
+        days_gone_after_via_done = (Date.today - via_done_date_answer_string).to_i #Total days Between Two Dates
+        if (days_gone_after_via_done < three_years)
+          @via_referred = true
+          @via_results_expired = false
+          @remaining_days = three_years - days_gone_after_via_done
+        end
+      end
+
+      #>>>>>>>>VIA LOGIC END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
         :conditions => ["person_id =? AND encounter_type =? AND concept_id =?",
           @patient.id, cervical_cancer_screening_encounter_type_id, via_referral_outcome_concept_id]
       ).collect{|o|o.answer_string.squish.upcase}
     
-
       via_referral_outcome_answers.each do |outcome|
         if terminal_referral_outcomes.include?(outcome)
+          @lesion_size_too_big = false
           @terminal = true
           break
         end
       end
     end
+
     ###########################################################################
+
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
 		else
@@ -1052,15 +1353,17 @@ class EncountersController < GenericEncountersController
     return set_date
   end
 
-	def suggest_appointment_date
+	def suggest_appointment_date(max_date)
 		#for now we disable this because we are already checking for this
 		#in the browser - the method is suggested_return_date
 		#@number_of_days_to_add_to_next_appointment_date = number_of_days_to_add_to_next_appointment_date(@patient, session[:datetime] || Date.today)
 
+=begin
 		dispensed_date = session[:datetime].to_date rescue Date.today
-		expiry_date = prescription_expiry_date(@patient, dispensed_date)
-		
+		expiry_date = prescription_expiry_date(@patient, dispensed_date, max_date)
 		return revised_suggested_date(expiry_date)
+=end
+		return revised_suggested_date((max_date - 2.day))
 	end
 
   def revised_suggested_date(expiry_date)
@@ -1085,11 +1388,11 @@ class EncountersController < GenericEncountersController
     encounter_type = EncounterType.find_by_name('APPOINTMENT')
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
 
-    appointments = {} ; sdate = (expiry_date.to_date + 1.day)
-    1.upto(5).each do |num|
+    appointments = {} ; sdate = (end_date.to_date + 1.day)
+    1.upto(4).each do |num|
       appointments[(sdate - num.day)] = 0
     end
-
+    
     Observation.find_by_sql("SELECT value_datetime appointment_date, count(value_datetime) AS count FROM obs
       INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
       AND encounter_type = #{encounter_type.id} AND value_datetime BETWEEN '#{start_date}'
@@ -1097,11 +1400,11 @@ class EncountersController < GenericEncountersController
       appointments[appointment.appointment_date.to_date] = appointment.count.to_i
     end
 
-    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+    (appointments || {}).sort_by {|x, y| x.to_date }.reverse.each do |date, count|
       next unless clinic_days.include?(date.to_date.strftime('%A'))
       next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
 
-      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
+      if count < clinic_appointment_limit
         return date
       end
     end
@@ -1110,111 +1413,96 @@ class EncountersController < GenericEncountersController
     the following block of code will only run if the recommended date is full
     Its a hack, we need to find a better way of cleaning up the code but it works :)
 =end
-    (appointments || {}).sort_by {|x, y| y }.each do |date, count|
+    (appointments || {}).sort_by {|x, y| y.to_i }.each do |date, count|
       next unless clinic_days.include?(date.to_date.strftime('%A'))
       next unless clinic_holidays.include?(date.to_date.strftime('%d %B')).blank?
 
-      if date.to_date == expiry_date.to_date and count < clinic_appointment_limit
-        return date
-      else
-        recommended_date = date
-        if count < clinic_appointment_limit
-          break
-        end
-      end
+      recommended_date = date
+      break
     end
 
     return recommended_date
   end
 	
-	def prescription_expiry_date(patient, dispensed_date)
+	def prescription_expiry_date(patient, dispensed_date, max_date)
     session_date = dispensed_date.to_date
         
-    arvs_given = false
-		
     #get all drug dispensed on set clinic day
-		drugs_given_on = PatientService.drugs_given_on(patient, session_date)
+    medication = MedicationService.drugs_given_on(patient, session_date)
+    return session_date if medication.blank?
 
-		orders_made = drugs_given_on.reject do |o|
-      !MedicationService.tb_medication(o.drug_order.drug) 
+    #==========================================get the min auto_expire_date 
+    medication_order_ids = []
+    (medication || []).each do |order|
+      next unless MedicationService.arv(order.drug_order.drug)
+      medication_order_ids << order.id
     end
 
-		auto_expire_date = Date.today + 2.days
-		
-		if orders_made.blank?
-			orders_made = drugs_given_on
-			auto_expire_date = orders_made.sort_by(&:auto_expire_date).first.auto_expire_date.to_date unless orders_made.blank?
-      
-      regimen_type_concept = nil
-      (orders_made || []).each do |o|
-        next unless MedicationService.arv(o.drug_order.drug)
-        regimen_type_concept = ConceptName.find_by_name("ARV regimens received abstracted construct").concept_id 
-        arvs_given = true
-        break
+
+    ############################################# a hack if no ARV are dispensed #############################################
+    if medication_order_ids.blank?
+      (medication || []).each do |order|
+        medication_order_ids << order.id
       end
+      medication_order_ids = [0] if medication_order_ids.blank?
+      smallest_expire_date_attr = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT MIN(auto_expire_date) AS auto_expire_date FROM orders 
+      WHERE order_id IN(#{medication_order_ids.uniq.join(',')})
+EOF
 
-      auto_expire_date = recalculation_auto_expire_date(orders_made, auto_expire_date)
-		else
-			auto_expire_date = orders_made.sort_by(&:auto_expire_date).first.auto_expire_date.to_date
-      regimen_type_concept = ConceptName.find_by_name("TB REGIMEN TYPE").concept_id
-		end
-		
-		treatment_encounter = orders_made.first
-
-		treatment_encounter = treatment_encounter.encounter.id rescue treatment_encounter.encounter_id
-		#raise treatment_encounter.to_yaml
-    arv_regimen_obs = Observation.find_by_sql("SELECT * FROM obs 
-      WHERE concept_id = #{regimen_type_concept} 
-      AND encounter_id = #{treatment_encounter} LIMIT 1") rescue []
-
-		arv_regimen_type = "" 
-		unless arv_regimen_obs.blank?
-			arv_regimen_type = arv_regimen_obs.to_s
-		end
-
-		starter_pack = false
-		if arv_regimen_type.match(/STARTER PACK/i)
-			starter_pack = true
-		end
-
-    #==========================================================================================
-    calculated_expire_date = auto_expire_date
-
-    order = orders_made.sort_by(&:auto_expire_date).first 
-
-    #............................................................................................ 
-    amounts_brought_to_clinic = Observation.find_by_sql("SELECT * FROM obs      
-      INNER JOIN drug_order USING (order_id)                                    
-      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
-      AND drug_order.drug_inventory_id = #{order.drug_order.drug_inventory_id}  
-      AND obs.obs_datetime >= '#{session_date.to_date}'                         
-      AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND person_id = #{patient.id}")                                           
-                                                                                
-    total_brought_to_clinic = amounts_brought_to_clinic.sum{|amount| amount.value_numeric}
-                                                                                
-    total_brought_to_clinic = total_brought_to_clinic + amounts_brought_to_clinic.sum{|amount| (amount.value_text.to_f rescue 0)}
-                                                                                
-    hanging_pills_duration = ((total_brought_to_clinic)/order.drug_order.equivalent_daily_dose).to_i
-                                                                                
-    expire_date = auto_expire_date + hanging_pills_duration.days        
-                                                                                
-    calculated_expire_date = expire_date.to_date if expire_date.to_date > calculated_expire_date
-
-    #............................................................................................ 
+      return (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day) rescue session_date
+    end
+    ############################################# a hack if no ARV are dispensed ends ########################################
 
 
-    auto_expire_date = calculated_expire_date
-		
-		buffer = 0		
-		if starter_pack
-			buffer = 1
-		else			
-			buffer = 2
-		end
 
-		buffer = 0 if !arvs_given
-		return auto_expire_date - buffer.days
+    smallest_expire_date_attr = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT MIN(auto_expire_date) AS auto_expire_date FROM orders 
+    WHERE order_id IN(#{medication_order_ids.join(',')})
+EOF
+
+    #We get the smallest_expire_date but we also give the patient a 2 day buffer
+    smallest_expire_date = (smallest_expire_date_attr['auto_expire_date'].to_date - 2.day)
+    #==========================================get the min auto_expire_date end
+
+    #suggested return dates
+    suggest_appointment_dates = []
+    
+
+    ######################################## If the user selected "Optimize appointment" #######################
+    appointment_type = PatientService.appointment_type(patient, session_date)
+    if(appointment_type.value_text == 'Optimize - including hanging pills')    
+      amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
+
+      (medication || []).each do |order|
+        amounts_brought_to_clinic.each do |drug_id, amounts_brought|
+          if drug_id == order.drug_order.drug_inventory_id
+            pills_per_day = MedicationService.get_medication_pills_per_day(order)
+            brought_to_clinic = amounts_brought
+            days = (brought_to_clinic.to_i/pills_per_day) if pills_per_day > 0
+            unless days.blank?
+              suggest_appointment_dates << (smallest_expire_date + days.day).to_date 
+            else
+              suggest_appointment_dates << smallest_expire_date
+            end
+          end
+        end
+      end unless amounts_brought_to_clinic.blank?
+    end unless appointment_type.blank?
+    ##############################################################################################################
+
+    unless suggest_appointment_dates.blank?
+      suggest_appointment = (suggest_appointment_dates.sort.first).to_date 
+    else
+      suggest_appointment = (smallest_expire_date).to_date
+    end
+
+    if suggest_appointment > max_date
+      return max_date
+    else
+      return suggest_appointment
+    end
+
 	end
 
   def recalculation_auto_expire_date(orders, auto_expire_date)
@@ -1243,24 +1531,24 @@ class EncountersController < GenericEncountersController
     duration = (exp_date - dispensed_date).to_i
 
     case duration
-      when 28
-        return (dispensed_date + 1.month)
-      when 58
-        return (dispensed_date + 2.month)
-      when 86
-        return (dispensed_date + 3.month)
-      when 114
-        return (dispensed_date + 4.month)
-      when 142
-        return (dispensed_date + 5.month)
-      when 170
-        return (dispensed_date + 6.month)
-      when 198
-        return (dispensed_date + 7.month)
-      when 226
-        return (dispensed_date + 8.month)
-      else
-        return auto_expire_date
+    when 28
+      return (dispensed_date + 1.month)
+    when 58
+      return (dispensed_date + 2.month)
+    when 86
+      return (dispensed_date + 3.month)
+    when 114
+      return (dispensed_date + 4.month)
+    when 142
+      return (dispensed_date + 5.month)
+    when 170
+      return (dispensed_date + 6.month)
+    when 198
+      return (dispensed_date + 7.month)
+    when 226
+      return (dispensed_date + 8.month)
+    else
+      return auto_expire_date
     end
 
   end
@@ -1497,6 +1785,9 @@ class EncountersController < GenericEncountersController
       end
 
       if params[:encounter]['encounter_type_name'].upcase == 'HIV STAGING'
+        
+        @allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked
+
         observations = []
         (params[:observations] || []).each do |observation|
           if observation['concept_name'].upcase == 'CD4 COUNT' or observation['concept_name'].upcase == "LYMPHOCYTE COUNT"
@@ -1808,12 +2099,12 @@ class EncountersController < GenericEncountersController
       AND f.identifier_type = (#{nationa_id_identifier_type}) AND f.identifier IN (#{@id_string})
 			WHERE (p.gender = 'F' OR gender = 'Female') 
       GROUP BY p.person_id").each do | patient |
-        @patient_ids << patient.patient_id
-        idf = patient.identifier
-        result["#{idf}"] = patient.earliest_start_date
-        if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
-          b4_visit_one << idf
-        end
+      @patient_ids << patient.patient_id
+      idf = patient.identifier
+      result["#{idf}"] = patient.earliest_start_date
+      if ((patient.earliest_start_date.to_date < anc_visit["#{idf}"].to_date) rescue false)
+        b4_visit_one << idf
+      end
     end
     no_art = @ids - result.keys
 
@@ -1836,7 +2127,7 @@ class EncountersController < GenericEncountersController
       cpt_ids = Encounter.find_by_sql(["SELECT * FROM encounter e
 			INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
 			INNER JOIN patient_identifier i ON e.patient_id = i.patient_id AND i.voided = 0
-      AND i.identifier_type = #{nationa_id_identifier_type} AND i.identifier IN(#{@ids})
+      AND i.identifier_type = #{nationa_id_identifier_type} AND i.identifier IN(#{@id_string})
 			WHERE e.encounter_type = (#{dispensing_encounter_type})
 			AND o.value_drug IN (#{cpt_drug_id.join(',')})
 			AND e.patient_id IN (#{@patient_ids.join(',')}) AND 
@@ -1856,8 +2147,7 @@ class EncountersController < GenericEncountersController
     result = {}
     @patient = PatientIdentifier.find_by_identifier(params[:national_id]).patient rescue nil
 
-    result["start_date"] = PatientProgram.find_by_sql("SELECT * FROM earliest_start_date
-	    WHERE patient_id = #{@patient.id}").first.earliest_start_date.to_date rescue ""
+    result["start_date"] = PatientService.earliest_start_date_patient_data(@patient.id)[:earliest_start_date] || ""
 
     result["arv_number"] = PatientService.get_patient_identifier(@patient, 'ARV Number') rescue ""
 
@@ -1956,27 +2246,73 @@ class EncountersController < GenericEncountersController
 		end
   end
 
+  def create_fast_track_assesment_observations
+    session_date = session[:datetime].to_date rescue Time.now
+    fast_track_status = params[:fast_track_status]
+    patient = Patient.find(params[:patient_id])
+    encounter_type = EncounterType.find_by_name("FAST TRACK ASSESMENT")
+    concept_ids = params[:concept_ids].split(",")
+    
+    ActiveRecord::Base.transaction do
+      encounter = patient.encounters.find(:last, :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
+          encounter_type, session_date.to_date])
+      encounter.void unless encounter.blank?
+      encounter = Encounter.new
+      encounter.encounter_type = encounter_type.encounter_type_id
+      encounter.patient_id = params[:patient_id]
+      encounter.encounter_datetime = session_date
+      encounter.save
+
+      concept_ids.each do |concept_id|
+        encounter.observations.create({
+            :person_id => params[:patient_id],
+            :concept_id => concept_id,
+            :value_coded => Concept.find_by_name("YES").concept_id,
+            :obs_datetime => encounter.encounter_datetime
+          })
+      end
+
+      encounter.observations.create({
+          :person_id => params[:patient_id],
+          :concept_id => Concept.find_by_name("FAST").concept_id,
+          :value_coded => Concept.find_by_name(fast_track_status).concept_id,
+          :obs_datetime => encounter.encounter_datetime
+        })
+    end
+    
+    render :text => true and return
+  end
+  
   protected
 
-  def number_of_booked_patients(date)                          
+  def number_of_booked_patients(date)
                                                                                 
-    start_date = date.strftime('%Y-%m-%d 00:00:00')                             
-    end_date = date.strftime('%Y-%m-%d 23:59:59')                               
+    start_date = date.strftime('%Y-%m-%d 00:00:00')
+    end_date = date.strftime('%Y-%m-%d 23:59:59')
                                                                                 
-    appointments = Observation.find_by_sql("SELECT count(value_datetime) AS count FROM obs 
+    appointments = Observation.find_by_sql("SELECT count(value_datetime) AS count FROM obs
       INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{@concept_id} 
       AND encounter_type = #{@encounter_type.id} AND value_datetime >= '#{start_date}' 
       AND value_datetime <= '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime")     
-    count = appointments.first.count unless appointments.blank?                       
-    count = 0 if count.blank?                                                 
+    count = appointments.first.count unless appointments.blank?
+    count = 0 if count.blank?
                                                                                 
     return count
   end
 
   def suggested(program_id)
-		session_date = session[:datetime].to_date rescue Date.today
-		patient_program = PatientProgram.find(program_id)
-		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date) rescue []
-		return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
-	end
+    session_date = session[:datetime].to_date rescue Date.today
+    patient_program = PatientProgram.find(program_id)
+    current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date) rescue []
+    return MedicationService.regimen_options(current_weight, patient_program.program) rescue []
+  end
+
+  def get_amounts_brought_if_transfer_in(person_id, drug_concept_id, date)
+    amount = Observation.find(:first, :conditions =>["concept_id = ? AND (obs_datetime BETWEEN ? AND ?)
+      AND person_id = ?", drug_concept_id , date.strftime('%Y-%m-%d 00:00:00'), 
+        date.strftime('%Y-%m-%d 23:59:59'), person_id])
+    return 0 if amount.blank?
+    return amount.value_numeric
+  end
+    
 end

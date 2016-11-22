@@ -69,8 +69,7 @@ module Openmrs
   def after_void(reason = nil)
   end
   
-  def void(reason = "Voided through #{ART_VERSION}",date_voided = Time.now,
-      voided_by = (User.current.user_id unless User.current.nil?))
+  def void(reason = "Voided through #{ART_VERSION}",date_voided = Time.now, voided_by = (User.current.user_id unless User.current.nil?))
     unless voided?
       self.date_voided = date_voided
       self.voided = 1
