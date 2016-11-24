@@ -967,7 +967,7 @@ module PatientService
 
 
   def self.get_patient_identifier(patient, identifier_type)
-    patient_identifier_type_id = PatientIdentifierType.find_by_name(identifier_type).patient_identifier_type_id rescue nil
+      patient_identifier_type_id = PatientIdentifierType.find_by_name(identifier_type).patient_identifier_type_id rescue nil
     patient_identifier = PatientIdentifier.find(:first, :select => "identifier",
       :conditions  =>["patient_id = ? and identifier_type = ?", patient.id, patient_identifier_type_id],
       :order => "date_created DESC" ).identifier rescue nil
@@ -1241,26 +1241,33 @@ EOF
     self.next_filing_number_to_be_archived(patient, next_filing_number)
   end
 
-	def self.next_filing_number_to_be_archived(current_patient , next_filing_number)
-		ActiveRecord::Base.transaction do
-			global_property_value = CoreService.get_global_property_value("filing.number.limit")
+  def self.next_filing_number_to_be_archived(current_patient , next_filing_number)
+    ActiveRecord::Base.transaction do
+      global_property_value = CoreService.get_global_property_value("filing.number.limit")
 
-			if global_property_value.blank?
-				global_property_value = '10000'
-			end
+      if global_property_value.blank?
+        global_property_value = '10000'
+      end
 
-			active_filing_number_identifier_type = PatientIdentifierType.find_by_name("Filing Number")
-			dormant_filing_number_identifier_type = PatientIdentifierType.find_by_name('Archived filing number')
+      active_filing_number_identifier_type = PatientIdentifierType.find_by_name("Filing Number")
+      dormant_filing_number_identifier_type = PatientIdentifierType.find_by_name('Archived filing number')
 
-			if (next_filing_number[5..-1].to_i >= global_property_value.to_i)
-				all_filing_numbers = PatientIdentifier.find(:all, :conditions =>["identifier_type = ?",
+      if (next_filing_number[5..-1].to_i >= global_property_value.to_i)
+=begin
+        all_filing_numbers = PatientIdentifier.find(:all, :conditions =>["identifier_type = ?",
             PatientIdentifierType.find_by_name("Filing Number").id],:group=>"identifier")
 				patient_ids = all_filing_numbers.collect{|i|i.patient_id}
+=end
+        patient_ids = PatientIdentifier.find_by_sql("
+          SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
+          WHERE voided = 0 AND identifier_type = #{active_filing_number_identifier_type.id}
+          GROUP BY identifier
+        ").map(&:patient_id)
 
         patient_to_be_archived = Person.find_by_sql(["
           SELECT * FROM person WHERE person_id IN(?) AND dead = 1 AND voided = 0 LIMIT 1
-        ", patient_ids]).first.patient rescue nil
 
+        ", patient_ids]).first.patient rescue nil
 
         if patient_to_be_archived.blank?
           #patient_to_be_archived = self.get_patient_to_be_archived_that_has_transfered_out(patient_ids)
@@ -1275,48 +1282,48 @@ EOF
           patient_to_be_archived = self.patients_with_the_least_encounter_datetime(patient_ids)
         end
 
-				if patient_to_be_archived.blank?
-					patient_to_be_archived = PatientIdentifier.find(:last,:conditions =>["identifier_type = ?",
-              PatientIdentifierType.find_by_name("Filing Number").id],
-            :group=>"patient_id",:order => "identifier DESC").patient rescue nil
-				end
-			end
+        if patient_to_be_archived.blank?
+          patient_to_be_archived = PatientIdentifier.find(:last,:conditions =>["identifier_type = ?",
+                                                                               PatientIdentifierType.find_by_name("Filing Number").id],
+                                                          :group=>"patient_id",:order => "identifier DESC").patient rescue nil
+        end
+      end
 
-			if patient_to_be_archived
-				filing_number = PatientIdentifier.new()
-				filing_number.patient_id = patient_to_be_archived.id
-				filing_number.identifier_type = dormant_filing_number_identifier_type.id
-				filing_number.identifier = PatientIdentifier.next_filing_number("Archived filing number")
-				filing_number.save
+      if patient_to_be_archived
+        filing_number = PatientIdentifier.new()
+        filing_number.patient_id = patient_to_be_archived.id
+        filing_number.identifier_type = dormant_filing_number_identifier_type.id
+        filing_number.identifier = PatientIdentifier.next_filing_number("Archived filing number")
+        filing_number.save
 
-				#assigning "patient_to_be_archived" filing number to the new patient
-				filing_number= PatientIdentifier.new()
-				filing_number.patient_id = current_patient.id
-				filing_number.identifier_type = active_filing_number_identifier_type.id
-				filing_number.identifier = self.get_patient_identifier(patient_to_be_archived, 'Filing Number')
-				filing_number.save
+        #assigning "patient_to_be_archived" filing number to the new patient
+        filing_number= PatientIdentifier.new()
+        filing_number.patient_id = current_patient.id
+        filing_number.identifier_type = active_filing_number_identifier_type.id
+        filing_number.identifier = self.get_patient_identifier(patient_to_be_archived, 'Filing Number')
+        filing_number.save
 
-				#void current filing number
-				current_filing_numbers =  PatientIdentifier.find(:all,:conditions=>["patient_id=? AND identifier_type = ?",
-            patient_to_be_archived.id,PatientIdentifierType.find_by_name("Filing Number").id])
-				current_filing_numbers.each do | f_number |
-					f_number.voided = 1
-					f_number.voided_by = User.current.id
-					f_number.void_reason = "Archived - filing number given to:#{current_patient.id}"
-					f_number.date_voided = Time.now()
-					f_number.save
-				end
-			else
-				filing_number = PatientIdentifier.new()
-				filing_number.patient_id = current_patient.id
-				filing_number.identifier_type = active_filing_number_identifier_type.id
-				filing_number.identifier = next_filing_number
-				filing_number.save
-			end
-		end
+        #void current filing number
+        current_filing_numbers =  PatientIdentifier.find(:all,:conditions=>["patient_id=? AND identifier_type = ?",
+                                                                            patient_to_be_archived.id,PatientIdentifierType.find_by_name("Filing Number").id])
+        current_filing_numbers.each do | f_number |
+          f_number.voided = 1
+          f_number.voided_by = User.current.id
+          f_number.void_reason = "Archived - filing number given to:#{current_patient.id}"
+          f_number.date_voided = Time.now()
+          f_number.save
+        end
+      else
+        filing_number = PatientIdentifier.new()
+        filing_number.patient_id = current_patient.id
+        filing_number.identifier_type = active_filing_number_identifier_type.id
+        filing_number.identifier = next_filing_number
+        filing_number.save
+      end
+    end
 
-		return true
-	end
+    return true
+  end
 
   def self.get_patient_to_be_archived_that_has_transfered_out(patient_ids = [])
     #The following function will get all transferred out patients
@@ -1343,22 +1350,25 @@ EOF
   end
 
 
-
   def self.get_patient_to_be_archived_based_on_waste_state(patient_ids = [])
     #The following function will get all transferred out patients
     #with active filling numbers and select one to be archived
     return nil if patient_ids.blank?
 
     #here we remove all ids that have any encounter today.
-    patient_ids_with_todays_encounters = Encounter.find(:all,:conditions => ["
-      encounter_datetime BETWEEN (?) AND (?)",Date.today.strftime('%Y-%m-%d 00:00:00'),
-      Date.today.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
 
-    patient_ids_with_todays_active_filing_numbers = PatientIdentifier.find(:all,:conditions => ["
-      (date_created BETWEEN (?) AND (?)) AND identifier_type = ?",Date.today.strftime('%Y-%m-%d 00:00:00'),
-      Date.today.strftime('%Y-%m-%d 23:59:59'),
-      PatientIdentifierType.find_by_name('Filing number').id]).map(&:patient_id)
+    patient_ids_with_todays_encounters = Encounter.find_by_sql("
+      SELECT DISTINCT(patient_id) patient_id FROM encounter
+        WHERE voided = 0 AND encounter_datetime BETWEEN '#{Date.today.strftime('%Y-%m-%d 00:00:00')}'
+              AND '#{Date.today.strftime('%Y-%m-%d 23:59:59')}'
+    ").map(&:patient_id)
 
+    patient_ids_with_todays_active_filing_numbers = PatientIdentifier.find_by_sql("
+        SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
+          WHERE voided = 0 AND date_created BETWEEN '#{Date.today.strftime('%Y-%m-%d 00:00:00')}'
+              AND '#{Date.today.strftime('%Y-%m-%d 23:59:59')}'
+            AND identifier_type = #{PatientIdentifierType.find_by_name('Filing number').id}
+                                                                                  ").map(&:patient_id)
 
     patient_ids = (patient_ids - patient_ids_with_todays_encounters)
     patient_ids = (patient_ids - patient_ids_with_todays_active_filing_numbers)
@@ -1368,26 +1378,15 @@ EOF
 select patient_id,state,start_date,end_date from patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
 AND p.patient_id IN(#{patient_ids.join(',')})
-WHERE start_date = (SELECT max(start_date) FROM patient_state t
-WHERE t.patient_program_id = s.patient_program_id);
+WHERE state IN (2, 3, 4, 5, 6, 8)
+  AND state != 7
+  AND start_date = (SELECT max(start_date) FROM patient_state t
+    WHERE t.patient_program_id = s.patient_program_id
+  )
+LIMIT 1;
 EOF
 
-
-   return nil if outcomes.blank?
-   selected_patient_states = {}
-
-   outcomes.each do |state|
-    selected_patient_states[state['patient_id'].to_i] = [] if selected_patient_states[state['patient_id'].to_i].blank?
-    selected_patient_states[state['patient_id'].to_i] << state['state'].to_i
-   end
-
-   (selected_patient_states || {}).each do |patient_id, states|
-     if (states.include?(2) || states.include?(3) || states.include?(4) || states.include?(5) || states.include?(6) || states.include?(8)) and not states.include?(7)
-       return patient_id
-     end
-   end
-
-   return nil
+    return outcomes.first.patient_id rescue nil
   end
 
   def self.patients_with_the_least_encounter_datetime(patient_ids = [])
@@ -1396,47 +1395,44 @@ EOF
     return nil if patient_ids.blank?
 
     encounter_type_name = ['HIV CLINIC REGISTRATION','VITALS','HIV CLINIC CONSULTATION',
-      'TREATMENT','HIV RECEPTION','HIV STAGING','DISPENSING','APPOINTMENT']
+                           'TREATMENT','HIV RECEPTION','HIV STAGING','DISPENSING','APPOINTMENT']
     encounter_type_ids = EncounterType.find(:all,:conditions => ["name IN (?)",encounter_type_name]).map{|n|n.id}
 
     #Patients with an appointment in the past month and the next 6 weeks from
     #current date
     appointment_encounter_type = EncounterType.find(:first,:conditions => ["name IN (?)",'APPOINTMENT'])
+    appointment_concept_id = ConceptName.find_by_name("APPOINTMENT DATE").id
     start_date = (Date.today - 7.month).strftime('%Y-%m-%d 00:00:00')
     end_date = (Date.today + 5.year).strftime('%Y-%m-%d 23:59:59')
 
     patient_not_to_be_archived = Encounter.find_by_sql(["
       SELECT patient_id FROM encounter
-      INNER JOIN obs USING(encounter_id)
-      WHERE value_datetime BETWEEN (?) AND (?)
+      INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.concept_id = #{appointment_concept_id}
+      WHERE encounter.voided = 0 AND obs.value_datetime BETWEEN (?) AND (?)
       AND encounter_type = ? AND obs.voided = 0 GROUP BY patient_id",start_date,end_date,
-      appointment_encounter_type]).map{ |l| l.patient_id }
+                                                        appointment_encounter_type]).map(&:patient_id)
     patient_not_to_be_archived = [0] if patient_not_to_be_archived.blank?
 
     #Patients with at least an encounter of type: encounter_type_name in the past 7 months
     #and the next 7 months from current date
     patient_not_to_be_archived_with_an_encounter = Encounter.find_by_sql(["
       SELECT patient_id FROM encounter
-      INNER JOIN obs USING(encounter_id)
-      WHERE obs_datetime BETWEEN (?) AND (?)
-      AND encounter_type IN(?) AND obs.voided = 0
-      GROUP BY patient_id",start_date,end_date,encounter_type_ids]).map{ |l| l.patient_id }
+      WHERE encounter.voided = 0 AND encounter_datetime BETWEEN (?) AND (?)
+      AND encounter_type IN(?)
+      GROUP BY patient_id",start_date,end_date,encounter_type_ids]).map(&:patient_id)
+
     patient_not_to_be_archived_with_an_encounter = [0] if patient_not_to_be_archived_with_an_encounter.blank?
 
     patient_not_to_be_archived = patient_not_to_be_archived && patient_not_to_be_archived_with_an_encounter
 
-    #The following block will pick a patient with the least encounter datetime
-    #and passed to be archived minus those patients with an appointment in the next
-    #eight months
     return Encounter.find_by_sql(["
-      SELECT patient_id, MAX(encounter_datetime) AS last_encounter_id
+      SELECT patient_id
       FROM encounter
-      WHERE patient_id IN (?)
-      AND encounter_type IN (?)
-      GROUP BY patient_id
-      HAVING patient_id NOT IN(?)",patient_ids,encounter_type_ids,
-      patient_not_to_be_archived]).first.patient rescue nil
-
+      WHERE encounter.voided = 0 AND patient_id IN (?) AND patient_id NOT IN (?)
+        AND encounter_type IN (?)
+      ORDER BY encounter_datetime ASC LIMIT 1
+    ",patient_ids, patient_not_to_be_archived, encounter_type_ids,
+                                 ]).first.patient rescue nil
   end
 
 	def self.patient_printing_filing_number_label(number=nil)
