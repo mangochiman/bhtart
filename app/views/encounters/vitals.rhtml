@@ -256,9 +256,9 @@ dateToday = session[:datetime].to_date rescue Date.today
     if (currentWeightPercentile >= 80){
       displayText += "<span class='goodWeightForAge'>" + currentWeightPercentile + "%</span><br>";
     } else if (currentWeightPercentile >= 70 && currentWeightPercentile < 80) {
-      displayText += "<span class='medWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Moderate wasting </span><br>";
+      displayText += "<span class='medWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Moderate malnutrition</span><br>";
     } else if (currentWeightPercentile < 70) {
-      displayText += "<span class='lowWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Severe wasting</span><br>";
+      displayText += "<span class='lowWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Severe malnutrition</span><br>";
     } else {
       displayText += "<span class='lowWeightForAge'>N/A</span><span class='recommendation'> Failed to calculate</span><br>";
     }
@@ -289,7 +289,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     if (weightForHeightPercentile >= 80) {
       displayText += "<span class='goodWeightForHeight'>" + weightForHeightPercentile + "%</span><br>";
     } else if (weightForHeightPercentile >= 75) {
-      displayText += "<span class='medWeightForHeight'>" + weightForHeightPercentile + "%</span>" + " <span class='recommendation'> Moderate wasting</span><br>";
+      displayText += "<span class='medWeightForHeight'>" + weightForHeightPercentile + "%</span>" + " <span class='recommendation'> Moderate malnutrition</span><br>";
     } else if (weightForHeightPercentile < 75) {
       displayText += "<span class='lowWeightForHeight'>" + weightForHeightPercentile + "%</span>" + "<span class='recommendation'> Severe wasting</span><br>";
     } else {
@@ -321,10 +321,10 @@ dateToday = session[:datetime].to_date rescue Date.today
       displayText += "<br/><span class='recommendation'>Normal weight</span>";
     } else if (currentBmi >= 16.0 && currentBmi <= 18.5) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
-      displayText +="Underweight: Moderate weight loss less than or equal to 10 percent, unexplained</span>";
+      displayText +="Underweight: Moderate malnutrition</span>";
     } else if (currentBmi < 16.0) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
-      displayText +="Underweight: Severe wasting or malnutrition</span>";
+      displayText +="Underweight: Severe malnutrition</span>";
     /*} else {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>Eligible for therapeutic feeding</span>";*/
     }

@@ -1546,9 +1546,9 @@ EOF
     unless weight == 0 || height == 0
       current_bmi = (weight/(height*height)*10000).round(1);
       if current_bmi <= 18.5 && current_bmi > 17.0
-        alert = 'Low BMI: Eligible for counseling'
+        alert = 'Moderate malnutrition'
       elsif current_bmi <= 17.0
-        alert = 'Low BMI: Eligible for therapeutic feeding'
+        alert = 'Severe malnutrition'
       end
     end
 
