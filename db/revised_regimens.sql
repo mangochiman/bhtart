@@ -166,6 +166,38 @@ LOCK TABLES `moh_other_medications` WRITE;
 INSERT INTO `moh_other_medications` VALUES (1,963,6,3,5.9,'P'),(2,963,1,6,13.9,'P'),(3,963,3,14,24.9,'P'),(4,297,9,6,13.9,'A'),(5,297,6,14,24.9,'A'),(6,297,8,25,300,'A'),(7,576,9,14,24.9,'A'),(8,576,6,25,300,'A'),(9,24,9,3,5.9,'P'),(10,24,6,6,9.9,'P'),(11,24,7,10,13.9,'P'),(12,24,8,14,19.9,'P'),(13,24,11,20,24.9,'P'),(14,931,9,14,24.9,'A'),(15,931,6,25,300,'A');
 /*!40000 ALTER TABLE `moh_other_medications` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `moh_regimen_ingredient_starter_packs`
+--
+
+DROP TABLE IF EXISTS `moh_regimen_ingredient_starter_packs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `moh_regimen_ingredient_starter_packs` (
+  `ingredient_id` int(11) NOT NULL DEFAULT '0',
+  `regimen_id` int(11) DEFAULT NULL,
+  `drug_inventory_id` int(11) DEFAULT NULL,
+  `dose_id` int(11) DEFAULT NULL,
+  `min_weight` float DEFAULT NULL,
+  `max_weight` float DEFAULT NULL,
+  `date_created` datetime DEFAULT NULL,
+  `date_updated` datetime DEFAULT NULL,
+  `creator` int(11) DEFAULT NULL,
+  `voided` tinyint(1) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `moh_regimen_ingredient_starter_packs`
+--
+
+LOCK TABLES `moh_regimen_ingredient_starter_packs` WRITE;
+/*!40000 ALTER TABLE `moh_regimen_ingredient_starter_packs` DISABLE KEYS */;
+INSERT INTO `moh_regimen_ingredient_starter_packs` VALUES (1,1,733,1,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(2,1,968,6,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(3,1,733,2,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(4,1,968,6,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(5,1,733,3,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(6,1,968,6,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(7,1,733,4,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(8,1,968,6,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(9,1,733,5,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(10,1,968,6,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(11,1,969,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(12,1,22,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(13,2,732,6,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(14,2,732,6,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(15,2,732,6,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(16,2,732,6,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(17,2,732,6,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(18,2,731,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(19,2,736,1,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(22,2,736,2,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(23,2,736,3,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(24,2,736,4,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(25,2,736,5,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(29,2,39,1,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(31,5,734,6,35,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(32,5,22,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL);
+/*!40000 ALTER TABLE `moh_regimen_ingredient_starter_packs` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -176,4 +208,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-11-08 12:45:40
+-- Dump completed on 2016-11-25 15:54:37

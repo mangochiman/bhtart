@@ -12,11 +12,12 @@ class GenericRegimensController < ApplicationController
     @gender = @patient.person.gender.upcase
 		@programs = @patient.patient_programs.all
 
-    ################################################################################################################
 		allergic_to_sulphur_session_date = session[:datetime].to_date rescue Date.today
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, allergic_to_sulphur_session_date) #chunked
-    ################################################################################################################
 
+    ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
+    @patient_initiated =  PatientService.patient_initiated(@patient.patient_id, allergic_to_sulphur_session_date)
+    ################################################################################################################
 
     ################################################################################################################
     @prescribe_arvs_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'ARVS')
@@ -758,7 +759,15 @@ class GenericRegimensController < ApplicationController
       end
       
     else
-      orders = MedicationService.regimen_medications(params[:regimen], weight)
+      ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
+      patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
+      if patient_initiated
+        orders = MedicationService.regimen_medications(params[:regimen], weight, true)
+      else
+        orders = MedicationService.regimen_medications(params[:regimen], weight)
+      end
+      #######################################################################################################################
+
       regimen_type = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' ')
     end
 
@@ -793,17 +802,7 @@ class GenericRegimensController < ApplicationController
 				:obs_datetime => start_date) if prescribe_arvs
 
 			orders.each do |order|
-				# Reduce buffer from 2 to 1 for starter packs
-=begin
-				if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
-					reduced = true
-					auto_expire_date  = auto_expire_date - 1.days
-				end
-=end
-				#drug = Drug.find(order.drug_inventory_id)
         drug = Drug.find(order[:drug_id])
-				#regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
-        #regimen_name = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' + ')
         morning_tabs = order[:am]
         evening_tabs = order[:pm]
 
@@ -1070,7 +1069,16 @@ class GenericRegimensController < ApplicationController
     @patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
     session_date = session[:datetime].to_date rescue Date.today
     current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
-    regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
+   
+    patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
+    ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
+    if patient_initiated
+      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight, true)
+    else
+      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
+    end
+    #######################################################################################################################
+
 
     ################################################################################################################
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked

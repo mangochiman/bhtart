@@ -2320,6 +2320,23 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
       session_date.strftime('%Y-%m-%d 23:59:59')])
   end
 
+  def self.patient_initiated(patient_id, session_date)
+    ans = ActiveRecord::Base.connection.select_value <<EOF
+      SELECT re_initiated_check(#{patient_id}, '#{session_date.to_date}');
+EOF
+  
+    return true if ans == 'Re-initiated'
+    end_date = session_date.strftime('%Y-%m-%d 23:59:59') 
+    arv_drug_concepts = MedicationService.arv_drugs 
+    concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
+   
+    dispensed_arvs = Observation.find(:all, :conditions =>["person_id = ? 
+      AND concept_id = ? AND obs_datetime <= ?", patient_id, concept_id, end_date]).map(&:value_drug)
+
+    return true if dispensed_arvs.blank?
+    return (Drug.find(:all,:conditions =>['concept_id IN(?)', 
+      dispensed_arv_concept_ids]).blank? == true ? true : false)
+  end
   private
 
   def self.current_program_location

@@ -288,10 +288,18 @@ module MedicationService
     return regimen_formulations
   end
 
-  def self.regimen_medications(regimen_index, current_weight)
+  def self.regimen_medications(regimen_index, current_weight, patient_initiated = false)
     regimen_index = regimen_index.to_s.gsub('Regimen ','').to_i 
     regimen_id = MohRegimen.find(:first, :conditions =>['regimen_index = ?', regimen_index]).regimen_id
-    regimen_medications = Drug.find(:all,:joins => "INNER JOIN moh_regimen_ingredient i 
+
+    
+    if patient_initiated == true and [0, 2, 6].include?(regimen_index.to_i)
+      table_name = 'moh_regimen_ingredient_starter_packs'
+    else
+      table_name = 'moh_regimen_ingredient' 
+    end
+
+    regimen_medications = Drug.find(:all,:joins => "INNER JOIN #{table_name} i 
       ON i.drug_inventory_id = drug.drug_id AND i.regimen_id = #{regimen_id}
       INNER JOIN moh_regimen_doses d ON d.dose_id = i.dose_id",
       :conditions => "#{current_weight.to_f} >= FORMAT(min_weight,2) 

@@ -518,8 +518,7 @@ function contraindicators(){
         content.appendChild(popupCover);
     }
     else{
-        resetRegimen();
-        gotoNextPage();
+        checkIFstartpackNeed();
     }
 }
 
