@@ -128,6 +128,38 @@
     document.getElementById("initiation_type").innerHTML = initiation_type;
 
   }
+
+  function checkIfStarterPack() {
+    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
+      concept = document.getElementById("regimen_concept_id");
+      if(concept.value.match(/NVP|Nevirapine/i)) {
+        sel = document.getElementById('tt_currentUnorderedListOptions');
+        lis = document.getElementsByTagName('li');
+        options = [];
+        for(var i = 0; i < lis.length; i++){
+          if(lis[i].innerHTML.match(/week/i)){
+            options.push(lis[i])
+          }
+        }
+
+        sel.innerHTML = null;
+        for(var i = 0; i < options.length; i++){
+          sel.appendChild(options[i])
+        }
+        
+        months = ['1 month', '2 months', '3 months', '4 months',
+          '5 months', '6 months', '7 months', '8 months',
+          '9 months', '10 months', '11 months', '12 months'
+        ]
+        for(var i = 0; i < months.length; i++){
+          option = document.createElement('option');
+          option.innerHTML = months[i];
+          //option.setAttribute('style','background-color: #CDBA96;');
+          sel.appendChild(option);
+        }
+      }
+    <%end%>
+  }
 </script>
 
 
@@ -2134,6 +2166,11 @@ end
     return existingRegimen;
   }
 
+  function clearStandardRegimen() {
+    concept = document.getElementById("regimen_concept_id");
+    concept.selectedIndex = 0;
+  }
+
   function addButton(){
    // __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
     var button = document.createElement("button");
@@ -2145,9 +2182,7 @@ end
 
     button.onclick = function(){
       __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
-      other_regimen = "yes"
-      concept =document.getElementById("regimen_concept_id");
-      concept.value = null
+      other_regimen = "yes";
       removeButton();
       gotoNextPage();
     }
@@ -2671,7 +2706,7 @@ pyridoxine_options = ["","25", "50"]
 
     <%= select_tag :regimen_concept_id_all, nil, {
       :allowFreeText => 'false',
-      :tt_onLoad => "checkInput(); set_patient_posible_all_suggestions($('patient_program').value);setTimeout('setSelectedRow(); setTextToAppear(\" (MoH Recommended)\")',1000);showCategory2('Prescription');",
+      :tt_onLoad => "clearStandardRegimen();checkInput(); set_patient_posible_all_suggestions($('patient_program').value);setTimeout('setSelectedRow(); setTextToAppear(\" (MoH Recommended)\")',1000);showCategory2('Prescription');",
       :condition => 'other_regimen == "yes"',
       :helpText => "Build ART regimen",
       :multiple => true,
@@ -2729,7 +2764,7 @@ pyridoxine_options = ["","25", "50"]
     <%= select_tag :duration, optionsString, {
       :id => "interval_to_next_visit",
       :condition => '$("prescribe_arvs").value == "YES" || $("cpt_given").value == "YES" || $("ipt_given").value == "YES"',
-      :tt_onLoad => "addPrescriptionBtn();__$('keyboard').style.display = 'none';
+      :tt_onLoad => "checkIfStarterPack();addPrescriptionBtn();__$('keyboard').style.display = 'none';
       showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value);",
       :tt_onUnLoad => "removePrescriptionBtn();hideStockLevelDetails(); removeOnclickEvent();",
       :helpText => 'Interval to next visit' } %>

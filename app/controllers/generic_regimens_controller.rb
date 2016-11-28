@@ -996,7 +996,10 @@ class GenericRegimensController < ApplicationController
 		render :layout => false and return unless patient_program
 		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
 		#@options = MedicationService.regimen_options(current_weight, patient_program.program)
-		@options = MedicationService.moh_arv_regimen_options(current_weight)
+    @options = ['']
+    MedicationService.moh_arv_regimen_options(current_weight).each do |option|
+      @options << option
+    end
 		#tmp = []
     #new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
 
