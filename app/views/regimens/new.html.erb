@@ -4,21 +4,17 @@
 
 <div id="confirmatory-test-popup-div">
   <div id="confirmatory-test-popup-header">
-    <center style='color: orange;'>Starter pack</center>
+    <center style='color: orange;'>Starter pack needed for 14 days</center>
   </div><br />
   <div>
 
     <span style="font-size: 16pt;">
-      <span style="color: orange;">Starter packs</span> are needed for all patients starting Regimen <b>0</b>, <b>2</b> or <b>6</b>:<br />
-        <ul>
-          <li>For the first time (new ART initiation)</li>
-          <li>After interrupting ART for more than 14 days (re-initiation / re-start)</li>
-        </ul>
+      <span id='initiation_type' style="color: green; padding-left: 20px;"></span>&nbsp;<span id='selected_starter_pack'></span>
     </span>
     <div style="padding-top: 65px;">
       <span id="confirmatory-test-yes" onclick="hideConfirmatoryTestPopup();resetRegimen();gotoNextPage();" 
         class="confirmatory-test-my_button" 
-        style="position: relative;">Continue with starter pack</span>
+        style="position: relative;">Prescribe starter pack</span>
       
     <span id="confirmatory-test-no" onclick="hideConfirmatoryTestPopup();" 
         class="confirmatory-test-my_button" 
@@ -62,13 +58,13 @@
     background-color: #F4F4F4;
     border: 2px solid #E0E0E0;
     border-radius: 15px;
-    height: 300px;
+    height: 200px;
     padding: 5px;
     position: absolute;
     margin-top: 100px;
-    width: 680px;
+    width: 530px;
     /*margin-left: 430px;*/
-    left: 40%;
+    left: 30%;
     z-index: 991;
   }
 
@@ -122,6 +118,15 @@
   function showConfirmatoryTestPopup(){
     document.getElementById("confirmatory-test-popup-div").style.display = 'inline';
     document.getElementById("confirmatory-test-cover").style.display = 'inline';
+    selected_starter_pack = document.getElementById("regimen_concept_id").value;
+    document.getElementById("selected_starter_pack").innerHTML = selected_starter_pack;
+    <%if @patient_initiated.match(/Re-initiated/i) %> 
+      initiation_type = 'Re-initiation / Re-start'
+    <%elsif @patient_initiated.match(/Initiation/i) %> 
+      initiation_type = 'First time initiation'
+    <%end%>
+    document.getElementById("initiation_type").innerHTML = initiation_type;
+
   }
 </script>
 
@@ -792,7 +797,7 @@ function changeRegimenOld(){
   }
 
   function checkIFstartpackNeed() {
-    <%if @patient_initiated %> 
+    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
       selected_regimen = document.getElementById('touchscreenInput' + tstCurrentPage).value;
       if(selected_regimen.match(/NVP|Nevirapine/i)) {
         showConfirmatoryTestPopup();

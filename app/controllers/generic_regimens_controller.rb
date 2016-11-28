@@ -761,7 +761,7 @@ class GenericRegimensController < ApplicationController
     else
       ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
       patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
-      if patient_initiated
+      if patient_initiated.match(/Re-initiated|Initiation/i)
         orders = MedicationService.regimen_medications(params[:regimen], weight, true)
       else
         orders = MedicationService.regimen_medications(params[:regimen], weight)
@@ -1072,7 +1072,7 @@ class GenericRegimensController < ApplicationController
    
     patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
     ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
-    if patient_initiated
+    if patient_initiated.match(/Re-initiated|Initiation/i)
       regimen_medications = MedicationService.regimen_medications(params[:id], current_weight, true)
     else
       regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
