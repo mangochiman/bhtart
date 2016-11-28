@@ -2325,7 +2325,7 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
       SELECT re_initiated_check(#{patient_id}, '#{session_date.to_date}');
 EOF
   
-    return true if ans == 'Re-initiated'
+    return ans if ans == 'Re-initiated'
     end_date = session_date.strftime('%Y-%m-%d 23:59:59') 
     arv_drug_concepts = MedicationService.arv_drugs 
     concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
@@ -2333,9 +2333,11 @@ EOF
     dispensed_arvs = Observation.find(:all, :conditions =>["person_id = ? 
       AND concept_id = ? AND obs_datetime <= ?", patient_id, concept_id, end_date]).map(&:value_drug)
 
-    return true if dispensed_arvs.blank?
+    return 'Initiation' if dispensed_arvs.blank?
     return (Drug.find(:all,:conditions =>['concept_id IN(?)', 
-      dispensed_arv_concept_ids]).blank? == true ? true : false)
+      dispensed_arv_concept_ids]).blank? == true ? 'Re-initiated' : 'Initiation')
+
+    return 'Continuing'
   end
   private
 
