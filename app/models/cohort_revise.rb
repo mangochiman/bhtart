@@ -108,6 +108,82 @@ BEGIN
 END;
 EOF
 
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP FUNCTION IF EXISTS `drug_pill_count`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION `drug_pill_count`(my_patient_id INT, my_drug_id INT, my_date DATE) RETURNS decimal(10,0)
+BEGIN
+  DECLARE done INT DEFAULT FALSE;
+  DECLARE my_pill_count, my_total_text, my_total_numeric DECIMAL;
+
+  DECLARE cur1 CURSOR FOR SELECT SUM(ob.value_numeric), SUM(CAST(ob.value_text AS DECIMAL)) FROM obs ob
+                        INNER JOIN drug_order do ON ob.order_id = do.order_id
+                        INNER JOIN orders o ON do.order_id = o.order_id
+                    WHERE ob.person_id = my_patient_id
+                        AND ob.concept_id = 2540
+                        AND ob.voided = 0
+                        AND o.voided = 0
+                        AND do.drug_inventory_id = my_drug_id
+                        AND DATE(ob.obs_datetime) = my_date
+                    GROUP BY ob.person_id;
+
+  DECLARE cur2 CURSOR FOR SELECT SUM(ob.value_numeric) FROM obs ob
+                    WHERE ob.person_id = my_patient_id
+                        AND ob.concept_id = (SELECT concept_id FROM drug WHERE drug_id = my_drug_id)
+                        AND ob.voided = 0
+                        AND DATE(ob.obs_datetime) = my_date
+                    GROUP BY ob.person_id;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+  OPEN cur1;
+
+  SET my_pill_count = 0;
+
+  read_loop: LOOP
+    FETCH cur1 INTO my_total_numeric, my_total_text;
+
+    IF done THEN
+      CLOSE cur1;
+      LEAVE read_loop;
+    END IF;
+
+        IF my_total_numeric IS NULL THEN
+            SET my_total_numeric = 0;
+        END IF;
+
+        IF my_total_text IS NULL THEN
+            SET my_total_text = 0;
+        END IF;
+
+        SET my_pill_count = my_total_numeric + my_total_text;
+    END LOOP;
+
+  OPEN cur2;
+  SET done = false;
+
+  read_loop: LOOP
+    FETCH cur2 INTO my_total_numeric;
+
+    IF done THEN
+      CLOSE cur2;
+      LEAVE read_loop;
+    END IF;
+
+        IF my_total_numeric IS NULL THEN
+            SET my_total_numeric = 0;
+        END IF;
+
+        SET my_pill_count = my_total_numeric + my_pill_count;
+    END LOOP;
+
+  RETURN my_pill_count;
+END;
+EOF
+
+
 
 
     ActiveRecord::Base.connection.execute <<EOF
@@ -169,7 +245,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF DATEDIFF(my_end_date, my_expiry_date) > 56 THEN
+    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 60 THEN
         SET flag = 1;
     END IF;
 
