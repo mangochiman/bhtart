@@ -708,7 +708,7 @@ EOF
 
       if rate >= 95
         adherent << ad['person_id'].to_i ; adherent = adherent.uniq
-      else
+      elsif rate < 95
         not_adherent << ad['person_id'].to_i ; not_adherent = not_adherent.uniq
       end
     end
@@ -718,12 +718,7 @@ EOF
 
     adherent = (adherent - found_in_both)
     new_patients_with_no_adherence_done = (patient_ids.uniq - (adherent + not_adherent))
-    adherent = (adherent + new_patients_with_no_adherence_done)
-
-    unless unknown_adherence.blank?
-      adherent = (adherent - unknown_adherence)
-      not_adherent = (not_adherent - unknown_adherence)
-    end
+    unknown_adherence = (new_patients_with_no_adherence_done + unknown_adherence).uniq
 
     return [adherent, not_adherent.uniq, unknown_adherence]
   end
