@@ -2329,6 +2329,32 @@ EOF
     end_date = session_date.strftime('%Y-%m-%d 23:59:59') 
     arv_drug_concepts = MedicationService.arv_drugs 
     concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
+  
+   
+
+    hiv_clinic_registration = Encounter.find(:last,:conditions =>["encounter_type = ? AND 
+      patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+      EncounterType.find_by_name("HIV CLINIC REGISTRATION").id, patient_id,
+      end_date.to_date.strftime('%Y-%m-%d 00:00:00'), end_date])
+
+    (hiv_clinic_registration.observations || []).map do | obs |
+      concept_name = obs.to_s.split(':')[0].strip rescue nil
+      next if concept_name.blank?
+      case concept_name
+      when 'Date ART last taken'
+        last_art_drugs_date_taken = obs.value_datetime.to_date rescue nil
+        unless last_art_drugs_date_taken.blank?
+          days = ActiveRecord::Base.connection.select_value <<EOF
+            SELECT timestampdiff(day, '#{last_art_drugs_date_taken.to_date}', '#{session_date.to_date}') AS days;
+EOF
+
+          return 'Re-initiated' if days.to_i > 14
+          return 'Continuing' if days.to_i <= 14
+        end
+      end
+    end unless hiv_clinic_registration.blank?
+ 
+  
    
     dispensed_arvs = Observation.find(:all, :conditions =>["person_id = ? 
       AND concept_id = ? AND obs_datetime <= ?", patient_id, concept_id, end_date]).map(&:value_drug)
@@ -2339,6 +2365,7 @@ EOF
 
     return 'Continuing'
   end
+
   private
 
   def self.current_program_location

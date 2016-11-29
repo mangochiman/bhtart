@@ -273,6 +273,7 @@ end
   <div id="cover">
   </div>
   <form id="frmMain" action="/encounters/create/" method="post">
+    <% sdate = (session[:datetime].to_date rescue Date.today).strftime("%Y-%m-%d") %>
 
     <%= hidden_field_tag "encounter[encounter_type_name]", "APPOINTMENT" %>
     <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
@@ -288,7 +289,7 @@ end
         :field_type => 'calendar',
         :tt_onLoad => "setAttributes();showSelectedDates();showCategory('Next Appointment'); __$('category').style.display = 'none'; __$('cover').style.display = 'none';",
         :ajaxCalendarUrl => "/patients/number_of_booked_patients?date=#{(@suggested_appointment_date.to_date rescue nil)}",
-        :min => "#{(session[:datetime].to_date rescue Date.to_date).strftime("%Y-%m-%d")}", :max => "#{@max_date.to_date.strftime("%Y-%m-%d")}",
+        :min => "#{sdate}", :max => "#{@max_date.to_date.strftime("%Y-%m-%d")}",
         :tt_onUnLoad => "__$('observations__value_datetime').value = hideInfo();"
       }) %>
 
