@@ -245,7 +245,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 60 THEN
+    IF TIMESTAMPDIFF(month, my_expiry_date, my_end_date) > 1 THEN
         SET flag = 1;
     END IF;
 
