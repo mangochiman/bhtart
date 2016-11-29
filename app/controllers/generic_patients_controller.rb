@@ -2402,9 +2402,13 @@ EOF
         #tb_medical = MedicationService.tb_medication(drug) unless drug.nil?
         #next if tb_medical == true
         next if drug.blank?
+        pills_brought = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT drug_pill_count(#{obs.person_id}, #{drug.id}, DATE('#{obs.obs_datetime.to_date}')) AS pills_brought;
+EOF
+
         drug_name = drug.concept.shortname rescue drug.name
         patient_visits[visit_date].pills = [] if patient_visits[visit_date].pills.blank?
-        patient_visits[visit_date].pills << [drug_name,obs.value_numeric] rescue []
+        patient_visits[visit_date].pills << [drug_name, pills_brought['pills_brought']] rescue []
 
       elsif concept_name.upcase == 'WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER'
 
