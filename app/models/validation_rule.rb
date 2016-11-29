@@ -11,8 +11,9 @@ class ValidationRule < ActiveRecord::Base
     rules.flatten.uniq
   end
 
-  def self.data_consistency_checks(date = Time.now)
+  def self.data_consistency_checks(date = Date.today)
     date = date.to_date
+    time = Time.now
     # require 'colorize'
     data_consistency_checks = {}
     #All methods for now should be here:
@@ -50,14 +51,16 @@ class ValidationRule < ActiveRecord::Base
       color = hash[key].length > 0 ? "red" : "green"
       eval("puts 'Time taken  :  #{(period/60).to_i} min  and #{(period % 60)} sec  --> #{hash[key].length} patient(s) found'.#{color}")
       puts ""	
-      hash}
+      hash
+    }
 		
-      set_rules = self.find(:all,:conditions =>['type_id = 2'])                   
+      set_rules = self.find(:all,:conditions =>['type_id = 2'])     
+
       (set_rules || []).each do |rule|                                            
          unless data_consistency_checks[rule.desc].blank?                          
-           create_update_validation_result(rule, date, data_consistency_checks[rule.desc])
-      end                                                                       
-    end                                                                         
+           create_update_validation_result(rule, time, data_consistency_checks[rule.desc])
+        end                                                                       
+      end                                                                         
                                                                                 
     return data_consistency_checks
   end
@@ -65,19 +68,21 @@ class ValidationRule < ActiveRecord::Base
   def self.create_update_validation_result(rule, date, patient_ids)
 
     #We substitute mysql with couch DB for storing results
-  end
-
-  def self.patients_without_outcomes(visit_date)
+    file = "#{Rails.root}/config/couchdb_config.yml"
+    couchdb_details = YAML.load(File.read(file))
     data = {
       "date_checked" => date.strftime("%Y%m%d%H%M%S"),
       "rule" => rule.desc,
-      "site_code" => "BBC", #to come from config
-      "site_name" => "Balaka BLM Clinic", #to come from config file
+      "site_code" => couchdb_details["site_code"],
+      "site_name" => couchdb_details["site_name"],
       "failures" => patient_ids.length
     }
+    #raise data['site_name']
 
     ValidationResult.add_record(data)
+  end
 
+  def self.patients_without_outcomes(visit_date)
     visit_date = visit_date.to_date
     connection = ActiveRecord::Base.connection
     art_patient_ids = connection.select_all("SELECT patient_id FROM flat_cohort_table
