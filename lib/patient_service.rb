@@ -2327,7 +2327,6 @@ EOF
   
     return ans if ans == 'Re-initiated'
     end_date = session_date.strftime('%Y-%m-%d 23:59:59') 
-    arv_drug_concepts = MedicationService.arv_drugs 
     concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
   
    
@@ -2360,10 +2359,13 @@ EOF
       AND concept_id = ? AND obs_datetime <= ?", patient_id, concept_id, end_date]).map(&:value_drug)
 
     return 'Initiation' if dispensed_arvs.blank?
-    return (Drug.find(:all,:conditions =>['concept_id IN(?)', 
-      dispensed_arv_concept_ids]).blank? == true ? 'Re-initiated' : 'Initiation')
+    arv_drug_concepts = MedicationService.arv_drugs.map(&:concept_id) 
+    arvs_found = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM drug WHERE concept_id IN(#{arv_drug_concepts.join(',')})
+      AND drug_id IN(#{dispensed_arvs.join(',')});
+EOF
 
-    return 'Continuing'
+    return arvs_found.blank? == true ? 'Initiation' : 'Continuing'
   end
 
   private

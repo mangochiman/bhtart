@@ -595,9 +595,14 @@ class GenericRegimensController < ApplicationController
 		start_date = session[:datetime] || Time.now
 		arvs_buffer = 2
 
-		auto_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
-		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
-
+    if session[:datetime].kind_of?(Date) || session[:datetime].kind_of?(Time)
+		  auto_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) - 1.day
+      auto_cpt_ipt_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) - 1.day 
+    else
+      auto_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) - 1.day
+      auto_cpt_ipt_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) - 1.day
+    end 
+		
 		auto_tb_expire_date = session[:datetime] + params[:tb_duration].to_i.days rescue Time.now + params[:tb_duration].to_i.days
 		auto_tb_continuation_expire_date = session[:datetime] + params[:tb_continuation_duration].to_i.days rescue Time.now + params[:tb_continuation_duration].to_i.days
 
