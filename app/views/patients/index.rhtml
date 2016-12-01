@@ -64,7 +64,20 @@
           url: "/patients/repeat_viral_load_request",
           data: "patient_id=<%=@patient.id %>",
           success: function(){
-            window.location="/patients/show/<%=@patient.id%>"
+              jQuery.ajax({
+                  url: "/lims?json=true&id=<%= @patient.id%>&location_id=<%= session[:location_id]%>&user_id=<%= session['warden.user.user.key']%>",
+                  success: function(data){
+                       var json = JSON.parse(data);
+                       window.location = "/lims/lims_barcode?patient_id=<%= @patient.id%>&tracking_number=" + json['tracking_number']
+                  },
+                  error: function(e){
+                      window.location="/patients/show/<%=@patient.id%>";
+                  }
+              });
+
+          },
+          error: function(e){
+              window.location="/patients/show/<%=@patient.id%>";
           }
         });
       }
