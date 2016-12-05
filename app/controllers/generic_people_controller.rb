@@ -75,7 +75,7 @@ class GenericPeopleController < ApplicationController
   end
 
 	def create_remote
-
+    #raise params.inspect
     authenticate_or_request_with_http_basic do |username, password|
       user = User.authenticate(username, password)
       raise "Wrong user credentials" if user.blank?
@@ -571,6 +571,7 @@ class GenericPeopleController < ApplicationController
 	end
 
   def create
+    #raise params.inspect
     if confirm_before_creating and not params[:force_create] == 'true' and params[:relation].blank?
       @parameters = params
       birthday_params = params.reject{|key,value| key.match(/gender/) }
