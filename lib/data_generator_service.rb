@@ -35,8 +35,9 @@ EOF
       
   end
 
-  def self.create_normal_visit
-    t1 = Thread.new{app.post("/sessions/create",{'login' => 'admin', 'password' => 'test'})}.join
+  def self.create_normal_visit(patient_id)
+    #raise patient_id
+    t1 = Thread.new{app.post("/sessions/create",{'login' => 'admini', 'password' => 'test'})}.join
     t2 = Thread.new{app.post("/sessions/update",{'location' => 721})}.join
     patient_id = "1004"
     
