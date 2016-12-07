@@ -5,11 +5,10 @@ class DataGeneratorController < ApplicationController
   end
 
   def normal_visits
-  	raise app.inspect
   	params[:patient_ids].each do |patient_id|
   		DataGeneratorService.create_normal_visit(patient_id)
   	end
-  	#DataGeneratorService.create_normal_visit(1008)
+    render :text => true and return 
   end
 
 end
