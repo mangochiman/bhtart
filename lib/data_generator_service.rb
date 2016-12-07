@@ -36,29 +36,27 @@ EOF
   end
 
   def self.create_normal_visit(patient_id)
-        #raise patient_id
-    #t1 = Thread.new{app.post("/sessions/create",{'login' => 'admini', 'password' => 'test'})}.join
-    #t2 = Thread.new{app.post("/sessions/update",{'location' => 721})}.join
+
     hiv_clinc_enc_normal_data = hiv_clinic_registration_enc_normal(patient_id).to_param
-    #`bundle exec #{Rails.root.to_s}/script/console "eval(app.post('/encounters/test', {:name => 'xxx'}))"`
-    #t1 = Thread.new{
-    `echo "app.post('/sessions/create', {:login => 'admin', :password => 'test'}); app.post('/sessions/update', {'location' => 721}); app.post('/encounters/create?#{hiv_clinc_enc_normal_data}')" | bundle exec #{Rails.root.to_s}/script/console`
-    #}.join
-    
-    #t2 = Thread.new{
-    #User.current = User.first
-    `echo "app.post('/sessions/update', {'location' => 721})" | bundle exec #{Rails.root.to_s}/script/console`
-    #}.join
-    #`echo "app.post('/encounters/test', {:name => 'xxx'})" | bundle exec #{Rails.root.to_s}/script/console`
-      #patient_id = "1004"
-      hiv_clinc_enc_normal_data = hiv_clinic_registration_enc_normal(patient_id).to_param
-    #raise "app.post('/encounters/create', #{hash})".inspect
+    hiv_reception_data = hiv_reception_encounter(patient_id).to_param
+    vitals_data = vitals_encounter(patient_id).to_param
+    hiv_staging_data = hiv_staging_encounter(patient_id).to_param
+    hiv_clinic_consultation_data = hiv_clinic_consultation(patient_id).to_param
+    treatment_data = treatment_encounter(patient_id).to_param
+    dispensation_data = dispensation_encounter(patient_id).to_param
+
     `echo "app.post('/encounters/create?#{hiv_clinc_enc_normal_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    `echo "app.post('/encounters/create?#{hiv_reception_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    `echo "app.post('/encounters/create?#{vitals_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    `echo "app.post('/encounters/create?#{hiv_staging_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    `echo "app.post('/encounters/create?#{hiv_clinic_consultation_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    `echo "app.post('/regimens/create?#{treatment_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    `echo "app.post('/dispensations/create?#{dispensation_data}')" | bundle exec #{Rails.root.to_s}/script/console`
 
     #t3 = Thread.new{
-      #hiv_clinc_enc_normal_data = hiv_clinic_registration_enc_normal(patient_id)
-      #app.post("/encounters/create", hiv_clinc_enc_normal_data)
-      #`echo "app.post('/encounters/create', #{hiv_clinc_enc_normal_data})" | bundle exec #{Rails.root.to_s}/script/console`
+    #hiv_clinc_enc_normal_data = hiv_clinic_registration_enc_normal(patient_id)
+    #app.post("/encounters/create", hiv_clinc_enc_normal_data)
+    #`echo "app.post('/encounters/create', #{hiv_clinc_enc_normal_data})" | bundle exec #{Rails.root.to_s}/script/console`
     #}.join
 =begin
     t4 = Thread.new{
@@ -1345,8 +1343,11 @@ EOF
 
   def self.hiv_reception_encounter(patient_id)
     {"filter"=>{"provider"=>""},
+      "location"=>"700",
       "fast_track_pop_up_input"=>"",
       "encounter"=>{"encounter_datetime"=>Time.now,
+        "date_created" => "#{Time.now}",
+        "creator" => "1",
         "patient_id"=>patient_id,
         "provider_id"=>"1",
         "encounter_type_name"=>"HIV RECEPTION"},
@@ -1395,6 +1396,7 @@ EOF
   def self.vitals_encounter(patient_id)
     data = {"filter"=>{"provider"=>""},
       "id"=>"vitals",
+      "location"=>"700",
       "observations"=>[{"value_datetime"=>"",
           "patient_id"=>patient_id,
           "obs_datetime"=>Time.now,
@@ -1475,12 +1477,15 @@ EOF
       "encounter"=>{"patient_id"=>patient_id,
         "provider_id"=>"1",
         "encounter_datetime"=>Time.now,
+        "date_created" => "#{Time.now}",
+        "creator" => "1",
         "encounter_type_name"=>"VITALS"}}
     return data
   end
 
   def self.hiv_staging_encounter(patient_id)
     {"new_cd4_percent_available"=>"",
+      "location"=>"700",
       "new_lymphocyte_count_available"=>"",
       "observations"=>[{"value_coded_or_text"=>"",
           "value_drug"=>"",
@@ -1737,6 +1742,8 @@ EOF
       "encounter"=>{"encounter_type_name"=>"HIV STAGING",
         "patient_id"=>patient_id,
         "provider_id"=>"1",
+        "date_created" => "#{Time.now}",
+        "creator" => "1",
         "encounter_datetime"=>Time.now},
       "new_cd4_count_available"=>"NO",
       "summary"=>""}
@@ -1744,6 +1751,7 @@ EOF
 
   def self.hiv_clinic_consultation(patient_id)
     {"advanced_side_effects"=>"",
+      "location"=>"700",
       "filter"=>{"provider"=>""},
       "observations"=>[{"value_coded_or_text_multiple"=>[""],
           "value_drug"=>"",
@@ -2063,9 +2071,158 @@ EOF
       "advanced_tb_symptoms"=>"",
       "encounter"=>{"patient_id"=>patient_id,
         "encounter_datetime"=>Time.now,
+        "date_created" => "#{Time.now}",
         "encounter_type_name"=>"HIV CLINIC CONSULTATION",
         "creator" => "1",
         "provider_id"=>"1"}}
+  end
+
+  def self.treatment_encounter(patient_id)
+    {"patient_id"=> patient_id,
+      "location"=>"700",
+      "regimen"=>"5",
+      "tb_continue_existing_regimen"=>"",
+      "tb_duration"=>"",
+      "fast_track_yes_no"=>"No",
+      "observations"=>[{"order_id"=>"",
+          "value_modifier"=>"",
+          "value_datetime"=>"",
+          "patient_id"=>patient_id,
+          "obs_datetime"=> Time.now,
+          "value_drug"=>"",
+          "value_boolean"=>"",
+          "value_coded_or_text"=>"",
+          "parent_concept_name"=>"",
+          "value_text"=>"",
+          "value_coded_or_text_multiple"=>[""],
+          "value_coded"=>"",
+          "obs_group_id"=>"",
+          "value_numeric"=>"",
+          "concept_name"=>"Prescribe drugs"},
+        {"order_id"=>"",
+          "value_modifier"=>"",
+          "value_datetime"=>"",
+          "patient_id"=> patient_id,
+          "obs_datetime"=> Time.now,
+          "value_drug"=>"",
+          "value_coded_or_text"=>"YES",
+          "value_boolean"=>"",
+          "parent_concept_name"=>"",
+          "value_text"=>"",
+          "value_coded_or_text_multiple"=>[""],
+          "value_coded"=>"",
+          "obs_group_id"=>"",
+          "value_numeric"=>"",
+          "concept_name"=>"PRESCRIBE ARVS"},
+        {"order_id"=>"",
+          "value_modifier"=>"",
+          "value_datetime"=>"",
+          "patient_id"=> patient_id,
+          "obs_datetime"=> Time.now,
+          "value_drug"=>"",
+          "value_coded_or_text"=>"",
+          "value_boolean"=>"",
+          "parent_concept_name"=>"",
+          "value_text"=>"",
+          "value_coded_or_text_multiple"=>[""],
+          "value_coded"=>"",
+          "obs_group_id"=>"",
+          "value_numeric"=>"",
+          "concept_name"=>"Reason antiretrovirals changed or stopped"},
+        {"order_id"=>"",
+          "value_modifier"=>"",
+          "value_datetime"=>"",
+          "patient_id"=>"1019",
+          "obs_datetime"=>Time.now,
+          "value_drug"=>"",
+          "value_coded_or_text"=>"Exact - excluding hanging pills",
+          "value_boolean"=>"",
+          "parent_concept_name"=>"",
+          "value_text"=>"",
+          "value_coded_or_text_multiple"=>[""],
+          "value_coded"=>"",
+          "obs_group_id"=>"",
+          "value_numeric"=>"",
+          "concept_name"=>"Appointment type"},
+        {"order_id"=>"",
+          "value_modifier"=>"",
+          "value_datetime"=>"",
+          "patient_id"=> patient_id,
+          "obs_datetime"=>Time.now,
+          "value_drug"=>"",
+          "value_coded_or_text"=>"YES",
+          "value_boolean"=>"",
+          "parent_concept_name"=>"",
+          "value_text"=>"",
+          "value_coded_or_text_multiple"=>[""],
+          "value_coded"=>"",
+          "obs_group_id"=>"",
+          "value_numeric"=>"",
+          "concept_name"=>"Prescribe cotramoxazole"},
+        {"order_id"=>"",
+          "value_modifier"=>"",
+          "value_datetime"=>"",
+          "patient_id"=> patient_id,
+          "obs_datetime"=>Time.now,
+          "value_drug"=>"",
+          "value_coded_or_text"=>"NO",
+          "value_boolean"=>"",
+          "parent_concept_name"=>"",
+          "value_text"=>"",
+          "value_coded_or_text_multiple"=>[""],
+          "value_coded"=>"",
+          "obs_group_id"=>"",
+          "value_numeric"=>"",
+          "concept_name"=>"ISONIAZID"},
+        {"order_id"=>"",
+          "value_modifier"=>"",
+          "value_datetime"=>"",
+          "patient_id"=> patient_id,
+          "obs_datetime"=>Time.now,
+          "value_drug"=>"",
+          "value_coded_or_text"=>"",
+          "value_boolean"=>"",
+          "parent_concept_name"=>"",
+          "value_text"=>"",
+          "value_coded_or_text_multiple"=>[""],
+          "value_coded"=>"",
+          "obs_group_id"=>"",
+          "value_numeric"=>"",
+          "concept_name"=>"pyridoxine"}],
+      "tb_regimen"=>"",
+      "regimen_concept_id"=>"Regimen 5 (TDF / 3TC / EFV)",
+      "fast_track_concept_ids"=>"",
+      "continue_existing_regimen"=>"NO",
+      "cpt_mgs"=>"960",
+      "ipt_mgs"=>"",
+      "pyridoxine_value"=>"",
+      "patient_program"=>"3977",
+      "regimen_all"=>"",
+      "regimen_ipt_cpt"=>"",
+      "duration"=>"28",
+      "fast_track_attributes"=>[""],
+      "filter"=>{"provider"=>"admin"},
+      "encounter"=>{"patient_id"=>patient_id,
+        "encounter_datetime"=>Time.now,
+        "date_created" => "#{Time.now}",
+        "creator" => "1",
+        "provider" => "1"
+      }
+    }
+  end
+
+  def self.dispensation_encounter(patient_id)
+    {"quantity"=>"30",
+      "location"=>"700",
+      "encounter_datetime" => Time.now,
+      "creator" => 1,
+      "provide_id" => 1,
+      "filter"=>{"provider"=>""},
+      "drug_id"=>"735",
+      "controller"=>"dispensations",
+      "patient_id"=>patient_id,
+      "action"=>"create"
+    }
   end
 
 end

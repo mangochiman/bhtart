@@ -413,6 +413,7 @@ class GenericEncountersController < ApplicationController
 
       # set current location via params if given
       Location.current_location = Location.find(params[:location])
+      User.current = User.find(params['encounter']['creator'])
     end
     
     if params['encounter']['encounter_type_name'].to_s.upcase == "APPOINTMENT" && !params[:report_url].nil? && !params[:report_url].match(/report/).nil?

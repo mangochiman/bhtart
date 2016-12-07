@@ -576,6 +576,13 @@ class GenericRegimensController < ApplicationController
 			user_person_id = current_user.person_id
 		end
 
+    unless params[:location].blank?
+      Person.migrated_datetime = params['encounter']['date_created']
+      Person.migrated_creator  = params['encounter']['creator'] rescue nil
+      User.current = User.find(params['encounter']['creator'])
+      Location.current_location = Location.find(params[:location])
+    end
+
 		user_person_id = user_person_id rescue User.find_by_user_id(current_user.user_id).person_id
 
 		encounter = PatientService.current_treatment_encounter(@patient, session_date, user_person_id)
@@ -621,6 +628,7 @@ class GenericRegimensController < ApplicationController
         fast_track_encounter.encounter_type = fast_track_encounter_type.encounter_type_id
         fast_track_encounter.patient_id = params[:patient_id]
         fast_track_encounter.encounter_datetime = session_date
+        fast_track_encounter.provider_id = params['encounter']['provider'] unless params['encounter']['creator'].blank?
         fast_track_encounter.save
 
         concept_ids.each do |concept_id|
@@ -823,7 +831,6 @@ class GenericRegimensController < ApplicationController
         end
         prn = 0
 				
-
         DrugOrder.write_order(
           encounter,
           @patient,
