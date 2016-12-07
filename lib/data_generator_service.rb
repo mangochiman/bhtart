@@ -44,6 +44,7 @@ EOF
     hiv_clinic_consultation_data = hiv_clinic_consultation(patient_id).to_param
     treatment_data = treatment_encounter(patient_id).to_param
     dispensation_data = dispensation_encounter(patient_id).to_param
+    appointment_data = appointment_encounter(patient_id).to_param
 
     `echo "app.post('/encounters/create?#{hiv_clinc_enc_normal_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{hiv_reception_data}')" | bundle exec #{Rails.root.to_s}/script/console`
@@ -52,6 +53,7 @@ EOF
     `echo "app.post('/encounters/create?#{hiv_clinic_consultation_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/regimens/create?#{treatment_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/dispensations/create?#{dispensation_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    `echo "app.post('/encounters/create?#{appointment_data}')" | bundle exec #{Rails.root.to_s}/script/console`
 
     #t3 = Thread.new{
     #hiv_clinc_enc_normal_data = hiv_clinic_registration_enc_normal(patient_id)
@@ -2078,6 +2080,9 @@ EOF
   end
 
   def self.treatment_encounter(patient_id)
+    patient = Patient.find(patient_id)
+    patient_program_id = patient.patient_programs.last.patient_program_id rescue ''
+    
     {"patient_id"=> patient_id,
       "location"=>"700",
       "regimen"=>"5",
@@ -2196,7 +2201,7 @@ EOF
       "cpt_mgs"=>"960",
       "ipt_mgs"=>"",
       "pyridoxine_value"=>"",
-      "patient_program"=>"3977",
+      "patient_program"=> patient_program_id,
       "regimen_all"=>"",
       "regimen_ipt_cpt"=>"",
       "duration"=>"28",
@@ -2225,4 +2230,28 @@ EOF
     }
   end
 
+  def self.appointment_encounter(patient_id)
+    appointment_date = Date.today + 30.days
+    
+    data = {"location"=>"700",
+      "observations"=>[
+        {"patient_id"=> patient_id,
+          "concept_name"=>"Appointment date",
+          "obs_datetime"=>"",
+          "value_datetime"=> appointment_date}
+      ],
+      "encounter"=>{
+        "patient_id"=>patient_id,
+        "encounter_datetime"=>Time.now,
+        "date_created" => "#{Time.now}",
+        "creator" => "1",
+        "provider_id" => "1",
+        "encounter_type_name"=>"APPOINTMENT"},
+      "filter"=>{"provider"=>"admin"},
+      "change_appointment_date"=>"true"
+    }
+
+    return data
+  end
+  
 end
