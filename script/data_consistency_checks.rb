@@ -8,7 +8,7 @@
 
 def start(date)
 	puts "Running data consistency checks for #{date}"
-	ValidationRule.data_consistency_checks(date)  
+	ValidationRule.data_consistency_checks(date)
 end
 
 start(Date.today)
