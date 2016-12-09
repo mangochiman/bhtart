@@ -11,4 +11,18 @@ class DataGeneratorController < ApplicationController
     render :text => true and return 
   end
 
+  def transfer_in_visits
+  	params[:patient_ids].each do |patient_id|
+  		DataGeneratorService.create_transfer_in_visit(patient_id)
+  	end
+    render :text => true and return
+  end
+
+  def re_initiation_visits
+  	params[:patient_ids].each do |patient_id|
+  		DataGeneratorService.create_re_initiation_visit(patient_id)
+  	end
+    render :text => true and return
+  end
+
 end

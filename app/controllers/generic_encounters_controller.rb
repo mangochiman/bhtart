@@ -1,6 +1,5 @@
 class GenericEncountersController < ApplicationController
   def create(params=params, session=session)
-    
     #A hack to set concept: Prescribe drugs to No/Yes if Medication orders include any of: ARVs/CPT/IPT
     if params[:encounter]['encounter_type_name'].match(/HIV CLINIC CONSULTATION|ART ADHERENCE/i) 
       set_prescribe_drugs_yes = true
@@ -251,7 +250,14 @@ class GenericEncountersController < ApplicationController
         encounter = Encounter.new()
         encounter.encounter_type = EncounterType.find_by_name("VITALS").id
         encounter.patient_id = params['encounter']['patient_id']
-        encounter.encounter_datetime = date_started_art 
+        encounter.encounter_datetime = date_started_art
+ 
+        unless params['encounter']['creator'].blank?
+          #Hack for API for simulating patients visit. By mangochiman
+          encounter.creator = params['encounter']['creator']
+          User.current = User.find(params['encounter']['creator'])
+        end
+
         if encounter.encounter_datetime.blank?                                                                        
           encounter.encounter_datetime = params['encounter']['encounter_datetime']  
         end 
@@ -442,7 +448,7 @@ class GenericEncountersController < ApplicationController
 		else
 		  user_person_id = User.find_by_user_id(encounter[:provider_id]).person_id 
 		end rescue user_person_id = current_user.id
-
+    
 		encounter.provider_id = user_person_id
 
 		encounter.save

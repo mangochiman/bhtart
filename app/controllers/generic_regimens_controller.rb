@@ -628,7 +628,13 @@ class GenericRegimensController < ApplicationController
         fast_track_encounter.encounter_type = fast_track_encounter_type.encounter_type_id
         fast_track_encounter.patient_id = params[:patient_id]
         fast_track_encounter.encounter_datetime = session_date
-        fast_track_encounter.provider_id = params['encounter']['provider'] unless params['encounter']['creator'].blank?
+
+        if params['encounter']
+          unless params['encounter']['creator'].blank?
+            fast_track_encounter.provider_id = params['encounter']['provider']
+          end
+        end
+        
         fast_track_encounter.save
 
         concept_ids.each do |concept_id|
