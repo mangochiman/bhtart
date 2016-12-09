@@ -32,6 +32,7 @@ EOF
     appointment_data = appointment_encounter(patient_id).to_param
 
     `echo "app.post('/encounters/create?#{hiv_clinc_enc_transfer_in_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    create_patient_program(patient_id)
     `echo "app.post('/encounters/create?#{hiv_reception_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{vitals_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{hiv_staging_data}')" | bundle exec #{Rails.root.to_s}/script/console`
@@ -40,6 +41,24 @@ EOF
     `echo "app.post('/dispensations/create?#{dispensation_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{appointment_data}')" | bundle exec #{Rails.root.to_s}/script/console`
 
+  end
+  def self.create_patient_program(patient_id)
+    patient = Patient.find(patient_id)
+    User.current = User.first
+    program = {
+      :date_enrolled=>"",
+      :program_id=>"1",
+      :location_id=>"700",
+      :patient_program_id=>"",
+      :states=>{:state=>"Pre-ART (Continue)", :start_dat => Time.now}
+    }
+
+    patient_program = patient.patient_programs.create(
+      :program_id => program[:program_id],
+      :date_enrolled => Time.now,
+      :creator => 1)
+
+    patient_program.transition(program[:states])
   end
 
   def self.create_re_initiation_visit(patient_id)
@@ -87,6 +106,7 @@ EOF
 
   def self.hiv_clinic_registration_enc_normal(patient_id)
     data = {"day_started_art"=>"",
+      "force_create_program" => "true",
       "location"=>"700",
       "filter"=>{"provider"=>""},
       "day_confirmatory_hiv_test"=>"",
@@ -2259,6 +2279,7 @@ EOF
   def self.hiv_clinic_registration_transfer_in_encounter(patient_id)
     {
       "location"=>"700",
+      "force_create_program" => "true",
       "observations"=>[{"value_datetime"=>"",
           "value_text"=>"",
           "patient_id"=>patient_id,
@@ -3528,6 +3549,7 @@ EOF
   def self.hiv_clinic_registration_reinitiation_encounter(patient_id)
     {
       "location"=>"700",
+      "force_create_program" => "true",
       "observations"=>[{"value_datetime"=>"",
           "value_text"=>"",
           "patient_id"=>patient_id,
