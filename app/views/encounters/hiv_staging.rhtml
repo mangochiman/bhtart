@@ -58,7 +58,8 @@
   var selected_stage_conditions = {};
   var retrospective_entry = <%= @retrospective %>
   var tstCurrentDate = '<%= session[:datetime].to_date.strftime("%Y-%m-%d") rescue Date.today.strftime("%Y-%m-%d") %>'
-
+  var currentBMI = '<%= @current_bmi %>'
+    
   function resetPad() {
     curr_page = tstCurrentPage - 1
     buttons = document.getElementsByClassName("keyboardButton");
@@ -845,7 +846,7 @@ end %>
         :optional => true,
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(3);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb(); disableSevereWeightLossInputForNormalBMI();',
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -867,7 +868,7 @@ end %>
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
-        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption();',
+        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption(); disableModerateWeightLossOptionForNormalBMI();',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
@@ -1192,6 +1193,45 @@ end %>
     }
 
   }
+
+  function disableSevereWeightLossInputForNormalBMI(){
+    currentBMI = parseFloat(currentBMI);
+
+    severe_weight_loss_option_input = jQuery("[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
+    severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+    severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+
+    if (currentBMI > 18.5){
+        //weight_loss_input.style.backgroundColor = '#CDBA96';
+        severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+        moderate_weight_loss_text = weight_loss_input.innerHTML;
+        weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBMI + "  )</i>"
+        severe_weight_loss_option_input.onclick = null;
+        severe_weight_loss_option_input.onmousedown = null;
+        severe_weight_loss_option_input.onmouseup = null;
+    }
+  }
+
+  function disableModerateWeightLossOptionForNormalBMI(){
+    moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+    moderate_wight_loss_option_id = moderate_weight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_input.id);
+    //severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+
+    if (currentBMI > 18.5){
+        moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+        moderate_weight_loss_text = weight_loss_input.innerHTML;
+        weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBMI + "  )</i>";
+        moderate_weight_loss_option_input.onclick = null;
+        moderate_weight_loss_option_input.onmousedown = null;
+        moderate_weight_loss_option_input.onmouseup = null;
+    }
+
+  }
+
 </script>
 
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>

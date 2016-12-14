@@ -542,6 +542,8 @@ class EncountersController < GenericEncountersController
 				@moderate_wasting = []
 				@severe_wasting = []
         @median_weight_height = []
+        @current_bmi = 0
+        
 				if @patient_bean.age < 15
 					median_weight_height = WeightHeightForAge.median_weight_height(@patient_bean.age_in_months, @patient.person.gender) rescue []
           @median_weight_height = median_weight_height
@@ -560,6 +562,7 @@ class EncountersController < GenericEncountersController
           current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
           current_height = PatientService.get_patient_attribute_value(@patient, "current_height")
           currentBmi = (current_weight/(current_height * current_height)*10000).round(1) rescue 0
+          @current_bmi = currentBmi
 
 					if currentBmi >= 16.0 && currentBmi <= 18.5
 						@moderate_wasting = ["Moderate weight loss less than or equal to 10 percent, unexplained"]
