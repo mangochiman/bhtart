@@ -73,7 +73,9 @@
 
   .tt_controls_year_started_art #Unknown { display: inline; }
 
-
+  .tt_controls_month_of_cd4_count .keyboard{
+    display: none;
+}
 </style>
 
 <%#= javascript_include_tag "dateformat" %>
@@ -1226,7 +1228,7 @@
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
       {	:id => "last_art_drugs_taken",
       :condition => '$("ever_received_art").value == "YES"',
-      :tt_onLoad => "addCustomRegimenButton();",
+      :tt_onLoad => "addCustomRegimenButton(); lastOtherDrugs = ''; $('otherMedications').value = '';",
       :tt_onUnLoad => 'updateLastARVDrugs(); removeCustomRegimenButton();',
       :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
