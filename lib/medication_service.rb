@@ -369,4 +369,27 @@ module MedicationService
     return ((number_of_pills)/total_pills_per_day).to_i
   end
 
+  def self.get_medication_dose(order)
+    instructions = order.instructions
+    return 0 if instructions.blank?
+    medication_name = order.drug_order.drug.name
+    num_of_tabs = instructions.sub("#{medication_name}:-",'').gsub('tab(s)','').gsub('tabs','').\
+      squish.gsub('Morning:','').sub('Evening:','').squish.split(',').collect {| n | n.to_f }
+
+    dose = 0
+    (num_of_tabs || []).each do |n|
+      dose += 1 if n > 0
+    end
+
+    if dose == 0
+      return 2 if instructions.match(/EVENING/i) and instructions.match(/MORNING/i)
+      return 1 if instructions.match(/EVENING/i) and not instructions.match(/MORNING/i)
+      return 1 if not instructions.match(/EVENING/i) and instructions.match(/MORNING/i)
+      return 1 if not instructions.match(/ONCE/i) 
+      return 2 if not instructions.match(/TWICE/i) 
+    end
+
+    return dose
+  end
+
 end
