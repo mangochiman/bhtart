@@ -1665,6 +1665,7 @@
     <%= text_field_tag "year_confirmatory_hiv_test", nil,
       {	:helpText => 'Confirmatory HIV test year',
       :field_type => 'number',
+      :condition => '$("type_of_confirmatory_hiv_test").value != "NOT DONE"',
       :tt_onLoad => "changeNextButtonForConfirmatoryYear(); changeAbsoluteMinForConfirmatoryYear();",
       :absoluteMax => Date.today.year,
       :tt_pageStyleClass => "Numeric NumbersOnly",
@@ -1672,7 +1673,7 @@
 
     <%= select_tag "month_confirmatory_hiv_test", month_name_options,
       {	:helpText => 'Confirmatory HIV test month',
-      :condition => '$("confirmatory_hiv_test_year").value.toLowerCase() != "unknown"',
+      :condition => '$("type_of_confirmatory_hiv_test").value != "NOT DONE" && $("confirmatory_hiv_test_year").value.toLowerCase() != "unknown"',
       :tt_onLoad => "__$('keyboard').style.display = 'none'; validateConfirmatoryMonth();",
       :validationMessage => 'Please enter a valid date',
       :id => "confirmatory_hiv_test_month"} %>
@@ -1680,7 +1681,7 @@
     <%= text_field_tag "day_confirmatory_hiv_test",  nil,
       :field_type => 'number', :helpText => 'Confirmatory HIV test day',
       :tt_onUnLoad => "updateConfirmDate();",
-      :condition => '($("confirmatory_hiv_test_year").value !="Unknown") && ($("confirmatory_hiv_test_month").value != "Unknown");',
+      :condition => '$("type_of_confirmatory_hiv_test").value != "NOT DONE" && ($("confirmatory_hiv_test_year").value !="Unknown") && ($("confirmatory_hiv_test_month").value != "Unknown");',
       :tt_onLoad => "getDayOfMonthPicker($('confirmatory_hiv_test_year').value, $('confirmatory_hiv_test_month').value);$('nextButton').style.display = 'block'; validateConfirmatoryDay();",
       :validationCode => "checkConfirmDate()",
       :id => "confirmatory_hiv_test_day" ,
