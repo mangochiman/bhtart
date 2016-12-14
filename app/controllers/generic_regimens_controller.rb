@@ -190,6 +190,22 @@ class GenericRegimensController < ApplicationController
     end
 
     @prescribe_ipt_set = prescribe_medication_set(@patient, session_date, 'Isoniazid')
+    fast_track_obs_date = fast_track_obs_date(@patient, session_date)
+
+    if @fast_track_patient
+      unless fast_track_obs_date.blank?
+        if (fast_track_obs_date < session_date)
+          #Ignore this logic if Fast Track has been enrolled today
+          if (Patient.cpt_prescribed_in_the_last_prescription?(@patient, session_date))
+            @prescribe_cpt_set = true
+          end
+
+          if (Patient.ipt_prescribed_in_the_last_prescription?(@patient, session_date))
+            @prescribe_ipt_set = true
+          end
+        end
+      end
+    end
 
     @cpt_dose = ""
     @ipt_dose = ""
@@ -996,6 +1012,40 @@ class GenericRegimensController < ApplicationController
 
     ################################################################################################################
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked
+    @fast_track_patient = fast_track_patient?(@patient, session_date)
+    fast_track_obs_date = fast_track_obs_date(@patient, session_date)
+
+    if @fast_track_patient
+      unless fast_track_obs_date.blank?
+        if (fast_track_obs_date < session_date)
+          #Ignore this logic if Fast Track has been enrolled today
+          if (Patient.cpt_prescribed_in_the_last_prescription?(@patient, session_date))
+            dose = MedicationService.other_medications('Cotrimoxazole', current_weight)
+            regimen_medications = (regimen_medications + dose) unless dose.blank?
+          end
+      
+          if (Patient.ipt_prescribed_in_the_last_prescription?(@patient, session_date))
+            dose = MedicationService.other_medications('Isoniazid', current_weight)
+            regimen_medications = (regimen_medications + dose) unless dose.blank?
+            category = regimen_medications.last[:category] rescue nil
+            drug = Drug.find_by_name('Pyridoxine (50mg)')
+
+            pyridoxine_dose = [{
+                :drug_name => 'Pyridoxine (50mg)',
+                :am => '0',
+                :pm => '1',
+                :units => 'Tab(s)',
+                :drug_id => drug.drug_id,
+                :regimen_index => nil,
+                :category => category
+              }]
+            regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+
+          end
+        end
+      end
+    end
+    
     if @allergic_to_sulphur == 'Yes'
       @prescribe_medication_set = false
     else
@@ -1009,6 +1059,7 @@ class GenericRegimensController < ApplicationController
         regimen_medications = (regimen_medications + dose)
       end
     end
+
 
     if @prescribe_ipt_set == true
       dose = MedicationService.other_medications('Isoniazid', current_weight)

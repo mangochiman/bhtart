@@ -165,7 +165,7 @@
     <% if @hiv_clinic_registration_date != @session_date %>
       <% if @confirmatory_hiv_test_type  == 'NOT DONE'%>
 
-        <%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['HIV Rapid Test','HIV RAPID TEST'],['HIV PCR','HIV DNA polymerase chain reaction'],'NOT Done','NOT DONE']),
+        <%= touch_select_tag "CONFIRMATORY HIV TEST TYPE", @patient, options_for_select([['HIV Rapid Test','HIV RAPID TEST'],['HIV PCR','HIV DNA polymerase chain reaction'],['NOT Done','NOT DONE']]),
           {	:id => "type_of_confirmatory_hiv_test",
           :helpText => "Type of confirmatory HIV test" } %>
 

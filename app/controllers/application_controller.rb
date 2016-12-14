@@ -79,6 +79,16 @@ class ApplicationController < GenericApplicationController
     return false #If not fast track OR fast track but missed their appointment dates
   end
 
+  def fast_track_obs_date(patient, session_date = Date.today)
+    fast_track_concept_id = Concept.find_by_name("FAST").concept_id
+    fast_track_assesment_encounter_type_id = EncounterType.find_by_name("FAST TRACK ASSESMENT").encounter_type_id
+    fast_track_obs_date = patient.person.observations.find(:last, :joins => [:encounter], 
+        :conditions => ["encounter_type =? AND DATE(obs_datetime) <= ? AND
+        concept_id =?", fast_track_assesment_encounter_type_id, session_date, fast_track_concept_id]
+    ).obs_datetime.to_date #rescue nil
+    return fast_track_obs_date
+  end
+
   def fast_track_patient?(patient, session_date = Date.today)
     fast_track_patient = false
     latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
