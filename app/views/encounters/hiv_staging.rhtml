@@ -58,8 +58,9 @@
   var selected_stage_conditions = {};
   var retrospective_entry = <%= @retrospective %>
   var tstCurrentDate = '<%= session[:datetime].to_date.strftime("%Y-%m-%d") rescue Date.today.strftime("%Y-%m-%d") %>'
-  var currentBMI = '<%= @current_bmi %>'
-    
+  var currentBMI = parseFloat('<%= @current_bmi %>');
+  currentBMI = parseFloat(currentBMI);
+  
   function resetPad() {
     curr_page = tstCurrentPage - 1
     buttons = document.getElementsByClassName("keyboardButton");
@@ -1195,8 +1196,6 @@ end %>
   }
 
   function disableSevereWeightLossInputForNormalBMI(){
-    currentBMI = parseFloat(currentBMI);
-
     severe_weight_loss_option_input = jQuery("[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
     severe_weight_loss_option_id = severe_weight_loss_option_input.id;
 
