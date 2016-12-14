@@ -498,7 +498,8 @@ function contraindicators(){
         nextButton.style.color = 'white';
         nextButton.onclick = function(){
             hideLibPopup();
-            gotoNextPage();
+            //gotoNextPage();
+            checkIFstartpackNeed();
         }
 
         popupDiv.appendChild(nextButton);
