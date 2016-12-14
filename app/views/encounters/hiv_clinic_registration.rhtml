@@ -1564,9 +1564,9 @@
     <%= text_field_tag "year_of_cd4", nil,
       { :helpText => 'Year of CD4 count',
       :field_type => 'number',
-      :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
+      :absoluteMin => "1890", :min => "1940",
       :tt_pageStyleClass => "Numeric NumbersOnly",
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory('when starting ART'); setAbsoluteMaxCD4Year();" ,
       :tt_onUnLoad => "hideCategory();" ,
       :condition => '$("new_cd4_count_available").value == "YES" && showConditions()',
       :id => "year_of_cd4" }  %>
@@ -1575,7 +1575,7 @@
       { :tt_onLoad => "__$('keyboard').style.display = 'none'",
       :helpText => 'Month of CD4 count',
       :condition => '$("year_of_cd4").value.toLowerCase() != "unknown" && $("new_cd4_count_available").value == "YES" && showConditions()',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory('when starting ART'); validateCD4Month();" ,
       :tt_onUnLoad => "hideCategory();" ,
       :id => "month_of_cd4" ,
       :validationMessage => 'Please enter a valid date'}%>
@@ -1584,7 +1584,7 @@
       :field_type => 'number',
       :helpText => 'Day of CD4 count',
       :condition => '($("year_of_cd4").value !="Unknown") && ($("month_of_cd4").value != "Unknown") && ($("new_cd4_count_available").value == "YES") && showConditions()',
-      :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_of_cd4').value, $('month_of_cd4').value);$('nextButton').style.display = 'block';",
+      :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_of_cd4').value, $('month_of_cd4').value);$('nextButton').style.display = 'block'; validateCD4Day();",
       :tt_onUnLoad => 'hideCategory();checkCd4Date();',
       :id => "day_of_cd4" %>
 
@@ -2196,6 +2196,87 @@
 
   }
 
+  function setAbsoluteMaxCD4Year(){
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    currYear = date.getFullYear();
+
+    if (parseInt(year_started_art)){
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", year_started_art);
+    }else{
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", currYear);
+    }
+  }
+
+  function validateCD4Month(){
+    date = new Date;
+    currYear = <%=(session[:datetime].to_date.year rescue Date.today.year)%>; //date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    year_of_cd4 = parseInt(jQuery('#year_of_cd4')[0].value);
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+
+    if (year_of_cd4 == currYear){
+      currentMonth = [];
+      numOfloops = ((new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>")).getMonth() + 1);
+
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+    if ((year_of_cd4 == year_started_art) && (year_of_cd4 != currYear)){
+      currentMonth = [];
+      numOfloops = month_started_art;
+
+      for(var i = 0; i < numOfloops; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+    if (year_art_last_taken != currYear) {
+      rule = availableMonths.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
+
+  }
+
+  function validateCD4Day(){
+    date = new Date
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    currMonth = date.getMonth() + 1;
+
+    cd4Month = parseInt(jQuery('#month_of_cd4')[0].value);
+    cd4Year = parseInt(jQuery('#year_of_cd4')[0].value);
+
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+    day_started_art = parseInt(jQuery('#day_started_art')[0].value);
+
+    if (cd4Year == currYear) {
+      if (cd4Month == currMonth){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+      }
+    }
+
+    if ((year_of_cd4 == year_started_art) && (year_of_cd4 != currYear)){
+      if (cd4Month == month_started_art){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',day_started_art);
+      }
+    }
+
+  }
+
   function preselectSevereWeightLoss(){
     if (parseFloat(currentBmi) < 16){
       console.log("It's a bit funny now")
@@ -2249,7 +2330,7 @@
     disableModerateWeightLossOption();
   }
 
-function preselectModerateWeightLossPaeds(){
+  function preselectModerateWeightLossPaeds(){
     currentWeight = parseFloat($("weight").value);
     current_weight_percentile = (currentWeight/(median_weight_height[0])*100)
 
@@ -2317,7 +2398,7 @@ function preselectModerateWeightLossPaeds(){
 
   }
 
-function disableSevereWeightLossInputForNormalBMI(){
+  function disableSevereWeightLossInputForNormalBMI(){
     severe_weight_loss_option_input = jQuery("[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
     severe_weight_loss_option_id = severe_weight_loss_option_input.id;
 
@@ -2326,13 +2407,13 @@ function disableSevereWeightLossInputForNormalBMI(){
     severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
 
     if (parseFloat(currentBmi) > 18.5){
-        //weight_loss_input.style.backgroundColor = '#CDBA96';
-        severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
-        moderate_weight_loss_text = weight_loss_input.innerHTML;
-        weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBmi + "  )</i>"
-        severe_weight_loss_option_input.onclick = null;
-        severe_weight_loss_option_input.onmousedown = null;
-        severe_weight_loss_option_input.onmouseup = null;
+      //weight_loss_input.style.backgroundColor = '#CDBA96';
+      severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBmi + "  )</i>"
+      severe_weight_loss_option_input.onclick = null;
+      severe_weight_loss_option_input.onmousedown = null;
+      severe_weight_loss_option_input.onmouseup = null;
     }
   }
 
@@ -2343,12 +2424,12 @@ function disableSevereWeightLossInputForNormalBMI(){
     weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_input.id);
 
     if (parseFloat(currentBmi) > 18.5){
-        moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
-        moderate_weight_loss_text = weight_loss_input.innerHTML;
-        weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBmi + "  )</i>";
-        moderate_weight_loss_option_input.onclick = null;
-        moderate_weight_loss_option_input.onmousedown = null;
-        moderate_weight_loss_option_input.onmouseup = null;
+      moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBmi + "  )</i>";
+      moderate_weight_loss_option_input.onclick = null;
+      moderate_weight_loss_option_input.onmousedown = null;
+      moderate_weight_loss_option_input.onmouseup = null;
     }
 
   }
