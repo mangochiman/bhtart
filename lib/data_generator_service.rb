@@ -72,6 +72,7 @@ EOF
     appointment_data = appointment_encounter(patient_id).to_param
 
     `echo "app.post('/encounters/create?#{hiv_clinc_enc_reinitiation_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    create_patient_program(patient_id)
     `echo "app.post('/encounters/create?#{hiv_reception_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{vitals_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{hiv_staging_data}')" | bundle exec #{Rails.root.to_s}/script/console`
@@ -94,6 +95,7 @@ EOF
     appointment_data = appointment_encounter(patient_id).to_param
 
     `echo "app.post('/encounters/create?#{hiv_clinc_enc_normal_data}')" | bundle exec #{Rails.root.to_s}/script/console`
+    create_patient_program(patient_id)
     `echo "app.post('/encounters/create?#{hiv_reception_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{vitals_data}')" | bundle exec #{Rails.root.to_s}/script/console`
     `echo "app.post('/encounters/create?#{hiv_staging_data}')" | bundle exec #{Rails.root.to_s}/script/console`
