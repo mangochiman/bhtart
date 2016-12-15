@@ -324,7 +324,7 @@ function contraindicators(){
                 for (var i = 0; i < side_effects_contraindications[sdate][type].length; i++){
                     if (type == 'side effect'){
 
-                        if (td2.innerHTML.length < 1 || td.innerHTML == '&nbsp;'){
+                        if (td2.innerHTML.length < 1 || td2.innerHTML == '&nbsp;'){
                             td2.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td2.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];
