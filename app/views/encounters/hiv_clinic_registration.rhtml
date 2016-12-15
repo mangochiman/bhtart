@@ -417,6 +417,7 @@
     } else {
 
       if(cd4_count_numeric <= 250 && cd4_count_modifier != ">") {
+
         $('cd4_count_less_than_250').value = "YES";
       } else {
         $('cd4_count_less_than_250').value = "NO";
@@ -749,12 +750,25 @@
     if (age > 14) {
       if (whoStage >= 3) {
         reasonForArtEligibility = whoStageConcept(whoStage, "ADULT");
+      }
 
-      } else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
-        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
-      } else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_250').value == "YES") {
+        reasonForArtEligibility = "CD4 count less than or equal to 250"
+      }
+
+      else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
         reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
-      } else {
+      }
+
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
+      }
+
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
+      }
+      
+      else {
         if (whoStage == 1 && lymphocyteCount < 1200 && lymphocyteCount != null) {
           reasonForArtEligibility = "LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1";
         } else if (whoStage == 2 && lymphocyteCount < 1200 && lymphocyteCount != null) {
@@ -2411,7 +2425,7 @@
       //weight_loss_input.style.backgroundColor = '#CDBA96';
       severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
       moderate_weight_loss_text = weight_loss_input.innerHTML;
-      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBmi + "  )</i>"
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBmi + "  )</i>"
       severe_weight_loss_option_input.onclick = null;
       severe_weight_loss_option_input.onmousedown = null;
       severe_weight_loss_option_input.onmouseup = null;
@@ -2427,7 +2441,7 @@
     if (parseFloat(currentBmi) > 18.5){
       moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
       moderate_weight_loss_text = weight_loss_input.innerHTML;
-      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBmi + "  )</i>";
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBmi + "  )</i>";
       moderate_weight_loss_option_input.onclick = null;
       moderate_weight_loss_option_input.onmousedown = null;
       moderate_weight_loss_option_input.onmouseup = null;

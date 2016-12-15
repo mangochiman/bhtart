@@ -43,7 +43,7 @@
 
   .tt_controls_month_of_cd4_count .keyboard{
     display: none;
-}
+  }
 </style>
 
 <%#= raise @patient_hcc_number.to_yaml %>
@@ -268,7 +268,7 @@
     }
   }
 
-function updateWhoStagePaeds() {
+  function updateWhoStagePaeds() {
     // Everyone is supposed to be HIV positive so start them at 1
     whoStage = 1;
     for (var i=1; i<=4; i++) {
@@ -391,12 +391,25 @@ function updateWhoStagePaeds() {
     if (age > 14) {
       if (whoStage >= 3) {
         reasonForArtEligibility = whoStageConcept(whoStage, "ADULT");
-
-      } else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
-        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
-      } else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+      }
+      
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_250').value == "YES") {
+        reasonForArtEligibility = "CD4 count less than or equal to 250"
+      }
+      
+      else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
         reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
-      } else {
+      }
+
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
+      }
+      
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
+      }
+
+      else {
         if (whoStage == 1 && lymphocyteCount < 1200 && lymphocyteCount != null) {
           reasonForArtEligibility = "LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1";
         } else if (whoStage == 2 && lymphocyteCount < 1200 && lymphocyteCount != null) {
@@ -1203,13 +1216,13 @@ end %>
     severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
 
     if (currentBMI > 18.5){
-        //weight_loss_input.style.backgroundColor = '#CDBA96';
-        severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
-        moderate_weight_loss_text = weight_loss_input.innerHTML;
-        weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBMI + "  )</i>"
-        severe_weight_loss_option_input.onclick = null;
-        severe_weight_loss_option_input.onmousedown = null;
-        severe_weight_loss_option_input.onmouseup = null;
+      //weight_loss_input.style.backgroundColor = '#CDBA96';
+      severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>"
+      severe_weight_loss_option_input.onclick = null;
+      severe_weight_loss_option_input.onmousedown = null;
+      severe_weight_loss_option_input.onmouseup = null;
     }
   }
 
@@ -1221,12 +1234,12 @@ end %>
     //severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
 
     if (currentBMI > 18.5){
-        moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
-        moderate_weight_loss_text = weight_loss_input.innerHTML;
-        weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( Current BMI is " + currentBMI + "  )</i>";
-        moderate_weight_loss_option_input.onclick = null;
-        moderate_weight_loss_option_input.onmousedown = null;
-        moderate_weight_loss_option_input.onmouseup = null;
+      moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>";
+      moderate_weight_loss_option_input.onclick = null;
+      moderate_weight_loss_option_input.onmousedown = null;
+      moderate_weight_loss_option_input.onmouseup = null;
     }
 
   }
