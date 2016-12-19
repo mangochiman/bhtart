@@ -603,11 +603,21 @@ class GenericRegimensController < ApplicationController
 		arvs_buffer = 2
 
     if session[:datetime].kind_of?(Date) || session[:datetime].kind_of?(Time)
-		  auto_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) - 1.day
-      auto_cpt_ipt_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) - 1.day 
+      params[:duration] = (params[:duration].to_i - 1)
+=begin
+		  auto_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) 
+      auto_cpt_ipt_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) 
+=end
+		  auto_expire_date = (session[:datetime] + params[:duration].to_i.days) 
+      auto_cpt_ipt_expire_date = (session[:datetime] + params[:duration].to_i.days) 
     else
-      auto_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) - 1.day
-      auto_cpt_ipt_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) - 1.day
+      params[:duration] = (params[:duration].to_i - 1)
+=begin
+      auto_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) 
+      auto_cpt_ipt_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) 
+=end
+      auto_expire_date = (Time.now + params[:duration].to_i.days) 
+      auto_cpt_ipt_expire_date = (Time.now + params[:duration].to_i.days) 
     end 
 		
 		auto_tb_expire_date = session[:datetime] + params[:tb_duration].to_i.days rescue Time.now + params[:tb_duration].to_i.days

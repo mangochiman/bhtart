@@ -451,6 +451,28 @@ module MedicationService
     end
 
     #Cotrimoxazole section
+    if current_weight >= 25
+      (regimen_medications || []).each do |medication|
+        if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/960/i)
+          return [medication]
+        end
+      end
+    end
+
+    if current_weight >= 14
+      (regimen_medications || []).each do |medication|
+        if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/480/i)
+          return [medication]
+        end
+      end
+    end
+
+    (regimen_medications || []).each do |medication|
+      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/120/i)
+        return [medication]
+      end
+    end
+
     (regimen_medications || []).each do |medication|
       if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/960/i)
         return [medication]
@@ -462,14 +484,6 @@ module MedicationService
         return [medication]
       end
     end
-
-    (regimen_medications || []).each do |medication|
-      if medication[:drug_name].match(/Cotrimoxazole/i) and medication[:drug_name].match(/120/i)
-        return [medication]
-      end
-    end
-
-
 
     return regimen_medications
   end
