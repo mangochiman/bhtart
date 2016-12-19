@@ -44,6 +44,10 @@
   .tt_controls_month_of_cd4_count .keyboard{
     display: none;
   }
+
+  .NoKeyboard .options {
+    height: 591px !important;
+  }
 </style>
 
 <%#= raise @patient_hcc_number.to_yaml %>
@@ -838,7 +842,7 @@ end %>
         :optional => true,
         :selected => @who_stage_iv_selected,
         :tt_onUnLoad => 'setSelectedStageConditions(4);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkEptb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkEptb(); hideTextInput(); displayCountOfSelectedConditions();',
         :condition => 'showConditions() == true && age >= 15',
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -849,7 +853,7 @@ end %>
         :multiple => true,
         :optional => true,
         :tt_onUnLoad => 'setSelectedStageConditions(4);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkEptb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkEptb(); hideTextInput(); displayCountOfSelectedConditions();',
         :condition => 'showConditions() == true && age <= 14',
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -860,7 +864,7 @@ end %>
         :optional => true,
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(3);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb(); disableSevereWeightLossInputForNormalBMI();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb(); disableSevereWeightLossInputForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();',
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -871,7 +875,7 @@ end %>
         :optional => true,
         :condition => 'showConditions() == true && age <= 14',
         :tt_onUnLoad => 'setSelectedStageConditions(3);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb(); hideTextInput(); displayCountOfSelectedConditions();',
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -882,7 +886,7 @@ end %>
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
-        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption(); disableModerateWeightLossOptionForNormalBMI();',
+        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption(); disableModerateWeightLossOptionForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
@@ -893,7 +897,7 @@ end %>
         :condition => 'showConditions() == true && age <= 14',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
-        :tt_onLoad => 'showCategory2("HIV staging");',
+        :tt_onLoad => 'showCategory2("HIV staging"); hideTextInput(); displayCountOfSelectedConditions();',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i),
@@ -901,7 +905,7 @@ end %>
         :multiple => true,
         :optional => true,
         :condition => 'age >= 15',
-        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabe(); hideTextInput(); displayCountOfSelectedConditions();",
         :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
         :helpText => "Stage 1 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -912,7 +916,7 @@ end %>
         :multiple => true,
         :optional => true,
         :condition => 'age <= 14',
-        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds();",
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds(); hideTextInput(); displayCountOfSelectedConditions();",
         :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
         :helpText => "Stage 1 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1244,6 +1248,47 @@ end %>
 
   }
 
+  function hideTextInput(){
+    jQuery('#touchscreenInput' + tstCurrentPage).hide();
+  }
+
+  function displayCountOfSelectedConditions(){
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').remove();
+    jQuery('#helpText' + tstCurrentPage).append("<span id='count-selected'>&nbsp;</span>")
+
+    if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+      selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+    }else{
+      selectedValuesCount = 0;
+    }
+    
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+    liOptions = document.getElementsByTagName("li");
+    for (var i=0; i<=liOptions.length - 1; i++){
+      addEvent(liOptions[i], "click", function() {
+        if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+          selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+        }else{
+          selectedValuesCount = 0
+        }
+        jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+
+      });
+
+    }
+  }
+
+  function addEvent(obj, evType, fn) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evType, fn, false);
+      return true;
+    } else if (obj.attachEvent) {
+      var r = obj.attachEvent("on" + evType, fn);
+      return r;
+    } else {
+      alert("Handler could not be attached");
+    }
+  }
 </script>
 
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>
