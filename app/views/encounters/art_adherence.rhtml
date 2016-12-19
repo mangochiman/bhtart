@@ -1101,6 +1101,10 @@ session_date = session[:datetime] || Time.now()
       cpt_option_input.onclick = null;
       cpt_option_input.onmousedown = null;
       cpt_option_input.onmouseup = null;
+
+      img_input = cpt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
     
     if (patientTBSuspected == 'true'){
@@ -1110,6 +1114,10 @@ session_date = session[:datetime] || Time.now()
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
+      
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
     if (patientTBConfirmed == 'true'){
@@ -1119,6 +1127,9 @@ session_date = session[:datetime] || Time.now()
       ipt_option_input.onclick = function(){
 
       }
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
     if (patientOnTBTreatment == 'true'){
@@ -1128,6 +1139,9 @@ session_date = session[:datetime] || Time.now()
       ipt_option_input.onclick = function(){
 
       }
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
     
     /*if (patientTBSuspected){
