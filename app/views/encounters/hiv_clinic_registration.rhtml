@@ -104,8 +104,9 @@
   var birthdate = new Date("<%= @patient.person.birthdate.to_date.strftime("%m/%d/%Y") %>")
   var dateCreated = new Date("<%=@patient.person.date_created %>");
   var patientBirthdateEstimated = "<%=@patient.person.birthdate_estimated %>";
-  var median_weight_height = <%= @median_weight_height.to_json -%>
-
+  var median_weight_height = <%= @median_weight_height.to_json -%>;
+  var sessionDate = new Date('<%=  @session_date.to_date.strftime('%d/%b/%Y') %>');
+  
   function checkTestDate(td){
     var testDate = createDates($('year_art_last_taken').value, $('month_art_last_taken').value , td.value);
     var years = testDate.getFullYear();
@@ -2021,7 +2022,7 @@
 
   function validateConfirmatoryMonth() {
     confirmatoryYear = parseInt(jQuery('#confirmatory_hiv_test_year')[0].value);
-    date = new Date;
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2031,7 +2032,7 @@
 
     if (confirmatoryYear == currYear){
       currentMonth = [];
-      numOfloops = ((new Date).getMonth() + 1);
+      numOfloops = (date.getMonth() + 1);
 
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);
@@ -2074,48 +2075,40 @@
   function validateMonthStartedART() {
     year_art_last_taken = parseInt(jQuery('#year_art_last_taken')[0].value);
     month_art_last_taken = parseInt(jQuery('#month_art_last_taken')[0].value);
-    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     year_started_art = parseInt(jQuery('#year_started_art')[0].value);
 
-
-    if ((year_art_last_taken != currYear) && (year_started_art == year_art_last_taken)){
-      currentMonth = [];
-      numOfloops = month_art_last_taken;
-      for(var i = 0; i < month_art_last_taken; i++){
-        currentMonth.push(availableMonths[i]);
-      }
-      rule = currentMonth.join("|");
-      rule = rule + "|Unknown";
-      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    }
-
-    if (year_art_last_taken == currYear){
-      currentMonth = [];
-      numOfloops = ((new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>")).getMonth() + 1);
- 
-      for(var i = 0; i < numOfloops; i++){
-        currentMonth.push(availableMonths[i]);
-      }
-      rule = currentMonth.join("|");
-      rule = rule + "|Unknown";
-      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    }
-
-    if (year_art_last_taken != currYear) {
+    if (year_started_art < year_art_last_taken){
       rule = availableMonths.join("|");
       rule = rule + "|Unknown";
       return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    } else{
+      if (year_started_art == currYear){
+        currentMonth = [];
+        numOfloops = (sessionDate.getMonth() + 1);
+
+        for(var i = 0; i < numOfloops; i++){
+          currentMonth.push(availableMonths[i]);
+        }
+        rule = currentMonth.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }else{
+        rule = availableMonths.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }
     }
 
   }
 
   function setAbsoluteMaxYearStartedART(){
     year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
-    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    date = sessionDate;
     currYear = date.getFullYear();
 
     if (parseInt(year_taken_art)){
@@ -2126,15 +2119,15 @@
   }
 
   function validateMonthARTTaken(){
-    date = new Date;
-    currYear = <%=(session[:datetime].to_date.year rescue Date.today.year)%>; //date.getFullYear();
+    date = sessionDate;
+    currYear = sessionDate.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
     if (year_taken_art == currYear){
       currentMonth = [];
-      numOfloops = <%=(session[:datetime].to_date.month rescue Date.today.month)%>;//((new Date).getMonth() + 1);
+      numOfloops = (sessionDate.getMonth() + 1);
 
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);
@@ -2147,7 +2140,7 @@
   }
 
   function validateDayARTTaken(){
-    date = new Date;
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
@@ -2164,7 +2157,7 @@
   }
 
   function validateDayStartedART(){
-    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
@@ -2191,7 +2184,7 @@
   }
 
   function validateConfirmatoryDay(){
-    date = new Date
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
@@ -2213,7 +2206,7 @@
 
   function setAbsoluteMaxCD4Year(){
     year_started_art = parseInt(jQuery('#year_started_art')[0].value);
-    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    date = sessionDate;
     currYear = date.getFullYear();
 
     if (parseInt(year_started_art)){
@@ -2224,8 +2217,8 @@
   }
 
   function validateCD4Month(){
-    date = new Date;
-    currYear = <%=(session[:datetime].to_date.year rescue Date.today.year)%>; //date.getFullYear();
+    date = sessionDate;
+    currYear = date.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -2233,40 +2226,32 @@
     year_started_art = parseInt(jQuery('#year_started_art')[0].value);
     month_started_art = parseInt(jQuery('#month_started_art')[0].value);
 
-    if (year_of_cd4 == currYear){
-      currentMonth = [];
-      numOfloops = ((new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>")).getMonth() + 1);
-
-      for(var i = 0; i < numOfloops; i++){
-        currentMonth.push(availableMonths[i]);
-      }
-      rule = currentMonth.join("|");
-      rule = rule + "|Unknown";
-      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    }
-
-    if ((year_of_cd4 == year_started_art) && (year_of_cd4 != currYear)){
-      currentMonth = [];
-      numOfloops = month_started_art;
-
-      for(var i = 0; i < numOfloops; i++){
-        currentMonth.push(availableMonths[i]);
-      }
-      rule = currentMonth.join("|");
-      rule = rule + "|Unknown";
-      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    }
-
-    if (year_art_last_taken != currYear) {
+    if (year_of_cd4 < year_started_art){
       rule = availableMonths.join("|");
       rule = rule + "|Unknown";
       return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    } else{
+      if (year_of_cd4 == year_started_art){
+        currentMonth = [];
+        numOfloops = (date.getMonth() + 1);
+
+        for(var i = 0; i < numOfloops; i++){
+          currentMonth.push(availableMonths[i]);
+        }
+        rule = currentMonth.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }else{
+        rule = availableMonths.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }
     }
 
   }
 
   function validateCD4Day(){
-    date = new Date
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
