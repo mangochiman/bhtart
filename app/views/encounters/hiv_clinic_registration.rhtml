@@ -75,6 +75,9 @@
 
   .tt_controls_month_of_cd4_count .keyboard{ display: none !important; }
 
+  .NoKeyboard .options {
+    height: 591px !important;
+  }
 </style>
 
 <%#= javascript_include_tag "dateformat" %>
@@ -1436,7 +1439,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
-      :tt_onLoad => "showCategory('when starting ART');",
+      :tt_onLoad => "showCategory('when starting ART'); hideTextInput(); displayCountOfSelectedConditions();",
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 4 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1447,7 +1450,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLossPaeds();",
+      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLossPaeds(); hideTextInput(); displayCountOfSelectedConditions();",
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 4 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1457,7 +1460,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLoss(); disableSevereWeightLossInputForNormalBMI();" ,
+      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLoss(); disableSevereWeightLossInputForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1468,7 +1471,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLossPaeds();" ,
+      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLossPaeds(); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1478,7 +1481,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLoss(); disableModerateWeightLossOptionForNormalBMI();" ,
+      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLoss(); disableModerateWeightLossOptionForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 2 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1489,7 +1492,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory('when starting ART'); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 2 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1498,7 +1501,7 @@
       {:id => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
+      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabe(); hideTextInput(); displayCountOfSelectedConditions();",
       :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 1 Conditions",
@@ -1509,7 +1512,7 @@
       :class => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds();",
+      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds(); hideTextInput(); displayCountOfSelectedConditions();",
       :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 1 Conditions",
@@ -2432,6 +2435,48 @@
       moderate_weight_loss_option_input.onmouseup = null;
     }
 
+  }
+
+  function hideTextInput(){
+    jQuery('#touchscreenInput' + tstCurrentPage).hide();
+  }
+
+  function displayCountOfSelectedConditions(){
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').remove();
+    jQuery('#helpText' + tstCurrentPage).append("<span id='count-selected'>&nbsp;</span>")
+
+    if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+      selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+    }else{
+      selectedValuesCount = 0;
+    }
+
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+    liOptions = document.getElementsByTagName("li");
+    for (var i=0; i<=liOptions.length - 1; i++){
+      addEvent(liOptions[i], "click", function() {
+        if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+          selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+        }else{
+          selectedValuesCount = 0
+        }
+        jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+
+      });
+
+    }
+  }
+
+  function addEvent(obj, evType, fn) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evType, fn, false);
+      return true;
+    } else if (obj.attachEvent) {
+      var r = obj.attachEvent("on" + evType, fn);
+      return r;
+    } else {
+      alert("Handler could not be attached");
+    }
   }
   
 </script>
