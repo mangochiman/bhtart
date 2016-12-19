@@ -517,4 +517,14 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return side_effects_contraindications
   end
 
+  def self.previous_weight(patient, session_date)
+    weight_concept_id = Concept.find_by_name("WEIGHT").concept_id
+
+    previous_patient_weight = patient.person.observations.find(:last, :conditions => ["concept_id =? AND
+        DATE(obs_datetime) < ?", weight_concept_id, session_date]
+    ).answer_string.squish rescue 0
+
+    return previous_patient_weight
+  end
+
 end

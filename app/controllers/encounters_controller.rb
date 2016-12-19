@@ -5,6 +5,7 @@ class EncountersController < GenericEncountersController
 		@patient_bean = PatientService.get_patient(@patient.person)
     @gender = @patient.person.gender.upcase
 		session_date = session[:datetime].to_date rescue Date.today
+    @previous_weight = Patient.previous_weight(@patient, session_date)
 
     fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
       "Last VL < 1000, no VL Result pending, no VL taken at next visit", "Not Pregnant? - no EID needed at next visit",

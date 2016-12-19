@@ -77,6 +77,7 @@
   var currentWeightPercentile;
   var displayText;
   var medianWeightHeight;
+  var previousWeight = '<%= @previous_weight %>';
 
 <%
 dateToday = session[:datetime].to_date rescue Date.today
@@ -323,6 +324,9 @@ dateToday = session[:datetime].to_date rescue Date.today
     }else if (currentBmi >= 25) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
       displayText +="Overweight: Pre-obese</span>";
+     }else if (weightLossPercent(currentWeight) >= 10) {
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText +="Weight loss of : " + weightLossPercent(currentWeight) + "%</span>";
     }else if (currentBmi > 18.5) {
       //displayText += currentBmi;
       displayText += "<span class='normalBMI'>" + currentBmi + "</span>";
@@ -370,7 +374,17 @@ dateToday = session[:datetime].to_date rescue Date.today
     sbpValue = (parseInt(sbpValue) - 10); //DBP has to be less than SPB at least by 10.
     jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", sbpValue);
   }
-  
+
+  function weightLossPercent(currentWeight){
+    /*Decrease = Original Number - New Number
+    //%Decrease = Decrease ÷ Original Number × 100
+    If your answer is a negative number then this is a percentage increase.
+Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
+*/
+    decrease = parseInt(previousWeight) - parseInt(currentWeight);
+    weight_loss_percent = (decrease/previousWeight) * 100;
+    return Math.round(weight_loss_percent);
+  }
 </script>
 
 <form action="/encounters/create/vitals">
