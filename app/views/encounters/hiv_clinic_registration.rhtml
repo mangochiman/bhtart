@@ -1421,14 +1421,14 @@
       :condition => "patientGender != 'MALE' && showConditions() == true",
       :tt_onUnLoad => 'hideCategory();',
       :tt_onLoad => "showCategory('when starting ART');",
-      :helpText => "Patient pregnant" } %>
+      :helpText => "Pregnant at initiation?" } %>
 
     <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
       {	:id => "breast_feeding" ,
       :condition => "patientGender != 'MALE' && showConditions() == true",
       :tt_onUnLoad => 'hideCategory();',
       :tt_onLoad => "showCategory('when starting ART');",
-      :helpText => "Patient breast feeding at initiation?" } %>
+      :helpText => "Breastfeeding at initiation?" } %>
 
 
     <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv),
