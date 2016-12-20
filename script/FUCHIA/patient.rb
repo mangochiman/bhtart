@@ -3,6 +3,8 @@ Parent_path = '/home/pachawo/Documents/msf/'
 require 'fastercsv'
 
 def start
+  #returns a hash of references
+  references = get_references
   FasterCSV.foreach("#{Parent_path}/TbPatient.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
     names = row[9].split(' ')
     given_name = nil ; middle_name = nil ; family_name = nil
@@ -31,9 +33,12 @@ def start
     city_village = row[3] rescue nil
     occupation = row[4] rescue nil
     age = row[12]
-   location = query_by_reference_id(city_village)
-   puts location
-=begin
+    city_village = references[city_village]
+    city_village = "Unknown" if city_village.blank?
+    occupation = references[occupation]
+    occupation = "Unknown" if occupation.blank?
+    
+
     if row[11].blank?
       age_estimate = true
       if !age_estimate_date_created.blank? and !age.blank?
@@ -66,14 +71,13 @@ def start
      PersonName.create(:given_name => given_name, :family_name => family_name, :middle_name => middle_name, 
               :date_created => person.date_created, :person_id => person.id)
      PersonAddress.create(:person_id => person.id, :city_village => city_village, :date_created => person.date_created)
-     #PersonAttribute.create(:person_id => person.id, :value => occupation, :date_created => person.date_created, :person_attribute_type_id => 14)
+     PersonAttribute.create(:person_id => person.id, :value => occupation, :date_created => person.date_created, :person_attribute_type_id => 14)
      patient = Patient.new()
      patient.patient_id = person.id
      patient.date_created = person.date_created
      patient.save
      
    end
-=end
   end 
  
 end
@@ -98,12 +102,12 @@ def generate_date_of_birth(age, date_recorded)
   date_of_birth = date_recorded.to_date - age.year
 end
 
-def query_by_reference_id(id)
+#function that loads csv file data into a hash
+def get_references
+  references_hash = {}
   FasterCSV.foreach("#{Parent_path}/TbReference.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
-    #if row[0].to_i.equal?(id.to_i)
-     # "Am in"
-    #end
-    row[6]
+    references_hash[row[0]] = row[6]
   end
+  return references_hash
 end
 start
