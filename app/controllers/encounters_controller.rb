@@ -209,6 +209,8 @@ class EncountersController < GenericEncountersController
             @patient.id,ConceptName.find_by_name("Prescribe drugs").concept_id,session_date])).to_s.strip.squish rescue ''
 
       @obs_ans = '' if @patient_has_stopped_fast_track_at_adherence #Just a hack. Do not remove this please.By mangochiman
+
+      @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date) rescue []
     end
         
     if (params[:encounter_type].upcase rescue '') == 'UPDATE HIV STATUS'
