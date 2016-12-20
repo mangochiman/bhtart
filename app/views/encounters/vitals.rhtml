@@ -390,7 +390,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     If your answer is a negative number then this is a percentage increase.
 Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
      */
-    decrease = parseInt(previousWeight) - parseInt(currentWeight);
+    decrease = parseFloat(previousWeight) - parseFloat(currentWeight);
     weight_loss_percent = (decrease/previousWeight) * 100;
     return Math.round(weight_loss_percent);
   }
