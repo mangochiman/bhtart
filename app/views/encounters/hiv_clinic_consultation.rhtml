@@ -1155,7 +1155,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         {:id => "prescribe_drugs",
         :tt_onLoad => "showCategory2('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
         :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
-        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
+        :condition => "$('refer_to_clinician').value == 'NO' && ($('allergic_to_sulphur').value.toUpperCase() == 'NO' || $('allergic_to_sulphur').value.toUpperCase() == 'UNKNOWN')" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
 

@@ -192,6 +192,13 @@ function lessSideEffects(){
 
 function contraindicators(){
     regimen_concept_id = document.getElementById('regimen_concept_id')
+    current_selected_value = document.getElementById('touchscreenInput' + tstCurrentPage).value.toUpperCase();
+
+    if (!current_selected_value){
+        showMessage("You must enter a value to continue")
+        return;
+    }
+
     try {
         selectedRegimenIndex = regimen_concept_id.options[regimen_concept_id.selectedIndex].text.split(" ")[1];
     }
