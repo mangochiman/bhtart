@@ -592,6 +592,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
         html += "lowBMI=" + parseFloat(current_weight_percentile).toFixed(1) + " ";
         html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
+      }else if(weightLossPercent() >= 10 && tbSymptomsOptions[i].match(/Weight loss/i)) {
+        html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+        html += "lowBMI=" + calculatedWeightlossPercent + "% ";
+        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
+      }else if(weightLossPercent() > 0 && parseInt('<%@patient_bean.age%>') < 5 && tbSymptomsOptions[i].match(/Weight loss/i)) {
+        html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+        html += "lowBMI=" + calculatedWeightlossPercent + "% ";
+        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
       }else{
         html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
         html += "key='" + tbSymptomsOptions[i] + "' onmousedown='clicked(this);'>";
@@ -793,6 +801,25 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   function hideCategory() {
     document.getElementById('category').style = 'display: none;'
   } 
+
+  var calculatedWeightlossPercent = null;
+
+  function weightLossPercent(){
+    currentWeight = <%=@current_weight %>;
+    previousWeight = <%=@previous_weight %>;
+    /*Decrease = Original Number - New Number
+    //%Decrease = Decrease ÷ Original Number × 100
+    If your answer is a negative number then this is a percentage increase.
+    Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
+*/
+    if(currentWeight.length < 1 || previousWeight.length < 1)
+      return 0;
+
+    decrease = parseInt(previousWeight) - parseInt(currentWeight);
+    weight_loss_percent = (decrease/previousWeight) * 100;
+    calculatedWeightlossPercent = Math.round(weight_loss_percent);
+    return calculatedWeightlossPercent;
+  }
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -1616,9 +1643,9 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 <div id="regimen-change-popup-div">
   <div id="regimen-change-popup-header">
     <%if @current_weight_percentile.blank?%>
-      <center>Low BMI </center>
+      <center id='weight_readings_header'>Low BMI </center>
     <%else%>
-      <center>Low weight percentile</center>
+      <center id='weight_readings_header'>Low weight percentile</center>
     <%end%>
   </div><br />
   <div>
@@ -1628,16 +1655,16 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         <!--i><b id="regimen-change-header">Patient has a low BMI: <span id='low-bmi'></span></b></i><br /-->
         <table class="bmi-alert" style="width: 100%;">
           <tr>
-            <td>Height</td><td class='bmi-data' id="current-height"></td>
+            <td id="previous_weight_sub">Height</td><td class='bmi-data' id="current-height"></td>
           </tr>
           <tr>
-            <td>Weight</td><td class='bmi-data' id="current-weight"></td>
+            <td id="current_weight_sub">Weight</td><td class='bmi-data' id="current-weight"></td>
           </tr>
           <tr>
             <%if @current_weight_percentile.blank?%>
-              <td>BMI</td><td class='bmi-data' id="low-bmi"></td>
+              <td id='weight_readings'>BMI</td><td class='bmi-data' id="low-bmi"></td>
             <%else%>
-              <td>Weight percentile</td><td class='bmi-data' id="low-bmi"></td>
+              <td id='weight_readings'>Weight percentile</td><td class='bmi-data' id="low-bmi"></td>
             <%end%>
           </tr>
         </table>
@@ -1770,6 +1797,15 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     document.getElementById('low-bmi').innerHTML = e.getAttribute('lowBMI');
     document.getElementById('current-height').innerHTML = '<%=@current_height%>';
     document.getElementById('current-weight').innerHTML = '<%=@current_weight%>';
+
+    if(calculatedWeightlossPercent >= 10) {
+      document.getElementById('weight_readings').innerHTML = 'Weightloss of:';
+      document.getElementById('previous_weight_sub').innerHTML = 'Previous weight:';
+      document.getElementById('current_weight_sub').innerHTML = 'Current weight:';
+      document.getElementById('current-height').innerHTML = <%=@current_weight.to_f%> + " (Kg)";
+      document.getElementById('current-weight').innerHTML = <%=@previous_weight.to_f%> + " (Kg)";
+      document.getElementById('weight_readings_header').innerHTML = 'Weightloss';
+    }
   }
 
 

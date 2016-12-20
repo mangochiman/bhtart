@@ -1,7 +1,7 @@
 <style>      
   
   .cellActive {
-    border-color: black;
+    border-color: green !important;
   }
 
   #cancelButton {
@@ -287,7 +287,7 @@ end
     <%= text_field_tag("observations[][value_datetime]", (@suggested_appointment_date ? @suggested_appointment_date.to_date : session_date).strftime("%Y-%m-%d"),
       {
         :field_type => 'calendar',
-        :tt_onLoad => "setAttributes();showSelectedDates();showCategory('Next Appointment'); __$('category').style.display = 'none'; __$('cover').style.display = 'none';",
+        :tt_onLoad => "setAttributes();showSelectedDates();showCategory('Next Appointment'); __$('category').style.display = 'none'; __$('cover').style.display = 'none';setBtn();setCurrentMonthDays();",
         :ajaxCalendarUrl => "/patients/number_of_booked_patients?date=#{(@suggested_appointment_date.to_date rescue nil)}",
         :min => "#{sdate}", :max => "#{@max_date.to_date.strftime("%Y-%m-%d")}",
         :tt_onUnLoad => "__$('observations__value_datetime').value = hideInfo();"
@@ -303,3 +303,76 @@ end
   </form>
 
 </body>
+
+<script>
+
+function setCurrentMonthDays() {
+  var days     = document.getElementsByClassName('cCell');
+  var classes  = 'cCell day cellActive';
+  var classes2 = 'cCell day cellInactive';
+  var classes3 = 'cCell day cellActive nonclinic';
+  var month    = document.getElementById('month').innerHTML;
+  var year     = document.getElementById('year').innerHTML;
+  var firstDay = null ; var setDates = [];
+
+  for(var i = 0; i < days.length; i++) {
+    day = days[i].innerHTML;
+    day = parseInt(day);
+    if(isNaN(day) == true)
+      continue;
+
+    if(firstDay == null && day > 1)
+      continue;
+
+    if(contains(setDates, day) == true)
+      continue;
+
+    curr_class = days[i].getAttribute('class'); 
+
+    if(firstDay == null && !day ==1){
+      continue;
+    }else if(firstDay == null){
+      firstDay = 1;
+    }else if(days[i].id.match(/week/i)){
+      continue;
+    }  
+
+    days[i].setAttribute('class', curr_class + ' boldblack');
+    setDates.push(day);
+  }
+
+}
+function contains(a, obj) {
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] === obj) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function fullMonths(m) {
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  month = parseInt(m) - 1;
+  return months[month]
+}
+
+
+function setBtn() {
+  btns = document.getElementsByClassName('btn');
+  for(var i = 0; i < btns.length; i++){
+    onclicks = btns[i].getAttribute('onclick');
+    btns[i].setAttribute('onclick', onclicks + ' setCurrentMonthDays();');
+  }
+}
+
+</script>
+
+<style>
+.boldblack {
+  border-color: #c7001e;
+  border-width: 1.1px !important;
+}
+
+</style>
