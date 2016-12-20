@@ -815,7 +815,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     if(currentWeight.length < 1 || previousWeight.length < 1)
       return 0;
 
-    decrease = parseInt(previousWeight) - parseInt(currentWeight);
+    decrease = parseFloat(previousWeight) - parseFloat(currentWeight);
     weight_loss_percent = (decrease/previousWeight) * 100;
     calculatedWeightlossPercent = Math.round(weight_loss_percent);
     return calculatedWeightlossPercent;
@@ -1802,8 +1802,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       document.getElementById('weight_readings').innerHTML = 'Weightloss of:';
       document.getElementById('previous_weight_sub').innerHTML = 'Previous weight:';
       document.getElementById('current_weight_sub').innerHTML = 'Current weight:';
-      document.getElementById('current-height').innerHTML = <%=@current_weight.to_f%> + " (Kg)";
-      document.getElementById('current-weight').innerHTML = <%=@previous_weight.to_f%> + " (Kg)";
+      document.getElementById('current-height').innerHTML = "<%=@previous_weight.to_f%>" + " (Kg)";
+      document.getElementById('current-weight').innerHTML = "<%=@current_weight.to_f%>" + " (Kg)";
       document.getElementById('weight_readings_header').innerHTML = 'Weightloss';
     }
   }
