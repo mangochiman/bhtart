@@ -5,13 +5,8 @@ require 'fastercsv'
 def start
   references = get_references
   FasterCSV.foreach ("#{Parent_path}/TbPatientDrug.csv", :quote_char => '"', :col_sep => ',', :row_sep =>:auto) do |row|
-    drug_name = references[row[4]]
-    concept_id = 7754 #ever received arvs?
-    value_coded = 1066 #default answer: no
-    if drug_name.equal?("ARV")
-      value_coded = 1065 #yes
-    end
-    puts ">>>> #{value_coded}"
+    patient_id = row[3]
+    clinic_registration(patient_id)
   end
 end
 
@@ -24,4 +19,9 @@ def get_references
   return references_hash
 end
 
+def clinic_registration(patient_id)
+  encounter_type_id = EncounterType.find_by_name("HIV CLINIC REGISTRATION").id
+  encounter_id = Encounter.find_by_sql("SELECT encounter_id FROM encounter WHERE encounter_type = #{encounter_type_id} and patient_id = #{patient_id}").first.try(:encounter_id)
+  concept_id = ConceptName.find_by_name("follow up agreement").concept_id
+end
 start
