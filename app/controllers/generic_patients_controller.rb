@@ -972,20 +972,6 @@ EOF
       :conditions => ["encounter_type = ? AND e.patient_id = ? AND DATE(encounter_datetime) = ?",
         type.id,@patient.id,session_date])
     
-    ################################# Recalculate auto_expire_date ##########################
-    unless orders.blank?
-      appointment_type = PatientService.appointment_type(@patient, session_date)
-      discontinued_dates = []
-      orders.each do |o|
-        discontinued_dates << o.discontinued_date unless o.discontinued_date.blank?
-      end 
-
-      if appointment_type.value_text == 'Optimize - including hanging pills' and discontinued_dates.blank?
-        MedicationService.recalculate_auto_expire_dates(orders) 
-      end unless appointment_type.blank?
-    end
-    #########################################################################################
-
     (orders || []).each{|order|
 
       @amount_needed = @amount_needed + (order.drug_order.amount_needed.to_i rescue 0)
@@ -3534,7 +3520,7 @@ EOF
     count = appointments.first.count unless appointments.blank?
     count = '0' if count.blank?
 
-    render :text => "Next appointment: #{date.strftime('%d/%b/%Y')} (#{count})"
+    render :text => "Next appointment: #{date.strftime('%d/%b/%Y')} (Booked: #{count})"
   end
 
 

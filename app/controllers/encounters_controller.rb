@@ -30,8 +30,8 @@ class EncountersController < GenericEncountersController
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
       earliest_auto_expire_medication = MedicationService.earliest_auto_expire_medication(@patient, session_date.to_date)
       @max_date = earliest_auto_expire_medication[1].to_date
-
-			@suggested_appointment_date = suggest_appointment_date(@max_date)
+      suggest_appointment_based_on_drug_id = earliest_auto_expire_medication[0]
+			@suggested_appointment_date = suggest_appointment_date(@max_date, suggest_appointment_based_on_drug_id)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 
       render :action => params[:encounter_type] and return
@@ -298,7 +298,9 @@ class EncountersController < GenericEncountersController
 		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
-			@suggested_appointment_date = suggest_appointment_date
+      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_medication(@patient, session_date.to_date)
+      @max_date = earliest_auto_expire_medication[1].to_date
+			@suggested_appointment_date = suggest_appointment_date(@max_date)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 		end
 
@@ -1359,7 +1361,7 @@ class EncountersController < GenericEncountersController
     return set_date
   end
 
-	def suggest_appointment_date(max_date)
+	def suggest_appointment_date(max_date, drug_id)
 		#for now we disable this because we are already checking for this
 		#in the browser - the method is suggested_return_date
 		#@number_of_days_to_add_to_next_appointment_date = number_of_days_to_add_to_next_appointment_date(@patient, session[:datetime] || Date.today)
@@ -1369,11 +1371,13 @@ class EncountersController < GenericEncountersController
 		expiry_date = prescription_expiry_date(@patient, dispensed_date, max_date)
 		return revised_suggested_date(expiry_date)
 =end
-		return revised_suggested_date((max_date - 2.day))
+		return revised_suggested_date(max_date, drug_id)
 	end
 
-  def revised_suggested_date(expiry_date)
-    clinic_appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
+  def revised_suggested_date(expiry_date, drug_id)
+    clinic_appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i 
+    clinic_appointment_limit = 200 if clinic_appointment_limit < 1
+
     peads_clinic_days = CoreService.get_global_property_value('peads.clinic.days')
     if (@patient_bean.age <= 14 && !peads_clinic_days.blank?)
       clinic_days = peads_clinic_days
@@ -1387,6 +1391,29 @@ class EncountersController < GenericEncountersController
     clinic_holidays = clinic_holidays.split(',').map{|day|day.to_date.strftime('%d %B')}.join(',').split(',') rescue []
 
     recommended_date = expiry_date.to_date;
+    session_date = session[:datetime].to_date rescue Date.today
+    order = Order.find(:first, :conditions =>["drug_inventory_id = ? AND DATE(start_date) = ? AND patient_id = ?", 
+            drug_id, session_date, @patient_bean.patient_id], 
+            :joins => "INNER JOIN drug_order d ON orders.order_id = d.order_id")
+    pills_per_day = MedicationService.get_medication_pills_per_day(order)
+
+=begin
+    amounts_dispensed = Observation.first(:conditions => ['concept_id = ? AND order_id = ? 
+      AND encounter_id = ?', ConceptName.find_by_name("AMOUNT DISPENSED").concept_id, 
+      order.order_id, EncounterType.find_by_name('TREATMENT').id]).value_numeric.to_f rescue nil 
+=end
+
+    amount_dispensed = order.drug_order.quantity.to_f
+
+    if not pills_per_day.blank? and not amount_dispensed.blank?
+      end_date_based_on_pills_dispensed = (session_date + ((amount_dispensed / pills_per_day).to_i).day) - 1.day
+      two_day_buffer_date = (end_date_based_on_pills_dispensed - 2.day)
+
+      if two_day_buffer_date < expiry_date
+        expiry_date = two_day_buffer_date
+      end
+    end
+
 
     start_date = (expiry_date - 5.day).strftime('%Y-%m-%d 00:00:00')
     end_date = expiry_date.strftime('%Y-%m-%d 23:59:59')
@@ -1476,6 +1503,7 @@ EOF
     
 
     ######################################## If the user selected "Optimize appointment" #######################
+=begin    
     appointment_type = PatientService.appointment_type(patient, session_date)
     if(appointment_type.value_text == 'Optimize - including hanging pills')    
       amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
@@ -1495,6 +1523,7 @@ EOF
         end
       end unless amounts_brought_to_clinic.blank?
     end unless appointment_type.blank?
+=end
     ##############################################################################################################
 
     unless suggest_appointment_dates.blank?

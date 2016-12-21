@@ -384,9 +384,9 @@ module MedicationService
       
       "0A" =>[[969, 22],[969, 968]],
       
-      "2P" => [[732],[732, 968], [732, 22]],
+      "2P" => [[732],[732, 736], [732, 39]],
       
-      "2A" => [[731],[731, 22], [731, 968]],
+      "2A" => [[731],[731, 39], [731, 736]],
       
       "4P" => [[736, 30],[736, 11]],
       
@@ -648,7 +648,7 @@ EOF
       SELECT obs.*, d.* FROM obs INNER JOIN drug d ON d.concept_id = obs.concept_id AND obs.voided = 0
       WHERE obs.obs_datetime BETWEEN '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
       AND '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND person_id = #{patient.id}
-      AND value_numeric IS NOT NULL;
+      AND value_numeric IS NOT NULL AND obs.voided = 0;
 EOF
 
     (amounts_brought_to_clinic || []).each do |amount|
@@ -860,7 +860,10 @@ EOF
     (orders || []).each do |order|
       drug = order.drug_order.drug
       next unless self.arv(drug)  
-      amount_prescriped[order.id] = order.discontinued_date.to_date rescue order.auto_expire_date
+      amount_prescriped[order.id] = order.auto_expire_date
+      if not order.discontinued_date.blank? and (order.auto_expire_date.to_date == order.start_date.to_date)
+        amount_prescriped[order.id] = order.discontinued_date
+      end
     end
 
     return amount_prescriped.sort_by{|order_id, auto_expire_date| auto_expire_date.to_date}.first

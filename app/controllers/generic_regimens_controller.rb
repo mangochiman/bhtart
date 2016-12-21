@@ -588,6 +588,9 @@ class GenericRegimensController < ApplicationController
 		encounter = PatientService.current_treatment_encounter(@patient, session_date, user_person_id)
 
     ############################################# set next appointment interval type #########################################
+    set_appointment_interval_type = nil
+    optimized_hanging_pills = {}
+
 		(params[:observations] || []).each do |observation|
 			if observation['concept_name'].upcase == 'APPOINTMENT TYPE'
         Observation.create(:person_id => @patient.id, 
@@ -595,7 +598,13 @@ class GenericRegimensController < ApplicationController
           :concept_id => ConceptName.find_by_name('Appointment type').concept_id,
           :value_text => observation[:value_coded_or_text], 
           :encounter_id => encounter.id) 
+
+        set_appointment_interval_type = observation[:value_coded_or_text]
       end
+    end
+
+    if set_appointment_interval_type == 'Optimize - including hanging pills'
+      optimized_hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, session_date.to_date)
     end
     ################################################################################################### 
  
@@ -844,19 +853,51 @@ class GenericRegimensController < ApplicationController
           dose = (morning_tabs.to_f + evening_tabs.to_f)/2
         end
         prn = 0
-				
+			
+        #################### Here we check if its an 'Optimize' prescrition, if yes we subtract the hanging doses to the
+        ## prescribe dose
+        hanging_pills_auto_expire_date = nil
+
+        if set_appointment_interval_type == 'Optimize - including hanging pills'
+          hanging_pills = optimized_hanging_pills[drug.drug_id] ||= 0
+          if hanging_pills > 0
+            days_to_subtract = (hanging_pills / (dose.to_f * equivalent_daily_dose.to_f))
+            if days_to_subtract > 0
+              hanging_pills_auto_expire_date = (auto_expire_date.to_date - days_to_subtract.day)
+              if hanging_pills_auto_expire_date.to_date < session_date.to_date
+                hanging_pills_auto_expire_date = session_date.to_date
+              end
+            end
+          end
+        end
+        ##############################################################################################################3
+
         DrugOrder.write_order(
           encounter,
           @patient,
           obs,
           drug,
           start_date,
-          auto_expire_date,
+          (hanging_pills_auto_expire_date.blank? ? auto_expire_date : hanging_pills_auto_expire_date),
           dose,
           frequency,
           prn,
           instructions,
           equivalent_daily_dose)
+
+        ################################# Recalculate auto_expire_date ##########################
+        unless hanging_pills_auto_expire_date.blank?
+          ActiveRecord::Base.connection.execute <<EOF
+          UPDATE orders t1 INNER JOIN drug_order t2 ON t1.order_id = t2.order_id AND t1.voided = 0
+           SET discontinued_date = '#{auto_expire_date.to_date}', 
+               auto_expire_date = '#{hanging_pills_auto_expire_date.to_date}'
+          WHERE drug_inventory_id = #{order[:drug_id]} AND encounter_id = #{encounter.id};
+EOF
+
+        end
+        #########################################################################################
+
+      	
 			end if prescribe_arvs
 		end
 

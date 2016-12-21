@@ -137,14 +137,14 @@ class DrugOrder < ActiveRecord::Base
   def total_drug_supply(patient, encounter = nil, session_date = Date.today)
     if encounter.blank?  
       type = EncounterType.find_by_name("DISPENSING")
-      encounter = encounters.find(:first,:conditions =>["encounter_datetime BETWEEN ? AND ? AND encounter_type = ?",
+      encounter = Encounter.find(:first,:conditions =>["encounter_datetime BETWEEN ? AND ? AND encounter_type = ?",
                                   session_date.to_date.strftime('%Y-%m-%d 00:00:00'),
                                   session_date.to_date.strftime('%Y-%m-%d 23:59:59'),
                                   type.id])
     end
     
     return [] if encounter.blank?
-   
+=begin   
     amounts_brought = Observation.all(:conditions => 
       ['obs.concept_id = ? AND ' +
        'obs.person_id = ? AND ' +
@@ -156,7 +156,14 @@ class DrugOrder < ActiveRecord::Base
         session_date.to_date.strftime('%Y-%m-%d 23:59:59'),
         drug_inventory_id], 
       :include => [:encounter, [:order => :drug_order]])      
-    total_brought = amounts_brought.sum{|amount| amount.value_numeric}
+=end
+
+    amounts_brought = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)[drug_inventory_id]
+    amounts_brought = 0 if amounts_brought.blank?
+    total_brought = amounts_brought
+
+    #total_brought = amounts_brought.sum{|amount| amount.value_numeric}
+
     amounts_dispensed = Observation.all(:conditions => ['concept_id = ? AND order_id = ? AND encounter_id = ?', ConceptName.find_by_name("AMOUNT DISPENSED").concept_id, self.order_id, encounter.encounter_id])
     total_dispensed = amounts_dispensed.sum{|amount| amount.value_numeric}
     self.quantity = total_dispensed + total_brought
