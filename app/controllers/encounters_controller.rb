@@ -1405,13 +1405,15 @@ class EncountersController < GenericEncountersController
 
     amount_dispensed = order.drug_order.quantity.to_f
 
-    if not pills_per_day.blank? and not amount_dispensed.blank?
+    if not pills_per_day.blank? and not amount_dispensed.blank? and not amount_dispensed.to_f == 0.0
       end_date_based_on_pills_dispensed = (session_date + ((amount_dispensed / pills_per_day).to_i).day) - 1.day
       two_day_buffer_date = (end_date_based_on_pills_dispensed - 2.day)
 
       if two_day_buffer_date < expiry_date
         expiry_date = two_day_buffer_date
       end
+    else
+      expiry_date -= 2.day
     end
 
 

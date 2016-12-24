@@ -862,10 +862,13 @@ class GenericRegimensController < ApplicationController
           hanging_pills = optimized_hanging_pills[drug.drug_id] ||= 0
           if hanging_pills > 0
             days_to_subtract = (hanging_pills / (dose.to_f * equivalent_daily_dose.to_f))
+            #days_to_subtract -= 1
+
             if days_to_subtract > 0
               hanging_pills_auto_expire_date = (auto_expire_date.to_date - days_to_subtract.day)
               if hanging_pills_auto_expire_date.to_date < session_date.to_date
-                hanging_pills_auto_expire_date = session_date.to_date
+                hanging_pills_auto_expire_date = (session_date.to_date + days_to_subtract.day).to_date
+                hanging_pills_auto_expire_date -= 1.day
               end
             end
           end
@@ -887,10 +890,17 @@ class GenericRegimensController < ApplicationController
 
         ################################# Recalculate auto_expire_date ##########################
         unless hanging_pills_auto_expire_date.blank?
+          if hanging_pills_auto_expire_date.to_date >= auto_expire_date.to_date
+            calculate_auto_expire_date = start_date.to_date
+          else 
+            calculate_auto_expire_date = hanging_pills_auto_expire_date.to_date
+          end
+
           ActiveRecord::Base.connection.execute <<EOF
           UPDATE orders t1 INNER JOIN drug_order t2 ON t1.order_id = t2.order_id AND t1.voided = 0
-           SET discontinued_date = '#{auto_expire_date.to_date}', 
-               auto_expire_date = '#{hanging_pills_auto_expire_date.to_date}'
+           SET discontinued_date = '#{hanging_pills_auto_expire_date}', 
+               auto_expire_date = '#{calculate_auto_expire_date}',
+               void_reason = '#{auto_expire_date.to_date}'
           WHERE drug_inventory_id = #{order[:drug_id]} AND encounter_id = #{encounter.id};
 EOF
 
@@ -1052,6 +1062,15 @@ EOF
 		if !params[:transfer_data].nil?
 			transfer_out_patient(params[:transfer_data][0])
 		end
+
+
+    if set_appointment_interval_type == 'Optimize - including hanging pills'
+      earliest_auto_expire_data = MedicationService.arv_earliest_auto_expire_medication(@patient.id, session_date.to_date)
+      earliest_auto_expire_arv_date = earliest_auto_expire_data[1].to_date rescue nil
+      unless earliest_auto_expire_arv_date.blank?
+        MedicationService.adjust_order_end_dates(encounter.orders, earliest_auto_expire_arv_date)
+      end
+    end
 
 		# Send them back to treatment for now, eventually may want to go to workflow
 		redirect_to "/patients/treatment_dashboard?patient_id=#{@patient.id}"

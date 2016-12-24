@@ -30,10 +30,14 @@ class DrugOrder < ActiveRecord::Base
   
   def duration
     ########We check if the non ARVs got the auto_expire_date moved forward to accormodate ARVs hanging pills 
-    if MedicationService.arv(order.drug_order.drug)
-      auto_expire_date = order.auto_expire_date.to_date
+    unless order.discontinued_date.blank?
+      if order.start_date.to_date == order.auto_expire_date.to_date
+        auto_expire_date = order.auto_expire_date.to_date
+      else
+        auto_expire_date = order.discontinued_date.to_date
+      end
     else
-      auto_expire_date = order.discontinued_date.to_date rescue order.auto_expire_date.to_date
+      auto_expire_date = order.auto_expire_date.to_date
     end
     #########################################################################################################
     (auto_expire_date - order.start_date.to_date).to_i rescue nil
@@ -178,6 +182,27 @@ class DrugOrder < ActiveRecord::Base
 
   def total_required
     required = (duration * equivalent_daily_dose)
+
+    #################################################### if pills brought back are more ##################
+    order = self.order
+    start_date = order.start_date.to_date
+    auto_expire_date = order.auto_expire_date.to_date
+
+    if start_date == auto_expire_date
+      optimized_hanging_pills = MedicationService.amounts_brought_to_clinic(order.patient, start_date)
+      hanging_pills = optimized_hanging_pills[self.drug_inventory_id] ||= 0
+
+      if hanging_pills > 0
+        days = (hanging_pills / (self.dose.to_f * self.equivalent_daily_dose.to_f))
+        #raise "#{days} >= #{duration} #{required}"
+        if days >= duration
+          return 0
+        end
+      end 
+
+    end
+    ########################################################################################################
+
     DrugOrder.calculate_complete_pack(self.drug, required)
   end
 
@@ -225,8 +250,8 @@ class DrugOrder < ActiveRecord::Base
   end
 
   def self.calculate_complete_pack(drug, units)
-    return units if drug.drug_order_barcodes.blank?
-
+    return units if drug.drug_order_barcodes.blank? || units == 0.0
+  
     (drug.drug_order_barcodes).sort_by{|d| d.tabs }.each do |barcode|
       if barcode.tabs >= units.to_f
         return barcode.tabs
