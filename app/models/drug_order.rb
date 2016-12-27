@@ -30,14 +30,19 @@ class DrugOrder < ActiveRecord::Base
   
   def duration
     ########We check if the non ARVs got the auto_expire_date moved forward to accormodate ARVs hanging pills 
-    unless order.discontinued_date.blank?
+    if not order.discontinued_date.blank? and MedicationService.arv(self.drug)
       if order.start_date.to_date == order.auto_expire_date.to_date
-        auto_expire_date = order.auto_expire_date.to_date
+        auto_expire_date = order.start_date.to_date
       else
-        auto_expire_date = order.discontinued_date.to_date
+        #auto_expire_date = order.discontinued_date.to_date
+        auto_expire_date = order.auto_expire_date.to_date
       end
     else
-      auto_expire_date = order.auto_expire_date.to_date
+      if not order.discontinued_date.blank? 
+        auto_expire_date = order.discontinued_date.to_date
+      else
+        auto_expire_date = order.auto_expire_date.to_date
+      end
     end
     #########################################################################################################
     (auto_expire_date - order.start_date.to_date).to_i rescue nil

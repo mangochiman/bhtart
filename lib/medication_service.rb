@@ -953,31 +953,16 @@ EOF
 
     (orders || []).each do |order|
       drug_order = order.drug_order
-      drug_orders[order.id] = {:dose => drug_order.dose.to_f,
-        :equivalent_daily_dose => drug_order.equivalent_daily_dose.to_f,
-        :quantity => (order.drug_order.quantity.to_f rescue nil),
-        :auto_expire_date => nil
-      }
-
-      if drug_orders[order.id][:quantity] == 0.0
-        unless amounts_brought[drug_order.drug_inventory_id].blank?
-          drug_orders[order.id][:quantity] = amounts_brought[drug_order.drug_inventory_id] 
-        end
-      end
-
-      if drug_orders[order.id][:quantity] != 0.0 
-        quantity = drug_orders[order.id][:quantity]
-        dose = drug_orders[order.id][:dose]
-        equivalent_daily_dose = drug_orders[order.id][:equivalent_daily_dose]
-        days = ((quantity / (equivalent_daily_dose.to_f)) - 1).to_i
-
-        auto_expire_date = (session_date.to_date + days.day).to_date
-
-        drug_orders[order.id][:auto_expire_date] = auto_expire_date
-        auto_expire_dates << auto_expire_date
-      end
-
+      next unless self.arv(drug_order.drug)
+      auto_expire_date = order.auto_expire_date.to_date
+      auto_expire_date = order.discontinued_date.to_date unless order.discontinued_date.blank?
+      auto_expire_dates << auto_expire_date
     end
+
+    (orders || []).each do |order|
+      drug_order = order.drug_order
+      auto_expire_dates << order.auto_expire_date.to_date
+    end if auto_expire_dates.blank?
 
     return auto_expire_dates.sort[0] unless auto_expire_dates.blank?
     return session_date
