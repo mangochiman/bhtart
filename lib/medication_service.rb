@@ -532,41 +532,30 @@ module MedicationService
     start_date = order.start_date.to_date
     auto_expire_date = order.auto_expire_date.to_date
     discontinued_date = order.discontinued_date.to_date unless order.discontinued_date.blank?
-    prescription_interval = self.prescription_interval(order)
+    prescription_end = order.void_reason.to_date rescue nil
 
-    if start_date == auto_expire_date
-      optimized_hanging_pills = self.amounts_brought_to_clinic(order.patient, start_date.to_date)
-      hanging_pills = optimized_hanging_pills[order.drug_order.drug_inventory_id] ||= 0
-      
-      if hanging_pills > 0
-        days_to_subtract = (hanging_pills / (order.drug_order.dose.to_f * order.drug_order.equivalent_daily_dose.to_f))
-        if days_to_subtract > 0
-          new_auto_expire_date = ((start_date.to_date + days_to_subtract.day) - 1.day)
-          return (new_auto_expire_date.to_date - start_date.to_date).to_i
-        end
-      end 
-    
-
-    end
-
-    
-    unless discontinued_date.blank?
-      added_days = ActiveRecord::Base.connection.select_one <<EOF
-      SELECT timestampdiff(day, DATE('#{auto_expire_date.to_s}'), DATE('#{discontinued_date.to_s}')) AS days;
-EOF
-    
-      return (prescription_interval + added_days['days'].to_i) 
+    if start_date == auto_expire_date and not prescription_end.blank?
+      return (discontinued_date.to_date - start_date.to_date).to_i
+    elsif not start_date < auto_expire_date
+      return (auto_expire_date.to_date - start_date.to_date).to_i
+    elsif not discontinued_date.blank?
+      return (discontinued_date.to_date - start_date.to_date).to_i
+    else
+      return (auto_expire_date.to_date - start_date.to_date).to_i
     end
     
-    return prescription_interval
   end
 
   def self.prescription_interval(order)
     start_date = order.start_date.to_date
     end_date = order.auto_expire_date.to_date
-    discontinued_date = order.void_reason.to_date rescue nil
+    discontinued_date = order.discontinued_date.to_date unless order.discontinued_date.blank?
+    prescription_end = order.void_reason.to_date rescue nil
+    
+    if start_date == end_date and not prescription_end.blank?
+      end_date = prescription_end
+    end
 
-    end_date = discontinued_date unless discontinued_date.blank? 
     return (end_date - start_date).to_i
   end
 
@@ -824,21 +813,48 @@ EOF
 
   end
 
-  def self.adjust_order_end_dates(orders, new_auto_expire_date)
+  def self.adjust_order_end_dates(orders, optimized_hanging_pills)
+    suggested_additional_dates = []
+    start_date = orders.last.start_date.to_date
+    auto_expire_date = orders.last.auto_expire_date.to_date
 
     (orders || []).each do |order|
-      discontinued_date = order.discontinued_date.to_date rescue nil
-      if discontinued_date == new_auto_expire_date.to_date
-        next 
-      end unless discontinued_date.blank?
+      drug = order.drug_order.drug
+      next unless self.arv(drug)
+      next if optimized_hanging_pills[drug.id].blank?
+      hanging_pills = optimized_hanging_pills[drug.id].to_f
+
+      #additional_days = (hanging_pills / (order.drug_order.dose.to_f * order.drug_order.equivalent_daily_dose.to_f))
+      additional_days = (hanging_pills / (order.drug_order.equivalent_daily_dose.to_f))
+      additional_days = additional_days.to_i rescue 0
+      next if additional_days < 1
+      
+      if ((start_date + additional_days.day).to_date >= auto_expire_date)
+        ActiveRecord::Base.connection.execute <<EOF
+          UPDATE orders SET auto_expire_date = '#{start_date.to_date}',
+          void_reason = '#{auto_expire_date.to_date}'
+          WHERE order_id = #{order.id};
+EOF
+
+        next
+      end
+
+      suggested_additional_dates << (auto_expire_date + additional_days.day).to_date
+    end
+
+    discontinued_date = suggested_additional_dates.sort.first unless suggested_additional_dates.blank?
+
+    unless discontinued_date.blank?
 
       ActiveRecord::Base.connection.execute <<EOF
-        UPDATE orders SET discontinued_date = '#{new_auto_expire_date.to_date}'
-        WHERE order_id = #{order.id};
+        UPDATE orders SET discontinued_date = '#{discontinued_date.to_date}'
+        WHERE order_id IN(#{orders.map(&:order_id).join(',')});
 EOF
 
     end
 
+
+    return nil 
   end
 
   def self.arv_earliest_auto_expire_medication(patient_id, date)
@@ -860,6 +876,11 @@ EOF
 
     (orders || []).each do |order|
       auto_expire_date = order.discontinued_date.to_date rescue order.auto_expire_date.to_date
+      original_auto_expire_date = order.void_reason.to_date rescue nil
+
+      if order.start_date.to_date == order.auto_expire_date.to_date and not original_auto_expire_date.blank?
+        auto_expire_date = original_auto_expire_date
+      end
       amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date 
     end
 
@@ -882,6 +903,11 @@ EOF
 
     (orders || []).each do |order|
       auto_expire_date = order.discontinued_date.to_date rescue order.auto_expire_date.to_date
+      original_auto_expire_date = order.void_reason.to_date rescue nil
+
+      if order.start_date.to_date == order.auto_expire_date.to_date and not original_auto_expire_date.blank?
+        auto_expire_date = original_auto_expire_date
+      end
       amount_dispensed[order.drug_order.drug_inventory_id] = auto_expire_date 
     end
 
@@ -911,6 +937,50 @@ EOF
     end
 
     return amount_prescriped.sort_by{|order_id, auto_expire_date| auto_expire_date.to_date}.first
+  end
+
+  def self.earliest_auto_expire_dispensed_medication(patient, session_date)
+    encounter_type = EncounterType.find_by_name('TREATMENT').id
+    start_date = session_date.strftime('%Y-%m-%d 00:00:00')
+    end_date = session_date.strftime('%Y-%m-%d 23:59:59')
+    amounts_brought = self.amounts_brought_to_clinic(patient, session_date)
+
+    drug_orders = {} ; auto_expire_dates = []
+
+    orders = Order.find(:all, :joins =>"INNER JOIN encounter e ON e.encounter_id = orders.encounter_id", 
+      :conditions =>["encounter_type = ? AND e.patient_id = ? AND encounter_datetime BETWEEN (?) AND (?)", 
+      encounter_type, patient.patient_id, start_date, end_date])
+
+    (orders || []).each do |order|
+      drug_order = order.drug_order
+      drug_orders[order.id] = {:dose => drug_order.dose.to_f,
+        :equivalent_daily_dose => drug_order.equivalent_daily_dose.to_f,
+        :quantity => (order.drug_order.quantity.to_f rescue nil),
+        :auto_expire_date => nil
+      }
+
+      if drug_orders[order.id][:quantity] == 0.0
+        unless amounts_brought[drug_order.drug_inventory_id].blank?
+          drug_orders[order.id][:quantity] = amounts_brought[drug_order.drug_inventory_id] 
+        end
+      end
+
+      if drug_orders[order.id][:quantity] != 0.0 
+        quantity = drug_orders[order.id][:quantity]
+        dose = drug_orders[order.id][:dose]
+        equivalent_daily_dose = drug_orders[order.id][:equivalent_daily_dose]
+        days = ((quantity / (equivalent_daily_dose.to_f)) - 1).to_i
+
+        auto_expire_date = (session_date.to_date + days.day).to_date
+
+        drug_orders[order.id][:auto_expire_date] = auto_expire_date
+        auto_expire_dates << auto_expire_date
+      end
+
+    end
+
+    return auto_expire_dates.sort[0] unless auto_expire_dates.blank?
+    return session_date
   end
 
 end

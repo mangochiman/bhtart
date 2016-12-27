@@ -456,9 +456,20 @@ session_date = session[:datetime] || Time.now()
           else
             auto_expire_date = order.auto_expire_date.strftime('%Y-%m-%d')
           end
+      
+          if order.drug_order.quantity.blank?
+            if order.start_date.to_date == order.auto_expire_date.to_date
+              hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, order.start_date.to_date)
+              quantity_given_last_time = hanging_pills[order.drug_order.drug_inventory_id]
+            else
+              quantity_given_last_time = 0
+            end
+          else
+            quantity_given_last_time = order.drug_order.quantity
+          end
         %>
         order_auto_expire_date['<%=order.order_id%>'] = "<%= auto_expire_date %>";
-        amount_given_last_time['<%=order.order_id%>'] = <%= (order.drug_order.quantity.to_f rescue 0) %>;
+        amount_given_last_time['<%=order.order_id%>'] = <%= (quantity_given_last_time.to_f rescue 0) %>;
         dose['<%=order.order_id%>'] = "<%= MedicationService.get_medication_dose(order) %>";
       </script>
 
@@ -637,6 +648,10 @@ session_date = session[:datetime] || Time.now()
       var last_visit_date = dateCreate(order_start_date[i]);
       var num_days = since(last_visit_date);
       var expected_amount_remaining = parseFloat(amount_given_last_time[i] - (num_days * daily_consumption[i]));
+
+      /* The assumption is: the patient will come to the clinic after taking 1 dose */
+      expected_amount_remaining -= dose[i];
+
       m = daily_consumption[i].split('.')[1]
       if (m == 0){
         expected_amount_remaining = parseInt(expected_amount_remaining);
