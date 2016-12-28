@@ -836,6 +836,7 @@ EOF
           WHERE order_id = #{order.id};
 EOF
 
+        suggested_additional_dates << (start_date + additional_days.day).to_date
         next
       end
 
