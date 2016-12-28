@@ -1028,7 +1028,7 @@ class GenericRegimensController < ApplicationController
 		end
 
 
-    if set_appointment_interval_type == 'Optimize - including hanging pills' and not optimized_hanging_pills.blank?	
+    if set_appointment_interval_type == 'Optimize - including hanging pills' #and not optimized_hanging_pills.blank?	
       MedicationService.adjust_order_end_dates(encounter.orders, optimized_hanging_pills)
     end
 

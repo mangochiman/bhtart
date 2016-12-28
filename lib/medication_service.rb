@@ -844,8 +844,34 @@ EOF
     end
 
     discontinued_date = suggested_additional_dates.sort.first unless suggested_additional_dates.blank?
+    
+    exact_discontinued_dates = []
 
     unless discontinued_date.blank?
+      (orders || []).each do |order|
+        drug = order.drug_order.drug
+        drug_order = order.drug_order
+        next unless self.arv(drug)
+        units = (drug_order.equivalent_daily_dose.to_f * (discontinued_date.to_date - start_date.to_date).to_i)
+        pack_size = DrugOrder.calculate_complete_pack(drug, units)       
+        consumption_days = ((pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i) - 1
+        exact_discontinued_dates << (start_date + consumption_days.day).to_date
+      end
+    else
+      (orders || []).each do |order|
+        drug = order.drug_order.drug
+        drug_order = order.drug_order
+        next unless self.arv(drug)
+        units = (drug_order.equivalent_daily_dose.to_f * (order.auto_expire_date.to_date - start_date.to_date).to_i)
+        pack_size = DrugOrder.calculate_complete_pack(drug, units)       
+        consumption_days = ((pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i) - 1
+        exact_discontinued_dates << (start_date + consumption_days.day).to_date
+      end
+    end
+
+    exact_discontinued_date = exact_discontinued_dates.sort.first unless exact_discontinued_dates.blank?
+
+    if not discontinued_date.blank? and exact_discontinued_date.blank?
 
       ActiveRecord::Base.connection.execute <<EOF
         UPDATE orders SET discontinued_date = '#{discontinued_date.to_date}'
@@ -854,6 +880,13 @@ EOF
 
     end
 
+    unless exact_discontinued_date.blank?
+      ActiveRecord::Base.connection.execute <<EOF
+        UPDATE orders SET discontinued_date = '#{exact_discontinued_date.to_date}'
+        WHERE order_id IN(#{orders.map(&:order_id).join(',')});
+EOF
+
+    end
 
     return nil 
   end
