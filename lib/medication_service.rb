@@ -836,49 +836,33 @@ EOF
           WHERE order_id = #{order.id};
 EOF
 
-        suggested_additional_dates << (start_date + additional_days.day).to_date
-        next
       end
 
-      suggested_additional_dates << (auto_expire_date + additional_days.day).to_date
     end
 
-    discontinued_date = suggested_additional_dates.sort.first unless suggested_additional_dates.blank?
-    
     exact_discontinued_dates = []
 
-    unless discontinued_date.blank?
-      (orders || []).each do |order|
-        drug = order.drug_order.drug
-        drug_order = order.drug_order
-        next unless self.arv(drug)
-        units = (drug_order.equivalent_daily_dose.to_f * (discontinued_date.to_date - start_date.to_date).to_i)
-        pack_size = DrugOrder.calculate_complete_pack(drug, units)       
-        consumption_days = ((pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i) - 1
-        exact_discontinued_dates << (start_date + consumption_days.day).to_date
+    (orders || []).each do |order|
+      drug = order.drug_order.drug
+      drug_order = order.drug_order
+      next if order.start_date.to_date == order.auto_expire_date.to_date
+      next unless self.arv(drug)
+      hanging_pills = optimized_hanging_pills[drug.id].to_f
+      additional_days = (hanging_pills / (order.drug_order.equivalent_daily_dose.to_f))
+      additional_days = additional_days.to_i rescue 0
+
+      units = (drug_order.equivalent_daily_dose.to_f * (order.auto_expire_date.to_date - start_date.to_date).to_i)
+      pack_size = DrugOrder.calculate_complete_pack(drug, units)       
+      consumption_days = ((pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i) - 1
+
+      if additional_days > 1
+        consumption_days += additional_days
       end
-    else
-      (orders || []).each do |order|
-        drug = order.drug_order.drug
-        drug_order = order.drug_order
-        next unless self.arv(drug)
-        units = (drug_order.equivalent_daily_dose.to_f * (order.auto_expire_date.to_date - start_date.to_date).to_i)
-        pack_size = DrugOrder.calculate_complete_pack(drug, units)       
-        consumption_days = ((pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i) - 1
-        exact_discontinued_dates << (start_date + consumption_days.day).to_date
-      end
+
+      exact_discontinued_dates << (start_date + consumption_days.day).to_date
     end
 
     exact_discontinued_date = exact_discontinued_dates.sort.first unless exact_discontinued_dates.blank?
-
-    if not discontinued_date.blank? and exact_discontinued_date.blank?
-
-      ActiveRecord::Base.connection.execute <<EOF
-        UPDATE orders SET discontinued_date = '#{discontinued_date.to_date}'
-        WHERE order_id IN(#{orders.map(&:order_id).join(',')});
-EOF
-
-    end
 
     unless exact_discontinued_date.blank?
       ActiveRecord::Base.connection.execute <<EOF
