@@ -115,8 +115,18 @@ dateToday = session[:datetime].to_date rescue Date.today
 
 
     if (age < 5){
-      jQuery('#keyboard').empty();
-      jQuery('#charts').load('/patients/baby_chart/<%= @patient.id -%>?patient_id=<%= @patient.id -%>&cur_weight=' + currentWeight, null, function(){jQuery('#keyboard').hide(); hookKeyboard()});
+      /*jQuery('#keyboard').empty();
+      jQuery('#charts').load('/patients/baby_chart/<%= @patient.id -%>?patient_id=<%= @patient.id -%>&cur_weight=' + currentWeight, null, function(){jQuery('#keyboard').hide(); hookKeyboard()}); */
+
+      jQuery.ajax({
+        method: "POST",
+        url: "/patients/render_baby_graph_data",
+        data: { patient_id: "<%= @patient.id -%>", data: "weight", currentWeight:currentWeight },
+        success: function(results){
+          obs = JSON.parse(results)
+          plotBabyGraph(obs);
+        }
+      })
 
     }else{
       //jQuery('#keyboard').empty();
@@ -131,6 +141,98 @@ dateToday = session[:datetime].to_date rescue Date.today
         }
       })
     }
+  }
+
+  var standard_high_weight = [];
+  var standard_low_weight = [];
+  var median_weight = [];
+  var age_in_months = [];
+  var weight_trail = [];
+
+  function resetWeightReadings(obs) {
+    standard_high_weight = [];
+    standard_low_weight = [];
+    median_weight = [];
+    age_in_months = [];
+    weight_trail = [];
+
+    for(var i = 0; i < obs.length; i++) {
+      weight_trail.push(obs[i][1])
+    }
+
+    <%(@weight_height_for_ages || {}).sort_by {|x, y| x }.each do |age, data|%>
+      standard_low_weight.push(<%=data[:standard_low_weight]%>);
+      standard_high_weight.push(<%=data[:standard_high_weight]%>);
+      median_weight.push(<%=data[:median_weight]%>);
+      age_in_months.push(<%=age%>);
+    <%end%>
+
+  }
+
+  function plotBabyGraph(obs) {
+
+    resetWeightReadings(obs);
+
+    jQuery('#charts').highcharts({
+        chart: {
+            type: 'line'
+        },
+        title: {
+            text: ''
+        },
+        legend: {
+            layout: 'vertical',
+            align: 'left',
+            verticalAlign: 'top',
+            x: 150,
+            y: 100,
+            floating: true,
+            borderWidth: 1,
+            backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+        },
+        xAxis: {
+            categories: age_in_months ,
+            title: {
+              text: 'Age in months'
+            },
+            plotBands: [{ // visualize the weekend
+                from: 4.5,
+                to: 6.5,
+                color: 'rgba(68, 170, 213, .2)'
+            }]
+        },
+        yAxis: {
+            title: {
+                text: 'Weight'
+            }
+        },
+        tooltip: {
+            shared: true,
+            valueSuffix: ' Kg'
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            areaspline: {
+                fillOpacity: 0.5
+            }
+        },
+        series: [{
+            name: 'Standard high weight',
+            data: standard_high_weight
+        }, {
+            name: 'Median weight',
+            data: median_weight
+        }, {
+            name: "Weight trail (child's weight)",
+            data: weight_trail
+        }, {
+            name: 'Standard low weight',
+            data: standard_low_weight
+        }]
+    });
+
   }
 
   function plotGraph(obs){
