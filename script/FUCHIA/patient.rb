@@ -5,7 +5,7 @@ require 'fastercsv'
 def start
   #returns a hash of references
   references = get_references
-  FasterCSV.foreach("#{Parent_path}/TbPatient.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
+  FasterCSV.foreach("#{Parent_path}/TbPatient.csv", :headers => true, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
     names = row[9].split(' ')
     given_name = nil ; middle_name = nil ; family_name = nil
 
@@ -24,7 +24,7 @@ def start
 
     age_estimate = false
     gender = row[10].squish.to_i rescue 'Unknown'
-    date_created = row[1] 
+    date_created = row[1]  
     date_created = get_proper_date(date_created)
     date_created = date_created.to_date.strftime("%Y-%m-%d 01:00:00") rescue Date.today.strftime("%Y-%m-%d 01:00:00")
     age_estimate_date_created = row[14] 
@@ -83,18 +83,18 @@ def start
 end
 
 def get_proper_date (unfomatted_date)
-  unfomatted_date = unfomatted_date.split("/") unless unfomatted_date.blank?
-  year_of_birth = unfomatted_date[2].split(" ")
-  year_of_birth = year_of_birth[0]
-  current_year = Date.today.year.to_s
+    unfomatted_date = unfomatted_date.split("/")
+    year_of_birth = unfomatted_date[2].split(" ")
+    year_of_birth = year_of_birth[0]
+    current_year = Date.today.year.to_s
 
-  if year_of_birth.to_i > current_year[-2..-1].to_i
-    year = "19#{year_of_birth}"
-  else
-    year = "20#{year_of_birth}"
-  end
+    if year_of_birth.to_i > current_year[-2..-1].to_i
+      year = "19#{year_of_birth}"
+    else
+      year = "20#{year_of_birth}"
+    end
 
-  fomatted_date = "#{year}-#{unfomatted_date[0]}-#{unfomatted_date[1]}" 
+    fomatted_date = "#{year}-#{unfomatted_date[0]}-#{unfomatted_date[1]}" 
 end
 
 def generate_date_of_birth(age, date_recorded)
