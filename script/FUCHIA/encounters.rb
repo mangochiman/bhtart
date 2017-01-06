@@ -188,7 +188,7 @@ def start
       moh_regimen_doses = MohRegimenDoses.find(:first, 
         :joins =>"INNER JOIN moh_regimen_ingredient i ON i.dose_id = moh_regimen_doses.dose_id",
         :conditions => ["drug_inventory_id = ? AND #{weight_during_visit.to_f} >= FORMAT(min_weight,2) 
-      AND #{weight_during_visit.to_f} <= FORMAT(max_weight,2)"])
+      AND #{weight_during_visit.to_f} <= FORMAT(max_weight,2)", drug.id])
 
       if moh_regimen_doses.blank?
         pills_per_day = 1
@@ -197,7 +197,7 @@ def start
       end
 
       duration = (date_created - n_visit).to_i
-      units = (duration * months)
+      units = (duration * pills_per_day)
       pill_given = DrugOrder.calculate_complete_pack(drug, units)
       
       medication_pills_dispensed[drug.id] = pill_given 
