@@ -109,6 +109,15 @@ class GenericEncountersController < ApplicationController
             obs[:value_text] = art_start_date_estimation
           end
         elsif obs['concept_name'].upcase == 'DATE ART LAST TAKEN' 
+          new_patient = false
+          (params[:observations] || []).each do |observation|
+            if observation['concept_name'].upcase == 'EVER RECEIVED ART' and observation['value_coded_or_text'].upcase == 'NO'
+              new_patient = true
+              break
+            end
+          end
+          next if new_patient == true
+
           date_art_last_taken = obs['value_datetime'].to_date rescue nil
           observations = []
           (params[:observations] || []).each do |observation|

@@ -324,6 +324,59 @@ The following block of code should be replaced by a more cleaner function
     render :template => "graphs/weight_chart", :layout => false
   end
 
+  def render_baby_graph_data
+    current_weight = params[:currentWeight]
+    patient = Patient.find(params[:patient_id])
+    birthdate = patient.person.birthdate.to_date rescue nil
+
+    concept_id = ConceptName.find_by_name("Weight (Kg)").concept_id
+    session_date = (session[:datetime].to_date rescue Date.today).strftime('%Y-%m-%d 23:59:59')
+    obs = []
+
+    weight_trail = {} ; current_date = (session_date.to_date - 2.year).to_date
+
+    weight_trail_data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT * FROM obs WHERE person_id = #{patient.id}
+    AND concept_id = #{concept_id} AND voided = 0 AND 
+    obs_datetime BETWEEN '#{(session_date.to_date - 2.year).strftime('%Y-%m-%d 00:00:00')}' 
+    AND '#{session_date}' ORDER BY obs_datetime LIMIT 100;
+EOF
+   
+    (weight_trail_data || []).each do |weight|
+      current_date = weight['obs_datetime'].to_date
+      year = current_date.year
+
+      months = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT timestampdiff(month, DATE('#{birthdate.to_date}'), DATE('#{current_date.to_date}')) AS `month`;
+EOF
+
+      month = months['month'].to_i 
+      next if month > 58 
+      begin
+        weight_trail[month] =  weight['value_numeric'].squish.to_f
+      rescue
+        next
+      end
+
+    end
+
+    months = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT timestampdiff(month, DATE('#{birthdate.to_date}'), DATE('#{session_date.to_date}')) AS `month`;
+EOF
+
+    month = months['month'].to_i 
+    if month <= 58 
+      weight_trail[month] = current_weight.to_f
+    end
+
+    sorted_weight_trail = []
+    (weight_trail || {}).sort_by{|x, y | x}.each do |m, weight|
+      sorted_weight_trail << [m, weight.to_f]
+    end
+
+    render :text => sorted_weight_trail.to_json and return
+  end
+
   def render_graph_data
     current_weight = params[:currentWeight]
     patient = Patient.find(params[:patient_id])
@@ -348,7 +401,7 @@ The following block of code should be replaced by a more cleaner function
           SELECT * FROM obs WHERE person_id = #{patient.id}
           AND concept_id = #{concept_id} AND voided = 0 AND 
     obs_datetime BETWEEN '#{(session_date.to_date - 2.year).strftime('%Y-%m-%d 00:00:00')}' 
-    AND '#{session_date}' LIMIT 100
+    AND '#{session_date}' LIMIT 100;
 EOF
    
     (weight_trail_data || []).each {|weight|
@@ -972,20 +1025,6 @@ EOF
       :conditions => ["encounter_type = ? AND e.patient_id = ? AND DATE(encounter_datetime) = ?",
         type.id,@patient.id,session_date])
     
-    ################################# Recalculate auto_expire_date ##########################
-    unless orders.blank?
-      appointment_type = PatientService.appointment_type(@patient, session_date)
-      discontinued_dates = []
-      orders.each do |o|
-        discontinued_dates << o.discontinued_date unless o.discontinued_date.blank?
-      end 
-
-      if appointment_type.value_text == 'Optimize - including hanging pills' and discontinued_dates.blank?
-        MedicationService.recalculate_auto_expire_dates(orders) 
-      end unless appointment_type.blank?
-    end
-    #########################################################################################
-
     (orders || []).each{|order|
 
       @amount_needed = @amount_needed + (order.drug_order.amount_needed.to_i rescue 0)
@@ -3534,7 +3573,7 @@ EOF
     count = appointments.first.count unless appointments.blank?
     count = '0' if count.blank?
 
-    render :text => "Next appointment: #{date.strftime('%d/%b/%Y')} (#{count})"
+    render :text => "Next appointment: #{date.strftime('%d/%b/%Y')} (Booked: #{count})"
   end
 
 

@@ -5,6 +5,7 @@ class EncountersController < GenericEncountersController
 		@patient_bean = PatientService.get_patient(@patient.person)
     @gender = @patient.person.gender.upcase
 		session_date = session[:datetime].to_date rescue Date.today
+    @previous_weight = Patient.previous_weight(@patient, session_date)
 
     fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
       "Last VL < 1000, no VL Result pending, no VL taken at next visit", "Not Pregnant? - no EID needed at next visit",
@@ -27,9 +28,8 @@ class EncountersController < GenericEncountersController
 		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
-      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_medication(@patient, session_date.to_date)
-      @max_date = earliest_auto_expire_medication[1].to_date
-
+      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_dispensed_medication(@patient, session_date.to_date)
+      @max_date = earliest_auto_expire_medication.to_date 
 			@suggested_appointment_date = suggest_appointment_date(@max_date)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 
@@ -208,6 +208,8 @@ class EncountersController < GenericEncountersController
             @patient.id,ConceptName.find_by_name("Prescribe drugs").concept_id,session_date])).to_s.strip.squish rescue ''
 
       @obs_ans = '' if @patient_has_stopped_fast_track_at_adherence #Just a hack. Do not remove this please.By mangochiman
+
+      @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date) rescue []
     end
         
     if (params[:encounter_type].upcase rescue '') == 'UPDATE HIV STATUS'
@@ -295,7 +297,9 @@ class EncountersController < GenericEncountersController
 		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
 			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
-			@suggested_appointment_date = suggest_appointment_date
+      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_dispensed_medication(@patient, session_date.to_date)
+      @max_date = earliest_auto_expire_medication.to_date
+			@suggested_appointment_date = suggest_appointment_date(@max_date)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 		end
 
@@ -971,6 +975,42 @@ class EncountersController < GenericEncountersController
 
     ###########################################################################
 
+
+
+    ################################# if vitals ##########################################
+    if params[:encounter_type].upcase == "VITALS"
+      birth_date = @patient_bean.birth_date.to_date
+      age_in_months = (session_date.year * 12 + session_date.month) - (birth_date.year * 12 + birth_date.month)
+      sex = @patient_bean.sex == 'Male' ? 0 : 1
+      #age_in_months = @patient_bean.age_in_months
+      if @patient_bean.age < 5
+        @weight_height_for_ages = {}
+        age_in_months += 5 if age_in_months < 53
+        weight_heights = WeightHeightForAge.find(:all, 
+          :conditions => ["sex = ? AND age_in_months BETWEEN 0 AND ?", sex, age_in_months])
+        (weight_heights || []).each do |data|
+
+          m = data.median_weight.to_f
+          l = data.standard_low_weight.to_f
+          h = data.standard_high_weight.to_f
+          
+          @weight_height_for_ages[data.age_in_months] = {
+            :median_weight => m.round(2) ,
+            :standard_low_weight => (m - l).round(2),
+            :standard_high_weight => (m + h).round(2)
+          }
+        end
+
+      end
+
+    end
+    ######################################################################################
+
+
+
+
+
+
 		if PatientIdentifier.site_prefix == "MPC"
       prefix = "LL-TB"
 		else
@@ -1366,11 +1406,13 @@ class EncountersController < GenericEncountersController
 		expiry_date = prescription_expiry_date(@patient, dispensed_date, max_date)
 		return revised_suggested_date(expiry_date)
 =end
-		return revised_suggested_date((max_date - 2.day))
+		return revised_suggested_date(max_date)
 	end
 
   def revised_suggested_date(expiry_date)
-    clinic_appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
+    clinic_appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i 
+    clinic_appointment_limit = 200 if clinic_appointment_limit < 1
+
     peads_clinic_days = CoreService.get_global_property_value('peads.clinic.days')
     if (@patient_bean.age <= 14 && !peads_clinic_days.blank?)
       clinic_days = peads_clinic_days
@@ -1384,6 +1426,15 @@ class EncountersController < GenericEncountersController
     clinic_holidays = clinic_holidays.split(',').map{|day|day.to_date.strftime('%d %B')}.join(',').split(',') rescue []
 
     recommended_date = expiry_date.to_date;
+
+=begin
+    amounts_dispensed = Observation.first(:conditions => ['concept_id = ? AND order_id = ? 
+      AND encounter_id = ?', ConceptName.find_by_name("AMOUNT DISPENSED").concept_id, 
+      order.order_id, EncounterType.find_by_name('TREATMENT').id]).value_numeric.to_f rescue nil 
+=end
+
+    expiry_date -= 2.day
+
 
     start_date = (expiry_date - 5.day).strftime('%Y-%m-%d 00:00:00')
     end_date = expiry_date.strftime('%Y-%m-%d 23:59:59')
@@ -1473,6 +1524,7 @@ EOF
     
 
     ######################################## If the user selected "Optimize appointment" #######################
+=begin    
     appointment_type = PatientService.appointment_type(patient, session_date)
     if(appointment_type.value_text == 'Optimize - including hanging pills')    
       amounts_brought_to_clinic = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)
@@ -1492,6 +1544,7 @@ EOF
         end
       end unless amounts_brought_to_clinic.blank?
     end unless appointment_type.blank?
+=end
     ##############################################################################################################
 
     unless suggest_appointment_dates.blank?

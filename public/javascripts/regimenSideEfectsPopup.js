@@ -192,6 +192,13 @@ function lessSideEffects(){
 
 function contraindicators(){
     regimen_concept_id = document.getElementById('regimen_concept_id')
+    current_selected_value = document.getElementById('touchscreenInput' + tstCurrentPage).value.toUpperCase();
+
+    if (!current_selected_value){
+        showMessage("You must enter a value to continue")
+        return;
+    }
+
     try {
         selectedRegimenIndex = regimen_concept_id.options[regimen_concept_id.selectedIndex].text.split(" ")[1];
     }
@@ -324,7 +331,7 @@ function contraindicators(){
                 for (var i = 0; i < side_effects_contraindications[sdate][type].length; i++){
                     if (type == 'side effect'){
 
-                        if (td2.innerHTML.length < 1 || td.innerHTML == '&nbsp;'){
+                        if (td2.innerHTML.length < 1 || td2.innerHTML == '&nbsp;'){
                             td2.innerHTML = side_effects_contraindications[sdate][type][i];
                         }else{
                             td2.innerHTML += "<br />" + side_effects_contraindications[sdate][type][i];

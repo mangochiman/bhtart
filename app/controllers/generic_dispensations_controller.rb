@@ -112,7 +112,7 @@ class GenericDispensationsController < ApplicationController
 				duration = params[:quantity].to_i / equivalent_daily_dose.to_i
 
 				auto_expire_date = start_date + duration.to_i.days rescue start_date.to_date + duration.to_i.days
-
+        raise "------------ #{auto_expire_date}"
 				DrugOrder.write_order(
 					treatment_encounter, 
 					@patient, 

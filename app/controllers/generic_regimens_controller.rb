@@ -588,6 +588,9 @@ class GenericRegimensController < ApplicationController
 		encounter = PatientService.current_treatment_encounter(@patient, session_date, user_person_id)
 
     ############################################# set next appointment interval type #########################################
+    set_appointment_interval_type = nil
+    optimized_hanging_pills = {}
+
 		(params[:observations] || []).each do |observation|
 			if observation['concept_name'].upcase == 'APPOINTMENT TYPE'
         Observation.create(:person_id => @patient.id, 
@@ -595,7 +598,13 @@ class GenericRegimensController < ApplicationController
           :concept_id => ConceptName.find_by_name('Appointment type').concept_id,
           :value_text => observation[:value_coded_or_text], 
           :encounter_id => encounter.id) 
+
+        set_appointment_interval_type = observation[:value_coded_or_text]
       end
+    end
+
+    if set_appointment_interval_type == 'Optimize - including hanging pills'
+      optimized_hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, session_date.to_date)
     end
     ################################################################################################### 
  
@@ -603,11 +612,19 @@ class GenericRegimensController < ApplicationController
 		arvs_buffer = 2
 
     if session[:datetime].kind_of?(Date) || session[:datetime].kind_of?(Time)
-		  auto_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) - 1.day
-      auto_cpt_ipt_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) - 1.day 
+=begin
+		  auto_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) 
+      auto_cpt_ipt_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) 
+=end
+		  auto_expire_date = (session[:datetime] + (params[:duration].to_i - 1).days) 
+      auto_cpt_ipt_expire_date = (session[:datetime] + (params[:duration].to_i - 1).days) 
     else
-      auto_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) - 1.day
-      auto_cpt_ipt_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) - 1.day
+=begin
+      auto_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) 
+      auto_cpt_ipt_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) 
+=end
+      auto_expire_date = (Time.now + (params[:duration].to_i - 1).days) 
+      auto_cpt_ipt_expire_date = (Time.now + (params[:duration].to_i - 1).days) 
     end 
 		
 		auto_tb_expire_date = session[:datetime] + params[:tb_duration].to_i.days rescue Time.now + params[:tb_duration].to_i.days
@@ -836,7 +853,12 @@ class GenericRegimensController < ApplicationController
           dose = (morning_tabs.to_f + evening_tabs.to_f)/2
         end
         prn = 0
-				
+			
+        #################### Here we check if its an 'Optimize' prescrition, if yes we subtract the hanging doses to the
+        ## prescribe dose
+
+        ##############################################################################################################3
+
         DrugOrder.write_order(
           encounter,
           @patient,
@@ -849,6 +871,7 @@ class GenericRegimensController < ApplicationController
           prn,
           instructions,
           equivalent_daily_dose)
+
 			end if prescribe_arvs
 		end
 
@@ -1003,6 +1026,11 @@ class GenericRegimensController < ApplicationController
 		if !params[:transfer_data].nil?
 			transfer_out_patient(params[:transfer_data][0])
 		end
+
+
+    if set_appointment_interval_type == 'Optimize - including hanging pills' #and not optimized_hanging_pills.blank?	
+      MedicationService.adjust_order_end_dates(encounter.orders, optimized_hanging_pills)
+    end
 
 		# Send them back to treatment for now, eventually may want to go to workflow
 		redirect_to "/patients/treatment_dashboard?patient_id=#{@patient.id}"
