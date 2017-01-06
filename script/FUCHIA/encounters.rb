@@ -407,16 +407,6 @@ def drug_mapping
     "NVP Single Dose + (AZT-3TC) regimen (Mother to child)" => ['AZT/3TC (Zidovudine and Lamivudine 300/150mg)','NVP (Nevirapine 200 mg tablet)']
   }
 
-  drugs = [] ; record_count = 1
-
-  FasterCSV.foreach("#{Parent_path}/TbFollowUpDrug.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
-   drugs << row[4].to_i
-   drugs = drugs.uniq
-   record_count += 1
-  end
-
-  count = 1
-
   FasterCSV.foreach("#{Parent_path}/TbFollowUpDrug.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
     follow_up_ref = row[3].to_i
     date_created = get_proper_date(row[1]).to_date rescue nil
@@ -430,14 +420,24 @@ def drug_mapping
         @@drug_follow_up[follow_up_ref][date_created] = []
       end
     end
-    @@drug_follow_up[follow_up_ref][date_created] << @@drug_map[get_references(Parent_path,row[4])]
+    @@drug_follow_up[follow_up_ref][date_created] << @@drug_map[@@referenes[row[4].to_i]]
     @@drug_follow_up[follow_up_ref][date_created] = @@drug_follow_up[follow_up_ref][date_created].uniq
-    puts "Mapping medication: #{count} ........... #{record_count}"
-    count += 1
+    puts "Mapping medication: #{@@drug_map[@@referenes[row[4].to_i]]} ...."
   end
 
 end
 
+@@referenes = {}
+
+def set_referenes
+  FasterCSV.foreach("#{Parent_path}/TbReference.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
+    @@referenes[row[0].to_i] = row[6]
+    puts ":: #{row[6]}"
+  end
+end
+
+
+set_referenes
 drug_mapping
 #setup_staging_conditions
 start
