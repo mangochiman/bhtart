@@ -979,23 +979,25 @@ class EncountersController < GenericEncountersController
 
     ################################# if vitals ##########################################
     if params[:encounter_type].upcase == "VITALS"
+      birth_date = @patient_bean.birth_date.to_date
+      age_in_months = (session_date.year * 12 + session_date.month) - (birth_date.year * 12 + birth_date.month)
       sex = @patient_bean.sex == 'Male' ? 0 : 1
-      age_in_months = @patient_bean.age_in_months
+      #age_in_months = @patient_bean.age_in_months
       if @patient_bean.age < 5
         @weight_height_for_ages = {}
         age_in_months += 5 if age_in_months < 53
         weight_heights = WeightHeightForAge.find(:all, 
           :conditions => ["sex = ? AND age_in_months BETWEEN 0 AND ?", sex, age_in_months])
         (weight_heights || []).each do |data|
+
+          m = data.median_weight.to_f
+          l = data.standard_low_weight.to_f
+          h = data.standard_high_weight.to_f
+          
           @weight_height_for_ages[data.age_in_months] = {
-            :median_height => data.median_height.to_f.round(2),
-            :standard_low_height => (data.median_height.to_f - data.standard_low_height.to_f).round(2),
-            :standard_high_height => (data.median_height.to_f + data.standard_high_height.to_f).round(2),
-
-            :median_weight => data.median_weight.to_f.round(2),
-            :standard_low_weight => (data.median_weight.to_f - data.standard_low_weight.to_f).round(2),
-            :standard_high_weight => (data.median_weight.to_f + data.standard_high_weight.to_f).round(2)
-
+            :median_weight => m.round(2) ,
+            :standard_low_weight => (m - l).round(2),
+            :standard_high_weight => (m + h).round(2)
           }
         end
 
