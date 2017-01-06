@@ -143,6 +143,9 @@ def start
   medication_pills_dispensed = {}
 
   (medication_on_this_visit || []).each do |medications|
+
+    puts medications.inspect
+
     (medications || []).each do |medication|
       next if medication.match(/Unknown/i)
       if next_visit.blank?
@@ -158,7 +161,7 @@ def start
       months = 1 if months < 1
       pill_given = (pill_per_month * months)
       medication_pills_dispensed[drug.id] = pill_given 
-      puts "............. #{medication_pills_dispensed[drug.id]}"
+      #puts "............. #{medication_pills_dispensed[drug.id]}"
     end
   end
 
