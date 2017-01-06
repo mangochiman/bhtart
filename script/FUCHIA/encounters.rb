@@ -7,7 +7,7 @@ HIV_staging = EncounterType.find_by_name("HIV staging")
 Treatment = EncounterType.find_by_name("TREATMENT")
 Dispension = EncounterType.find_by_name("DISPENSING")
 Appointment = EncounterType.find_by_name("APPOINTMENT")
-HIV_clinic_consultation = EncounterType.find_by_name("HIV CLINIC REGISTRATION")
+HIV_clinic_consultation = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
 Parent_path = '/home/pachawo/Documents/msf/'
 
 @@staging_conditions = []
@@ -62,27 +62,34 @@ def start
   ############################ hiv staging and clinical consultation #########################
   s_c = @@patient_visits[patient_id][date_created] rescue []
 
-  hiv_staging_encounter = Encounter.find(:first, :conditions => ["patient_id = ? and encounter_datetime 
-     between ? and ? and encounter_type = ?",patient_id, start_date, end_date, 
-     HIV_staging.id])
+  hiv_staging_encounter = Encounter.find(:last, :conditions => ["patient_id = ? and encounter_datetime <= ? 
+    and encounter_type = ?",patient_id, end_date, HIV_staging.id])
 
-  hiv_staging_encounter = self.create_encounter(patient_id, HIV_staging.id, date_created) if hiv_staging_encounter.blank?
 
-  (s_c || []).each do |cond|
+  if hiv_staging_encounter.blank?
+   hiv_staging_encounter = self.create_encounter(patient_id, HIV_staging.id, date_created) if hiv_staging_encounter.blank?
+   (s_c || []).each do |cond|
      self.create_observation_value_coded(hiv_staging_encounter, "WHO Stage defining conditions not explicitly asked adult", cond)
      puts "#{hiv_staging_encounter.patient_id}:::::::::: #{cond}"
-  end
+    end 
+  end 
 
+=begin
   if diagnostic_2.match(/preg/i) || diagnostic.match(/preg/i)
     self.create_observation_value_coded(hiv_staging_encounter, 'Pregnant', 'Yes')
   end rescue nil 
-  
+=end
+
   if !cd4_count.blank? && !date_cd4_count.blank?
     self.create_observation_value_numeric(hiv_staging_encounter, 'CD4 count', cd4_count)
     self.create_observation_value_datetime(hiv_staging_encounter, 'Date of CD4 count', date_cd4_count)
   end rescue nil
 
   hiv_clinic_registration_encounter = self.create_encounter(patient_id, HIV_clinic_consultation.id, date_created)
+
+  if diagnostic_2.match(/preg/i) || diagnostic.match(/preg/i)
+    self.create_observation_value_coded(hiv_clinic_registration_encounter, 'Pregnant', 'Yes')
+  end rescue nil 
 
   if diagnostic_2.match(/NEUROPATH/i) || diagnostic.match(/NEUROPATH/i)
     self.create_observation_value_coded(hiv_clinic_registration_encounter,'MALAWI ART SIDE EFFECTS', 'Peripheral neuropathy')
@@ -119,18 +126,17 @@ def start
   medication_on_this_visit = @@drug_follow_up[ref_id][date_created] rescue nil
 
   ############################ give drugs ##################################################
+  (medication_on_this_visit || []).each do |medication|
+    next if next_visit.blank?
+    duration = (next_visit - date_created).to_i
+    #puts "............. #{medication}"
+  end
+  
   unless medication_on_this_visit.blank?
     #prescription_enc = self.create_encounter(patient_id, Treatment.id, date_created) 
     #dispension_enc = self.create_encounter(patient_id, Dispension.id, date_created) 
   end
 
-  (medication_on_this_visit || []).each do |medication|
-    if next_visit.blank?
-      next_visit = date_created + 28
-    end
-    duration = (next_visit - date_created).to_i
-    #puts "............. #{medication}"
-  end
   ##########################################################################################
 
   ################################ set appointment #########################################
