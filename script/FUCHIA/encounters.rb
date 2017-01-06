@@ -1,5 +1,6 @@
 require 'fastercsv'
 User.current = User.find_by_username('admin')
+ScriptStared = Time.now()
     
 Hiv_reception_encounter = EncounterType.find_by_name("Hiv reception")
 Vitals = EncounterType.find_by_name("Vitals")
@@ -25,6 +26,7 @@ def start
     start_date = date_created.strftime("%Y-%m-%d 00:00:00")
     end_date = date_created.strftime("%Y-%m-%d 23:59:59")
 
+    get_drug_mapping(ref_id)
 =begin
 
     encounter = Encounter.find(:all, :conditions => ["patient_id = ? and encounter_datetime 
@@ -187,6 +189,8 @@ def start
 
 
   end
+
+  puts "Script time: #{ScriptStared} - #{Time.now()}"
 end
 
 #function that loads csv file data into a hash
@@ -349,7 +353,9 @@ def setup_staging_conditions
   end
 end
 
-def drug_mapping
+def get_drug_mapping(ref_id)
+  @@drug_follow_up = {}
+
   @@drug_map = {
     "Cotrimoxazole prophylaxis" => ['Cotrimoxazole (960mg)'],
     "FDC3 (AZT-3TC-NVP)" => ['AZT/3TC/NVP (300/150/200mg tablet)'],
@@ -404,15 +410,20 @@ def drug_mapping
     "NVP Single Dose + (AZT-3TC) regimen (Mother to child)" => ['AZT/3TC (Zidovudine and Lamivudine 300/150mg)','NVP (Nevirapine 200 mg tablet)']
   }
 
-  drugs = []
+  drugs = [] ; record_count = 1
 
   FasterCSV.foreach("#{Parent_path}/TbFollowUpDrug.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
+   next unless ref_id == row[3].to_i
    drugs << row[4].to_i
    drugs = drugs.uniq
+   record_count += 1
   end
+
+  count = 1
 
   FasterCSV.foreach("#{Parent_path}/TbFollowUpDrug.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
     follow_up_ref = row[3].to_i
+    next unless ref_id == follow_up_ref
     date_created = get_proper_date(row[1]).to_date rescue nil
     next if date_created.blank? 
 
@@ -426,10 +437,12 @@ def drug_mapping
     end
     @@drug_follow_up[follow_up_ref][date_created] << @@drug_map[get_references(Parent_path,row[4])]
     @@drug_follow_up[follow_up_ref][date_created] = @@drug_follow_up[follow_up_ref][date_created].uniq
+    puts "Mapping medication: #{count} ........... #{record_count}"
+    count += 1
   end
 
 end
 
-drug_mapping
+#drug_mapping
 #setup_staging_conditions
 start
