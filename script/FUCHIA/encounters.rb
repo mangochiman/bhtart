@@ -26,6 +26,13 @@ def start
     start_date = date_created.strftime("%Y-%m-%d 00:00:00")
     end_date = date_created.strftime("%Y-%m-%d 23:59:59")
 
+    begin
+      patient = Patient.find(patient_id)
+    rescue
+      ############## code to log errors ########
+      next
+    end
+
 =begin
 
     encounter = Encounter.find(:all, :conditions => ["patient_id = ? and encounter_datetime 
@@ -148,22 +155,53 @@ def start
 
     (medications || []).each do |medication|
       next if medication.match(/Unknown/i)
-      drug = Drug.find_by_name(medication) rescue nil
-      next if drug.blank?
+      begin
+        drug = Drug.find_by_name(medication) 
+      rescue
+        ###log error
+        next 
+      end
 
       if next_visit.blank?
-        n_visit = (date_created + 1.month).to_date
+        n_visit = (date_created.to_date + 28.day).to_date
       else
         n_visit = next_visit
       end
 
-      months = (date_created.year * 12 + date_created.month) - (n_visit.year * 12 + n_visit.month)
-      pill_per_month = DrugOrderBarcode.find_by_drug_id(drug.id).tabs rescue 60
+      weight_during_visit = PatientService.get_patient_attribute_value(patient, "current_weight", date_created)
+      age_during_visit = (date_created.year - patient.person.birthdate.year).to_i
+
+      if weight_during_visit.blank?
+        if age > 18
+          weight_during_visit = 50.0
+        elsif age >= 14 and age <= 18
+          weight_during_visit = 35.0
+        elsif age >= 10 and age < 14
+          weight_during_visit = 20.0
+        elsif age >= 5 and age < 10
+          weight_during_visit = 15.0
+        else
+          weight_during_visit = 5.0
+        end
+      end
+
+      moh_regimen_doses = MohRegimenDoses.find(:first, 
+        :joins =>"INNER JOIN moh_regimen_ingredient i ON i.dose_id = moh_regimen_doses.dose_id",
+        :conditions => ["drug_inventory_id = ? AND #{weight_during_visit.to_f} >= FORMAT(min_weight,2) 
+      AND #{weight_during_visit.to_f} <= FORMAT(max_weight,2)"])
+
+      if moh_regimen_doses.blank?
+        pills_per_day = 1
+      else
+        pills_per_day = (moh_regimen_doses.am.to_f + moh_regimen_doses.pm.to_f)
+      end
+
+      duration = (date_created - n_visit).to_i
+      units = (duration * months)
+      pill_given = DrugOrder.calculate_complete_pack(drug, units)
       
-      months = 1 if months < 1
-      pill_given = (pill_per_month * months)
       medication_pills_dispensed[drug.id] = pill_given 
-      #puts "............. #{medication_pills_dispensed[drug.id]}"
+      puts "............. #{medication_pills_dispensed[drug.id]}"
     end
   end
 
