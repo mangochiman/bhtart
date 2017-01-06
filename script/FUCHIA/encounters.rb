@@ -144,7 +144,7 @@ def start
 
   (medication_on_this_visit || []).each do |medications|
     (medications || []).each do |medication|
-      next if medication.blank?
+      next if medication.match(/Unknown/i)
       if next_visit.blank?
         n_visit = (date_created + 1.month).to_date
       else
@@ -380,7 +380,7 @@ def drug_mapping
     "Efavirenz pediatric" =>['EFV (Efavirenz 50mg tablet)'],
     "Nevirapine pediatric" => ['NVP (Nevirapine 50 mg tablet)'],
     "Lamivudine pediatric" => ['3TC (Lamivudine syrup 10mg/mL from 100mL bottle)'],
-    "Abacavir pediatric" => [''],
+    "Abacavir pediatric" => ['Unknown'],
     "Ritonavir" => ['Ritonavir 100mg'],
     "Darunavir" => ['Darunavir 600mg'],
     "Raltegravir" => ['RAL (Raltegravir 400mg)'],
@@ -395,7 +395,7 @@ def drug_mapping
     "Zidovudine (Mother to child)" => ['AZT (Zidovudine 300mg tablet)'],
     "Nevirapine (Mother to child)" => ['NVP (Nevirapine 200 mg tablet)'],
     "Didanosine 400" => ['DDI (Didanosine 200mg tablet)'],
-    "Other ARV 2" => [''],
+    "Other ARV 2" => ['Unknown'],
     "Zidovudine pediatric" => ['AZT (Zidovudine 100mg tablet)'],
     "FDC6 (D4T40-3TC)" => ['d4T/3TC (Stavudine Lamivudine 30/150 tablet)'],
     "Other ARV 1" => [''],
