@@ -1099,8 +1099,8 @@ session_date = session[:datetime] || Time.now()
     ipt_message_header = "PATIENT IS ON TB TREATMENT";
 
     if (allergicToSuphur.toUpperCase() == 'YES'){
-      cpt_option_input.style.backgroundColor = '#CDBA96';
-      cpt_input.innerHTML = 'CPT (Allergic)';
+      //cpt_option_input.style.backgroundColor = '#CDBA96';
+      cpt_input.innerHTML = "<span class='disabled_check'>CPT (Allergic)</span>";
       cpt_option_input.onclick = null;
       cpt_option_input.onmousedown = null;
       cpt_option_input.onmouseup = null;
@@ -1111,8 +1111,8 @@ session_date = session[:datetime] || Time.now()
     }
     
     if (patientTBSuspected == 'true'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB Suspected)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (TB SUSPECTED)</span>";
       //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
@@ -1124,8 +1124,9 @@ session_date = session[:datetime] || Time.now()
     }
 
     if (patientTBConfirmed == 'true'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB Confirmed)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      //ipt_input.innerHTML = 'IPT (TB Confirmed)';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB NOT ON TREATMENT)</span>";
       //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
       ipt_option_input.onclick = function(){
 
@@ -1136,8 +1137,9 @@ session_date = session[:datetime] || Time.now()
     }
 
     if (patientOnTBTreatment == 'true'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB On Treatment)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      //ipt_input.innerHTML = 'IPT (TB On Treatment)';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB ON TREATMENT)</span>";
       //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
       ipt_option_input.onclick = function(){
 
@@ -1172,6 +1174,10 @@ session_date = session[:datetime] || Time.now()
 </script>
 
 <style type="text/css">
+  .disabled_check {
+    padding-left: 52px;
+  }
+
   #fast_track_reminder_cover{
     position: absolute;
     background-color: black;

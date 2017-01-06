@@ -1394,8 +1394,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     allergicToSulphur = $('allergic_to_sulphur').value.toUpperCase();
 
     if (allergicToSulphur.toUpperCase() == 'YES'){
-      cpt_option_input.style.backgroundColor = '#CDBA96';
-      cpt_input.innerHTML = 'CPT (Allergic)';
+      //cpt_option_input.style.backgroundColor = '#CDBA96';
+      cpt_input.innerHTML = "<span class='disabled_check'>CPT (Allergic)</span>";
       cpt_option_input.onclick = null;
       cpt_option_input.onmousedown = null;
       cpt_option_input.onmouseup = null;
@@ -1406,8 +1406,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
 
     if (tb_treatment__status == 'YES'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (PATIENT IS ON TB TREATMENT)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (TB SUSPECTED)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
@@ -1418,8 +1418,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
 
     if (tb_status == 'CONFIRMED TB ON TREATMENT'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (CONFIRMED TB ON TREATMENT)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB ON TREATMENT)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
@@ -1430,8 +1430,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
 
     if (tb_status == 'CONFIRMED TB NOT ON TREATMENT'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (CONFIRMED TB NOT ON TREATMENT)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB NOT ON TREATMENT)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
@@ -1442,8 +1442,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
     
     if (tb_status == 'TB SUSPECTED'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB Suspected)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (TB Suspected)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
@@ -1457,6 +1457,10 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 </script>
 
 <style type="text/css">
+  .disabled_check {
+    padding-left: 52px;
+  }
+
   #fast_track_reminder_cover{
     position: absolute;
     background-color: black;
