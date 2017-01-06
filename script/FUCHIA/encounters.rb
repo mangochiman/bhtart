@@ -148,6 +148,9 @@ def start
 
     (medications || []).each do |medication|
       next if medication.match(/Unknown/i)
+      drug = Drug.find_by_name(medication) rescue nil
+      next if drug.blank?
+
       if next_visit.blank?
         n_visit = (date_created + 1.month).to_date
       else
@@ -155,7 +158,6 @@ def start
       end
 
       months = (date_created.year * 12 + date_created.month) - (n_visit.year * 12 + n_visit.month)
-      drug = Drug.find_by_name(medication)
       pill_per_month = DrugOrderBarcode.find_by_drug_id(drug.id).tabs rescue 60
       
       months = 1 if months < 1
