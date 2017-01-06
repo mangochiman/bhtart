@@ -26,7 +26,6 @@ def start
     start_date = date_created.strftime("%Y-%m-%d 00:00:00")
     end_date = date_created.strftime("%Y-%m-%d 23:59:59")
 
-    get_drug_mapping(ref_id)
 =begin
 
     encounter = Encounter.find(:all, :conditions => ["patient_id = ? and encounter_datetime 
@@ -353,9 +352,7 @@ def setup_staging_conditions
   end
 end
 
-def get_drug_mapping(ref_id)
-  @@drug_follow_up = {}
-
+def drug_mapping
   @@drug_map = {
     "Cotrimoxazole prophylaxis" => ['Cotrimoxazole (960mg)'],
     "FDC3 (AZT-3TC-NVP)" => ['AZT/3TC/NVP (300/150/200mg tablet)'],
@@ -413,7 +410,6 @@ def get_drug_mapping(ref_id)
   drugs = [] ; record_count = 1
 
   FasterCSV.foreach("#{Parent_path}/TbFollowUpDrug.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
-   next unless ref_id == row[3].to_i
    drugs << row[4].to_i
    drugs = drugs.uniq
    record_count += 1
@@ -423,7 +419,6 @@ def get_drug_mapping(ref_id)
 
   FasterCSV.foreach("#{Parent_path}/TbFollowUpDrug.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
     follow_up_ref = row[3].to_i
-    next unless ref_id == follow_up_ref
     date_created = get_proper_date(row[1]).to_date rescue nil
     next if date_created.blank? 
 
@@ -443,6 +438,6 @@ def get_drug_mapping(ref_id)
 
 end
 
-#drug_mapping
+drug_mapping
 #setup_staging_conditions
 start
