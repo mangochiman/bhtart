@@ -255,7 +255,7 @@ class DrugOrder < ActiveRecord::Base
   end
 
   def self.calculate_complete_pack(drug, units)
-    return units if drug.drug_order_barcodes.blank? || units == 0.0
+    return units if drug.drug_order_barcodes.blank? || units.to_f == 0.0
   
     (drug.drug_order_barcodes).sort_by{|d| d.tabs }.each do |barcode|
       if barcode.tabs >= units.to_f

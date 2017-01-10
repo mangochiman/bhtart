@@ -844,10 +844,11 @@ EOF
 
     exact_discontinued_dates = []
 
+    orders = Order.find(:all, :conditions => ["order_id IN(?)", orders.map(&:id)])
+
     (orders || []).each do |order|
       drug = order.drug_order.drug
       drug_order = order.drug_order
-      next if order.start_date.to_date == order.auto_expire_date.to_date
       next unless self.arv(drug)
       hanging_pills = optimized_hanging_pills[drug.id].to_f
       additional_days = (hanging_pills / (order.drug_order.equivalent_daily_dose.to_f))
@@ -857,8 +858,12 @@ EOF
       pack_size = DrugOrder.calculate_complete_pack(drug, units)       
       consumption_days = ((pack_size.to_f / drug_order.equivalent_daily_dose.to_f).to_i) - 1
 
-      if additional_days > 1
+      if additional_days > 1 and not (order.start_date.to_date == order.auto_expire_date.to_date)
         consumption_days += additional_days
+      elsif additional_days > 1 and (order.start_date.to_date == order.auto_expire_date.to_date)
+        consumption_days = additional_days      
+      elsif additional_days < 1
+        next
       end
 
       exact_discontinued_dates << (start_date + consumption_days.day).to_date
