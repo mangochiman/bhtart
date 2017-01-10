@@ -838,6 +838,28 @@ EOF
           WHERE order_id = #{order.id};
 EOF
 
+        type = EncounterType.find_by_name("DISPENSING")
+        obs_datetime = order.encounter.encounter_datetime.to_time.strftime('%Y-%m-%d %H:%M:%S')
+
+        dispension_enc = order.patient.encounters.find(:first,
+          :conditions =>["DATE(encounter_datetime) = ? AND encounter_type = ?",start_date.to_date,type.id])
+        dispension_enc ||= order.patient.encounters.create(:encounter_type => type.id,
+          :encounter_datetime => obs_datetime)
+    
+        obs = Observation.new()
+        obs.concept_id = Concept.find_by_name("AMOUNT DISPENSED").concept_id
+        obs.order_id = order.id
+        obs.person_id = order.patient_id
+        obs.encounter_id = dispension_enc.id
+        obs.value_drug = drug.id
+        obs.value_numeric = 0
+        obs.obs_datetime = obs_datetime
+        obs.save
+
+        ActiveRecord::Base.connection.execute <<EOF
+          UPDATE drug_order SET quantity = #{hanging_pills.to_f} WHERE order_id = #{order.id};
+EOF
+
       end
 
     end

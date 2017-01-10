@@ -368,24 +368,8 @@ session_date = session[:datetime] || Time.now()
     <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
 
     <% art_drugs_given_before = MedicationService.art_drug_given_before(@patient, session_date.to_date).uniq
-       art_drugs_prescribed_before =  MedicationService.art_drug_prescribed_before(@patient,session_date).uniq
-
-       art_drug_order_ids = [] ; art_drug_orders = []
-       (art_drugs_given_before || []).uniq.each do |order|
-         art_drug_orders << order
-         art_drug_order_ids << order.id
-       end
-
-       (art_drugs_prescribed_before || []).uniq.each do |order|
-         next if art_drug_order_ids.include?(order.id)
-         art_drug_orders << order
-       end
-
-
-    %>
-    <% (art_drug_orders || []).each do |order|
-    %>
-      <% if @retrospective %>
+       (art_drugs_given_before || []).each do |order|
+        if @retrospective %>
         <%= touch_numeric_tag "AMOUNT OF DRUG BROUGHT TO CLINIC", @patient, nil,
           {	:id        => "amount_brought_#{order.order_id}",
           :units     => "#{order.drug_order.units}",
