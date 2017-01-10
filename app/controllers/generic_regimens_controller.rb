@@ -809,10 +809,22 @@ class GenericRegimensController < ApplicationController
       
     else
       ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
+
+      on_tb_treatment = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?
+        AND obs_datetime <= ?", @patient.patient_id, ConceptName.find_by_name('TB treatment').concept_id,
+        session_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
+      
+      if on_tb_treatment.match(/Yes/i)
+        on_tb_treatment = true 
+      else
+        on_tb_treatment = false
+      end
+
       patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
       if patient_initiated.match(/Re-initiated|Initiation/i)
-        orders = MedicationService.regimen_medications(params[:regimen], weight, true)
-      elsif on_tb_treatment.to_s == true
+        orders = MedicationService.regimen_medications(params[:regimen], weight, true, on_tb_treatment)
+      elsif on_tb_treatment == true
+        orders = MedicationService.regimen_medications(params[:regimen], weight, false, on_tb_treatment)
       else
         orders = MedicationService.regimen_medications(params[:regimen], weight)
       end
