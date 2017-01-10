@@ -569,7 +569,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
 
       html += "<tr>";
-      html += "<td class='labelText'>" + tbSymptomsOptions[i] + "</td>";
+      var tbSymptom = tbSymptomsOptions[i];
+      
+      if(tbSymptom.match(/malnutrition/i)){
+        tbSymptom = 'Weight loss / Failure to thrive / Malnutrition'
+      }
+
+
+      html += "<td class='labelText'>" + tbSymptom + "</td>";
 
       
       html += "<td style='width: 30%;'>";
@@ -1805,7 +1812,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     document.getElementById('current-weight').innerHTML = '<%=@current_weight%>';
 
     if(calculatedWeightlossPercent >= 10) {
-      document.getElementById('weight_readings').innerHTML = 'Weightloss of:';
+      document.getElementById('weight_readings').innerHTML = 'Weight loss of:';
       document.getElementById('previous_weight_sub').innerHTML = 'Previous weight:';
       document.getElementById('current_weight_sub').innerHTML = 'Current weight:';
       document.getElementById('current-height').innerHTML = "<%=@previous_weight.to_f%>" + " (Kg)";

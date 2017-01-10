@@ -13,6 +13,19 @@ class GenericRegimensController < ApplicationController
 		@programs = @patient.patient_programs.all
 
 		allergic_to_sulphur_session_date = session[:datetime].to_date rescue Date.today
+    ################################################ check if on TB treatment ##########################
+    on_tb_treatment = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?
+      AND obs_datetime <= ?", @patient.patient_id, ConceptName.find_by_name('TB treatment').concept_id,
+      allergic_to_sulphur_session_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
+    
+    if on_tb_treatment.match(/Yes/i)
+      @on_tb_treatment = true 
+    else
+      @on_tb_treatment = false
+    end
+    ##########################################################################################################
+
+
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, allergic_to_sulphur_session_date) #chunked
 
     ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
@@ -799,6 +812,7 @@ class GenericRegimensController < ApplicationController
       patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
       if patient_initiated.match(/Re-initiated|Initiation/i)
         orders = MedicationService.regimen_medications(params[:regimen], weight, true)
+      elsif on_tb_treatment.to_s == true
       else
         orders = MedicationService.regimen_medications(params[:regimen], weight)
       end
@@ -1120,11 +1134,22 @@ class GenericRegimensController < ApplicationController
     current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
    
     patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
+      
+    on_tb_treatment = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?
+      AND obs_datetime <= ?", @patient.patient_id, ConceptName.find_by_name('TB treatment').concept_id,
+      session_date.to_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
+    
+    if on_tb_treatment.match(/Yes/i)
+      on_tb_treatment = true 
+    else
+      on_tb_treatment = false
+    end
+   
     ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
     if patient_initiated.match(/Re-initiated|Initiation/i)
-      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight, true)
+      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight, true, on_tb_treatment)
     else
-      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
+      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight, false, on_tb_treatment)
     end
     #######################################################################################################################
 

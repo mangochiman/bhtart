@@ -199,6 +199,38 @@ LOCK TABLES `moh_regimen_ingredient_starter_packs` WRITE;
 INSERT INTO `moh_regimen_ingredient_starter_packs` VALUES (1,1,733,1,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(2,1,968,6,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(3,1,733,2,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(4,1,968,7,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(5,1,733,3,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(6,1,968,8,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(7,1,733,4,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(8,1,968,11,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(9,1,733,5,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(10,1,968,12,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(11,1,969,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(12,1,22,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(31,5,734,6,35,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(32,5,22,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(39,2,736,13,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(40,2,736,14,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(41,2,736,15,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(42,2,736,16,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(43,2,736,17,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(44,2,39,13,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(45,2,732,6,3,5.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(46,2,732,7,6,9.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(47,2,732,8,10,13.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(48,2,732,11,14,19.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(49,2,732,12,20,24.9,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(50,2,731,6,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL);
 /*!40000 ALTER TABLE `moh_regimen_ingredient_starter_packs` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `moh_regimen_ingredient_tb_treatment`
+--
+
+DROP TABLE IF EXISTS `moh_regimen_ingredient_tb_treatment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `moh_regimen_ingredient_tb_treatment` (
+  `ingredient_id` int(11) NOT NULL DEFAULT '0',
+  `regimen_id` int(11) DEFAULT NULL,
+  `drug_inventory_id` int(11) DEFAULT NULL,
+  `dose_id` int(11) DEFAULT NULL,
+  `min_weight` float DEFAULT NULL,
+  `max_weight` float DEFAULT NULL,
+  `date_created` datetime DEFAULT NULL,
+  `date_updated` datetime DEFAULT NULL,
+  `creator` int(11) DEFAULT NULL,
+  `voided` tinyint(1) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `moh_regimen_ingredient_tb_treatment`
+--
+
+LOCK TABLES `moh_regimen_ingredient_tb_treatment` WRITE;
+/*!40000 ALTER TABLE `moh_regimen_ingredient_tb_treatment` DISABLE KEYS */;
+INSERT INTO `moh_regimen_ingredient_tb_treatment` VALUES (33,6,73,3,35,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(34,6,734,6,35,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(35,7,39,1,25,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL),(36,7,73,3,35,300,'2016-09-19 16:00:00','2016-09-19 16:00:00',1,0,NULL);
+/*!40000 ALTER TABLE `moh_regimen_ingredient_tb_treatment` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -209,4 +241,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-12-21 12:39:43
+-- Dump completed on 2017-01-10  9:38:47

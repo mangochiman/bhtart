@@ -4,7 +4,7 @@
 
 <div id="confirmatory-test-popup-div">
   <div id="confirmatory-test-popup-header">
-    <center style='color: orange;'>Starter pack needed for 14 days</center>
+    <center style='color: orange;' id="main-pop-header">Starter pack needed for 14 days</center>
   </div><br />
   <div>
 
@@ -29,6 +29,13 @@
 
 
 <style type="text/css">
+  .Bclear {
+    background-color: clear !important;
+  }
+
+  .Bcolor {
+    background-color: rgba(240, 240, 240, 0.2) !important;
+  }
 
   .confirmatory-test-my_button {
     -moz-user-select: none;
@@ -116,6 +123,9 @@
   }
 
   function showConfirmatoryTestPopup(){
+    document.getElementById("main-pop-header").innerHTML = "Starter pack needed for 14 days";
+    document.getElementById("confirmatory-test-yes").innerHTML = "Prescribe starter pack";
+
     document.getElementById("confirmatory-test-popup-div").style.display = 'inline';
     document.getElementById("confirmatory-test-cover").style.display = 'inline';
     selected_starter_pack = document.getElementById("regimen_concept_id").value;
@@ -127,6 +137,18 @@
     <%end%>
     document.getElementById("initiation_type").innerHTML = initiation_type;
 
+  }
+
+  function showTBtreatmentPopup(){
+    document.getElementById("main-pop-header").innerHTML = "On TB treatment";
+    document.getElementById("confirmatory-test-yes").innerHTML = "Prescribe regimen";
+
+    document.getElementById("selected_starter_pack").innerHTML = "";
+
+    document.getElementById("confirmatory-test-popup-div").style.display = 'inline';
+    document.getElementById("confirmatory-test-cover").style.display = 'inline';
+    initiation_type = 'ATV/r is going to be replaced by LPV/r'
+    document.getElementById("initiation_type").innerHTML = initiation_type;
   }
 
   function checkIfStarterPack() {
@@ -151,10 +173,20 @@
           '5 months', '6 months', '7 months', '8 months',
           '9 months', '10 months', '11 months', '12 months'
         ]
+
+        //colors = [' #CDBA96;', '']
+        colors = 'Bclear';//['Bclear', 'Bcolor'];
+
         for(var i = 0; i < months.length; i++){
           option = document.createElement('option');
           option.innerHTML = months[i];
-          //option.setAttribute('style','background-color: #CDBA96;');
+          option.setAttribute('class',colors);
+          if(colors == 'Bclear') {
+            colors = 'Bcolor';
+          }else{
+            colors = 'Bclear';
+          }
+
           sel.appendChild(option);
         }
       }
@@ -829,10 +861,14 @@ function changeRegimenOld(){
   }
 
   function checkIFstartpackNeed() {
+    var on_tb_treatment = '<%= @on_tb_treatment %>';
+
     <%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
       selected_regimen = document.getElementById('touchscreenInput' + tstCurrentPage).value;
       if(selected_regimen.match(/NVP|Nevirapine/i)) {
         showConfirmatoryTestPopup();
+      }else if(selected_regimen.match(/ATV/i) && on_tb_treatment == 'true') {
+        showTBtreatmentPopup();
       }else if(selected_regimen.length < 1){
         return
       }else{
@@ -840,8 +876,15 @@ function changeRegimenOld(){
         gotoNextPage();
       }
     <%else%>
-      resetRegimen();
-      gotoNextPage();
+      selected_regimen = document.getElementById('touchscreenInput' + tstCurrentPage).value;
+      if(selected_regimen.match(/ATV/i) && on_tb_treatment == 'true') {
+        showTBtreatmentPopup();
+      }else if(selected_regimen.length < 1){
+        return
+      }else{
+        resetRegimen();
+        gotoNextPage();
+      }
     <%end%>
   }
 

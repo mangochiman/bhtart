@@ -1201,16 +1201,16 @@ end %>
       selected_stage_three_conditions = selected_stage_conditions[3].split(';');
       if (selected_stage_three_conditions.indexOf(severe_weight_loss) != -1){
         //weight_loss_input.style.backgroundColor = '#CDBA96';
-        moderate_wight_loss_option_input.style.backgroundColor = '#CDBA96';
+        //moderate_wight_loss_option_input.style.backgroundColor = '#CDBA96';
         moderate_weight_loss_text = weight_loss_input.innerHTML;
         weight_loss_input.innerHTML = moderate_weight_loss_text + " ( Severe weight loss already selected )"
-        moderate_wight_loss_option_input.onclick = null;
-        moderate_wight_loss_option_input.onmousedown = null;
-        moderate_wight_loss_option_input.onmouseup = null;
+        //moderate_wight_loss_option_input.onclick = null;
+        //moderate_wight_loss_option_input.onmousedown = null;
+        //moderate_wight_loss_option_input.onmouseup = null;
 
-        img_input = moderate_wight_loss_option_input.getElementsByTagName("img")[0];
-        img_input.src = '';
-        img_input.alt = '';
+        //img_input = moderate_wight_loss_option_input.getElementsByTagName("img")[0];
+        //img_input.src = '';
+        //img_input.alt = '';
       }
     }
 
@@ -1225,16 +1225,16 @@ end %>
 
     if (currentBMI > 18.5){
       //weight_loss_input.style.backgroundColor = '#CDBA96';
-      severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      //severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
       moderate_weight_loss_text = weight_loss_input.innerHTML;
       weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>"
-      severe_weight_loss_option_input.onclick = null;
-      severe_weight_loss_option_input.onmousedown = null;
-      severe_weight_loss_option_input.onmouseup = null;
+      //severe_weight_loss_option_input.onclick = null;
+      //severe_weight_loss_option_input.onmousedown = null;
+      //severe_weight_loss_option_input.onmouseup = null;
 
-      img_input = severe_weight_loss_option_input.getElementsByTagName("img")[0];
-      img_input.src = '';
-      img_input.alt = '';
+      //img_input = severe_weight_loss_option_input.getElementsByTagName("img")[0];
+      //img_input.src = '';
+      //img_input.alt = '';
     }
   }
 
@@ -1246,16 +1246,16 @@ end %>
     //severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
 
     if (currentBMI > 18.5){
-      moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      //moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
       moderate_weight_loss_text = weight_loss_input.innerHTML;
       weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>";
-      moderate_weight_loss_option_input.onclick = null;
-      moderate_weight_loss_option_input.onmousedown = null;
-      moderate_weight_loss_option_input.onmouseup = null;
+      //moderate_weight_loss_option_input.onclick = null;
+      //moderate_weight_loss_option_input.onmousedown = null;
+      //moderate_weight_loss_option_input.onmouseup = null;
       
-      img_input = moderate_weight_loss_option_input.getElementsByTagName("img")[0];
-      img_input.src = '';
-      img_input.alt = '';
+      //img_input = moderate_weight_loss_option_input.getElementsByTagName("img")[0];
+      //img_input.src = '';
+      //img_input.alt = '';
     }
 
   }

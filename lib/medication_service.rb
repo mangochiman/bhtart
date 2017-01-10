@@ -262,7 +262,7 @@ module MedicationService
       6 => "TDF / 3TC + NVP",
       7 => "TDF / 3TC + ATV/r",
       8 => "AZT / 3TC + ATV/r",
-      9 => "ABC / 3TC + ATV/r",
+      9 => "ABC / 3TC + LPV/r",
       10 => "TDF / 3TC + LPV/r",
       11 => "AZT / 3TC + LPV/r",
       12 => "DRV + r + ETV + RAL"
@@ -279,7 +279,7 @@ module MedicationService
       6 => "TDF/3TC + NVP",
       7 => "TDF/3TC + ATV/r",
       8 => "AZT/3TC + ATV/r",
-      9 => "ABC/3TC + ATV/r",
+      9 => "ABC/3TC + LPV/r",
       10 => "TDF/3TC + LPV/r",
       11 => "AZT/3TC + LPV/r",
       12 => "DRV + r + ETV + RAL"
@@ -288,13 +288,15 @@ module MedicationService
     return regimen_formulations
   end
 
-  def self.regimen_medications(regimen_index, current_weight, patient_initiated = false)
+  def self.regimen_medications(regimen_index, current_weight, patient_initiated = false, on_tb_treatment = false)
     regimen_index = regimen_index.to_s.gsub('Regimen ','').to_i 
     regimen_id = MohRegimen.find(:first, :conditions =>['regimen_index = ?', regimen_index]).regimen_id
 
     
     if patient_initiated == true and [0, 2, 6].include?(regimen_index.to_i)
       table_name = 'moh_regimen_ingredient_starter_packs'
+    elsif on_tb_treatment == true and [7, 8].include?(regimen_index.to_i)
+      table_name = 'moh_regimen_ingredient_tb_treatment'
     else
       table_name = 'moh_regimen_ingredient' 
     end

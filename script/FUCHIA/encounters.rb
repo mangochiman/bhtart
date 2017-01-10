@@ -191,9 +191,10 @@ def start
       AND #{weight_during_visit.to_f} <= FORMAT(max_weight,2)", drug.id])
 
       if moh_regimen_doses.blank?
-        pills_per_day = 1
+        pills_per_day = 1.0
       else
-        pills_per_day = (moh_regimen_doses.am.to_f + moh_regimen_doses.pm.to_f)
+        pills_per_day = (moh_regimen_doses.am.to_f + moh_regimen_doses.pm.to_f).to_f
+        puts "******************************* #{pills_per_day}"
       end
 
       duration = (date_created - n_visit).to_i
@@ -201,7 +202,7 @@ def start
       pill_given = DrugOrder.calculate_complete_pack(drug, units)
       
       medication_pills_dispensed[drug.id] = pill_given 
-      puts "............. #{medication_pills_dispensed[drug.id]}"
+      #puts "............. #{medication_pills_dispensed[drug.id]}"
     end
   end
 

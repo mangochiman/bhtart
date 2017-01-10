@@ -23,20 +23,18 @@
     display: none;
   }
   .title {
-    text-decoration:underline;
     margin-right:10px;
   }
 
-
+  .abnormal-weight {
+    color: red;
+  }
 
   .lowWeightForHeight{color:black;background:red;}
   .medWeightForHeight {color:black;background:yellow;}
   .lowBMI {
-    color: red;
     font-weight: bolder;
     font-size: 14pt;
-    border: 1px solid black;
-    border-radius: 50%;
     padding: 3px;
     /*background:red;*/
   }
@@ -424,29 +422,29 @@ dateToday = session[:datetime].to_date rescue Date.today
 
     displayText = "<div><span class='title'>Current BMI:</span>";
     if (currentBmi >= 40 ) {
-      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation abnormal-weight'>";
       displayText +="Overweight: Obese (class III)</span>";
     }else if (currentBmi > 35) {
-      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation abnormal-weight'>";
       displayText +="Overweight: Obese (class II)</span>";
     }else if (currentBmi > 30) {
-      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation abnormal-weight'>";
       displayText +="Overweight: Obese (class I)</span>";
     }else if (currentBmi >= 25) {
-      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation abnormal-weight'>";
       displayText +="Overweight: Pre-obese</span>";
     }else if (weightLossPercent(currentWeight) >= 10) {
-      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation abnormal-weight'>";
       displayText +="Weight loss of : " + weightLossPercent(currentWeight) + "%</span>";
     }else if (currentBmi > 18.5) {
       //displayText += currentBmi;
       displayText += "<span class='normalBMI'>" + currentBmi + "</span>";
       displayText += "<br/><span class='recommendation'>Normal weight</span>";
     } else if (currentBmi >= 16.0 && currentBmi <= 18.5) {
-      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation abnormal-weight'>";
       displayText +="Underweight: Moderate malnutrition</span>";
     } else if (currentBmi < 16.0) {
-      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation abnormal-weight'>";
       displayText +="Underweight: Severe malnutrition</span>";
       /*} else {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>Eligible for therapeutic feeding</span>";*/

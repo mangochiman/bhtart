@@ -979,7 +979,7 @@ class EncountersController < GenericEncountersController
 
     ################################# if vitals ##########################################
     if params[:encounter_type].upcase == "VITALS"
-      birth_date = @patient_bean.birth_date.to_date
+      birth_date = @patient.person.birthdate.to_date
       age_in_months = (session_date.year * 12 + session_date.month) - (birth_date.year * 12 + birth_date.month)
       sex = @patient_bean.sex == 'Male' ? 0 : 1
       #age_in_months = @patient_bean.age_in_months
