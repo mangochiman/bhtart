@@ -990,26 +990,52 @@ EOF
     encounter_type = EncounterType.find_by_name('TREATMENT').id
     start_date = session_date.strftime('%Y-%m-%d 00:00:00')
     end_date = session_date.strftime('%Y-%m-%d 23:59:59')
-    amounts_brought = self.amounts_brought_to_clinic(patient, session_date)
-
     drug_orders = {} ; auto_expire_dates = []
-
+   
     orders = Order.find(:all, :joins =>"INNER JOIN encounter e ON e.encounter_id = orders.encounter_id", 
       :conditions =>["encounter_type = ? AND e.patient_id = ? AND encounter_datetime BETWEEN (?) AND (?)", 
       encounter_type, patient.patient_id, start_date, end_date])
+    
+    appointment_type = Observation.find(:first,:conditions =>["
+      obs_datetime BETWEEN ? AND ? AND person_id = ?
+      AND concept_id = ?", start_date, end_date, patient.id,
+      ConceptName.find_by_name('Appointment type').concept_id]).value_text rescue ''
 
-    (orders || []).each do |order|
-      drug_order = order.drug_order
-      next unless self.arv(drug_order.drug)
-      auto_expire_date = order.auto_expire_date.to_date
-      auto_expire_date = order.discontinued_date.to_date unless order.discontinued_date.blank?
-      auto_expire_dates << auto_expire_date
+    if appointment_type == 'Optimize - including hanging pills'
+     
+      (orders || []).each do |order|
+        drug_order = order.drug_order
+        quantity = drug_order.quantity.to_f rescue 0.0
+        next if quantity == 0.0
+
+        equivalent_daily_dose = drug_order.equivalent_daily_dose.to_f
+        begin
+          auto_expire_dates << session_date.to_date + (((quantity / equivalent_daily_dose).day) - 1)
+        rescue
+          next
+        end
+      end 
+
+    else
+
+      ################################################## if not Optimize next appointment ###############
+      amounts_brought = self.amounts_brought_to_clinic(patient, session_date)
+
+      (orders || []).each do |order|
+        drug_order = order.drug_order
+        next unless self.arv(drug_order.drug)
+        auto_expire_date = order.auto_expire_date.to_date
+        auto_expire_date = order.discontinued_date.to_date unless order.discontinued_date.blank?
+        auto_expire_dates << auto_expire_date
+      end
+
+      (orders || []).each do |order|
+        drug_order = order.drug_order
+        auto_expire_dates << order.auto_expire_date.to_date
+      end if auto_expire_dates.blank?
+      ########################################### end #############################################
+
     end
-
-    (orders || []).each do |order|
-      drug_order = order.drug_order
-      auto_expire_dates << order.auto_expire_date.to_date
-    end if auto_expire_dates.blank?
 
     return auto_expire_dates.sort[0] unless auto_expire_dates.blank?
     return session_date
