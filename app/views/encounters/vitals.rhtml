@@ -147,17 +147,46 @@ dateToday = session[:datetime].to_date rescue Date.today
   var age_in_months = [];
   var weight_trail = [];
 
+  <%(@weight_height_for_ages || {}).sort_by {|x, y| x }.each do |age, data|%>
+    weight_trail.push(null);
+  <%end%>
+
   function resetWeightReadings(obs) {
     standard_high_weight = [];
     standard_low_weight = [];
     median_weight = [];
     age_in_months = [];
-    weight_trail = [];
+    //weight_trail = [];
 
+    count = 0
+    
     for(var i = 0; i < obs.length; i++) {
-      weight_trail.push(obs[i][1])
-    }
+      m_index = obs[i][0];
+      weight_trail[m_index] = obs[i][1];
+      //weight_trail[19] = 11.1;
+      count++;
 
+    }
+/*
+    data_found = false ; prev_weight = null;
+    
+    for(var i = 0; i < weight_trail.length; i++){
+      if(count == 0)
+        continue;
+
+      if(weight_trail[i] != null && data_found == false){
+        data_found = true ; prev_weight = weight_trail[i];
+        continue;
+      }
+
+      if(weight_trail[i] == null && data_found == true){
+        weight_trail[i] = null;
+        count--;
+        continue;
+      }
+
+    }
+*/
     <%(@weight_height_for_ages || {}).sort_by {|x, y| x }.each do |age, data|%>
       standard_low_weight.push(<%=data[:standard_low_weight]%>);
       standard_high_weight.push(<%=data[:standard_high_weight]%>);
@@ -178,16 +207,6 @@ dateToday = session[:datetime].to_date rescue Date.today
         title: {
             text: ''
         },
-        legend: {
-            layout: 'vertical',
-            align: 'left',
-            verticalAlign: 'top',
-            x: 150,
-            y: 100,
-            floating: true,
-            borderWidth: 1,
-            backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
-        },
         xAxis: {
             categories: age_in_months ,
             title: {
@@ -195,8 +214,7 @@ dateToday = session[:datetime].to_date rescue Date.today
             },
             plotBands: [{ // visualize the weekend
                 from: 4.5,
-                to: 6.5,
-                color: 'rgba(68, 170, 213, .2)'
+                to: 6.5
             }]
         },
         yAxis: {
@@ -212,19 +230,29 @@ dateToday = session[:datetime].to_date rescue Date.today
             enabled: false
         },
         plotOptions: {
-            areaspline: {
-                fillOpacity: 0.5
+          series: {
+            fillOpacity: 0.5,
+            connectNulls: true,
+            marker: {
+              enabled: false
             }
+          }
         },
         series: [{
             name: 'Standard high weight',
-            data: standard_high_weight
+            data: standard_high_weight,
+            marker: {
+              fillColor: '#c70a00',
+              lineWidth: 2,
+              lineColor: '999'
+            }
         }, {
             name: 'Median weight',
             data: median_weight
         }, {
             name: "Weight trail (child's weight)",
-            data: weight_trail
+            data: weight_trail,
+            marker: { enabled: true }
         }, {
             name: 'Standard low weight',
             data: standard_low_weight
