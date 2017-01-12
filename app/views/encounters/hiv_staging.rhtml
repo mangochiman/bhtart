@@ -886,7 +886,7 @@ end %>
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
-        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption(); disableModerateWeightLossOptionForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();',
+        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption(); hideTextInput(); displayCountOfSelectedConditions();',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
@@ -1203,7 +1203,7 @@ end %>
         //weight_loss_input.style.backgroundColor = '#CDBA96';
         //moderate_wight_loss_option_input.style.backgroundColor = '#CDBA96';
         moderate_weight_loss_text = weight_loss_input.innerHTML;
-        weight_loss_input.innerHTML = moderate_weight_loss_text + " ( Severe weight loss already selected )"
+        weight_loss_input.innerHTML = "<span class='disabled_check'>" + moderate_weight_loss_text + " ( Severe weight loss already selected )</span>"
         moderate_wight_loss_option_input.onclick = null;
         moderate_wight_loss_option_input.onmousedown = null;
         moderate_wight_loss_option_input.onmouseup = null;
@@ -1211,6 +1211,17 @@ end %>
         img_input = moderate_wight_loss_option_input.getElementsByTagName("img")[0];
         img_input.src = '';
         img_input.alt = '';
+
+        
+        if(weight_loss_input.getAttribute('style').match(/lightblue/i)) {
+          updateTouchscreenInputForSelect(__$('optionValue' + "0"), weight_loss_input);
+          displayCountOfSelectedConditions();
+        }else{
+          displayCountOfSelectedConditions();
+        }
+
+      }else{
+        disableModerateWeightLossOptionForNormalBMI();
       }
     }
 
@@ -1224,13 +1235,15 @@ end %>
     severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
 
     if (currentBMI > 18.5){
+      document.getElementById('currentBMI').innerHTML = currentBMI;
+      weight_loss_input.setAttribute('onmousedown','alertOnNormalBMI()');
       //weight_loss_input.style.backgroundColor = '#CDBA96';
       //severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
-      moderate_weight_loss_text = weight_loss_input.innerHTML;
-      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>"
-      //severe_weight_loss_option_input.onclick = null;
-      //severe_weight_loss_option_input.onmousedown = null;
-      //severe_weight_loss_option_input.onmouseup = null;
+      //moderate_weight_loss_text = weight_loss_input.innerHTML;
+      //weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>"
+      /*severe_weight_loss_option_input.onclick = null;
+      severe_weight_loss_option_input.onmousedown = null;
+      severe_weight_loss_option_input.onmouseup = null;*/
 
       //img_input = severe_weight_loss_option_input.getElementsByTagName("img")[0];
       //img_input.src = '';
@@ -1246,9 +1259,10 @@ end %>
     //severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
 
     if (currentBMI > 18.5){
-      //moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
-      moderate_weight_loss_text = weight_loss_input.innerHTML;
-      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>";
+      document.getElementById('currentBMI').innerHTML = currentBMI;
+      weight_loss_input.setAttribute('onmousedown','alertOnNormalBMI()');
+      //moderate_weight_loss_text = weight_loss_input.innerHTML;
+      //weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>";
       //moderate_weight_loss_option_input.onclick = null;
       //moderate_weight_loss_option_input.onmousedown = null;
       //moderate_weight_loss_option_input.onmouseup = null;
@@ -1301,6 +1315,147 @@ end %>
       alert("Handler could not be attached");
     }
   }
+
+
+  function alertOnNormalBMI(){
+    try {
+      severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+    }catch(e){
+      severe_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+      severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+    }
+
+    weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+
+    if(weight_loss_input.getAttribute('style').match(/lightblue/i)) {
+      //selectCondition();
+      displayCountOfSelectedConditions();
+      return;
+    }
+
+    document.getElementById("regimen-change-popup-div").style.display = 'inline';
+    document.getElementById("regimen-change-cover").style.display = 'inline';
+  }
+
+  function closeAlertOnNormalBMI(){
+    document.getElementById("regimen-change-popup-div").style.display = 'none';
+    document.getElementById("regimen-change-cover").style.display = 'none';
+  }
+
+  function selectCondition() {
+    severe_weight_loss_option_input = jQuery("[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
+
+    try {
+      severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+    }catch(e){
+      severe_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+      severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+    }
+
+    weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+    updateTouchscreenInputForSelect(__$('optionValue' + "0"), weight_loss_input);
+    displayCountOfSelectedConditions();
+    closeAlertOnNormalBMI();
+  }
 </script>
 
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>
+
+
+<style>
+  #regimen-change-popup-div {
+    display: none;
+    background-color: #F4F4F4;
+    border: 2px solid #E0E0E0;
+    border-radius: 15px;
+    height: 270px;
+    padding: 5px;
+    position: absolute;
+    margin-top: 100px;
+    width: 600px;
+    margin-left: 430px;
+    z-index: 991;
+  }
+
+  #regimen-change-cover{
+    display: none;
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.65;
+  }
+
+  #btnContainer {
+    width: 99.9%;
+  }
+
+  .btns {
+    -moz-user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bolder;
+    line-height: 2.29;
+    margin-bottom: 0;
+    padding: 6px 56px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    color: #fff;
+    float: right;
+    margin-top: -5px;
+  }
+
+  #yesBtn{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+  }
+
+  #noBtn{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+    margin-right: 27px;
+  }
+
+  .disabled_check {
+    padding-left: 52px;
+  }
+
+</style>
+
+<div id="regimen-change-cover"></div>
+<div id="regimen-change-popup-div">
+
+  <table style="width: 99.9%; margin-bottom: 95px;">
+    <tr>
+      <td style="text-align: center; font-weight: bold; color: green;
+      border-style: solid; border-width: 0px 0px 2px 0px;">
+        Notice
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align: center; font-weight: bold; color: black;">
+        Patient has a BMI of:&nbsp;<span id="currentBMI"></span><p>
+        Are you sure with your selection?</p>
+      </td>
+    </tr>
+  <table>
+
+  <div id="btnContainer">
+    <input type="button" class="btns" id="yesBtn" onmousedown="selectCondition();" value="Yes, select condition" />
+    <input type="button" class="btns" id="noBtn" onmousedown="closeAlertOnNormalBMI();" value="No" />
+  </div>
+</div>
