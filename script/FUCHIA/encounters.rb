@@ -62,6 +62,7 @@ def start
    unless weight.blank? 
      vitals_encounter = self.create_encounter(patient_id, Vitals.id, date_created)
 
+     self.create_observation_value_numeric(vitals_encounter, encounter_id, "Weight (kg)", weight)
      encounter_id = encounter_id.to_i + 1
      puts ">>> #{encounter_id}"
    end
