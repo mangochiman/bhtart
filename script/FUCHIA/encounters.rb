@@ -7,9 +7,10 @@ Vitals = EncounterType.find_by_name("Vitals")
 HIV_staging = EncounterType.find_by_name("HIV staging")
 Treatment = EncounterType.find_by_name("TREATMENT")
 Dispension = EncounterType.find_by_name("DISPENSING")
+Encounter_id = Encounter.last
 Appointment = EncounterType.find_by_name("APPOINTMENT")
 HIV_clinic_consultation = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
-Parent_path = '/home/mwatha/Desktop/msf'
+Parent_path = '/home/pachawo/Documents/msf'
 
 @@staging_conditions = []
 @@patient_visits = {}
@@ -17,6 +18,12 @@ Parent_path = '/home/mwatha/Desktop/msf'
 @@drug_follow_up = {}
 
 def start
+  `touch /home/pachawo/pats/encounter.sql` 
+  if Encounter_id.blank?
+    encounter_id = 1
+  else
+    encounter_id = Encounter_id.id + 1
+  end
   FasterCSV.foreach("#{Parent_path}/tb_follow_up.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
     patient_id = row[3].to_i
     date_created = get_proper_date(row[9]).to_date rescue nil
@@ -25,27 +32,27 @@ def start
     next if date_created.blank? || patient_id.blank?
     start_date = date_created.strftime("%Y-%m-%d 00:00:00")
     end_date = date_created.strftime("%Y-%m-%d 23:59:59")
-
+=begin
     begin
       patient = Patient.find(patient_id)
     rescue
       ############## code to log errors ########
       next
     end
-
-=begin
+=end
 
     encounter = Encounter.find(:all, :conditions => ["patient_id = ? and encounter_datetime 
      between ? and ? and encounter_type = ?",patient_id, start_date, end_date, 
      Hiv_reception_encounter.id])
 
     if encounter.blank?
-      self.create_hiv_reception(patient_id, date_created)
+      puts "Creating HIV Clinic reception for #{patient_id}"
+      self.create_hiv_reception(encounter_id, patient_id, date_created)
+      encounter_id = encounter_id.to_i + 2
+      puts ">>> #{encounter_id}"
     else
       puts "Patient has encounters recorded!!"
     end
-
-
 
    ############################### creating vitals ###########################################
    weight = row[28].to_f rescue nil
@@ -54,15 +61,19 @@ def start
 
    unless weight.blank? 
      vitals_encounter = self.create_encounter(patient_id, Vitals.id, date_created)
-     self.create_observation_value_numeric(vitals_encounter,"Weight (kg)", weight)
+
+     encounter_id = encounter_id.to_i + 1
+     puts ">>> #{encounter_id}"
    end
    
    unless height.blank?
      vitals_encounter = self.create_encounter(patient_id, Vitals.id, date_created) if vitals_encounter.blank?
-     self.create_observation_value_numeric(vitals_encounter, "Height (cm)", height)
+     self.create_observation_value_numeric(vitals_encounter, encounter_id, "Height (cm)", height)
+     encounter_id = encounter_id.to_i + 1
+     puts ">>> #{encounter_id}"
    end
    ###########################################################################################
-
+=begin
 
   diagnostic = row[30] rescue nil
   diagnostic_2 = row[31] rescue nil
@@ -92,8 +103,6 @@ def start
 
 
 =begin
-
-
 
   if !cd4_count.blank? && !date_cd4_count.blank?
     self.create_observation_value_numeric(hiv_staging_encounter, 'CD4 count', cd4_count)
@@ -139,10 +148,7 @@ def start
   ##########################################################################################
 
 
-=end
-
-
-
+=begin
 
   medication_on_this_visit = @@drug_follow_up[ref_id][date_created] rescue nil
 
@@ -206,7 +212,6 @@ def start
   end
 
 
-=begin
 
   
   unless medication_on_this_visit.blank?
@@ -215,7 +220,8 @@ def start
   end
 
   ##########################################################################################
-
+=end
+=begin
   ################################ set appointment #########################################
   if !next_visit.blank?
     appointment_encounter = self.create_encounter(patient_id, Appointment.id, date_created)
@@ -224,12 +230,7 @@ def start
     puts "Setting appointment for...... #{patient_id}"
   end
   ##########################################################################################
-
-
 =end
-
-
-
   end
 
   puts "Script time: #{ScriptStared} - #{Time.now()}"
@@ -257,49 +258,72 @@ def get_patient_drug(parent_path, patient_id)
   return drug_ref
 end
 
-def self.create_hiv_reception(patient_id, date_created)
-  #TODO create hiv reception
-  puts "HIV reception for: #{patient_id}"
+def self.create_hiv_reception(enc_id, patient_id, date_created)
+  puts "Creating HIV reception for: #{patient_id}"
   encounter = self.create_encounter(patient_id, Hiv_reception_encounter.id, date_created)
   if !encounter.blank?
-   #TODO create observations
-
-    self.create_observation_value_coded(encounter, "Guardian present", "No") #guardian obs
-    
-    self.create_observation_value_coded(encounter, "Patient present", "Yes") #guardian obs
+    self.create_observation_value_coded(encounter, enc_id,  "Guardian present", "No") 
+    enc_id = enc_id.to_i + 1
+    self.create_observation_value_coded(encounter, enc_id, "Patient present", "Yes")
   end
 end
 
 def self.create_encounter(patient_id, encounter_type_id, date_created)
   if !patient_id.blank?
+
     encounter = Encounter.new
     encounter.encounter_type = encounter_type_id
     encounter.patient_id = patient_id
     encounter.encounter_datetime = date_created.strftime("%Y-%m-%d 00:00:00")
-    encounter.save
-    return encounter
+    
+    uuid = ActiveRecord::Base.connection.select_one <<EOF
+     select uuid();
+EOF
+    date_created =date_created.strftime("%Y-%m-%d 00:00:00")
+
+    insert_encounters = "INSERT INTO encounter (encounter_type, patient_id, encounter_datetime, creator, uuid) "
+    insert_encounters += "VALUES ('#{encounter_type_id}','#{patient_id}','#{date_created}','#{User.current.id}','#{uuid.values.first}');"
+
+    `echo "#{insert_encounters}" >> /home/pachawo/pats/encounter.sql`
   end
+
+  return encounter
 end
 
-def self.create_observation_value_numeric(encounter, concept_name, value)
+def self.create_observation_value_numeric(encounter, encounter_id, concept_name, value)
     observation =  Observation.new
     observation.person_id = encounter.patient_id
     observation.encounter_id = encounter.id
     observation.concept_id = ConceptName.find_by_name(concept_name).concept_id
     observation.value_numeric = value
-    observation.obs_datetime = encounter.encounter_datetime
-    observation.save
-    puts ">>> Creating vitals #{concept_name}"
+    observation.obs_datetime = encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")
+    
+    uuid = ActiveRecord::Base.connection.select_one <<EOF
+     select uuid();
+EOF
+    
+    insert_observation = "INSERT INTO obs (person_id, encounter_id, concept_id, value_numeric, obs_datetime, creator, uuid) "
+    insert_observation += "VALUES (#{observation.person_id}, #{encounter_id}, #{observation.concept_id}, "
+    insert_observation += "'#{observation.value_numeric}', '#{observation.obs_datetime}', '#{User.current.id}', '#{uuid.values.first}'); \t\t"
+
+    `echo "#{insert_observation}" >> /home/pachawo/pats/encounter.sql`
 end
 
-def self.create_observation_value_coded(encounter, concept_name, value_coded_concept_name)
+def self.create_observation_value_coded(encounter, encounter_id, concept_name, value_coded_concept_name)
     observation =  Observation.new
     observation.person_id = encounter.patient_id
     observation.encounter_id = encounter.id
     observation.concept_id = ConceptName.find_by_name(concept_name).concept_id
     observation.value_coded = ConceptName.find_by_name(value_coded_concept_name).concept_id
     observation.obs_datetime = encounter.encounter_datetime
-    observation.save
+    #observation.save
+    uuid =ActiveRecord::Base.connection.select_one <<EOF
+     select uuid();
+EOF
+    insert_observation_value_coded =<<EOF
+      INSERT INTO obs(person_id,encounter_id,concept_id,value_coded,datetime,creater,uuid)VALUES('#{encounter.patient_id}','#{encounter_id}','#{observation.concept_id}','#{observation.value_coded}','#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}','#{User.current.id}','#{uuid.values.first}');
+EOF
+    `echo "#{insert_observation_value_coded}" >> /home/pachawo/pats/encounter.sql`
 end
 
 def self.create_observation_value_datetime(encounter, concept_name, date)
@@ -480,7 +504,7 @@ def set_referenes
 end
 
 
-set_referenes
-drug_mapping
+#set_referenes
+#drug_mapping
 #setup_staging_conditions
 start
