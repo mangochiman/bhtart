@@ -117,16 +117,26 @@ DELIMITER ;
 -- The date of the first On ARVs state for each patient
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
   VIEW `earliest_start_date` AS
-  SELECT `p`.`patient_id` AS `patient_id`, DATE(patient_start_date(`p`.`patient_id`)) AS `date_enrolled`,
-         date_antiretrovirals_started(`p`.`patient_id`, MIN(`s`.`start_date`)) AS `earliest_start_date`, `person`.`death_date` AS death_date,
-         (DATEDIFF(date_antiretrovirals_started(`p`.`patient_id`, MIN(`s`.`start_date`)), `person`.`birthdate`)/365.25) AS age_at_initiation,
-         DATEDIFF(MIN(`s`.`start_date`), `person`.`birthdate`) AS age_in_days
-  FROM ((`patient_program` `p`
-  LEFT JOIN `patient_state` `s` ON((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-  LEFT JOIN `person` ON((`person`.`person_id` = `p`.`patient_id`)))
-  WHERE ((`p`.`voided` = 0) AND (`s`.`voided` = 0) AND (`p`.`program_id` = 1) AND
-        (`s`.`state` = 7))
-  GROUP BY `p`.`patient_id`;
+  select
+      `p`.`patient_id` AS `patient_id`,
+      `pe`.`gender` AS `gender`,
+      `pe`.`birthdate`,
+      date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
+      cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+      `person`.`death_date` AS `death_date`,
+      (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
+      (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
+  from
+      ((`patient_program` `p`
+      left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
+      left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
+      left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+  where
+      ((`p`.`voided` = 0)
+          and (`s`.`voided` = 0)
+          and (`p`.`program_id` = 1)
+          and (`s`.`state` = 7))
+  group by `p`.`patient_id`;
 
 -- The date of the first On ARVs state for each patient
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
@@ -566,6 +576,65 @@ DECLARE date_started DATE;
 SET date_started = (SELECT MIN(start_date) FROM patient_state WHERE voided = 0 AND state = 7 AND patient_program_id IN (SELECT patient_program_id FROM patient_program WHERE patient_id = set_patient_id AND voided = 0 AND program_id = 1));
 
 RETURN date_started;
+END$$
+DELIMITER ;
+
+DROP FUNCTION IF EXISTS patient_outcome;
+
+DELIMITER $$
+CREATE FUNCTION `patient_outcome`(patient_id INT, visit_date date) RETURNS varchar(25)
+BEGIN
+DECLARE set_program_id INT;
+DECLARE set_patient_state INT;
+DECLARE set_outcome varchar(25);
+
+SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
+
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND start_date <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
+
+
+IF set_patient_state = 1 THEN
+  SET set_outcome = 'Pre-ART (Continue)';
+END IF;
+
+IF set_patient_state = 2   THEN
+  SET set_outcome = 'Patient transferred out';
+END IF;
+
+IF set_patient_state = 3 THEN
+  SET set_outcome = 'Patient died';
+END IF;
+
+IF set_patient_state = 6 THEN
+  SET set_outcome = 'Treatment stopped';
+END IF;
+
+IF set_patient_state = 7 THEN
+  SET set_patient_state = current_defaulter(patient_id, visit_date);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_patient_state = 0 THEN
+    SET set_outcome = 'On antiretrovirals';
+  END IF;
+END IF;
+
+IF set_outcome IS NULL THEN
+  SET set_patient_state = current_defaulter(patient_id, visit_date);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  END IF;
+
+  IF set_outcome IS NULL THEN
+    SET set_outcome = 'On antiretrovirals';
+  END IF;
+
+END IF;
+
+RETURN set_outcome;
 END$$
 DELIMITER ;
 
