@@ -487,7 +487,7 @@
     var patientAge = "<%= @patient_bean.age.to_i %>";
     var pregnancyStatus = $('pregnant').value;
 
-    if ((patientAge >= 12 && patientAge <= 55) && pregnancyStatus == "YES") {
+    if ((patientAge < 12 || patientAge > 55) && pregnancyStatus == "YES") {
       return "true";
     } else {
       return "false";
@@ -498,7 +498,7 @@
     var patientAge = "<%= @patient_bean.age.to_i %>";
     var breastfeedingStatus = $('breast_feeding').value;
 
-    if ((patientAge >= 12 && patientAge <= 55) && breastfeedingStatus == "YES") {
+    if ((patientAge < 12 || patientAge > 55) && breastfeedingStatus == "YES") {
       return "true";
     } else {
       return "false";
