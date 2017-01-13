@@ -102,14 +102,14 @@ EOF
 
   end
     #puts insert_person.inspect
-    `echo "#{insert_person}" >> /home/pachawo/pats/patients2.sql`
+    `echo '#{insert_person}' >> /home/pachawo/pats/patients2.sql`
     
 
     insert_patient =<<EOF
       INSERT INTO patient (patient_id,creator,date_created) VALUES(#{row[0]},#{User.current.id},"#{date_created}");
 EOF
 
-    `echo "#{insert_patient}" >> /home/pachawo/pats/patients2.sql`
+    `echo '#{insert_patient}' >> /home/pachawo/pats/patients2.sql`
 
         uuid = ActiveRecord::Base.connection.select_one <<EOF
     select uuid();
@@ -118,8 +118,9 @@ EOF
     insert_person_name =<<EOF
       INSERT INTO person_name (person_id,middle_name,given_name,family_name,creator,date_created,uuid) VALUES (#{row[0]},"#{middle_name}","#{given_name}","#{family_name}",#{User.current.id},"#{date_created}","#{uuid.values.first}");
 EOF
+
     puts insert_person_name.inspect
-     `echo "#{insert_person_name}" >> /home/pachawo/pats/patients2.sql`
+     `echo '#{insert_person_name}' >> /home/pachawo/pats/patients2.sql`
 
     uuid = ActiveRecord::Base.connection.select_one <<EOF
             select uuid();
@@ -128,7 +129,7 @@ EOF
       INSERT INTO person_address (person_id, city_village, date_created, creator, uuid) VALUES (#{row[0]},"#{city_village}", "#{date_created}", #{User.current.id}, "#{uuid.values.first}");
 EOF
     puts insert_person_address
-    `echo "#{insert_person_address}" >> /home/pachawo/pats/patients2.sql`
+    `echo '#{insert_person_address}' >> /home/pachawo/pats/patients2.sql`
 
     uuid = ActiveRecord::Base.connection.select_one <<EOF
         select uuid();
@@ -138,11 +139,8 @@ EOF
         INSERT INTO person_attribute (person_id, value, date_created, person_attribute_type_id, creator, uuid) VALUES (#{row[0]}, "#{occupation}", "#{date_created}", "#{attr_type_id}", #{User.current.id}, "#{uuid.values.first}");
 EOF
     puts insert_person_attr;
-    `echo "#{insert_person_attr}" >> /home/pachawo/pats/patients2.sql`
+    `echo '#{insert_person_attr}' >> /home/pachawo/pats/patients2.sql`
   end 
-
-
- 
 end
 
 
