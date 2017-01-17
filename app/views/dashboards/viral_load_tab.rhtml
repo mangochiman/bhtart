@@ -207,7 +207,7 @@ div, table{
           <tr>
               <td style="font-weight: bold; font-size: 1em; padding: 2px; max-width: 61%;">Date given to patient</td>
               <% if vl_available_and_result_given(@patient) == true %>
-                  <td style=""><%= @date_vl_result_given.strftime("%d-%b-%Y") %></td>
+                  <td style=""><%= @date_vl_result_given.strftime("%d-%b-%Y") rescue '----------------------------'%></td>
               <% else %>
                   <td id="" style="">----------------------------</td>
               <% end %>

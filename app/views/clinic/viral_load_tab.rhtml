@@ -1,0 +1,182 @@
+<style type="text/css">
+  body {
+    -moz-user-select:none;
+	font-family: Arial,sans-serif;
+  }
+
+  #stats {
+    width:98%;
+    border:1px solid #eee;
+    margin:10px;
+    background:white;
+    font-size: 1.1em;
+  }
+  #stats td, #stats th {
+    text-align:center;
+  }
+  .odd {
+    background-color: #eee;
+  }
+
+  #table_div {
+    overflow:auto;
+    height: 320px;
+    background-color: white;
+    border: solid 1px #eee;
+    border-width: 1px;
+    overflow: hidden;
+  }
+
+  #tab {
+    -moz-user-select:none;
+  }
+
+  .stat{
+      font-size: 1.5em;
+      font-weight: bold;
+      float: right;
+      padding: 14px;
+  }
+
+    #popup{
+        position: absolute;
+        top: 0%;
+        left: 10%;
+        z-index: 1005;
+        background: ghostwhite;
+        width: 85%;
+        height: 98%;
+        border: 1px solid darkolivegreen;
+        border-radius: 2px;
+        overflow-Y: auto;
+        display: none;
+    }
+    #cancel{
+        position: fixed;
+        z-index: 1010;
+        top: 0px;
+        right: 10px;
+        width: 60px;height: 50px;
+        text-align: center; vertical-align: middle;;
+        font-size: 2.6em;
+        padding-top: 5px;
+        font-weight: bold;
+        background:#f8f8ff;
+        border-radius: 50%;
+        color: red;
+        border: 1px solid darkred;
+        cursor: pointer;
+    }
+    .p-header{
+        background: darkslategray;
+        color: white;
+        padding: 5px;
+        width: 25%;
+        text-align: left;
+        font-size: 1.2em;
+    }
+    #caption{
+        font-size: 1.2em;
+        padding: 3.5px;
+    }
+    #p-table td{
+        font-size: 1.05em;
+        padding: 4px;
+        background: white;
+        width: 25%;
+    }
+</style>
+<div id="tab" style="">
+  <h3>LIMS - Viral Load Statistics</h3>
+    <div id="table_div">
+      <span class="stat" onclick="view('pending')" style="color: darkslategray; cursor: pointer"> <%= @data["pending"].length %> <span style="font-size: 1em">Pending</span></span>
+
+      <span class="stat" onclick="view('available')" style="color: darkslategray; cursor: pointer"> <%= @data["available"].length %> <span style="font-size: 1em">Available &nbsp;&nbsp;| </span></span>
+
+     <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected &nbsp;&nbsp;|</span></span>
+    <table id="stats" cellpadding="14">
+
+        <tr style="color: #fff; background-color: #666;">
+            <th style="text-align:left;">Result</th>
+            <th>Given to patients</th>
+            <th>Not given to patients</th>
+        </tr>
+
+        <tr class="even">
+            <td style="float: left; font-weight: bold;color: darkslategray"> VL <1000</td>
+            <td onclick="view('less_than_1000_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["less_than_1000_given"].length %></td>
+            <td onclick="view('less_than_1000_not_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["less_than_1000_not_given"].length %></td>
+        </tr>
+
+        <tr class="odd">
+            <td style="float: left; font-weight: bold;color: darkslategray"> VL  >=1000</td>
+            <td onclick="view('more_than_1000_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["more_than_1000_given"].length %></td>
+            <td onclick="view('more_than_1000_not_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["more_than_1000_not_given"].length %></td>
+        </tr>
+
+      </table>
+  </div>
+</div>
+
+<div id="popup">
+    <div id="cancel" onmousedown="cancelPopup()">X</div>
+    <table id="ph-table" style="width: 97%; color: darkslategray;  margin-left: 5px;">
+        <caption id="caption">Patients Samples</caption>
+        <thead>
+            <tr>
+                <th class="p-header">Tracking Number</th>
+                <th class="p-header">Patient Name</th>
+                <th class="p-header">National ID</th>
+                <th class="p-header">Ordered By</th>
+            </tr>
+        </thead>
+    </table>
+  <div style="padding: 0px;height: 80%;overflow: auto;width: 100%;border-top: 2px solid darkred;">
+    <table id="p-table" style="width: 97%; color: darkslategray;  margin-left: 5px;"></table>
+  </div>
+</div>
+
+<script>
+    all_data = JSON.parse('<%= @data.to_json%>');
+
+    function cancelPopup(){
+        document.getElementById("popup").style.display = "none";
+    }
+
+    function view(category){
+
+        var table = document.getElementById("p-table");
+        table.innerHTML = "";
+        var data = all_data[category];
+
+        document.getElementById("popup").style.display = "block";
+
+        for(var i = 0; i < data.length; i ++){
+            var row = document.createElement("tr");
+            table.appendChild(row);
+            var o = data[i];
+
+            var sources = [
+                "o['_id']",
+                "o['patient']['first_name'] + ' ' + o['patient']['last_name'] + '  (' + o['patient']['gender'] + ')' ",
+                "o['patient']['national_patient_id']",
+                "o['who_order_test']['first_name'] + ' ' + o['who_order_test']['last_name']"
+            ];
+
+            for(var k = 0; k < sources.length; k++){
+                var td = document.createElement("td");
+                td.innerHTML = eval(sources[k]);
+                td.className = "p-data";
+                row.appendChild(td);
+            }
+
+        }
+        var original_width = document.getElementById("ph-table").offsetWidth
+        var diff = (document.getElementById("ph-table").offsetWidth -
+                document.getElementById("p-table").offsetWidth)
+
+        document.getElementById("ph-table").style.width = (original_width - diff ) + "px";
+
+    }
+
+</script>

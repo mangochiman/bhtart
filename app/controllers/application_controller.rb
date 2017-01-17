@@ -1,4 +1,28 @@
 class ApplicationController < GenericApplicationController
+  def national_lims_activated
+
+    if !File.exists?("#{Rails.root}/config/lims.yml")
+      return false
+    end
+    settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+    enabled = settings['enable_lims']
+    return false if (enabled.to_s == 'false' rescue true )
+    true
+  end
+
+  def latest_lims_vl(patient)
+    settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+    national_id_type = PatientIdentifierType.find_by_name("National id").id
+    npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
+    url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}&test_status=verified__reviewed"
+    trail_url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
+    data = JSON.parse(RestClient.get(url)) rescue []
+    latest_date = data.last[0].to_date rescue nil
+    latest_result = data.last[1]["Viral Load"].strip.scan(/\d+/).first rescue nil
+    modifier = data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue nil
+    [modifier, latest_result, latest_date] rescue []
+  end
+
   def todays_consultation_encounters(patient, session_date = Date.today)
     hiv_clinic_consultation_encounter_type = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
     hiv_clinic_consultations = Encounter.find(:all, :conditions =>["patient_id=? AND encounter_type=?

@@ -81,8 +81,24 @@
           }
         });
       }
+
     </script>
     <style>
+        #msg-div{
+            position: absolute;
+            left: 46%;
+            top: 25%;
+            font-weight: bold;
+            background: red;
+            z-index: 100;
+            width: 25%;
+            padding: 10px;
+            font-size: 1.3em;
+            height: 8%;
+            text-align: center;
+            vertical-align: middle;
+            border-radius: 5px;
+        }
       #tab6 {
         background-color: white;
         border: 0 none;
@@ -271,6 +287,7 @@
       <% end %>
     </style>
   </head>
+
   <body><div id='content'>
       <div id='description' style='color:#777;position:absolute;margin-top:-70px;'></div><center>
         <form id = 'dashboard' action='/clinic'>
@@ -417,4 +434,33 @@
       </center>
     </div>
   </body>
+
 </html>
+
+<script>
+    <%if @vl_results_ready %>
+
+        function hideMsg(div){
+            setTimeout(function(){fade(div, 1);}, 2500);
+        }
+
+        function fade(div, opacity){
+            __$(div).style.opacity = opacity;
+            if (opacity >= 0){
+                opacity = opacity - 0.01;
+                setTimeout(function(){fade(div, opacity)}, 20)
+            }
+        }
+
+        jQuery( document ).ready(function() {
+            var msgDiv = document.createElement("div");
+            msgDiv.id = "msg-div";
+            msgDiv.innerHTML = "<span>Viral Load Results Available</span>";
+            document.body.appendChild(msgDiv);
+
+            setTimeout(function(){
+                hideMsg("msg-div");
+            }, 2500);
+        });
+    <%end%>
+</script>

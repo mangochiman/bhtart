@@ -2,6 +2,7 @@ class GenericPatientsController < ApplicationController
   before_filter :find_patient, :except => [:void]
 
   def show
+
     current_state = tb_status(@patient).downcase
     @show_period = false
     @show_period = true if current_state.match(/currently in treatment/i)
@@ -101,11 +102,16 @@ The following block of code should be replaced by a more cleaner function
         @cd4_latest_result = cd4_results[1]["TestValue"] rescue nil
         @cd4_modifier = cd4_results[1]["Range"] rescue nil
 
-        vl_results = Lab.latest_result_by_test_type(@patient, 'HIV_viral_load', patient_identifiers) rescue nil
-        @vl_results = vl_results
-        @vl_latest_date = vl_results[0].split('::')[0].to_date rescue nil
-        @vl_latest_result = vl_results[1]["TestValue"] rescue nil
-        @vl_modifier = vl_results[1]["Range"] rescue nil
+        if national_lims_activated
+          @vl_modifier, @vl_latest_result, @vl_latest_date = latest_lims_vl(@patient)
+          @vl_results = true if !@vl_latest_result.blank?
+        else
+          vl_results = Lab.latest_result_by_test_type(@patient, 'HIV_viral_load', patient_identifiers) rescue nil
+          @vl_results = vl_results
+          @vl_latest_date = vl_results[0].split('::')[0].to_date rescue nil
+          @vl_latest_result = vl_results[1]["TestValue"] rescue nil
+          @vl_modifier = vl_results[1]["Range"] rescue nil
+        end
       end
 
       @current_hiv_program_status = Patient.find_by_sql("
@@ -113,6 +119,19 @@ The following block of code should be replaced by a more cleaner function
 											FROM patient p INNER JOIN program_workflow_state pw ON pw.program_workflow_state_id = current_state_for_program(patient_id, 1, '#{session_date}')
 											INNER JOIN concept_name c ON c.concept_id = pw.concept_id where p.patient_id = '#{@patient.patient_id}'").first.status rescue "Unknown"
       ####################
+
+      data = []
+      if national_lims_activated
+        settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+        national_id_type = PatientIdentifierType.find_by_name("National id").id
+        npid = @patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
+        url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}"
+
+        data = JSON.parse(RestClient.get(url)) rescue []
+      end
+
+      @vl_results_ready = data.length > 0
+
       render :template => 'patients/index', :layout => false
     end
   end
@@ -3927,22 +3946,82 @@ EOF
   end
 
   def viral_load_page
+
     patient = Patient.find(params[:patient_id])
     @patient = patient
     id_types = ["Legacy Pediatric id","National id","Legacy National id","Old Identification Number"]
     identifier_types = PatientIdentifierType.find(:all, :conditions=>["name IN (?)",
         id_types]).collect{| type |type.id }
 
-		patient_identifiers = PatientIdentifier.find(:all, :conditions=>["patient_id=? AND
-     identifier_type IN (?)", patient.id,identifier_types]).collect{| i | i.identifier }
-    
-    @results = Lab.latest_result_by_test_type(patient, 'HIV_viral_load', patient_identifiers) rescue nil
-    @latest_date = @results[0].split('::')[0].to_date rescue nil
-    @latest_result = @results[1]["TestValue"] rescue nil
-    @modifier = @results[1]["Range"] rescue nil
+    if national_lims_activated
+      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+      national_id_type = PatientIdentifierType.find_by_name("National id").id
+      npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
+      url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}&test_status=verified__reviewed"
+      trail_url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
+      data = JSON.parse(RestClient.get(url)) rescue []
+      @latest_date = data.last[0].to_date rescue nil
+      @latest_result = data.last[1]["Viral Load"].strip.scan(/\d+/).first rescue nil
+      @modifier = data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue nil
+
+      @date_vl_result_given = nil
+      if ((data.last[2] == "reviewed") rescue false)
+        @date_vl_result_given = Observation.find(:last, :conditions => ["
+          person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
+          Concept.find_by_name("Viral load").concept_id, 'Result given to patient', data.last[3].to_date]).value_datetime rescue nil
+
+        @date_vl_result_given = data.last[3].to_date if @date_vl_result_given.blank?
+      end
+
+      #[["97426", {"result_given"=>"no", "result"=>"253522", "date_result_given"=>"", "date_of_sample"=>Sun, 17 Aug 2014, "second_line_switch"=>"no"}]]
+      trail = JSON.parse(RestClient.get(trail_url)) rescue []
+      @vl_result_hash = []
+      (trail || []).each do |order|
+          results = order['results']['Viral Load']
+          next if results.blank?
+          timestamp = results.keys.sort.last
+          next if (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
+          result = results[timestamp]['results']
+
+          date_given = nil
+          if ((results[timestamp]['test_status'].downcase.strip == "reviewed") rescue false)
+            date_given = Observation.find(:last, :conditions => ["
+                    person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
+                    Concept.find_by_name("Viral load").concept_id, 'Result given to patient', timestamp.to_date]).value_datetime rescue nil
+
+            date_given = timestamp.to_date.to_date if date_given.blank?
+          end
+
+          @vl_result_hash << [order['_id'], {"result_given" => (results[timestamp]['test_status'].downcase.strip == 'reviewed' ? 'yes' : 'no'),
+                          "result" => (result["Viral Load"] rescue nil),
+                          "date_of_sample" => order['date_time'].to_date,
+                          "date_result_given" => date_given,
+                          "second_line_switch" => '?'
+                        }
+          ]
+      end
+
+
+    else
+      patient_identifiers = PatientIdentifier.find(:all, :conditions=>["patient_id=? AND
+       identifier_type IN (?)", patient.id,identifier_types]).collect{| i | i.identifier }
+
+      @results = Lab.latest_result_by_test_type(patient, 'HIV_viral_load', patient_identifiers) rescue nil
+      @latest_date = @results[0].split('::')[0].to_date rescue nil
+      @latest_result = @results[1]["TestValue"] rescue nil
+      @modifier = @results[1]["Range"] rescue nil
+
+      @vl_result_hash = Patient.vl_result_hash(patient)
+
+      @date_vl_result_given = Observation.find(:last, :conditions => ["
+        person_id =? AND concept_id =? AND value_text REGEXP ?", patient.id,
+        Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
+
+    end
+
     @reason_for_art = PatientService.reason_for_art_eligibility(patient)
     @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-        patient.patient_id, Concept.find_by_name("Viral load").concept_id]
+                                                          patient.patient_id, Concept.find_by_name("Viral load").concept_id]
     ).answer_string.squish.upcase rescue nil
 
     @high_vl = true
@@ -3964,13 +4043,7 @@ EOF
       AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
         "Repeat"]).obs_datetime.to_date rescue nil
 
-    @date_vl_result_given = Observation.find(:last, :conditions => ["
-    person_id =? AND concept_id =? AND value_text REGEXP ?", patient.id,
-        Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
-
     @enter_lab_results = GlobalProperty.find_by_property('enter.lab.results').property_value == 'true' rescue false
-
-    @vl_result_hash = Patient.vl_result_hash(patient)
 
     render :template => 'dashboards/viral_load_tab', :layout => false
     

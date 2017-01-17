@@ -11,6 +11,7 @@
 
     <% if Location.current_location.name.match(/HIV|ART/i) %>
       <style>
+
         #buttonlinks {
           display: none;
         }
@@ -36,6 +37,21 @@
       </style>
     <% end %>
     <style>
+    #msg-div{
+        position: absolute;
+        left: 46%;
+        top: 20%;
+        font-weight: bold;
+        background: red;
+        z-index: 100;
+        width: 25%;
+        padding: 10px;
+        font-size: 1.3em;
+        height: 8%;
+        text-align: center;
+        vertical-align: middle;
+        border-radius: 5px;
+    }
       #vl_data{
         position: absolute;
         -moz-user-select: none;
@@ -1238,3 +1254,33 @@ function cancelOperation(action){
       </div>
 </body>
 </html>
+
+<script>
+    <%if @vl_results_ready %>
+
+    function hideMsg(div){
+        setTimeout(function(){fade(div, 1);}, 2500);
+    }
+
+    function fade(div, opacity){
+        __$(div).style.opacity = opacity;
+        if (opacity >= 0){
+            opacity = opacity - 0.01;
+            setTimeout(function(){fade(div, opacity)}, 20)
+        }
+    }
+
+    jQuery( document ).ready(function() {
+        setTimeout(function() {
+            var msgDiv = document.createElement("div");
+            msgDiv.id = "msg-div";
+            msgDiv.innerHTML = "<span>Viral Load Results Available</span>";
+            __$("content").appendChild(msgDiv);
+
+            setTimeout(function () {
+                hideMsg("msg-div");
+            }, 500);
+        }, 2500)
+    });
+    <%end%>
+</script>

@@ -177,6 +177,72 @@ class GenericLabController < ApplicationController
     lab_parameter.Range = test_modifier
     lab_parameter.save
 
+    #create an order
+
+    settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+    create_url = "#{settings['national-repo-node']}/create_hl7_order"
+
+    if national_lims_activated
+      json = { :return_path => "http://#{request.host}:#{request.port}",
+               :district => settings['district'],
+               :health_facility_name => settings['facility_name'],
+               :first_name=> patient_bean.name.split(/\s+/).first,
+               :last_name=>  patient_bean.name.split(/\s+/).last,
+               :middle_name=>"",
+               :date_of_birth=> patient_bean.birth_date.to_date,
+               :gender=> ((patient_bean.sex == "Female") ? "F" : "M"),
+               :national_patient_id=> patient_bean.national_id,
+               :phone_number=> (patient_bean.cell_phone_number ||
+                   patient_bean.home_phone_number ||
+                   patient_bean.office_phone_number),
+               :reason_for_test=> '',
+               :sample_collector_last_name=> '',
+               :sample_collector_first_name=> '',
+               :sample_collector_phone_number=> '',
+               :sample_collector_id=> '',
+               :sample_order_location=> Location.current_location.name,
+               :sample_type=> "Blood",
+               :date_sample_drawn=> "",
+               :tests=> ["Viral Load"],
+               :sample_priority=> 'Routine',
+               :target_lab=> settings['receiving_facility'],
+               :tracking_number => "",
+               :art_start_date => "",
+               :date_dispatched => "",
+               :date_received => Time.now,
+               :return_json => 'true'
+      }
+
+      test_date = "#{params[:test_day]}/#{params[:test_month]}/#{params[:test_year]}".to_datetime.strftime("%Y%m%d%H%M%S")
+      #Post to NLIMS
+      data = JSON.parse(RestClient::Request.execute(:method => 'post',  :url => create_url, :payload => json.to_json, :headers => {"Content-Type" => "application/json"})) #rescue nil
+
+
+      if !data.blank?
+        order                          = {"_id"           => data["tracking_number"],
+                                          "sample_status" => "specimen-accepted"}
+
+        h                              = {}
+        h['test_status']               = "verified"
+        h['remarks']                   = ""
+        h['datetime_started']          = ""
+        h['datetime_completed']        = test_date
+        h['who_updated']               = {}
+        who                            = current_user
+        h['who_updated']['first_name'] = who.name.strip.scan(/^\w+/).first
+        h['who_updated']['last_name']  = who.name.strip.scan(/\w+$/).last
+        h['who_updated']['ID_number']  = who.username
+
+        h['results']                   = {"Viral Load" => (params[:test_value].first rescue "") }
+        order['results']               = {}
+        order['results']["Viral Load"] = h
+
+        remote_post_url = "#{settings['central_repo']}/pass_json/"
+        RestClient::Request.execute(:method => 'post',  :url => remote_post_url, :payload => order.to_json, :headers => {"Content-Type" => "application/json"})
+
+      end
+    end
+
     unless params[:go_to_patient_dashboard].blank?
       redirect_to ("/lab/give_result?patient_id=#{params[:patient_id]}&go_to_patient_dashboard=true") and return if params[:result_given].match(/YES/i)
       redirect_to ("/patients/show/#{params[:patient_id]}") and return
@@ -252,6 +318,43 @@ class GenericLabController < ApplicationController
       obs.encounter_id = enc.id
       obs.obs_datetime = Time.now
       obs.save
+    end
+
+    if national_lims_activated
+      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+
+      national_id_type = PatientIdentifierType.find_by_name("National id").id
+      npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
+
+      get_url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}&raw=true&test_status=verified"
+      data = JSON.parse(RestClient.get(get_url)) rescue []
+
+      if !data.blank?
+        result        = data['results']['Viral Load']
+        timestamp     = result.keys.sort.last
+        result        = result[timestamp]
+
+        order                          = {"_id"           => data["_id"],
+                                          "sample_status" => data["status"]}
+
+        h                              = {}
+        h['test_status']               = "reviewed"
+        h['remarks']                   = result['remarks'] rescue nil
+        h['datetime_started']          = result['datetime_started'] rescue nil
+        h['datetime_completed']        = result['datetime_completed'] rescue nil
+        h['who_updated']               = {}
+        who                            = current_user
+        h['who_updated']['first_name'] = who.name.strip.scan(/^\w+/).first
+        h['who_updated']['last_name']  = who.name.strip.scan(/\w+$/).last
+        h['who_updated']['ID_number']  = who.username
+
+        h['results']                   = result['results']
+        order['results']               = {}
+        order['results']["Viral Load"] = h
+
+        remote_post_url = "#{settings['central_repo']}/pass_json/"
+        RestClient::Request.execute(:method => 'post',  :url => remote_post_url, :payload => order.to_json, :headers => {"Content-Type" => "application/json"})
+      end
     end
 
     unless params[:go_to_patient_dashboard].blank?

@@ -1,0 +1,14 @@
+development:
+  protocol: http
+  host: localhost
+  port: 3014
+  order_path: /create_hl7_order
+  query_path: /query_results/
+  district: Lilongwe
+  health_facility_name: Martin Preuss Centre
+
+test:
+  <<: *development
+
+production:
+  <<: *development
