@@ -27,7 +27,7 @@ def start
 
   FasterCSV.foreach("#{Parent_path}/tb_follow_up.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
     patient_id = row[3].to_i
-    date_created = get_proper_date(row[1]).to_date rescue nil
+    date_created = get_proper_date(row[9]).to_date rescue nil
     next_visit = get_proper_date(row[10]).to_date rescue nil
     ref_id = row[0].to_i
     next if date_created.blank? || patient_id.blank?
@@ -47,10 +47,9 @@ def start
      Hiv_reception_encounter.id])
 
     if encounter.blank?
-      puts "Creating HIV Clinic reception for #{patient_id}"
+      puts ">>>#{encounter_id} ############# HIV Clinic reception for #{patient_id}"
       self.create_hiv_reception(encounter_id, patient_id, date_created)
       encounter_id = encounter_id.to_i + 1
-      puts ">>> #{encounter_id}"
     else
       puts "Patient has encounters recorded!!"
     end
@@ -59,19 +58,18 @@ def start
    weight = row[28].to_f rescue nil
    height = row[29].to_f rescue nil
    vitals_encounter = nil
-
+   
+   puts ">>>#{encounter_id} ############# Vitals for #{patient_id}"
    unless weight.blank? 
      vitals_encounter = self.create_encounter(encounter_id, patient_id, Vitals.id, date_created)
      self.create_observation_value_numeric(vitals_encounter, "Weight (kg)", weight)
      encounter_id = encounter_id.to_i + 1
-     puts ">>> #{encounter_id}"
    end
    
    unless height.blank?
      vitals_encounter = self.create_encounter(encounter_id, patient_id, Vitals.id, date_created) if vitals_encounter.blank?
      self.create_observation_value_numeric(vitals_encounter, "Height (cm)", height)
      encounter_id = encounter_id.to_i + 1
-     puts ">>> #{encounter_id}"
    end
    ###########################################################################################
 
@@ -81,17 +79,18 @@ def start
   date_cd4_count = get_proper_date(row[14]).to_date unless row[14].blank?
 
   ############################ hiv staging and clinical consultation #########################
-  s_c = @@patient_visits[patient_id][date_created] rescue []
+  #s_c = @@patient_visits[patient_id][date_created] rescue []
+  s_c = @@patient_visits[ref_id] rescue []
 
   hiv_staging_encounter = Encounter.find(:last, :conditions => ["patient_id = ? and encounter_datetime <= ? 
     and encounter_type = ?",patient_id, end_date, HIV_staging.id])
 
   if hiv_staging_encounter.blank?
+   puts ">>>#{encounter_id} ############# HIV Staging for #{patient_id}"
    hiv_staging_encounter = self.create_encounter(encounter_id, patient_id, HIV_staging.id, date_created) if hiv_staging_encounter.blank?
    encounter_id = encounter_id + 1
    (s_c || []).each do |cond|
      self.create_observation_value_coded(hiv_staging_encounter, "WHO Stage defining conditions not explicitly asked adult", cond)
-     puts "#{hiv_staging_encounter.patient_id}:::::::::: #{cond}"
     end 
     encounter_id = encounter_id + 1
   end 
@@ -108,7 +107,8 @@ def start
     self.create_observation_value_numeric(hiv_staging_encounter, 'CD4 count', cd4_count)
     self.create_observation_value_datetime(hiv_staging_encounter, 'Date of CD4 count', date_cd4_count)
   end rescue nil
-
+   
+  puts ">>>#{encounter_id} ############# Clinic consultation for #{patient_id}"
   hiv_clinic_registration_encounter = self.create_encounter(encounter_id, patient_id, HIV_clinic_consultation.id, date_created)
   encounter_id = encounter_id + 1
   if diagnostic_2.match(/preg/i) || diagnostic.match(/preg/i)
@@ -132,7 +132,6 @@ def start
   end rescue nil
 
           # >>>>>>>>>>>>>>>>>>> Associated symptoms <<<<<<<<<<<<<<<<<<<<< #
-=begin
   if diagnostic_2.match(/cough/i) || diagnostic.match(/cough/i)
     self.create_observation_value_coded(hiv_clinic_registration_encounter, 'TB symptoms', 'Cough')
   end rescue nil
@@ -221,16 +220,15 @@ def start
 
   ##########################################################################################
 =end
-=begin
   ################################ set appointment #########################################
   if !next_visit.blank?
-    appointment_encounter = self.create_encounter(patient_id, Appointment.id, date_created)
-    #raise appointment_encounter.inspect
+    puts ">>>#{encounter_id} ############# Appointment for: #{patient_id}"
+    appointment_encounter = self.create_encounter(encounter_id, patient_id, Appointment.id, date_created)
+    encounter_id = encounter_id + 1
     self.create_observation_value_datetime(appointment_encounter, "Appointment date", next_visit)
-    puts "Setting appointment for...... #{patient_id}"
   end
   ##########################################################################################
-=end
+
   end
 
   puts "Script time: #{ScriptStared} - #{Time.now()}"
@@ -259,7 +257,6 @@ def get_patient_drug(parent_path, patient_id)
 end
 
 def self.create_hiv_reception(enc_id, patient_id, date_created)
-  puts "Creating HIV reception for: #{patient_id}"
   encounter = self.create_encounter(enc_id, patient_id, Hiv_reception_encounter.id, date_created)
   if !encounter.blank?
     self.create_observation_value_coded(encounter,  "Guardian present", "No") 
@@ -388,7 +385,13 @@ def setup_staging_conditions
     	"Isosporiasis" => 'Isosporiasis', 
     	"Seborrheic dermatitis" => 'Seborrhoeic dermatitis',
     	"Wart infection" => 'Wart virus infection',
-    	"Papular pruritic eruption" => 'Papular pruritic eruptions'
+    	"Papular pruritic eruption" => 'Papular pruritic eruptions',
+      "Malnutrition moderate" => 'Malnutrition',
+      "Progressive multifocal leukoencephalopathy" => 'Progressive multifocal leukoencephalopathy',
+      "Unexplained anaemia/neutropenia/trombocytopenia" => 'Unexplained anaemia, neutropaenia, or throbocytopaenia',
+      "Acute necrotizing ulcerative stomatitis" => ' Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis',
+      "Oral ulcerations" => 'Oral ulcerations, recurrent',
+      "Persistent generalized lymphadenopathy" => 'Persistent generalized lymphadenopathy'
   }
 
   conditions = []
@@ -397,7 +400,7 @@ def setup_staging_conditions
     conditions << row[4].to_i
     conditions = conditions.uniq
   end
-
+=begin
   FasterCSV.foreach("#{Parent_path}/TbPatientDiagnosis.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
     patient_id = row[3].to_i
     date_created = get_proper_date(row[1]).to_date rescue nil
@@ -413,6 +416,16 @@ def setup_staging_conditions
    end
    @@patient_visits[patient_id][date_created] << @@conditions_map[get_references(Parent_path,row[4])]
    @@patient_visits[patient_id][date_created] = @@patient_visits[patient_id][date_created].uniq
+  end
+=end
+  FasterCSV.foreach("#{Parent_path}/TbFollowUpDiagnosis.csv", :headers => true, :quote_char => '"', :col_sep => ',', :row_sep => :auto) do |row|
+    follow_up_reference = row[3].to_i
+
+    if @@patient_visits[follow_up_reference].blank?
+      @@patient_visits[follow_up_reference] = []
+    end
+    @@patient_visits[follow_up_reference] << @@conditions_map[get_references(Parent_path, row[4])]
+    @@patient_visits[follow_up_reference] = @@patient_visits[follow_up_reference].uniq
   end
 end
 
