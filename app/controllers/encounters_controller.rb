@@ -1100,8 +1100,8 @@ class EncountersController < GenericEncountersController
         ['Male condoms', 'MALE CONDOMS'],
         ['Female condoms', 'FEMALE CONDOMS'],
         ['Rhythm method', 'RYTHM METHOD'],
-        ['Withdrawal method', 'WITHDRAWAL METHOD'],
-        ['Abstinence', 'ABSTINENCE'],
+        #['Withdrawal method', 'WITHDRAWAL METHOD'],
+        #['Abstinence', 'ABSTINENCE'],
         ['Tubal ligation', 'TUBAL LIGATION'],
         ['Vasectomy', 'VASECTOMY']
       ],
