@@ -3962,6 +3962,9 @@ EOF
       data = JSON.parse(RestClient.get(url)) rescue []
       @latest_date = data.last[0].to_date rescue nil
       @latest_result = data.last[1]["Viral Load"].strip.scan(/\d+/).first rescue nil
+
+      @latest_result = "Rejected" if (data.last[1]["Viral Load"] rescue nil) == "Rejected"
+
       @modifier = data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue nil
 
       @date_vl_result_given = nil
@@ -3978,9 +3981,20 @@ EOF
       @vl_result_hash = []
       (trail || []).each do |order|
           results = order['results']['Viral Load']
+          if order['status'].match(/rejected|voided/i)
+            @vl_result_hash << [order['_id'], {"result_given" =>  'no',
+                           "result" => order['status'].humanize,
+                           "date_of_sample" => order['date_time'].to_date,
+                           "date_result_given" => "",
+                           "second_line_switch" => '?'
+                        }
+            ]
+            next
+          end
+
           next if results.blank?
-          timestamp = results.keys.sort.last
-          next if (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
+          timestamp = results.keys.sort.last rescue nil
+          next if (!order['status'].match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
           result = results[timestamp]['results']
 
           date_given = nil
@@ -4000,7 +4014,6 @@ EOF
                         }
           ]
       end
-
 
     else
       patient_identifiers = PatientIdentifier.find(:all, :conditions=>["patient_id=? AND
@@ -4025,6 +4038,7 @@ EOF
     ).answer_string.squish.upcase rescue nil
 
     @high_vl = true
+
     if (@latest_result.to_i < 1000)
       @high_vl = false
     end

@@ -189,7 +189,7 @@ class GenericLabController < ApplicationController
                :first_name=> patient_bean.name.split(/\s+/).first,
                :last_name=>  patient_bean.name.split(/\s+/).last,
                :middle_name=>"",
-               :date_of_birth=> patient_bean.birth_date.to_date,
+               :date_of_birth=> (patient_bean.birth_date.to_date rescue nil),
                :gender=> ((patient_bean.sex == "Female") ? "F" : "M"),
                :national_patient_id=> patient_bean.national_id,
                :phone_number=> (patient_bean.cell_phone_number ||

@@ -170,6 +170,8 @@ div, table{
       <% unless @latest_result.blank?%>
           <% if @high_vl == true %>
               <span style="letter-spacing: 8px;font-weight:bold; font-family: Nimbus Sans L; margin-left: 13%; color: red; font-size: 19px"><blink>HIGH VIRAL LOAD</blink></span>
+          <% elsif @latest_result.match(/rejected/i) %>
+              <span style="letter-spacing: 8px;font-weight:bold; font-family: Nimbus Sans L; margin-left: 13%; color: red; font-size: 19px"><blink>Viral Load Rejected</blink></span>
           <% else %>
               <span style="font-weight:bold; font-family: Nimbus Sans L; margin-left: 35%;">VIRAL LOAD</span>
           <% end %>
@@ -185,6 +187,8 @@ div, table{
             <% unless @latest_result.blank?%>
                 <% if @high_vl == true %>
                   <td style="color:red; font-weight: bold; font-size: 14px"><%= (@modifier + ' ' + @latest_result.to_s) rescue nil %></td>
+                <% elsif @latest_result.match(/rejected/i)%>
+                        <td><span style="margin-left: 8%; font-weight: bold; color: red">Rejected</span></td>
                 <% else %>
                   <td style=""><%= (@modifier + ' ' + @latest_result.to_s) rescue nil %></td>
                 <% end %>
