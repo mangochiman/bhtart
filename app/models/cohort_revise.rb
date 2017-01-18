@@ -672,20 +672,67 @@ Unique PatientProgram entries at the current location for those patients with at
   end
 
   def self.get_disaggregated_cohort(start_date, end_date, gender, ag)
+    if ag == '50+ years'
+      diff = [50, 1000]
+      iu = 'year'
+    elsif ag.match(/years/i)
+      diff = ag.sub(' years','').split('-')
+      iu = 'year'
+    elsif ag.match(/months/i)
+      diff = ag.sub(' months','').split('-')
+      iu = 'month'
+    else
+      if gender == 'M'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'M'
+      elsif gender == 'FNP'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'F'
+      elsif gender == 'FP'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'F'
+      elsif gender == 'FBf'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'F'
+      end
+    end
 
-    if ag == '0-5 months'
-      data = ActiveRecord::Base.connection.select_one <<EOF
-      SELECT count(*) as started FROM temp_earliest_start_date 
-      WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-      AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
+    data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT patient_id  FROM temp_earliest_start_date  
+    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}'
+    AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i};
 EOF
 
+    data1 = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT t1.patient_id FROM temp_earliest_start_date t1
+    INNER JOIN temp_patient_outcomes t2 ON t1.patient_id = t2.patient_id
+    WHERE date_enrolled <= '#{end_date.to_date}' AND gender = '#{gender.first}'
+    AND cum_outcome = 'On antiretrovirals'
+    AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i};
+EOF
 
+=begin
+    data2 = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT count(*) as started FROM temp_earliest_start_date 
+    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
+EOF
 
-      return [data['started'], 0, 0, 0]
-    else
-      return [0, 0, 0, 0]
+    data3 = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT count(*) as started FROM temp_earliest_start_date 
+    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
+EOF
+=end
+
+    unless data1.blank?
     end
+
+    return [
+      (data.length rescue 0), 
+      (data1.length rescue 0),
+       0, 0]
   end
 
   private

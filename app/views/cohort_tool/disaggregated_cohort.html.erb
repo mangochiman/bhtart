@@ -7,6 +7,8 @@
 th, td {
   border-style: solid;
   border-width: 1px;
+  text-align: left;
+  padding-left: 10px;
 }
 
 .table-container {
@@ -14,10 +16,14 @@ th, td {
   height: 85%;
 }
 
-#header-fixed { 
-  position: fixed; 
-  top: 0px; display:none;
-  background-color:white;
+.data td {
+  text-align: right;
+  padding-right: 10px;
+}
+
+.data-header {
+  text-align: right;
+  padding-right: 10px;
 }
 
 </style>
@@ -49,20 +55,20 @@ th, td {
     <th>Indicator</th>
     <th>&nbsp;</th>
     <th>&nbsp;</th>
-    <th>A</th>
-    <th>B</th>
-    <th>C</th>
-    <th>D</th>
+    <th style="text-align: center;">A</th>
+    <th style="text-align: center;">B</th>
+    <th style="text-align: center;">C</th>
+    <th style="text-align: center;">D</th>
   </tr>
 
   <tr>
     <th>Sub Group</th>
     <th>Age</th>
     <th>Sex</th>
-    <th>Started on ART</th>
-    <th>Alive on ART</th>
-    <th>Started on IPT</th>
-    <th>Screened for TB</th>
+    <th class="data-header">Started on ART</th>
+    <th class="data-header">Alive on ART</th>
+    <th class="data-header">Started on IPT</th>
+    <th class="data-header">Screened for TB</th>
   </tr>
 
   </thead>
@@ -85,7 +91,7 @@ th, td {
     end
   end%>
 
-  <tr class="data">
+  <!--tr class="data">
     <th>25</th>
     <th>All</th>
     <th>M</th>
@@ -123,7 +129,7 @@ th, td {
     <td><%=%></td>
     <td><%=%></td>
     <td><%=%></td>
-  </tr>
+  </tr-->
 
   </tbody>
 
