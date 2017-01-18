@@ -117,6 +117,105 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   var current_patient_bmi = '<%= @current_patient_bmi %>'
   var current_weight_percentile = '<%= @current_weight_percentile %>'
 
+  var familyPlanningLogic = {
+    "ORAL CONTRACEPTIVE PILLS":{
+      "DEPO-PROVERA":'N', "INTRAUTERINE CONTRACEPTION":'N', 'CONTRACEPTIVE IMPLANT':'N',
+      'MALE CONDOMS':'Y', 'FEMALE CONDOMS':'Y', 'RYTHM METHOD': 'N', 'TUBAL LIGATION':'N',
+      'VASECTOMY':'N'},
+    "DEPO-PROVERA":{
+      "ORAL CONTRACEPTIVE PILLS":'N', "INTRAUTERINE CONTRACEPTION":'N', 'CONTRACEPTIVE IMPLANT':'N',
+      'MALE CONDOMS':'Y', 'FEMALE CONDOMS':'Y', 'RYTHM METHOD': 'N', 'TUBAL LIGATION':'N',
+      'VASECTOMY':'N'},
+    "INTRAUTERINE CONTRACEPTION":{
+      "ORAL CONTRACEPTIVE PILLS":'N', "DEPO-PROVERA":'N', 'CONTRACEPTIVE IMPLANT':'N',
+      'MALE CONDOMS':'Y', 'FEMALE CONDOMS':'Y', 'RYTHM METHOD': 'N', 'TUBAL LIGATION':'N',
+      'VASECTOMY':'N'},
+    "CONTRACEPTIVE IMPLANT":{
+      "ORAL CONTRACEPTIVE PILLS":'N', "DEPO-PROVERA":'N', 'INTRAUTERINE CONTRACEPTION':'N',
+      'MALE CONDOMS':'Y', 'FEMALE CONDOMS':'Y', 'RYTHM METHOD': 'N', 'TUBAL LIGATION':'N',
+      'VASECTOMY':'N'},
+    "MALE CONDOMS":{
+      "ORAL CONTRACEPTIVE PILLS":'Y', "DEPO-PROVERA":'Y', 'INTRAUTERINE CONTRACEPTION':'Y',
+      'CONTRACEPTIVE IMPLANT':'Y', 'FEMALE CONDOMS':'N', 'RYTHM METHOD': 'Y', 'TUBAL LIGATION':'N',
+      'VASECTOMY':'Y'},
+    "FEMALE CONDOMS":{
+      "ORAL CONTRACEPTIVE PILLS":'Y', "DEPO-PROVERA":'Y', 'INTRAUTERINE CONTRACEPTION':'Y',
+      'CONTRACEPTIVE IMPLANT':'Y', 'MALE CONDOMS':'N', 'RYTHM METHOD': 'Y', 'TUBAL LIGATION':'N',
+      'VASECTOMY':'Y'},
+    "RYTHM METHOD":{
+      "ORAL CONTRACEPTIVE PILLS":'N', "DEPO-PROVERA":'N', 'INTRAUTERINE CONTRACEPTION':'N',
+      'MALE CONDOMS':'Y', 'FEMALE CONDOMS':'Y', 'CONTRACEPTIVE IMPLANT': 'N', 'TUBAL LIGATION':'N',
+      'VASECTOMY':'N'},
+    "TUBAL LIGATION":{
+      "ORAL CONTRACEPTIVE PILLS":'N', "DEPO-PROVERA":'N', 'INTRAUTERINE CONTRACEPTION':'N',
+      'MALE CONDOMS':'N', 'FEMALE CONDOMS':'N', 'CONTRACEPTIVE IMPLANT': 'N', 'RYTHM METHOD':'N',
+      'VASECTOMY':'N'},
+    "VASECTOMY":{
+      "ORAL CONTRACEPTIVE PILLS":'N', "DEPO-PROVERA":'N', 'INTRAUTERINE CONTRACEPTION':'N',
+      'MALE CONDOMS':'N', 'FEMALE CONDOMS':'N', 'CONTRACEPTIVE IMPLANT': 'N', 'RYTHM METHOD':'N',
+      'TUBAL LIGATION':'N'}
+  }
+
+  var family_planning_interval;
+
+  function controlFamilyPlanningMethodsSelection(){
+    liOptions = jQuery("li");
+    
+    if (__$('touchscreenInput' + tstCurrentPage).value.length < 1){
+      console.log('Nothing is selected')
+      resetElements(liOptions)
+    }
+
+    if (__$('touchscreenInput' + tstCurrentPage).value.length > 0){
+      first_family_planning = __$('touchscreenInput' + tstCurrentPage).value.split(';')[0].toUpperCase();
+      for (var i=0; i<=liOptions.length - 1; i++){
+        familyPlanningMethods = familyPlanningLogic[first_family_planning];
+        for (var key in familyPlanningMethods){
+          value = familyPlanningMethods[key];
+          liOption = jQuery( "li[tstvalue=" + key + "]" )[0];
+          if (value == 'N'){
+            liOption.onclick = function(){
+              console.log('Disabled')
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function resetElements(liOptions){
+    for (var i=0; i<=liOptions.length - 1; i++){
+      liOptions[i].onclick = function(){
+        updateTouchscreenInputForSelect(__$('optionValue' + this.id), this);
+        console.log('resetting')
+      }
+    }
+  }
+
+  function startFamilyPlanningTimer(){
+    family_planning_interval = window.setInterval("controlFamilyPlanningMethodsSelection()", 500);
+  }
+
+  function stopFamilyPlanningTimer(){
+    clearInterval(family_planning_interval);
+  }
+
+  function resetSelectOptions(obj){
+    obj.setAttribute("onclick", "null; updateTouchscreenInputForSelect(__$('optionValue' + this.id), this)");
+  }
+
+  function addEvent(obj, evType, fn) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evType, fn, false);
+      return true;
+    } else if (obj.attachEvent) {
+      var r = obj.attachEvent("on" + evType, fn);
+      return r;
+    } else {
+      alert("Handler could not be attached");
+    }
+  }
+
   function getNumberOfSymptoms(){
     var options = $('symptoms').options
     var symptoms = 0;
@@ -695,7 +794,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         }
       }
  
-    } 
+    }
   }
 
   function preselectSelectedTBSymptoms(){
@@ -728,7 +827,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         }
       }
  
-    } 
+    }
   }
 
   function validateSideEffectsInput(){
@@ -809,7 +908,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   
   function hideCategory() {
     document.getElementById('category').style = 'display: none;'
-  } 
+  }
 
   var calculatedWeightlossPercent = null;
 
@@ -820,7 +919,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     //%Decrease = Decrease ÷ Original Number × 100
     If your answer is a negative number then this is a percentage increase.
     Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
-*/
+     */
     if(currentWeight.length < 1 || previousWeight.length < 1)
       return 0;
 
@@ -908,7 +1007,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
         {:id => "fpm_used",
         :condition => "$('on_fpm').value == 'YES' && $('pregnant').value != 'YES'",
-        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false",
+        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer();",
+        :tt_onUnLoad => "stopFamilyPlanningTimer();",
         :multiple => true,
         :tt_pageStyleClass => "NoKeyboard",
         :helpText => "What method?" } %>
