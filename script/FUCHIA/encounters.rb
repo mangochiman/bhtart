@@ -18,7 +18,15 @@ Parent_path = '/home/pachawo/Documents/msf'
 @@drug_follow_up = {}
 
 def start
-  `touch /home/pachawo/pats/encounter.sql` 
+  `touch /home/pachawo/pats/encounters.sql`
+  `touch /home/pachawo/pats/observations.sql`
+  
+  obs =  "INSERT INTO obs (person_id, encounter_id, concept_id, value_numeric,value_coded, value_datetime, obs_datetime, creator, uuid) VALUES "
+  
+  encounter =  "INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, encounter_datetime, creator, uuid) VALUES "
+  
+  `echo '#{encounter}' >> /home/pachawo/pats/encounters.sql` 
+  `echo '#{obs}' >> /home/pachawo/pats/observations.sql`
   if Encounter_id.blank?
     encounter_id = 1
   else
@@ -69,7 +77,7 @@ def start
    unless height.blank?
      vitals_encounter = self.create_encounter(encounter_id, patient_id, Vitals.id, date_created) if vitals_encounter.blank?
      self.create_observation_value_numeric(vitals_encounter, "Height (cm)", height)
-     encounter_id = encounter_id.to_i + 1
+     encounter_id = encounter_id.to_i + 1 if vitals_encounter.blank?
    end
    ###########################################################################################
 
@@ -277,10 +285,9 @@ def self.create_encounter(encounter_id, patient_id, encounter_type_id, date_crea
 EOF
     date_created =date_created.strftime("%Y-%m-%d 00:00:00")
 
-    insert_encounters =  "INSERT INTO encounter (encounter_type, patient_id, encounter_datetime, creator, uuid) "
-    insert_encounters += "VALUES (\"#{encounter_type_id}\",\"#{patient_id}\",\"#{date_created}\",\"#{User.current.id}\",\"#{uuid.values.first}\");"
+    insert_encounters = "(\"#{encounter_id}\",\"#{encounter_type_id}\",\"#{patient_id}\",\"#{encounter.patient_id}\",\"#{date_created}\",\"#{User.current.id}\",\"#{uuid.values.first}\");"
 
-    `echo '#{insert_encounters}' >> /home/pachawo/pats/encounter.sql`
+    `echo -n '#{insert_encounters}' >> /home/pachawo/pats/encounters.sql`
   end
 
   return encounter
@@ -293,12 +300,11 @@ def self.create_observation_value_numeric(encounter, concept_name, value)
      select uuid();
 EOF
     
-    insert_observation =  "INSERT INTO obs (person_id, encounter_id, concept_id, value_numeric, obs_datetime, creator, uuid) "
-    insert_observation += "VALUES (\"#{encounter.patient_id}\",\"#{encounter.id}\",\"#{concept_id}\", "
-    insert_observation += "\"#{value}\", \"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\", "
-    insert_observation += "\"#{User.current.id}\", \"#{uuid.values.first}\"); \t"
+    insert_observation = "(\"#{encounter.patient_id}\",\"#{encounter.id}\",\"#{concept_id}\","
+    insert_observation += "\"#{value}\",\" \",\" \",\"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\","
+    insert_observation += "\"#{User.current.id}\",\"#{uuid.values.first}\"), "
 
-    `echo '#{insert_observation}' >> /home/pachawo/pats/encounter.sql`
+    `echo -n '#{insert_observation}' >> /home/pachawo/pats/observations.sql`
 end
 
 def self.create_observation_value_coded(encounter, concept_name, value_coded_concept_name)
@@ -308,12 +314,11 @@ def self.create_observation_value_coded(encounter, concept_name, value_coded_con
     uuid =ActiveRecord::Base.connection.select_one <<EOF
      select uuid();
 EOF
-    insert_observation_value_coded =  "INSERT INTO obs(person_id,encounter_id,concept_id,value_coded,datetime,creater,uuid) "
-    insert_observation_value_coded += "VALUES(\"#{encounter.patient_id}\",\"#{encounter.id}\",\"#{concept_id}\","
-    insert_observation_value_coded += "\"#{value_coded}\",\"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\","
-    insert_observation_value_coded += "\"#{User.current.id}\",\"#{uuid.values.first}\"); \t"
+    insert_observation_value_coded = "(\"#{encounter.patient_id}\",\"#{encounter.id}\",\"#{concept_id}\",\" \","
+    insert_observation_value_coded += "\"#{value_coded}\",\" \",\"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\","
+    insert_observation_value_coded += "\"#{User.current.id}\",\"#{uuid.values.first}\"), "
 
-    `echo '#{insert_observation_value_coded}' >> /home/pachawo/pats/encounter.sql`
+    `echo -n '#{insert_observation_value_coded}' >> /home/pachawo/pats/observations.sql`
 end
 
 def self.create_observation_value_datetime(encounter, concept_name, date)
@@ -322,12 +327,11 @@ def self.create_observation_value_datetime(encounter, concept_name, date)
     uuid =ActiveRecord::Base.connection.select_one <<EOF
      select uuid();
 EOF
-    insert_observation_value_datetime =  "INSERT INTO obs(person_id,encounter_id,concept_id,value_datetime,datetime,creater,uuid) "
-    insert_observation_value_datetime += "VALUES(\"#{encounter.patient_id}\",\"#{encounter.id}\",\"#{concept_id}\","
+    insert_observation_value_datetime = "(\"#{encounter.patient_id}\",\"#{encounter.id}\",\"#{concept_id}\",\" \",\" \","
     insert_observation_value_datetime += "\"#{date.strftime("%Y-%m-%d %H:%M:%S")}\",\"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\","
-    insert_observation_value_datetime += "\"#{User.current.id}\",\"#{uuid.values.first}\"); \t"
+    insert_observation_value_datetime += "\"#{User.current.id}\",\"#{uuid.values.first}\"), "
 
-    `echo '#{insert_observation_value_datetime}' >> /home/pachawo/pats/encounter.sql`
+    `echo -n '#{insert_observation_value_datetime}' >> /home/pachawo/pats/observations.sql`
 end
 
 def get_proper_date (unfomatted_date)
