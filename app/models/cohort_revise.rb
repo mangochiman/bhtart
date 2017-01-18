@@ -671,6 +671,22 @@ Unique PatientProgram entries at the current location for those patients with at
 
   end
 
+  def self.get_disaggregated_cohort(start_date, end_date, gender, ag)
+
+    if ag == '0-5 months'
+      data = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT count(*) as started FROM temp_earliest_start_date 
+      WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+      AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
+EOF
+
+
+
+      return [data['started'], 0, 0, 0]
+    else
+      return [0, 0, 0, 0]
+    end
+  end
 
   private
 

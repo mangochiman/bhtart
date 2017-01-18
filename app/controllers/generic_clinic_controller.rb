@@ -133,6 +133,7 @@ class GenericClinicController < ApplicationController
   def reports_tab
     @reports = [
       ["Cohort","/cohort_tool/cohort_menu"],
+      ["ART disaggregated cohort","/cohort_tool/disaggregated_cohort_menu"],
       ["Revised Cohort","/cohort_tool/revised_cohort_menu"],
       ["Revised Cohort Survival Analysis","/cohort_tool/revised_cohort_survival_analysis_menu"],
       ["Supervision","/clinic/supervision_tab"],

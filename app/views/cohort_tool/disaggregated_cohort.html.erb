@@ -1,0 +1,137 @@
+<style>
+#disaggregated_cohort {
+  width: 99%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border-style: solid;
+  border-width: 1px;
+}
+
+.table-container {
+  overflow: auto;
+  height: 85%;
+}
+
+#header-fixed { 
+  position: fixed; 
+  top: 0px; display:none;
+  background-color:white;
+}
+
+</style>
+
+
+
+<div class="table-container">
+
+<table id="disaggregated_cohort" cellspacing='0'>
+ 
+  <thead>
+ 
+  <tr>
+    <th colspan="2">Clinic name:</th>
+    <th>&nbsp;</th>
+    <td colspan="4"><%= Location.current_health_center.name %></td>
+  </tr>
+
+  <tr>
+    <th colspan="2">Year</th>
+    <th>&nbsp;</th>
+    <td><%=@quarter.split(' ')[1]%></td>
+    <th>&nbsp;</th>
+    <th>Quarter</th>
+    <td><%=@quarter.split(' ')[0]%></td>
+  </tr>
+
+  <tr>
+    <th>Indicator</th>
+    <th>&nbsp;</th>
+    <th>&nbsp;</th>
+    <th>A</th>
+    <th>B</th>
+    <th>C</th>
+    <th>D</th>
+  </tr>
+
+  <tr>
+    <th>Sub Group</th>
+    <th>Age</th>
+    <th>Sex</th>
+    <th>Started on ART</th>
+    <th>Alive on ART</th>
+    <th>Started on IPT</th>
+    <th>Screened for TB</th>
+  </tr>
+
+  </thead>
+
+  <tbody>
+
+  <%@disaggregated_age_groups.sort_by{|x, y | x }.each do |counter, genders|
+    genders.each do |gender, age_groups|
+    age_groups.each do |age_group, num|%>
+      <tr class="data">
+        <th><%=counter%></th>
+        <th><%=age_group%></th>
+        <th><%=gender%></th>
+        <td><%=num[0]%></td>
+        <td><%=num[1]%></td>
+        <td><%=num[2]%></td>
+        <td><%=num[3]%></td>
+      </tr>
+    <%end
+    end
+  end%>
+
+  <tr class="data">
+    <th>25</th>
+    <th>All</th>
+    <th>M</th>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+  </tr>
+
+  <tr>
+    <th>26</th>
+    <th>All</th>
+    <th>FNP</th>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+  </tr>
+
+  <tr>
+    <th>27</th>
+    <th>All</th>
+    <th>FP</th>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+  </tr>
+
+  <tr>
+    <th>28</th>
+    <th>All</th>
+    <th>FBf</th>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+    <td><%=%></td>
+  </tr>
+
+  </tbody>
+
+</table>
+
+</div>
+
+<script>
+
+
+</script>
