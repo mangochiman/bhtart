@@ -5,14 +5,14 @@ CDCDataExtraction = 1
 def start
   facility_name = GlobalProperty.find_by_sql("select property_value from global_property where property = 'current_health_center_name'").map(&:property_value).first
 
-  start_date = "2016-10-01".to_date
-  end_date = "2016-12-31".to_date
+  start_date = "2016-01-01".to_date
+  end_date = "2016-03-31".to_date
   puts "CDC ART data extraction............................................................................................"
 
   puts "New on ART (Newly registered)......................................................................................"
   total_new_on_art = new_on_art(start_date, end_date, nil, nil)
   new_on_art_less_1 = new_on_art(start_date, end_date, 0, 1)
-  new_on_art_between_1_and_9 = new_on_art(start_date, end_date, 1, 9)
+  new_on_art_between_1_and_9 = new_on_art(start_date, end_date, 2, 9)
   new_on_art_btwn_10_14_female = new_on_art(start_date, end_date, 10, 14, 'F')
   new_on_art_btwn_10_14_male = new_on_art(start_date, end_date, 10, 14, 'M')
   new_on_art_less_15_19_female = new_on_art(start_date, end_date, 15, 19, 'F')
@@ -31,7 +31,7 @@ def start
   puts "Receving ART (Total registered- Cumulative)........................................................................................."
   total_receiving_art_cumulative = receiving_art_cumulative(start_date, end_date, nil, nil)
   receiving_art_cumulative_less_1 = receiving_art_cumulative(start_date, end_date, 0, 1)
-  receiving_art_cumulative_between_1_and_9 = receiving_art_cumulative(start_date, end_date, 1, 9)
+  receiving_art_cumulative_between_1_and_9 = receiving_art_cumulative(start_date, end_date, 2, 9)
   receiving_art_cumulative_btwn_10_14_female = receiving_art_cumulative(start_date, end_date, 10, 14, 'F')
   receiving_art_cumulative_btwn_10_14_male = receiving_art_cumulative(start_date, end_date, 10, 14, 'M')
   receiving_art_cumulative_less_15_19_female = receiving_art_cumulative(start_date, end_date, 15, 19, 'F')
@@ -50,7 +50,7 @@ def start
   puts "New PLHIV with screened TB status(Newly registered).............................................."
   total_plhiv_screened_tb_status = plhiv_screened_tb_status(start_date, end_date, nil, nil)
   #plhiv_screened_tb_status_less_1 = plhiv_screened_tb_status(start_date, end_date, 0, 1)
-  #plhiv_screened_tb_status_between_1_and_9 = plhiv_screened_tb_status(start_date, end_date, 1, 9)
+  #plhiv_screened_tb_status_between_1_and_9 = plhiv_screened_tb_status(start_date, end_date, 2, 9)
   #plhiv_screened_tb_status_btwn_10_14_female = plhiv_screened_tb_status(start_date, end_date, 10, 14, 'F')
   #plhiv_screened_tb_status_btwn_10_14_male = plhiv_screened_tb_status(start_date, end_date, 10, 14, 'M')
   #plhiv_screened_tb_status_less_15_19_female = plhiv_screened_tb_status(start_date, end_date, 15, 19, 'F')
@@ -69,7 +69,7 @@ def start
   puts "Total alive and on ARVS at 12 months after initiation.............................................."
   total_alive_and_on_ARVS_at_12_months_after_initiation = alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, nil, nil)
   alive_and_on_ARVS_at_12_months_after_initiation_less_1 = alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, 0, 1)
-  alive_and_on_ARVS_at_12_months_after_initiation_between_1_and_9 = alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, 1, 9)
+  alive_and_on_ARVS_at_12_months_after_initiation_between_1_and_9 = alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, 2, 9)
   alive_and_on_ARVS_at_12_months_after_initiation_btwn_10_14_female = alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, 10, 14, 'F')
   alive_and_on_ARVS_at_12_months_after_initiation_btwn_10_14_male = alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, 10, 14, 'M')
   alive_and_on_ARVS_at_12_months_after_initiation_less_15_19_female = alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, 15, 19, 'F')
@@ -88,7 +88,7 @@ def start
   puts "Total initiated in 12 months........................................................................."
   total_total_initiated_in_12_months = total_initiated_in_12_months(start_date, end_date, nil, nil)
   total_initiated_in_12_months_less_1 = total_initiated_in_12_months(start_date, end_date, 0, 1)
-  total_initiated_in_12_months_between_1_and_9 = total_initiated_in_12_months(start_date, end_date, 1, 9)
+  total_initiated_in_12_months_between_1_and_9 = total_initiated_in_12_months(start_date, end_date, 2, 9)
   total_initiated_in_12_months_btwn_10_14_female = total_initiated_in_12_months(start_date, end_date, 10, 14, 'F')
   total_initiated_in_12_months_btwn_10_14_male = total_initiated_in_12_months(start_date, end_date, 10, 14, 'M')
   total_initiated_in_12_months_less_15_19_female = total_initiated_in_12_months(start_date, end_date, 15, 19, 'F')
