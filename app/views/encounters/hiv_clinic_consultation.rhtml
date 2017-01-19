@@ -1005,6 +1005,41 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     }
 
   }
+
+  function hideSafeFamillyPlanningPopup(){
+    document.getElementById("safe-family-planning-popup-div").style.display = 'none';
+    document.getElementById("safe-family-planning-cover").style.display = 'none';
+  }
+
+  function showSafeFamilyPlanningMethodsPopup(){
+    document.getElementById("safe-family-planning-popup-div").style.display = 'inline';
+    document.getElementById("safe-family-planning-cover").style.display = 'inline';
+  }
+
+  function setOptionsForSafeFamilyPlanningMethodsPopup(){
+    male_condoms_option_input = jQuery("li[tstvalue='MALE CONDOMS']")[0];
+    female_condoms_option_input = jQuery("li[tstvalue='FEMALE CONDOMS']")[0];
+
+    addEvent(male_condoms_option_input, "click", function() {
+      if (male_condoms_option_input.style.backgroundColor.match(/lightblue/i)){
+        selectedValues = $("touchscreenInput" + tstCurrentPage).value.split(";");
+        if (selectedValues.length == 1){
+          showSafeFamilyPlanningMethodsPopup();
+        }
+      }
+    })
+      
+    addEvent(female_condoms_option_input, "click", function() {
+      if (female_condoms_option_input.style.backgroundColor.match(/lightblue/i)){
+        selectedValues = $("touchscreenInput" + tstCurrentPage).value.split(";");
+        if (selectedValues.length == 1){
+          showSafeFamilyPlanningMethodsPopup();
+        }
+      }
+    })
+    
+  }
+  
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -1095,7 +1130,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
         {:id => "fpm_used",
         :condition => "$('pregnant').value != 'YES'",
-        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning();', 300)",
+        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning(); setOptionsForSafeFamilyPlanningMethodsPopup();', 300);",
         :tt_onUnLoad => "stopFamilyPlanningTimer(); updateFamilyPlanningHiddenField();",
         :multiple => true,
         :tt_pageStyleClass => "NoKeyboard",
@@ -1104,11 +1139,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       <%= touch_select_tag "FAMILY PLANNING, ACTION TO TAKE", @patient, options_for_select(@select_options['family_planning_methods']),
         {:id => "fpm_used",
         :condition => "$('pregnant').value != 'YES'",
-        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning();', 300)",
+        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning(); setOptionsForSafeFamilyPlanningMethodsPopup();', 300)",
         :tt_onUnLoad => "stopFamilyPlanningTimer();",
         :multiple => true,
         :tt_pageStyleClass => "NoKeyboard",
-        :helpText => "What method are you receiving today?" } %>
+        :helpText => "What method are you providing today?" } %>
 
       <% if @use_extended_family_planning == "true"  %>
 
@@ -1728,8 +1763,28 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
 </style>
+<!-------------SAFE FAMILY PLANNING POPUP BEGIN-------- -->
+<div id="safe-family-planning-popup-div">
+  <div id="safe-family-planning-popup-header">
+    <center>Recommendation</center>
+  </div><br />
+  <div>
+
+    <span style="font-size: 16pt;">
+      <center>
+        <i><b id="safe-family-planning-message-header">UNSAFE FAMILY PLANNING METHOD</b></i><br />
+        Choose a safer family planning method on top of the selected condoms
+      </center>
+    </span>
+    <div style="padding-top: 65px;">
+      <span id="safe-family-planning-yes" onclick="hideSafeFamillyPlanningPopup();" class="tb-treatment-my_button" style="position: relative;">Ok</span>
+    </div>
+  </div>
+</div>
 
 
+<div id="safe-family-planning-cover"></div>
+<!--------------- SAFE FAMILY PLANNING POPUP END -------- -->
 
 <div id="tb-treatment-popup-div">
   <div id="tb-treatment-popup-header">
@@ -1777,7 +1832,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
 
-  #tb-treatment-popup-div {
+  #tb-treatment-popup-div, #safe-family-planning-popup-div {
     display: none;
     background-color: #F4F4F4;
     border: 2px solid #E0E0E0;
@@ -1791,7 +1846,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     z-index: 991;
   }
 
-  #tb-treatment-popup-header{
+  #tb-treatment-popup-header, #safe-family-planning-popup-header{
     border-bottom: 2px solid #7D9EC0;
     margin-left: -5px;
     width: 101.5%;
@@ -1803,7 +1858,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     font-weight: bolder;
   }
 
-  #tb-treatment-cover{
+  #tb-treatment-cover, #safe-family-planning-cover{
     display: none;
     position: absolute;
     background-color: black;
@@ -1815,7 +1870,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     opacity: 0.65;
   }
 
-  #tb-treatment-yes, #tb-treatment-no {
+  #tb-treatment-yes, #tb-treatment-no, #safe-family-planning-yes {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
