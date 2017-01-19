@@ -2380,19 +2380,19 @@ end
     /* 
      */
     attr = [
-      [['Adult 18 years +', '9533'],['No side effects, OI/TB', '9539']],
+      [['Adult 18 years +', '9533'],['No side effects/OI', '9539']],
       [['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540']],
       [['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538']],
-      [['Last VL < 1000','9536']],
-      [['Good adherence','9537']]
+      [['Last VL < 1000','9536'], ['TB symtom screening negative', '2186']],
+      [['Good adherence','9537'], ['Not on IPT or on IPT for 6 months + without complications', '9527']]
     ];
 
 <%if @patient.person.gender.first.upcase == 'M'%>
       attr = [
-        [['Adult 18 years +', '9533'],['No side effects, OI/TB', '9539']],
+        [['Adult 18 years +', '9533'],['No side effects/OI', '9539']],
         [['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540']],
-        [['On 1st Line ART','9535']],
-        [['Last VL < 1000','9536']],
+        [['On 1st Line ART','9535'], ['TB symtom screening negative', '2186']],
+        [['Last VL < 1000','9536'], ['Not on IPT or on IPT for 6 months + without complications', '9527']],
         [['Good adherence','9537']]
       ];
 <%end%>
