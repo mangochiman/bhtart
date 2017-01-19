@@ -1436,6 +1436,46 @@ class CohortToolController < GenericCohortToolController
   def revised_cohort_menu
   end
 
+  def disaggregated_cohort
+    @disaggregated_age_groups = {}
+    @quarter = params[:quarter]
+    @quarter = @quarter.split("to")[0].to_date.strftime("%d %b, %Y") + " to " +
+      @quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
+    start_date,end_date = Report.generate_cohort_date_range(@quarter)
+    
+   
+    @age_groups = ['0-5 months',
+      '6-11 months', '12-23 months','2-4 years',
+      '5-9 years','10-14 years','15-17 years',
+      '18-19 years','20-24 years','25-29 years',
+      '30-49 years','50+ years','All'
+    ]
+
+    counter = 1
+ 
+    ['Male', 'Female'].each do |gender|
+      (@age_groups).each do |ag|
+        next if ag.match(/all/i)
+        @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
+        @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
+        @disaggregated_age_groups[counter][gender][ag] = CohortRevise.get_disaggregated_cohort(start_date, end_date, gender, ag) 
+        counter+= 1
+      end
+    end
+
+    ['M', 'FNP','FP','FBf'].each do |gender|
+      (@age_groups).each do |ag|
+        next unless ag.match(/all/i)
+        @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
+        @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
+        @disaggregated_age_groups[counter][gender][ag] = CohortRevise.get_disaggregated_cohort(start_date, end_date, gender, ag) 
+        counter+= 1
+      end
+    end
+    
+    render :layout => "report"
+  end
+
   def revised_cohort
 		session[:cohort] = nil
 
