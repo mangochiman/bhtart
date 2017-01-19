@@ -1095,15 +1095,18 @@ class EncountersController < GenericEncountersController
         ['',''],
         ['Oral contraceptive pills', 'ORAL CONTRACEPTIVE PILLS'],
         ['Depo-Provera', 'DEPO-PROVERA'],
-        ['IUD-Intrauterine device/loop', 'INTRAUTERINE CONTRACEPTION'],
-        ['Contraceptive implant', 'CONTRACEPTIVE IMPLANT'],
+        #['IUD-Intrauterine device/loop', 'INTRAUTERINE CONTRACEPTION'],
+        ['Intrauterine device/loop', 'INTRAUTERINE CONTRACEPTION'],
+        #['Contraceptive implant', 'CONTRACEPTIVE IMPLANT'],
+        ['Implant', 'CONTRACEPTIVE IMPLANT'],
         ['Male condoms', 'MALE CONDOMS'],
         ['Female condoms', 'FEMALE CONDOMS'],
-        ['Rhythm method', 'RYTHM METHOD'],
+        ['None of the above', 'NONE'],
+        #['Rhythm method', 'RYTHM METHOD'],
         #['Withdrawal method', 'WITHDRAWAL METHOD'],
         #['Abstinence', 'ABSTINENCE'],
-        ['Tubal ligation', 'TUBAL LIGATION'],
-        ['Vasectomy', 'VASECTOMY']
+        #['Tubal ligation', 'TUBAL LIGATION'],
+        #['Vasectomy', 'VASECTOMY']
       ],
       'male_family_planning_methods' => [
         ['',''],

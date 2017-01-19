@@ -162,20 +162,23 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     liOptions = jQuery("li");
     
     if (__$('touchscreenInput' + tstCurrentPage).value.length < 1){
-      console.log('Nothing is selected')
       resetElements(liOptions)
     }
 
     if (__$('touchscreenInput' + tstCurrentPage).value.length > 0){
       first_family_planning = __$('touchscreenInput' + tstCurrentPage).value.split(';')[0].toUpperCase();
       for (var i=0; i<=liOptions.length - 1; i++){
+        tstvalue = liOptions[i].getAttribute('tstvalue');
+        if (tstvalue.match(/NONE/i))continue;
         familyPlanningMethods = familyPlanningLogic[first_family_planning];
         for (var key in familyPlanningMethods){
           value = familyPlanningMethods[key];
           liOption = jQuery( "li[tstvalue=" + key + "]" )[0];
-          if (value == 'N'){
-            liOption.onclick = function(){
-              console.log('Disabled')
+          if (liOption){
+            if (value == 'N'){
+              liOption.onclick = function(){
+                console.log('Disabled')
+              }
             }
           }
         }
@@ -185,6 +188,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   function resetElements(liOptions){
     for (var i=0; i<=liOptions.length - 1; i++){
+      tstvalue = liOptions[i].getAttribute('tstvalue');
+      if (tstvalue.match(/NONE/i))continue;
       liOptions[i].onclick = function(){
         updateTouchscreenInputForSelect(__$('optionValue' + this.id), this);
         console.log('resetting')
@@ -928,6 +933,78 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     calculatedWeightlossPercent = Math.round(weight_loss_percent);
     return calculatedWeightlossPercent;
   }
+
+  function updateFamilyPlanningHiddenField(){
+    current_input_value = $("touchscreenInput" + tstCurrentPage).value;
+    if (current_input_value.match(/NONE/i)){
+      $('on_fpm').value = 'NO';
+    }else{
+      $('on_fpm').value = 'YES';
+    }
+  }
+
+  function controlNoneSelectionForFamilyPlanning(){
+    liOptions = document.getElementsByTagName("li");
+    for (var i=0; i<=liOptions.length - 1; i++){
+      tstValue = liOptions[i].getAttribute("tstvalue");
+
+      if (tstValue.match(/NONE/i)){
+        liOptions[i].onclick = function(){
+          selectedValues = $("touchscreenInput" + tstCurrentPage).value.split(";")
+          currentLiItem = this;
+
+          if (currentLiItem.style.backgroundColor.match(/lightblue/i)){
+            for (var j=0; j<=selectedValues.length - 1; j++){
+              selected_value = selectedValues[j].toUpperCase();
+              if (selected_value.match(/IMPLANT/i)){
+                selected_value = 'CONTRACEPTIVE IMPLANT';
+              }
+              if (selected_value.match(/INTRAUTERINE/i)){
+                selected_value = 'INTRAUTERINE CONTRACEPTION';
+              }
+              liElement = jQuery("[tstvalue=" + selected_value + "]")[0];
+              if (liElement){
+                id = liElement.getAttribute("id");
+                updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
+              }
+            }
+          }else{
+            for (var j=0; j<=selectedValues.length - 1; j++){
+              selected_value = selectedValues[j].toUpperCase();
+              if (selected_value.match(/IMPLANT/i)){
+                selected_value = 'CONTRACEPTIVE IMPLANT';
+              }
+              if (selected_value.match(/INTRAUTERINE/i)){
+                selected_value = 'INTRAUTERINE CONTRACEPTION';
+              }
+
+              liElement = jQuery("[tstvalue=" + selected_value + "]")[0];
+              console.log(liElement)
+              if (liElement){
+                id = liElement.getAttribute("id");
+                updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
+              }
+            }
+
+            noneElement = jQuery("[tstvalue=NONE]")[0];
+            noneElementID = noneElement.getAttribute("id");
+            updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement)
+          }
+
+        }
+      }
+      else{
+        liOptions[i].onmouseup = function(){
+          noneElement = jQuery("[tstvalue=NONE]")[0];
+          noneElementID = noneElement.getAttribute("id");
+          if (noneElement.style.backgroundColor.match(/lightblue/i)){
+            updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement);
+          }
+        }
+      }
+    }
+
+  }
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -998,20 +1075,40 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
     %>
 
-      <%= touch_yes_no_unknown_tag "CURRENTLY USING FAMILY PLANNING METHOD", @patient, nil,
-        {:id => "on_fpm",
-        :tt_onLoad =>"showCategory2('Clinic consultation'); on_fpm=false",
-        :condition => "$('pregnant').value != 'YES' && terminalFamilyPlanningMethod() == 'false'",
-        :helpText => "Currently using family planning method" } %>
+    <%#= touch_yes_no_unknown_tag "CURRENTLY USING FAMILY PLANNING METHOD", @patient, nil,
+    {:id => "on_fpm",
+    :tt_onLoad =>"showCategory2('Clinic consultation');",
+    :condition => "$('pregnant').value != 'YES' && terminalFamilyPlanningMethod() == 'false'",
+    :helpText => "Currently using family planning method" } %>
+
+      <%= touch_hidden_tag "CURRENTLY USING FAMILY PLANNING METHOD" , @patient, "" , :id => "on_fpm" %>
+
+    <%#= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
+    {:id => "fpm_used",
+    :condition => "$('on_fpm').value == 'YES' && $('pregnant').value != 'YES'",
+    :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer();",
+    :tt_onUnLoad => "stopFamilyPlanningTimer();",
+    :multiple => true,
+    :tt_pageStyleClass => "NoKeyboard",
+    :helpText => "What method are you currently on?" } %>
 
       <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
         {:id => "fpm_used",
-        :condition => "$('on_fpm').value == 'YES' && $('pregnant').value != 'YES'",
-        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer();",
+        :condition => "$('pregnant').value != 'YES'",
+        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning();', 300)",
+        :tt_onUnLoad => "stopFamilyPlanningTimer(); updateFamilyPlanningHiddenField();",
+        :multiple => true,
+        :tt_pageStyleClass => "NoKeyboard",
+        :helpText => "What method are you currently on?" } %>
+
+      <%= touch_select_tag "FAMILY PLANNING, ACTION TO TAKE", @patient, options_for_select(@select_options['family_planning_methods']),
+        {:id => "fpm_used",
+        :condition => "$('pregnant').value != 'YES'",
+        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning();', 300)",
         :tt_onUnLoad => "stopFamilyPlanningTimer();",
         :multiple => true,
         :tt_pageStyleClass => "NoKeyboard",
-        :helpText => "What method?" } %>
+        :helpText => "What method are you receiving today?" } %>
 
       <% if @use_extended_family_planning == "true"  %>
 
