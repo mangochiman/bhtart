@@ -124,6 +124,16 @@ Unique PatientProgram entries at the current location for those patients with at
       return [started_on_art, alive_on_art, started_on_ipt, screened_for_tb]
     end 
 
+    if gender == 'M'
+      age_from = 0  ; age_to = 1000 ; yrs_months = 'year'
+      started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
+      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
+      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date)
+      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date)
+
+      return [started_on_art, alive_on_art, started_on_ipt, screened_for_tb]
+    end
+
     return [0, 0, 0, 0]
   end 
 
