@@ -2229,6 +2229,97 @@
             &nbsp;
         </td>
     </tr>
+    <tr>
+        <td class="index">
+            80.
+        </td>
+        <td class="border-top-dotted border-left-dotted border-null-bottom border-null-right">
+            <b>Current TB status</b> any form of TB
+        </td>
+        <td colspan="2" class="border-top-dotted border-null-bottom border-null-left border-null-right">
+            (as of the last visit before end of quarter)
+        </td>
+        <td colspan="2" class="border-top-dotted border-null-left border-null-bottom">
+            TB <b>not</b> suspected
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('tb_not_suspected');">
+                <%= @cohort.tb_not_suspected.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            81.
+        </td>
+        <td class="border-left-dotted border-null-bottom border-null-top border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-right border-null-bottom border-null-top border-null-left">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-left border-null-top border-null-bottom">
+            TB <b>suspected</b>
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('tb_suspected');">
+                <%= @cohort.tb_suspected.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            82.
+        </td>
+        <td colspan="3" class="border-left-dotted border-null-bottom border-null-top border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-top border-null-bottom border-null-left">
+            TB conf., <b>not</b> on Rx
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('tb_confirmed_currently_not_yet_on_tb_treatment');">
+                <%= @cohort.tb_confirmed_currently_not_yet_on_tb_treatment.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            83.
+        </td>
+        <td colspan="3" class="border-left-dotted border-null-right border-null-bottom border-null-top">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-left border-null-top border-null-bottom">
+            TB conf., <b>on TB Rx</b>
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('tb_confirmed_on_tb_treatment');">
+                <%= @cohort.tb_confirmed_on_tb_treatment.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            84.
+        </td>
+        <td colspan="3" class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
+            Unknown (not circled)
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('unknown_tb_status');">
+                <%= @cohort.unknown_tb_status.count %>
+            </a>
+        </td>
+    </tr>
+    <tr class="row-break">
+        <td colspan="7" class="border-null">
+            &nbsp;
+        </td>
+    </tr>
     <tr class="row-break">
         <td colspan="7" class="border-null">
             &nbsp;
@@ -2236,7 +2327,7 @@
     </tr>
     <tr>
         <td class="index">
-            82.
+            85.
         </td>
         <td class="text-bold border-top-dotted border-left-dotted border-null-bottom border-null-right">
             Side effects
@@ -2255,7 +2346,7 @@
     </tr>
     <tr>
         <td class="index">
-            83.
+            86.
         </td>
         <td class="border-left-dotted border-null-bottom border-null-top border-null-right">
             &nbsp;
@@ -2274,7 +2365,7 @@
     </tr>
     <tr>
         <td class="index">
-            84.
+            87.
         </td>
         <td class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;
@@ -2298,7 +2389,7 @@
     </tr>
     <tr>
         <td class="index">
-            85.
+            88.
         </td>
         <td class="text-bold border-left-dotted border-top-dotted border-null-bottom border-null-right">
             Adherence
@@ -2317,7 +2408,7 @@
     </tr>
     <tr>
         <td class="index">
-            86.
+            89.
         </td>
         <td class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -2336,7 +2427,7 @@
     </tr>
     <tr>
         <td class="index">
-            87.
+            90.
         </td>
         <td class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
             &nbsp;
