@@ -1139,7 +1139,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       <%= touch_select_tag "FAMILY PLANNING, ACTION TO TAKE", @patient, options_for_select(@select_options['family_planning_methods']),
         {:id => "fpm_used",
         :condition => "$('pregnant').value != 'YES'",
-        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning();', 300)",
+        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning(); setOptionsForSafeFamilyPlanningMethodsPopup();', 300)",
         :tt_onUnLoad => "stopFamilyPlanningTimer();",
         :multiple => true,
         :tt_pageStyleClass => "NoKeyboard",
