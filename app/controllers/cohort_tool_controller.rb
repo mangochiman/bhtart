@@ -1458,7 +1458,7 @@ class CohortToolController < GenericCohortToolController
         next if ag.match(/all/i)
         @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
         @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
-        @disaggregated_age_groups[counter][gender][ag] = CohortRevise.get_disaggregated_cohort(start_date, end_date, gender, ag) 
+        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag) 
         counter+= 1
       end
     end
@@ -1468,7 +1468,7 @@ class CohortToolController < GenericCohortToolController
         next unless ag.match(/all/i)
         @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
         @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
-        @disaggregated_age_groups[counter][gender][ag] = CohortRevise.get_disaggregated_cohort(start_date, end_date, gender, ag) 
+        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag) 
         counter+= 1
       end
     end
