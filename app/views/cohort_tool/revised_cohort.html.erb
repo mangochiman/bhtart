@@ -1849,17 +1849,17 @@
         <td class="index">
             62.
         </td>
-        <td rowspan="5" colspan="3" class="text-italic text-center  border-left-dotted border-null-right
+        <td rowspan="4" colspan="3" class="text-italic text-center  border-left-dotted border-null-right
         border-null-bottom border-null-top">
             Count regimen for <u>all patients registered</u> at this site,
             including those who currently get supplies from another site
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>1P</b>
+            Regimen <b>2P</b>
         </td>
         <td colspan="2" class="number">
             <a href="javascript:drillDown('one_p');">
-                <%= @cohort.one_p.count %>
+                <%= @cohort.two_p.count %>
             </a>
         </td>
     </tr>
@@ -1868,11 +1868,11 @@
             63.
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>2P</b>
+            Regimen <b>4P</b>
         </td>
         <td colspan="2" class="number">
             <a href="javascript:drillDown('two_p');">
-                <%= @cohort.two_p.count %>
+                <%= @cohort.four_p.count %>
             </a>
         </td>
     </tr>
@@ -1881,11 +1881,11 @@
             64.
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>3P</b>
+            Regimen <b>9P</b>
         </td>
         <td colspan="2" class="number">
             <a href="javascript:drillDown('three_p');">
-                <%= @cohort.three_p.count %>
+                <%= @cohort.nine_p.count %>
             </a>
         </td>
     </tr>
@@ -1894,14 +1894,15 @@
             65.
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>4P</b>
+            Regimen <b>11P</b>
         </td>
         <td colspan="2" class="number">
             <a href="javascript:drillDown('four_p');">
-                <%= @cohort.four_p.count %>
+                <%= @cohort.elleven_p.count %>
             </a>
         </td>
     </tr>
+<!--
     <tr>
         <td class="index">
             66.
@@ -1931,9 +1932,10 @@
             </a>
         </td>
     </tr>
+!-->
     <tr>
         <td class="index">
-            68.
+            66.
         </td>
         <td class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
@@ -1952,17 +1954,49 @@
     </tr>
     <tr>
         <td class="index">
+            67.
+        </td>
+        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
+            Regimen <b>2A</b>
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('one_a');">
+                <%= @cohort.two_a.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            68.
+        </td>
+        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
+            &nbsp;
+        </td>
+        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
+            Regimen <b>4A</b>
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('two_a');">
+                <%= @cohort.four_a.count %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
             69.
         </td>
         <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>1A</b>
+            Regimen <b>5A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('one_a');">
-                <%= @cohort.one_a.count %>
+            <a href="javascript:drillDown('three_a');">
+                <%= @cohort.five_a.count %>
             </a>
         </td>
     </tr>
@@ -1974,11 +2008,11 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>2A</b>
+            Regimen <b>6A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('two_a');">
-                <%= @cohort.two_a.count %>
+            <a href="javascript:drillDown('four_a');">
+                <%= @cohort.six_a.count %>
             </a>
         </td>
     </tr>
@@ -1990,11 +2024,11 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>3A</b>
+            Regimen <b>7A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('three_a');">
-                <%= @cohort.three_a.count %>
+            <a href="javascript:drillDown('five_a');">
+                <%= @cohort.seven_a.count %>
             </a>
         </td>
     </tr>
@@ -2006,11 +2040,11 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>4A</b>
+            Regimen <b>8A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('four_a');">
-                <%= @cohort.four_a.count %>
+            <a href="javascript:drillDown('six_a');">
+                <%= @cohort.eight_a.count %>
             </a>
         </td>
     </tr>
@@ -2022,11 +2056,11 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>5A</b>
+            Regimen <b>9A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('five_a');">
-                <%= @cohort.five_a.count %>
+            <a href="javascript:drillDown('seven_a');">
+                <%= @cohort.nine_a.count %>
             </a>
         </td>
     </tr>
@@ -2038,11 +2072,11 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>6A</b>
+            Regimen <b>10A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('six_a');">
-                <%= @cohort.six_a.count %>
+            <a href="javascript:drillDown('eight_a');">
+                <%= @cohort.ten_a.count %>
             </a>
         </td>
     </tr>
@@ -2054,11 +2088,11 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>7A</b>
+            Regimen <b>11A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('seven_a');">
-                <%= @cohort.seven_a.count %>
+            <a href="javascript:drillDown('nine_a');">
+                <%= @cohort.elleven_a.count %>
             </a>
         </td>
     </tr>
@@ -2070,46 +2104,15 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>8A</b>
-        </td>
-        <td colspan="2" class="number">
-            <a href="javascript:drillDown('eight_a');">
-                <%= @cohort.eight_a.count %>
-            </a>
-        </td>
-    </tr>
-    <tr>
-        <td class="index">
-            77.
-        </td>
-        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
-            &nbsp;
-        </td>
-        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>9A</b>
-        </td>
-        <td colspan="2" class="number">
-            <a href="javascript:drillDown('nine_a');">
-                <%= @cohort.nine_a.count %>
-            </a>
-        </td>
-    </tr>
-    <tr>
-        <td class="index">
-            78.
-        </td>
-        <td colspan="3" class="border-left-dotted border-null-top border-null-bottom border-null-right">
-            &nbsp;
-        </td>
-        <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>10A</b>
+            Regimen <b>12A</b>
         </td>
         <td colspan="2" class="number">
             <a href="javascript:drillDown('ten_a');">
-                <%= @cohort.ten_a.count %>
+                <%= @cohort.twelve_a.count %>
             </a>
         </td>
     </tr>
+<!--
     <tr>
         <td class="index">
             79.
@@ -2118,7 +2121,7 @@
             &nbsp;
         </td>
         <td colspan="2" class="border-null-bottom border-null-top border-null-left">
-            Regimen <b>11A</b>
+            Regimen <b>12A</b>
         </td>
         <td colspan="2" class="number">
             <a href="javascript:drillDown('elleven_a');">
@@ -2142,9 +2145,10 @@
             </a>
         </td>
     </tr>
+-->
     <tr>
         <td class="index">
-            81.
+            77.
         </td>
         <td colspan="3" class="text-center border-left-dotted border-bottom-dotted border-null-top border-null-right">
             Specify above regimens counted as 'Other'
@@ -2158,6 +2162,7 @@
             </a>
         </td>
     </tr>
+  
     <tr class="row-break">
         <td colspan="7" class="border-null">
             &nbsp;
