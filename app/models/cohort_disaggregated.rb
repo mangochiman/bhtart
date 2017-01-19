@@ -80,12 +80,6 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.cum_no_tb = CohortRevise.cum_no_tb(cohort.cum_total_registered, cohort.cum_tb_within_the_last_two_years, cohort.cum_current_episode_of_tb)
 
 =begin
-    From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
-=end
-    CohortRevise.update_cum_outcome(end_date)
-
-
-=begin
     Total Alive and On ART
     Unique PatientProgram entries at the current location for those patients with at least one state
     ON ARVs and earliest start date of the 'ON ARVs' state less than or equal to end date of quarter
@@ -99,9 +93,9 @@ Unique PatientProgram entries at the current location for those patients with at
 
   end
 
-  def self.get_data(start_date, end_date, gender, age_group)
+  def self.get_data(start_date, end_date, gender, age_group, cohort)
 
-    @@cohort = get_indicators(start_date, end_date)
+    @@cohort = cohort
 
     if gender == 'Male' || gender == 'Female'
       if age_group == '50+ years' 

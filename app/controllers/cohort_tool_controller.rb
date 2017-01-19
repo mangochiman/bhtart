@@ -1443,7 +1443,8 @@ class CohortToolController < GenericCohortToolController
       @quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
     start_date,end_date = Report.generate_cohort_date_range(@quarter)
     
-   
+    cohort = CohortDisaggregated.get_indicators(start_date, end_date)
+     
     @age_groups = ['0-5 months',
       '6-11 months', '12-23 months','2-4 years',
       '5-9 years','10-14 years','15-17 years',
@@ -1458,7 +1459,7 @@ class CohortToolController < GenericCohortToolController
         next if ag.match(/all/i)
         @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
         @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
-        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag) 
+        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag, cohort) 
         counter+= 1
       end
     end
@@ -1468,7 +1469,7 @@ class CohortToolController < GenericCohortToolController
         next unless ag.match(/all/i)
         @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
         @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
-        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag) 
+        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag, cohort) 
         counter+= 1
       end
     end
