@@ -718,21 +718,49 @@ EOF
     WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
     AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
 EOF
+=end
+    
+    dispensing_encounter_id = EncounterType.find_by_name('DISPENSING').id
+    amount_dispensed = ConceptName.find_by_name('Amount dispensed').concept_id
+    ipt_drug_ids = Drug.find_all_by_concept_id(656).map(&:drug_id)
 
-    data3 = ActiveRecord::Base.connection.select_one <<EOF
-    SELECT count(*) as started FROM temp_earliest_start_date 
-    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
+    patient_ids = []
+    (data1 || {}).each do |x, y|
+      patient_ids << x['patient_id'].to_i
+    end
+
+    unless patient_ids.blank?
+    data2 = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.patient_id FROM encounter e 
+      INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+      AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
+      AND obs.concept_id = #{amount_dispensed}
+      WHERE value_drug IN(#{ipt_drug_ids.join(',')}) 
+      AND e.patient_id IN(#{patient_ids.join(',')})
+      AND encounter_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY e.patient_id;
+EOF
+
+    end
+
+=begin
+    data3 = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.patient_id FROM encounter e 
+      INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+      AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
+      AND obs.concept_id = #{amount_dispensed}
+      WHERE value_drug IN(#{ipt_drug_ids.join(',')}) 
+      AND e.patient_id IN(#{patient_ids.join(',')})
+      AND encounter_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY e.patient_id;
 EOF
 =end
-
-    unless data1.blank?
-    end
 
     return [
       (data.length rescue 0), 
       (data1.length rescue 0),
-       0, 0]
+      (data2.length rescue 0),
+       0]
   end
 
   private
