@@ -1858,7 +1858,7 @@
             Regimen <b>2P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('one_p');">
+            <a href="javascript:drillDown('two_p');">
                 <%= @cohort.two_p.count %>
             </a>
         </td>
@@ -1871,7 +1871,7 @@
             Regimen <b>4P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('two_p');">
+            <a href="javascript:drillDown('four_p');">
                 <%= @cohort.four_p.count %>
             </a>
         </td>
@@ -1884,7 +1884,7 @@
             Regimen <b>9P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('three_p');">
+            <a href="javascript:drillDown('nine_p');">
                 <%= @cohort.nine_p.count %>
             </a>
         </td>
@@ -1897,7 +1897,7 @@
             Regimen <b>11P</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('four_p');">
+            <a href="javascript:drillDown('elleven_p');">
                 <%= @cohort.elleven_p.count %>
             </a>
         </td>
@@ -1963,7 +1963,7 @@
             Regimen <b>2A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('one_a');">
+            <a href="javascript:drillDown('two_a');">
                 <%= @cohort.two_a.count %>
             </a>
         </td>
@@ -1979,7 +1979,7 @@
             Regimen <b>4A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('two_a');">
+            <a href="javascript:drillDown('four_a');">
                 <%= @cohort.four_a.count %>
             </a>
         </td>
@@ -1995,7 +1995,7 @@
             Regimen <b>5A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('three_a');">
+            <a href="javascript:drillDown('five_a');">
                 <%= @cohort.five_a.count %>
             </a>
         </td>
@@ -2011,7 +2011,7 @@
             Regimen <b>6A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('four_a');">
+            <a href="javascript:drillDown('six_a');">
                 <%= @cohort.six_a.count %>
             </a>
         </td>
@@ -2027,7 +2027,7 @@
             Regimen <b>7A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('five_a');">
+            <a href="javascript:drillDown('seven_a');">
                 <%= @cohort.seven_a.count %>
             </a>
         </td>
@@ -2043,7 +2043,7 @@
             Regimen <b>8A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('six_a');">
+            <a href="javascript:drillDown('eight_a');">
                 <%= @cohort.eight_a.count %>
             </a>
         </td>
@@ -2059,7 +2059,7 @@
             Regimen <b>9A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('seven_a');">
+            <a href="javascript:drillDown('nine_a');">
                 <%= @cohort.nine_a.count %>
             </a>
         </td>
@@ -2075,7 +2075,7 @@
             Regimen <b>10A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('eight_a');">
+            <a href="javascript:drillDown('ten_a');">
                 <%= @cohort.ten_a.count %>
             </a>
         </td>
@@ -2091,7 +2091,7 @@
             Regimen <b>11A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('nine_a');">
+            <a href="javascript:drillDown('elleven_a');">
                 <%= @cohort.elleven_a.count %>
             </a>
         </td>
@@ -2107,7 +2107,7 @@
             Regimen <b>12A</b>
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('ten_a');">
+            <a href="javascript:drillDown('twelve_a');">
                 <%= @cohort.twelve_a.count %>
             </a>
         </td>
@@ -2181,7 +2181,7 @@
             <b>Preg</b>nant
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('total_patients_without_side_effects');">
+            <a href="javascript:drillDown('total_pregnant');">
                 <%= 0 %>
             </a>
         </td>
@@ -2200,7 +2200,7 @@
             <b>B</b>reast<b>f</b>eeding
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('total_patients_with_side_effects');">
+            <a href="javascript:drillDown('total_breastfeeding');">
                 &nbsp;<%= 0 %>
             </a>
         </td>
@@ -2219,7 +2219,7 @@
             All <b>others</b> (not circled)
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('unknown_side_effects');">
+            <a href="javascript:drillDown('all_others');">
                 <%= 0 %>
             </a>
         </td>
@@ -2317,12 +2317,6 @@
     </tr>
     <tr class="row-break">
         <td colspan="7" class="border-null">
-            &nbsp;
-        </td>
-    </tr>
-    <tr class="row-break">
-        <td colspan="7" class="border-null">
-            &nbsp;
         </td>
     </tr>
     <tr>
@@ -2444,100 +2438,113 @@
             </a>
         </td>
     </tr>
-    <tr class="row-break">
+    <tr>
         <td colspan="7" class="border-null">
-            &nbsp;
-        </td>
-    </tr>
-    <tr>
-        <td class="index">
-            88.
-        </td>
-        <td class="border-top-dotted border-left-dotted border-null-bottom border-null-right">
-            <b>Current TB status</b> any form of TB
-        </td>
-        <td colspan="2" class="border-top-dotted border-null-bottom border-null-left border-null-right">
-            (as of the last visit before end of quarter)
-        </td>
-        <td colspan="2" class="border-top-dotted border-null-left border-null-bottom">
-            TB <b>not</b> suspected
-        </td>
-        <td colspan="2" class="number">
-            <a href="javascript:drillDown('tb_not_suspected');">
-                <%= @cohort.tb_not_suspected.count %>
-            </a>
-        </td>
-    </tr>
-    <tr>
-        <td class="index">
-            89.
-        </td>
-        <td class="border-left-dotted border-null-bottom border-null-top border-null-right">
-            &nbsp;
-        </td>
-        <td colspan="2" class="border-null-right border-null-bottom border-null-top border-null-left">
-            &nbsp;
-        </td>
-        <td colspan="2" class="border-null-left border-null-top border-null-bottom">
-            TB <b>suspected</b>
-        </td>
-        <td colspan="2" class="number">
-            <a href="javascript:drillDown('tb_suspected');">
-                <%= @cohort.tb_suspected.count %>
-            </a>
-        </td>
-    </tr>
-    <tr>
-        <td class="index">
-            90.
-        </td>
-        <td colspan="3" class="border-left-dotted border-null-bottom border-null-top border-null-right">
-            &nbsp;
-        </td>
-        <td colspan="2" class="border-null-top border-null-bottom border-null-left">
-            TB conf., <b>not</b> on Rx
-        </td>
-        <td colspan="2" class="number">
-            <a href="javascript:drillDown('tb_confirmed_currently_not_yet_on_tb_treatment');">
-                <%= @cohort.tb_confirmed_currently_not_yet_on_tb_treatment.count %>
-            </a>
         </td>
     </tr>
     <tr>
         <td class="index">
             91.
         </td>
-        <td colspan="3" class="border-left-dotted border-null-right border-null-bottom border-null-top">
-            &nbsp;
+        <td class="border-top-dotted border-left-dotted border-bottom-dotted border-null-right">
+            <b>CPT</b>
         </td>
-        <td colspan="2" class="border-null-left border-null-top border-null-bottom">
-            TB conf., <b>on TB Rx</b>
-        </td>
-        <td colspan="2" class="number">
-            <a href="javascript:drillDown('tb_confirmed_on_tb_treatment');">
-                <%= @cohort.tb_confirmed_on_tb_treatment.count %>
-            </a>
-        </td>
-    </tr>
-    <tr>
-        <td class="index">
-            92.
-        </td>
-        <td colspan="3" class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
-            &nbsp;
-        </td>
-        <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
-            Unknown (not circled)
+        <td colspan="2" class="border-top-dotted border-dotted-bottom border-null-left border-null-right">
+           Apprx. % of patients retained in <b>ART</b> who are currently on CPT
+         </td>
+        <td colspan="2" class="border-top-dotted border-null-left border-dotted-bottom">
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('unknown_tb_status');">
-                <%= @cohort.unknown_tb_status.count %>
+            <a href="javascript:drillDown('art_patients_currently_on_cpt');">
+              <%= "0 %" %>
             </a>
         </td>
     </tr>
     <tr>
         <td colspan="7" class="border-null">
-            &nbsp;
+        </td>
+    </tr>
+    <tr>
+          <td class="index">
+              92.
+          </td>
+          <td class="text-bold border-top-dotted border-left-dotted border-null-bottom border-null-right">
+              IPT
+          </td>
+          <td colspan="2" class="border-top-dotted border-null-bottom border-null-left border-null-right">
+             Apprx. % of patients retained in <b>pre-ART</b> who are currently on IPT
+          </td>
+          <td colspan="2" class="border-top-dotted border-null-bottom border-null-left" colspan="2">
+          </td>
+          <td colspan="2" class="number">
+              <a href="javascript:drillDown('pre_art_patients_currently_on_ipt');">
+                  <%= "0 %" %>
+              </a>
+          </td>
+      </tr>
+      <tr>
+          <td class="index">
+          </td>
+          <td class="border-left-dotted border-bottom-dotted border-null-top border-null-right">
+              &nbsp;
+          </td>
+          <td colspan="2" class="border-null-left border-null-right border-null-top border-bottom-dotted">
+               Apprx. % of patients retained in <b>ART</b> who are currently on IPT
+          </td>
+          <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
+          </td>
+          <td colspan="2" class="number">
+              <a href="javascript:drillDown('art_patients_currently_on_ipt');">
+                <%= "0 %" %>
+              </a>
+          </td>
+      </tr>
+    <tr>
+        <td colspan="7" class="border-null">
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            93.
+        </td>
+        <td class="border-top-dotted border-left-dotted border-bottom-dotted border-null-right">
+            <b>PIFP</b>
+        </td>
+        <td colspan="2" class="border-top-dotted border-dotted-bottom border-null-left border-null-right">
+            Apprx. % of <u>women</u> who received Depo at <b>ART</b> in the last quarter
+        </td>
+        <td colspan="2" class="border-top-dotted border-null-left border-dotted-bottom">
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('pifp_patients');">
+                <%= "0 %" %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="7" class="border-null">
+        </td>
+    </tr>
+    <tr>
+        <td class="index">
+            94.
+        </td>
+        <td class="border-top-dotted border-left-dotted border-bottom-dotted border-null-right">
+            <b>BP screen</b>
+        </td>
+        <td colspan="2" class="border-top-dotted border-dotted-bottom border-null-left border-null-right">
+            Apprx. % of <u>adult <b>ART</b></u> patients with BP recorded at least once this year
+        </td>
+        <td colspan="2" class="border-top-dotted border-null-left border-dotted-bottom">
+        </td>
+        <td colspan="2" class="number">
+            <a href="javascript:drillDown('bp_screen_patients');">
+                <%= "0 %" %>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="7" class="border-null">
         </td>
     </tr>
 </table>

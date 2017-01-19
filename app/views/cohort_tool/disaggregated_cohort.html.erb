@@ -23,10 +23,13 @@ th, td {
 }
 
 .data-header {
-  text-align: right;
+  text-align: center;
   padding-right: 10px;
 }
 
+.separator hr {
+  height: 2px;
+}
 
 
 
@@ -185,9 +188,18 @@ table tr:hover td {
 
   <tbody>
 
-  <%@disaggregated_age_groups.sort_by{|x, y | x }.each do |counter, genders|
+  <%
+  hr_sep = 'Male'
+  @disaggregated_age_groups.sort_by{|x, y | x }.each do |counter, genders|
     genders.each do |gender, age_groups|
-    age_groups.each do |age_group, num|%>
+    age_groups.each do |age_group, num|
+      if gender.upcase != hr_sep.upcase and hr_sep.upcase != 'M' %>
+      <tr class="data">
+        <th colspan="7" class="separator"><hr /></th>
+      <tr>
+      <%
+      hr_sep = gender.upcase
+      end%>
       <tr class="data">
         <th><%=counter%></th>
         <th><%=age_group%></th>
@@ -200,46 +212,6 @@ table tr:hover td {
     <%end
     end
   end%>
-
-  <!--tr class="data">
-    <th>25</th>
-    <th>All</th>
-    <th>M</th>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-  </tr>
-
-  <tr>
-    <th>26</th>
-    <th>All</th>
-    <th>FNP</th>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-  </tr>
-
-  <tr>
-    <th>27</th>
-    <th>All</th>
-    <th>FP</th>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-  </tr>
-
-  <tr>
-    <th>28</th>
-    <th>All</th>
-    <th>FBf</th>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-    <td><%=%></td>
-  </tr-->
 
   </tbody>
 
