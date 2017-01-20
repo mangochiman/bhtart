@@ -196,6 +196,21 @@
       }
     <%end%>
   }
+
+  function disableOptimiseButtonForStarterPacks(){
+    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %>
+      concept = document.getElementById("regimen_concept_id");
+      jQuery('#optimize_interval').removeClass('gray').addClass('green');
+      jQuery('#optimize_interval').attr("onmousedown", 'onSetAppointmentIntervalType("Optimize - including hanging pills")');
+
+      if(concept.value.match(/NVP|Nevirapine/i)) {
+        jQuery('#optimize_interval').removeClass('green').addClass('gray');
+        jQuery('#optimize_interval').removeAttr("onmousedown");
+      }
+
+    <%end%>
+  }
+
 </script>
 
 
@@ -2813,7 +2828,7 @@ pyridoxine_options = ["","25", "50"]
       :id => "interval_to_next_visit",
       :condition => '$("prescribe_arvs").value == "YES" || $("cpt_given").value == "YES" || $("ipt_given").value == "YES"',
       :tt_onLoad => "checkIfStarterPack();addPrescriptionBtn();__$('keyboard').style.display = 'none';
-      showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value);",
+      showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value); setTimeout('disableOptimiseButtonForStarterPacks();', 300);",
       :tt_onUnLoad => "removePrescriptionBtn();hideStockLevelDetails(); removeOnclickEvent();",
       :helpText => 'Interval to next visit' } %>
 
