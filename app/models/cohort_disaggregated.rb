@@ -161,6 +161,9 @@ Unique PatientProgram entries at the current location for those patients with at
 
     if gender == 'FBf'
       a, b, c, d = self.get_fbf(start_date, end_date)
+      w, x, y, z = self.get_fp(start_date, end_date)
+
+      a = (a - w) ; b = (b - x) ; c = (c - y) ; d = (d - z)
       return [a.length, b.length, c.length, d.length]
     end
 
@@ -306,6 +309,8 @@ return [(data.length rescue 0), (data1.length rescue 0),
       age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
       cum_pregnant_women = @@cohort.cum_pregnant_females_all_ages
       
+      return [[], [], [], []] if cum_pregnant_women.blank?
+       
       started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
       alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
       started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date)
@@ -402,7 +407,7 @@ return [(data.length rescue 0), (data1.length rescue 0),
 
       started_on_art_pat_ids = []
 
-      cum_breastfeeding_mothers_data.each do |fbf_patient_id, obs_datetime|
+      cum_breastfeeding_mothers_data.uniq.each do |fbf_patient_id, obs_datetime|
         (started_on_art || []).each do |data|
           patient_id = data['patient_id'].to_i
           if patient_id == fbf_patient_id 
