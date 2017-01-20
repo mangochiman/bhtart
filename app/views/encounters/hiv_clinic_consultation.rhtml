@@ -66,6 +66,11 @@
     overflow: auto;
     width: 98%;
   }
+
+  .disabled-li{
+    text-decoration: line-through;
+    color: gray !important;
+  }
 </style>
 <%
 side_effects_options = []
@@ -176,7 +181,9 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
           liOption = jQuery( "li[tstvalue=" + key + "]" )[0];
           if (liOption){
             if (value == 'N'){
+              jQuery(liOption).addClass("disabled-li");
               liOption.onclick = function(){
+                //jQuery(liOption).addClass("disabled-li");
                 console.log('Disabled')
               }
             }
@@ -187,6 +194,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
   function resetElements(liOptions){
+    //disabled-li
+    jQuery( "li" ).removeClass( "disabled-li");
     for (var i=0; i<=liOptions.length - 1; i++){
       tstvalue = liOptions[i].getAttribute('tstvalue');
       if (tstvalue.match(/NONE/i))continue;
@@ -950,6 +959,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       if (tstValue.match(/NONE/i)){
         liOptions[i].onclick = function(){
+           jQuery( "li" ).removeClass( "disabled-li");
           selectedValues = $("touchscreenInput" + tstCurrentPage).value.split(";")
           currentLiItem = this;
 
