@@ -1464,7 +1464,7 @@ class CohortToolController < GenericCohortToolController
       end
     end
 
-    ['M', 'FNP','FP','FBf'].each do |gender|
+    ['M', 'FP','FNP','FBf'].each do |gender|
       (@age_groups).each do |ag|
         next unless ag.match(/all/i)
         @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?

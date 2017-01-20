@@ -159,6 +159,11 @@ Unique PatientProgram entries at the current location for those patients with at
     end
 
 
+    if gender == 'FBf'
+      a, b, c, d = self.get_fbf(start_date, end_date)
+      return [a.length, b.length, c.length, d.length]
+    end
+
     return [0, 0, 0, 0]
   end 
 
@@ -224,7 +229,7 @@ EOF
     ipt_drug_ids = Drug.find_all_by_concept_id(ConceptName.find_by_name('Isoniazid').concept_id).map(&:drug_id)
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-    SELECT obs.person_id FROM obs
+    SELECT obs.person_id patient_id FROM obs
     WHERE concept_id = #{amount_dispensed} AND obs.voided = 0
     AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
     AND value_drug IN(#{ipt_drug_ids.join(',')}) AND obs.person_id IN(#{patient_ids.join(',')});
@@ -299,12 +304,14 @@ return [(data.length rescue 0), (data1.length rescue 0),
 
   def self.get_fp(start_date, end_date)
       age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
-      cum_pregnant_women = @@cohort.cum_pregnant_women
+      cum_pregnant_women = @@cohort.cum_pregnant_females_all_ages
       
       started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
       alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
       started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date)
       screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date)
+
+      #raise started_on_art.inspect 
 
       started_on_art_pat_ids = []
       (started_on_art || []).each do |data|
@@ -327,44 +334,42 @@ return [(data.length rescue 0), (data1.length rescue 0),
       end
 
 
-
-
       data_started_on_art = []
       (cum_pregnant_women || {}).each do |cum|
-        obs_datetime = cum['obs_datetime'].to_date
+        obs_datetime = cum[:date_enrolled].to_date 
         if obs_datetime >= start_date.to_date and obs_datetime <= end_date.to_date
-          if started_on_art_pat_ids.include?(cum['person_id'].to_i)
-            data_started_on_art << cum['person_id'].to_i
+          if started_on_art_pat_ids.include?(cum[:patient_id].to_i)
+            data_started_on_art << cum[:patient_id].to_i
           end
         end
       end
 
       data_alive_on_art = []
       (cum_pregnant_women || {}).each do |cum|
-        obs_datetime = cum['obs_datetime'].to_date
+        obs_datetime = cum[:date_enrolled].to_date 
         if obs_datetime <= end_date.to_date
-          if alive_on_art_pat_ids.include?(cum['person_id'].to_i)
-            data_alive_on_art << cum['person_id'].to_i
+          if alive_on_art_pat_ids.include?(cum[:patient_id].to_i)
+            data_alive_on_art << cum[:patient_id].to_i
           end
         end
       end
 
       data_started_on_ipt = []
       (cum_pregnant_women || {}).each do |cum|
-        obs_datetime = cum['obs_datetime'].to_date
+        obs_datetime = cum[:date_enrolled].to_date
         if obs_datetime <= end_date.to_date
-          if started_on_ipt_pat_ids.include?(cum['person_id'].to_i)
-            data_started_on_ipt << cum['person_id'].to_i
+          if started_on_ipt_pat_ids.include?(cum[:patient_id].to_i)
+            data_started_on_ipt << cum[:patient_id].to_i
           end
         end
       end
 
       data_screened_for_tb = []
       (cum_pregnant_women || {}).each do |cum|
-        obs_datetime = cum['obs_datetime'].to_date
+        obs_datetime = cum[:date_enrolled].to_date
         if obs_datetime >= start_date.to_date and obs_datetime <= end_date.to_date
-          if screened_for_tb_pat_ids.include?(cum['person_id'].to_i)
-            data_screened_for_tb << cum['person_id'].to_i
+          if screened_for_tb_pat_ids.include?(cum[:patient_id].to_i)
+            data_screened_for_tb << cum[:patient_id].to_i
           end
         end
       end
@@ -378,5 +383,102 @@ return [(data.length rescue 0), (data1.length rescue 0),
 
   end
 
+
+  def self.get_fbf(start_date, end_date)
+      age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
+      cum_breastfeeding_mothers = self.cum_breastfeeding_mothers(end_date)
+      
+      started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
+      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
+      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date)
+      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date)
+
+      return [0, 0, 0, 0] if cum_breastfeeding_mothers.blank?
+
+      cum_breastfeeding_mothers_data = []
+      (cum_breastfeeding_mothers).each do |data|
+        cum_breastfeeding_mothers_data << [data['patient_id'].to_i, data['obs_datetime'].to_date]
+      end
+
+      started_on_art_pat_ids = []
+
+      cum_breastfeeding_mothers_data.each do |fbf_patient_id, obs_datetime|
+        (started_on_art || []).each do |data|
+          patient_id = data['patient_id'].to_i
+          if patient_id == fbf_patient_id 
+            if obs_datetime >= start_date.to_date and obs_datetime <= end_date.to_date 
+              started_on_art_pat_ids << data['patient_id'].to_i
+            end
+          end
+        end
+      end
+
+
+
+      alive_on_art_pat_ids = []
+
+      cum_breastfeeding_mothers_data.each do |fbf_patient_id, obs_datetime|
+        (alive_on_art || []).each do |data|
+          patient_id = data['patient_id'].to_i
+          if patient_id == fbf_patient_id 
+            if obs_datetime <= end_date.to_date 
+              alive_on_art_pat_ids << data['patient_id'].to_i
+            end
+          end
+        end
+      end
+
+      started_on_ipt_pat_ids = []
+
+      cum_breastfeeding_mothers_data.each do |fbf_patient_id, obs_datetime|
+        (started_on_ipt || []).each do |data|
+          patient_id = data['patient_id'].to_i
+          if patient_id == fbf_patient_id 
+            if obs_datetime >= start_date.to_date and obs_datetime <= end_date.to_date 
+              started_on_ipt_pat_ids << data['patient_id'].to_i
+            end
+          end
+        end
+      end
+
+      screened_for_tb_pat_ids = []
+
+      cum_breastfeeding_mothers_data.each do |fbf_patient_id, obs_datetime|
+        (screened_for_tb || []).each do |data|
+          patient_id = data['patient_id'].to_i
+          if patient_id == fbf_patient_id 
+            if obs_datetime <= end_date.to_date 
+              screened_for_tb_pat_ids << data['patient_id'].to_i
+            end
+          end
+        end
+      end
+
+
+
+      return [started_on_art_pat_ids, alive_on_art_pat_ids, 
+        started_on_ipt_pat_ids, screened_for_tb_pat_ids]
+      raise "#{data_started_on_art.inspect} ----------- #{started_on_art_pat_ids}"
+
+  end
+
+  def self.cum_breastfeeding_mothers(cutoff_date)
+    
+    concept_id = ConceptName.find_by_name('Breast feeding?').concept_id
+    yes_concept_id = ConceptName.find_by_name('Yes').concept_id
+
+    data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT t2.person_id patient_id, t2.obs_datetime FROM obs t2 
+    WHERE concept_id = #{concept_id} AND t2.voided = 0
+    AND DATE(obs_datetime) = (
+      SELECT DATE(max(e.encounter_datetime)) FROM encounter e
+      WHERE e.voided = 0 AND e.patient_id = t2.person_id
+      AND e.encounter_datetime <= '#{cutoff_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
+    ) AND t2.obs_datetime <= '#{cutoff_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
+    AND t2.value_coded = #{yes_concept_id} GROUP BY t2.person_id; 
+EOF
+
+    return data
+  end
 
 end
