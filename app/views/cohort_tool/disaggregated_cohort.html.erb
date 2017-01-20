@@ -31,7 +31,11 @@ th, td {
   height: 2px;
 }
 
-
+#err_msg {
+  padding: 10px 0px 10px 0px;
+  color: red;
+  text-align: left;
+}
 
 
 
@@ -144,11 +148,12 @@ table tr:hover td {
 
 
 <div class="table-container">
-
 <table id="disaggregated_cohort" cellspacing='0'>
  
   <thead>
  
+  <caption id='err_msg'></caption>
+
   <tr>
     <th colspan="2">Clinic name:</th>
     <th>&nbsp;</th>
@@ -194,20 +199,36 @@ table tr:hover td {
     genders.each do |gender, age_groups|
     age_groups.each do |age_group, num|
       if gender.upcase != hr_sep.upcase and hr_sep.upcase != 'M' %>
-      <tr class="data">
-        <th colspan="7" class="separator"><hr /></th>
-      <tr>
-      <%
-      hr_sep = gender.upcase
-      end%>
+        <tr class="data">
+          <th colspan="7" class="separator"><hr /></th>
+        <tr>
+        <%hr_sep = gender.upcase
+      end if counter < 26
+      
+      check_point = []
+
+      if counter <= 24
+        check_point << "id='#{hr_sep.downcase}_started_on_art_#{counter}' class='#{hr_sep.downcase}_started_on_art'"
+        check_point << "id='#{hr_sep.downcase}_alive_on_art_#{counter}' class='#{hr_sep.downcase}_alive_on_art'"
+        check_point << "id='#{hr_sep.downcase}_started_on_ipt_#{counter}' class='#{hr_sep.downcase}_started_on_ipt'"
+        check_point << "id='#{hr_sep.downcase}_screened_for_tb_#{counter}' class='#{hr_sep.downcase}_screened_for_tb'"
+      elsif counter >= 25
+        hr_sep = gender
+        check_point << "id='#{hr_sep.downcase}_started_on_art_#{counter}' class='#{hr_sep.downcase}_started_on_art_total'"
+        check_point << "id='#{hr_sep.downcase}_alive_on_art_#{counter}' class='#{hr_sep.downcase}_alive_on_art_#{counter}_total'"
+        check_point << "id='#{hr_sep.downcase}_started_on_ipt_#{counter}' class='#{hr_sep.downcase}_started_on_ipt_total'"
+        check_point << "id='#{hr_sep.downcase}_screened_for_tb_#{counter}' class='#{hr_sep.downcase}_screened_for_tb_#{counter}_total'"
+      end
+      %>
+
       <tr class="data">
         <th><%=counter%></th>
         <th><%=age_group%></th>
         <th><%=gender%></th>
-        <td><%=num[0]%></td>
-        <td><%=num[1]%></td>
-        <td><%=num[2]%></td>
-        <td><%=num[3]%></td>
+        <td <%=(check_point[0] rescue nil)%>><%=num[0]%></td>
+        <td <%=(check_point[1] rescue nil)%>><%=num[1]%></td>
+        <td <%=(check_point[2] rescue nil)%>><%=num[2]%></td>
+        <td <%=(check_point[3] rescue nil)%>><%=num[3]%></td>
       </tr>
     <%end
     end
@@ -221,5 +242,96 @@ table tr:hover td {
 
 <script>
 
+function validateReport(x, y, err_msg) {
+  all = document.getElementsByClassName(x)
+  total = document.getElementById(y)
 
+  all_total = 0;
+
+  for(var i = 0; i < all.length; i++){
+    all_total += parseInt(all[i].innerHTML)
+  }
+
+  if(all_total != parseInt(total.innerHTML)) {
+    err = document.getElementById('err_msg');
+    if(err.innerHTML.length < 1){
+      err.innerHTML = err_msg;
+    }else{
+      err.innerHTML += '<br />' + err_msg;
+    }
+  }
+}
+
+function getFieldsToValidate() {
+
+  var rules = [
+    ['male_started_on_art', 'm_started_on_art_25','Column A: 1 to 12 == (25)'],
+    ['male_alive_on_art','m_alive_on_art_25','Column B: 13 to 24 == (25)'],
+    ['male_started_on_ipt','m_started_on_ipt_25','Column C: 1 to 12 == (25)'],
+    ['male_screened_for_tb','m_screened_for_tb_25','Column D: 1 to 12 == (25)']
+  ];
+
+
+  for(var i = 0; i < rules.length; i++){
+    validateReport(rules[i][0], rules[i][1], rules[i][2]);
+  }
+
+/*
+female_started_on_art == fp_started_on_art_26,fnp_started_on_art_27,fbf_started_on_art_28
+female_alive_on_art == fp_alive_on_art_26, fnp_alive_on_art_27, fbf_alive_on_art_28
+female_started_on_ipt == fp_started_on_ipt_26, fnp_started_on_ipt_27,fbf_started_on_ipt_28
+female_screened_for_tb == fp_screened_for_tb_26, fnp_screened_for_tb_27, fbf_screened_for_tb_28
+
+*/
+
+  var rules = [
+  ['female_started_on_art', ['fp_started_on_art_26','fnp_started_on_art_27',
+    'fbf_started_on_art_28'],"Column A: 13 to 24 == (26 + 27 + 28)"],
+
+    ['female_alive_on_art', ['fp_alive_on_art_26', 'fnp_alive_on_art_27', 
+    'fbf_alive_on_art_28'],"Column B: 13 to 24 == (26 + 27 + 28)"],
+
+    ['female_started_on_ipt', ['fp_started_on_ipt_26', 'fnp_started_on_ipt_27',
+    'fbf_started_on_ipt_28'],"Column C: 13 to 24 == (25 + 27 + 28)"],
+
+    ['female_screened_for_tb', ['fp_screened_for_tb_26', 'fnp_screened_for_tb_27', 
+      'fbf_screened_for_tb_28'],"Column D: 13 to 24 == (26 + 27 + 28)"]
+  ]
+
+  for(var i = 0; i < rules.length; i++){
+    validateReport2(rules[i][0], rules[i][1], rules[i][2]);
+  }
+
+
+}
+
+
+function validateReport2(x, y, err_msg) {
+
+  var all = document.getElementsByClassName(x)
+  var e   =   document.getElementById(y[0]);
+  var e1  =   document.getElementById(y[1]);
+  var e2  =   document.getElementById(y[2]);
+
+  var all_total = 0; 
+  var all_females = (parseInt(e.innerHTML) + parseInt(e1.innerHTML));
+  all_females +=  (parseInt(e2.innerHTML))
+
+  for(var i = 0; i < all.length; i++){
+    all_total += parseInt(all[i].innerHTML)
+  }
+
+  if(all_total != all_females) {
+    err = document.getElementById('err_msg');
+    if(err.innerHTML.length < 1){
+      err.innerHTML = err_msg;
+    }else{
+      err.innerHTML += '<br />' + err_msg;
+    }
+  }
+
+
+}
+
+getFieldsToValidate();
 </script>
