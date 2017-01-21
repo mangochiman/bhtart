@@ -666,12 +666,330 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
     cohort.patients_with_unknown_adhrence = unknown_adherence
 
+=begin
+  Pregnant and breastfeeding status during Consultaiton
+=end
+    cohort.total_pregnant_women = self.total_pregnant_women(cohort.total_alive_and_on_art, end_date)
+    cohort.total_breastfeeding_women = self.total_breastfeeding_women(cohort.total_alive_and_on_art, end_date)
+    cohort.total_other_patients = self.total_other_patients(cohort.total_alive_and_on_art, cohort.total_breastfeeding_women, cohort.total_pregnant_women)
+
+=begin
+    Patients with CPT dispensed at least once before end of quarter and on ARVs
+=end
+    cohort.total_patients_on_arvs_and_cpt = self.total_patients_on_arvs_and_cpt(cohort.total_alive_and_on_art, end_date)
+
+=begin
+    Patients with IPT dispensed at least once before end of quarter and on ARVS
+=end
+    cohort.total_patients_on_arvs_and_ipt = self.total_patients_on_arvs_and_ipt(cohort.total_alive_and_on_art, end_date)
+
+=begin
+    Patients on family planning methods at least once before end of quarter and on ARVs
+=end
+    cohort.total_patients_on_family_planning = self.total_patients_on_family_planning(cohort.total_alive_and_on_art, end_date)
+
+=begin
+    Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
+=end
+    cohort.total_patients_with_screened_bp = self.total_patients_with_screened_bp(cohort.total_alive_and_on_art, end_date)
+
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
 
   end
 
+  def self.get_disaggregated_cohort(start_date, end_date, gender, ag)
+    if ag == '50+ years'
+      diff = [50, 1000]
+      iu = 'year'
+    elsif ag.match(/years/i)
+      diff = ag.sub(' years','').split('-')
+      iu = 'year'
+    elsif ag.match(/months/i)
+      diff = ag.sub(' months','').split('-')
+      iu = 'month'
+    else
+      if gender == 'M'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'M'
+      elsif gender == 'FNP'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'F'
+      elsif gender == 'FP'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'F'
+      elsif gender == 'FBf'
+        diff = [0, 1000]
+        iu = 'year' ; gender = 'F'
+      end
+    end
+
+    data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT patient_id  FROM temp_earliest_start_date
+    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}'
+    AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i};
+EOF
+
+    data1 = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT t1.patient_id FROM temp_earliest_start_date t1
+    INNER JOIN temp_patient_outcomes t2 ON t1.patient_id = t2.patient_id
+    WHERE date_enrolled <= '#{end_date.to_date}' AND gender = '#{gender.first}'
+    AND cum_outcome = 'On antiretrovirals'
+    AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i};
+EOF
+
+=begin
+    data2 = ActiveRecord::Base.connection.select_one <<EOF
+    SELECT count(*) as started FROM temp_earliest_start_date
+    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
+EOF
+=end
+
+    dispensing_encounter_id = EncounterType.find_by_name('DISPENSING').id
+    amount_dispensed = ConceptName.find_by_name('Amount dispensed').concept_id
+    ipt_drug_ids = Drug.find_all_by_concept_id(656).map(&:drug_id)
+
+    patient_ids = []
+    (data1 || {}).each do |x, y|
+      patient_ids << x['patient_id'].to_i
+    end
+
+    unless patient_ids.blank?
+    data2 = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.patient_id FROM encounter e
+      INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+      AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
+      AND obs.concept_id = #{amount_dispensed}
+      WHERE value_drug IN(#{ipt_drug_ids.join(',')})
+      AND e.patient_id IN(#{patient_ids.join(',')})
+      AND encounter_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY e.patient_id;
+EOF
+
+    end
+
+=begin
+    data3 = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.patient_id FROM encounter e
+      INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+      AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
+      AND obs.concept_id = #{amount_dispensed}
+      WHERE value_drug IN(#{ipt_drug_ids.join(',')})
+      AND e.patient_id IN(#{patient_ids.join(',')})
+      AND encounter_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY e.patient_id;
+EOF
+=end
+
+    return [
+      (data.length rescue 0),
+      (data1.length rescue 0),
+      (data2.length rescue 0),
+       0]
+  end
+
   private
+
+  def self.total_patients_with_screened_bp(patients_list, end_date)
+    patient_ids = []
+    (patients_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+    systolic_blood_presssure_concept_id = ConceptName.find_by_name("Systolic blood pressure").concept_id
+    diastolic_pressure_concept_id = ConceptName.find_by_name("Diastolic blood pressure").concept_id
+
+    results = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT o.person_id
+      FROM obs o
+      WHERE o.voided = 0 AND (o.concept_id in (#{systolic_blood_presssure_concept_id}, #{diastolic_pressure_concept_id}) AND o.value_text IS NOT NULL)
+      AND o.person_id IN (#{patient_ids.join(',')})
+      AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
+                                  WHERE obs.voided = 0
+                    							AND (obs.concept_id IN (#{systolic_blood_presssure_concept_id}, #{diastolic_pressure_concept_id}) AND obs.value_text IS NOT NULL)
+                    							AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+                                  AND obs.person_id = o.person_id)
+      GROUP BY o.person_id;
+EOF
+    return results
+  end
+
+  def self.total_patients_on_family_planning(patients_list, end_date)
+    patient_ids = []
+    (patients_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+    hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
+    method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
+    family_planning_action_to_take_concept_id = ConceptName.find_by_name("Family planning, action to take").concept_id
+
+    results = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT o.person_id
+      FROM obs o
+       inner join encounter e on e.encounter_id = o.encounter_id AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
+      WHERE o.voided = 0 AND e.voided = 0
+      AND (o.concept_id in (#{method_of_family_planning_concept_id}, #{family_planning_action_to_take_concept_id}) AND o.value_coded IS NOT NULL)
+      AND o.person_id IN (#{patient_ids.join(',')})
+      AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
+                                  WHERE obs.voided = 0
+                    							AND (obs.concept_id IN (#{method_of_family_planning_concept_id}, #{family_planning_action_to_take_concept_id}) AND obs.value_coded IS NOT NULL)
+                    							AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+                                  AND obs.person_id = o.person_id)
+      GROUP BY o.person_id;
+EOF
+    return results
+  end
+
+  def self.total_patients_on_arvs_and_ipt(patients_list, end_date)
+    isoniazid_concept_id = ConceptName.find_by_name("Isoniazid").concept_id
+    pyridoxine_concept_id = ConceptName.find_by_name("Pyridoxine").concept_id
+
+    patient_ids = []
+    (patients_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+    results = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT ods.patient_id FROM orders ods
+       INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0
+      WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
+      AND dos.quantity IS NOT NULL
+      AND ods.patient_id in (#{patient_ids.join(',')})
+      AND ods.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
+                    							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
+                    							WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
+                    							AND d.quantity IS NOT NULL
+                                  AND o.patient_id = ods.patient_id
+                                  AND o.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+
+      GROUP BY ods.patient_id;
+EOF
+    return results
+  end
+
+  def self.total_patients_on_arvs_and_cpt(patients_list, end_date)
+    cpt_concept_id = ConceptName.find_by_name("Cotrimoxazole").concept_id
+
+    patient_ids = []
+    (patients_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+    results = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT ods.patient_id FROM orders ods
+       INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0
+      WHERE ods.concept_id = #{cpt_concept_id}
+      AND dos.quantity IS NOT NULL
+      AND ods.patient_id in (#{patient_ids.join(',')})
+      AND ods.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
+                    							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
+                    							WHERE o.concept_id =  #{cpt_concept_id}
+                    							AND d.quantity IS NOT NULL
+                                  AND o.patient_id = ods.patient_id
+                                  AND o.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+
+      GROUP BY ods.patient_id;
+EOF
+    return results
+  end
+
+  def self.total_breastfeeding_women(patients_list, end_date)
+    patient_ids = []
+    (patients_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+    total_pregnant_females = []
+    (total_pregnant_women(patients_list, end_date) || []).each do |person|
+      total_pregnant_females << person['person_id'].to_i
+    end
+
+    return [] if total_pregnant_females.blank?
+
+    hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
+    breastfeeding_concept_id = ConceptName.find_by_name("Breast feeding?").concept_id
+
+    results = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT person_id FROM obs obs
+        INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+      WHERE obs.person_id IN (#{patient_ids.join(',')})
+      AND obs.person_id NOT IN (#{total_pregnant_females.join(',')})
+      AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = 7965
+      AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
+      AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
+      							WHERE o.concept_id = #{breastfeeding_concept_id} AND voided = 0
+      							AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+      GROUP BY obs.person_id;
+EOF
+    return results
+  end
+
+  def self.total_pregnant_women(patients_list, end_date)
+    patient_ids = []
+    (patients_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+    result = []
+
+    hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
+    pregnant_concept_id = ConceptName.find_by_name("Is patient pregnant?").concept_id
+
+    results = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT person_id FROM obs obs
+        INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
+      WHERE obs.person_id IN (#{patient_ids.join(',')})
+      AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = 7965
+      AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
+      AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
+                    WHERE o.concept_id = #{pregnant_concept_id} AND voided = 0
+                    AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+      GROUP BY obs.person_id;
+EOF
+    return results
+  end
+
+  def self.total_other_patients(patient_list, all_breastfeeding_women, all_pregnant_women)
+    patient_ids = []; all_pregnant_women_ids = []; all_breastfeeding_women_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    (all_pregnant_women || []).each do |row|
+      all_pregnant_women_ids << row['person_id'].to_i
+    end
+
+    (all_breastfeeding_women || []).each do |row|
+      all_breastfeeding_women_ids << row['person_id'].to_i
+    end
+
+    results = (patient_ids - (all_breastfeeding_women_ids + all_pregnant_women_ids))
+    return results
+  end
 
   def self.latest_art_adherence(patient_list, end_date)
     patient_ids = []
@@ -779,6 +1097,7 @@ EOF
         obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       ) GROUP BY person_id
 EOF
+
     (data || []).each do |patient_tb_status|
       status = patient_tb_status['tb_status']
       status = 'unknown_tb_status' if status.blank?
@@ -1016,7 +1335,6 @@ EOF
     result = []
 
     (total_registered || []).each do |patient|
-    #  raise patient.to_yaml
       total_registered_patients << patient["patient_id"].to_i
     end
 
@@ -1195,7 +1513,6 @@ EOF
     end
 
   end
-
 
   def self.who_stage_two(start_date, end_date)
     reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
