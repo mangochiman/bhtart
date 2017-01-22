@@ -398,7 +398,7 @@ return [(data.length rescue 0), (data1.length rescue 0),
       started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date)
       screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date)
 
-      return [0, 0, 0, 0] if cum_breastfeeding_mothers.blank?
+      return [[], [], [], []] if cum_breastfeeding_mothers.blank?
 
       cum_breastfeeding_mothers_data = []
       (cum_breastfeeding_mothers).each do |data|
