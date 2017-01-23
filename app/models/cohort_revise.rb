@@ -817,8 +817,6 @@ EOF
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
-    return [] if results.blank?
-
     total_percent = (((results.count).to_f / (patient_ids.count).to_f) * 100).to_i
     return total_percent
   end
@@ -897,7 +895,6 @@ EOF
 
       GROUP BY ods.patient_id;
 EOF
-    return [] if results.blank?
 
     total_percent = (((results.count).to_f / (patient_ids.count).to_f) * 100).to_i
     return total_percent
@@ -930,8 +927,6 @@ EOF
 
       GROUP BY ods.patient_id;
 EOF
-    return [] if results.blank?
-
     total_percent = (((results.count).to_f / (patient_ids.count).to_f) * 100).to_i
     return total_percent
   end
