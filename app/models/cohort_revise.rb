@@ -824,13 +824,27 @@ EOF
   end
 
   def self.total_patients_on_family_planning(patients_list, end_date)
-    patient_ids = []
+
+    patient_ids = []; patient_list = []
+
     (patients_list || []).each do |row|
       patient_ids << row['patient_id'].to_i
     end
 
     return [] if patient_ids.blank?
     result = []
+
+    all_women = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date
+      WHERE (gender = 'F' OR gender = 'Female') AND patient_id IN  (#{patient_ids.join(',')})
+      AND date_enrolled <= '#{end_date}'
+      GROUP BY patient_id;
+EOF
+
+    (all_women || []).each do |patient|
+        patient_list << patient['patient_id'].to_i
+    end
+    patient_list = [] if patient_list.blank?
 
     hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
     method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
@@ -851,9 +865,8 @@ EOF
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
-    return [] if results.blank?
-
-    total_percent = ((results.count / patient_ids.count) * 100)
+    results = [] if results.blank?
+    total_percent = ((results.count / patient_list.count) * 100)
     return total_percent
   end
 
@@ -948,10 +961,10 @@ EOF
         INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
       WHERE obs.person_id IN (#{patient_ids.join(',')})
       AND obs.person_id NOT IN (#{total_pregnant_females.join(',')})
-      AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = 7965
+      AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = #{breastfeeding_concept_id} AND obs.value_coded = 1065
       AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-      							WHERE o.concept_id = #{breastfeeding_concept_id} AND voided = 0
+      							WHERE o.concept_id = #{breastfeeding_concept_id} AND obs.value_coded = 1065 AND voided = 0
       							AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       GROUP BY obs.person_id;
 EOF
@@ -974,10 +987,10 @@ EOF
       SELECT person_id FROM obs obs
         INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
       WHERE obs.person_id IN (#{patient_ids.join(',')})
-      AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = 7965
+      AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = #{pregnant_concept_id} AND obs.value_coded = '1065'
       AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-                    WHERE o.concept_id = #{pregnant_concept_id} AND voided = 0
+                    WHERE o.concept_id = #{pregnant_concept_id} AND voided = 0 AND o.value_coded = '1065'
                     AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       GROUP BY obs.person_id;
 EOF
