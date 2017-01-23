@@ -817,7 +817,10 @@ EOF
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
-    return results
+    return [] if results.blank?
+
+    total_percent = ((results.count / patient_ids.count) * 100)
+    return total_percent
   end
 
   def self.total_patients_on_family_planning(patients_list, end_date)
@@ -848,7 +851,10 @@ EOF
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
-    return results
+    return [] if results.blank?
+
+    total_percent = ((results.count / patient_ids.count) * 100)
+    return total_percent
   end
 
   def self.total_patients_on_arvs_and_ipt(patients_list, end_date)
@@ -879,7 +885,10 @@ EOF
 
       GROUP BY ods.patient_id;
 EOF
-    return results
+    return [] if results.blank?
+
+    total_percent = ((results.count / patient_ids.count) * 100)
+    return total_percent
   end
 
   def self.total_patients_on_arvs_and_cpt(patients_list, end_date)
@@ -909,7 +918,10 @@ EOF
 
       GROUP BY ods.patient_id;
 EOF
-    return results
+    return [] if results.blank?
+
+    total_percent = ((results.count / patient_ids.count) * 100)
+    return total_percent
   end
 
   def self.total_breastfeeding_women(patients_list, end_date)

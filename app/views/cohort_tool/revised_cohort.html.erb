@@ -2455,9 +2455,7 @@
         <td colspan="2" class="border-top-dotted border-null-left border-dotted-bottom">
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('art_patients_currently_on_cpt');">
-              <%= "#{@cohort.total_patients_on_arvs_and_cpt.count}  %" %>
-            </a>
+              <%= "#{@cohort.total_patients_on_arvs_and_cpt}  %" %>
         </td>
     </tr>
     <tr>
@@ -2477,9 +2475,7 @@
           <td colspan="2" class="border-top-dotted border-null-bottom border-null-left" colspan="2">
           </td>
           <td colspan="2" class="number">
-              <a href="javascript:drillDown('pre_art_patients_currently_on_ipt');">
                   <%= "0  %" %>
-              </a>
           </td>
       </tr>
       <tr>
@@ -2494,9 +2490,7 @@
           <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
           </td>
           <td colspan="2" class="number">
-              <a href="javascript:drillDown('art_patients_currently_on_ipt');">
-                <%= "#{@cohort.total_patients_on_arvs_and_ipt.count}  %" %>
-              </a>
+                <%= "#{@cohort.total_patients_on_arvs_and_ipt}  %" %>
           </td>
       </tr>
     <tr>
@@ -2516,9 +2510,7 @@
         <td colspan="2" class="border-top-dotted border-null-left border-dotted-bottom">
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('family_planning_patients');">
-                <%= "#{@cohort.total_patients_on_family_planning.count}  %" %>
-            </a>
+                <%= "#{@cohort.total_patients_on_family_planning}  %" %>
         </td>
     </tr>
     <tr>
@@ -2538,9 +2530,7 @@
         <td colspan="2" class="border-top-dotted border-null-left border-dotted-bottom">
         </td>
         <td colspan="2" class="number">
-            <a href="javascript:drillDown('bp_screen_patients');">
-                <%= "#{@cohort.total_patients_with_screened_bp.count}  %" %>
-            </a>
+          <%= "#{@cohort.total_patients_with_screened_bp}  %" %>
         </td>
     </tr>
     <tr>
@@ -3021,26 +3011,6 @@
                 break;
             case 'unknown_tb_status':
             <% (@cohort.unknown_tb_status || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id %>);
-            <% end %>
-                break;
-            case 'art_patients_currently_on_ipt':
-            <% (@cohort.total_patients_on_arvs_and_ipt || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id %>);
-            <% end %>
-                break;
-            case 'art_patients_currently_on_cpt':
-            <% (@cohort.total_patients_on_arvs_and_cpt || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id %>);
-            <% end %>
-                break;
-            case 'family_planning_patients':
-            <% (@cohort.total_patients_on_family_planning || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id %>);
-            <% end %>
-                break;
-            case 'bp_screen_patients':
-            <% (@cohort.total_patients_with_screened_bp || []).each do |patient_id| %>
                 patient_ids.push(<%= patient_id %>);
             <% end %>
                 break;
