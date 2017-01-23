@@ -853,6 +853,7 @@ EOF
         obs.encounter_id = dispension_enc.id
         obs.value_drug = drug.id
         obs.value_numeric = 0
+        obs.value_text = "Pills remaining enough to last to next visit"
         obs.obs_datetime = obs_datetime
         obs.save
 
