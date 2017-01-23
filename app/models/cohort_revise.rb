@@ -845,20 +845,21 @@ EOF
     patient_list = [] if patient_list.blank?
 
     hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
-    method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
+    #method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
     family_planning_action_to_take_concept_id = ConceptName.find_by_name("Family planning, action to take").concept_id
+    none_concept_id = ConceptName.find_by_name("None").concept_id
 
     results = ActiveRecord::Base.connection.select_all <<EOF
       SELECT o.person_id
       FROM obs o
        inner join encounter e on e.encounter_id = o.encounter_id AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       WHERE o.voided = 0 AND e.voided = 0
-      AND (o.concept_id in (#{method_of_family_planning_concept_id}, #{family_planning_action_to_take_concept_id}) AND o.value_coded IS NOT NULL)
+      AND (o.concept_id = #{family_planning_action_to_take_concept_id} AND o.value_coded != #{none_concept_id})
       AND o.person_id IN (#{patient_ids.join(',')})
       AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
                                   WHERE obs.voided = 0
-                    							AND (obs.concept_id IN (#{method_of_family_planning_concept_id}, #{family_planning_action_to_take_concept_id}))
+                    							AND (obs.concept_id = #{family_planning_action_to_take_concept_id})
                     							AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
@@ -951,7 +952,7 @@ EOF
     breastfeeding_concept_id = ConceptName.find_by_name("Breast feeding?").concept_id
 
     results = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT person_id FROM obs obs
+      SELECT person_id  FROM obs obs
         INNER JOIN encounter enc ON enc.encounter_id = obs.encounter_id AND enc.voided = 0
       WHERE obs.person_id IN (#{patient_ids.join(',')})
       AND obs.person_id NOT IN (#{total_pregnant_females.join(',')})
