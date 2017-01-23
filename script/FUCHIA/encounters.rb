@@ -10,7 +10,7 @@ Dispension = EncounterType.find_by_name("DISPENSING")
 Encounter_id = Encounter.last
 Appointment = EncounterType.find_by_name("APPOINTMENT")
 HIV_clinic_consultation = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
-Parent_path = '/home/comish/Desktop/msf'
+Parent_path = '/home/pachawo/Documents/msf'
 
 @@staging_conditions = []
 @@patient_visits = {}
@@ -18,15 +18,12 @@ Parent_path = '/home/comish/Desktop/msf'
 @@drug_follow_up = {}
 
 def start
-  `touch /home/comish/Desktop/datamigration/encounters.sql`
-  `touch /home/comish/Desktop/datamigration/observations.sql`
-  
   obs =  "INSERT INTO obs (person_id, encounter_id, concept_id, value_numeric,value_coded, value_datetime, obs_datetime, creator, uuid) VALUES "
-  
   encounter =  "INSERT INTO encounter (encounter_id, encounter_type, patient_id, provider_id, encounter_datetime, creator, uuid) VALUES "
   
-  `echo '#{encounter}' >> /home/comish/Desktop/datamigration/encounters.sql` 
-  `echo '#{obs}' >> /home/comish/Desktop/datamigration/observations.sql`
+  `touch /home/pachawo/pats/encounters.sql && echo '#{encounter}' >> /home/pachawo/pats/encounters.sql` 
+  `touch /home/pachawo/pats/observations.sql && echo '#{obs}' >> /home/pachawo/pats/observations.sql`
+
   if Encounter_id.blank?
     encounter_id = 1
   else
@@ -238,7 +235,12 @@ def start
   ##########################################################################################
 
   end
+  puts "...............please wait............"
+  encounter_sql = File.read("/home/pachawo/pats/encounters.sql")[0...-1]
+  File.open("/home/pachawo/pats/encounters.sql", "w") {|sql| sql.puts encounter_sql << ";"}
 
+  observation_sql = File.read("/home/pachawo/pats/observations.sql")[0...-1]
+  File.open("/home/pachawo/pats/observations.sql", "w") {|sql| sql.puts observation_sql << ";"}
   puts "Script time: #{ScriptStared} - #{Time.now()}"
 end
 
@@ -285,9 +287,10 @@ def self.create_encounter(encounter_id, patient_id, encounter_type_id, date_crea
 EOF
     date_created =date_created.strftime("%Y-%m-%d 00:00:00")
 
-    insert_encounters = "(\"#{encounter_id}\",\"#{encounter_type_id}\",\"#{patient_id}\",\"#{encounter.patient_id}\",\"#{date_created}\",\"#{User.current.id}\",\"#{uuid.values.first}\"),"
+    insert_encounters = "(\"#{encounter_id}\",\"#{encounter_type_id}\",\"#{patient_id}\",\"#{User.current.id}\",\"#{date_created}\","
+    insert_encounters += "\"#{User.current.id}\",\"#{uuid.values.first}\"),"
 
-    `echo -n '#{insert_encounters}' >> /home/comish/Desktop/datamigration/encounters.sql`
+    `echo -n '#{insert_encounters}' >> /home/pachawo/pats/encounters.sql`
   end
 
   return encounter
@@ -304,7 +307,7 @@ EOF
     insert_observation += "\"#{value}\",null,null,\"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\","
     insert_observation += "\"#{User.current.id}\",\"#{uuid.values.first}\"), "
 
-    `echo -n '#{insert_observation}' >> /home/comish/Desktop/datamigration/observations.sql`
+    `echo -n '#{insert_observation}' >> /home/pachawo/pats/observations.sql`
 end
 
 def self.create_observation_value_coded(encounter, concept_name, value_coded_concept_name)
@@ -318,7 +321,7 @@ EOF
     insert_observation_value_coded += "\"#{value_coded}\",null,\"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\","
     insert_observation_value_coded += "\"#{User.current.id}\",\"#{uuid.values.first}\"), "
 
-    `echo -n '#{insert_observation_value_coded}' >> /home/comish/Desktop/datamigration/observations.sql`
+    `echo -n '#{insert_observation_value_coded}' >> /home/pachawo/pats/observations.sql`
 end
 
 def self.create_observation_value_datetime(encounter, concept_name, date)
@@ -331,7 +334,7 @@ EOF
     insert_observation_value_datetime += "\"#{date.strftime("%Y-%m-%d %H:%M:%S")}\",\"#{encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00")}\","
     insert_observation_value_datetime += "\"#{User.current.id}\",\"#{uuid.values.first}\"), "
 
-    `echo -n '#{insert_observation_value_datetime}' >> /home/comish/Desktop/datamigration/observations.sql`
+    `echo -n '#{insert_observation_value_datetime}' >> /home/pachawo/pats/observations.sql`
 end
 
 def get_proper_date (unfomatted_date)
