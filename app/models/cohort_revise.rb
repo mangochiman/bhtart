@@ -819,7 +819,7 @@ EOF
 EOF
     return [] if results.blank?
 
-    total_percent = ((results.count / patient_ids.count) * 100)
+    total_percent = (((results.count).to_f / (patient_ids.count).to_f) * 100).to_i
     return total_percent
   end
 
@@ -860,13 +860,12 @@ EOF
       AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
                                   WHERE obs.voided = 0
-                    							AND (obs.concept_id IN (#{method_of_family_planning_concept_id}, #{family_planning_action_to_take_concept_id}) AND obs.value_coded IS NOT NULL)
+                    							AND (obs.concept_id IN (#{method_of_family_planning_concept_id}, #{family_planning_action_to_take_concept_id}))
                     							AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
-    results = [] if results.blank?
-    total_percent = ((results.count / patient_list.count) * 100)
+    total_percent = (((results.count).to_f / (patient_list.count).to_f) * 100).to_i
     return total_percent
   end
 
@@ -892,15 +891,15 @@ EOF
       AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                     							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
                     							WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
-                    							AND d.quantity IS NOT NULL
                                   AND o.patient_id = ods.patient_id
+                                  AND d.quantity IS NOT NULL
                                   AND o.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
 
       GROUP BY ods.patient_id;
 EOF
     return [] if results.blank?
 
-    total_percent = ((results.count / patient_ids.count) * 100)
+    total_percent = (((results.count).to_f / (patient_ids.count).to_f) * 100).to_i
     return total_percent
   end
 
@@ -925,7 +924,7 @@ EOF
       AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                     							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
                     							WHERE o.concept_id =  #{cpt_concept_id}
-                    							AND d.quantity IS NOT NULL
+                                  AND d.quantity IS NOT NULL
                                   AND o.patient_id = ods.patient_id
                                   AND o.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
 
@@ -933,7 +932,7 @@ EOF
 EOF
     return [] if results.blank?
 
-    total_percent = ((results.count / patient_ids.count) * 100)
+    total_percent = (((results.count).to_f / (patient_ids.count).to_f) * 100).to_i
     return total_percent
   end
 
@@ -964,7 +963,7 @@ EOF
       AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' AND obs.concept_id = #{breastfeeding_concept_id} AND obs.value_coded = 1065
       AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
-      							WHERE o.concept_id = #{breastfeeding_concept_id} AND obs.value_coded = 1065 AND voided = 0
+      							WHERE o.concept_id = #{breastfeeding_concept_id} AND voided = 0
       							AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       GROUP BY obs.person_id;
 EOF
