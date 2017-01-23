@@ -853,12 +853,24 @@ EOF
         obs.encounter_id = dispension_enc.id
         obs.value_drug = drug.id
         obs.value_numeric = 0
+        obs.value_text = "Pills remaining enough to last to next visit"
         obs.obs_datetime = obs_datetime
         obs.save
 
         ActiveRecord::Base.connection.execute <<EOF
           UPDATE drug_order SET quantity = #{hanging_pills.to_f} WHERE order_id = #{order.id};
 EOF
+
+
+        current_state = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT current_state_for_program(#{order.patient_id}, 1, '#{obs_datetime.to_date}') state;
+EOF
+
+        unless current_state['state'].to_i == 7
+          patient = order.patient
+          patient.patient_programs.find_last_by_program_id(Program.find_by_name("HIV PROGRAM")).transition(
+             :state => "On antiretrovirals", :start_date => obs_datetime.to_time)
+        end
 
       end
 

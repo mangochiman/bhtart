@@ -45,6 +45,12 @@ class CohortService
   #survival analysis: Number of new patients registered on ART within a certain period of time
   attr_accessor :general_survival_analysis, :women_survival_analysis, :children_survival_analysis
 
+  #Patient pregnancy and/or breastfeeding status as of end of quarter
+  attr_accessor :total_pregnant_women, :total_breastfeeding_women, :total_other_patients
+
+  #Percentage of CPT, IPT, Family planning, BP screened patients
+  attr_accessor :total_patients_on_arvs_and_cpt, :total_patients_on_arvs_and_ipt, :total_patients_on_family_planning, :total_patients_with_screened_bp, :total_patients_with_screened_bp
+
 	def initialize(name)
 		@name = name
 	end
