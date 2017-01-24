@@ -1344,7 +1344,17 @@ EOF
     end
 
     type = EncounterType.find_by_name("DISPENSING")
+    drug_end_date_concept_id = ConceptName.find_by_name("Drug end date").concept_id
+
     patient.encounters.find_last_by_encounter_type(type.id, :order => "encounter_datetime").observations.each do | obs |
+      if obs.concept_id == drug_end_date_concept_id 
+        order = obs.order
+        if order.drug_order.drug_inventory_id == obs.value_drug
+          alerts << "Runout date: #{order.drug_order.drug.name} #{obs.value_datetime.to_date.strftime('%d/%b/%Y')}"
+          next
+        end
+      end
+
       next if obs.order.blank?
       next if obs.order.auto_expire_date.blank?
       auto_expire_date = obs.order.discontinued_date.to_date rescue obs.order.auto_expire_date.to_date

@@ -285,6 +285,38 @@ class GenericDispensationsController < ApplicationController
 			end
 			
 		end
+
+
+=begin
+  The following block of code will create observations for each dispensed drug that indicated the 
+  exact expiry date of the medication
+=end
+    concept_id = ConceptName.find_by_name("Drug end date").concept_id
+    con_id = ConceptName.find_by_name('Amount dispensed').concept_id
+    observations = encounter.observations
+   
+    (observations || []).each do |obs|
+      next unless obs.concept_id == con_id
+      order = Order.find(obs.order_id)
+      drug_order = order.drug_order
+      quantity = drug_order.quantity.to_f rescue 0.0
+      if quantity == 0.0
+        value_numeric = Observation.find(:first, :conditions =>["order_id = ?
+          AND concept_id = ?",order.id, con_id]).value_numeric rescue 0
+        quantity = value_numeric.to_f rescue 0.0
+      end
+     
+      next if quantity == 0.0
+      auto_expire_date = (order.start_date.to_date + (quantity / drug_order.equivalent_daily_dose.to_f).day)
+      Observation.create(:person_id => order.patient_id, :encounter_id => encounter.id,
+        :concept_id => concept_id, :value_datetime => (auto_expire_date.to_date - 1.day).to_date,
+        :order_id => order.id, :value_drug => drug_order.drug_inventory_id,
+        :obs_datetime => encounter.encounter_datetime.to_time)
+    
+    end
+    ################################################################################################################
+
+
 		return regimen_cat
 	end
 
