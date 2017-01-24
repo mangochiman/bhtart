@@ -1344,12 +1344,34 @@ EOF
     end
 
     type = EncounterType.find_by_name("DISPENSING")
-    patient.encounters.find_last_by_encounter_type(type.id, :order => "encounter_datetime").observations.each do | obs |
-      next if obs.order.blank?
-      next if obs.order.auto_expire_date.blank?
-      auto_expire_date = obs.order.discontinued_date.to_date rescue obs.order.auto_expire_date.to_date
-      alerts << "Runout date: #{obs.order.drug_order.drug.name} #{auto_expire_date.to_date.strftime('%d/%b/%Y')}"
+    drug_end_date_concept_id = ConceptName.find_by_name("Drug end date").concept_id
+    medication_runout_dates = {}
+
+    medication_orders = patient.encounters.find_last_by_encounter_type(type.id, :order => "encounter_datetime").observations
+    (medication_orders || []).each do | obs |
+      if obs.concept_id == drug_end_date_concept_id 
+        order = obs.order
+        if order.drug_order.drug_inventory_id == obs.value_drug
+          medication_runout_dates[obs.value_drug] = "Runout date: #{order.drug_order.drug.name} #{obs.value_datetime.to_date.strftime('%d/%b/%Y')}"
+          next
+        end
+      end
     end rescue []
+
+    (medication_orders || []).each do | obs |
+      order = obs.order
+      next if order.blank?
+      next if order.auto_expire_date.blank?
+      next unless medication_runout_dates[order.drug_order.drug_inventory_id].blank?
+      auto_expire_date = order.discontinued_date.to_date rescue order.auto_expire_date.to_date
+      alerts << "Runout date: #{order.drug_order.drug.name} #{auto_expire_date.to_date.strftime('%d/%b/%Y')}"
+    end rescue []
+
+    (medication_runout_dates || {}).each do |drug_id, text|
+      alerts << text
+    end
+
+
 
     # BMI alerts
     if patient_bean.age >= 15

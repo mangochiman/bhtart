@@ -864,7 +864,8 @@ EOF
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
-    total_percent = (((results.count).to_f / (patient_list.count).to_f) * 100).to_i
+
+    total_percent = (((results.count).to_f / (patient_list.count).to_f) * 100).to_i rescue 0
     return total_percent
   end
 
