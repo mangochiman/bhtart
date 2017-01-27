@@ -1436,15 +1436,18 @@ class CohortToolController < GenericCohortToolController
   def revised_cohort_menu
   end
 
+	def flat_tables_revised_cohort_menu
+  end
+
   def disaggregated_cohort
     @disaggregated_age_groups = {}
     @quarter = params[:quarter]
     @quarter = @quarter.split("to")[0].to_date.strftime("%d %b, %Y") + " to " +
       @quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
     start_date,end_date = Report.generate_cohort_date_range(@quarter)
-    
+
     cohort = CohortDisaggregated.get_indicators(start_date, end_date)
-     
+
     @age_groups = ['0-5 months',
       '6-11 months', '12-23 months','2-4 years',
       '5-9 years','10-14 years','15-17 years',
@@ -1453,13 +1456,13 @@ class CohortToolController < GenericCohortToolController
     ]
 
     counter = 1
- 
+
     ['Male', 'Female'].each do |gender|
       (@age_groups).each do |ag|
         next if ag.match(/all/i)
         @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
         @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
-        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag, cohort) 
+        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag, cohort)
         counter+= 1
       end
     end
@@ -1469,15 +1472,15 @@ class CohortToolController < GenericCohortToolController
         next unless ag.match(/all/i)
         @disaggregated_age_groups[counter] = {} if @disaggregated_age_groups[counter].blank?
         @disaggregated_age_groups[counter][gender] = {} if @disaggregated_age_groups[counter][gender].blank?
-        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag, cohort) 
+        @disaggregated_age_groups[counter][gender][ag] = CohortDisaggregated.get_data(start_date, end_date, gender, ag, cohort)
         counter+= 1
       end
     end
-    
+
     render :layout => "report"
   end
 
-  def revised_cohort
+	def revised_cohort
 		session[:cohort] = nil
 
 		if params[:quarter] == 'Select date range'
@@ -1514,6 +1517,137 @@ class CohortToolController < GenericCohortToolController
     render :layout => false
 
   end
+
+  def flat_tables_revised_cohort_to_print
+	  @logo = CoreService.get_global_property_value('logo').to_s
+	  quarter = params[:quarter]
+
+	  start_date,end_date = Report.generate_cohort_date_range(quarter)
+
+	  @cohort = CohortRevise.get_indicators(start_date, end_date)
+	  logger.info("cohort")
+	  render :layout => false
+  end
+
+	def revised_cohort_survival_analysis
+		session[:cohort] = nil
+
+		if params[:quarter] == 'Select date range'
+			redirect_to :action => 'select_cohort_date' and return
+		end
+
+		@logo = CoreService.get_global_property_value('logo').to_s
+
+		if params[:date] and not params[:date]['start'].blank? and not params[:date]['end'].blank?
+			@quarter = params[:date]['start']. + " to " + params[:date]['end']
+			start_date = params[:date]['start'].to_date
+			end_date = params[:date]['end'].to_date
+		end if not params[:date].blank?
+
+		if start_date.blank? and end_date.blank?
+			@quarter = params[:quarter]
+			@quarter = @quarter.split("to")[0].to_date.strftime("%d %b, %Y") + " to " +
+				@quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
+			start_date,end_date = Report.generate_cohort_date_range(@quarter)
+		end
+
+		cohort = SurvivalAnalysisRevise.get_indicators(start_date, end_date, params[:quarter_type])
+		logger.info("cohort")
+
+		if session[:cohort].blank?
+			@cohort = cohort#.report(logger)
+			session[:cohort]=@cohort
+		else
+			@cohort = session[:cohort]
+		end
+
+		session[:views]=nil; session[:chidren]; session[:nil]
+
+		case params[:quarter_type].downcase
+			when 'general'
+				render :template => '/cohort_tool/revised_cohort_survival_analysis', :layout => false and return
+			when 'women'
+				render :template => '/cohort_tool/revised_women_cohort_survival_analysis', :layout => false and return
+			when 'children'
+				render :template => '/cohort_tool/revised_children_cohort_survival_analysis', :layout => false and return
+		end
+	end
+
+  def flat_tables_revised_cohort
+		session[:cohort] = nil
+
+		if params[:quarter] == 'Select date range'
+			redirect_to :action => 'select_cohort_date' and return
+		end
+		session[:pre_art] = []
+		@logo = CoreService.get_global_property_value('logo').to_s
+
+		if params[:date] and not params[:date]['start'].blank? and not params[:date]['end'].blank?
+			@quarter = params[:date]['start']. + " to " + params[:date]['end']
+			start_date = params[:date]['start'].to_date
+			end_date = params[:date]['end'].to_date
+		end if not params[:date].blank?
+
+		if start_date.blank? and end_date.blank?
+			@quarter = params[:quarter]
+			@quarter = @quarter.split("to")[0].to_date.strftime("%d %b, %Y") + " to " +
+				@quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
+			start_date,end_date = Report.generate_cohort_date_range(@quarter)
+		end
+		@cohort = CohortRevise.get_indicators(start_date, end_date)
+		logger.info("cohort")
+=begin
+		#raise request.env["HTTP_CONNECTION"].to_yaml
+		if session[:cohort].blank?
+			@cohort = cohort#.report(logger)
+			session[:cohort]=@cohort
+		else
+			@cohort = session[:cohort]
+		end
+
+		session[:views]=nil; session[:chidren]; session[:nil]
+=end
+    render :layout => false
+
+  end
+
+	def revised_cohort
+		session[:cohort] = nil
+
+		if params[:quarter] == 'Select date range'
+			redirect_to :action => 'select_cohort_date' and return
+		end
+		session[:pre_art] = []
+		@logo = CoreService.get_global_property_value('logo').to_s
+
+		if params[:date] and not params[:date]['start'].blank? and not params[:date]['end'].blank?
+			@quarter = params[:date]['start']. + " to " + params[:date]['end']
+			start_date = params[:date]['start'].to_date
+			end_date = params[:date]['end'].to_date
+		end if not params[:date].blank?
+
+		if start_date.blank? and end_date.blank?
+			@quarter = params[:quarter]
+			@quarter = @quarter.split("to")[0].to_date.strftime("%d %b, %Y") + " to " +
+				@quarter.split("to")[1].to_date.strftime("%d %b, %Y") if @quarter.match("to")
+			start_date,end_date = Report.generate_cohort_date_range(@quarter)
+		end
+		@cohort = CohortRevise.get_indicators(start_date, end_date)
+		logger.info("cohort")
+=begin
+		#raise request.env["HTTP_CONNECTION"].to_yaml
+		if session[:cohort].blank?
+			@cohort = cohort#.report(logger)
+			session[:cohort]=@cohort
+		else
+			@cohort = session[:cohort]
+		end
+
+		session[:views]=nil; session[:chidren]; session[:nil]
+=end
+		render :layout => false
+
+	end
 
   def revised_cohort_to_print
 	  @logo = CoreService.get_global_property_value('logo').to_s

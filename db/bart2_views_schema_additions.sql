@@ -124,8 +124,8 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
       date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
       cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
       `person`.`death_date` AS `death_date`,
-      (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
-      (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
+      (select timestampdiff(year, `pe`.`birthdate`, date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)))) AS `age_at_initiation`,
+      (select timestampdiff(day, `pe`.`birthdate`, date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)))) AS `age_in_days`
   from
       ((`patient_program` `p`
       left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))

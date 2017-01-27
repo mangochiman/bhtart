@@ -35,7 +35,7 @@ class GenericClinicController < ApplicationController
       ["Stock report","/drug/date_select"]
     ]
 
-    render :template => 'clinic/reports', :layout => 'clinic' 
+    render :template => 'clinic/reports', :layout => 'clinic'
   end
 
   def supervision
@@ -46,7 +46,7 @@ class GenericClinicController < ApplicationController
 
     @landing_dashboard = 'clinic_supervision'
 
-    render :template => 'clinic/supervision', :layout => 'clinic' 
+    render :template => 'clinic/supervision', :layout => 'clinic'
   end
 
   def properties
@@ -57,7 +57,7 @@ class GenericClinicController < ApplicationController
       ["Set site code", "/properties/site_code"],
       ["Set appointment limit", "/properties/set_appointment_limit"]
     ]
-    render :template => 'clinic/properties', :layout => 'clinic' 
+    render :template => 'clinic/properties', :layout => 'clinic'
   end
 
   def management
@@ -69,15 +69,15 @@ class GenericClinicController < ApplicationController
       ["Removed from shelves","date_select"],
       ["Stock report","date_select"]
     ]
-    render :template => 'clinic/management', :layout => 'clinic' 
+    render :template => 'clinic/management', :layout => 'clinic'
   end
 
   def printing
-    render :template => 'clinic/printing', :layout => 'clinic' 
+    render :template => 'clinic/printing', :layout => 'clinic'
   end
 
   def users
-    render :template => 'clinic/users', :layout => 'clinic' 
+    render :template => 'clinic/users', :layout => 'clinic'
   end
 
   def administration
@@ -87,7 +87,7 @@ class GenericClinicController < ApplicationController
       ['/clinic/location_management','Location Management']
     ]
     @landing_dashboard = 'clinic_administration'
-    render :template => 'clinic/administration', :layout => 'clinic' 
+    render :template => 'clinic/administration', :layout => 'clinic'
   end
 
   def overview_tab
@@ -145,15 +145,15 @@ class GenericClinicController < ApplicationController
       ["Missed Appointments", "/report/missed_appointment_duration?type=missed"],
       ["Defaulted patients", "/report/missed_appointment_duration?type=defaulter"],
       ["Avg ART clinic duration for patients", "/report/avg_waiting_time_for_art_patients"],
-      ["Flat tables reports", "/cohort/select_date"],
+      ["Flat tables reports", "/cohort_tool/flat_tables_revised_cohort_menu"],
       ["HTN Reports", "/cohort_tool/select_htn_date"]
     ]
 
 
-    
+
   	if what_app? == 'TB-ART'
   		@reports <<  ["Case Findings", "/cohort_tool/case_findings_quarter"] << ["TB Register","/cohort_tool/report_duration?report_name=tb_register"] #<< ["Laboratory Register","/cohort_tool/report_duration?report_name=lab_register"]
-  		
+
   	end
     @reports = [
       ["Diagnosis","/drug/date_select?goto=/report/age_group_select?type=diagnosis"],
@@ -231,7 +231,7 @@ class GenericClinicController < ApplicationController
 
   def pharmacy_error_correction_menu
     @formatted = GenericDrugController.new.preformat_regimen
-    @drugs = {} 
+    @drugs = {}
     @cms_drugs = {}
 
     (DrugCms.find_by_sql("SELECT * FROM drug_cms") rescue []).each do |drug|
@@ -239,7 +239,7 @@ class GenericClinicController < ApplicationController
       @cms_drugs[drug_name] = drug.name
       @drugs[drug_name] = "#{drug.short_name} #{drug.strength} "
     end
-    
+
     render :layout => "application"
   end
 
@@ -271,7 +271,7 @@ class GenericClinicController < ApplicationController
     pharmacy_obs.save
     redirect_to('/clinic')
   end
-  
+
   def system_configurations
     @current_location = Location.current_health_center.name
     @cervical_cancer_property = GlobalProperty.find_by_property("activate.cervical.cancer.screening").property_value.to_s == "true"rescue "Not Set"
@@ -281,7 +281,7 @@ class GenericClinicController < ApplicationController
     @ask_pills_property = GlobalProperty.find_by_property("ask.pills.remaining.at.home").property_value.to_s == "true" rescue "Not Set"
     @confirm_before_creating_property = GlobalProperty.find_by_property("confirm.before.creating").property_value.to_s == "true" rescue "Not Set"
     @enter_lab_results_property = GlobalProperty.find_by_property("enter.lab.results").property_value.to_s == "true" rescue "Not Set"
-    
+
     @export_cohort_data_property = (session["export.cohort.data"].downcase == "yes" rescue 'Not Set')
     @extended_family_panning_property = GlobalProperty.find_by_property("extended.family.planning").property_value.to_s == "true" rescue "Not Set"
     @systollic_blood_pressure_property = CoreService.get_global_property_value("htn.systolic.threshold").to_i
@@ -294,7 +294,7 @@ class GenericClinicController < ApplicationController
 
     @show_lab_results_property = GlobalProperty.find_by_property("show.lab.results").property_value.to_s == "true" rescue "Not Set"
     @extended_staging_property = GlobalProperty.find_by_property("use.extended.staging.questions").property_value.to_s == "true" rescue "Not Set"
-    
+
     @use_filing_number_property = GlobalProperty.find_by_property("use.filing.numbers").property_value.to_s == "true" rescue false
     @use_user_selected_activities_property = GlobalProperty.find_by_property("use.user.selected.activities").property_value.to_s == "true" rescue "Not Set"
 
@@ -311,7 +311,7 @@ class GenericClinicController < ApplicationController
     } rescue []
     render :layout => "report"
   end
-  
+
   def supervision_tab
     @reports = [
       ["Data that was Updated","/cohort_tool/select?report_type=summary_of_records_that_were_updated"],
@@ -333,7 +333,7 @@ class GenericClinicController < ApplicationController
       ['/location.new?act=delete','Delete location'],
       ['/location/new?act=print','Print location']
     ]
-    render :template => 'clinic/location_management', :layout => 'clinic' 
+    render :template => 'clinic/location_management', :layout => 'clinic'
   end
 
   def location_management_tab
@@ -363,7 +363,7 @@ class GenericClinicController < ApplicationController
     ]
     render :layout => false
   end
-  
+
   def lab_tab
     #only applicable in the sputum submission area
     enc_date = session[:datetime].to_date rescue Date.today

@@ -1,4 +1,4 @@
-class CohortRevise
+class FlatTablesCohort
 
 
 
@@ -34,24 +34,6 @@ EOF
         group by `p`.`patient_id`;
 EOF
 
-=begin
-    ActiveRecord::Base.connection.execute <<EOF
-      CREATE TABLE temp_earliest_start_date
-select
-        `p`.`patient_id` AS `patient_id`,
-        `p`.`gender` AS `gender`,
-        `p`.`birthdate`,
-        `p`.`earliest_start_date` AS `earliest_start_date`,
-         cast(`patient_start_date`(`p`.`patient_id`) as date) AS `date_enrolled`,
-        `p`.`death_date` AS `death_date`,
-        (select timestampdiff(year, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_at_initiation`,
-        (select timestampdiff(day, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_in_days`
-    from
-        `patients_on_arvs` `p`
-    group by `p`.`patient_id`
-EOF
-
-=end
 
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `last_text_for_obs`;
@@ -318,7 +300,7 @@ EOF
 
 
     ActiveRecord::Base.connection.execute <<EOF
-      DROP FUNCTION IF EXISTS `oitiated_check`;
+      DROP FUNCTION IF EXISTS `re_initiated_check`;
 EOF
 
     ActiveRecord::Base.connection.execute <<EOF
@@ -697,99 +679,7 @@ Unique PatientProgram entries at the current location for those patients with at
     return cohort
 
   end
-
-  def self.get_disaggregated_cohort(start_date, end_date, gender, ag)
-    if ag == '50+ years'
-      diff = [50, 1000]
-      iu = 'year'
-    elsif ag.match(/years/i)
-      diff = ag.sub(' years','').split('-')
-      iu = 'year'
-    elsif ag.match(/months/i)
-      diff = ag.sub(' months','').split('-')
-      iu = 'month'
-    else
-      if gender == 'M'
-        diff = [0, 1000]
-        iu = 'year' ; gender = 'M'
-      elsif gender == 'FNP'
-        diff = [0, 1000]
-        iu = 'year' ; gender = 'F'
-      elsif gender == 'FP'
-        diff = [0, 1000]
-        iu = 'year' ; gender = 'F'
-      elsif gender == 'FBf'
-        diff = [0, 1000]
-        iu = 'year' ; gender = 'F'
-      end
-    end
-
-    data = ActiveRecord::Base.connection.select_all <<EOF
-    SELECT patient_id  FROM temp_earliest_start_date
-    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}'
-    AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i};
-EOF
-
-    data1 = ActiveRecord::Base.connection.select_all <<EOF
-    SELECT t1.patient_id FROM temp_earliest_start_date t1
-    INNER JOIN temp_patient_outcomes t2 ON t1.patient_id = t2.patient_id
-    WHERE date_enrolled <= '#{end_date.to_date}' AND gender = '#{gender.first}'
-    AND cum_outcome = 'On antiretrovirals'
-    AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i};
-EOF
-
-=begin
-    data2 = ActiveRecord::Base.connection.select_one <<EOF
-    SELECT count(*) as started FROM temp_earliest_start_date
-    WHERE earliest_start_date BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-    AND (earliest_start_date) = (date_enrolled) AND gender = '#{gender.first}';
-EOF
-=end
-
-    dispensing_encounter_id = EncounterType.find_by_name('DISPENSING').id
-    amount_dispensed = ConceptName.find_by_name('Amount dispensed').concept_id
-    ipt_drug_ids = Drug.find_all_by_concept_id(656).map(&:drug_id)
-
-    patient_ids = []
-    (data1 || {}).each do |x, y|
-      patient_ids << x['patient_id'].to_i
-    end
-
-    unless patient_ids.blank?
-    data2 = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.patient_id FROM encounter e
-      INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-      AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
-      AND obs.concept_id = #{amount_dispensed}
-      WHERE value_drug IN(#{ipt_drug_ids.join(',')})
-      AND e.patient_id IN(#{patient_ids.join(',')})
-      AND encounter_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY e.patient_id;
-EOF
-
-    end
-
-=begin
-    data3 = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.patient_id FROM encounter e
-      INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-      AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
-      AND obs.concept_id = #{amount_dispensed}
-      WHERE value_drug IN(#{ipt_drug_ids.join(',')})
-      AND e.patient_id IN(#{patient_ids.join(',')})
-      AND encounter_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY e.patient_id;
-EOF
-=end
-
-    return [
-      (data.length rescue 0),
-      (data1.length rescue 0),
-      (data2.length rescue 0),
-       0]
-  end
-
+  
   private
 
   def self.total_patients_with_screened_bp(patients_list, end_date)
@@ -1244,9 +1134,8 @@ EOF
   def self.died_in(month_str)
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
-      INNER JOIN temp_earliest_start_date t USING(patient_id)
-      WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+      SELECT died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM flat_table_cohort o
+      WHERE hiv_program_state = 'Patient died'
       HAVING died_in = '#{month_str}';
 EOF
 
@@ -1393,7 +1282,7 @@ EOF
     result = total_registered_patients - (tb_within_2yrs_patients + current_tb_episode_patients)
     return result
   end
-
+#----------------------------------------------------------------reworked reason for starting
   def self.children_12_23_months(start_date, end_date)
     reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
 
@@ -1597,11 +1486,11 @@ EOF
     end
 
   end
-
+#----------------------------------------------------------------reworked reason for starting
   def self.unknown_age(start_date, end_date)
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
+      SELECT * FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (age_at_initiation IS NULL OR age_at_initiation < 0 OR birthdate IS NULL)
       GROUP BY patient_id;
@@ -1617,7 +1506,7 @@ EOF
   def self.adults_at_art_initiation(start_date, end_date)
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
+      SELECT * FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND age_at_initiation > 14 GROUP BY patient_id;
 EOF
@@ -1632,7 +1521,7 @@ EOF
   def self.children_24_months_14_years_at_art_initiation(start_date, end_date)
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
+      SELECT * FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND age_at_initiation BETWEEN  2 AND 14 GROUP BY patient_id;
 EOF
@@ -1647,7 +1536,7 @@ EOF
   def self.children_below_24_months_at_art_initiation(start_date, end_date)
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
+      SELECT * FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (age_at_initiation >= 0 AND age_at_initiation < 2) GROUP BY patient_id;
 EOF
@@ -1668,7 +1557,7 @@ EOF
     pregnant_women_ids = [0] if pregnant_women_ids.blank?
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female')
       AND t.patient_id NOT IN(#{pregnant_women_ids.join(',')}) GROUP BY patient_id;
@@ -1680,7 +1569,7 @@ EOF
 
     return registered
   end
-
+#---to redo
   def self.pregnant_females_all_ages(start_date, end_date)
     registered = [] ; patient_id_plus_date_enrolled = []
     data = ActiveRecord::Base.connection.select_all <<EOF
@@ -1717,7 +1606,7 @@ EOF
   def self.males(start_date, end_date)
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'Male' OR gender = 'M') GROUP BY patient_id;
 EOF
@@ -1734,7 +1623,7 @@ EOF
     re_initiated_on_art_patient_ids = []
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated FROM temp_earliest_start_date
+      SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND DATE(date_enrolled) != DATE(earliest_start_date)
       GROUP BY patient_id
@@ -1751,7 +1640,7 @@ EOF
   def self.re_initiated_on_art(start_date, end_date)
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated FROM temp_earliest_start_date
+      SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND DATE(date_enrolled) != DATE(earliest_start_date)
       GROUP BY patient_id
@@ -1768,7 +1657,7 @@ EOF
   def self.initiated_on_art_first_time(start_date, end_date)
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
+      SELECT * FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND DATE(date_enrolled) = DATE(earliest_start_date)
       GROUP BY patient_id;
@@ -1783,7 +1672,7 @@ EOF
 
   def self.get_cum_start_date
     cum_start_date = ActiveRecord::Base.connection.select_value <<EOF
-      SELECT MIN(date_enrolled) FROM temp_earliest_start_date;
+      SELECT MIN(date_enrolled) FROM flat_table_cohort;
 EOF
 
     return cum_start_date.to_date rescue nil
@@ -1792,7 +1681,8 @@ EOF
   def self.total_registered(start_date, end_date)
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
+      SELECT patient_id, earliest_start_date, date_enrolled, birthdate, death_date, age_at_initiation
+      FROM flat_table_cohort
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' GROUP BY patient_id;
 EOF
 
