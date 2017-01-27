@@ -1,4 +1,5 @@
 require 'yaml'
+Connection = ActiveRecord::Base.connection
 
 if ARGV[0].nil?
   raise "Please include the environment that you would like to choose. Either development or production"
@@ -24,34 +25,7 @@ def get_all_patients
     patient_list = Patient.find_by_sql("SELECT patient_id FROM #{@source_db}.flat_table1
                                         WHERE patient_id IN (SELECT patient_id FROM #{@source_db}.earliest_start_date) GROUP BY patient_id").map(&:patient_id)
 
-    $flat_table_1_patients_list = Encounter.find_by_sql("SELECT
-                                                patient_id,
-                                                gender,
-                                                dob,
-                                                earliest_start_date,
-                                                date_enrolled,
-                                                age_at_initiation,
-                                                age_in_days,
-                                                death_date,
-                                                reason_for_eligibility,
-                                                ever_registered_at_art_clinic,
-                                                date_art_last_taken,
-                                                taken_art_in_last_two_months,
-                                                taken_art_in_last_two_weeks,
-                                                extrapulmonary_tuberculosis,
-                                                pulmonary_tuberculosis,
-                                                pulmonary_tuberculosis_last_2_years,
-                                                kaposis_sarcoma,
-                                                extrapulmonary_tuberculosis_v_date,
-                                                pulmonary_tuberculosis_v_date,
-                                                pulmonary_tuberculosis_last_2_years_v_date,
-                                                kaposis_sarcoma_v_date,
-                                                reason_for_starting_v_date,
-                                                ever_registered_at_art_v_date,
-                                                date_art_last_taken_v_date,
-                                                date_art_last_taken_v_date,
-                                                taken_art_in_last_two_months_v_date,
-                                                current_location
+    $flat_table_1_patients_list = Encounter.find_by_sql("SELECT *
                                               FROM #{@source_db}.flat_table1
                                               WHERE patient_id IN (#{patient_list.join(',')})")
 
@@ -183,72 +157,8 @@ def get_patients_data(patient_id)
    end
 
    #get flat_table2 data
-    flat_table_2_data = Encounter.find_by_sql("SELECT
-                              patient_id,
-                              visit_date,
-                              pregnant_yes,
-                              pregnant_no,
-                              pregnant_unknown,
-                              drug_induced_abdominal_pain,
-                              drug_induced_anorexia,
-                              drug_induced_diarrhea,
-                              drug_induced_jaundice,
-                              drug_induced_leg_pain_numbness,
-                              drug_induced_vomiting,
-                              drug_induced_peripheral_neuropathy,
-                              drug_induced_hepatitis,
-                              drug_induced_anemia,
-                              drug_induced_lactic_acidosis,
-                              drug_induced_lipodystrophy,
-                              drug_induced_skin_rash,
-                              drug_induced_other_symptom,
-                              drug_induced_fever,
-                              drug_induced_cough,
-                              tb_status_tb_not_suspected,
-                              tb_status_tb_suspected,
-                              tb_status_confirmed_tb_not_on_treatment,
-                              tb_status_confirmed_tb_on_treatment,
-                              tb_status_unknown,
-                              regimen_category,
-                              drug_auto_expire_date1,
-                              drug_inventory_id1,
-                              drug_name1,
-                              drug_auto_expire_date2,
-                              drug_inventory_id2,
-                              drug_name2,
-                              drug_auto_expire_date3,
-                              drug_inventory_id3,
-                              drug_name3,
-                              drug_auto_expire_date4,
-                              drug_inventory_id4,
-                              drug_name4,
-                              drug_inventory_id5,
-                              drug_name5,
-                              drug_equivalent_daily_dose5,
-                              what_was_the_patient_adherence_for_this_drug1,
-                              what_was_the_patient_adherence_for_this_drug2,
-                              what_was_the_patient_adherence_for_this_drug3,
-                              what_was_the_patient_adherence_for_this_drug4,
-                              what_was_the_patient_adherence_for_this_drug5,
-                              current_hiv_program_state,
-                              current_hiv_program_start_date,
-                              current_hiv_program_end_date,
-                              current_hiv_program_end_date,
-                              side_effects_peripheral_neuropathy,
-                              side_effects_hepatitis,
-                              side_effects_skin_rash,
-                              side_effects_lipodystrophy,
-                              side_effects_other,
-                              side_effects_no,
-                              side_effects_kidney_failure,
-                              side_effects_nightmares,
-                              side_effects_diziness,
-                              side_effects_psychosis,
-                              drug_induced_kidney_failure,
-                              drug_induced_nightmares,
-                              drug_induced_diziness,
-                              drug_induced_psychosis,
-                              drug_induced_blurry_vision
+
+    flat_table_2_data = Connection.select_all("SELECT  *
                             FROM #{@source_db}.flat_table2
                             WHERE patient_id = #{patient_id}
                             ORDER BY visit_date DESC
@@ -264,7 +174,8 @@ def get_patients_data(patient_id)
   #write sql statement
   #raise hiv_staging[1].to_yaml
   flat_cohort_table_sql_statement = initial_flat_table1_string + "(" + flat_table1[0] + "," + flat_table2[0] + ")" + \
-		 " VALUES (" + flat_table1[1] + "," + flat_table2[1] + ");"
+                " VALUES (" + flat_table1[1] + "," + flat_table2[1] + ");"
+
 
    return [flat_cohort_table_sql_statement]
 end
@@ -283,7 +194,6 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
     (flat_table_1_data || []).each do |patient|
 
       pat = Patient.find_by_patient_id(patient.patient_id)
-
       a_hash[:patient_id] = patient.patient_id
       a_hash[:gender] = patient.gender
       a_hash[:birthdate] = patient.dob
@@ -293,6 +203,8 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
       a_hash[:age_at_initiation] = patient.age_at_initiation
       a_hash[:age_in_days] = patient.age_in_days
       a_hash[:reason_for_starting] = patient.reason_for_eligibility
+      a_hash[:who_stage] = patient.who_stage
+      a_hash[:who_stages_criteria_present] = patient.who_stages_criteria_present
       a_hash[:ever_registered_at_art] = patient.ever_registered_at_art_clinic
       a_hash[:date_art_last_taken] = patient.date_art_last_taken
       a_hash[:taken_art_in_last_two_months] = patient.taken_art_in_last_two_months
@@ -326,113 +238,115 @@ def process_flat_table_2(flat_table_2_data, type = 0) #type 0 normal encounter, 
     return generate_sql_string(a_hash) if type == 1
 
     (flat_table_2_data || []).each do |patient|
-      a_hash[:hiv_program_state] = patient.current_hiv_program_state
-      a_hash[:hiv_program_start_date] = patient.current_hiv_program_start_date
-      a_hash[:pregnant_yes] = patient.pregnant_yes
-      a_hash[:pregnant_no] = patient.pregnant_no
-      a_hash[:drug_induced_abdominal_pain] = patient.drug_induced_abdominal_pain
-      a_hash[:drug_induced_anorexia] = patient.drug_induced_anorexia
-      a_hash[:drug_induced_diarrhea] = patient.drug_induced_diarrhea
-      a_hash[:drug_induced_jaundice] = patient.drug_induced_jaundice
-      a_hash[:drug_induced_leg_pain_numbness] = patient.drug_induced_leg_pain_numbness
-      a_hash[:drug_induced_vomiting] = patient.drug_induced_vomiting
-      a_hash[:drug_induced_peripheral_neuropathy] = patient.drug_induced_peripheral_neuropathy
-      a_hash[:drug_induced_hepatitis] = patient.drug_induced_hepatitis
-      a_hash[:drug_induced_anemia] = patient.drug_induced_anemia
-      a_hash[:drug_induced_lactic_acidosis] = patient.drug_induced_lactic_acidosis
-      a_hash[:drug_induced_lipodystrophy] = patient.drug_induced_lipodystrophy
-      a_hash[:drug_induced_skin_rash] = patient.drug_induced_skin_rash
-      a_hash[:drug_induced_other_symptom] = patient.drug_induced_other_symptom
-      a_hash[:drug_induced_fever] = patient.drug_induced_fever
-      a_hash[:drug_induced_cough] = patient.drug_induced_cough
-      a_hash[:tb_not_suspected] = patient.tb_status_tb_not_suspected
-      a_hash[:tb_suspected] = patient.tb_status_tb_suspected
-      a_hash[:confirmed_tb_not_on_treatment] = patient.tb_status_confirmed_tb_not_on_treatment
-      a_hash[:confirmed_tb_on_treatment] = patient.tb_status_confirmed_tb_on_treatment
-      a_hash[:unknown_tb_status] = patient.tb_status_unknown
-      a_hash[:regimen_category] = patient.regimen_category
-      a_hash[:what_was_the_patient_adherence_for_this_drug1] = patient.what_was_the_patient_adherence_for_this_drug1
-      a_hash[:what_was_the_patient_adherence_for_this_drug2] = patient.what_was_the_patient_adherence_for_this_drug2
-      a_hash[:what_was_the_patient_adherence_for_this_drug3] = patient.what_was_the_patient_adherence_for_this_drug3
-      a_hash[:what_was_the_patient_adherence_for_this_drug4] = patient.what_was_the_patient_adherence_for_this_drug4
-      a_hash[:what_was_the_patient_adherence_for_this_drug5] = patient.what_was_the_patient_adherence_for_this_drug5
-      a_hash[:drug_name1] = patient.drug_name1
-      a_hash[:drug_name2] = patient.drug_name2
-      a_hash[:drug_name3] = patient.drug_name3
-      a_hash[:drug_name4] = patient.drug_name4
-      a_hash[:drug_name5] = patient.drug_name5
-      a_hash[:drug_inventory_id1] = patient.drug_inventory_id1
-      a_hash[:drug_inventory_id2] = patient.drug_inventory_id2
-      a_hash[:drug_inventory_id3] = patient.drug_inventory_id3
-      a_hash[:drug_inventory_id4] = patient.drug_inventory_id4
-      a_hash[:drug_inventory_id5] = patient.drug_inventory_id5
-      a_hash[:drug_auto_expire_date1] = patient.drug_auto_expire_date1
-      a_hash[:drug_auto_expire_date2] = patient.drug_auto_expire_date2
-      a_hash[:drug_auto_expire_date3] = patient.drug_auto_expire_date3
-      a_hash[:drug_auto_expire_date4] = patient.drug_auto_expire_date4
-      a_hash[:drug_auto_expire_date5] = patient.drug_equivalent_daily_dose5
-      a_hash[:hiv_program_state_v_date] = patient.visit_date
-      a_hash[:hiv_program_start_date_v_date] = patient.visit_date
-      a_hash[:current_tb_status_v_date] = patient.visit_date
-      a_hash[:pregnant_yes_v_date] = patient.visit_date
-      a_hash[:pregnant_no_v_date] = patient.visit_date
-      a_hash[:death_date_v_date] = patient.visit_date
-      a_hash[:drug_induced_abdominal_pain_v_date] = patient.visit_date
-      a_hash[:drug_induced_anorexia_v_date] = patient.visit_date
-      a_hash[:drug_induced_diarrhea_v_date] = patient.visit_date
-      a_hash[:drug_induced_jaundice_v_date] = patient.visit_date
-      a_hash[:drug_induced_leg_pain_numbness_v_date] = patient.visit_date
-      a_hash[:drug_induced_vomiting_v_date] = patient.visit_date
-      a_hash[:drug_induced_peripheral_neuropathy_v_date] = patient.visit_date
-      a_hash[:drug_induced_hepatitis_v_date] = patient.visit_date
-      a_hash[:drug_induced_anemia_v_date] = patient.visit_date
-      a_hash[:drug_induced_lactic_acidosis_v_date] = patient.visit_date
-      a_hash[:drug_induced_lipodystrophy_v_date] = patient.visit_date
-      a_hash[:drug_induced_skin_rash_v_date] = patient.visit_date
-      a_hash[:drug_induced_other_symptom_v_date] = patient.visit_date
-      a_hash[:drug_induced_fever_v_date] = patient.visit_date
-      a_hash[:drug_induced_cough_v_date] = patient.visit_date
-      a_hash[:tb_not_suspected_v_date] = patient.visit_date
-      a_hash[:tb_suspected_v_date] = patient.visit_date
-      a_hash[:confirmed_tb_not_on_treatment_v_date] = patient.visit_date
-      a_hash[:confirmed_tb_on_treatment_v_date] = patient.visit_date
-      a_hash[:unknown_tb_status_v_date] = patient.visit_date
-      a_hash[:what_was_the_patient_adherence_for_this_drug1_v_date] = patient.visit_date
-      a_hash[:what_was_the_patient_adherence_for_this_drug2_v_date] = patient.visit_date
-      a_hash[:what_was_the_patient_adherence_for_this_drug3_v_date] = patient.visit_date
-      a_hash[:what_was_the_patient_adherence_for_this_drug4_v_date] = patient.visit_date
-      a_hash[:what_was_the_patient_adherence_for_this_drug5_v_date] = patient.visit_date
-      a_hash[:regimen_category_v_date] = patient.visit_date
-      a_hash[:drug_name1_v_date] = patient.visit_date
-      a_hash[:drug_name2_v_date] = patient.visit_date
-      a_hash[:drug_name3_v_date] = patient.visit_date
-      a_hash[:drug_name4_v_date] = patient.visit_date
-      a_hash[:drug_name5_v_date] = patient.visit_date
-      a_hash[:drug_inventory_id1_v_date] = patient.visit_date
-      a_hash[:drug_inventory_id2_v_date] = patient.visit_date
-      a_hash[:drug_inventory_id3_v_date] = patient.visit_date
-      a_hash[:drug_inventory_id4_v_date] = patient.visit_date
-      a_hash[:drug_inventory_id5_v_date] = patient.visit_date
-      a_hash[:drug_auto_expire_date1_v_date] = patient.visit_date
-      a_hash[:drug_auto_expire_date2_v_date] = patient.visit_date
-      a_hash[:drug_auto_expire_date3_v_date] = patient.visit_date
-      a_hash[:drug_auto_expire_date4_v_date] = patient.visit_date
-      a_hash[:drug_auto_expire_date5_v_date] = patient.visit_date
-      a_hash[:side_effects_peripheral_neuropathy] = patient.side_effects_peripheral_neuropathy
-      a_hash[:side_effects_hepatitis] = patient.side_effects_hepatitis
-      a_hash[:side_effects_skin_rash] = patient.side_effects_skin_rash
-      a_hash[:side_effects_lipodystrophy] = patient.side_effects_lipodystrophy
-      a_hash[:side_effects_other] = patient.side_effects_other
-      a_hash[:side_effects_no] = patient.side_effects_no
-      a_hash[:side_effects_kidney_failure] = patient.side_effects_kidney_failure
-      a_hash[:side_effects_nightmares] = patient.side_effects_nightmares
-      a_hash[:side_effects_diziness] = patient.side_effects_diziness
-      a_hash[:side_effects_psychosis] = patient.side_effects_psychosis
-      a_hash[:drug_induced_kidney_failure] = patient.drug_induced_kidney_failure
-      a_hash[:drug_induced_nightmares] = patient.drug_induced_nightmares
-      a_hash[:drug_induced_diziness] = patient.drug_induced_diziness
-      a_hash[:drug_induced_psychosis] = patient.drug_induced_psychosis
-      a_hash[:drug_induced_blurry_vision] = patient.drug_induced_blurry_vision
+      a_hash[:hiv_program_state] = patient['current_hiv_program_state']
+      a_hash[:hiv_program_start_date] = patient['current_hiv_program_start_date']
+      a_hash[:patient_pregnant] = patient['patient_pregnant']
+      a_hash[:drug_induced_abdominal_pain] = patient['drug_induced_abdominal_pain']
+      a_hash[:drug_induced_anorexia] = patient['drug_induced_anorexia']
+      a_hash[:drug_induced_diarrhea] = patient['drug_induced_diarrhea']
+      a_hash[:drug_induced_jaundice] = patient['drug_induced_jaundice']
+      a_hash[:drug_induced_leg_pain_numbness] = patient['drug_induced_leg_pain_numbness']
+      a_hash[:drug_induced_vomiting] = patient['drug_induced_vomiting']
+      a_hash[:drug_induced_peripheral_neuropathy] = patient['drug_induced_peripheral_neuropathy']
+      a_hash[:drug_induced_hepatitis] = patient['drug_induced_hepatitis']
+      a_hash[:drug_induced_anemia] = patient['drug_induced_anemia']
+      a_hash[:drug_induced_lactic_acidosis] = patient['drug_induced_lactic_acidosis']
+      a_hash[:drug_induced_lipodystrophy] = patient['drug_induced_lipodystrophy']
+      a_hash[:drug_induced_skin_rash] = patient['drug_induced_skin_rash']
+      a_hash[:drug_induced_other] = patient['drug_induced_other']
+      a_hash[:drug_induced_fever] = patient['drug_induced_fever']
+      a_hash[:drug_induced_cough] = patient['drug_induced_cough']
+      a_hash[:tb_not_suspected] = patient['tb_status_tb_not_suspected']
+      a_hash[:tb_suspected] = patient['tb_status_tb_suspected']
+      a_hash[:confirmed_tb_not_on_treatment] = patient['tb_status_confirmed_tb_not_on_treatment']
+      a_hash[:confirmed_tb_on_treatment] = patient['tb_status_confirmed_tb_on_treatment']
+      a_hash[:unknown_tb_status] = patient['tb_status_unknown']
+      a_hash[:regimen_category_treatment] = patient['regimen_category_treatment']
+      a_hash[:regimen_category_dispensed] = patient['regimen_category_dispensed']
+      a_hash[:type_of_ARV_regimen_given] = patient['type_of_ARV_regimen_given']
+      a_hash[:arv_regimens_received_construct] = patient['arv_regimens_received_construct']
+      a_hash[:what_was_the_patient_adherence_for_this_drug1] = patient['what_was_the_patient_adherence_for_this_drug1']
+      a_hash[:what_was_the_patient_adherence_for_this_drug2] = patient['what_was_the_patient_adherence_for_this_drug2']
+      a_hash[:what_was_the_patient_adherence_for_this_drug3] = patient['what_was_the_patient_adherence_for_this_drug3']
+      a_hash[:what_was_the_patient_adherence_for_this_drug4] = patient['what_was_the_patient_adherence_for_this_drug4']
+      a_hash[:what_was_the_patient_adherence_for_this_drug5] = patient['what_was_the_patient_adherence_for_this_drug5']
+      a_hash[:drug_name1] = patient['drug_name1']
+      a_hash[:drug_name2] = patient['drug_name2']
+      a_hash[:drug_name3] = patient['drug_name3']
+      a_hash[:drug_name4] = patient['drug_name4']
+      a_hash[:drug_name5] = patient['drug_name5']
+      a_hash[:drug_inventory_id1] = patient['drug_inventory_id1']
+      a_hash[:drug_inventory_id2] = patient['drug_inventory_id2']
+      a_hash[:drug_inventory_id3] = patient['drug_inventory_id3']
+      a_hash[:drug_inventory_id4] = patient['drug_inventory_id4']
+      a_hash[:drug_inventory_id5] = patient['drug_inventory_id5']
+      a_hash[:drug_auto_expire_date1] = patient['drug_auto_expire_date1']
+      a_hash[:drug_auto_expire_date2] = patient['drug_auto_expire_date2']
+      a_hash[:drug_auto_expire_date3] = patient['drug_auto_expire_date3']
+      a_hash[:drug_auto_expire_date4] = patient['drug_auto_expire_date4']
+      a_hash[:drug_auto_expire_date5] = patient['drug_equivalent_daily_dose5']
+      a_hash[:hiv_program_state_v_date] = patient['visit_date']
+      a_hash[:hiv_program_start_date_v_date] = patient['visit_date']
+      a_hash[:current_tb_status_v_date] = patient['visit_date']
+      a_hash[:patient_pregnant_v_date] = patient['visit_date']
+      a_hash[:drug_induced_abdominal_pain_v_date] = patient['visit_date']
+      a_hash[:drug_induced_anorexia_v_date] = patient['visit_date']
+      a_hash[:drug_induced_diarrhea_v_date] = patient['visit_date']
+      a_hash[:drug_induced_jaundice_v_date] = patient['visit_date']
+      a_hash[:drug_induced_leg_pain_numbness_v_date] = patient['visit_date']
+      a_hash[:drug_induced_vomiting_v_date] = patient['visit_date']
+      a_hash[:drug_induced_peripheral_neuropathy_v_date] = patient['visit_date']
+      a_hash[:drug_induced_hepatitis_v_date] = patient['visit_date']
+      a_hash[:drug_induced_anemia_v_date] = patient['visit_date']
+      a_hash[:drug_induced_lactic_acidosis_v_date] = patient['visit_date']
+      a_hash[:drug_induced_lipodystrophy_v_date] = patient['visit_date']
+      a_hash[:drug_induced_skin_rash_v_date] = patient['visit_date']
+      a_hash[:drug_induced_other_v_date] = patient['visit_date']
+      a_hash[:drug_induced_fever_v_date] = patient['visit_date']
+      a_hash[:drug_induced_cough_v_date] = patient['visit_date']
+      a_hash[:tb_not_suspected_v_date] = patient['visit_date']
+      a_hash[:tb_suspected_v_date] = patient['visit_date']
+      a_hash[:confirmed_tb_not_on_treatment_v_date] = patient['visit_date']
+      a_hash[:confirmed_tb_on_treatment_v_date] = patient['visit_date']
+      a_hash[:unknown_tb_status_v_date] = patient['visit_date']
+      a_hash[:what_was_the_patient_adherence_for_this_drug1_v_date] = patient['visit_date']
+      a_hash[:what_was_the_patient_adherence_for_this_drug2_v_date] = patient['visit_date']
+      a_hash[:what_was_the_patient_adherence_for_this_drug3_v_date] = patient['visit_date']
+      a_hash[:what_was_the_patient_adherence_for_this_drug4_v_date] = patient['visit_date']
+      a_hash[:what_was_the_patient_adherence_for_this_drug5_v_date] = patient['visit_date']
+      a_hash[:drug_name1_v_date] = patient['visit_date']
+      a_hash[:drug_name2_v_date] = patient['visit_date']
+      a_hash[:drug_name3_v_date] = patient['visit_date']
+      a_hash[:drug_name4_v_date] = patient['visit_date']
+      a_hash[:drug_name5_v_date] = patient['visit_date']
+      a_hash[:drug_inventory_id1_v_date] = patient['visit_date']
+      a_hash[:drug_inventory_id2_v_date] = patient['visit_date']
+      a_hash[:drug_inventory_id3_v_date] = patient['visit_date']
+      a_hash[:drug_inventory_id4_v_date] = patient['visit_date']
+      a_hash[:drug_inventory_id5_v_date] = patient['visit_date']
+      a_hash[:drug_auto_expire_date1_v_date] = patient['visit_date']
+      a_hash[:drug_auto_expire_date2_v_date] = patient['visit_date']
+      a_hash[:drug_auto_expire_date3_v_date] = patient['visit_date']
+      a_hash[:drug_auto_expire_date4_v_date] = patient['visit_date']
+      a_hash[:drug_auto_expire_date5_v_date] = patient['visit_date']
+      a_hash[:side_effects_peripheral_neuropathy] = patient['side_effects_peripheral_neuropathy']
+      a_hash[:side_effects_hepatitis] = patient['side_effects_hepatitis']
+      a_hash[:side_effects_skin_rash] = patient['side_effects_skin_rash']
+      a_hash[:side_effects_lipodystrophy] = patient['side_effects_lipodystrophy']
+      a_hash[:side_effects_Other] = patient['side_effects_Other']
+      a_hash[:side_effects_no] = patient['side_effects_no']
+      a_hash[:side_effects_kidney_failure] = patient['side_effects_kidney_failure']
+      a_hash[:side_effects_nightmares] = patient['side_effects_nightmares']
+      a_hash[:side_effects_diziness] = patient['side_effects_diziness']
+      a_hash[:side_effects_psychosis] = patient['side_effects_psychosis']
+  	  a_hash[:side_effects_renal_failure] = patient['side_effects_renal_failure']
+      a_hash[:side_effects_blurry_vision] = patient['side_effects_blurry_vision']
+      a_hash[:side_effects_gynaecomastia] = patient['side_effects_gynaecomastia']
+      a_hash[:drug_induced_kidney_failure] = patient['drug_induced_kidney_failure']
+      a_hash[:drug_induced_nightmares] = patient['drug_induced_nightmares']
+      a_hash[:drug_induced_diziness] = patient['drug_induced_diziness']
+      a_hash[:drug_induced_psychosis] = patient['drug_induced_psychosis']
+      a_hash[:drug_induced_blurry_vision] = patient['drug_induced_blurry_vision']
    end
     return generate_sql_string(a_hash)
 end
