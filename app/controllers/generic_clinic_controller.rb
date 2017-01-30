@@ -359,7 +359,8 @@ class GenericClinicController < ApplicationController
       #["Stock <br />Charts","stock_movement_menu?goto=stoke_movement"]
       ["Edit <br /> Product Display Names","capture_cms_drugs"],
       ["HIV Product <br /> Stock Report","drug_stock_report"],
-      ["Manage <br /> Drug Sets","new_drug_sets"]
+      ["Manage <br /> Drug Sets","new_drug_sets"],
+      ["Drug Movement <br /> Report","drug_movement_report_menu"]
     ]
     render :layout => false
   end
