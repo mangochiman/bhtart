@@ -2,9 +2,168 @@
 <%= javascript_include_tag 'miscellaneous.js'%>
 <%=  stylesheet_link_tag  'miscellaneous.css'%>
 
-<script>
+<div id="confirmatory-test-popup-div">
+  <div id="confirmatory-test-popup-header">
+    <center style='color: orange;'>Starter pack needed for 14 days</center>
+  </div><br />
+  <div>
 
+    <span style="font-size: 16pt;">
+      <span id='initiation_type' style="color: green; padding-left: 20px;"></span>&nbsp;<span id='selected_starter_pack'></span>
+    </span>
+    <div style="padding-top: 65px;">
+      <span id="confirmatory-test-yes" onclick="hideConfirmatoryTestPopup();resetRegimen();gotoNextPage();" 
+        class="confirmatory-test-my_button" 
+        style="position: relative;">Prescribe starter pack</span>
+      
+    <span id="confirmatory-test-no" onclick="hideConfirmatoryTestPopup();" 
+        class="confirmatory-test-my_button" 
+        style="position: relative;">Cancel</span>
+    </div>
+  </div>
+</div>
+
+
+<div id="confirmatory-test-cover"></div>
+
+
+
+<style type="text/css">
+
+  .confirmatory-test-my_button {
+    -moz-user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bolder;
+    line-height: 2.29;
+    margin-bottom: 0;
+    padding: 6px 56px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    color: #fff;
+    float: right;
+    margin-top: -5px;
+  }
+
+
+  #confirmatory-test-popup-div {
+    display: none;
+    background-color: #F4F4F4;
+    border: 2px solid #E0E0E0;
+    border-radius: 15px;
+    height: 200px;
+    padding: 5px;
+    position: absolute;
+    margin-top: 100px;
+    width: 530px;
+    /*margin-left: 430px;*/
+    left: 30%;
+    z-index: 991;
+  }
+
+  #confirmatory-test-popup-header{
+    border-bottom: 2px solid #7D9EC0;
+    margin-left: -5px;
+    width: 101.5%;
+    background-color: #FFFFFF;
+    margin-top: -5px;
+    padding-top: 5px;
+    border-radius: 15px 15px 0 0;
+    font-size: 14pt;
+    font-weight: bolder;
+  }
+
+  #confirmatory-test-cover{
+    display: none;
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.65;
+  }
+
+  #confirmatory-test-yes {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+  }
+
+  #confirmatory-test-no {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+    margin-right: 40px;
+  }
+</style>
+
+
+<script>
+  function hideConfirmatoryTestPopup(){
+    document.getElementById("confirmatory-test-popup-div").style.display = 'none';
+    document.getElementById("confirmatory-test-cover").style.display = 'none';
+  }
+
+  function showConfirmatoryTestPopup(){
+    document.getElementById("confirmatory-test-popup-div").style.display = 'inline';
+    document.getElementById("confirmatory-test-cover").style.display = 'inline';
+    selected_starter_pack = document.getElementById("regimen_concept_id").value;
+    document.getElementById("selected_starter_pack").innerHTML = selected_starter_pack;
+    <%if @patient_initiated.match(/Re-initiated/i) %> 
+      initiation_type = 'Re-initiation / Re-start'
+    <%elsif @patient_initiated.match(/Initiation/i) %> 
+      initiation_type = 'First time initiation'
+    <%end%>
+    document.getElementById("initiation_type").innerHTML = initiation_type;
+
+  }
+
+  function checkIfStarterPack() {
+    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
+      concept = document.getElementById("regimen_concept_id");
+      if(concept.value.match(/NVP|Nevirapine/i)) {
+        sel = document.getElementById('tt_currentUnorderedListOptions');
+        lis = document.getElementsByTagName('li');
+        options = [];
+        for(var i = 0; i < lis.length; i++){
+          if(lis[i].innerHTML.match(/week/i)){
+            options.push(lis[i])
+          }
+        }
+
+        sel.innerHTML = null;
+        for(var i = 0; i < options.length; i++){
+          sel.appendChild(options[i])
+        }
+        
+        months = ['1 month', '2 months', '3 months', '4 months',
+          '5 months', '6 months', '7 months', '8 months',
+          '9 months', '10 months', '11 months', '12 months'
+        ]
+        for(var i = 0; i < months.length; i++){
+          option = document.createElement('option');
+          option.innerHTML = months[i];
+          //option.setAttribute('style','background-color: #CDBA96;');
+          sel.appendChild(option);
+        }
+      }
+    <%end%>
+  }
 </script>
+
+
+
 <%= javascript_include_tag("miscellaneous")%>
 <%= stylesheet_link_tag("miscellaneous")%>
 <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
@@ -668,6 +827,24 @@ function changeRegimenOld(){
       element.setAttribute("onmousedown", "checkRegimen()")
     }
   }
+
+  function checkIFstartpackNeed() {
+    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
+      selected_regimen = document.getElementById('touchscreenInput' + tstCurrentPage).value;
+      if(selected_regimen.match(/NVP|Nevirapine/i)) {
+        showConfirmatoryTestPopup();
+      }else if(selected_regimen.length < 1){
+        return
+      }else{
+        resetRegimen();
+        gotoNextPage();
+      }
+    <%else%>
+      resetRegimen();
+      gotoNextPage();
+    <%end%>
+  }
+
 
   function resetRegimen(){
     element = document.getElementById('nextButton')
@@ -1989,6 +2166,11 @@ end
     return existingRegimen;
   }
 
+  function clearStandardRegimen() {
+    concept = document.getElementById("regimen_concept_id");
+    concept.selectedIndex = 0;
+  }
+
   function addButton(){
    // __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
     var button = document.createElement("button");
@@ -2000,9 +2182,7 @@ end
 
     button.onclick = function(){
       __$('touchscreenInput' + tstCurrentPage).setAttribute("optional", "true");
-      other_regimen = "yes"
-      concept =document.getElementById("regimen_concept_id");
-      concept.value = null
+      other_regimen = "yes";
       removeButton();
       gotoNextPage();
     }
@@ -2520,13 +2700,13 @@ pyridoxine_options = ["","25", "50"]
         :tt_onLoad => "hideCategory();checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);modifyPage(); startRegimenChangeInterval();",
         :condition => 'hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value != "YES"',
         :helpText => "Select ART regimen.#{@current_regimen_text} Current patient weight: <b>#{@current_weight}</b>",
-        :optional => 'false' ,
+        :optional => 'false' , 
         :tt_onUnload => "resetRegimen();removeButton(); stopRegimenChangeInterval();"}%>
     <% end %>
 
     <%= select_tag :regimen_concept_id_all, nil, {
       :allowFreeText => 'false',
-      :tt_onLoad => "checkInput(); set_patient_posible_all_suggestions($('patient_program').value);setTimeout('setSelectedRow(); setTextToAppear(\" (MoH Recommended)\")',1000);showCategory2('Prescription');",
+      :tt_onLoad => "clearStandardRegimen();checkInput(); set_patient_posible_all_suggestions($('patient_program').value);setTimeout('setSelectedRow(); setTextToAppear(\" (MoH Recommended)\")',1000);showCategory2('Prescription');",
       :condition => 'other_regimen == "yes"',
       :helpText => "Build ART regimen",
       :multiple => true,
@@ -2584,7 +2764,7 @@ pyridoxine_options = ["","25", "50"]
     <%= select_tag :duration, optionsString, {
       :id => "interval_to_next_visit",
       :condition => '$("prescribe_arvs").value == "YES" || $("cpt_given").value == "YES" || $("ipt_given").value == "YES"',
-      :tt_onLoad => "addPrescriptionBtn();__$('keyboard').style.display = 'none';
+      :tt_onLoad => "checkIfStarterPack();addPrescriptionBtn();__$('keyboard').style.display = 'none';
       showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value);",
       :tt_onUnLoad => "removePrescriptionBtn();hideStockLevelDetails(); removeOnclickEvent();",
       :helpText => 'Interval to next visit' } %>

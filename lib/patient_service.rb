@@ -1169,7 +1169,7 @@ EOF
     patient.current_residence = person.addresses.first.city_village rescue nil
     patient.landmark = person.addresses.first.address1 rescue nil
     patient.home_village = person.addresses.first.neighborhood_cell rescue nil
-    patient.mothers_surname = person.names.first.family_name2
+    patient.mothers_surname = person.names.first.family_name2 rescue nil
     patient.eid_number = get_patient_identifier(person.patient, 'EID Number') rescue nil
     patient.pre_art_number = get_patient_identifier(person.patient, 'Pre ART Number (Old format)') rescue nil
     patient.archived_filing_number = get_patient_identifier(person.patient, 'Archived filing number')rescue nil
@@ -2318,6 +2318,54 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
       AND obs_datetime BETWEEN ? AND ?", appointment_type_id, patient.id,
       session_date.strftime('%Y-%m-%d 00:00:00'), 
       session_date.strftime('%Y-%m-%d 23:59:59')])
+  end
+
+  def self.patient_initiated(patient_id, session_date)
+    ans = ActiveRecord::Base.connection.select_value <<EOF
+      SELECT re_initiated_check(#{patient_id}, '#{session_date.to_date}');
+EOF
+  
+    return ans if ans == 'Re-initiated'
+    end_date = session_date.strftime('%Y-%m-%d 23:59:59') 
+    concept_id = ConceptName.find_by_name('Amount dispensed').concept_id
+  
+   
+
+    hiv_clinic_registration = Encounter.find(:last,:conditions =>["encounter_type = ? AND 
+      patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
+      EncounterType.find_by_name("HIV CLINIC REGISTRATION").id, patient_id,
+      end_date.to_date.strftime('%Y-%m-%d 00:00:00'), end_date])
+
+    (hiv_clinic_registration.observations || []).map do | obs |
+      concept_name = obs.to_s.split(':')[0].strip rescue nil
+      next if concept_name.blank?
+      case concept_name
+      when 'Date ART last taken'
+        last_art_drugs_date_taken = obs.value_datetime.to_date rescue nil
+        unless last_art_drugs_date_taken.blank?
+          days = ActiveRecord::Base.connection.select_value <<EOF
+            SELECT timestampdiff(day, '#{last_art_drugs_date_taken.to_date}', '#{session_date.to_date}') AS days;
+EOF
+
+          return 'Re-initiated' if days.to_i > 14
+          return 'Continuing' if days.to_i <= 14
+        end
+      end
+    end unless hiv_clinic_registration.blank?
+ 
+  
+   
+    dispensed_arvs = Observation.find(:all, :conditions =>["person_id = ? 
+      AND concept_id = ? AND obs_datetime <= ?", patient_id, concept_id, end_date]).map(&:value_drug)
+
+    return 'Initiation' if dispensed_arvs.blank?
+    arv_drug_concepts = MedicationService.arv_drugs.map(&:concept_id) 
+    arvs_found = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM drug WHERE concept_id IN(#{arv_drug_concepts.join(',')})
+      AND drug_id IN(#{dispensed_arvs.join(',')});
+EOF
+
+    return arvs_found.blank? == true ? 'Initiation' : 'Continuing'
   end
 
   private

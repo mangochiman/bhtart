@@ -40,6 +40,14 @@
   #tt_page_hcc_number .touchscreenTextInput{
     width: 98% !important;
   }
+
+  .tt_controls_month_of_cd4_count .keyboard{
+    display: none;
+  }
+
+  .NoKeyboard .options {
+    height: 591px !important;
+  }
 </style>
 
 <%#= raise @patient_hcc_number.to_yaml %>
@@ -54,7 +62,9 @@
   var selected_stage_conditions = {};
   var retrospective_entry = <%= @retrospective %>
   var tstCurrentDate = '<%= session[:datetime].to_date.strftime("%Y-%m-%d") rescue Date.today.strftime("%Y-%m-%d") %>'
-
+  var currentBMI = parseFloat('<%= @current_bmi %>');
+  currentBMI = parseFloat(currentBMI);
+  
   function resetPad() {
     curr_page = tstCurrentPage - 1
     buttons = document.getElementsByClassName("keyboardButton");
@@ -262,7 +272,7 @@
     }
   }
 
-function updateWhoStagePaeds() {
+  function updateWhoStagePaeds() {
     // Everyone is supposed to be HIV positive so start them at 1
     whoStage = 1;
     for (var i=1; i<=4; i++) {
@@ -385,12 +395,25 @@ function updateWhoStagePaeds() {
     if (age > 14) {
       if (whoStage >= 3) {
         reasonForArtEligibility = whoStageConcept(whoStage, "ADULT");
-
-      } else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
-        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
-      } else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+      }
+      
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_250').value == "YES") {
+        reasonForArtEligibility = "CD4 count less than or equal to 250"
+      }
+      
+      else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
         reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
-      } else {
+      }
+
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
+      }
+      
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
+      }
+
+      else {
         if (whoStage == 1 && lymphocyteCount < 1200 && lymphocyteCount != null) {
           reasonForArtEligibility = "LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1";
         } else if (whoStage == 2 && lymphocyteCount < 1200 && lymphocyteCount != null) {
@@ -464,7 +487,7 @@ function updateWhoStagePaeds() {
     var patientAge = "<%= @patient_bean.age.to_i %>";
     var pregnancyStatus = $('pregnant').value;
 
-    if ((patientAge >= 55) && pregnancyStatus == "YES") {
+    if ((patientAge >= 12 && patientAge <= 55) && pregnancyStatus == "YES") {
       return "true";
     } else {
       return "false";
@@ -475,7 +498,7 @@ function updateWhoStagePaeds() {
     var patientAge = "<%= @patient_bean.age.to_i %>";
     var breastfeedingStatus = $('breast_feeding').value;
 
-    if ((patientAge >= 55) && breastfeedingStatus == "YES") {
+    if ((patientAge >= 12 && patientAge <= 55) && breastfeedingStatus == "YES") {
       return "true";
     } else {
       return "false";
@@ -505,7 +528,7 @@ function updateWhoStagePaeds() {
     
     updateReasonForArtEligibility();
     var conditions = selectedConditions();
-    var display = "<div><span class='title'>WHO Stage: " + $('who_stage').value + "</span></div>";
+    var display = "<div><span class='title'>WHO Stage: " + $('who_stage').value.sub('WHO STAGE','') + "</span></div>";
     display += "<div><span class='title'>Condition on starting ART: " + $('reason_for_art_eligibility').value + "</span></div>";
 
     $('inputFrame'+tstCurrentPage).innerHTML = '<div id="summary">' + display + '</div>' ;
@@ -794,7 +817,7 @@ end %>
             :tt_onLoad => 'showCategory2("HIV staging");',
             :helpText => "Patient breast feeding at initiation?" } %>
         <% else %>
-          <% if patient_pregnant.blank? %>
+          <% if patient_pregnant.blank? and (@patient_bean.age >= 10 and @patient_bean.age <= 55)%>
             <%= touch_yes_no_unknown_tag "IS PATIENT PREGNANT?", @patient, nil,
               {	:id => "pregnant" ,
               :optional => false ,
@@ -802,7 +825,6 @@ end %>
               :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she pregnant?",
               :tt_onLoad => 'showCategory2("HIV staging");',
               :helpText => "Is patient pregnant?" } %>
-          <% end %>
 
           <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
             {	:id => "breast_feeding" ,
@@ -810,6 +832,7 @@ end %>
             :validationCode => "checkBreastfeedingAndAge() == 'false'",
             :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she breastfeeding?",
             :helpText => "Is patient breast feeding?" } %>
+          <% end %>
 
         <% end %>
       <% end %>
@@ -819,7 +842,7 @@ end %>
         :optional => true,
         :selected => @who_stage_iv_selected,
         :tt_onUnLoad => 'setSelectedStageConditions(4);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkEptb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkEptb(); hideTextInput(); displayCountOfSelectedConditions();',
         :condition => 'showConditions() == true && age >= 15',
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -830,7 +853,7 @@ end %>
         :multiple => true,
         :optional => true,
         :tt_onUnLoad => 'setSelectedStageConditions(4);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkEptb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkEptb(); hideTextInput(); displayCountOfSelectedConditions();',
         :condition => 'showConditions() == true && age <= 14',
         :helpText => "Stage 4 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -841,7 +864,7 @@ end %>
         :optional => true,
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(3);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb(); disableSevereWeightLossInputForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();',
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -852,7 +875,7 @@ end %>
         :optional => true,
         :condition => 'showConditions() == true && age <= 14',
         :tt_onUnLoad => 'setSelectedStageConditions(3);',
-        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb();',
+        :tt_onLoad => 'showCategory2("HIV staging");checkPtb();checkPastTb(); hideTextInput(); displayCountOfSelectedConditions();',
         :helpText => "Stage 3 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
@@ -863,7 +886,7 @@ end %>
         :condition => 'showConditions() == true && age >= 15',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
-        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption();',
+        :tt_onLoad => 'showCategory2("HIV staging"); disableModerateWeightLossOption(); disableModerateWeightLossOptionForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_ii_paeds),
@@ -874,7 +897,7 @@ end %>
         :condition => 'showConditions() == true && age <= 14',
         :tt_onUnLoad => 'setSelectedStageConditions(2);',
         :helpText => "Stage 2 Conditions",
-        :tt_onLoad => 'showCategory2("HIV staging");',
+        :tt_onLoad => 'showCategory2("HIV staging"); hideTextInput(); displayCountOfSelectedConditions();',
         :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
 
       <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient, options_for_select(@who_stage_i),
@@ -882,7 +905,7 @@ end %>
         :multiple => true,
         :optional => true,
         :condition => 'age >= 15',
-        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabe(); hideTextInput(); displayCountOfSelectedConditions();",
         :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
         :helpText => "Stage 1 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -893,7 +916,7 @@ end %>
         :multiple => true,
         :optional => true,
         :condition => 'age <= 14',
-        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds();",
+        :tt_onLoad => "showCategory2('HIV staging');setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds(); hideTextInput(); displayCountOfSelectedConditions();",
         :tt_onUnLoad => 'setSelectedStageConditions(1); resetStageDefiningConditions();',
         :helpText => "Stage 1 Conditions",
         :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1184,9 +1207,99 @@ end %>
         moderate_wight_loss_option_input.onclick = null;
         moderate_wight_loss_option_input.onmousedown = null;
         moderate_wight_loss_option_input.onmouseup = null;
+
+        img_input = moderate_wight_loss_option_input.getElementsByTagName("img")[0];
+        img_input.src = '';
+        img_input.alt = '';
       }
     }
 
+  }
+
+  function disableSevereWeightLossInputForNormalBMI(){
+    severe_weight_loss_option_input = jQuery("[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
+    severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+    severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+
+    if (currentBMI > 18.5){
+      //weight_loss_input.style.backgroundColor = '#CDBA96';
+      severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>"
+      severe_weight_loss_option_input.onclick = null;
+      severe_weight_loss_option_input.onmousedown = null;
+      severe_weight_loss_option_input.onmouseup = null;
+
+      img_input = severe_weight_loss_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
+    }
+  }
+
+  function disableModerateWeightLossOptionForNormalBMI(){
+    moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+    moderate_wight_loss_option_id = moderate_weight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_input.id);
+    //severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+
+    if (currentBMI > 18.5){
+      moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBMI + "  )</i>";
+      moderate_weight_loss_option_input.onclick = null;
+      moderate_weight_loss_option_input.onmousedown = null;
+      moderate_weight_loss_option_input.onmouseup = null;
+      
+      img_input = moderate_weight_loss_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
+    }
+
+  }
+
+  function hideTextInput(){
+    jQuery('#touchscreenInput' + tstCurrentPage).hide();
+  }
+
+  function displayCountOfSelectedConditions(){
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').remove();
+    jQuery('#helpText' + tstCurrentPage).append("<span id='count-selected'>&nbsp;</span>")
+
+    if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+      selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+    }else{
+      selectedValuesCount = 0;
+    }
+    
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+    liOptions = document.getElementsByTagName("li");
+    for (var i=0; i<=liOptions.length - 1; i++){
+      addEvent(liOptions[i], "click", function() {
+        if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+          selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+        }else{
+          selectedValuesCount = 0
+        }
+        jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+
+      });
+
+    }
+  }
+
+  function addEvent(obj, evType, fn) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evType, fn, false);
+      return true;
+    } else if (obj.attachEvent) {
+      var r = obj.attachEvent("on" + evType, fn);
+      return r;
+    } else {
+      alert("Handler could not be attached");
+    }
   }
 </script>
 

@@ -1,6 +1,6 @@
 
 .inputPage {
-  background: url('../images/mw-bk.jpg') no-repeat fixed center;
+  /*background: url('../images/mw-bk.jpg') no-repeat fixed center;*/
   background-size: 50%;
   -moz-user-select: none;
 }

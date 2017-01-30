@@ -585,12 +585,22 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
      
       html += "<td>";
       if(low_mbi == true) {
+        calculatedWeightlossPercent = null;
         html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
         html += "lowBMI=" + parseFloat(current_patient_bmi) + " ";
         html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
       }else if(low_weight_percentile == true) {
+        calculatedWeightlossPercent = null;
         html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
         html += "lowBMI=" + parseFloat(current_weight_percentile).toFixed(1) + " ";
+        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
+      }else if(weightLossPercent() >= 10 && tbSymptomsOptions[i].match(/Weight loss/i)) {
+        html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+        html += "lowBMI=" + calculatedWeightlossPercent + "% ";
+        html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
+      }else if(weightLossPercent() > 0 && parseInt('<%@patient_bean.age%>') < 5 && tbSymptomsOptions[i].match(/Weight loss/i)) {
+        html += "<div class='low_bmi_found switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
+        html += "lowBMI=" + calculatedWeightlossPercent + "% ";
         html += "key='" + tbSymptomsOptions[i] + "' onmousedown='alertOnLowBMI(this);'>";
       }else{
         html += "<div class='switch switch-no' id='no_btn_container_" + i + "' category='TB' ";
@@ -793,6 +803,25 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   function hideCategory() {
     document.getElementById('category').style = 'display: none;'
   } 
+
+  var calculatedWeightlossPercent = null;
+
+  function weightLossPercent(){
+    currentWeight = <%=@current_weight %>;
+    previousWeight = <%=@previous_weight %>;
+    /*Decrease = Original Number - New Number
+    //%Decrease = Decrease ÷ Original Number × 100
+    If your answer is a negative number then this is a percentage increase.
+    Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
+*/
+    if(currentWeight.length < 1 || previousWeight.length < 1)
+      return 0;
+
+    decrease = parseFloat(previousWeight) - parseFloat(currentWeight);
+    weight_loss_percent = (decrease/previousWeight) * 100;
+    calculatedWeightlossPercent = Math.round(weight_loss_percent);
+    return calculatedWeightlossPercent;
+  }
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -820,7 +849,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
           :validationCode => "checkPregnancyAndAge() == 'false'",
           :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she pregnant?",
           :tt_onLoad => "showCategory2('Clinic consultation');",
-          :helpText => "Is patient pregnant?"} %>
+          :helpText => "Currently pregnant?"} %>
 
       <%else%>
         <%= touch_hidden_tag "IS PATIENT PREGNANT?" , @patient, @is_patient_pregnant_value.strip , :id => "pregnant" %>
@@ -833,7 +862,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
           :validationCode => "checkBreastfeedingAndAge() == 'false'",
           :tt_onLoad => "showCategory2('Clinic consultation');",
           :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she breastfeeding?",
-          :helpText => "Is patient breast feeding?" } %>
+          :helpText => "Currently breastfeeding?" } %>
 
       <%else%>
         <%= touch_hidden_tag "IS PATIENT BREAST FEEDING?" , @patient, @is_patient_breast_feeding_value.strip , :id => "breast_feeding" %>
@@ -846,7 +875,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         :validationCode => "checkBreastfeedingAndAge() == 'false'",
         :validationMessage => "Patient (#{@patient_bean.name}) is #{@patient_bean.age} years old. Is she breastfeeding?",
         :tt_onLoad => "showCategory2('Clinic consultation');",
-        :helpText => "Is patient breast feeding?" } %>
+        :helpText => "Currently breastfeeding?" } %>
       <!-- CURRENTLY ON FAMILY PLANNING METHOD END -->
     <% end %>
   <% else %>
@@ -1001,7 +1030,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     :id => 'tb_treatment_question',
     :tt_onUnLoad => "showCategory2('Clinic consultation'); hideTBStatusQuestion();",
     :tt_onLoad => "showCategory2('Clinic consultation');",
-    :helpText => "Is the patient on TB Treatment?" } %>
+    :helpText => "On TB Treatment?" } %>
 
   <% if @avilable_status == '' %>
     <%= text_field_tag "advanced_tb_symptoms", nil, {
@@ -1086,7 +1115,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       {	:id => "allergic_to_sulphur",
       :condition => "$('refer_to_clinician').value == 'NO'" ,
       :tt_onLoad => "showCategory2('Clinic consultation');",
-      :helpText => "Is patient allergic to cotrimoxazole" } %>
+      :helpText => "Allergic to cotrimoxazole" } %>
   <%else%>
     <input type="hidden" id='allergic_to_sulphur' value="<%=@allergic_to_sulphur.upcase%>" />
   <%end unless art_adherence_to_be_done %>
@@ -1128,7 +1157,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         {:id => "prescribe_drugs",
         :tt_onLoad => "showCategory2('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
         :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
-        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'NO'" ,
+        :condition => "$('refer_to_clinician').value == 'NO' && ($('allergic_to_sulphur').value.toUpperCase() == 'NO' || $('allergic_to_sulphur').value.toUpperCase() == 'UNKNOWN')" ,
         :multiple => true,
         :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
 
@@ -1365,49 +1394,73 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     allergicToSulphur = $('allergic_to_sulphur').value.toUpperCase();
 
     if (allergicToSulphur.toUpperCase() == 'YES'){
-      cpt_option_input.style.backgroundColor = '#CDBA96';
-      cpt_input.innerHTML = 'CPT (Allergic)';
+      //cpt_option_input.style.backgroundColor = '#CDBA96';
+      cpt_input.innerHTML = "<span class='disabled_check'>CPT (Allergic)</span>";
       cpt_option_input.onclick = null;
       cpt_option_input.onmousedown = null;
       cpt_option_input.onmouseup = null;
+
+      img_input = cpt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
     if (tb_treatment__status == 'YES'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (PATIENT IS ON TB TREATMENT)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (TB SUSPECTED)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
+
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
     if (tb_status == 'CONFIRMED TB ON TREATMENT'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (CONFIRMED TB ON TREATMENT)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB ON TREATMENT)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
+
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
     if (tb_status == 'CONFIRMED TB NOT ON TREATMENT'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (CONFIRMED TB NOT ON TREATMENT)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB NOT ON TREATMENT)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
+
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
     
     if (tb_status == 'TB SUSPECTED'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB Suspected)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (TB Suspected)</span>";
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
+
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
   }
 </script>
 
 <style type="text/css">
+  .disabled_check {
+    padding-left: 52px;
+  }
+
   #fast_track_reminder_cover{
     position: absolute;
     background-color: black;
@@ -1596,9 +1649,9 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 <div id="regimen-change-popup-div">
   <div id="regimen-change-popup-header">
     <%if @current_weight_percentile.blank?%>
-      <center>Low BMI </center>
+      <center id='weight_readings_header'>Low BMI </center>
     <%else%>
-      <center>Low weight percentile</center>
+      <center id='weight_readings_header'>Low weight percentile</center>
     <%end%>
   </div><br />
   <div>
@@ -1608,16 +1661,16 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         <!--i><b id="regimen-change-header">Patient has a low BMI: <span id='low-bmi'></span></b></i><br /-->
         <table class="bmi-alert" style="width: 100%;">
           <tr>
-            <td>Height</td><td class='bmi-data' id="current-height"></td>
+            <td id="previous_weight_sub">Height</td><td class='bmi-data' id="current-height"></td>
           </tr>
           <tr>
-            <td>Weight</td><td class='bmi-data' id="current-weight"></td>
+            <td id="current_weight_sub">Weight</td><td class='bmi-data' id="current-weight"></td>
           </tr>
           <tr>
             <%if @current_weight_percentile.blank?%>
-              <td>BMI</td><td class='bmi-data' id="low-bmi"></td>
+              <td id='weight_readings'>BMI</td><td class='bmi-data' id="low-bmi"></td>
             <%else%>
-              <td>Weight percentile</td><td class='bmi-data' id="low-bmi"></td>
+              <td id='weight_readings'>Weight percentile</td><td class='bmi-data' id="low-bmi"></td>
             <%end%>
           </tr>
         </table>
@@ -1625,7 +1678,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     </span>
     <div style="padding-top: 65px;">
 
-      <span id="regimen-change-yes" onclick="continueWithRegimenChange();" class="regimen-change-my_button">Select weight loss</span>
+      <span id="regimen-change-yes" onclick="continueWithRegimenChange();" class="regimen-change-my_button">Confirm weight loss</span>
       <span id="regimen-change-no" onclick="hideRegimenChangePopup();" class="regimen-change-my_button">Recheck Height / Weight</span>
     </div>
   </div>
@@ -1750,6 +1803,15 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     document.getElementById('low-bmi').innerHTML = e.getAttribute('lowBMI');
     document.getElementById('current-height').innerHTML = '<%=@current_height%>';
     document.getElementById('current-weight').innerHTML = '<%=@current_weight%>';
+
+    if(calculatedWeightlossPercent >= 10) {
+      document.getElementById('weight_readings').innerHTML = 'Weightloss of:';
+      document.getElementById('previous_weight_sub').innerHTML = 'Previous weight:';
+      document.getElementById('current_weight_sub').innerHTML = 'Current weight:';
+      document.getElementById('current-height').innerHTML = "<%=@previous_weight.to_f%>" + " (Kg)";
+      document.getElementById('current-weight').innerHTML = "<%=@current_weight.to_f%>" + " (Kg)";
+      document.getElementById('weight_readings_header').innerHTML = 'Weight loss';
+    }
   }
 
 

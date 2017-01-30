@@ -152,7 +152,6 @@ session_date = session[:datetime] || Time.now()
   var daily_consumption = {}
   var order_start_date = {}
   var amount_given_last_time = {}
-  var amount_counted = {}
   var order_auto_expire_date = {}
   var amount_brought_ids = {}
   var amount_other_ids = {}
@@ -457,20 +456,20 @@ session_date = session[:datetime] || Time.now()
           else
             auto_expire_date = order.auto_expire_date.strftime('%Y-%m-%d')
           end
-        %>
-        order_auto_expire_date['<%=order.order_id%>'] = "<%= auto_expire_date %>";
-        amount_given_last_time['<%=order.order_id%>'] = <%= (order.drug_order.quantity.to_f rescue 0) %>;
-        <%
-          given_last_time = order.drug_order.quantity.to_f rescue 0
-          if given_last_time > 0
-            pills_remaining = MedicationService.get_amounts_brought_if_transfer_in(@patient.id, order.drug_order.drug.concept_id,order.start_date.to_date)
+      
+          if order.drug_order.quantity.blank?
+            if order.start_date.to_date == order.auto_expire_date.to_date
+              hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, order.start_date.to_date)
+              quantity_given_last_time = hanging_pills[order.drug_order.drug_inventory_id]
+            else
+              quantity_given_last_time = 0
+            end
           else
-             amount = MedicationService.amounts_brought_to_clinic(@patient, order.start_date.to_date)
-             pills_remaining = amount[order.drug_order.drug_inventory_id].to_i rescue 0
+            quantity_given_last_time = order.drug_order.quantity
           end
         %>
-        amount_counted['<%=order.order_id%>'] = <%= pills_remaining %>;
-        amount_given_last_time['<%=order.order_id%>'] += amount_counted['<%=order.order_id%>'];
+        order_auto_expire_date['<%=order.order_id%>'] = "<%= auto_expire_date %>";
+        amount_given_last_time['<%=order.order_id%>'] = <%= (quantity_given_last_time.to_f rescue 0) %>;
         dose['<%=order.order_id%>'] = "<%= MedicationService.get_medication_dose(order) %>";
       </script>
 
@@ -649,6 +648,10 @@ session_date = session[:datetime] || Time.now()
       var last_visit_date = dateCreate(order_start_date[i]);
       var num_days = since(last_visit_date);
       var expected_amount_remaining = parseFloat(amount_given_last_time[i] - (num_days * daily_consumption[i]));
+
+      /* The assumption is: the patient will come to the clinic after taking 1 dose */
+      expected_amount_remaining -= dose[i];
+
       m = daily_consumption[i].split('.')[1]
       if (m == 0){
         expected_amount_remaining = parseInt(expected_amount_remaining);
@@ -938,7 +941,7 @@ session_date = session[:datetime] || Time.now()
           :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
           :condition => "$('refer_to_clinician').value == 'NO'" ,
           :multiple => true,
-          :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
+          :helpText => "Medication to prescribe during this visit" } %>
 
         <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
 
@@ -1096,38 +1099,54 @@ session_date = session[:datetime] || Time.now()
     ipt_message_header = "PATIENT IS ON TB TREATMENT";
 
     if (allergicToSuphur.toUpperCase() == 'YES'){
-      cpt_option_input.style.backgroundColor = '#CDBA96';
-      cpt_input.innerHTML = 'CPT (Allergic)';
+      //cpt_option_input.style.backgroundColor = '#CDBA96';
+      cpt_input.innerHTML = "<span class='disabled_check'>CPT (Allergic)</span>";
       cpt_option_input.onclick = null;
       cpt_option_input.onmousedown = null;
       cpt_option_input.onmouseup = null;
+
+      img_input = cpt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
     
     if (patientTBSuspected == 'true'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB Suspected)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (TB SUSPECTED)</span>";
       //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
       ipt_option_input.onclick = null;
       ipt_option_input.onmousedown = null;
       ipt_option_input.onmouseup = null;
+      
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
     if (patientTBConfirmed == 'true'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB Confirmed)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      //ipt_input.innerHTML = 'IPT (TB Confirmed)';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB NOT ON TREATMENT)</span>";
       //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
       ipt_option_input.onclick = function(){
 
       }
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
 
     if (patientOnTBTreatment == 'true'){
-      ipt_option_input.style.backgroundColor = '#CDBA96';
-      ipt_input.innerHTML = 'IPT (TB On Treatment)';
+      //ipt_option_input.style.backgroundColor = '#CDBA96';
+      //ipt_input.innerHTML = 'IPT (TB On Treatment)';
+      ipt_input.innerHTML = "<span class='disabled_check'>IPT (CONFIRMED TB ON TREATMENT)</span>";
       //input.parentNode.children[0].innerHTML = '<img class="unselectable" src="/images/minus.png">';
       ipt_option_input.onclick = function(){
 
       }
+      img_input = ipt_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
     }
     
     /*if (patientTBSuspected){
@@ -1155,6 +1174,10 @@ session_date = session[:datetime] || Time.now()
 </script>
 
 <style type="text/css">
+  .disabled_check {
+    padding-left: 52px;
+  }
+
   #fast_track_reminder_cover{
     position: absolute;
     background-color: black;

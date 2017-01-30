@@ -63,17 +63,21 @@
 
   #tt_page_month_started_art .inputFrameClass {  height: 86%; }
 
-  .tt_controls_year_art_last_taken #Unknown { display: inline; }
+  .tt_controls_year_last_taken_arvs #Unknown { display: inline; }
 
   .tt_controls_month_art_last_taken .keyboard { display:none; }
 
-  #tt_page_month_art_last_taken .options {  height: 90%; }
+  #tt_page_month_last_taken_arvs .options {  height: 90%; }
 
   #tt_page_month_art_last_taken .inputFrameClass {  height: 86%; }
 
   .tt_controls_year_started_art #Unknown { display: inline; }
 
+  .tt_controls_month_of_cd4_count .keyboard{ display: none !important; }
 
+  .NoKeyboard .options {
+    height: 591px !important;
+  }
 </style>
 
 <%#= javascript_include_tag "dateformat" %>
@@ -103,8 +107,9 @@
   var birthdate = new Date("<%= @patient.person.birthdate.to_date.strftime("%m/%d/%Y") %>")
   var dateCreated = new Date("<%=@patient.person.date_created %>");
   var patientBirthdateEstimated = "<%=@patient.person.birthdate_estimated %>";
-  var median_weight_height = <%= @median_weight_height.to_json -%>
-
+  var median_weight_height = <%= @median_weight_height.to_json -%>;
+  var sessionDate = new Date('<%=  @session_date.to_date.strftime('%d/%b/%Y') %>');
+  
   function checkTestDate(td){
     var testDate = createDates($('year_art_last_taken').value, $('month_art_last_taken').value , td.value);
     var years = testDate.getFullYear();
@@ -416,6 +421,7 @@
     } else {
 
       if(cd4_count_numeric <= 250 && cd4_count_modifier != ">") {
+
         $('cd4_count_less_than_250').value = "YES";
       } else {
         $('cd4_count_less_than_250').value = "NO";
@@ -748,12 +754,25 @@
     if (age > 14) {
       if (whoStage >= 3) {
         reasonForArtEligibility = whoStageConcept(whoStage, "ADULT");
+      }
 
-      } else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
-        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
-      } else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_250').value == "YES") {
+        reasonForArtEligibility = "CD4 count less than or equal to 250"
+      }
+
+      else if (tstCurrentDate < '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
         reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
-      } else {
+      }
+
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_350').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 350";
+      }
+
+      else if (tstCurrentDate >= '2014-04-01' && $('cd4_count_less_than_500').value == "YES"){
+        reasonForArtEligibility = "CD4 COUNT LESS THAN OR EQUAL TO 500";
+      }
+      
+      else {
         if (whoStage == 1 && lymphocyteCount < 1200 && lymphocyteCount != null) {
           reasonForArtEligibility = "LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1";
         } else if (whoStage == 2 && lymphocyteCount < 1200 && lymphocyteCount != null) {
@@ -914,7 +933,7 @@
     
     updateReasonForArtEligibility();
     var conditions = selectedConditions();
-    var display = "<div><span class='title'>WHO Stage: " + $('who_stage').value + "</span></div>";
+    var display = "<div><span class='title'>" + $('who_stage').value + "</span></div>";
     display += "<div><span class='title'>Condition on starting ART: " + $('reason_for_art_eligibility').value + "</span></div>";
 
     $('inputFrame'+tstCurrentPage).innerHTML = '<div id="summary">' + display + '</div>' ;
@@ -1226,7 +1245,7 @@
     <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
       {	:id => "last_art_drugs_taken",
       :condition => '$("ever_received_art").value == "YES"',
-      :tt_onLoad => "addCustomRegimenButton();",
+      :tt_onLoad => "addCustomRegimenButton(); lastOtherDrugs = ''; $('otherMedications').value = '';",
       :tt_onUnLoad => 'updateLastARVDrugs(); removeCustomRegimenButton();',
       :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
@@ -1293,7 +1312,7 @@
       <%= touch_location_tag "LOCATION OF ART INITIATION", @patient, nil,
         {	:id => "location_of_art_initialization",
         :condition => '$("ever_registered_at_ART_clinic").value == "YES" && $("ever_received_art").value == "YES"',
-        :tt_onLoad => "showCategory('when starting ART')" ,
+        :tt_onLoad => "showCategory2('when starting ART')" ,
         :tt_onUnLoad => "hideCategory()",
         :helpText => "Location of ART initiation" } %>
 
@@ -1303,7 +1322,7 @@
         :field_type => 'number',
         :absoluteMin => "1890", :min => "1940",
         :tt_pageStyleClass => "Numeric NumbersOnly",
-        :tt_onLoad => "showCategory('when starting ART'); setAbsoluteMaxYearStartedART();" ,
+        :tt_onLoad => "showCategory2('when starting ART'); setAbsoluteMaxYearStartedART();" ,
         :tt_onUnLoad => "hideCategory()",
         :condition => '$("ever_received_art").value == "YES" && $("ever_registered_at_ART_clinic").value == "YES"',
         :id => "year_started_art" }  %>
@@ -1314,7 +1333,7 @@
         :id => "art_start_date_estimation",
         :allowFreeText => false,
         :tt_onUnLoad => "hideCategory();setUnkownStage();",
-        :tt_onLoad => "showCategory('when starting ART');setReasonForStarting();",
+        :tt_onLoad => "showCategory2('when starting ART');setReasonForStarting();",
         :condition => '$("year_started_art").value.toUpperCase() == "UNKNOWN"',
         :ttMatchFromBeginning => "true")%>
 
@@ -1323,7 +1342,7 @@
       <%= select_tag "month_started_art", month_name_options,
         {	:helpText => 'Month started ART',
         :condition => '$("ever_received_art").value == "YES" && $("year_started_art").value.toLowerCase() != "unknown"',
-        :tt_onLoad => "showCategory('when starting ART'); __$('keyboard').style.display = 'none'; validateMonthStartedART();",
+        :tt_onLoad => "showCategory2('when starting ART'); __$('keyboard').style.display = 'none'; validateMonthStartedART();",
         :tt_onUnLoad => "hideCategory(); setUnkownStage();",
         :id => "month_started_art" ,
         :validationMessage => 'Please enter a valid date'}%>
@@ -1331,7 +1350,7 @@
       <%= text_field_tag "day_started_art",  nil,
         :field_type => 'number', :helpText => 'Day started ART',
         :condition => '$("ever_received_art").value == "YES" && ($("year_started_art").value !="Unknown") && ($("month_started_art").value != "Unknown")',
-        :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_started_art').value, $('month_started_art').value);$('nextButton').style.display = 'block';validateDayStartedART();",
+        :tt_onLoad => "showCategory2('when starting ART');getDayOfMonthPicker($('year_started_art').value, $('month_started_art').value);$('nextButton').style.display = 'block';validateDayStartedART();",
         :validationCode => "checkStartDate();",
         :id => "day_started_art" ,
         :tt_onUnLoad => "hideCategory();updateStartDate();setUnkownStage();",
@@ -1344,7 +1363,7 @@
     <%= touch_text_field_tag "ART NUMBER AT PREVIOUS LOCATION", @patient, nil,
       {	:id => "previous_art_number",
       :condition => '$("ever_registered_at_ART_clinic").value == "YES" && $("ever_received_art").value == "YES"',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART')" ,
       :tt_onUnLoad => "hideCategory()",
       :helpText => "ART number at previous location" } %>
 
@@ -1352,7 +1371,7 @@
       {	:id => "has_transfer_letter",
       :tt_onUnload=>  "$('programs__states__state').value = 'Patient transferred in'",
       :condition => "$('ever_registered_at_ART_clinic').value == 'YES' && $('ever_received_art').value == 'YES'",
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART')" ,
       :tt_onUnLoad => "hideCategory()",
       :helpText => "Has staging information?" } %>
 
@@ -1365,7 +1384,7 @@
       :absoluteMin => 10,
       :absoluteMax => 228,
       :helpText => "Height (CM)",
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART')" ,
       :tt_onUnLoad => "hideCategory()",
       :units => 'cm',
       :validationRule => "^([0-9]+)|Unknown$",
@@ -1387,7 +1406,7 @@
       :validationRule => "([0-9]+\\.[0-9])|Unknown$",
       :validationMessage => "You must enter a decimal between 0 and 9 (for example: 54<b>.6</b>)",
       :tt_onUnLoad => "hideCategory();calculateBMI();",
-      :tt_onLoad => "showCategory('when starting ART')",
+      :tt_onLoad => "showCategory2('when starting ART')",
       :tt_pageStyleClass => "Numeric NumbersOnlyWithDecimal"} %>
     <%= hidden_field_tag("observations[][concept_name]", "WEIGHT (KG)") %>
     <%= hidden_field_tag("observations[][patient_id]", @patient.id) %>
@@ -1400,19 +1419,23 @@
 
     <% end %>
 
+    <% if @patient_bean.age > 9 %>
+
     <%= touch_yes_no_unknown_tag "IS PATIENT PREGNANT?", @patient, nil,
       {:id => "pregnant" ,
       :condition => "patientGender != 'MALE' && showConditions() == true",
       :tt_onUnLoad => 'hideCategory();',
-      :tt_onLoad => "showCategory('when starting ART');",
-      :helpText => "Patient pregnant" } %>
+      :tt_onLoad => "showCategory2('when starting ART');",
+      :helpText => "Pregnant at initiation?" } %>
 
     <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
       {	:id => "breast_feeding" ,
       :condition => "patientGender != 'MALE' && showConditions() == true",
       :tt_onUnLoad => 'hideCategory();',
-      :tt_onLoad => "showCategory('when starting ART');",
-      :helpText => "Patient breast feeding at initiation?" } %>
+      :tt_onLoad => "showCategory2('when starting ART');",
+      :helpText => "Breastfeeding at initiation?" } %>
+
+    <% end %>
 
 
     <%= touch_select_tag "WHO STAGES CRITERIA PRESENT", @patient,  options_for_select(@who_stage_iv),
@@ -1420,7 +1443,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
-      :tt_onLoad => "showCategory('when starting ART');",
+      :tt_onLoad => "showCategory2('when starting ART'); hideTextInput(); displayCountOfSelectedConditions();",
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 4 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1431,7 +1454,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(4);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLossPaeds();",
+      :tt_onLoad => "showCategory2('when starting ART'); preselectSevereWeightLossPaeds(); hideTextInput(); displayCountOfSelectedConditions();",
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 4 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1441,7 +1464,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectSevereWeightLoss();" ,
+      :tt_onLoad => "showCategory2('when starting ART'); preselectSevereWeightLoss(); disableSevereWeightLossInputForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1452,7 +1475,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(3);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLossPaeds();" ,
+      :tt_onLoad => "showCategory2('when starting ART'); preselectModerateWeightLossPaeds(); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 3 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1462,7 +1485,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
-      :tt_onLoad => "showCategory('when starting ART'); preselectModerateWeightLoss();" ,
+      :tt_onLoad => "showCategory2('when starting ART'); preselectModerateWeightLoss(); disableModerateWeightLossOptionForNormalBMI(); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 2 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1473,7 +1496,7 @@
       :multiple => true,
       :optional => true,
       :tt_onUnLoad => 'hideCategory();setSelectedStageConditions(2);',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART'); hideTextInput(); displayCountOfSelectedConditions();" ,
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 2 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small"  } %>
@@ -1482,8 +1505,8 @@
       {:id => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabe();",
-      :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
+      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabe(); hideTextInput(); displayCountOfSelectedConditions();",
+      :tt_onUnLoad => "showCategory2('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
       :condition => 'showConditions() == true && age >= 15',
       :helpText => "Stage 1 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1493,8 +1516,8 @@
       :class => "stage_1_conditions",
       :multiple => true,
       :optional => true,
-      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds();",
-      :tt_onUnLoad => "showCategory('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
+      :tt_onLoad => "hideCategory();setOptionsForContraindicationsPopup(); forceStageOneAvailabePaeds(); hideTextInput(); displayCountOfSelectedConditions();",
+      :tt_onUnLoad => "showCategory2('when starting ART');setSelectedStageConditions(1); resetStageDefiningConditions();",
       :condition => 'showConditions() == true && age <= 14',
       :helpText => "Stage 1 Conditions",
       :tt_pageStyleClass => "NoKeyboard NoInput small" } %>
@@ -1555,7 +1578,7 @@
     <%= touch_location_tag "CD4 COUNT LOCATION", @patient, nil,
       {	:id => "cd4_count_location",
       :condition => '$("new_cd4_count_available").value == "YES" && showConditions()',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART')" ,
       :tt_onUnLoad => "hideCategory();" ,
       :helpText => "CD4 Count Location"} %>
 
@@ -1563,9 +1586,9 @@
     <%= text_field_tag "year_of_cd4", nil,
       { :helpText => 'Year of CD4 count',
       :field_type => 'number',
-      :absoluteMin => "1890", :min => "1940", :absoluteMax => Date.today.year,
+      :absoluteMin => "1890", :min => "1940",
       :tt_pageStyleClass => "Numeric NumbersOnly",
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART'); setAbsoluteMaxCD4Year();" ,
       :tt_onUnLoad => "hideCategory();" ,
       :condition => '$("new_cd4_count_available").value == "YES" && showConditions()',
       :id => "year_of_cd4" }  %>
@@ -1574,7 +1597,7 @@
       { :tt_onLoad => "__$('keyboard').style.display = 'none'",
       :helpText => 'Month of CD4 count',
       :condition => '$("year_of_cd4").value.toLowerCase() != "unknown" && $("new_cd4_count_available").value == "YES" && showConditions()',
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART'); validateCD4Month();" ,
       :tt_onUnLoad => "hideCategory();" ,
       :id => "month_of_cd4" ,
       :validationMessage => 'Please enter a valid date'}%>
@@ -1583,7 +1606,7 @@
       :field_type => 'number',
       :helpText => 'Day of CD4 count',
       :condition => '($("year_of_cd4").value !="Unknown") && ($("month_of_cd4").value != "Unknown") && ($("new_cd4_count_available").value == "YES") && showConditions()',
-      :tt_onLoad => "showCategory('when starting ART');getDayOfMonthPicker($('year_of_cd4').value, $('month_of_cd4').value);$('nextButton').style.display = 'block';",
+      :tt_onLoad => "showCategory2('when starting ART');getDayOfMonthPicker($('year_of_cd4').value, $('month_of_cd4').value);$('nextButton').style.display = 'block'; validateCD4Day();",
       :tt_onUnLoad => 'hideCategory();checkCd4Date();',
       :id => "day_of_cd4" %>
 
@@ -1603,7 +1626,7 @@
       :helpText => "CD4 Count",
       :max => 1000 ,
       :min => 1 ,
-      :tt_onLoad => "showCategory('when starting ART');updateCD4CountKeyPad();",
+      :tt_onLoad => "showCategory2('when starting ART');updateCD4CountKeyPad();",
       :tt_onUnLoad => "hideCategory();updateCD4Count();"} %>
 
     <%= touch_hidden_tag "CD4 COUNT LESS THAN OR EQUAL TO 250", @patient, "", :id => "cd4_count_less_than_250" %>
@@ -1613,7 +1636,7 @@
       :id => 'new_cd4_percent_available',
       :condition => 'showConditions() == true',
       :helpText => "CD4 percent available",
-      :tt_onLoad => "showCategory('when starting ART')" ,
+      :tt_onLoad => "showCategory2('when starting ART')" ,
       :tt_onUnLoad => "hideCategory();" ,
       :tt_pageStyleClass => 'NoKeyboard' %>
 
@@ -1621,7 +1644,7 @@
       {	:id => "cd4_percent",
       :condition => '$("new_cd4_percent_available").value == "YES" && showConditions()',
       :helpText => "CD4 Percent",
-      :tt_onLoad => "showCategory('when starting ART');updateCD4CountKeyPad();",
+      :tt_onLoad => "showCategory2('when starting ART');updateCD4CountKeyPad();",
       :tt_onUnLoad => 'hideCategory();updateCD4Percent()'} %>
 
     <%= touch_hidden_tag "CD4 PERCENT LESS THAN 25", @patient, "", :id => "cd4_percent_less_than_25" %>
@@ -1664,6 +1687,7 @@
     <%= text_field_tag "year_confirmatory_hiv_test", nil,
       {	:helpText => 'Confirmatory HIV test year',
       :field_type => 'number',
+      :condition => '$("type_of_confirmatory_hiv_test").value != "NOT DONE"',
       :tt_onLoad => "changeNextButtonForConfirmatoryYear(); changeAbsoluteMinForConfirmatoryYear();",
       :absoluteMax => Date.today.year,
       :tt_pageStyleClass => "Numeric NumbersOnly",
@@ -1671,7 +1695,7 @@
 
     <%= select_tag "month_confirmatory_hiv_test", month_name_options,
       {	:helpText => 'Confirmatory HIV test month',
-      :condition => '$("confirmatory_hiv_test_year").value.toLowerCase() != "unknown"',
+      :condition => '$("type_of_confirmatory_hiv_test").value != "NOT DONE" && $("confirmatory_hiv_test_year").value.toLowerCase() != "unknown"',
       :tt_onLoad => "__$('keyboard').style.display = 'none'; validateConfirmatoryMonth();",
       :validationMessage => 'Please enter a valid date',
       :id => "confirmatory_hiv_test_month"} %>
@@ -1679,7 +1703,7 @@
     <%= text_field_tag "day_confirmatory_hiv_test",  nil,
       :field_type => 'number', :helpText => 'Confirmatory HIV test day',
       :tt_onUnLoad => "updateConfirmDate();",
-      :condition => '($("confirmatory_hiv_test_year").value !="Unknown") && ($("confirmatory_hiv_test_month").value != "Unknown");',
+      :condition => '$("type_of_confirmatory_hiv_test").value != "NOT DONE" && ($("confirmatory_hiv_test_year").value !="Unknown") && ($("confirmatory_hiv_test_month").value != "Unknown");',
       :tt_onLoad => "getDayOfMonthPicker($('confirmatory_hiv_test_year').value, $('confirmatory_hiv_test_month').value);$('nextButton').style.display = 'block'; validateConfirmatoryDay();",
       :validationCode => "checkConfirmDate()",
       :id => "confirmatory_hiv_test_day" ,
@@ -1739,7 +1763,7 @@
     </span-->
     <div style="padding-top: 65px;">
       <span id="yes" onclick="continueProcess();" class="my_button" style="position: relative;">Keep &quot;Asymptomatic&quot;</span>
-      <span id="no" onclick="hidePopup();" class="my_button" style=" position: relative; right: 20px;">Keep &quot;Other&quot; conditions</span>
+      <span id="no" onclick="hidePopup();" class="my_button" style=" position: relative; right: 20px;">Keep other conditions</span>
     </div>
   </div>
 </div>
@@ -2005,7 +2029,7 @@
 
   function validateConfirmatoryMonth() {
     confirmatoryYear = parseInt(jQuery('#confirmatory_hiv_test_year')[0].value);
-    date = new Date;
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2015,7 +2039,7 @@
 
     if (confirmatoryYear == currYear){
       currentMonth = [];
-      numOfloops = ((new Date).getMonth() + 1);
+      numOfloops = (date.getMonth() + 1);
 
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);
@@ -2058,48 +2082,40 @@
   function validateMonthStartedART() {
     year_art_last_taken = parseInt(jQuery('#year_art_last_taken')[0].value);
     month_art_last_taken = parseInt(jQuery('#month_art_last_taken')[0].value);
-    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     year_started_art = parseInt(jQuery('#year_started_art')[0].value);
 
-
-    if ((year_art_last_taken != currYear) && (year_started_art == year_art_last_taken)){
-      currentMonth = [];
-      numOfloops = month_art_last_taken;
-      for(var i = 0; i < month_art_last_taken; i++){
-        currentMonth.push(availableMonths[i]);
-      }
-      rule = currentMonth.join("|");
-      rule = rule + "|Unknown";
-      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    }
-
-    if (year_art_last_taken == currYear){
-      currentMonth = [];
-      numOfloops = ((new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>")).getMonth() + 1);
- 
-      for(var i = 0; i < numOfloops; i++){
-        currentMonth.push(availableMonths[i]);
-      }
-      rule = currentMonth.join("|");
-      rule = rule + "|Unknown";
-      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    }
-
-    if (year_art_last_taken != currYear) {
+    if (year_started_art < year_art_last_taken){
       rule = availableMonths.join("|");
       rule = rule + "|Unknown";
       return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    } else{
+      if (year_started_art == currYear){
+        currentMonth = [];
+        numOfloops = (sessionDate.getMonth() + 1);
+
+        for(var i = 0; i < numOfloops; i++){
+          currentMonth.push(availableMonths[i]);
+        }
+        rule = currentMonth.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }else{
+        rule = availableMonths.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }
     }
 
   }
 
   function setAbsoluteMaxYearStartedART(){
     year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
-    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    date = sessionDate;
     currYear = date.getFullYear();
 
     if (parseInt(year_taken_art)){
@@ -2110,15 +2126,15 @@
   }
 
   function validateMonthARTTaken(){
-    date = new Date;
-    currYear = <%=(session[:datetime].to_date.year rescue Date.today.year)%>; //date.getFullYear();
+    date = sessionDate;
+    currYear = sessionDate.getFullYear();
     currDay = date.getDate();
     availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     year_taken_art = parseInt(jQuery('#year_art_last_taken')[0].value);
     if (year_taken_art == currYear){
       currentMonth = [];
-      numOfloops = <%=(session[:datetime].to_date.month rescue Date.today.month)%>;//((new Date).getMonth() + 1);
+      numOfloops = (sessionDate.getMonth() + 1);
 
       for(var i = 0; i < numOfloops; i++){
         currentMonth.push(availableMonths[i]);
@@ -2131,7 +2147,7 @@
   }
 
   function validateDayARTTaken(){
-    date = new Date;
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
@@ -2148,7 +2164,7 @@
   }
 
   function validateDayStartedART(){
-    date = new Date("<%=@session_date.to_date.strftime('%d/%b/%Y')%>");
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
@@ -2175,7 +2191,7 @@
   }
 
   function validateConfirmatoryDay(){
-    date = new Date
+    date = sessionDate;
     currYear = date.getFullYear();
     currDay = date.getDate();
     currMonth = date.getMonth() + 1;
@@ -2190,6 +2206,79 @@
     if (confirmatoryYear == currYear) {
       if (confirmatoryMonth == currMonth){
         return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+      }
+    }
+
+  }
+
+  function setAbsoluteMaxCD4Year(){
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    date = sessionDate;
+    currYear = date.getFullYear();
+
+    if (parseInt(year_started_art)){
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", year_started_art);
+    }else{
+      jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", currYear);
+    }
+  }
+
+  function validateCD4Month(){
+    date = sessionDate;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    availableMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    year_of_cd4 = parseInt(jQuery('#year_of_cd4')[0].value);
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+
+    if (year_of_cd4 < year_started_art){
+      rule = availableMonths.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    } else{
+      if (year_of_cd4 == year_started_art){
+        currentMonth = [];
+        numOfloops = (date.getMonth() + 1);
+
+        for(var i = 0; i < numOfloops; i++){
+          currentMonth.push(availableMonths[i]);
+        }
+        rule = currentMonth.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }else{
+        rule = availableMonths.join("|");
+        rule = rule + "|Unknown";
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+      }
+    }
+
+  }
+
+  function validateCD4Day(){
+    date = sessionDate;
+    currYear = date.getFullYear();
+    currDay = date.getDate();
+    currMonth = date.getMonth() + 1;
+
+    cd4Month = parseInt(jQuery('#month_of_cd4')[0].value);
+    cd4Year = parseInt(jQuery('#year_of_cd4')[0].value);
+
+    year_started_art = parseInt(jQuery('#year_started_art')[0].value);
+    month_started_art = parseInt(jQuery('#month_started_art')[0].value);
+    day_started_art = parseInt(jQuery('#day_started_art')[0].value);
+
+    if (cd4Year == currYear) {
+      if (cd4Month == currMonth){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+      }
+    }
+
+    if ((year_of_cd4 == year_started_art) && (year_of_cd4 != currYear)){
+      if (cd4Month == month_started_art){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',day_started_art);
       }
     }
 
@@ -2248,7 +2337,7 @@
     disableModerateWeightLossOption();
   }
 
-function preselectModerateWeightLossPaeds(){
+  function preselectModerateWeightLossPaeds(){
     currentWeight = parseFloat($("weight").value);
     current_weight_percentile = (currentWeight/(median_weight_height[0])*100)
 
@@ -2273,22 +2362,26 @@ function preselectModerateWeightLossPaeds(){
   }
 
   function disableModerateWeightLossOption(){
-    moderate_wight_loss_option_input = jQuery("[tstvalue='Moderate unexplained wasting/malnutrition not responding to treatment (weight-for-height/ -age 70-79% or muac 11-12 cm)']")[0];
-    moderate_wight_loss_option_id = moderate_wight_loss_option_input.id;
+    moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+    moderate_weight_loss_option_id = moderate_weight_loss_option_input.id;
 
-    weight_loss_input = document.getElementById('optionValue' + moderate_wight_loss_option_id);
+    weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_id);
     severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
     
     if (selected_stage_conditions[3]){
       selected_stage_three_conditions = selected_stage_conditions[3].split(';');
       if (selected_stage_three_conditions.indexOf(severe_weight_loss) != -1){
         //weight_loss_input.style.backgroundColor = '#CDBA96';
-        moderate_wight_loss_option_input.style.backgroundColor = '#CDBA96';
+        moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
         moderate_weight_loss_text = weight_loss_input.innerHTML;
         weight_loss_input.innerHTML = moderate_weight_loss_text + " ( Severe weight loss already selected )"
-        moderate_wight_loss_option_input.onclick = null;
-        moderate_wight_loss_option_input.onmousedown = null;
-        moderate_wight_loss_option_input.onmouseup = null;
+        moderate_weight_loss_option_input.onclick = null;
+        moderate_weight_loss_option_input.onmousedown = null;
+        moderate_weight_loss_option_input.onmouseup = null;
+
+        img_input = moderate_weight_loss_option_input.getElementsByTagName("img")[0];
+        img_input.src = '';
+        img_input.alt = '';
       }
     }
 
@@ -2311,9 +2404,101 @@ function preselectModerateWeightLossPaeds(){
         moderate_wight_loss_option_input.onclick = null;
         moderate_wight_loss_option_input.onmousedown = null;
         moderate_wight_loss_option_input.onmouseup = null;
+
+        img_input = moderate_wight_loss_option_input.getElementsByTagName("img")[0];
+        img_input.src = '';
+        img_input.alt = '';
       }
     }
 
   }
 
+  function disableSevereWeightLossInputForNormalBMI(){
+    severe_weight_loss_option_input = jQuery("[tstvalue='Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained']")[0];
+    severe_weight_loss_option_id = severe_weight_loss_option_input.id;
+
+
+    weight_loss_input = document.getElementById('optionValue' + severe_weight_loss_option_id);
+    severe_weight_loss = "Severe weight loss >10% and/or BMI <18.5kg/m^2, unexplained";
+
+    if (parseFloat(currentBmi) > 18.5){
+      //weight_loss_input.style.backgroundColor = '#CDBA96';
+      severe_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBmi + "  )</i>"
+      severe_weight_loss_option_input.onclick = null;
+      severe_weight_loss_option_input.onmousedown = null;
+      severe_weight_loss_option_input.onmouseup = null;
+
+      img_input = severe_weight_loss_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
+    }
+  }
+
+  function disableModerateWeightLossOptionForNormalBMI(){
+    moderate_weight_loss_option_input = jQuery("[tstvalue='Moderate weight loss less than or equal to 10 percent, unexplained']")[0];
+    moderate_wight_loss_option_id = moderate_weight_loss_option_input.id;
+
+    weight_loss_input = document.getElementById('optionValue' + moderate_weight_loss_option_input.id);
+
+    if (parseFloat(currentBmi) > 18.5){
+      moderate_weight_loss_option_input.style.backgroundColor = '#CDBA96';
+      moderate_weight_loss_text = weight_loss_input.innerHTML;
+      weight_loss_input.innerHTML = moderate_weight_loss_text + " <i>( BMI is " + currentBmi + "  )</i>";
+      moderate_weight_loss_option_input.onclick = null;
+      moderate_weight_loss_option_input.onmousedown = null;
+      moderate_weight_loss_option_input.onmouseup = null;
+
+      img_input = moderate_weight_loss_option_input.getElementsByTagName("img")[0];
+      img_input.src = '';
+      img_input.alt = '';
+    }
+
+  }
+
+  function hideTextInput(){
+    jQuery('#touchscreenInput' + tstCurrentPage).hide();
+  }
+
+  function displayCountOfSelectedConditions(){
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').remove();
+    jQuery('#helpText' + tstCurrentPage).append("<span id='count-selected'>&nbsp;</span>")
+
+    if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+      selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+    }else{
+      selectedValuesCount = 0;
+    }
+
+    jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+    liOptions = document.getElementsByTagName("li");
+    for (var i=0; i<=liOptions.length - 1; i++){
+      addEvent(liOptions[i], "click", function() {
+        if ($("touchscreenInput" + tstCurrentPage).value.length > 0){
+          selectedValuesCount = $("touchscreenInput" + tstCurrentPage).value.split(";").length;
+        }else{
+          selectedValuesCount = 0
+        }
+        jQuery('#helpText' + tstCurrentPage + ' > #count-selected').html('&nbsp;(' + selectedValuesCount + ' selected)');
+
+      });
+
+    }
+  }
+
+  function addEvent(obj, evType, fn) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evType, fn, false);
+      return true;
+    } else if (obj.attachEvent) {
+      var r = obj.attachEvent("on" + evType, fn);
+      return r;
+    } else {
+      alert("Handler could not be attached");
+    }
+  }
+  
 </script>
+
+<script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>

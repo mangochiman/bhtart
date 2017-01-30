@@ -31,7 +31,15 @@
 
   .lowWeightForHeight{color:black;background:red;}
   .medWeightForHeight {color:black;background:yellow;}
-  .lowBMI {color:black;background:red;}
+  .lowBMI {
+    color: red;
+    font-weight: bolder;
+    font-size: 14pt;
+    border: 1px solid black;
+    border-radius: 50%;
+    padding: 3px;
+    /*background:red;*/
+  }
   .lowBMIcounselling {color:black;background:orange;}
   .lowWeightForAge {color:black;background:red;}
   .medWeightForAge {color:black;background:yellow;}
@@ -41,7 +49,7 @@
   .goodHeightForAge {color:black;}
 
   #tt_page_nutritional_status .inputFrameClass { height: 87%;}
-  
+
   #tt_page_nutritional_status .inputPage{
     width: 98.7%;
   }
@@ -69,6 +77,7 @@
   var currentWeightPercentile;
   var displayText;
   var medianWeightHeight;
+  var previousWeight = '<%= @previous_weight %>';
 
 <%
 dateToday = session[:datetime].to_date rescue Date.today
@@ -106,8 +115,18 @@ dateToday = session[:datetime].to_date rescue Date.today
 
 
     if (age < 5){
-      jQuery('#keyboard').empty();
-      jQuery('#charts').load('/patients/baby_chart/<%= @patient.id -%>?patient_id=<%= @patient.id -%>&cur_weight=' + currentWeight, null, function(){jQuery('#keyboard').hide(); hookKeyboard()});
+      /*jQuery('#keyboard').empty();
+      jQuery('#charts').load('/patients/baby_chart/<%= @patient.id -%>?patient_id=<%= @patient.id -%>&cur_weight=' + currentWeight, null, function(){jQuery('#keyboard').hide(); hookKeyboard()}); */
+
+      jQuery.ajax({
+        method: "POST",
+        url: "/patients/render_baby_graph_data",
+        data: { patient_id: "<%= @patient.id -%>", data: "weight", currentWeight:currentWeight },
+        success: function(results){
+          obs = JSON.parse(results)
+          plotBabyGraph(obs);
+        }
+      })
 
     }else{
       //jQuery('#keyboard').empty();
@@ -124,77 +143,169 @@ dateToday = session[:datetime].to_date rescue Date.today
     }
   }
 
+  var standard_high_weight = [];
+  var standard_low_weight = [];
+  var median_weight = [];
+  var age_in_months = [];
+  var weight_trail = [];
+
+  function resetWeightReadings(obs) {
+    standard_high_weight = [];
+    standard_low_weight = [];
+    median_weight = [];
+    age_in_months = [];
+    weight_trail = [];
+
+    for(var i = 0; i < obs.length; i++) {
+      weight_trail.push(obs[i][1])
+    }
+
+    <%(@weight_height_for_ages || {}).sort_by {|x, y| x }.each do |age, data|%>
+      standard_low_weight.push(<%=data[:standard_low_weight]%>);
+      standard_high_weight.push(<%=data[:standard_high_weight]%>);
+      median_weight.push(<%=data[:median_weight]%>);
+      age_in_months.push(<%=age%>);
+    <%end%>
+
+  }
+
+  function plotBabyGraph(obs) {
+
+    resetWeightReadings(obs);
+
+    jQuery('#charts').highcharts({
+        chart: {
+            type: 'line'
+        },
+        title: {
+            text: ''
+        },
+        legend: {
+            layout: 'vertical',
+            align: 'left',
+            verticalAlign: 'top',
+            x: 150,
+            y: 100,
+            floating: true,
+            borderWidth: 1,
+            backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+        },
+        xAxis: {
+            categories: age_in_months ,
+            title: {
+              text: 'Age in months'
+            },
+            plotBands: [{ // visualize the weekend
+                from: 4.5,
+                to: 6.5,
+                color: 'rgba(68, 170, 213, .2)'
+            }]
+        },
+        yAxis: {
+            title: {
+                text: 'Weight'
+            }
+        },
+        tooltip: {
+            shared: true,
+            valueSuffix: ' Kg'
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            areaspline: {
+                fillOpacity: 0.5
+            }
+        },
+        series: [{
+            name: 'Standard high weight',
+            data: standard_high_weight
+        }, {
+            name: 'Median weight',
+            data: median_weight
+        }, {
+            name: "Weight trail (child's weight)",
+            data: weight_trail
+        }, {
+            name: 'Standard low weight',
+            data: standard_low_weight
+        }]
+    });
+
+  }
+
   function plotGraph(obs){
 
     //jQuery.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=usdeur.json&callback=?', function (data) {
 
-        jQuery('#charts').highcharts({
-            chart: {
-                zoomType: 'x'
+    jQuery('#charts').highcharts({
+      chart: {
+        zoomType: 'x'
+      },
+      title: {
+        text: 'Weight history'
+      },
+      subtitle: {
+        text: document.ontouchstart === undefined ?
+          'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+      },
+      xAxis: {
+        type: 'datetime',
+        dateTimeLabelFormats:{
+          month: '%b, %Y'
+        }
+      },
+      yAxis: {
+        min: 0,
+        title: {
+          text: 'Weight (kg)'
+        }
+      },
+      tooltip: {
+        headerFormat: '<b>{series.name}</b><br>',
+        pointFormat: '{point.x:%e. %b, %Y}: {point.y:.1f} Kg'
+      },
+      legend: {
+        enabled: false
+      },
+      credits: {
+        enabled: false
+      },
+      plotOptions: {
+        area: {
+          fillColor: {
+            linearGradient: {
+              x1: 0,
+              y1: 0,
+              x2: 0,
+              y2: 1
             },
-            title: {
-                text: 'Weight history'
-            },
-            subtitle: {
-                text: document.ontouchstart === undefined ?
-                        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-            },
-            xAxis: {
-              type: 'datetime',
-              dateTimeLabelFormats:{
-                month: '%b, %Y'
-              } 
-            },
-            yAxis: {
-              min: 0,
-                title: {
-                    text: 'Weight (kg)'
-                }
-            },
-            tooltip: {
-              headerFormat: '<b>{series.name}</b><br>',
-              pointFormat: '{point.x:%e. %b, %Y}: {point.y:.1f} Kg'
-            },
-            legend: {
-                enabled: false
-            },
-            credits: {
-                enabled: false
-            },
-            plotOptions: {
-                area: {
-                    fillColor: {
-                        linearGradient: {
-                            x1: 0,
-                            y1: 0,
-                            x2: 0,
-                            y2: 1
-                        },
-                        stops: [
-                            [0, Highcharts.getOptions().colors[0]],
-                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                        ]
-                    },
-                    marker: {
-                      enabled: true,
-                      symbol: 'circle',
-                      radius: 7
-                    },
-                    lineWidth: 1,
-                    states: {
-                        hover: {
-                            lineWidth: 1
-                        }
-                    },
-                    threshold: null
-                }
-            },
-            series: [{
-                type: 'area',
-                name: 'Weight',
-                data: formatData(obs)
-            }]
-        });
+            stops: [
+              [0, Highcharts.getOptions().colors[0]],
+              [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+            ]
+          },
+          marker: {
+            enabled: true,
+            symbol: 'circle',
+            radius: 7
+          },
+          lineWidth: 1,
+          states: {
+            hover: {
+              lineWidth: 1
+            }
+          },
+          threshold: null
+        }
+      },
+      series: [{
+          type: 'area',
+          name: 'Weight',
+          data: formatData(obs)
+        }]
+    });
     //});
 
 
@@ -216,14 +327,14 @@ dateToday = session[:datetime].to_date rescue Date.today
     var year = newDate.getFullYear();
 
     return Date.UTC(year,monthIndex,day);
-/* 
+    /*
     months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return day + "/" + months[monthIndex] + '/' + year;
     return day + "/" + months[monthIndex] + '/' + year;
-*/
+     */
   }
 
-/* 
+  /*
   function dataG(obs) {
     var correctedWeights = [];
 
@@ -235,7 +346,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     return [{name: 'Weight', data: correctedWeights}];
   }
   
-*/
+   */
   function hookKeyboard(){
 
     __$("nextButton").onclick = function(){
@@ -256,9 +367,18 @@ dateToday = session[:datetime].to_date rescue Date.today
     if (currentWeightPercentile >= 80){
       displayText += "<span class='goodWeightForAge'>" + currentWeightPercentile + "%</span><br>";
     } else if (currentWeightPercentile >= 70 && currentWeightPercentile < 80) {
-      displayText += "<span class='medWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Moderate wasting </span><br>";
+      if (weightLossPercent(currentWeight) >= 1){
+        displayText += "<span class='medWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Moderate malnutrition (<span class='medWeightForAge'>" + weightLossPercent(currentWeight) +  "%</span> weight loss)</span><br>";
+      }else{
+        displayText += "<span class='medWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Moderate malnutrition</span><br>";
+      }
     } else if (currentWeightPercentile < 70) {
-      displayText += "<span class='lowWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Severe wasting</span><br>";
+
+      if (weightLossPercent(currentWeight) >= 1){
+        displayText += "<span class='lowWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Severe malnutrition (<span class='lowWeightForAge'>" + weightLossPercent(currentWeight) +  "%</span> weight loss)</span><br>";
+      }else{
+        displayText += "<span class='lowWeightForAge'>" + currentWeightPercentile + "%</span>" + " <span class='recommendation'> Severe malnutrition</span><br>";
+      }
     } else {
       displayText += "<span class='lowWeightForAge'>N/A</span><span class='recommendation'> Failed to calculate</span><br>";
     }
@@ -289,7 +409,7 @@ dateToday = session[:datetime].to_date rescue Date.today
     if (weightForHeightPercentile >= 80) {
       displayText += "<span class='goodWeightForHeight'>" + weightForHeightPercentile + "%</span><br>";
     } else if (weightForHeightPercentile >= 75) {
-      displayText += "<span class='medWeightForHeight'>" + weightForHeightPercentile + "%</span>" + " <span class='recommendation'> Moderate wasting</span><br>";
+      displayText += "<span class='medWeightForHeight'>" + weightForHeightPercentile + "%</span>" + " <span class='recommendation'> Moderate malnutrition</span><br>";
     } else if (weightForHeightPercentile < 75) {
       displayText += "<span class='lowWeightForHeight'>" + weightForHeightPercentile + "%</span>" + "<span class='recommendation'> Severe wasting</span><br>";
     } else {
@@ -315,17 +435,20 @@ dateToday = session[:datetime].to_date rescue Date.today
     }else if (currentBmi >= 25) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
       displayText +="Overweight: Pre-obese</span>";
+    }else if (weightLossPercent(currentWeight) >= 10) {
+      displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
+      displayText +="Weight loss of : " + weightLossPercent(currentWeight) + "%</span>";
     }else if (currentBmi > 18.5) {
       //displayText += currentBmi;
       displayText += "<span class='normalBMI'>" + currentBmi + "</span>";
       displayText += "<br/><span class='recommendation'>Normal weight</span>";
     } else if (currentBmi >= 16.0 && currentBmi <= 18.5) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
-      displayText +="Underweight: Moderate weight loss less than or equal to 10 percent, unexplained</span>";
+      displayText +="Underweight: Moderate malnutrition</span>";
     } else if (currentBmi < 16.0) {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>";
-      displayText +="Underweight: Severe wasting or malnutrition</span>";
-    /*} else {
+      displayText +="Underweight: Severe malnutrition</span>";
+      /*} else {
       displayText += "<span class='lowBMI'>" + currentBmi + "</span><br/><span class='recommendation'>Eligible for therapeutic feeding</span>";*/
     }
     displayText += "</div>";
@@ -362,7 +485,17 @@ dateToday = session[:datetime].to_date rescue Date.today
     sbpValue = (parseInt(sbpValue) - 10); //DBP has to be less than SPB at least by 10.
     jQuery('#touchscreenInput'+ tstCurrentPage).attr("absoluteMax", sbpValue);
   }
-  
+
+  function weightLossPercent(currentWeight){
+    /*Decrease = Original Number - New Number
+    //%Decrease = Decrease ÷ Original Number × 100
+    If your answer is a negative number then this is a percentage increase.
+Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
+     */
+    decrease = parseFloat(previousWeight) - parseFloat(currentWeight);
+    weight_loss_percent = (decrease/previousWeight) * 100;
+    return Math.round(weight_loss_percent);
+  }
 </script>
 
 <form action="/encounters/create/vitals">
@@ -465,7 +598,7 @@ dateToday = session[:datetime].to_date rescue Date.today
         :id => "systolic_blood_pressure",
         :field_type => "number",
         :tt_onLoad => "showCategory2('Current vitals');updateSBPValues();",
-        :tt_onUnLoad => "clearInterval(sbpInterval);", 
+        :tt_onUnLoad => "clearInterval(sbpInterval);",
         :helpText => "Systolic blood pressure (<span id='sbp'>&nbsp;</span>/<span id='dbp'>&nbsp;</span>)",
         :absoluteMin => 70,
         :absoluteMax => 220,
@@ -495,10 +628,10 @@ dateToday = session[:datetime].to_date rescue Date.today
     <%= touch_hidden_tag "HT FOR AGE", @patient, nil, {:id => 'height_for_age'} %>
   <% end %>
 
-  <%= text_field_tag :showSummary, nil, { 
-    :tt_onLoad => "growthIndicators();__$('keyboard').style.display = 'none';", 
+  <%= text_field_tag :showSummary, nil, {
+    :tt_onLoad => "growthIndicators();__$('keyboard').style.display = 'none';",
     :helpText => "Nutritional status",
-    :optional => "true", :tt_pageStyleClass => "NoControls" 
+    :optional => "true", :tt_pageStyleClass => "NoControls"
   } %>
 
   <% if @retrospective %>

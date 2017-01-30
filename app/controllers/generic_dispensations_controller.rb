@@ -14,7 +14,6 @@ class GenericDispensationsController < ApplicationController
 	end
 
   def create
-    
     if (params[:identifier])
       params[:drug_id] = params[:identifier].match(/^\d+/).to_s
       params[:quantity] = params[:identifier].match(/\d+$/).to_s
@@ -45,6 +44,7 @@ class GenericDispensationsController < ApplicationController
       session_date = session[:datetime] || Time.now()
     else
       session_date = params[:encounter_datetime] #Use date_created passed during import
+      User.current = User.find(params[:creator])
     end
 
     @drug = Drug.find(params[:drug_id]) rescue nil
@@ -112,7 +112,7 @@ class GenericDispensationsController < ApplicationController
 				duration = params[:quantity].to_i / equivalent_daily_dose.to_i
 
 				auto_expire_date = start_date + duration.to_i.days rescue start_date.to_date + duration.to_i.days
-
+        raise "------------ #{auto_expire_date}"
 				DrugOrder.write_order(
 					treatment_encounter, 
 					@patient, 

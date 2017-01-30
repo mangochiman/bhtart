@@ -12,11 +12,12 @@ class GenericRegimensController < ApplicationController
     @gender = @patient.person.gender.upcase
 		@programs = @patient.patient_programs.all
 
-    ################################################################################################################
 		allergic_to_sulphur_session_date = session[:datetime].to_date rescue Date.today
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, allergic_to_sulphur_session_date) #chunked
-    ################################################################################################################
 
+    ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
+    @patient_initiated =  PatientService.patient_initiated(@patient.patient_id, allergic_to_sulphur_session_date)
+    ################################################################################################################
 
     ################################################################################################################
     @prescribe_arvs_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'ARVS')
@@ -575,11 +576,21 @@ class GenericRegimensController < ApplicationController
 			user_person_id = current_user.person_id
 		end
 
+    unless params[:location].blank?
+      Person.migrated_datetime = params['encounter']['date_created']
+      Person.migrated_creator  = params['encounter']['creator'] rescue nil
+      User.current = User.find(params['encounter']['creator'])
+      Location.current_location = Location.find(params[:location])
+    end
+
 		user_person_id = user_person_id rescue User.find_by_user_id(current_user.user_id).person_id
 
 		encounter = PatientService.current_treatment_encounter(@patient, session_date, user_person_id)
 
     ############################################# set next appointment interval type #########################################
+    set_appointment_interval_type = nil
+    optimized_hanging_pills = {}
+
 		(params[:observations] || []).each do |observation|
 			if observation['concept_name'].upcase == 'APPOINTMENT TYPE'
         Observation.create(:person_id => @patient.id, 
@@ -587,16 +598,35 @@ class GenericRegimensController < ApplicationController
           :concept_id => ConceptName.find_by_name('Appointment type').concept_id,
           :value_text => observation[:value_coded_or_text], 
           :encounter_id => encounter.id) 
+
+        set_appointment_interval_type = observation[:value_coded_or_text]
       end
+    end
+
+    if set_appointment_interval_type == 'Optimize - including hanging pills'
+      optimized_hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, session_date.to_date)
     end
     ################################################################################################### 
  
 		start_date = session[:datetime] || Time.now
 		arvs_buffer = 2
 
-		auto_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
-		auto_cpt_ipt_expire_date = session[:datetime] + params[:duration].to_i.days + arvs_buffer.days rescue Time.now + params[:duration].to_i.days + arvs_buffer.days
-
+    if session[:datetime].kind_of?(Date) || session[:datetime].kind_of?(Time)
+=begin
+		  auto_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) 
+      auto_cpt_ipt_expire_date = (session[:datetime] + params[:duration].to_i.days + arvs_buffer.days) 
+=end
+		  auto_expire_date = (session[:datetime] + (params[:duration].to_i - 1).days) 
+      auto_cpt_ipt_expire_date = (session[:datetime] + (params[:duration].to_i - 1).days) 
+    else
+=begin
+      auto_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) 
+      auto_cpt_ipt_expire_date = (Time.now + params[:duration].to_i.days + arvs_buffer.days) 
+=end
+      auto_expire_date = (Time.now + (params[:duration].to_i - 1).days) 
+      auto_cpt_ipt_expire_date = (Time.now + (params[:duration].to_i - 1).days) 
+    end 
+		
 		auto_tb_expire_date = session[:datetime] + params[:tb_duration].to_i.days rescue Time.now + params[:tb_duration].to_i.days
 		auto_tb_continuation_expire_date = session[:datetime] + params[:tb_continuation_duration].to_i.days rescue Time.now + params[:tb_continuation_duration].to_i.days
 
@@ -615,6 +645,13 @@ class GenericRegimensController < ApplicationController
         fast_track_encounter.encounter_type = fast_track_encounter_type.encounter_type_id
         fast_track_encounter.patient_id = params[:patient_id]
         fast_track_encounter.encounter_datetime = session_date
+
+        if params['encounter']
+          unless params['encounter']['creator'].blank?
+            fast_track_encounter.provider_id = params['encounter']['provider']
+          end
+        end
+        
         fast_track_encounter.save
 
         concept_ids.each do |concept_id|
@@ -758,7 +795,15 @@ class GenericRegimensController < ApplicationController
       end
       
     else
-      orders = MedicationService.regimen_medications(params[:regimen], weight)
+      ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
+      patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
+      if patient_initiated.match(/Re-initiated|Initiation/i)
+        orders = MedicationService.regimen_medications(params[:regimen], weight, true)
+      else
+        orders = MedicationService.regimen_medications(params[:regimen], weight)
+      end
+      #######################################################################################################################
+
       regimen_type = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' ')
     end
 
@@ -793,17 +838,7 @@ class GenericRegimensController < ApplicationController
 				:obs_datetime => start_date) if prescribe_arvs
 
 			orders.each do |order|
-				# Reduce buffer from 2 to 1 for starter packs
-=begin
-				if order.regimen.concept.shortname.upcase.match(/STARTER PACK/i) and !reduced
-					reduced = true
-					auto_expire_date  = auto_expire_date - 1.days
-				end
-=end
-				#drug = Drug.find(order.drug_inventory_id)
         drug = Drug.find(order[:drug_id])
-				#regimen_name = (order.regimen.concept.concept_names.typed("SHORT").first || order.regimen.concept.name).name
-        #regimen_name = MedicationService.regimen_medications(params[:regimen], weight).collect{|d|d[:drug_name]}.join(' + ')
         morning_tabs = order[:am]
         evening_tabs = order[:pm]
 
@@ -818,7 +853,11 @@ class GenericRegimensController < ApplicationController
           dose = (morning_tabs.to_f + evening_tabs.to_f)/2
         end
         prn = 0
-				
+			
+        #################### Here we check if its an 'Optimize' prescrition, if yes we subtract the hanging doses to the
+        ## prescribe dose
+
+        ##############################################################################################################3
 
         DrugOrder.write_order(
           encounter,
@@ -832,6 +871,7 @@ class GenericRegimensController < ApplicationController
           prn,
           instructions,
           equivalent_daily_dose)
+
 			end if prescribe_arvs
 		end
 
@@ -987,6 +1027,11 @@ class GenericRegimensController < ApplicationController
 			transfer_out_patient(params[:transfer_data][0])
 		end
 
+
+    if set_appointment_interval_type == 'Optimize - including hanging pills' #and not optimized_hanging_pills.blank?	
+      MedicationService.adjust_order_end_dates(encounter.orders, optimized_hanging_pills)
+    end
+
 		# Send them back to treatment for now, eventually may want to go to workflow
 		redirect_to "/patients/treatment_dashboard?patient_id=#{@patient.id}"
 	end
@@ -997,7 +1042,10 @@ class GenericRegimensController < ApplicationController
 		render :layout => false and return unless patient_program
 		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
 		#@options = MedicationService.regimen_options(current_weight, patient_program.program)
-		@options = MedicationService.moh_arv_regimen_options(current_weight)
+    @options = ['']
+    MedicationService.moh_arv_regimen_options(current_weight).each do |option|
+      @options << option
+    end
 		#tmp = []
     #new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue nil
 
@@ -1070,7 +1118,16 @@ class GenericRegimensController < ApplicationController
     @patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
     session_date = session[:datetime].to_date rescue Date.today
     current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight", session_date)
-    regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
+   
+    patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
+    ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
+    if patient_initiated.match(/Re-initiated|Initiation/i)
+      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight, true)
+    else
+      regimen_medications = MedicationService.regimen_medications(params[:id], current_weight)
+    end
+    #######################################################################################################################
+
 
     ################################################################################################################
 		@allergic_to_sulphur = Patient.allergic_to_sulpher(@patient, session_date) #chunked

@@ -30,10 +30,19 @@ class DrugOrder < ActiveRecord::Base
   
   def duration
     ########We check if the non ARVs got the auto_expire_date moved forward to accormodate ARVs hanging pills 
-    if MedicationService.arv(order.drug_order.drug)
-      auto_expire_date = order.auto_expire_date.to_date
+    if not order.discontinued_date.blank? and MedicationService.arv(self.drug)
+      if order.start_date.to_date == order.auto_expire_date.to_date
+        auto_expire_date = order.start_date.to_date
+      else
+        #auto_expire_date = order.discontinued_date.to_date
+        auto_expire_date = order.auto_expire_date.to_date
+      end
     else
-      auto_expire_date = order.discontinued_date.to_date rescue order.auto_expire_date.to_date
+      if not order.discontinued_date.blank? 
+        auto_expire_date = order.discontinued_date.to_date
+      else
+        auto_expire_date = order.auto_expire_date.to_date
+      end
     end
     #########################################################################################################
     (auto_expire_date - order.start_date.to_date).to_i rescue nil
@@ -137,14 +146,14 @@ class DrugOrder < ActiveRecord::Base
   def total_drug_supply(patient, encounter = nil, session_date = Date.today)
     if encounter.blank?  
       type = EncounterType.find_by_name("DISPENSING")
-      encounter = encounters.find(:first,:conditions =>["encounter_datetime BETWEEN ? AND ? AND encounter_type = ?",
+      encounter = Encounter.find(:first,:conditions =>["encounter_datetime BETWEEN ? AND ? AND encounter_type = ?",
                                   session_date.to_date.strftime('%Y-%m-%d 00:00:00'),
                                   session_date.to_date.strftime('%Y-%m-%d 23:59:59'),
                                   type.id])
     end
     
     return [] if encounter.blank?
-   
+=begin   
     amounts_brought = Observation.all(:conditions => 
       ['obs.concept_id = ? AND ' +
        'obs.person_id = ? AND ' +
@@ -156,7 +165,14 @@ class DrugOrder < ActiveRecord::Base
         session_date.to_date.strftime('%Y-%m-%d 23:59:59'),
         drug_inventory_id], 
       :include => [:encounter, [:order => :drug_order]])      
-    total_brought = amounts_brought.sum{|amount| amount.value_numeric}
+=end
+
+    amounts_brought = MedicationService.amounts_brought_to_clinic(patient, session_date.to_date)[drug_inventory_id]
+    amounts_brought = 0 if amounts_brought.blank?
+    total_brought = amounts_brought
+
+    #total_brought = amounts_brought.sum{|amount| amount.value_numeric}
+
     amounts_dispensed = Observation.all(:conditions => ['concept_id = ? AND order_id = ? AND encounter_id = ?', ConceptName.find_by_name("AMOUNT DISPENSED").concept_id, self.order_id, encounter.encounter_id])
     total_dispensed = amounts_dispensed.sum{|amount| amount.value_numeric}
     self.quantity = total_dispensed + total_brought
@@ -171,6 +187,27 @@ class DrugOrder < ActiveRecord::Base
 
   def total_required
     required = (duration * equivalent_daily_dose)
+
+    #################################################### if pills brought back are more ##################
+    order = self.order
+    start_date = order.start_date.to_date
+    auto_expire_date = order.auto_expire_date.to_date
+
+    if start_date == auto_expire_date
+      optimized_hanging_pills = MedicationService.amounts_brought_to_clinic(order.patient, start_date)
+      hanging_pills = optimized_hanging_pills[self.drug_inventory_id] ||= 0
+
+      if hanging_pills > 0
+        days = (hanging_pills / (self.dose.to_f * self.equivalent_daily_dose.to_f))
+        #raise "#{days} >= #{duration} #{required}"
+        if days >= duration
+          return 0
+        end
+      end 
+
+    end
+    ########################################################################################################
+
     DrugOrder.calculate_complete_pack(self.drug, required)
   end
 
@@ -218,8 +255,8 @@ class DrugOrder < ActiveRecord::Base
   end
 
   def self.calculate_complete_pack(drug, units)
-    return units if drug.drug_order_barcodes.blank?
-
+    return units if drug.drug_order_barcodes.blank? || units == 0.0
+  
     (drug.drug_order_barcodes).sort_by{|d| d.tabs }.each do |barcode|
       if barcode.tabs >= units.to_f
         return barcode.tabs
