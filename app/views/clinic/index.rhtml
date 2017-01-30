@@ -122,6 +122,36 @@
   #remove {
     float:right;
   }
+
+ <% if national_lims_activated %>
+      #tab2 {
+          background-color: green;
+          border: 0 none;
+          color: white;
+          font-weight: bold;
+          border-left: 3px outset yellow;
+          border-radius: 10px;
+          border-right: 3px outset yellow;
+          border-top: 3px outset yellow;
+      }
+
+      .active-tab#tab2{
+          background-color: white !important;
+          border: 0 none;
+          color: black !important;
+          font-weight: bold;
+          border-left: 3px outset #333;
+          border-radius: 10px;
+          border-right: 3px outset #333;
+          border-top: 3px outset #333;
+          color: #fff;
+          cursor: pointer;
+          float: left;
+          font-size: 18px;
+          padding: 3px 8px 8px;
+          font-weight: normal;
+      }
+  <% end %>
 </style>
 <script language="javascript">
 
@@ -243,6 +273,9 @@
                   </script>
               <%else%>
                   <option value='/clinic/overview_tab'>Overview</option>
+                  <% if national_lims_activated %>
+                    <option value='/clinic/viral_load_tab'>Viral Load</option>
+                  <% end %>
                   <option value='/clinic/reports_tab'>Reports</option>
                   <%if @location == 'Chronic Cough'%>
                     <option value='/clinic/lab_tab'>Laboratory</option>

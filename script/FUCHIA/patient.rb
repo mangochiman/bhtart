@@ -1,10 +1,23 @@
 User.current = User.find_by_username('admin')
+ScriptStarted = Time.now
 Parent_path = '/home/pachawo/Documents/msf/'
 require 'fastercsv'
 
 def start
   #returns a hash of references
   references = get_references
+  person_sql = "INSERT INTO person (person_id, birthdate, birthdate_estimated, dead, gender, death_date, date_created, creator, uuid) VALUES "
+  patient_sql = "INSERT INTO patient (patient_id,creator,date_created) VALUES "
+  person_name_sql = "INSERT INTO person_name (person_id,middle_name,given_name,family_name,creator,date_created,uuid) VALUES "
+  person_address_sql = "INSERT INTO person_address (person_id, city_village, date_created, creator, uuid) VALUES "
+  person_attribute_sql = "INSERT INTO person_attribute (person_id, value, date_created, person_attribute_type_id, creator, uuid) VALUES "
+
+  `touch /home/pachawo/pats/person.sql && echo '#{person_sql}' >> /home/pachawo/pats/person.sql`
+  `touch /home/pachawo/pats/patient.sql && echo '#{patient_sql}' >> /home/pachawo/pats/patient.sql`
+  `touch /home/pachawo/pats/person_name.sql && echo '#{person_name_sql}' >> /home/pachawo/pats/person_name.sql`
+  `touch /home/pachawo/pats/person_address.sql && echo '#{person_address_sql}' >> /home/pachawo/pats/person_address.sql`
+  `touch /home/pachawo/pats/person_attribute.sql && echo '#{person_attribute_sql}' >> /home/pachawo/pats/person_attribute.sql`
+
   FasterCSV.foreach("#{Parent_path}/TbPatient.csv", :headers => true, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
     names = row[9].split(' ')
     given_name = nil ; middle_name = nil ; family_name = nil
@@ -55,32 +68,72 @@ def start
       gender = gender == 0 ? 'M' : 'F'
     end
 
-    person = Person.find(row[0].to_i) rescue nil
-    if person.blank?
-      puts "Creating:#{row[0]} ................ "
-      person = Person.new()
-      person.birthdate_estimated = age_estimate
-      person.birthdate = dob.to_date 
-      person.dead = is_dead.to_i
-      person.gender = gender unless gender == 'Unknown'
-      person.death_date = date_of_death.to_date unless date_of_death.blank?
-      person.date_created = date_created
-      person.person_id = row[0].to_i
-      person.save
+    death_date = date_of_death.to_date unless date_of_death.blank?
+    gender = gender unless gender == 'Unknown'
 
-     PersonName.create(:given_name => given_name, :family_name => family_name, :middle_name => middle_name, 
-              :date_created => person.date_created, :person_id => person.id)
-     PersonAddress.create(:person_id => person.id, :city_village => city_village, :date_created => person.date_created)
-     PersonAttribute.create(:person_id => person.id, :value => occupation, :date_created => person.date_created, :person_attribute_type_id => 14)
-     patient = Patient.new()
-     patient.patient_id = person.id
-     patient.date_created = person.date_created
-     patient.save
-     
-   end
+    uuid = ActiveRecord::Base.connection.select_one <<EOF
+    select uuid();
+EOF
+
+  if death_date.blank?
+    insert_person = "(#{row[0]}, \"#{dob.to_date}\",#{age_estimate}, #{is_dead}, \"#{gender}\",null,\"#{date_created}\", #{User.current.id}, \"#{uuid.values.first}\"),"  
+  else
+    insert_person = "(#{row[0]}, \"#{dob.to_date}\",#{age_estimate}, #{is_dead},\"#{gender}\",\"#{ date_of_death}\",\"#{date_created}\", #{User.current.id},"
+    insert_person += "\"#{uuid.values.first}\"),"
+  end
+  
+  puts ">>>Person #{row[0]}"
+  `echo -n '#{insert_person}' >> /home/pachawo/pats/person.sql`
+  
+  insert_patient = "(#{row[0]},#{User.current.id},\"#{date_created}\"),"
+  puts ">>>Patient details for #{row[0]}"
+  `echo -n '#{insert_patient}' >> /home/pachawo/pats/patient.sql`
+
+  uuid = ActiveRecord::Base.connection.select_one <<EOF
+    select uuid();
+EOF
+
+    insert_person_name = "(#{row[0]},\"#{middle_name}\",\"#{given_name}\",\"#{family_name}\",#{User.current.id},\"#{date_created}\",\"#{uuid.values.first}\"),"
+    puts ">>>Person name for #{row[0]}"
+    `echo -n '#{insert_person_name}' >> /home/pachawo/pats/person_name.sql`
+
+    uuid = ActiveRecord::Base.connection.select_one <<EOF
+            select uuid();
+EOF
+    insert_person_address = "(#{row[0]},\"#{city_village}\", \"#{date_created}\", #{User.current.id}, \"#{uuid.values.first}\"),"
+    puts ">>>Person address for #{row[0]}"
+    `echo -n '#{insert_person_address}' >> /home/pachawo/pats/person_address.sql`
+
+    uuid = ActiveRecord::Base.connection.select_one <<EOF
+        select uuid();
+EOF
+    attr_type_id = PersonAttributeType.find_by_name("Occupation").id
+    insert_person_attr = "(#{row[0]}, \"#{occupation}\", \"#{date_created}\", \"#{attr_type_id}\", #{User.current.id}, \"#{uuid.values.first}\"),"
+    puts ">>>Person attributes for #{row[0]}"
+    `echo -n '#{insert_person_attr}' >> /home/pachawo/pats/person_attribute.sql`
   end 
- 
+  
+  puts "...........Please wait..............."
+  person_file_content = File.read("/home/pachawo/pats/person.sql")[0...-1]
+  File.open("/home/pachawo/pats/person.sql", "w"){|sql| sql.puts person_file_content << ";"}
+  
+  patient_file_content = File.read("/home/pachawo/pats/patient.sql")[0...-1]
+  File.open("/home/pachawo/pats/patient.sql", "w"){|sql| sql.puts patient_file_content << ";"}
+  
+  person_name_file_content = File.read("/home/pachawo/pats/person_name.sql")[0...-1]
+  File.open("/home/pachawo/pats/person_name.sql", "w"){|sql| sql.puts person_name_file_content << ";"}
+  
+  person_address_file_content = File.read("/home/pachawo/pats/person_address.sql")[0...-1]
+  File.open("/home/pachawo/pats/person_address.sql", "w"){|sql| sql.puts person_address_file_content << ";"}
+  
+  person_attribute_file_content = File.read("/home/pachawo/pats/person_attribute.sql")[0...-1]
+  File.open("/home/pachawo/pats/person_attribute.sql", "w"){|sql| sql.puts person_attribute_file_content << ";"}
+  
+  puts "Script time #{ScriptStarted} - #{Time.now}"
 end
+
+
+
 
 def get_proper_date (unfomatted_date)
     unfomatted_date = unfomatted_date.split("/")

@@ -1,4 +1,5 @@
 class GenericClinicController < ApplicationController
+  require 'rest-client'
   def index
 
     return_uri = session[:return_uri]
@@ -127,6 +128,49 @@ class GenericClinicController < ApplicationController
       render :template => 'clinic/overview_simple.rhtml' , :layout => false
       return
     end
+    render :layout => false
+  end
+
+  def viral_load_tab
+
+    settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+    url = settings['lims_national_dashboard_ip'] + "/api/viral_load_stats"
+    data = JSON.parse(RestClient.get(url)) rescue {}
+
+    @data = {}
+    @data['pending'] = data['pending'] || []
+    @data['rejected'] = data['rejected'] || []
+    @data['less_than_1000_not_given'] = []
+    @data['less_than_1000_given'] = []
+    @data['more_than_1000_not_given'] = []
+    @data['more_than_1000_given'] = []
+
+    (data['completed'] || []).each do |order|
+      results = (order['results']['Viral Load'] || order['results']['Viral load'] || order['results']['VL'])
+      timestamp = results.keys.sort.last
+      result = results[timestamp]['results']
+      vl = (result['Viral Load'] || result['Viral load'] || result['VL']).strip
+      if (vl.match(/\</) && vl.scan(/\d+/).last.to_i <= 1000)
+        @data['less_than_1000_not_given'] << order
+      elsif (vl.match(/\d+/))
+        @data['more_than_1000_not_given'] << order
+      end
+    end
+
+    (data['reviewed'] || []).each do |order|
+      results = (order['results']['Viral load'] || order['results']['Viral Load'] || order['results']['VL'])
+      timestamp = results.keys.sort.last
+      result = results[timestamp]['results']
+      vl = (result['Viral load'] || result['Viral Load'] || result['VL'])
+      if (vl.match(/\</) && vl.scan(/\d+/).last.to_i <= 1000)
+        @data['less_than_1000_given'] << order
+      elsif (vl.match(/\d+/))
+        @data['more_than_1000_given'] << order
+      end
+    end
+
+    @data["available"] = @data["more_than_1000_not_given"] + @data["less_than_1000_not_given"]
+
     render :layout => false
   end
 
