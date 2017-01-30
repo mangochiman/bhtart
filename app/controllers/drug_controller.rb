@@ -360,12 +360,4 @@ AND '#{end_date}' AND e.voided = 0 GROUP BY do.drug_inventory_id")
     return drug_supervision_verification
   end
 
-  def drug_movement_report_menu
-
-  end
-
-  def process_drug_movement_report
-    
-  end
-  
 end

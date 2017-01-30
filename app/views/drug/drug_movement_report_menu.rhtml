@@ -23,17 +23,12 @@
   }
 </style>
 
-<%= javascript_include_tag 'jquery' %>
-
-<% options = "<option>" "" "</option>"
-@drugs.each do |drug|
-  options += "<option value = '#{drug}'>#{drug}</option>"
-end
+<%
+month_names = month_name_options.gsub('<option value="Unknown">Unknown</option>', '')
 %>
 
-<% month_names = month_name_options.gsub('<option value="Unknown">Unknown</option>', '') %>
 <form  action="/drug/process_drug_movement_report" method="POST">
-  <%= select_tag "drug_name", options,
+  <%= select_tag "drug_id", options_for_select(@drugs),
     {
     :id => "select_drugs",
     :field_type => 'alpha',
