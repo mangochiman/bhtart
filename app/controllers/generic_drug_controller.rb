@@ -872,15 +872,15 @@ class GenericDrugController < ApplicationController
     start_date = (start_year + "-" + start_month + "-" + start_day).to_date
     end_date = (end_year + "-" + end_month + "-" + end_day).to_date
     packsize = Pharmacy.pack_size(drug_id)
+    @drug_name = Drug.find(drug_id).name
 
     @stocks = {}
     ((start_date..end_date).to_a).each do |date|
       stock_level = (Pharmacy.drug_stock_on(drug_id, date)/packsize).round rescue 0
       @stocks[date]= {"stock_count" => stock_level,"pack_size" => packsize}
     end
-
-    raise @stocks.to_json
-
+    
+    render :layout => "report"
   end
   
 end
