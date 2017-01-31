@@ -13,25 +13,16 @@ EOF
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
         select
-            `p`.`patient_id` AS `patient_id`,
-            `pe`.`gender` AS `gender`,
-            `pe`.`birthdate`,
-            date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-            cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+            `patient_id` AS `patient_id`,
+            `gender` AS `gender`,
+            `birthdate`,
+            `earliest_start_date`,
+            `date_enrolled`,
             `person`.`death_date` AS `death_date`,
-            (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
-            (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
-        from
-            ((`patient_program` `p`
-            left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
-            left join `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
-            left join `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
-        where
-            ((`p`.`voided` = 0)
-                and (`s`.`voided` = 0)
-                and (`p`.`program_id` = 1)
-                and (`s`.`state` = 7))
-        group by `p`.`patient_id`;
+            `age_at_initiation`,
+            `age_in_days`
+        from flat_table_cohort
+        group by `patient_id`;
 EOF
 
 
@@ -164,9 +155,6 @@ BEGIN
   RETURN my_pill_count;
 END;
 EOF
-
-
-
 
     ActiveRecord::Base.connection.execute <<EOF
       DROP FUNCTION IF EXISTS `current_defaulter`;
@@ -320,7 +308,6 @@ set yes_concept = (SELECT concept_id FROM concept_name WHERE name ='YES' LIMIT 1
 set no_concept = (SELECT concept_id FROM concept_name WHERE name ='NO' LIMIT 1);
 set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE name ='DATE ART LAST TAKEN' LIMIT 1);
 set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
-
 
 set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 56)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
 
@@ -629,13 +616,13 @@ Unique PatientProgram entries at the current location for those patients with at
     or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
     during their latest HIV Clinic Consultaiton encounter in the reporting period
 =end
-    @@tb_status = self.cal_tb_status(cohort.total_alive_and_on_art, end_date)
+    #@@tb_status = self.cal_tb_status(cohort.total_alive_and_on_art, end_date)
 
-    cohort.tb_suspected = self.get_tb_status('TB suspected')
-    cohort.tb_not_suspected = self.get_tb_status('TB NOT suspected')
-    cohort.tb_confirmed_on_tb_treatment = self.get_tb_status('Confirmed TB on treatment')
-    cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.get_tb_status('Confirmed TB NOT on treatment')
-    cohort.unknown_tb_status = self.get_tb_status('unknown_tb_status')
+    cohort.tb_suspected = self.tb_suspected(cohort.total_alive_and_on_art, start_date, end_date)
+    cohort.tb_not_suspected = self.tb_not_suspected(cohort.total_alive_and_on_art, start_date, end_date)
+    cohort.tb_confirmed_on_tb_treatment = self.confirmed_tb_not_on_treatment(cohort.total_alive_and_on_art, start_date, end_date)
+    cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.confirmed_tb_on_treatment(cohort.total_alive_and_on_art, start_date, end_date)
+    cohort.unknown_tb_status = self.unknown_tb_status(cohort.total_alive_and_on_art, start_date, end_date)
 
 =begin
   ART adherence
@@ -983,9 +970,9 @@ EOF
     return result
   end
 
-  def self.cal_tb_status(patient_list, end_date)
+  def self.tb_suspected(patient_list, start_date, end_date)
+    registered = []
     patient_ids = []
-    tb_status = []
 
     (patient_list || []).each do |row|
       patient_ids << row['patient_id'].to_i
@@ -993,42 +980,111 @@ EOF
 
     return [] if patient_ids.blank?
 
-    tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
-
-    data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT person_id, value_coded, value_coded_name_id,  cn.name as tb_status
-      FROM obs o
-       LEFT JOIN concept_name cn ON o.value_coded = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED'
-      WHERE o.voided = 0 AND o.concept_id = #{tb_status_concept_id}
-      AND o.person_id IN(#{patient_ids.join(',')}) AND
-      o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      AND o.obs_datetime = (
-        SELECT max(obs_datetime) FROM obs WHERE concept_id = #{tb_status_concept_id}
-        AND voided = 0 AND person_id = o.person_id AND
-        obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      ) GROUP BY person_id
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM flat_table_cohort t
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND patient_id IN (#{patient_ids.join(',')})
+      AND tb_suspected = 'Yes' GROUP BY patient_id;
 EOF
 
-    (data || []).each do |patient_tb_status|
-      status = patient_tb_status['tb_status']
-      status = 'unknown_tb_status' if status.blank?
-      tb_status << {
-        :patient_id => patient_tb_status['person_id'].to_i,
-        :tb_status => status
-      }
+    (total_registered || []).each do |patient|
+      registered << patient
     end
-    return tb_status
+
   end
 
-  def self.get_tb_status(tb_status)
+  def self.tb_not_suspected(patient_list, start_date, end_date)
     registered = []
-      (@@tb_status || []).each do |status|
-        if tb_status == status[:tb_status]
-          registered << {:patient_id => status[:patient_id], :tb_status => status[:tb_status]}
-        end
-      end
 
-      return registered
+    patient_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM flat_table_cohort t
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND patient_id IN (#{patient_ids.join(',')})
+      AND tb_not_suspected = 'Yes' GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient|
+      registered << patient
+    end
+
+  end
+
+  def self.confirmed_tb_not_on_treatment(patient_list, start_date, end_date)
+    registered = []
+
+    patient_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM flat_table_cohort t
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND patient_id IN (#{patient_ids.join(',')})
+      AND confirmed_tb_not_on_treatment = 'Yes' GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient|
+      registered << patient
+    end
+
+  end
+
+  def self.confirmed_tb_on_treatment(patient_list, start_date, end_date)
+    registered = []
+    patient_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM flat_table_cohort t
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND patient_id IN (#{patient_ids.join(',')})
+      AND confirmed_tb_on_treatment = 'Yes' GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient|
+      registered << patient
+    end
+
+  end
+
+  def self.unknown_tb_status(patient_list, start_date, end_date)
+    registered = []
+    patient_ids = []
+
+    (patient_list || []).each do |row|
+      patient_ids << row['patient_id'].to_i
+    end
+
+    return [] if patient_ids.blank?
+
+    total_registered = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM flat_table_cohort
+      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND patient_id IN (#{patient_ids.join(',')})
+      AND unknown_tb_status = 'Yes' GROUP BY patient_id;
+EOF
+
+    (total_registered || []).each do |patient|
+      registered << patient
+    end
+
   end
 
   def self.total_patients_with_side_effects(patients_alive_and_on_art, start_date, end_date)
@@ -1096,16 +1152,15 @@ EOF
     end
 
     return [] if patient_ids.blank?
-
+=begin
     dispensing_encounter_id = EncounterType.find_by_name("DISPENSING").id
     regimen_category = ConceptName.find_by_name("REGIMEN CATEGORY").concept_id
     regimem_given_concept = ConceptName.find_by_name('ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT').concept_id
     unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
-
+=end
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT t.patient_id,
-      last_text_for_obs(t.patient_id, #{dispensing_encounter_id}, #{regimen_category}, #{regimem_given_concept}, #{unknown_regimen_given}, '#{end_date}') regimen_category
-      FROM temp_earliest_start_date t
+      SELECT t.patient_id, regimen_category_treatment
+      FROM flat_table_cohort t
       WHERE t.patient_id IN (#{patient_ids.join(', ')}) GROUP BY patient_id;
 EOF
     (data || []).each do |regimen_attr|
@@ -1178,16 +1233,13 @@ EOF
 
   def self.kaposis_sarcoma(start_date, end_date)
     #KAPOSIS SARCOMA
-    concept_id = ConceptName.find_by_name('KAPOSIS SARCOMA').concept_id
-    who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     registered = []
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded = #{concept_id}) AND concept_id = #{who_stages_criteria}
-      AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
+      AND who_stages_criteria = 'Kaposis sarcoma' AND kaposis_sarcoma = 'Yes'
+      GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1198,19 +1250,13 @@ EOF
 
   def self.current_episode_of_tb(start_date, end_date)
     #CURRENT EPISODE OF TB
-    eptb_concept_id = ConceptName.find_by_name('EXTRAPULMONARY TUBERCULOSIS (EPTB)').concept_id
-    pulmonary_tb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS').concept_id
-    current_ptb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS (CURRENT)').concept_id
-
-    who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     registered = []
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id})) AND concept_id = #{who_stages_criteria}
-      AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
+      AND pulmonary_tuberculosis = 'Yes' OR extrapulmonary_tuberculosis = 'Yes'
+     GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1220,17 +1266,13 @@ EOF
 
   def self.tb_within_the_last_two_years(start_date, end_date)
     #Pulmonary tuberculosis within the last 2 years
-    pulmonary_tb_within_last_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
-    ptb_within_the_past_two_yrs_concept_id = ConceptName.find_by_name('Ptb within the past two years').concept_id
-    who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     registered = []
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded IN (#{pulmonary_tb_within_last_2yrs_concept_id}, #{ptb_within_the_past_two_yrs_concept_id})) AND concept_id = #{who_stages_criteria}
-      AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
+      AND pulmonary_tuberculosis_last_2_years = 'Yes'
+     GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1284,14 +1326,11 @@ EOF
   end
 #----------------------------------------------------------------reworked reason for starting
   def self.children_12_23_months(start_date, end_date)
-    reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded = #{reason_concept_id}) AND voided = 0 GROUP BY patient_id;
+      AND reason_for_starting = 'HIV Infected' GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1301,16 +1340,11 @@ EOF
   end
 
   def self.unknown_other_reason_outside_guidelines(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('Unknown').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id})
-      AND voided = 0 GROUP BY patient_id;
+      AND reason_for_starting = 'Unknown' GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1320,19 +1354,11 @@ EOF
   end
 
   def self.who_stage_four(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('WHO stage IV adult').concept_id
-    reason2_concept_id = ConceptName.find_by_name('WHO stage IV peds').concept_id
-    reason3_concept_id = ConceptName.find_by_name('WHO STAGE 4').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id}
-      OR value_coded = #{reason2_concept_id} OR value_coded = #{reason3_concept_id})
-      AND voided = 0 GROUP BY patient_id;
+      AND reason_for_starting IN ('WHO stage IV adult', 'WHO stage IV peds') GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1342,19 +1368,11 @@ EOF
   end
 
   def self.who_stage_three(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('WHO stage III adult').concept_id
-    reason2_concept_id = ConceptName.find_by_name('WHO stage III peds').concept_id
-    reason3_concept_id = ConceptName.find_by_name('WHO STAGE 3').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id}
-      OR value_coded = #{reason2_concept_id} OR value_coded = #{reason3_concept_id})
-      AND voided = 0 GROUP BY patient_id;
+    SELECT * FROM flat_table_cohort t
+    WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+    AND reason_for_starting IN ('WHO stage III adult', 'WHO stage III peds') GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1364,16 +1382,11 @@ EOF
   end
 
   def self.pregnant_women(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id}
-      AND voided = 0 GROUP BY patient_id;
+      AND reason_for_starting IN ('Patient pregnant', 'Patient pregnant at initiation')  GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1383,16 +1396,11 @@ EOF
   end
 
   def self.breastfeeding_mothers(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('BREASTFEEDING').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id}
-      AND voided = 0 GROUP BY patient_id;
+      AND reason_for_starting IN ('Currently breastfeeding child', 'Breastfeeding')  GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1402,20 +1410,11 @@ EOF
   end
 
   def self.asymptomatic(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason3_concept_id = ConceptName.find_by_name('LYMPHOCYTES').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-    reason2_concept_id = ConceptName.find_by_name('ASYMPTOMATIC').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art}
-      AND (value_coded = #{reason3_concept_id}
-      OR value_coded = #{reason4_concept_id} OR value_coded = #{reason2_concept_id})
-      AND voided = 0 GROUP BY patient_id;
+      AND reason_for_starting = 'ASYMPTOMATIC'  GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1425,24 +1424,12 @@ EOF
   end
 
   def self.who_stage_two(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason2_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 750').concept_id
-    reason5_concept_id = ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
-    reason_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
-    reason3_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND
-      (value_coded = #{reason_concept_id} OR value_coded = #{reason2_concept_id}
-      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}
-      OR value_coded = #{reason5_concept_id}) AND voided = 0 GROUP BY patient_id;
+      AND (reason_for_starting like '%Lymphocyte count%' OR reason_for_starting LIKE '%CD4 COUNT%' GROUP BY patient_id;
 EOF
-
     (total_registered || []).each do |patient|
       registered << patient
     end
@@ -1450,16 +1437,11 @@ EOF
   end
 
   def self.confirmed_hiv_infection_in_infants_pcr(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('HIV PCR').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id})
-      AND voided = 0 GROUP BY patient_id;
+      AND (reason_for_starting like '%HIV PCR%' GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1469,18 +1451,12 @@ EOF
   end
 
   def self.presumed_severe_hiv_disease_in_infants(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('PRESUMED SEVERE HIV').concept_id
-
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
+      SELECT * FROM flat_table_cohort t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id}
-      AND voided = 0 GROUP BY patient_id;
+      AND (reason_for_starting like '%Presumed severe%' GROUP BY patient_id;
 EOF
-
     (total_registered || []).each do |patient|
       registered << patient
     end
