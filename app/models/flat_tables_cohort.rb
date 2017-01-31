@@ -679,7 +679,7 @@ Unique PatientProgram entries at the current location for those patients with at
     return cohort
 
   end
-  
+
   private
 
   def self.total_patients_with_screened_bp(patients_list, end_date)

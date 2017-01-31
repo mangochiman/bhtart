@@ -318,7 +318,7 @@ EOF
 
 
     ActiveRecord::Base.connection.execute <<EOF
-      DROP FUNCTION IF EXISTS `oitiated_check`;
+      DROP FUNCTION IF EXISTS `re_initiated_check`;
 EOF
 
     ActiveRecord::Base.connection.execute <<EOF
