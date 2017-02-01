@@ -36,6 +36,8 @@ def easy_art_setup
   `mysql -h #{host} -u #{username} -p#{password} #{database} < db/revised_regimens.sql`
   `rake db:migrate`
   `mysql -h #{host} -u #{username} -p#{password} #{database} < db/drug_order_barcodes.sql`
+
+  create_reinitiated_check_view
   puts "==========================SCRIPT ENDED============================================="
 end
 
