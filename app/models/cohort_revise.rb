@@ -363,7 +363,7 @@ DETERMINISTIC
 BEGIN
 DECLARE set_outcome varchar(25) default 'N/A';
 DECLARE date_of_death DATE;
-DECLARE num_of_months INT;
+DECLARE num_of_days INT;
 
 IF set_status = 'Patient died' THEN
 
@@ -374,12 +374,12 @@ IF set_status = 'Patient died' THEN
   END IF;
 
 
-  set num_of_months = (TIMESTAMPDIFF(month, date(date_enrolled), date(date_of_death)));
+  set num_of_days = (TIMESTAMPDIFF(day, date(date_enrolled), date(date_of_death)));
 
-  IF num_of_months < 2 THEN set set_outcome ="1st month";
-  ELSEIF num_of_months = 2 THEN set set_outcome ="2nd month";
-  ELSEIF num_of_months = 3 THEN set set_outcome ="3rd month";
-  ELSEIF num_of_months > 3 THEN set set_outcome ="4+ months";
+  IF num_of_days <= 30 THEN set set_outcome ="1st month";
+  ELSEIF num_of_days <= 60 THEN set set_outcome ="2nd month";
+  ELSEIF num_of_days <= 91 THEN set set_outcome ="3rd month";
+  ELSEIF num_of_days > 91 THEN set set_outcome ="4+ months";
   END IF;
 
 
