@@ -122,7 +122,8 @@ dateToday = session[:datetime].to_date rescue Date.today
         data: { patient_id: "<%= @patient.id -%>", data: "weight", currentWeight:currentWeight },
         success: function(results){
           obs = JSON.parse(results)
-          plotBabyGraph(obs);
+          //plotBabyGraph(obs);
+          plotGraph(obs);
         }
       })
 

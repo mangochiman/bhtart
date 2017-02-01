@@ -292,8 +292,8 @@ function cancelOperation(action){
       document.getElementById('tabPageContainer').innerHTML = "<div style='text-align: center; color: red; font-size: 14pt;'><%= @htn_alert %> </div><div id='summary' style='background: width:100%;'></div>" ;
       if (age < 5){
         jQuery('#summary').empty();
-        //jQuery('#summary').load('/patients/baby_chart/<%= @patient_bean.patient_id %>?patient_id=<%= @patient_bean.patient_id %>&tab=true');
-        jQuery('#summary').load('/patients/area_chart_peds?patient_id=<%= @patient_bean.patient_id %>');
+        //jQuery('#summary').load('/patients/area_chart_peds?patient_id=<%= @patient_bean.patient_id %>');
+        jQuery('#summary').load('/people/area_graph_adults?id=<%=@patient_bean.patient_id%>');
       }else{
         jQuery('#summary').empty();
         jQuery('#summary').load('/people/area_graph_adults?id=<%=@patient_bean.patient_id%>');
