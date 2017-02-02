@@ -30,6 +30,22 @@ if params[:from] == 'clinic'%>
     document.getElementById("stock_level_graph").style.display = 'none';
   }
 
+  function displayPaedsStock(){
+    document.getElementById("stock_level_graph_paeds").style.display = '';
+  }
+
+  function hidePaedsStock(){
+    document.getElementById("stock_level_graph_paeds").style.display = 'none';
+  }
+
+  function displayAdultStock(){
+    document.getElementById("stock_level_graph_adults").style.display = '';
+  }
+
+  function hideAdultStock(){
+    document.getElementById("stock_level_graph_adults").style.display = 'none';
+  }
+  
 </script>
 
 <style type="text/css">
@@ -69,17 +85,38 @@ if params[:from] == 'clinic'%>
     :field_type => "number",
     :tt_onLoad => "inform();__$('keyboard').style.display = 'none';") %>
   <% if @activate_drug_management %>
-    <%= text_field_tag(:stock_level, nil, :helpText => "Current Stock Level",
+
+    <%#= text_field_tag(:stock_level, nil, :helpText => "Current Stock Level",
       :id => "current_stock_level",
       :optional => "true",
       :tt_onLoad => "__$('keyboard').style.display = 'none'; displayStocks();",
       :tt_onUnload => "hideStock();") %>
 
+    <%= text_field_tag(:stock_level_paeds, nil, :helpText => "Current Stock Level For Paediatric Drugs",
+      :id => "current_stock_level_paeds",
+      :optional => "true",
+      :tt_onLoad => "__$('keyboard').style.display = 'none'; displayPaedsStock();",
+      :tt_onUnload => "hidePaedsStock();") %>
+
+    <%= text_field_tag(:stock_level_adults, nil, :helpText => "Current Stock Level For Adults Drugs",
+      :id => "current_stock_level_adults",
+      :optional => "true",
+      :tt_onLoad => "__$('keyboard').style.display = 'none'; displayAdultStock();",
+      :tt_onUnload => "hideAdultStock();") %>
+
     <%= submit_tag :value => "Submit" %>
   </form>
 
-  <div style="display: none;" id="stock_level_graph">
-
+  <!--<div style="display: none;" id="stock_level_graph">
     <iframe  src="/sessions/stock_levels_graph"></iframe>
+  </div>-->
+
+  <div style="display: none;" id="stock_level_graph_paeds">
+    <iframe  src="/sessions/stock_levels_graph_paeds"></iframe>
   </div>
+
+  <div style="display: none;" id="stock_level_graph_adults">
+    <iframe  src="/sessions/stock_levels_graph_adults"></iframe>
+  </div>
+
 <% end %>
