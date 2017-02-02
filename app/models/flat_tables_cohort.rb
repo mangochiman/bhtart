@@ -332,7 +332,7 @@ DETERMINISTIC
 BEGIN
 DECLARE set_outcome varchar(25) default 'N/A';
 DECLARE date_of_death DATE;
-DECLARE num_of_months INT;
+DECLARE num_of_days INT;
 
 IF set_status = 'Patient died' THEN
 
@@ -343,7 +343,7 @@ IF set_status = 'Patient died' THEN
   END IF;
 
 
-  set num_of_months = (TIMESTAMPDIFF(month, date(date_enrolled), date(date_of_death)));
+  set num_of_days = (TIMESTAMPDIFF(month, date(date_enrolled), date(date_of_death)));
 
   IF num_of_days <= 30 THEN set set_outcome ="1st month";
   ELSEIF num_of_days <= 60 THEN set set_outcome ="2nd month";
@@ -982,11 +982,10 @@ EOF
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM flat_cohort_table t
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      WHERE date_enrolled <= '#{end_date}'
       AND patient_id IN (#{patient_ids.join(',')})
       AND tb_suspected = 'Yes' GROUP BY patient_id;
 EOF
-
     (total_registered || []).each do |patient|
       registered << patient
     end
@@ -1006,7 +1005,7 @@ EOF
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM flat_cohort_table t
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      WHERE date_enrolled <= '#{end_date}'
       AND patient_id IN (#{patient_ids.join(',')})
       AND tb_not_suspected = 'Yes' GROUP BY patient_id;
 EOF
@@ -1030,7 +1029,7 @@ EOF
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM flat_cohort_table t
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      WHERE date_enrolled <= '#{end_date}'
       AND patient_id IN (#{patient_ids.join(',')})
       AND confirmed_tb_not_on_treatment = 'Yes' GROUP BY patient_id;
 EOF
@@ -1053,7 +1052,7 @@ EOF
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM flat_cohort_table t
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      WHERE date_enrolled <= '#{end_date}'
       AND patient_id IN (#{patient_ids.join(',')})
       AND confirmed_tb_on_treatment = 'Yes' GROUP BY patient_id;
 EOF
@@ -1076,7 +1075,7 @@ EOF
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM flat_cohort_table
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      WHERE date_enrolled <= '#{end_date}'
       AND patient_id IN (#{patient_ids.join(',')})
       AND unknown_tb_status = 'Yes' GROUP BY patient_id;
 EOF
@@ -1163,8 +1162,9 @@ EOF
       FROM flat_cohort_table t
       WHERE t.patient_id IN (#{patient_ids.join(', ')}) GROUP BY patient_id;
 EOF
+
     (data || []).each do |regimen_attr|
-        regimen = regimen_attr['regimen_category']
+        regimen = regimen_attr['regimen_category_treatment']
         regimen = 'unknown_regimen' if regimen.blank? || regimen == 'Unknown'
         regimens << {
           :patient_id => regimen_attr['patient_id'].to_i,
@@ -1553,9 +1553,10 @@ EOF
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
 EOF
-
     (data || []).each do |patient|
-      patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
+      unless !patient['date_enrolled'].blank?
+        patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
+      end
     end
 
     yes_concept_id = ConceptName.find_by_name('Yes').concept_id
