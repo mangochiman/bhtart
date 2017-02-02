@@ -309,7 +309,7 @@ set no_concept = (SELECT concept_id FROM concept_name WHERE name ='NO' LIMIT 1);
 set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE name ='DATE ART LAST TAKEN' LIMIT 1);
 set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
 
-set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 56)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
+set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 14)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
 
 set check_two = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
 
@@ -345,10 +345,10 @@ IF set_status = 'Patient died' THEN
 
   set num_of_months = (TIMESTAMPDIFF(month, date(date_enrolled), date(date_of_death)));
 
-  IF num_of_months < 2 THEN set set_outcome ="1st month";
-  ELSEIF num_of_months = 2 THEN set set_outcome ="2nd month";
-  ELSEIF num_of_months = 3 THEN set set_outcome ="3rd month";
-  ELSEIF num_of_months > 3 THEN set set_outcome ="4+ months";
+  IF num_of_days <= 30 THEN set set_outcome ="1st month";
+  ELSEIF num_of_days <= 60 THEN set set_outcome ="2nd month";
+  ELSEIF num_of_days <= 91 THEN set set_outcome ="3rd month";
+  ELSEIF num_of_days > 91 THEN set set_outcome ="4+ months";
   END IF;
 
 
