@@ -947,7 +947,7 @@ EOF
       total_pregnant_females << person['person_id'].to_i
     end
 
-    return [] if total_pregnant_females.blank?
+    total_pregnant_females = [0] if total_pregnant_females.blank?
 
     hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
     breastfeeding_concept_id = ConceptName.find_by_name("Breast feeding?").concept_id
@@ -964,6 +964,7 @@ EOF
       							AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       GROUP BY obs.person_id;
 EOF
+
     return results
   end
 
