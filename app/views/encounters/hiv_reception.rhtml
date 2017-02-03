@@ -122,13 +122,11 @@
         <%= select_tag "observations[][value_text]", relationship_options(@patient),
           {:id => "guardian_present",
           :multiple => false,
-          :optional => false,
           :tt_onUnLoad => "forcePatientPresentYes(),setTimeout(cleanup_guardian_options() , 500)" } %>
       <% else %>
         <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
           {:id => "guardian_present",
           :multiple => false,
-          :optional => false,
           :tt_onUnLoad => "forcePatientPresentYes(),setTimeout(cleanup_guardian_options() , 500)" } %>
       <% end %>
 
@@ -143,13 +141,11 @@
         <%= select_tag "observations[][value_text]", relationship_options(@patient),
           {:id => "guardian_present",
           :multiple => false,
-          :optional => false,
           :tt_onUnLoad => "forcePatientPresentYes()" } %>
       <% else %>
         <%= select_tag "observations[][value_text]", options_for_select([['Yes','Yes'],['No','No']]),
           {:id => "guardian_present",
           :multiple => false,
-          :optional => false,
           :tt_onUnLoad => "forcePatientPresentYes()" } %>
       <% end %>
       <%= hidden_field_tag("observations[][value_coded_or_text]", nil) %>
