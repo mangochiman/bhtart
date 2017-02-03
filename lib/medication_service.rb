@@ -895,7 +895,9 @@ EOF
       if additional_days > 1 and not (order.start_date.to_date == order.auto_expire_date.to_date)
         consumption_days += additional_days
       elsif additional_days > 1 and (order.start_date.to_date == order.auto_expire_date.to_date)
-        consumption_days = additional_days      
+        #the assumption is;we subtruct 3 days from the additional_days because the patient is going
+        #start taking the drugs on the visit day (1 day) plus the 2 day buffer 
+        consumption_days = (additional_days - 3)     
       elsif additional_days < 1
         next
       end
