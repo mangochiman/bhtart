@@ -161,7 +161,42 @@
     .number {
         text-align: right;
     }
+  #consistency_check {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    margin-left: 25px;
+    margin-right: 15px;
+    color: #ea091a;
+    font-size: 18px;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 2px;
+    line-height: 32px
+  }
+  #incosistence_title {
+    font-size: 24px;
+    text-align: center;
+  }
 </style>
+
+<div id="consistency_check">
+  <div id="patients_consistency"></div>
+  <div id="cum_patients_consistency"></div>
+  <div id="gender_consistency"></div>
+  <div id="cum_gender_consistency"></div>
+  <div id="age_consistency"></div>
+  <div id="cum_age_consistency"></div>
+  <div id="reasons_consistency"></div>
+  <div id="cum_reasons_consistency"></div>
+  <div id="conditions_consistency"></div>
+  <div id="cum_conditions_consistency"></div>
+  <div id="died_consistency"></div>
+  <div id="total_consistency"></div>
+  <div id="regimen_consistency"></div>
+  <div id="pregnant_consistency"></div>
+  <div id="tb_status_consistency"></div>
+  <div id="side_effect_consistency"></div>
+  <div id="adherence_consistency"></div>
+</div>
 
 <table class="table-top" border="2px;">
     <tr>
@@ -1593,7 +1628,7 @@
           &nbsp;
       </td>
       <td class="number">
-          <a href="javascript:drillDown('cum_kaposis_sarcoma');" id="cum_kaposis_sarcoma">
+          <a href="javascript:drillDown('cum_kaposis_sarcoma');">
               <%= @cohort.cum_kaposis_sarcoma.count %>
           </a>
       </td>
@@ -2570,6 +2605,8 @@
   var total_registered = parseInt(document.getElementById("total_registered").innerHTML);
   var cum_total_registered = parseInt(document.getElementById("cum_total_registered").innerHTML);
   var total_alive_and_on_art = parseInt(document.getElementById("total_alive_and_on_art").innerHTML);
+  
+  report_inconsistency = 0;
 
   /**############### Initializing total values to zero ####################*/
   total_on_art = 0;
@@ -2616,50 +2653,104 @@
   /***************************************************************/
 
   for(var i = 0; i < on_art.length; i++){
+    
     total_on_art += parseInt(on_art[i].innerHTML); 
+  
   }
+  
   for(var i = 0; i < cum_on_art.length; i++){
+  
     total_cum_on_art += parseInt(cum_on_art[i].innerHTML); 
+  
   }
 
   if(total_on_art !== total_registered){
+
+    patient_consistency_div = document.getElementById("patients_consistency");
     patients_on_art = document.getElementsByClassName("patients_on_art")
+    report_inconsistency += 1;
+
+    patient_consistency_div.innerHTML = "26. Newly total registered in quarter is not equal to "
+    patient_consistency_div.innerHTML += "sum of (Newly registered in quarter) values from 27 through 29";
+
     for(var i = 0; i < patients_on_art.length; i++){
+
       patients_on_art[i].style.border = "3px solid red"
+
     }
+
   }
 
   if(total_cum_on_art !== cum_total_registered){
-    cum_patients_on_art = document.getElementsByClassName("cum_patients_on_art")
+    
+    cum_patients_consistency_div = document.getElementById("patients_consistency");
+    cum_patients_on_art = document.getElementsByClassName("cum_patients_on_art");
+    report_inconsistency += 1;
+
+    cum_patients_consistency_div.innerHTML = "26. Cumulative total registered is not equal to ";
+    cum_patients_consistency_div.innerHTML += "the sum of (Cumulative ever registered) values from 27 through 29";
+
     for(var i = 0; i < cum_patients_on_art.length; i++){
+
       cum_patients_on_art[i].style.border = "3px solid red"
+    
     }
+
   }
+
   /***************************************************************/
 
   /***************************block 2*****************************/
   /** Compare the sum of Males, Non-pregnant Females and         */
   /** Pregnant Females against total registered                  */
   /***************************************************************/
+  
   for(var i = 0; i < gender.length; i++){
+  
     total_gender += parseInt(gender[i].innerHTML);
+  
   }
+
   for(var i = 0; i < cum_gender.length; i++){
+  
     total_cum_gender += parseInt(cum_gender[i].innerHTML);
+ 
   }
 
   if(total_gender !== total_registered){
+  
     gender_class = document.getElementsByClassName("gender_class")
+    gender_consistency_div = document.getElementById("gender_consistency");
+    report_inconsistency += 1;
+
+    gender_consistency_div.innerHTML = "26. Newly total registered in quarter is not equal to ";
+    gender_consistency_div.innerHTML += "the sum of (Newly registered in quarter) values from 30 through 32";
+    
     for(var i = 0; i < gender_class.length; i++){
+      
       gender_class[i].style.border = "3px solid red"
+    
     }
+ 
   }
+
   if(total_cum_gender !== cum_total_registered){ 
+
     cum_gender_class = document.getElementsByClassName("cum_gender_class")
+    cum_gender_consistency_div = document.getElementById("cum_gender_consistency");
+    report_inconsistency += 1;
+
+    cum_gender_consistency_div.innerHTML = "26. Cumulative total registered is not equal to "
+    cum_gender_consistency_div.innerHTML += "the sum of (Cumulative ever registered) values from 30 through 32";
+
     for(var i = 0; i < cum_gender_class.length; i++){
+    
       cum_gender_class[i].style.border = "3px solid red"
+   
     }
+ 
   }
+
   /***************************************************************/
 
   /************************block 3********************************/
@@ -2668,50 +2759,106 @@
   /* Adults 15 years or older at ART initiation and Unknown age  */
   /* against total registered                                    */
   /***************************************************************/
+
   for(var i = 0; i < age.length; i++){
+
     total_age += parseInt(age[i].innerHTML); 
+
   }
+
   for(var i = 0; i < cum_age.length; i++){
+
     total_cum_age += parseInt(cum_age[i].innerHTML); 
+
   }
 
   if(total_age !== total_registered){
-    age_class = document.getElementsByClassName("age_class")
+
+    age_class = document.getElementsByClassName("age_class");
+    age_consistency_div = document.getElementById("age_consistency");
+    report_inconsistency += 1;
+
+    age_consistency_div.innerHTML = "26. Newly total registered in quarter is not equal to ";
+    age_consistency_div.innerHTML += "the sum of (Newly registered in quarter) values from 33 through 35";
+
     for(var i = 0; i < age_class.length; i++){
+
       age_class[i].style.border = "3px solid red"
+
     }
+
   }
+
   if(total_cum_age !== cum_total_registered){
-    age_class = document.getElementsByClassName("cum_age_class")
+
+    age_class = document.getElementsByClassName("cum_age_class");
+    cum_age_consistency_div = document.getElementById("cum_age_consistency");
+    report_inconsistency += 1;
+
+    cum_age_consistency_div.innerHTML = "26. Cumulative ever registered is not equal to ";
+    cum_age_consistency_div.innerHTML += "the sum of (Cumulative ever registered) values from 33 through 35";
+
     for(var i = 0; i < cum_age_class.length; i++){
+
       cum_age_class[i].style.border = "3px solid red"
+
     }
+
   }
+
   /***************************************************************/
 
   /****************************block 4****************************/
   /* Comparing the sum values of Reason for starting ART against */
   /* total registered                                            */
   /***************************************************************/
+
   for(var i = 0; i < reasons.length; i++){
+
     total_reasons += parseInt(reasons[i].innerHTML); 
+
   }
+
   for(var i = 0; i < cum_reasons.length; i++){
+
     total_cum_reasons += parseInt(cum_reasons[i].innerHTML); 
+
   }
 
   if(total_reasons !== total_registered){ 
+
     reason_class = document.getElementsByClassName("reason_class")
+    reasons_consistency_div = document.getElementById("reasons_consistency");
+    report_inconsistency += 1;
+
+    reasons_consistency_div.innerHTML = "26. Newly total registered in quarter is not equal to ";
+    reasons_consistency_div.innerHTML += "Reasons for starting ART.";
+
     for(var i = 0; i < reason_class.length; i++){
+
       reason_class[i].style.border = "3px solid red"
+
     }
+
   }
+
   if(total_cum_reasons !== cum_total_registered){
+
     cum_reason_class = document.getElementsByClassName("cum_reason_class")
+    cum_reasons_consistency = document.getElementById("cum_reasons_consistency");
+    report_inconsistency += 1;
+
+    cum_reasons_consistency.innerHTML = "26. Cumulative total registered is not equal to "
+    cum_reasons_consistency.innerHTML += "Reason for starting ART.";
+
     for(var i = 0; i < cum_reason_class.length; i++){
+
       cum_reason_class[i].style.border = "3px solid red"
+
     }
+
   }
+
   /***************************************************************/
 
   /***************************block 5*****************************/
@@ -2719,41 +2866,84 @@
   /*  Stage defining conditions at ART initiation against        */
   /*  total registered                                           */
   /***************************************************************/
+
   for(var i = 0; i < conditions.length; i++){
+
     total_conditions += parseInt(conditions[i].innerHTML); 
+
   }
+
   for(var i = 0; i < cum_conditions.length; i++){
+
     total_cum_conditions += parseInt(cum_conditions[i].innerHTML); 
+
   }
 
   if(total_conditions !== total_registered){  
+
     condition_class = document.getElementsByClassName("condition_class");
+    conditions_consistency_div = document.getElementById("conditions_consistency");
+    report_inconsistency += 1;
+
+    conditions_consistency_div.innerHTML = "26. Newly total registered in quarter) is not equal to "
+    conditions_consistency_div.innerHTML += "Stage defining condition.";
+
     for(var i = 0; i < condition_class.length; i++){
+
       condition_class[i].style.border = "3px solid red" 
+
     }
+
   }
+
   if(total_cum_conditions !== cum_total_registered){
+
     cum_condition_class = document.getElementsByClassName("cum_condition_class");
+    cum_conditions_consistency_div = document.getElementById("cum_conditions_consistency");
+    report_inconsistency += 1;
+
+    cum_conditions_consistency_div.innerHTML = "26. Cumulative total registered is not equal to "
+    cum_conditions_consistency_div.innerHTML += "Stage defining conditions.";
+
     for(var i = 0; i < cum_condition_class.length; i++){
+
       cum_condition_class[i].style.border = "3px solid red" 
+
     }
+
   }
+
   /***************************************************************/
   
   /*****************************block 6***************************/
   /*  Comparing the sum of the values of all the patients died   */
   /*  against the value "Died total"
   /***************************************************************/
+
   for(var i = 0; i < dead.length; i++){
+
     total_dead += parseInt(dead[i].innerHTML); 
+
   }
 
   if(total_dead !== died_total){
+
     dead_class = document.getElementsByClassNam("dead_class");
+    died_consistency_div = document.getElementById("died_consistency");
+    report_inconsistency += 1;
+
+    died_consistency_div.innerHTML = "55. Died total is not equal to  ";
+    died_consistency_div.innerHTML += "the sum of all dead patients.";
+
+
     for(var i = 0; i < dead_class.length; i++){
+
       dead_class[i].style.border = "3px solid red" 
+
     }
+
   }
+
   /***************************************************************/
   
   /*****************************block 7***************************/
@@ -2761,84 +2951,153 @@
   /*  Defaulted, Stopped taking ARVs and Transferred Out against */
   /*  total registered (cummulative)                             */
   /***************************************************************/
+
   for(var i = 0; i < registered_on_art.length; i++){
+
     total_registered_on_art += parseInt(registered_on_art[i].innerHTML);
+
   }
   
   if(total_registered_on_art !== cum_total_registered){
+
     reg_on_art_class = document.getElementsByClassName("reg_on_art_class");
+    total_consistency_div = document.getElementById("total_consistency");
+    report_inconsistency += 1;
+
+    total_consistency_div.innerHTML = "26. Cumulative total registered is not equal to ";
+    total_consistency_div.innerHTML += "(total alive patients + dead + defaulted + stopped taking art + transfered out).";
+
+
     for(var i = 0; i < reg_on_art_class.length; i++){
+
       reg_on_art_class[i].style.border = "3px solid red"
+
     }
+
   }
+
   /***************************************************************/
 
   /*************************block 8*******************************/
   /*  Comparing the sum of all the regimens against total alive  */
   /*  and on art                                                 */
   /***************************************************************/
+
   for(var i =0; i < regimen.length; i++){
+
     total_regimen += parseInt(regimen[i].innerHTML);
+
   }
 
  if(total_alive_and_on_art != total_regimen){
+
     regimen_class = document.getElementsByClassName("regimen_class");
+    regimen_consistency_div = document.getElementById("regimen_consistency");
+    report_inconsistency += 1;
+
+    regimen_consistency_div.innerHTML = "50. Total alive and on ART  is not equal to "
+    regimen_consistency_div.innerHTML += "Secondary outcomes of those alive on ART.";
+
+
     for(var i =0; i < regimen_class.length; i++){
+
        regimen_class[i].style.border = "3px solid red"
+
     }
+
   }
+
   /***************************************************************/
 
   /**************************block 9 *****************************/
   /*  Comparing the sum of values in Pregnant / Breastfeeding    */
   /*  against total alive                                        */
   /***************************************************************/
+
   for(var i = 0; i < tb_status.length; i++){
+
     total_tb_status += parseInt(tb_status[i].innerHTML); 
+
   }
 
   if(total_tb_status !== total_alive_and_on_art){
+
     tb_status_class = document.getElementsByClassName("tb_status_class");
+    tb_status_consistency_div = document.getElementById("tb_status_consistency");
+    report_inconsistency += 1;
+
+    tb_status_consistency_div.innerHTML = "50. Total alive and on ART is not equal to ";
+    tb_status_consistency_div.innerHTML += "all patients with any form of TB status.";
+
+
     for(var i = 0; i < tb_status_class.length; i++){
+
       tb_status_class[i].style.border = "3px solid red" 
+
     }
+
   }
+
   /***************************************************************/
 
   /************************block 10*******************************/
   /*  Comparing the sum of values in tb status against total     */
   /*  alive                                                      */
   /***************************************************************/
+
   for(var i = 0; i < pregnant.length; i++){
+
     total_pregnant += parseInt(pregnant[i].innerHTML);
 
   }
 
   if(total_pregnant !== total_alive_and_on_art){
+
     pregnant_class = document.getElementsByClassName("pregnant_class");
+    pregnant_consistency_div = document.getElementById("pregnant_consistency");
+    report_inconsistency += 1;
+
+    pregnant_consistency_div.innerHTML = "50. Total alive and on ART is not equal to ";
+    pregnant_consistency_div.innerHTML += "all patients with pregnant/breastfeeds during visit.";
+
     for(var i = 0; i < pregnant_class.length; i++){
+
       pregnant_class[i].style.border = "3px solid red" 
+
     }
+
   }
+
   /***************************************************************/
   
   /*****************************block 11**************************/
   /*  Comparing the sum of all the value in Side effects against */
   /*  total alive                                                */
   /***************************************************************/
+
   for(var i = 0; i < side_effects.length; i++){
+
     total_side_effects += parseInt(side_effects[i].innerHTML);
+
   }
   
-
   if(total_side_effects !== total_alive_and_on_art){
 
     side_effects_class = document.getElementsByClassName("side_effects_class");
+    side_effect_consistency_div = document.getElementById("side_effect_consistency");
+    report_inconsistency += 1;
+
+    side_effect_consistency_div.innerHTML = "50. Total alive and on ART is not equal to ";
+    side_effect_consistency_div.innerHTML += "total number of patients with/without Side effects.";
 
     for(var i = 0; i < side_effects_class.length; i++){
+
       side_effects_class[i].style.border = "3px solid red" 
+
     }
+
   }
+
   /***************************************************************/
 
   /*********************block 12 *********************************/
@@ -2852,17 +3111,32 @@
 
   }
   
-
   if(total_adherence !== total_alive_and_on_art){
 
     adherence_class = document.getElementsByClassName("adherence_class");
+    adherence_consistency_div = document.getElementById("adherence_consistency");
+    report_inconsistency += 1;
+
+    adherence_consistency_div.innerHTML = "50. Total alive and on ART is not equal to ";
+    adherence_consistency_div.innerHTML += "total number of patients adhering to drugs.";
 
     for(var i = 0; i < adherence_class.length; i++){
 
       adherence_class[i].style.border = "3px solid red" 
     }
   }
+
   /***************************************************************/
+  
+  if(report_inconsistency > 0){
+    var title_div = document.createElement("div");
+    var title = document.createTextNode("This report has the following ("+report_inconsistency+") inconsistences:");
+    title_div.setAttribute("id", "incosistence_title");
+    title_div.appendChild(title); 
+
+    var current_div = document.getElementById("consistency_check"); 
+    document.body.insertBefore(title_div, current_div);
+  }
 </script>
 
 <script>
