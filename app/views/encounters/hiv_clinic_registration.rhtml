@@ -1147,9 +1147,13 @@
 
 
  function everReceivedARTMonth() {
+    var ever_received_art = $('ever_received_art').value;
     var ever_registered_at_ART_clinic = $("ever_registered_at_ART_clinic").value;
     var year_started_art = $("year_started_art").value;
     
+    if(ever_received_art.toLowerCase() == 'no')
+      return "false";
+
     if(ever_registered_at_ART_clinic.toLowerCase() == 'no')
       return "false";
 
@@ -1160,9 +1164,13 @@
  }
 
  function everReceivedARTDay() {
+    var ever_received_art = $('ever_received_art').value;
     var ever_registered_at_ART_clinic = $("ever_registered_at_ART_clinic").value;
     var year_started_art = $("year_started_art").value;
     var month_started_art = $("month_started_art").value
+
+    if(ever_received_art.toLowerCase() == 'no')
+      return "false";
 
     if(ever_registered_at_ART_clinic.toLowerCase() == 'no')
       return "false";
