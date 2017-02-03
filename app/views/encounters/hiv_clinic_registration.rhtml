@@ -1145,6 +1145,37 @@
     }
   }
 
+
+ function everReceivedARTMonth() {
+    var ever_registered_at_ART_clinic = $("ever_registered_at_ART_clinic").value;
+    var year_started_art = $("year_started_art").value;
+    
+    if(ever_registered_at_ART_clinic.toLowerCase() == 'no')
+      return "false";
+
+    if(year_started_art.toLowerCase() == "unknown")
+      return "false";
+
+    return "true";
+ }
+
+ function everReceivedARTDay() {
+    var ever_registered_at_ART_clinic = $("ever_registered_at_ART_clinic").value;
+    var year_started_art = $("year_started_art").value;
+    var month_started_art = $("month_started_art").value
+
+    if(ever_registered_at_ART_clinic.toLowerCase() == 'no')
+      return "false";
+
+    if(year_started_art.toLowerCase() == "unknown")
+      return "false";
+
+    if(month_started_art.toLowerCase() == "unknown")
+      return "false";
+
+    return "true";
+ }
+
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
 <%# if @patient.patient_programs.current.local.map(&:program).map(&:name).include?('HIV PROGRAM') %>
@@ -1341,7 +1372,7 @@
 
       <%= select_tag "month_started_art", month_name_options,
         {	:helpText => 'Month started ART',
-        :condition => '$("ever_received_art").value == "YES" && $("year_started_art").value.toLowerCase() != "unknown"',
+        :condition => 'everReceivedARTMonth() == "true";',
         :tt_onLoad => "showCategory2('when starting ART'); __$('keyboard').style.display = 'none'; validateMonthStartedART();",
         :tt_onUnLoad => "hideCategory(); setUnkownStage();",
         :id => "month_started_art" ,
@@ -1349,7 +1380,7 @@
 
       <%= text_field_tag "day_started_art",  nil,
         :field_type => 'number', :helpText => 'Day started ART',
-        :condition => '$("ever_received_art").value == "YES" && ($("year_started_art").value !="Unknown") && ($("month_started_art").value != "Unknown")',
+        :condition => 'everReceivedARTDay() == "true";',
         :tt_onLoad => "showCategory2('when starting ART');getDayOfMonthPicker($('year_started_art').value, $('month_started_art').value);$('nextButton').style.display = 'block';validateDayStartedART();",
         :validationCode => "checkStartDate();",
         :id => "day_started_art" ,
