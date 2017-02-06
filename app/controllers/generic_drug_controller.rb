@@ -167,7 +167,7 @@ class GenericDrugController < ApplicationController
   end
 
   def delivery
-    @formatted = preformat_regimen
+    @formatted = preformat_regimen.sort
     @drugs = {} #regimen_name_map
     @cms_drugs = {}
 
@@ -176,6 +176,8 @@ class GenericDrugController < ApplicationController
       @cms_drugs[drug_name] = drug.name
       @drugs[drug_name] = "#{drug.short_name} #{drug.strength} "
     end
+
+    #raise @formatted.to_yaml
   end
 
   def capture_cms_drugs

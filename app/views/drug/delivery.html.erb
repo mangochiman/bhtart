@@ -537,9 +537,7 @@
   }
 
 <% options = "<option>" "" "</option>"
-#raise @drugs.to_yaml
-@formatted.each{|drug|
-  #raise drug[0].to_yaml
+@formatted.sort_by{|i| (@cms_drugs[i].downcase rescue nil)}.each{|drug|
   next if @cms_drugs[drug].blank?
   options += "<option value = '#{drug}'>#{@cms_drugs[drug]}</option>"
 }
