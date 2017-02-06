@@ -56,17 +56,21 @@ def self.receiving_art_cumulative(start_date, end_date, min_age = nil, max_age =
 
   unless gender.blank?
     receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select * from earliest_start_date
+      select patient_id, patient_outcome(patient_id, '2016-12-31') AS outcome, age_at_initiation
+      from earliest_start_date
       where date_enrolled <= '#{end_date}'
-      AND gender = '#{gender}'
-      #{condition};
+      and gender = '#{gender}'
+      #{condition}
+      having outcome = 'On antiretrovirals';
 EOF
   else
     receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select * from earliest_start_date
+      select patient_id, patient_outcome(patient_id, '2016-12-31') AS outcome, age_at_initiation
+      from earliest_start_date
       where date_enrolled <= '#{end_date}'
-      AND gender IN ('F', 'M')
-      #{condition};
+      and gender IN ('F', 'M')
+      #{condition}
+      having outcome = 'On antiretrovirals';
 EOF
   end
 

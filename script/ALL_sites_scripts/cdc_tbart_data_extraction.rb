@@ -10,12 +10,13 @@ def start
   puts "CDC TB-ART data extraction............................................................................................"
 
   puts "TB-HIV patients on ART................................................................................................"
+#=begin
   $total_tb_hiv_on_art_total = tb_hiv_on_art_total(start_date, end_date, nil, nil)
   tb_hiv_on_art_total_less_15_female = tb_hiv_on_art_total(start_date, end_date, 0, 14, 'F')
   tb_hiv_on_art_total_less_15_male = tb_hiv_on_art_total(start_date, end_date, 0, 14, 'M')
   tb_hiv_on_art_total_more_15_female = tb_hiv_on_art_total(start_date, end_date,15, nil, 'F')
   tb_hiv_on_art_total_more_15_male = tb_hiv_on_art_total(start_date, end_date,15, nil, 'M')
-
+#=end
   puts "TB-ART patients (HIV)................................................................................................."
   total_tb_art_hiv_total = tb_art_hiv_total($total_tb_hiv_on_art_total, start_date, end_date, nil, nil)
   tb_art_hiv_total_less_15_female = tb_art_hiv_total($total_tb_hiv_on_art_total, start_date, end_date, 0, 14, 'F')
@@ -38,10 +39,14 @@ end
 
 def self.tb_art_hiv_total(patients_on_arvs, start_date, end_date, min_age = nil, max_age = nil, gender = [])
  patient_ids = []
- (patients_on_arvs || []).each do |row|
-   patient_ids << row['patient_id'].to_i
- end
 
+ patients_on_arvs = [0] if patients_on_arvs.blank?
+=begin
+ (patients_on_arvs || []).each do |row|
+   puts '#{row}'
+   patient_ids << row['patient_id'
+ end
+=end
   if (max_age.blank? && min_age.blank?)
     condition = ""
   elsif (max_age.blank?)
@@ -59,9 +64,9 @@ def self.tb_art_hiv_total(patients_on_arvs, start_date, end_date, min_age = nil,
         INNER JOIN person p on p.person_id = pp.patient_id
       WHERE pp.program_id = 2
       AND ord.concept_id in (select distinct concept_id from concept_set where concept_set IN (1159))
-      AND pp.patient_id not in (#{patient_ids.join(',')})
+      AND pp.patient_id not in (#{patients_on_arvs})
       AND o.concept_id = 3753 and o.value_coded = 703
-      AND p.person_id = '#{gender}'
+      AND p.gender = '#{gender}'
       AND DATE(pp.date_enrolled) <= '#{end_date}'
       GROUP BY pp.patient_id
       #{condition};
@@ -74,9 +79,9 @@ EOF
         INNER JOIN person p on p.person_id = pp.patient_id
       WHERE pp.program_id = 2
       AND ord.concept_id in (select distinct concept_id from concept_set where concept_set IN (1159))
-      AND pp.patient_id not in (#{patient_ids.join(',')})
+      AND pp.patient_id not in (#{patients_on_arvs})
       AND o.concept_id = 3753 and o.value_coded = 703
-      AND p.person_id = '#{gender}'
+      AND p.gender = '#{gender}'
       AND DATE(pp.date_enrolled) <= '#{end_date}'
       GROUP BY pp.patient_id
       #{condition};
