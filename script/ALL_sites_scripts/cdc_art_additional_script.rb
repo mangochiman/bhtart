@@ -54,23 +54,41 @@ def self.receiving_art_cumulative(start_date, end_date, min_age = nil, max_age =
     condition = "AND age_at_initiation  BETWEEN #{min_age} and #{max_age}"
   end
 
+  art_defaulters = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT p.person_id AS patient_id, current_defaulter(p.person_id, '#{end_date}') AS def
+        FROM earliest_start_date e
+         Inner JOIN person p on p.person_id = e.patient_id and p.voided  = 0
+        WHERE p.dead = 0
+        GROUP BY p.person_id
+        HAVING def = 1 AND current_state_for_program(p.person_id, 1, '#{end_date}') NOT IN (6, 2, 3)
+EOF
+
+    patient_ids = []
+    (art_defaulters || []).each do |patient|
+      patient_ids << patient['patient_id'].to_i
+    end
+
   unless gender.blank?
     receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select patient_id, patient_outcome(patient_id, '2016-12-31') AS outcome, age_at_initiation
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}'
-      and gender = '#{gender}'
+      SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{end_date}') AS state, date_enrolled, age_at_initiation, gender
+      FROM earliest_start_date e
+      WHERE date_enrolled <= '#{end_date}'
+      AND e.patient_id NOT IN (#{patient_ids.join(',')})
+      AND gender = '#{gender}'
       #{condition}
-      having outcome = 'On antiretrovirals';
+      GROUP BY e.patient_id
+      HAVING state = 7;
 EOF
   else
     receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select patient_id, patient_outcome(patient_id, '2016-12-31') AS outcome, age_at_initiation
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}'
-      and gender IN ('F', 'M')
+      SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{end_date}') AS state, date_enrolled, age_at_initiation, gender
+      FROM earliest_start_date e
+      WHERE date_enrolled <= '#{end_date}'
+      AND e.patient_id NOT IN (#{patient_ids.join(',')})
+      AND gender IN ('F','M')
       #{condition}
-      having outcome = 'On antiretrovirals';
+      GROUP BY e.patient_id
+      HAVING state = 7;
 EOF
   end
 

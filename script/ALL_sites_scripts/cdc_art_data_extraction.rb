@@ -187,6 +187,7 @@ def self.receiving_art_cumulative(start_date, end_date, min_age = nil, max_age =
 				FROM earliest_start_date e
          Inner JOIN person p on p.person_id = e.patient_id and p.voided  = 0
 				WHERE p.dead = 0
+        AND date_enrolled <= '#{end_date}'
 				GROUP BY p.person_id
 				HAVING def = 1 AND current_state_for_program(p.person_id, 1, '#{end_date}') NOT IN (6, 2, 3)
 EOF
@@ -407,35 +408,30 @@ EOF
 end
 
 def self.alive_and_on_ARVS_at_12_months_after_initiation(start_date, end_date, min_age = nil, max_age = nil, gender = [])
-  if (max_age.blank? && min_age.blank?)
-    condition = ""
-  elsif (max_age.blank?)
-    condition = "AND age_at_initiation >= #{min_age}"
-  else
-    condition = "AND age_at_initiation  BETWEEN #{min_age} and #{max_age}"
-  end
 
-  unless gender.blank?
-    alive_and_on_ARVS_at_12_months_after_initiation = ActiveRecord::Base.connection.select_all <<EOF
-      select
-          *,
-          TIMESTAMPDIFF(month, date(date_enrolled), date('#{end_date}')) as period_on_art,
-          patient_outcome(patient_id, '#{end_date}') as outcome
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}' AND gender = '#{gender}'   #{condition}
-      having period_on_art >= 12 and outcome <> 'Patient died';
+    art_defaulters = ActiveRecord::Base.connection.select_all <<EOF
+          SELECT p.person_id AS patient_id, current_defaulter(p.person_id, '#{end_date}') AS def
+  				FROM earliest_start_date e
+           Inner JOIN person p on p.person_id = e.patient_id and p.voided  = 0
+  				WHERE p.dead = 0
+          AND date_enrolled <= '#{end_date}'
+  				GROUP BY p.person_id
+  				HAVING def = 1 AND current_state_for_program(p.person_id, 1, '#{end_date}') NOT IN (6, 2, 3)
 EOF
-  else
+
+      @patient_ids = []
+      (art_defaulters || []).each do |patient|
+        @patient_ids << patient['patient_id'].to_i
+      end
+
     alive_and_on_ARVS_at_12_months_after_initiation = ActiveRecord::Base.connection.select_all <<EOF
-      select
-          *,
-          TIMESTAMPDIFF(month, date(date_enrolled), date('#{end_date}')) as period_on_art,
-          patient_outcome(patient_id, '#{end_date}') as outcome
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}' AND gender IN ('F', 'M')   #{condition}
-      having period_on_art >= 12 and outcome <> 'Patient died';
+      SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{end_date}') AS state, date_enrolled, age_at_initiation, gender
+      FROM earliest_start_date e
+      WHERE date_enrolled BETWEEN '2016-01-01' AND '#{end_date}'
+      AND e.patient_id NOT IN (#{@patient_ids.join(',')})
+      GROUP BY e.patient_id
+      HAVING state = 7;
 EOF
-  end
 
     total_alive_and_on_ARVS_at_12_months_after_initiation = []; alive_and_on_ARVS_at_12_months_after_initiation_less_1  = []; alive_and_on_ARVS_at_12_months_after_initiation_between_1_and_9 = []
     alive_and_on_ARVS_at_12_months_after_initiation_btwn_10_14_female  = []; alive_and_on_ARVS_at_12_months_after_initiation_btwn_10_14_male = []; alive_and_on_ARVS_at_12_months_after_initiation_less_15_19_female = []
@@ -529,35 +525,13 @@ EOF
 end
 
 def self.total_initiated_in_12_months(start_date, end_date, min_age = nil, max_age = nil, gender = [])
-  if (max_age.blank? && min_age.blank?)
-    condition = ""
-  elsif (max_age.blank?)
-    condition = "AND age_at_initiation >= #{min_age}"
-  else
-    condition = "AND age_at_initiation  BETWEEN #{min_age} and #{max_age}"
-  end
-
-  unless gender.blank?
-    patients_by_age_groups = ActiveRecord::Base.connection.select_all <<EOF
-    select
-        *,
-        TIMESTAMPDIFF(month, date(date_enrolled), date('#{end_date}')) as period_on_art
-    from earliest_start_date
-    where date_enrolled <= '#{end_date}' AND gender = '#{gender}'   #{condition}
-    having period_on_art >= 12;
-EOF
-  else
     total_initiated_in_12_months = ActiveRecord::Base.connection.select_all <<EOF
-    select
-        *,
-        TIMESTAMPDIFF(month, date(date_enrolled), date('#{end_date}')) as period_on_art
-    from earliest_start_date
-    where date_enrolled <= '#{end_date}' AND gender IN ('F', 'M')   #{condition}
-    having period_on_art >= 12;
+      SELECT *
+      FROM earliest_start_date
+      WHERE date_enrolled BETWEEN '2016-01-01' AND '#{end_date}';
 EOF
-  end
 
-    total_total_initiated_in_12_months = []; total_initiated_in_12_months_less_1  = []; total_initiated_in_12_months_between_1_and_9 = []
+    total_tota_initiated_in_12_months = []; total_initiated_in_12_months_less_1  = []; total_initiated_in_12_months_between_1_and_9 = []
     total_initiated_in_12_months_btwn_10_14_female  = []; total_initiated_in_12_months_btwn_10_14_male = []; total_initiated_in_12_months_less_15_19_female = []
     total_initiated_in_12_months_less_15_19_male = []; total_initiated_in_12_months_less_20_24_female = []; total_initiated_in_12_months_less_20_24_male = []
     total_initiated_in_12_months_less_25_49_female = []; total_initiated_in_12_months_less_25_49_male = []; total_initiated_in_12_months_less_more_than_50_female = []
@@ -649,33 +623,30 @@ EOF
 end
 
 def self.peads_receiving_art_cumulative(start_date, end_date, min_age = nil, max_age = nil, gender = [])
-  if (max_age.blank? && min_age.blank?)
-    condition = ""
-  elsif (max_age.blank?)
-    condition = "AND age_at_initiation >= #{min_age}"
-  else
-    condition = "AND age_at_initiation  BETWEEN #{min_age} and #{max_age}"
-  end
+  art_defaulters = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT p.person_id AS patient_id, current_defaulter(p.person_id, '#{end_date}') AS def
+        FROM earliest_start_date e
+         Inner JOIN person p on p.person_id = e.patient_id and p.voided  = 0
+        WHERE p.dead = 0
+        AND date_enrolled <= '#{end_date}'
+        GROUP BY p.person_id
+        HAVING def = 1 AND current_state_for_program(p.person_id, 1, '#{end_date}') NOT IN (6, 2, 3)
+EOF
 
-  unless gender.blank?
-    receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select patient_id, patient_outcome(patient_id, '#{end_date}') AS outcome, age_at_initiation
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}'
-      and gender = '#{gender}'
-      #{condition}
-      having outcome = 'On antiretrovirals';
+    patient_ids = []
+    (art_defaulters || []).each do |patient|
+      patient_ids << patient['patient_id'].to_i
+    end
+
+  receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{end_date}') AS state, date_enrolled, age_at_initiation, gender
+    FROM earliest_start_date e
+    WHERE date_enrolled BETWEEN '2016-01-01' AND '#{end_date}'
+    AND e.patient_id NOT IN (#{patient_ids.join(',')})
+    GROUP BY e.patient_id
+    HAVING state = 7;
 EOF
-  else
-    receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select patient_id, patient_outcome(patient_id, '#{end_date}') AS outcome, age_at_initiation
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}'
-      and gender IN ('F', 'M')
-      #{condition}
-      having outcome = 'On antiretrovirals';
-EOF
-  end
+
     patients_alive_and_on_arvs_all_ages = []
     patients_alive_and_on_arvs_less_15_years = []
     patients_alive_and_on_arvs_less_bwtn_10_14_years = []
