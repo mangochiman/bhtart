@@ -60,7 +60,8 @@ def self.cumulative_children_less_15_years(start_date, end_date)
     WHERE date_enrolled <= '#{end_date}'
     AND age_at_initiation between 0 and 14;
 EOF
-  return new_on_art
+
+  return new_on_art.count
 end
 
 def self.new_on_art(start_date, end_date, min_age = nil, max_age = nil, gender = [])
@@ -180,34 +181,29 @@ EOF
 end
 
 def self.receiving_art_cumulative(start_date, end_date, min_age = nil, max_age = nil, gender = [])
-  if (max_age.blank? && min_age.blank?)
-    condition = ""
-  elsif (max_age.blank?)
-    condition = "AND age_at_initiation >= #{min_age}"
-  else
-    condition = "AND age_at_initiation  BETWEEN #{min_age} and #{max_age}"
-  end
 
-  unless gender.blank?
-    receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select patient_id, patient_outcome(patient_id, '#{end_date}') AS outcome, age_at_initiation
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}'
-      and gender = '#{gender}'
-      #{condition}
-      having outcome = 'On antiretrovirals';
+  art_defaulters = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT p.person_id AS patient_id, current_defaulter(p.person_id, '#{end_date}') AS def
+				FROM earliest_start_date e
+         Inner JOIN person p on p.person_id = e.patient_id and p.voided  = 0
+				WHERE p.dead = 0
+				GROUP BY p.person_id
+				HAVING def = 1 AND current_state_for_program(p.person_id, 1, '#{end_date}') NOT IN (6, 2, 3)
 EOF
-  else
-    receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
-      select patient_id, patient_outcome(patient_id, '#{end_date}') AS outcome, age_at_initiation
-      from earliest_start_date
-      where date_enrolled <= '#{end_date}'
-      and gender IN ('F', 'M')
-      #{condition}
-      having outcome = 'On antiretrovirals';
-EOF
-  end
 
+    patient_ids = []
+    (art_defaulters || []).each do |patient|
+      patient_ids << patient['patient_id'].to_i
+    end
+
+  receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{end_date}') AS state, date_enrolled, age_at_initiation, gender
+    FROM earliest_start_date e
+    WHERE date_enrolled <= '#{end_date}'
+    AND e.patient_id NOT IN (#{patient_ids.join(',')})
+    GROUP BY e.patient_id
+    HAVING state = 7;
+EOF
 
     total_receiving_art_cumulative = []; receiving_art_cumulative_less_1  = []; receiving_art_cumulative_between_1_and_9 = []
     receiving_art_cumulative_btwn_10_14_female  = []; receiving_art_cumulative_btwn_10_14_male = []; receiving_art_cumulative_less_15_19_female = []
