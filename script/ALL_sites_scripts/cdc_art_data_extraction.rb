@@ -317,10 +317,9 @@ EOF
       SELECT * FROM obs o
       WHERE o.person_id IN (#{total_alive_ids.join(',')})
       AND o.concept_id = 7459
-      and DATE(o.obs_datetime) =  (SELECT max(obs_datetime) FROM obs WHERE concept_id = 7459 and voided = 0 and DATE(obs_datetime) <= '#{end_date}' and person_id = o.person_id)
       and value_coded IN (7455, 7456, 7458)
       AND DATE(o.obs_datetime) < '#{end_date}' and o.voided = 0
-
+      GROUP BY o.person_id;
 EOF
 
   total_plhiv_screened_tb_status = []; plhiv_screened_tb_status_less_1  = []; plhiv_screened_tb_status_between_1_and_9 = []
