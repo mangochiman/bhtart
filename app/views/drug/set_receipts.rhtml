@@ -311,24 +311,15 @@
               if (j == 0){
                 //var inputID = "Number of tins";
                 var inputID = item.getAttribute("value") + "_" + i + "_number_of_tins";
+				if (i == 0){
+					var inputValue = drug_cms_packsizes[item.getAttribute("value")];
+				}else{
+					var inputValue = drugs_hash[drug_name]["tabs_per_tin"]
+				}                
                 
-                var inputValue = drug_cms_packsizes[item.getAttribute("value")];
                 var field_type = "tabs_per_tin"
               }
 
-
-			/*
-			 drug_name = drug + "_" + row;
-			    if (field == 'tabs_per_tin'){
-			      drugs_hash[drug_name]["tabs_per_tin"] = value;
-			    }
-			    if (field == 'total_tins'){
-			      drugs_hash[drug_name]["total_tins"] = value;
-			    }
-			    if (field == 'date_of_expiry'){
-			      drugs_hash[drug_name]["date_of_expiry"] = value;
-			    }
-			 * */
               if (j == 1){
                 //var inputID = "Number of expiring tins";
                 var inputID = item.getAttribute("value") + "_" + i + "_total_tins";
@@ -357,6 +348,9 @@
               textField.style.marginLeft = '10px';
               textField.style.textAlign = 'center';
 
+			  if (i + j == 0){
+			  	textField.disabled = true;
+			  }
               if (j != 2){
                 textField.onmousedown = function () {
                   jQ(".input-field").attr("class", "input-field");
