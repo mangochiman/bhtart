@@ -100,7 +100,6 @@ EOF
           if (patient['gender'] == "F")
             new_on_art_less_15_19_female << patient['patient_id'].to_i
           else
-            raise 'am in'
             new_on_art_less_15_19_male << patient['patient_id'].to_i
           end
         end
@@ -286,35 +285,44 @@ EOF
 end
 
 def self.plhiv_screened_tb_status(start_date, end_date, min_age = nil, max_age = nil, gender = [])
-  if (max_age.blank? && min_age.blank?)
-    condition = ""
-  elsif (max_age.blank?)
-    condition = "AND age_at_initiation >= #{min_age}"
-  else
-    condition = "AND age_at_initiation  BETWEEN #{min_age} and #{max_age}"
+  art_defaulters = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT p.person_id AS patient_id, current_defaulter(p.person_id, '#{end_date}') AS def
+				FROM earliest_start_date e
+         Inner JOIN person p on p.person_id = e.patient_id and p.voided  = 0
+				WHERE p.dead = 0
+        AND date_enrolled <= '#{end_date}'
+				GROUP BY p.person_id
+				HAVING def = 1 AND current_state_for_program(p.person_id, 1, '#{end_date}') NOT IN (6, 2, 3)
+EOF
+
+    patient_ids = []
+    (art_defaulters || []).each do |patient|
+      patient_ids << patient['patient_id'].to_i
+    end
+
+  alive_and_on_arvs = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{end_date}') AS state, date_enrolled, age_at_initiation, gender
+    FROM earliest_start_date e
+    WHERE date_enrolled <= '#{end_date}'
+    AND e.patient_id NOT IN (#{patient_ids.join(',')})
+    GROUP BY e.patient_id
+    HAVING state = 7;
+EOF
+   total_alive_ids = []
+  (alive_and_on_arvs || []).each do |patient|
+    total_alive_ids << patient['patient_id'].to_i
   end
 
-  unless gender.blank?
     plhiv_screened_tb_status = ActiveRecord::Base.connection.select_all <<EOF
-      select e.* from earliest_start_date e
-       inner join obs o on o.person_id = e.patient_id and o.concept_id = 7459 and o.voided = 0
-      where e.date_enrolled <= '#{end_date}'
-      and o.value_coded in (7456, 7458)
-      and e.gender = '#{gender}'
-      and DATE(o.obs_datetime) < '#{end_date}'
-      #{condition};
+      SELECT * FROM obs o
+      WHERE o.person_id IN (#{total_alive_ids.join(',')})
+      AND o.concept_id = 7459
+      and DATE(o.obs_datetime) =  (SELECT max(obs_datetime) FROM obs WHERE concept_id = 7459 and voided = 0 and DATE(obs_datetime) <= '#{end_date}' and person_id = o.person_id)
+      and value_coded IN (7455, 7456, 7458)
+      AND DATE(o.obs_datetime) < '#{end_date}') and o.voided = 0
+
 EOF
-  else
-    plhiv_screened_tb_status = ActiveRecord::Base.connection.select_all <<EOF
-      select e.* from earliest_start_date e
-       inner join obs o on o.person_id = e.patient_id and o.concept_id = 7459 and o.voided = 0
-      where e.date_enrolled <= '#{end_date}'
-      and o.value_coded in (7456, 7458)
-      and e.gender in ('F','M')
-      and DATE(o.obs_datetime) < '#{end_date}'
-      #{condition};
-EOF
-  end
+
   total_plhiv_screened_tb_status = []; plhiv_screened_tb_status_less_1  = []; plhiv_screened_tb_status_between_1_and_9 = []
   plhiv_screened_tb_status_btwn_10_14_female  = []; plhiv_screened_tb_status_btwn_10_14_male = []; plhiv_screened_tb_status_less_15_19_female = []
   plhiv_screened_tb_status_less_15_19_male = []; plhiv_screened_tb_status_less_20_24_female = []; plhiv_screened_tb_status_less_20_24_male = []
