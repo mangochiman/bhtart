@@ -307,15 +307,15 @@
             for (var j = 0; j <= 2; j++) {
               var cell = document.createElement("td");
               var textField = document.createElement("input");
-    		  console.log(drug_name)
+              console.log(drug_name)
               if (j == 0){
                 //var inputID = "Number of tins";
                 var inputID = item.getAttribute("value") + "_" + i + "_number_of_tins";
-				if (i == 0){
-					var inputValue = drug_cms_packsizes[item.getAttribute("value")];
-				}else{
-					var inputValue = drugs_hash[drug_name]["tabs_per_tin"]
-				}                
+                if (i == 0){
+                  var inputValue = drug_cms_packsizes[item.getAttribute("value")];
+                }else{
+                  var inputValue = drugs_hash[drug_name]["tabs_per_tin"]
+                }
                 
                 var field_type = "tabs_per_tin"
               }
@@ -348,9 +348,9 @@
               textField.style.marginLeft = '10px';
               textField.style.textAlign = 'center';
 
-			  if (i + j == 0){
-			  	textField.disabled = true;
-			  }
+              if (i + j == 0){
+                textField.disabled = true;
+              }
               if (j != 2){
                 textField.onmousedown = function () {
                   jQ(".input-field").attr("class", "input-field");
@@ -727,7 +727,7 @@
           //input-field
           var evens = document.getElementsByClassName("even");
           var odds = document.getElementsByClassName("odd");
-		  current_drug = node.getAttribute("value")
+          current_drug = node.getAttribute("value")
 		  
           for (var i = 0; i < evens.length; i++) {
             evens[i].style.background = "rgb(245, 250, 253)";
@@ -1235,7 +1235,7 @@
 
             guiSetup();
             loadDrugs();
-            checkValidations();
+            //checkValidations();
           }
         };
 
@@ -1393,6 +1393,128 @@
       }
 
       function showSummary() {
+
+        __$("inputFrame" + tstCurrentPage).style.background = "rgba(235, 240, 240, 0.3)";
+
+        var header = document.createElement("div");
+        header.id = 'heada'
+        header.style.display = "table";
+        header.style.width = "100%";
+
+        var r = document.createElement("div");
+        r.style.display = "table-row";
+        header.appendChild(r);
+        var label = document.createElement("div");
+        label.className = "drug-label scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Drug";
+        r.appendChild(label);
+
+        var label = document.createElement("div");
+        label.className = "drug-value scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Amount per unit";
+        r.appendChild(label);
+
+        var label = document.createElement("div");
+        label.className = "drug-value scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Total units";
+        r.appendChild(label);
+
+        var label = document.createElement("div");
+        label.className = "drug-value scell hvalue";
+        label.style.display = "table-cell";
+        label.innerHTML = "Expiry date";
+        r.appendChild(label);
+
+        __$("inputFrame" + tstCurrentPage).appendChild(header);
+
+        var table = document.createElement("div");
+        table.id = "summary";
+        table.style.display = "table";
+        table.style.width = "100%";
+
+        var div = document.createElement("div");
+        div.style.height = "530px";
+        div.style.paddingTOp = "10px";
+        div.style.marginTop = "10px";
+        div.style.overflowY = "auto";
+        div.style.width = "100%";
+        div.appendChild(table);
+
+        __$("inputFrame" + tstCurrentPage).appendChild(div);
+        var ii = -1;
+        var i = 0
+        for (var drug_name in drugs_hash){
+          console.log(drug_name.split("_"))
+          var drug = drug_name.split("_")[0];
+          var date_of_expiry = drugs_hash[drug_name]["date_of_expiry"];
+          var tabs_per_tin = drugs_hash[drug_name]["tabs_per_tin"];
+          var total_tins = drugs_hash[drug_name]["total_tins"];
+          
+          if (date_of_expiry.length > 0 && tabs_per_tin.length > 0 && total_tins.length > 0){
+
+            ii += 1;
+            var row = document.createElement("div");
+            row.style.display = "table-row";
+            row.style.background = (ii % 2 == 0) ? "rgb(240, 240, 250)" : "white";
+            table.appendChild(row);
+
+            var label = document.createElement("div");
+            label.className = "drug-label scell";
+            label.style.display = "table-cell";
+            label.innerHTML = drug_cms_names[drug];
+            if (i == 0)
+            label.style.borderTop = "0.4px solid gray";
+            row.appendChild(label);
+
+            var amount = document.createElement("div");
+            amount.className = "drug-value scell editable";
+            amount.style.display = "table-cell";
+            amount.innerHTML = tabs_per_tin;
+            amount.setAttribute("drug", drug);
+            //amount.setAttribute("pos", c);
+            amount.onmousedown = function () {
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of tins");
+            }
+            //if (i == 0)
+            //amount.style.borderTop = "0.4px solid gray";
+            row.appendChild(amount);
+
+            var expire_amount = document.createElement("div");
+            expire_amount.style.display = "table-cell";
+            expire_amount.className = "drug-value scell editable";
+            expire_amount.innerHTML = total_tins;
+            expire_amount.setAttribute("drug", drug);
+            //expire_amount.setAttribute("pos", c);
+            expire_amount.onmousedown = function () {
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of expiring tins");
+            }
+            //expire_amount.style.borderTop = "0.4px solid gray";
+            row.appendChild(expire_amount);
+
+            var expire_date = document.createElement("div");
+            expire_date.style.display = "table-cell";
+            expire_date.className = "drug-label scell editable";
+            expire_date.innerHTML = date_of_expiry;
+            expire_date.setAttribute("drug", drug);
+            //expire_date.setAttribute("pos", c);
+            expire_date.onmousedown = function () {
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Date of expiry");
+            }
+
+            //expire_date.style.borderTop = "0.4px solid gray";
+            row.appendChild(expire_date);
+          }
+          i += 1
+        }
+
+        r.style.width = (table.offsetWidth) + "px";
+
+        __$("nextButton").innerHTML = "<span>Save</span>";
+      }
+      /*function showSummary() {
 
         __$("inputFrame" + tstCurrentPage).style.background = "rgba(235, 240, 240, 0.3)";
 
@@ -1643,7 +1765,7 @@
         r.style.width = (table.offsetWidth) + "px";
 
         __$("nextButton").innerHTML = "<span>Save</span>";
-      }
+      }*/
 
       function enableSaveDialogBox(){
         __$('nextButton').onmousedown = function(){
@@ -1922,15 +2044,15 @@
   function trimDate() {
     field = document.getElementById('Date of expiry');
     try {
-    	date_of_expiry_inputs = jQuery("input[field_type=date_of_expiry]");
-    	for (var i=0; i<=date_of_expiry_inputs.length - 1; i++){
-    		if(date_of_expiry_inputs[i].value.length > 8) {
-        		date_of_expiry_inputs[i].value = date_of_expiry_inputs[i].value.slice(3,11);
-      		}
-    	}
+      date_of_expiry_inputs = jQuery("input[field_type=date_of_expiry]");
+      for (var i=0; i<=date_of_expiry_inputs.length - 1; i++){
+        if(date_of_expiry_inputs[i].value.length > 8) {
+          date_of_expiry_inputs[i].value = date_of_expiry_inputs[i].value.slice(3,11);
+        }
+      }
       
     }catch(e){
-    	console.log(e)
+      console.log(e)
     }
     
     
@@ -1945,28 +2067,28 @@
     }
   }
 
-function updateDrugsHash(){
-  input_fields = document.getElementsByClassName("input-field");
-  if (input_fields.length > 0){
-	  drug = document.getElementById("input-header").getAttribute('drug');
-	  	for (var i=0; i<=input_fields.length - 1; i++){
-	    value = input_fields[i].value;
-	    row = input_fields[i].getAttribute("row");
-	    field = input_fields[i].getAttribute("field_type");
-	    drug_name = drug + "_" + row;
-	    if (field == 'tabs_per_tin'){
-	      drugs_hash[drug_name]["tabs_per_tin"] = value;
-	    }
-	    if (field == 'total_tins'){
-	      drugs_hash[drug_name]["total_tins"] = value;
-	    }
-	    if (field == 'date_of_expiry'){
-	      drugs_hash[drug_name]["date_of_expiry"] = value;
-	    }
-	  }
+  function updateDrugsHash(){
+    input_fields = document.getElementsByClassName("input-field");
+    if (input_fields.length > 0){
+      drug = document.getElementById("input-header").getAttribute('drug');
+      for (var i=0; i<=input_fields.length - 1; i++){
+        value = input_fields[i].value;
+        row = input_fields[i].getAttribute("row");
+        field = input_fields[i].getAttribute("field_type");
+        drug_name = drug + "_" + row;
+        if (field == 'tabs_per_tin'){
+          drugs_hash[drug_name]["tabs_per_tin"] = value;
+        }
+        if (field == 'total_tins'){
+          drugs_hash[drug_name]["total_tins"] = value;
+        }
+        if (field == 'date_of_expiry'){
+          drugs_hash[drug_name]["date_of_expiry"] = value;
+        }
+      }
+    }
+    return drugs_hash
   }
-  return drugs_hash
-}
 
-update_drugs_hash = window.setInterval("updateDrugsHash()", 1000);
+  update_drugs_hash = window.setInterval("updateDrugsHash()", 1000);
 </script>
