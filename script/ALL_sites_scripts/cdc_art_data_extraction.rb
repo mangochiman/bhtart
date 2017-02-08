@@ -11,7 +11,6 @@ def start
 
   puts "New on ART (Newly registered)......................................................................................"
   total_new_on_art, new_on_art_less_1, new_on_art_between_1_and_9, new_on_art_btwn_10_14_female, new_on_art_btwn_10_14_male, new_on_art_less_15_19_female, new_on_art_less_15_19_male, new_on_art_less_20_24_female, new_on_art_less_20_24_male, new_on_art_less_25_49_female, new_on_art_less_25_49_male, new_on_art_less_more_than_50_female, new_on_art_less_more_than_50_male, new_on_art_less_15_female, new_on_art_less_15_male, new_on_art_more_15_female,  new_on_art_more_15_male = new_on_art(start_date, end_date, nil, nil)
-
   puts "Receving ART (Total registered- Cumulative)........................................................................................."
   total_receiving_art_cumulative, receiving_art_cumulative_less_1, receiving_art_cumulative_between_1_and_9, receiving_art_cumulative_btwn_10_14_female, receiving_art_cumulative_btwn_10_14_male, receiving_art_cumulative_less_15_19_female, receiving_art_cumulative_less_15_19_male, receiving_art_cumulative_less_20_24_female, receiving_art_cumulative_less_20_24_male, receiving_art_cumulative_less_25_49_female, receiving_art_cumulative_less_25_49_male, receiving_art_cumulative_less_more_than_50_female, receiving_art_cumulative_less_more_than_50_male, receiving_art_cumulative_less_15_female, receiving_art_cumulative_less_15_male, receiving_art_cumulative_more_15_female,  receiving_art_cumulative_more_15_male = receiving_art_cumulative(start_date, end_date, nil, nil)
 
@@ -36,8 +35,10 @@ def start
     $resultsOutput = File.open("./CDCDataExtraction_" + "#{facility_name}" + ".txt", "w")
     $resultsOutput  << "Newly patients regigestered...........................................................\n"
     $resultsOutput  << "total_new_on_art: #{total_new_on_art}\n new_on_art_less_1: #{new_on_art_less_1}\n new_on_art_between_1_and_9: #{new_on_art_between_1_and_9}\n new_on_art_btwn_10_14_female: #{new_on_art_btwn_10_14_female}\n new_on_art_btwn_10_14_male: #{new_on_art_btwn_10_14_male}\n new_on_art_less_15_19_female: #{new_on_art_less_15_19_female}\n new_on_art_less_15_19_male: #{new_on_art_less_15_19_male}\n new_on_art_less_20_24_female: #{new_on_art_less_20_24_female}\n new_on_art_less_20_24_male: #{new_on_art_less_20_24_male}\n new_on_art_less_25_49_female: #{new_on_art_less_25_49_female}\n new_on_art_less_25_49_male: #{new_on_art_less_25_49_male}\n new_on_art_less_more_than_50_female: #{new_on_art_less_more_than_50_female}\n new_on_art_less_more_than_50_male: #{new_on_art_less_more_than_50_male}\n new_on_art_less_15_female: #{new_on_art_less_15_female}\n new_on_art_less_15_male: #{new_on_art_less_15_male}\n new_on_art_more_15_female: #{new_on_art_more_15_female}\n new_on_art_more_15_male: #{new_on_art_more_15_male}\n"
+
     $resultsOutput  << "\n Ever received ARVS (cumulative) regigestered...........................................................\n"
     $resultsOutput  << "total_receiving_art_cumulative: #{total_receiving_art_cumulative}\n receiving_art_cumulative_less_1: #{receiving_art_cumulative_less_1}\n receiving_art_cumulative_between_1_and_9: #{receiving_art_cumulative_between_1_and_9}\n receiving_art_cumulative_btwn_10_14_female: #{receiving_art_cumulative_btwn_10_14_female}\n receiving_art_cumulative_btwn_10_14_male: #{receiving_art_cumulative_btwn_10_14_male}\n receiving_art_cumulative_less_15_19_female: #{receiving_art_cumulative_less_15_19_female}\n receiving_art_cumulative_less_15_19_male: #{receiving_art_cumulative_less_15_19_male}\n receiving_art_cumulative_less_20_24_female: #{receiving_art_cumulative_less_20_24_female}\n receiving_art_cumulative_less_20_24_male: #{receiving_art_cumulative_less_20_24_male}\n receiving_art_cumulative_less_25_49_female: #{receiving_art_cumulative_less_25_49_female}\n receiving_art_cumulative_less_25_49_male: #{receiving_art_cumulative_less_25_49_male}\n receiving_art_cumulative_less_more_than_50_female: #{receiving_art_cumulative_less_more_than_50_female}\n receiving_art_cumulative_less_more_than_50_male: #{receiving_art_cumulative_less_more_than_50_male}\n receiving_art_cumulative_less_15_female: #{receiving_art_cumulative_less_15_female}\n receiving_art_cumulative_less_15_male: #{receiving_art_cumulative_less_15_male}\n receiving_art_cumulative_more_15_female: #{receiving_art_cumulative_more_15_female}\n receiving_art_cumulative_more_15_male: #{receiving_art_cumulative_more_15_male}\n"
+
     $resultsOutput  << "\nNewly PLHIV total Registered screened TB status...........................................................\n"
     $resultsOutput  << "total_plhiv_screened_tb_status: #{total_plhiv_screened_tb_status}\n plhiv_screened_tb_status_less_15_female: #{plhiv_screened_tb_status_less_15_female}\n plhiv_screened_tb_status_less_15_male: #{plhiv_screened_tb_status_less_15_male}\n plhiv_screened_tb_status_more_15_female: #{plhiv_screened_tb_status_more_15_female}\n plhiv_screened_tb_status_more_15_male: #{plhiv_screened_tb_status_more_15_male}\n"
     $resultsOutput  << "\nTotal alive and on ARVs after 12 months of initiation...........................................................\n"
@@ -46,6 +47,7 @@ def start
     $resultsOutput  << "total_initiated_in_12_months: #{total_total_initiated_in_12_months}\n total_initiated_in_12_months_less_1: #{total_initiated_in_12_months_less_1}\n total_initiated_in_12_months_between_1_and_9: #{total_initiated_in_12_months_between_1_and_9}\n total_initiated_in_12_months_btwn_10_14_female: #{total_initiated_in_12_months_btwn_10_14_female}\n total_initiated_in_12_months_btwn_10_14_male: #{total_initiated_in_12_months_btwn_10_14_male}\n total_initiated_in_12_months_less_15_19_female: #{total_initiated_in_12_months_less_15_19_female}\n total_initiated_in_12_months_less_15_19_male: #{total_initiated_in_12_months_less_15_19_male}\n total_initiated_in_12_months_less_20_24_female: #{total_initiated_in_12_months_less_20_24_female}\n total_initiated_in_12_months_less_20_24_male: #{total_initiated_in_12_months_less_20_24_male}\n total_initiated_in_12_months_less_25_49_female: #{total_initiated_in_12_months_less_25_49_female}\n total_initiated_in_12_months_less_25_49_male: #{total_initiated_in_12_months_less_25_49_male}\n total_initiated_in_12_months_less_more_than_50_female: #{total_initiated_in_12_months_less_more_than_50_female}\n total_initiated_in_12_months_less_more_than_50_male: #{total_initiated_in_12_months_less_more_than_50_male}\n total_initiated_in_12_months_less_15_female: #{total_initiated_in_12_months_less_15_female}\n total_initiated_in_12_months_less_15_male: #{total_initiated_in_12_months_less_15_male}\n total_initiated_in_12_months_more_15_female: #{total_initiated_in_12_months_more_15_female}\n total_initiated_in_12_months_more_15_male: #{total_initiated_in_12_months_more_15_male}\n"
     $resultsOutput  << "\nChildren with outcomes...........................................................\n"
     $resultsOutput  << "patients_alive_and_on_arvs_all_ages: #{patients_alive_and_on_arvs_all_ages}\n  cumulative_children_less_15_years : #{cumulative_children_less_15_years }\n  patients_alive_and_on_arvs_less_15_years: #{patients_alive_and_on_arvs_less_15_years}\n  patients_alive_and_on_arvs_less_bwtn_10_14_years: #{patients_alive_and_on_arvs_less_bwtn_10_14_years}\n  patients_alive_and_on_arvs_only_14_years: #{patients_alive_and_on_arvs_only_14_years}\n  patients_alive_and_on_arvs_between_15_and_19_years: #{patients_alive_and_on_arvs_between_15_and_19_years}\n  patients_alive_and_on_arvs_more_than_20_years: #{patients_alive_and_on_arvs_more_than_20_years}\n  treatment_outcome_for_children_less_15yrs_died: #{treatment_outcome_for_children_less_15yrs_died}\n  treatment_outcome_for_children_less_15yrs_defaulted: #{treatment_outcome_for_children_less_15yrs_defaulted}\n  treatment_outcome_for_children_less_15yrs_stopped: #{treatment_outcome_for_children_less_15yrs_stopped}\n  treatment_outcome_for_children_less_15yrs_transferred_out: #{treatment_outcome_for_children_less_15yrs_transferred_out}\n "
+
   end
 
   if CDCDataExtraction == 1
@@ -65,29 +67,11 @@ EOF
 end
 
 def self.new_on_art(start_date, end_date, min_age = nil, max_age = nil, gender = [])
-  if (max_age.blank? && min_age.blank?)
-    condition = ""
-  elsif (max_age.blank?)
-    condition = "AND age_at_initiation >= #{min_age}"
-  else
-    condition = "AND age_at_initiation  BETWEEN #{min_age} and #{max_age}"
-  end
-
-  unless gender.blank?
-    new_on_art = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM earliest_start_date
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      #{condition}
-      AND gender = '#{gender}';
-EOF
-  else
-    new_on_art = ActiveRecord::Base.connection.select_all <<EOF
+  new_on_art = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM earliest_start_date
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND gender IN ('F', 'M')
-      #{condition};
 EOF
-  end
 
   total_new_on_art = []; new_on_art_less_1  = []; new_on_art_between_1_and_9 = []
   new_on_art_btwn_10_14_female  = []; new_on_art_btwn_10_14_male = []; new_on_art_less_15_19_female = []
@@ -96,71 +80,75 @@ EOF
   new_on_art_less_more_than_50_male = []; new_on_art_less_15_female = []; new_on_art_less_15_male = []
   new_on_art_more_15_female = []; new_on_art_more_15_male = []
 
+
   (new_on_art || []).each do |patient|
-        if patient['age_at_initiation'].to_f <= 1
-          new_on_art_less_1 << patient
-        elsif patient['age_at_initiation'].to_f >= 2 && patient['age_at_initiation'].to_f <= 9
-          new_on_art_between_1_and_9 << patient
+        if patient['age_at_initiation'].to_i <= 1
+          new_on_art_less_1 << patient['patient_id'].to_i
+        elsif patient['age_at_initiation'].to_i  >= 2 && patient['age_at_initiation'].to_i  <= 9
+          new_on_art_between_1_and_9 << patient['patient_id'].to_i
         end
 
-        if (patient['age_at_initiation'].to_f >= 10 && patient['age_at_initiation'].to_f <= 14)
+        if (patient['age_at_initiation'].to_i  >= 10 && patient['age_at_initiation'].to_i  <= 14)
           if (patient['gender'] == "M")
-            new_on_art_btwn_10_14_male << patient
+            new_on_art_btwn_10_14_male << patient['patient_id'].to_i
           else
-            new_on_art_btwn_10_14_female << patient
+            new_on_art_btwn_10_14_female << patient['patient_id'].to_i
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 15 && patient['age_at_initiation'].to_f <= 19)
-          if (patient['gender'] == "M")
-            new_on_art_less_15_19_male << patient
+        if (patient['age_at_initiation'].to_i  >= 15 && patient['age_at_initiation'].to_i  <= 19)
+          if (patient['gender'] == "F")
+            new_on_art_less_15_19_female << patient['patient_id'].to_i
           else
-            new_on_art_less_15_19_female << patient
+            raise 'am in'
+            new_on_art_less_15_19_male << patient['patient_id'].to_i
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 20 && patient['age_at_initiation'].to_f <= 24)
+        if (patient['age_at_initiation'].to_i  >= 20 && patient['age_at_initiation'].to_i  <= 24)
           if (patient['gender'] == "M")
-            new_on_art_less_20_24_male << patient
+            new_on_art_less_20_24_male << patient['patient_id'].to_i
           else
-            new_on_art_less_20_24_female << patient
+            new_on_art_less_20_24_female << patient['patient_id'].to_i
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 25 && patient['age_at_initiation'].to_f <= 49)
+        if (patient['age_at_initiation'].to_i  >= 25 && patient['age_at_initiation'].to_i  <= 49)
           if (patient['gender'] == "M")
-            new_on_art_less_25_49_male << patient
+            new_on_art_less_25_49_male << patient['patient_id'].to_i
           else
-            new_on_art_less_25_49_female << patient
+            new_on_art_less_25_49_female << patient['patient_id'].to_i
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 50)
+        if (patient['age_at_initiation'].to_i  >= 50)
           if (patient['gender'] == "M")
-            new_on_art_less_more_than_50_male << patient
+            new_on_art_less_more_than_50_male << patient['patient_id'].to_i
           else
-            new_on_art_less_more_than_50_female << patient
+            new_on_art_less_more_than_50_female << patient['patient_id'].to_i
           end
         end
 
-        if (patient['age_at_initiation'].to_f < 15)
+        if (patient['age_at_initiation'].to_i  <= 14)
           if (patient['gender'] == "M")
-            new_on_art_less_15_male << patient
+            new_on_art_less_15_male << patient['patient_id'].to_i
           else
-            new_on_art_less_15_female << patient
+            new_on_art_less_15_female << patient['patient_id'].to_i
           end
        end
 
-        if (patient['age_at_initiation'].to_f >= 15)
+        if (patient['age_at_initiation'].to_i  >= 15)
           if (patient['gender'] ==  "M")
-            new_on_art_more_15_male << patient
+            new_on_art_more_15_male << patient['patient_id'].to_i
           else
-            new_on_art_more_15_female << patient
+            new_on_art_more_15_female << patient['patient_id'].to_i
           end
         end
   end
 
-  total_new_on_art = new_on_art
+  (new_on_art || []).each do |patient|
+    total_new_on_art << patient['patient_id'].to_i
+  end
 
   return [total_new_on_art.count, new_on_art_less_1.count,
   new_on_art_between_1_and_9.count,
@@ -214,13 +202,13 @@ EOF
     receiving_art_cumulative_more_15_female = []; receiving_art_cumulative_more_15_male = []
 
     (receiving_art_cumulative || []).each do |patient|
-          if patient['age_at_initiation'].to_f <= 1
+          if patient['age_at_initiation'].to_i <= 1
             receiving_art_cumulative_less_1 << patient
-          elsif patient['age_at_initiation'].to_f >= 2 && patient['age_at_initiation'].to_f <= 9
+          elsif patient['age_at_initiation'].to_i >= 2 && patient['age_at_initiation'].to_i <= 9
             receiving_art_cumulative_between_1_and_9 << patient
           end
 
-          if (patient['age_at_initiation'].to_f >= 10 && patient['age_at_initiation'].to_f <= 14)
+          if (patient['age_at_initiation'].to_i >= 10 && patient['age_at_initiation'].to_i <= 14)
             if (patient['gender'] == "M")
               receiving_art_cumulative_btwn_10_14_male << patient
             else
@@ -228,7 +216,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 15 && patient['age_at_initiation'].to_f <= 19)
+          if (patient['age_at_initiation'].to_i >= 15 && patient['age_at_initiation'].to_i <= 19)
             if (patient['gender'] == "M")
               receiving_art_cumulative_less_15_19_male << patient
             else
@@ -236,7 +224,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 20 && patient['age_at_initiation'].to_f <= 24)
+          if (patient['age_at_initiation'].to_i >= 20 && patient['age_at_initiation'].to_i <= 24)
             if (patient['gender'] == "M")
               receiving_art_cumulative_less_20_24_male << patient
             else
@@ -244,7 +232,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 25 && patient['age_at_initiation'].to_f <= 49)
+          if (patient['age_at_initiation'].to_i >= 25 && patient['age_at_initiation'].to_i <= 49)
             if (patient['gender'] == "M")
               receiving_art_cumulative_less_25_49_male << patient
             else
@@ -252,7 +240,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 50)
+          if (patient['age_at_initiation'].to_i >= 50)
             if (patient['gender'] == "M")
               receiving_art_cumulative_less_more_than_50_male << patient
             else
@@ -260,7 +248,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f < 15)
+          if (patient['age_at_initiation'].to_i < 15)
             if (patient['gender'] == "M")
               receiving_art_cumulative_less_15_male << patient
             else
@@ -268,7 +256,7 @@ EOF
             end
          end
 
-          if (patient['age_at_initiation'].to_f >= 15)
+          if (patient['age_at_initiation'].to_i >= 15)
             if (patient['gender'] ==  "M")
               receiving_art_cumulative_more_15_male << patient
             else
@@ -335,13 +323,13 @@ EOF
   plhiv_screened_tb_status_more_15_female = []; plhiv_screened_tb_status_more_15_male = []
 
   (plhiv_screened_tb_status || []).each do |patient|
-        if patient['age_at_initiation'].to_f <= 1
+        if patient['age_at_initiation'].to_i <= 1
           plhiv_screened_tb_status_less_1 << patient
-        elsif patient['age_at_initiation'].to_f >= 2 && patient['age_at_initiation'].to_f <= 9
+        elsif patient['age_at_initiation'].to_i >= 2 && patient['age_at_initiation'].to_i <= 9
           plhiv_screened_tb_status_between_1_and_9 << patient
         end
 
-        if (patient['age_at_initiation'].to_f >= 10 && patient['age_at_initiation'].to_f <= 14)
+        if (patient['age_at_initiation'].to_i >= 10 && patient['age_at_initiation'].to_i <= 14)
           if (patient['gender'] == "M")
             plhiv_screened_tb_status_btwn_10_14_male << patient
           else
@@ -349,7 +337,7 @@ EOF
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 15 && patient['age_at_initiation'].to_f <= 19)
+        if (patient['age_at_initiation'].to_i >= 15 && patient['age_at_initiation'].to_i <= 19)
           if (patient['gender'] == "M")
             plhiv_screened_tb_status_less_15_19_male << patient
           else
@@ -357,7 +345,7 @@ EOF
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 20 && patient['age_at_initiation'].to_f <= 24)
+        if (patient['age_at_initiation'].to_i >= 20 && patient['age_at_initiation'].to_i <= 24)
           if (patient['gender'] == "M")
             plhiv_screened_tb_status_less_20_24_male << patient
           else
@@ -365,7 +353,7 @@ EOF
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 25 && patient['age_at_initiation'].to_f <= 49)
+        if (patient['age_at_initiation'].to_i >= 25 && patient['age_at_initiation'].to_i <= 49)
           if (patient['gender'] == "M")
             plhiv_screened_tb_status_less_25_49_male << patient
           else
@@ -373,7 +361,7 @@ EOF
           end
         end
 
-        if (patient['age_at_initiation'].to_f >= 50)
+        if (patient['age_at_initiation'].to_i >= 50)
           if (patient['gender'] == "M")
             plhiv_screened_tb_status_less_more_than_50_male << patient
           else
@@ -381,7 +369,7 @@ EOF
           end
         end
 
-        if (patient['age_at_initiation'].to_f < 15)
+        if (patient['age_at_initiation'].to_i < 15)
           if (patient['gender'] == "M")
             plhiv_screened_tb_status_less_15_male << patient
           else
@@ -389,7 +377,7 @@ EOF
           end
        end
 
-        if (patient['age_at_initiation'].to_f >= 15)
+        if (patient['age_at_initiation'].to_i >= 15)
           if (patient['gender'] ==  "M")
             plhiv_screened_tb_status_more_15_male << patient
           else
@@ -441,13 +429,13 @@ EOF
     alive_and_on_ARVS_at_12_months_after_initiation_more_15_female = []; alive_and_on_ARVS_at_12_months_after_initiation_more_15_male = []
 
     (alive_and_on_ARVS_at_12_months_after_initiation || []).each do |patient|
-          if patient['age_at_initiation'].to_f <= 1
+          if patient['age_at_initiation'].to_i <= 1
             alive_and_on_ARVS_at_12_months_after_initiation_less_1 << patient
-          elsif patient['age_at_initiation'].to_f >= 2 && patient['age_at_initiation'].to_f <= 9
+          elsif patient['age_at_initiation'].to_i >= 2 && patient['age_at_initiation'].to_i <= 9
             alive_and_on_ARVS_at_12_months_after_initiation_between_1_and_9 << patient
           end
 
-          if (patient['age_at_initiation'].to_f >= 10 && patient['age_at_initiation'].to_f <= 14)
+          if (patient['age_at_initiation'].to_i >= 10 && patient['age_at_initiation'].to_i <= 14)
             if (patient['gender'] == "M")
               alive_and_on_ARVS_at_12_months_after_initiation_btwn_10_14_male << patient
             else
@@ -455,7 +443,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 15 && patient['age_at_initiation'].to_f <= 19)
+          if (patient['age_at_initiation'].to_i >= 15 && patient['age_at_initiation'].to_i <= 19)
             if (patient['gender'] == "M")
               alive_and_on_ARVS_at_12_months_after_initiation_less_15_19_male << patient
             else
@@ -463,7 +451,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 20 && patient['age_at_initiation'].to_f <= 24)
+          if (patient['age_at_initiation'].to_i >= 20 && patient['age_at_initiation'].to_i <= 24)
             if (patient['gender'] == "M")
               alive_and_on_ARVS_at_12_months_after_initiation_less_20_24_male << patient
             else
@@ -471,7 +459,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 25 && patient['age_at_initiation'].to_f <= 49)
+          if (patient['age_at_initiation'].to_i >= 25 && patient['age_at_initiation'].to_i <= 49)
             if (patient['gender'] == "M")
               alive_and_on_ARVS_at_12_months_after_initiation_less_25_49_male << patient
             else
@@ -479,7 +467,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 50)
+          if (patient['age_at_initiation'].to_i >= 50)
             if (patient['gender'] == "M")
               alive_and_on_ARVS_at_12_months_after_initiation_less_more_than_50_male << patient
             else
@@ -487,7 +475,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f < 15)
+          if (patient['age_at_initiation'].to_i < 15)
             if (patient['gender'] == "M")
               alive_and_on_ARVS_at_12_months_after_initiation_less_15_male << patient
             else
@@ -495,7 +483,7 @@ EOF
             end
          end
 
-          if (patient['age_at_initiation'].to_f >= 15)
+          if (patient['age_at_initiation'].to_i >= 15)
             if (patient['gender'] ==  "M")
               alive_and_on_ARVS_at_12_months_after_initiation_more_15_male << patient
             else
@@ -539,13 +527,13 @@ EOF
     total_initiated_in_12_months_more_15_female = []; total_initiated_in_12_months_more_15_male = []
 
     (total_initiated_in_12_months || []).each do |patient|
-          if patient['age_at_initiation'].to_f <= 1
+          if patient['age_at_initiation'].to_i <= 1
             total_initiated_in_12_months_less_1 << patient
-          elsif patient['age_at_initiation'].to_f >= 2 && patient['age_at_initiation'].to_f <= 9
+          elsif patient['age_at_initiation'].to_i >= 2 && patient['age_at_initiation'].to_i <= 9
             total_initiated_in_12_months_between_1_and_9 << patient
           end
 
-          if (patient['age_at_initiation'].to_f >= 10 && patient['age_at_initiation'].to_f <= 14)
+          if (patient['age_at_initiation'].to_i >= 10 && patient['age_at_initiation'].to_i <= 14)
             if (patient['gender'] == "M")
               total_initiated_in_12_months_btwn_10_14_male << patient
             else
@@ -553,7 +541,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 15 && patient['age_at_initiation'].to_f <= 19)
+          if (patient['age_at_initiation'].to_i >= 15 && patient['age_at_initiation'].to_i <= 19)
             if (patient['gender'] == "M")
               total_initiated_in_12_months_less_15_19_male << patient
             else
@@ -561,7 +549,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 20 && patient['age_at_initiation'].to_f <= 24)
+          if (patient['age_at_initiation'].to_i >= 20 && patient['age_at_initiation'].to_i <= 24)
             if (patient['gender'] == "M")
               total_initiated_in_12_months_less_20_24_male << patient
             else
@@ -569,7 +557,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 25 && patient['age_at_initiation'].to_f <= 49)
+          if (patient['age_at_initiation'].to_i >= 25 && patient['age_at_initiation'].to_i <= 49)
             if (patient['gender'] == "M")
               total_initiated_in_12_months_less_25_49_male << patient
             else
@@ -577,7 +565,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f >= 50)
+          if (patient['age_at_initiation'].to_i >= 50)
             if (patient['gender'] == "M")
               total_initiated_in_12_months_less_more_than_50_male << patient
             else
@@ -585,7 +573,7 @@ EOF
             end
           end
 
-          if (patient['age_at_initiation'].to_f < 15)
+          if (patient['age_at_initiation'].to_i < 15)
             if (patient['gender'] == "M")
               total_initiated_in_12_months_less_15_male << patient
             else
@@ -593,7 +581,7 @@ EOF
             end
          end
 
-          if (patient['age_at_initiation'].to_f >= 15)
+          if (patient['age_at_initiation'].to_i >= 15)
             if (patient['gender'] ==  "M")
               total_initiated_in_12_months_more_15_male << patient
             else
@@ -655,23 +643,23 @@ EOF
     patients_alive_and_on_arvs_more_than_20_years = []
 
     (receiving_art_cumulative || []).each do |patient|
-      if (patient['age_at_initiation'].to_f < 15)
+      if (patient['age_at_initiation'].to_i < 15)
         patients_alive_and_on_arvs_less_15_years << patient
       end
 
-      if (patient['age_at_initiation'].to_f >= 10 && patient['age_at_initiation'].to_f <= 14)
+      if (patient['age_at_initiation'].to_i >= 10 && patient['age_at_initiation'].to_i <= 14)
         patients_alive_and_on_arvs_less_bwtn_10_14_years << patient
       end
 
-      if (patient['age_at_initiation'].to_f == 14)
+      if (patient['age_at_initiation'].to_i == 14)
         patients_alive_and_on_arvs_only_14_years << patient
       end
 
-      if (patient['age_at_initiation'].to_f >= 15 && patient['age_at_initiation'].to_f <= 19)
+      if (patient['age_at_initiation'].to_i >= 15 && patient['age_at_initiation'].to_i <= 19)
         patients_alive_and_on_arvs_between_15_and_19_years << patient
       end
 
-      if (patient['age_at_initiation'].to_f >= 20 )
+      if (patient['age_at_initiation'].to_i >= 20 )
         patients_alive_and_on_arvs_more_than_20_years << patient
       end
     end
