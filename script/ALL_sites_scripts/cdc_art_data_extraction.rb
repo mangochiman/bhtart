@@ -14,7 +14,7 @@ def start
   puts "Receving ART (Total registered- Cumulative)........................................................................................."
   total_receiving_art_cumulative, receiving_art_cumulative_less_1, receiving_art_cumulative_between_1_and_9, receiving_art_cumulative_btwn_10_14_female, receiving_art_cumulative_btwn_10_14_male, receiving_art_cumulative_less_15_19_female, receiving_art_cumulative_less_15_19_male, receiving_art_cumulative_less_20_24_female, receiving_art_cumulative_less_20_24_male, receiving_art_cumulative_less_25_49_female, receiving_art_cumulative_less_25_49_male, receiving_art_cumulative_less_more_than_50_female, receiving_art_cumulative_less_more_than_50_male, receiving_art_cumulative_less_15_female, receiving_art_cumulative_less_15_male, receiving_art_cumulative_more_15_female,  receiving_art_cumulative_more_15_male = receiving_art_cumulative(start_date, end_date, nil, nil)
 
-  puts "New PLHIV with screened TB status(Newly registered).............................................."
+  puts "PLHIV with screened TB status positive............................................................................."
   total_plhiv_screened_tb_status, plhiv_screened_tb_status_less_15_female, plhiv_screened_tb_status_less_15_male, plhiv_screened_tb_status_more_15_female, plhiv_screened_tb_status_more_15_male = plhiv_screened_tb_status(start_date, end_date, nil, nil)
 
   puts "Total alive and on ARVS at 12 months after initiation.............................................."
@@ -318,7 +318,7 @@ EOF
         INNER JOIN obs o  ON esd.patient_id = o.person_id
       WHERE o.person_id IN (#{total_alive_ids.join(',')})
       AND o.concept_id = 7459
-      and value_coded IN (7455, 7456, 7458)
+      AND value_coded IN (7456, 7458)
       AND DATE(o.obs_datetime) < '#{end_date}' and o.voided = 0
       GROUP BY o.person_id;
 EOF
