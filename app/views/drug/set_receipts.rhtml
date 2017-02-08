@@ -286,7 +286,7 @@
           tbl.style.width = "93%";
           //tbl.style.paddingLeft = "20px";
           tbl.style.left = "2%";
-          tbl.style.paddingTop = "30px";
+          tbl.style.paddingTop = "62px";
           
           table_headers = ["Tabs Per Tin", "Total tins", "Date Of Expiry"];
 
@@ -396,14 +396,15 @@
           header.style.width = "98%";
           header.style.textAlign = "center";
           header.style.height = "45px";
-          header.style.marginTop = "244px";
+          //header.style.marginTop = "244px";
+
           header.setAttribute("drug", item.getAttribute("value"));
           /*header.innerHTML = pos + (pos == 1 ? "<sup>st</sup>" : (pos == 2 ? "<sup>nd</sup>" : (pos == 3 ? "<sup>rd</sup>" : "th"))) +
                         " - " + item.getAttribute("cms_name");*/
           header.innerHTML = item.getAttribute("cms_name");
           __$("data-pane").appendChild(header);
           __$("data-pane").appendChild(table);
-
+  
           /*if (!(sieved.indexOf(item.getAttribute("value")) >= 0)) {
             console.log("Sieved data found")
             var textField1 = document.createElement("input");
@@ -1395,7 +1396,7 @@
       function showSummary() {
 
         __$("inputFrame" + tstCurrentPage).style.background = "rgba(235, 240, 240, 0.3)";
-
+        jQuery('.stock-input').remove();
         var header = document.createElement("div");
         header.id = 'heada'
         header.style.display = "table";
@@ -1444,10 +1445,11 @@
         div.appendChild(table);
 
         __$("inputFrame" + tstCurrentPage).appendChild(div);
+        var form = document.forms[0];
+
         var ii = -1;
         var i = 0
         for (var drug_name in drugs_hash){
-          console.log(drug_name.split("_"))
           var drug = drug_name.split("_")[0];
           var date_of_expiry = drugs_hash[drug_name]["date_of_expiry"];
           var tabs_per_tin = drugs_hash[drug_name]["tabs_per_tin"];
@@ -1466,7 +1468,7 @@
             label.style.display = "table-cell";
             label.innerHTML = drug_cms_names[drug];
             if (i == 0)
-            label.style.borderTop = "0.4px solid gray";
+              label.style.borderTop = "0.4px solid gray";
             row.appendChild(label);
 
             var amount = document.createElement("div");
@@ -1475,8 +1477,10 @@
             amount.innerHTML = tabs_per_tin;
             amount.setAttribute("drug", drug);
             //amount.setAttribute("pos", c);
+            var input_id = drug_name + "_number_of_tins";
+            console.log(console.log(input_id))
             amount.onmousedown = function () {
-              navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of tins");
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), input_id);
             }
             //if (i == 0)
             //amount.style.borderTop = "0.4px solid gray";
@@ -1488,8 +1492,9 @@
             expire_amount.innerHTML = total_tins;
             expire_amount.setAttribute("drug", drug);
             //expire_amount.setAttribute("pos", c);
+            var input_id = drug_name + "_total_tins";
             expire_amount.onmousedown = function () {
-              navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of expiring tins");
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), input_id);
             }
             //expire_amount.style.borderTop = "0.4px solid gray";
             row.appendChild(expire_amount);
@@ -1500,12 +1505,40 @@
             expire_date.innerHTML = date_of_expiry;
             expire_date.setAttribute("drug", drug);
             //expire_date.setAttribute("pos", c);
+            var input_id = drug_name + "_date_of_expiry";
             expire_date.onmousedown = function () {
-              navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Date of expiry");
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), input_id);
             }
 
             //expire_date.style.borderTop = "0.4px solid gray";
             row.appendChild(expire_date);
+
+
+
+            var input = document.createElement("input");
+
+            input.className = 'stock-input';
+            input.setAttribute("type", "hidden");
+            input.setAttribute("name", "obs[" + drug + "][][amount]");
+            input.value = tabs_per_tin;
+
+            var input2 = document.createElement("input");
+            input2.className = 'stock-input';
+            input2.setAttribute("name", "obs[" + drug + "][][expire_amount]");
+            input2.value = total_tins;
+
+            var input3 = document.createElement("input");
+            input3.className = 'stock-input';
+            input3.setAttribute("name", "obs[" + drug + "][][date]");
+            input3.value = date_of_expiry;
+
+            form.appendChild(input);
+            form.appendChild(input2);
+            form.appendChild(input3);
+
+
+
+
           }
           i += 1
         }
@@ -2010,6 +2043,14 @@
         background-color: #d3d3d3;
         border-radius: 3px;
       }
+
+      #popupkeyboard{
+        position: absolute;
+        left: 30%;
+        bottom: 20px;
+        margin-left: inherit !important;
+        
+      }
     </style>
   </head>
   <div id="container">
@@ -2032,7 +2073,7 @@
         :tt_onLoad => "showSummary();enableSaveDialogBox();",
         :optional => "true",
         :id => "summary",
-        :helpText => "<span style='color: red;background: white;'>Verify values entered - You can edit a value by clicking its field</span>",
+        :helpText => "<span style='color: red;background: white;'>Confirm Entry (Touch row to change) </span>",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
     </form>
