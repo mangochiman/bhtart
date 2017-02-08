@@ -314,7 +314,8 @@ EOF
   end
 
     plhiv_screened_tb_status = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM obs o
+      SELECT esd.* FROM earliest_start_date esd
+        INNER JOIN obs o  ON esd.patient_id = o.person_id
       WHERE o.person_id IN (#{total_alive_ids.join(',')})
       AND o.concept_id = 7459
       and value_coded IN (7455, 7456, 7458)
