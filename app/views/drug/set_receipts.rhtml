@@ -24,7 +24,10 @@
       var activePos = 0;
       var counts = {};
       var lockParams = false;
-
+      var drugs_hash = {}
+      var total_rows = 2;
+      var current_drug;
+      
       var imgBlank = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAhHpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4aWYAAHjadY7LCYBADAXvW4Ul5Lf5lCOiYAeWb8Kqe3IOyeMRhrT9Oo+2FAjUpJtrqEIiIUFrBocBAyAB1s45eDZjJpp1YxpBww1kHsrTv3RW18PETLtuulHaaWdkz1miskK9EVPyOfinf7+4AUCRLBT7Z5tUAAAKAmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNC40LjAtRXhpdjIiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjMyIgogICBleGlmOlBpeGVsWURpbWVuc2lvbj0iMzIiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMzIiCiAgIHRpZmY6SW1hZ2VIZWlnaHQ9IjMyIgogICB0aWZmOk9yaWVudGF0aW9uPSIxIi8+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgCjw/eHBhY2tldCBlbmQ9InciPz4NhXU1AAAABHNCSVQICAgIfAhkiAAAAeZJREFUWMPt1j1rVEEUxvH/3Nddb9ZEC4sIFhpFgiFiULATrCwEC4soamU6Se+XEKz9ABFSWFgIlpZCrCxc1kLzVmQ17EtudvfOnDkWG9nCJsWFFN7TzBQD58fDGWZMwCwnWQEnXBWgAlSAChAd92Dr6w4agAim1+HuqZSHUcx1wI+GbAxGrGcNPqFgFBZuni8XoAE4x/Swz6vFBZ5YQ9I9QL1gzqXcjjzPvzV5Eya8DEPy0hMQIRj2eb24xLPNPczBAFwBzoEXSELSS3O8aDUxWmMV0FJnoNfh3vw1Hv/cg/4hagvUObAWLUZopwfft+DKZVYGOXdKH8LTGU9HSpwPQCxGHMba8d45jLPQ7WO6OWlWZ7l0QFzjVqc3if2oOc6BsyAyXtv7EIYslT4D6gmsm8Qu9gjh0L/NvXj1EkBIWHoCg5yNqRQjbhK7uPG1dBbjxeNFzEwDI8KX0gEjy9ssRkLzb+xePM4J9TTmTAPbz1kvHZCkvNv8wfuLs5BEqDh0jPDqRTSrxczPoTu7rKU1PpY+A3GEyw9Z2d3CXb3Ag98dovY+igZmphFwdhq7vc1a4VlNInzpAKNQS/lVFDxqtrg/VWc5S7iBosWAz802a0nChzTGB+b4b4GpfsUVoAJUgP8e8Ad1/Pn3B4MjXwAAAABJRU5ErkJggg=='
       var imgCancel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAG9AAABvQBc+sgmgAAAAd0SU1FB9oEEwoaHRbh2IwAAAHxSURBVEjHvZbPSutAFMa/XotQSiELyUYXroQsCgXvFVz5AOLGhdCNPkkR3ErpE/gAIkJx4U7cCf57gi4EKQWvCEUQiR39uUjKNGaSyL3UgUOSOTPfd+bMN2dSApTV3kslX9IfSb8lLcdPSbqRdBs/r2fgbyYIkDIjlY3UMtKbkSiwt3hs2YXlAg+MdPUN4K92ZaQgl8BI20Z6/Qfwsb0aadtJEEf+P+CTJEGCIM55Ii0fEtTrUKlkglGtQr3Ohztd5UmCVmpytwujETw9wepqGnxtDYbDaMzRkSuAFiAZyXephYODaPJoBI+PsLRkfUEQEY/93W6WunwZad25/Pl56PctyN0d+D54HvR6tv/+Hnw/K43rMtJuZo5XVuD52YJdXMD5uf0eDqHRyNvwXRnpJE8VbG5CGFrQsYUhbGwUKepERhoUSY/9/TTB3t53JDsoJMDzovx/Jej1oFYrJPgVFyxnm5Gk42NpYSHqCEPp5SV6X1yUDg+jMdntJn+TO51k1Ds7sLWV7Gu3CzfZLdNmMwnU6Vhfu530NZu5Mk0dNCoVGAwswOkpTPolODuz/n7fVVKig+YqFXgePDxY7Ver6RXWanB5acvJ3Jy7VGQVO2ZnodFIRJ4ikaIx6eiTxW7q5fpHLpwfuTKncemXpv3b8gkOTrvXD5TdSQAAAABJRU5ErkJggg=='
       var imgTick = 'data:image/png;base64,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';
@@ -263,7 +266,6 @@
           }
 
           for (var j in drugs) {
-
             for (var i = 1; i <= counts[drugs[j]]; i++) {
               buildParams(drugs[j], i);
             }
@@ -301,28 +303,54 @@
           var tblBody = document.createElement("tbody");
           for (var i = 0; i < 3; i++) {
             var row = document.createElement("tr");
+            var drug_name = item.getAttribute("value") + "_" + i;
             for (var j = 0; j <= 2; j++) {
               var cell = document.createElement("td");
               var textField = document.createElement("input");
-    
+    		  console.log(drug_name)
               if (j == 0){
-                var inputID = "Number of tins";
+                //var inputID = "Number of tins";
+                var inputID = item.getAttribute("value") + "_" + i + "_number_of_tins";
+                
                 var inputValue = drug_cms_packsizes[item.getAttribute("value")];
+                var field_type = "tabs_per_tin"
               }
 
+
+			/*
+			 drug_name = drug + "_" + row;
+			    if (field == 'tabs_per_tin'){
+			      drugs_hash[drug_name]["tabs_per_tin"] = value;
+			    }
+			    if (field == 'total_tins'){
+			      drugs_hash[drug_name]["total_tins"] = value;
+			    }
+			    if (field == 'date_of_expiry'){
+			      drugs_hash[drug_name]["date_of_expiry"] = value;
+			    }
+			 * */
               if (j == 1){
-                var inputID = "Number of expiring tins";
-                var inputValue = __$(item.getAttribute("value") + "_expire_amount_" + pos).value;
+                //var inputID = "Number of expiring tins";
+                var inputID = item.getAttribute("value") + "_" + i + "_total_tins";
+                
+                var inputValue = drugs_hash[drug_name]["total_tins"] //__$(item.getAttribute("value") + "_expire_amount_" + pos).value;
+                var field_type = "total_tins"
               }
 
               if (j == 2){
-                var inputID = "Date of expiry";
-                var inputValue = __$(item.getAttribute("value") + "_date_" + pos).value;
+                //var inputID = "Date of expiry";
+                var inputID = item.getAttribute("value") + "_" + i + "_date_of_expiry";
+                
+                var inputValue = drugs_hash[drug_name]["date_of_expiry"]; //__$(item.getAttribute("value") + "_date_" + pos).value;
+                var field_type = "date_of_expiry"
               }
 
               textField.className = "input-field";
               textField.id = inputID;
               textField.value = inputValue;
+              textField.setAttribute("field_type", field_type)
+              textField.setAttribute("row", i);
+              textField.setAttribute("drug_name", item.getAttribute("value") + "_" + i)
               textField.style.height = '35px';
               textField.style.width = '275px';
               textField.style.fontSize = '26px';
@@ -381,7 +409,8 @@
           header.innerHTML = item.getAttribute("cms_name");
           __$("data-pane").appendChild(header);
           __$("data-pane").appendChild(table);
-          if (!(sieved.indexOf(item.getAttribute("value")) >= 0)) {
+
+          /*if (!(sieved.indexOf(item.getAttribute("value")) >= 0)) {
             console.log("Sieved data found")
             var textField1 = document.createElement("input");
             textField1.id = "Number of tins";
@@ -502,7 +531,7 @@
           if (activeField.length > 0) {
             __$(activeField).onmousedown.apply(__$(activeField));
             activeField = "";
-          }
+          }*/
         }
 
         function showDate(parent, target) {
@@ -701,10 +730,11 @@
         }
 
         function clickUpdate(node, id) {
-
+          //input-field
           var evens = document.getElementsByClassName("even");
           var odds = document.getElementsByClassName("odd");
-
+		  current_drug = node.getAttribute("value")
+		  
           for (var i = 0; i < evens.length; i++) {
             evens[i].style.background = "rgb(245, 250, 253)";
           }
@@ -714,7 +744,7 @@
           }
 
           node.style.background = "lightblue";
-
+          
           jQ("#data-pane").empty();
           setTimeout(function () {
             if (activePos != 0) {
@@ -1898,12 +1928,51 @@
   function trimDate() {
     field = document.getElementById('Date of expiry');
     try {
-      if(field.value.length > 8) {
-        field.value = field.value.slice(3,11);
-      }
-    }catch(e){}
+    	date_of_expiry_inputs = jQuery("input[field_type=date_of_expiry]");
+    	for (var i=0; i<=date_of_expiry_inputs.length - 1; i++){
+    		if(date_of_expiry_inputs[i].value.length > 8) {
+        		date_of_expiry_inputs[i].value = date_of_expiry_inputs[i].value.slice(3,11);
+      		}
+    	}
+      
+    }catch(e){
+    	console.log(e)
+    }
+    
+    
   }
 
   setInterval("trimDate();",10);
 
+  for (var j in drugs) {
+    for (var i=0; i<=total_rows; i++){
+      drug_name = drugs[j] + "_" + i;
+      drugs_hash[drug_name] = {"tabs_per_tin":"", "total_tins":"", "date_of_expiry":""}
+    }
+  }
+
+function updateDrugsHash(){
+  input_fields = document.getElementsByClassName("input-field");
+  if (input_fields.length > 0){
+	  drug = document.getElementById("input-header").getAttribute('drug');
+	  	for (var i=0; i<=input_fields.length - 1; i++){
+	    value = input_fields[i].value;
+	    row = input_fields[i].getAttribute("row");
+	    field = input_fields[i].getAttribute("field_type");
+	    drug_name = drug + "_" + row;
+	    if (field == 'tabs_per_tin'){
+	      drugs_hash[drug_name]["tabs_per_tin"] = value;
+	    }
+	    if (field == 'total_tins'){
+	      drugs_hash[drug_name]["total_tins"] = value;
+	    }
+	    if (field == 'date_of_expiry'){
+	      drugs_hash[drug_name]["date_of_expiry"] = value;
+	    }
+	  }
+  }
+  return drugs_hash
+}
+
+update_drugs_hash = window.setInterval("updateDrugsHash()", 1000);
 </script>
