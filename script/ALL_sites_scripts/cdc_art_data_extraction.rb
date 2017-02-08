@@ -637,7 +637,7 @@ EOF
   receiving_art_cumulative = ActiveRecord::Base.connection.select_all <<EOF
     SELECT e.patient_id, current_state_for_program(e.patient_id, 1, '#{end_date}') AS state, date_enrolled, age_at_initiation, gender
     FROM earliest_start_date e
-    WHERE date_enrolled BETWEEN '2016-01-01' AND '#{end_date}'
+    WHERE date_enrolled <= '#{end_date}'
     AND e.patient_id NOT IN (#{patient_ids.join(',')})
     GROUP BY e.patient_id
     HAVING state = 7;
