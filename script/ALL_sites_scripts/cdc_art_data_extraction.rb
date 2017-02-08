@@ -319,7 +319,7 @@ EOF
       AND o.concept_id = 7459
       and DATE(o.obs_datetime) =  (SELECT max(obs_datetime) FROM obs WHERE concept_id = 7459 and voided = 0 and DATE(obs_datetime) <= '#{end_date}' and person_id = o.person_id)
       and value_coded IN (7455, 7456, 7458)
-      AND DATE(o.obs_datetime) < '#{end_date}') and o.voided = 0
+      AND DATE(o.obs_datetime) < '#{end_date}' and o.voided = 0
 
 EOF
 
