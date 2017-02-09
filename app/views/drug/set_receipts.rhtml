@@ -306,8 +306,8 @@
             var drug_name = item.getAttribute("value") + "_" + i;
             for (var j = 0; j <= 2; j++) {
               var cell = document.createElement("td");
+              cell.style.width = '80px'
               var textField = document.createElement("input");
-              console.log(drug_name)
               if (j == 0){
                 //var inputID = "Number of tins";
                 var inputID = item.getAttribute("value") + "_" + i + "_number_of_tins";
@@ -2049,7 +2049,7 @@
         left: 30%;
         bottom: 20px;
         margin-left: inherit !important;
-        
+
       }
     </style>
   </head>
@@ -2061,10 +2061,11 @@
 
       <%= text_field_tag :information, nil,
         {
-        :tt_onLoad => "$('clearButton').style.display = 'none'; checkContainer(); updateNextButton() ",
+        :tt_onLoad => "$('clearButton').style.display = 'none'; checkContainer(); updateNextButton(); validator = setInterval('validateInputFields();', 350); ",
         :optional => "true",
         :id => "input",
         :helpText => "Batch details",
+        :tt_onUnload => "clearInterval(validator)",
         :tt_pageStyleClass => "NoKeyboard"
       } %>
 
@@ -2132,4 +2133,76 @@
   }
 
   update_drugs_hash = window.setInterval("updateDrugsHash()", 1000);
+
+  function disableBatchInputs(){
+    incomplete_rows = []
+    for (var i=0; i<=total_rows.length; i++){
+      row_inputs = jQuery("[row=" + i + "]");
+
+    }
+  }
+
+  function enableBatchInputs(){
+
+  }
+
+  function validateInputFields(){
+    incomplete_rows = [];
+
+    for (var key in drugs_hash){
+      drugName = key.split("_")[0];
+      row_number = (parseInt(key.split("_")[1]) + 1);
+
+      tabs_per_tin = drugs_hash[key]["tabs_per_tin"];
+      total_tins = drugs_hash[key]["total_tins"];
+      date_of_expiry = drugs_hash[key]["date_of_expiry"];
+
+      if (!row_complete(tabs_per_tin, total_tins, date_of_expiry)){
+        incomplete_rows.push([drugName, row_number]);
+      }
+      
+      if (parseInt(key.split("_")[1]) == 0){
+        if (drugs_hash[key]["tabs_per_tin"].length == 0){
+          incomplete_rows.push([drugName, row_number]); //The drug has not been clicked yet.
+        }
+      }
+      
+    }
+    
+    if (incomplete_rows.length > 0){
+      error_message = "<u>Incomplete Entries for the following drugs</u> <br />"
+      for (var i=0; i<=incomplete_rows.length - 1; i++){
+        drugName = incomplete_rows[i][0];
+        row_number = incomplete_rows[i][1];
+        error_message += "&nbsp;&nbsp;&nbsp;" + drugName + " on row # " + row_number + '<br />';
+      }
+    	
+      __$('nextButton').onmousedown = function(){
+        showMessage(error_message);
+      }
+    }else{
+      __$('nextButton').onmousedown = function(){
+        gotoNextPage();
+      }
+    }
+  }
+
+  function row_complete(tabs_per_tin, total_tins, date_of_expiry){
+    if (tabs_per_tin.length > 0 || total_tins.length > 0 || date_of_expiry.length > 0){
+      if (tabs_per_tin.length > 0 && total_tins.length > 0 && date_of_expiry.length > 0){
+        return true
+      }else{
+        return false
+      }
+    }else{
+      return true
+    }
+
+  }
+  
 </script>
+<style>
+  .messageBar {
+    width: 700px;
+  }
+</style>
