@@ -7,10 +7,12 @@ def start
 
   start_date = "2016-10-01".to_date
   end_date = "2016-12-31".to_date
+
   puts "CDC ART data extraction............................................................................................"
 
   puts "New on ART (Newly registered)......................................................................................"
   total_new_on_art, new_on_art_less_1, new_on_art_between_1_and_9, new_on_art_btwn_10_14_female, new_on_art_btwn_10_14_male, new_on_art_less_15_19_female, new_on_art_less_15_19_male, new_on_art_less_20_24_female, new_on_art_less_20_24_male, new_on_art_less_25_49_female, new_on_art_less_25_49_male, new_on_art_less_more_than_50_female, new_on_art_less_more_than_50_male, new_on_art_less_15_female, new_on_art_less_15_male, new_on_art_more_15_female,  new_on_art_more_15_male = new_on_art(start_date, end_date, nil, nil)
+
   puts "Receving ART (Total registered- Cumulative)........................................................................................."
   total_receiving_art_cumulative, receiving_art_cumulative_less_1, receiving_art_cumulative_between_1_and_9, receiving_art_cumulative_btwn_10_14_female, receiving_art_cumulative_btwn_10_14_male, receiving_art_cumulative_less_15_19_female, receiving_art_cumulative_less_15_19_male, receiving_art_cumulative_less_20_24_female, receiving_art_cumulative_less_20_24_male, receiving_art_cumulative_less_25_49_female, receiving_art_cumulative_less_25_49_male, receiving_art_cumulative_less_more_than_50_female, receiving_art_cumulative_less_more_than_50_male, receiving_art_cumulative_less_15_female, receiving_art_cumulative_less_15_male, receiving_art_cumulative_more_15_female,  receiving_art_cumulative_more_15_male = receiving_art_cumulative(start_date, end_date, nil, nil)
 
@@ -35,10 +37,8 @@ def start
     $resultsOutput = File.open("./CDCDataExtraction_" + "#{facility_name}" + ".txt", "w")
     $resultsOutput  << "Newly patients regigestered...........................................................\n"
     $resultsOutput  << "total_new_on_art: #{total_new_on_art}\n new_on_art_less_1: #{new_on_art_less_1}\n new_on_art_between_1_and_9: #{new_on_art_between_1_and_9}\n new_on_art_btwn_10_14_female: #{new_on_art_btwn_10_14_female}\n new_on_art_btwn_10_14_male: #{new_on_art_btwn_10_14_male}\n new_on_art_less_15_19_female: #{new_on_art_less_15_19_female}\n new_on_art_less_15_19_male: #{new_on_art_less_15_19_male}\n new_on_art_less_20_24_female: #{new_on_art_less_20_24_female}\n new_on_art_less_20_24_male: #{new_on_art_less_20_24_male}\n new_on_art_less_25_49_female: #{new_on_art_less_25_49_female}\n new_on_art_less_25_49_male: #{new_on_art_less_25_49_male}\n new_on_art_less_more_than_50_female: #{new_on_art_less_more_than_50_female}\n new_on_art_less_more_than_50_male: #{new_on_art_less_more_than_50_male}\n new_on_art_less_15_female: #{new_on_art_less_15_female}\n new_on_art_less_15_male: #{new_on_art_less_15_male}\n new_on_art_more_15_female: #{new_on_art_more_15_female}\n new_on_art_more_15_male: #{new_on_art_more_15_male}\n"
-
     $resultsOutput  << "\n Ever received ARVS (cumulative) regigestered...........................................................\n"
     $resultsOutput  << "total_receiving_art_cumulative: #{total_receiving_art_cumulative}\n receiving_art_cumulative_less_1: #{receiving_art_cumulative_less_1}\n receiving_art_cumulative_between_1_and_9: #{receiving_art_cumulative_between_1_and_9}\n receiving_art_cumulative_btwn_10_14_female: #{receiving_art_cumulative_btwn_10_14_female}\n receiving_art_cumulative_btwn_10_14_male: #{receiving_art_cumulative_btwn_10_14_male}\n receiving_art_cumulative_less_15_19_female: #{receiving_art_cumulative_less_15_19_female}\n receiving_art_cumulative_less_15_19_male: #{receiving_art_cumulative_less_15_19_male}\n receiving_art_cumulative_less_20_24_female: #{receiving_art_cumulative_less_20_24_female}\n receiving_art_cumulative_less_20_24_male: #{receiving_art_cumulative_less_20_24_male}\n receiving_art_cumulative_less_25_49_female: #{receiving_art_cumulative_less_25_49_female}\n receiving_art_cumulative_less_25_49_male: #{receiving_art_cumulative_less_25_49_male}\n receiving_art_cumulative_less_more_than_50_female: #{receiving_art_cumulative_less_more_than_50_female}\n receiving_art_cumulative_less_more_than_50_male: #{receiving_art_cumulative_less_more_than_50_male}\n receiving_art_cumulative_less_15_female: #{receiving_art_cumulative_less_15_female}\n receiving_art_cumulative_less_15_male: #{receiving_art_cumulative_less_15_male}\n receiving_art_cumulative_more_15_female: #{receiving_art_cumulative_more_15_female}\n receiving_art_cumulative_more_15_male: #{receiving_art_cumulative_more_15_male}\n"
-
     $resultsOutput  << "\nNewly PLHIV total Registered screened TB status...........................................................\n"
     $resultsOutput  << "total_plhiv_screened_tb_status: #{total_plhiv_screened_tb_status}\n plhiv_screened_tb_status_less_15_female: #{plhiv_screened_tb_status_less_15_female}\n plhiv_screened_tb_status_less_15_male: #{plhiv_screened_tb_status_less_15_male}\n plhiv_screened_tb_status_more_15_female: #{plhiv_screened_tb_status_more_15_female}\n plhiv_screened_tb_status_more_15_male: #{plhiv_screened_tb_status_more_15_male}\n"
     $resultsOutput  << "\nTotal alive and on ARVs after 12 months of initiation...........................................................\n"
@@ -47,7 +47,6 @@ def start
     $resultsOutput  << "total_initiated_in_12_months: #{total_total_initiated_in_12_months}\n total_initiated_in_12_months_less_1: #{total_initiated_in_12_months_less_1}\n total_initiated_in_12_months_between_1_and_9: #{total_initiated_in_12_months_between_1_and_9}\n total_initiated_in_12_months_btwn_10_14_female: #{total_initiated_in_12_months_btwn_10_14_female}\n total_initiated_in_12_months_btwn_10_14_male: #{total_initiated_in_12_months_btwn_10_14_male}\n total_initiated_in_12_months_less_15_19_female: #{total_initiated_in_12_months_less_15_19_female}\n total_initiated_in_12_months_less_15_19_male: #{total_initiated_in_12_months_less_15_19_male}\n total_initiated_in_12_months_less_20_24_female: #{total_initiated_in_12_months_less_20_24_female}\n total_initiated_in_12_months_less_20_24_male: #{total_initiated_in_12_months_less_20_24_male}\n total_initiated_in_12_months_less_25_49_female: #{total_initiated_in_12_months_less_25_49_female}\n total_initiated_in_12_months_less_25_49_male: #{total_initiated_in_12_months_less_25_49_male}\n total_initiated_in_12_months_less_more_than_50_female: #{total_initiated_in_12_months_less_more_than_50_female}\n total_initiated_in_12_months_less_more_than_50_male: #{total_initiated_in_12_months_less_more_than_50_male}\n total_initiated_in_12_months_less_15_female: #{total_initiated_in_12_months_less_15_female}\n total_initiated_in_12_months_less_15_male: #{total_initiated_in_12_months_less_15_male}\n total_initiated_in_12_months_more_15_female: #{total_initiated_in_12_months_more_15_female}\n total_initiated_in_12_months_more_15_male: #{total_initiated_in_12_months_more_15_male}\n"
     $resultsOutput  << "\nChildren with outcomes...........................................................\n"
     $resultsOutput  << "patients_alive_and_on_arvs_all_ages: #{patients_alive_and_on_arvs_all_ages}\n  cumulative_children_less_15_years : #{cumulative_children_less_15_years }\n  patients_alive_and_on_arvs_less_15_years: #{patients_alive_and_on_arvs_less_15_years}\n  patients_alive_and_on_arvs_less_bwtn_10_14_years: #{patients_alive_and_on_arvs_less_bwtn_10_14_years}\n  patients_alive_and_on_arvs_only_14_years: #{patients_alive_and_on_arvs_only_14_years}\n  patients_alive_and_on_arvs_between_15_and_19_years: #{patients_alive_and_on_arvs_between_15_and_19_years}\n  patients_alive_and_on_arvs_more_than_20_years: #{patients_alive_and_on_arvs_more_than_20_years}\n  treatment_outcome_for_children_less_15yrs_died: #{treatment_outcome_for_children_less_15yrs_died}\n  treatment_outcome_for_children_less_15yrs_defaulted: #{treatment_outcome_for_children_less_15yrs_defaulted}\n  treatment_outcome_for_children_less_15yrs_stopped: #{treatment_outcome_for_children_less_15yrs_stopped}\n  treatment_outcome_for_children_less_15yrs_transferred_out: #{treatment_outcome_for_children_less_15yrs_transferred_out}\n "
-
   end
 
   if CDCDataExtraction == 1
@@ -67,10 +66,24 @@ EOF
 end
 
 def self.new_on_art(start_date, end_date, min_age = nil, max_age = nil, gender = [])
+  patient_ids = []
+  patients_id =   ActiveRecord::Base.connection.select_all <<EOF
+    SELECT * FROM earliest_start_date
+      WHERE date_enrolled BETWEEN '#{start_date}' AND  '#{end_date}';
+EOF
+
+  (patients_id || []).each do |patient|
+    patient_ids << patient['patient_id'].to_i
+  end
+
   new_on_art = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM earliest_start_date
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND gender IN ('F', 'M')
+                SELECT esd.*
+                 FROM patients_on_arvs esd
+                 LEFT JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id
+                 LEFT JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id
+                 WHERE esd.patient_id IN (#{patient_ids.join(',')}) AND
+                 (ero.obs_id IS NULL)
+                 GROUP BY esd.patient_id
 EOF
 
   total_new_on_art = []; new_on_art_less_1  = []; new_on_art_between_1_and_9 = []
@@ -79,7 +92,6 @@ EOF
   new_on_art_less_25_49_female = []; new_on_art_less_25_49_male = []; new_on_art_less_more_than_50_female = []
   new_on_art_less_more_than_50_male = []; new_on_art_less_15_female = []; new_on_art_less_15_male = []
   new_on_art_more_15_female = []; new_on_art_more_15_male = []
-
 
   (new_on_art || []).each do |patient|
         if patient['age_at_initiation'].to_i <= 1
