@@ -183,16 +183,31 @@ class GenericSessionsController < ApplicationController
       active = (disp_rate.to_i == 0 && stock_level.to_i != 0)? false : true
       drug_cms_name = drug_cms.name
 
+      stock_expiry_date = Pharmacy.latest_expiry_date_for_drug(drug.id)
+      date_diff_in_months = 0
+      unless stock_expiry_date.blank? #Date diff in months
+        date_diff_in_months = (stock_expiry_date.year * 12 + stock_expiry_date.month) - (Date.today.year * 12 + Date.today.month)
+        if (date_diff_in_months > 0 && date_diff_in_months < month_of_stock)
+
+        else
+          date_diff_in_months = 0
+          #raise stock_expiry_date.inspect
+        end
+
+      end
+      date_diff_in_months = 0 if disp_rate.to_i == 0
+
       @list[drug_cms_name] = {
         "month_of_stock" => month_of_stock,
         "stock_level" => stock_level,
+        "drug" => drug.id,
         "consumption_rate" => (disp_rate.round(2)),
         "stocked_out" => stocked_out,
+        "expiry_stock" => date_diff_in_months,
         "active" => active
       }
 
     end
-    
     @list = @list.sort_by{|k, v|k}
 
     render :layout => false

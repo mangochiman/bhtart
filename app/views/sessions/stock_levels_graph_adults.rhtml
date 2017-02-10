@@ -15,6 +15,7 @@
       stock_level:<%= values['stock_level'] %> ,
       consumption_rate: <%= values['consumption_rate'] %>,
       stocked_out: <%= values['stocked_out'] %>,
+      expiry_stock: <%= values['expiry_stock'] %>,
       active: <%= values['active'] %>
     };
 
@@ -40,7 +41,7 @@
           fontFamily: "'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif",
           fontSize: '14px'
         },
-        text: '<b>Stock Levels for adult drugs</b>'
+        text: '<b>Stock Levels for adults</b>'
       },
       xAxis: {
         categories: drugs,
@@ -130,6 +131,10 @@
           dataLabels: {
             enabled: false
           }
+        },
+        series: {
+          showInLegend: false,
+          pointWidth: 20
         }
       },
       credits: {
@@ -142,8 +147,12 @@
     });
   });
 
+  stock_level = {}
+  expiry_stocks = {}
   function dataG() {
     var correctedWeights = [];
+    var correctedWeights_two = []
+
 
 <% (@list || []).each do |drug, values| %>
       var val = parseFloat(<%= values["month_of_stock"] %>);
@@ -151,6 +160,17 @@
       correctedWeights.push({y: val, color: col});
 <% end %>
 
+<% (@list || []).each do |drug, values| %>
+      var val = parseFloat(<%= values["expiry_stock"] %>);
+      var col = (val <= 2) ? 'red' : (val > 4 ? 'yellow' : 'green');
+      correctedWeights_two.push({y: val, color: col});
+<% end %>
+
+    stock_level.data = correctedWeights
+    expiry_stocks.data = correctedWeights_two
+
+    data = [{data: expiry_stocks.data}, {data: stock_level.data}];
+    return data;
     return [{name: 'Month(s) of stock', showInLegend: false, data: correctedWeights, pointWidth: 20}];
   }
 
