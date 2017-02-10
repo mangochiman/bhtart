@@ -632,5 +632,20 @@ EOF
     return [] if verified_stock.blank?
     return [verified_stock.value_numeric, verified_stock.encounter_date]
   end
+
+  def self.latest_expiry_date_for_drug(drug_id)
+    pharmacy_encounter_type = PharmacyEncounterType.find_by_name('Tins currently in stock')
+
+    last_physical_expiry_date = Pharmacy.find_by_sql(
+      "SELECT * from pharmacy_obs WHERE
+           drug_id = #{drug_id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id} AND
+           DATE(encounter_date) = (
+            SELECT MAX(DATE(encounter_date)) FROM pharmacy_obs
+            WHERE drug_id =#{drug_id} AND pharmacy_encounter_type = #{pharmacy_encounter_type.id}
+          ) LIMIT 1;"
+    ).last.expiry_date.to_date rescue nil
+
+    return last_physical_expiry_date
+  end
   # ............................... New code to cal latest_physical_counted (meant for ART stock management app) ends .................................#
 end
