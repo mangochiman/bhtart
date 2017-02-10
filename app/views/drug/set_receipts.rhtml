@@ -404,7 +404,19 @@
           header.innerHTML = item.getAttribute("cms_name");
           __$("data-pane").appendChild(header);
           __$("data-pane").appendChild(table);
-  
+
+
+          var button = document.createElement("div");
+          button.id = "add-button";
+          button.innerHTML = "<span>Add Row</span>";
+          button.setAttribute("drug", item.getAttribute("value"));
+          button.onmousedown = function () {
+            console.log("Button clicked");
+          }
+          __$("data-pane").appendChild(button);
+
+
+
           /*if (!(sieved.indexOf(item.getAttribute("value")) >= 0)) {
             console.log("Sieved data found")
             var textField1 = document.createElement("input");
@@ -1981,7 +1993,7 @@
       }
 
       #add-button {
-        position: absolute;
+        /*position: absolute;
         bottom: 100px;
         right: 25px;
         font-size: 2em;
@@ -1990,7 +2002,15 @@
         height: auto;
         padding-bottom: 8px;
         width: 75px;
+        text-align: center;*/
+        position: absolute;
+        border-radius: 5px;
+        bottom: 100px;
+        right: 25px;
+        font-weight: bold;
+        height: auto;
         text-align: center;
+        cursor: pointer;
       }
 
       .red {
