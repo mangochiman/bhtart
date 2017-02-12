@@ -163,7 +163,7 @@
 <% (@list || []).each do |drug, values| %>
       var val = parseFloat(<%= values["expiry_stock"] %>);
       var col = (val <= 2) ? 'red' : (val > 4 ? 'yellow' : 'green');
-      correctedWeights_two.push({y: val, color: col});
+      correctedWeights_two.push({y: val, color: '#8B8989'});
 <% end %>
 
     stock_level.data = correctedWeights
