@@ -2236,7 +2236,7 @@
         break;
       }
     }
-    if (!complete){
+    if (complete){
       var batch_table = jQuery("#batch-table")[0];
       var i = parseInt(jQuery( "table input:last" ).attr("row")) + 1;
       var drug = __$('data-pane').getAttribute("drug");
