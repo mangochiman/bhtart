@@ -1383,107 +1383,19 @@
 
         __$("inputFrame" + tstCurrentPage).appendChild(div);
 
-        sievable = filter_drugs(drugs, sievable);
-        var ii = -1
-        for (var i in drugs) {
-
-          if (sievable.indexOf(drugs[i]) >= 0) continue;
-
-          for (var c = 1; c <= counts[drugs[i]]; c++) {
-            var amount_value = "";
-            var expire_amount_value = "";
-            var date_value = "";
-            var authcode = "";
-            ii += 1;
-            try {
-              if (__$(drugs[i] + "_packsize_" + c)) {
-                amount_value = __$(drugs[i] + "_packsize_" + c).value;
-                expire_amount_value = __$(drugs[i] + "_units_" + c).value;
-                date_value = __$(drugs[i] + "_reason_" + c).value;
-                authcode = __$(drugs[i] + "_authcode_" + c).value;
-              }
-            } catch (e) {
-            }
-
-            var row = document.createElement("div");
-            row.style.display = "table-row";
-            row.style.background = (ii % 2 == 0) ? "rgb(240, 240, 250)" : "white";
-            table.appendChild(row);
-
-            var label = document.createElement("div");
-            label.className = "drug-label scell";
-            label.style.display = "table-cell";
-            label.innerHTML = drug_cms_names[drugs[i]];
-            if (i == 0)
-              label.style.borderTop = "0.4px solid gray";
-            row.appendChild(label);
-
-            var amount = document.createElement("div");
-            amount.className = "drug-value scell editable";
-            amount.style.display = "table-cell";
-            amount.innerHTML = expire_amount_value;
-            amount.setAttribute("drug", drugs[i]);
-            amount.setAttribute("pos", c);
-            amount.onmousedown = function () {
-              if (this.innerHTML.length > 0) {
-                navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of expiring tins");
-              }
-            }
-            if (i == 0)
-              amount.style.borderTop = "0.4px solid gray";
-            row.appendChild(amount);
-
-            var expire_amount = document.createElement("div");
-            expire_amount.style.display = "table-cell";
-            expire_amount.className = "drug-value scell editable";
-            expire_amount.innerHTML = date_value;
-            expire_amount.setAttribute("drug", drugs[i]);
-            expire_amount.setAttribute("pos", c);
-            expire_amount.onmousedown = function () {
-              if (this.innerHTML.length > 0) {
-                navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Reason for disposal");
-              }
-            }
-            if (i == 0)
-              expire_amount.style.borderTop = "0.4px solid gray";
-            row.appendChild(expire_amount);
-
-            var expire_date = document.createElement("div");
-            expire_date.style.display = "table-cell";
-            expire_date.className = "drug-label scell editable";
-            expire_date.innerHTML = authcode;
-            expire_date.setAttribute("drug", drugs[i]);
-            expire_date.setAttribute("pos", c);
-            expire_date.onmousedown = function () {
-              if (this.innerHTML.length > 0) {
-                navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Authorisation code");
-              }
-            }
-            if (i == 0)
-              expire_date.style.borderTop = "0.4px solid gray";
-            row.appendChild(expire_date);
-          }
-        }
-
+        var form = document.forms[0];
         var ii = -1;
-        for (var i in sievable) {
+        var i = 0;
+     
+        for (var drug_name in drugs_hash){
+          var drug = drug_name.split("_")[0];
+          var reason = drugs_hash[drug_name]["reason"];
+          var tabs_per_tin = drugs_hash[drug_name]["tabs_per_tin"];
+          var total_tins = drugs_hash[drug_name]["total_tins"];
+          var authorization_code = drugs_hash[drug_name]["authorization_code"];
 
-          for (var c = 1; c <= counts[sievable[i]]; c++) {
-            var amount_value = "";
-            var expire_amount_value = "";
-            var date_value = "";
+          if (reason.length > 0 && tabs_per_tin.length > 0 && total_tins.length > 0 && authorization_code.length > 0){
             ii += 1;
-
-            try {
-              if (__$(sievable[i] + "_packsize_" + c)) {
-                amount_value = __$(sievable[i] + "_packsize_" + c).value;
-                expire_amount_value = __$(sievable[i] + "_units_" + c).value;
-                date_value = __$(sievable[i] + "_reason_" + c).value;
-                authcode = __$(sievable[i] + "_authcode_" + c).value;
-              }
-            } catch (e) {
-            }
-
             var row = document.createElement("div");
             row.style.display = "table-row";
             row.style.background = (ii % 2 == 0) ? "rgb(240, 240, 250)" : "white";
@@ -1492,58 +1404,100 @@
             var label = document.createElement("div");
             label.className = "drug-label scell";
             label.style.display = "table-cell";
-            label.innerHTML = drug_cms_names[sievable[i]];
+            label.innerHTML = drug_cms_names[drug];
             if (i == 0)
               label.style.borderTop = "0.4px solid gray";
             row.appendChild(label);
 
+            var amount = document.createElement("div");
+            amount.className = "drug-value scell editable";
+            amount.style.display = "table-cell";
+            amount.innerHTML = tabs_per_tin;
+            amount.setAttribute("drug", drug);
+            //amount.setAttribute("pos", c);
+            var input_id = drug_name + "_number_of_tins";
+            amount.onmousedown = function () {
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), input_id);
+            }
+            //if (i == 0)
+            //amount.style.borderTop = "0.4px solid gray";
+            //row.appendChild(amount);
+
             var expire_amount = document.createElement("div");
             expire_amount.style.display = "table-cell";
             expire_amount.className = "drug-value scell editable";
-            expire_amount.innerHTML = amount_value;
-            expire_amount.setAttribute("drug", sievable[i]);
-            expire_amount.setAttribute("pos", c);
+            expire_amount.innerHTML = total_tins;
+            expire_amount.setAttribute("drug", drug);
+            //expire_amount.setAttribute("pos", c);
+            var input_id = drug_name + "_total_tins";
             expire_amount.onmousedown = function () {
-              if (this.innerHTML.length > 0) {
-                navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Number of tins");
-              }
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), input_id);
             }
-            if (i == 0)
-              expire_amount.style.borderTop = "0.4px solid gray";
+            //expire_amount.style.borderTop = "0.4px solid gray";
             row.appendChild(expire_amount);
-
-            var amount = document.createElement("div");
-            amount.className = "drug-value scell editable";
-            amount.setAttribute("drug", sievable[i]);
-            amount.setAttribute("pos", c);
-            amount.onmousedown = function () {
-              if (this.innerHTML.length > 0) {
-                navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Reason for disposal");
-              }
-            }
-            amount.style.display = "table-cell";
-            amount.innerHTML = date_value;
-            if (i == 0)
-              amount.style.borderTop = "0.4px solid gray";
-            row.appendChild(amount);
 
             var expire_date = document.createElement("div");
             expire_date.style.display = "table-cell";
             expire_date.className = "drug-label scell editable";
-            expire_date.innerHTML = authcode;
-            expire_date.setAttribute("drug", sievable[i]);
-            expire_date.setAttribute("pos", c);
+            expire_date.innerHTML = reason;
+            expire_date.setAttribute("drug", drug);
+            //expire_date.setAttribute("pos", c);
+            var input_id = drug_name + "_date_of_expiry";
             expire_date.onmousedown = function () {
-              if (this.innerHTML.length > 0) {
-                navigate(this.getAttribute("drug"), this.getAttribute("pos"), "Authorisation code");
-              }
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), input_id);
             }
-            if (i == 0)
-              expire_date.style.borderTop = "0.4px solid gray";
-            row.appendChild(expire_date);
-          }
-        }
 
+            //expire_date.style.borderTop = "0.4px solid gray";
+            row.appendChild(expire_date);
+
+            var authorization_c = document.createElement("div");
+            authorization_c.style.display = "table-cell";
+            authorization_c.className = "drug-label scell editable";
+            authorization_c.innerHTML = authorization_code;
+            authorization_c.setAttribute("drug", drug);
+            //expire_date.setAttribute("pos", c);
+            var input_id = drug_name + "_authorization_c";
+            authorization_c.onmousedown = function () {
+              navigate(this.getAttribute("drug"), this.getAttribute("pos"), input_id);
+            }
+
+            //expire_date.style.borderTop = "0.4px solid gray";
+            row.appendChild(authorization_c);
+
+            var input = document.createElement("input");
+
+            input.className = 'stock-input';
+            input.setAttribute("type", "hidden");
+            input.setAttribute("name", "obs[" + drug + "][][packsize]");
+            input.value = tabs_per_tin;
+
+            var input2 = document.createElement("input");
+            input2.className = 'stock-input';
+            input2.setAttribute("type", "hidden");
+            input2.setAttribute("name", "obs[" + drug + "][][units]");
+            input2.value = total_tins;
+
+            var input3 = document.createElement("input");
+            input3.className = 'stock-input';
+            input3.setAttribute("type", "hidden");
+            input3.setAttribute("name", "obs[" + drug + "][][reason]");
+            input3.value = reason;
+
+            var input4 = document.createElement("input");
+            input4.className = 'stock-input';
+            input4.setAttribute("type", "hidden");
+            input4.setAttribute("name", "obs[" + drug + "][][authcode]");
+            input4.value = authorization_code;
+
+            form.appendChild(input);
+            form.appendChild(input2);
+            form.appendChild(input3);
+            form.appendChild(input4);
+
+
+          }
+          i += 1
+        }
 
         __$("heada").style.width = (table.offsetWidth) + "px";
         r.style.width = (table.offsetWidth) + "px";
@@ -1706,7 +1660,7 @@
       }
 
       .drug-label {
-        min-width: 40%;
+        min-width: 30%;
         text-align: left;
         padding-left: 2%;
         overflow-X: hidden;
