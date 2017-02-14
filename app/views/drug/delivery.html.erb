@@ -573,7 +573,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
       {
       :id => 'relocation_facility',
       :field_type => 'alpha',
-      :helpText => "Select Facility to Relocate Items to",
+      :helpText => "Destination",
       :ajaxURL => '/programs/locations?q=',
       :condition => "$('relocation_or_disposal').value.toUpperCase() == 'RELOCATIONS'",
       :allowFreeText => true }
