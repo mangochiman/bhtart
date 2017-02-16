@@ -10,7 +10,7 @@ end
 def sample
   facility_name = GlobalProperty.find_by_sql("select property_value from global_property where property = 'current_health_center_name'").map(&:property_value).first
 
-  file = "./dha_patient_level_data_" + "#{facility_name}" + ".csv"
+  file = "/home/user/dha_patient_level_data_" + "#{facility_name}" + ".csv"
 
   patient_details = ActiveRecord::Base.connection.select_all <<EOF
       SELECT esd.patient_id,
@@ -42,7 +42,7 @@ EOF
     unless appointment.blank?
       appointment_date = appointment['next_appointment_date']
     else
-      appointment_date = "0000-00-00"
+      appointment_date = "N/A"
     end
 
     puts "#{patient['patient_id']}, #{appointment_date}, #{outcome['outcome']}"
@@ -50,10 +50,11 @@ EOF
   end
 
   FasterCSV.open( file, 'w' ) do |csv|
-    csv << ["patient_id", "gender", "birthdate", "date_of_registration", "date_of_initiation", "visit_date", "next_appointment_date", "outcome"]
+    csv << ["facility_name","patient_id", "gender", "birthdate", "date_of_registration", "date_of_initiation", "visit_date", "next_appointment_date", "outcome"]
     appointment_and_outcome_details.each do |s|
-      csv << [s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]]
+      csv << ["#{facility_name}", s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]]
     end
   end
+  puts "please check your home folder for this site's csv file............"
 end
 start
