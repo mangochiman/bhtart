@@ -10,7 +10,7 @@ end
 def sample
   facility_name = GlobalProperty.find_by_sql("select property_value from global_property where property = 'current_health_center_name'").map(&:property_value).first
 
-  file = "/home/deliwe/dha_patient_level_data_" + "#{facility_name}" + ".csv"
+  file = "/home/user/dha_patient_level_data_" + "#{facility_name}" + ".csv"
 
   patient_details = ActiveRecord::Base.connection.select_all <<EOF
       SELECT esd.patient_id,
