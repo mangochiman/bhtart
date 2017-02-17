@@ -20,8 +20,8 @@ def sample
         esd.earliest_start_date AS date_of_initiation,
         DATE(en.encounter_datetime) AS visit_date
       FROM earliest_start_date esd
-        INNER JOIN encounter en ON en.patient_id = esd.patient_id AND en.voided AND en.encounter_type IN (6, 7, 9, 25, 51, 52, 53, 54, 68, 119)
-      WHERE DATE(en.encounter_datetime) BETWEEN '2015-01-01' AND '2016-12-31 23:59:59'
+        INNER JOIN encounter en ON en.patient_id = esd.patient_id AND en.voided = 0 
+      WHERE DATE(en.encounter_datetime) <= '2016-12-31 23:59:59'
       GROUP BY esd.patient_id, DATE(en.encounter_datetime);
 EOF
 
