@@ -1079,9 +1079,17 @@ class GenericRegimensController < ApplicationController
 	end
 
   def suggest_all
+=begin
     medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i 
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*", 
       :group => 'drug.drug_id')
+=end
+
+    medications = []
+    (Drug.all || []).each do |d|
+      next unless MedicationService.arv(d)
+      medications << d
+    end
 
     session_date = session[:datetime].to_date rescue Date.today
     patient = Patient.find(params[:patient_id])
