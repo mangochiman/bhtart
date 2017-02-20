@@ -280,15 +280,23 @@
 
           /* CUSTOM TABLE FOR BATCH DETAILS*/
 
+          var scrollable_div = document.createElement("div");
+          scrollable_div.id = 'scrollable-div';
+          scrollable_div.style.overflow = "auto";
+          scrollable_div.style.height = "250px";
+          scrollable_div.style.paddingTop = "15px";
+
           var tbl     = document.createElement("table");
           tbl.id = "batch-table"
-          tbl.style.position = "absolute";
+          //tbl.style.position = "absolute";
           tbl.style.border = "1.5px solid #5ca6c4";
           tbl.style.borderRadius = "10px";
-          tbl.style.width = "90%";
+          tbl.style.width = "94%";
           //tbl.style.paddingLeft = "20px";
-          tbl.style.left = "2%";
-          tbl.style.paddingTop = "62px";
+          tbl.style.marginTop = "20px";
+          tbl.style.marginLeft = "20px";
+          tbl.style.paddingTop = "35px";
+          tbl.style.paddingBottom = "20px";
 
           table_headers = ["Pack Size", "Total tins", "Reason For Disposal", "Authorizaton Code"];
 
@@ -314,7 +322,8 @@
             var drug_name = item.getAttribute("value") + "_" + i;
             for (var j = 0; j <= 3; j++) {
               var cell = document.createElement("td");
-              cell.style.width = '20px'
+              cell.style.width = '20px';
+              cell.style.textAlign = 'center';
               var textField = document.createElement("input");
               if (j == 2){
                 var textField = document.createElement("select");
@@ -323,12 +332,12 @@
               if (j == 0){
                 //var inputID = "Number of tins";
                 var inputID = item.getAttribute("value") + "_" + i + "_number_of_tins";
-                if (i == 0){
+                /*if (i == 0){
                   var inputValue = drug_cms_packsizes[item.getAttribute("value")];
                 }else{
                   var inputValue = drugs_hash[drug_name]["tabs_per_tin"]
-                }
-
+                }*/
+                var inputValue = drug_cms_packsizes[item.getAttribute("value")];
                 var field_type = "tabs_per_tin"
               }
 
@@ -402,7 +411,9 @@
             tblBody.appendChild(row);
             tbl.appendChild(tblBody);
           }
-          __$("data-pane").appendChild(tbl);
+          scrollable_div.appendChild(tbl)
+          __$("data-pane").appendChild(scrollable_div);
+          jQuery("#batch-table td:first-child, #batch-table th:first-child").hide();
           /* CUSTOM END*/
 
           var table = document.createElement("div");
@@ -423,13 +434,14 @@
           header.style.width = "98%";
           header.style.textAlign = "center";
           header.style.height = "45px";
-          //header.style.marginTop = "244px";
-
+          header.style.top = "0px";
+          header.style.position = 'absolute';
           header.setAttribute("drug", item.getAttribute("value"));
           /*header.innerHTML = pos + (pos == 1 ? "<sup>st</sup>" : (pos == 2 ? "<sup>nd</sup>" : (pos == 3 ? "<sup>rd</sup>" : "th"))) +
-                            " - " + item.getAttribute("cms_name");*/
+                        " - " + item.getAttribute("cms_name");*/
           header.innerHTML = item.getAttribute("cms_name");
-          __$("data-pane").appendChild(header);
+          scrollable_div.appendChild(header)
+          //__$("data-pane").appendChild(header);
           __$("data-pane").appendChild(table);
 
 
@@ -1888,8 +1900,8 @@
   }
 
   function row_complete(tabs_per_tin, total_tins, reason, authorization_code){
-    if (tabs_per_tin.length > 0 || total_tins.length > 0 || reason.length > 0 || authorization_code.length > 0){
-      if (tabs_per_tin.length > 0 && total_tins.length > 0 && reason.length > 0 && authorization_code.length > 0){
+    if (total_tins.length > 0 || reason.length > 0 || authorization_code.length > 0){
+      if (total_tins.length > 0 && reason.length > 0 && authorization_code.length > 0){
         return true
       }else{
         return false
@@ -1909,6 +1921,7 @@
         break;
       }
     }
+
     if (complete){
       var batch_table = jQuery("#batch-table")[0].getElementsByTagName("tbody")[0];
       var i = parseInt(jQuery( "table input:last" ).attr("row")) + 1;
@@ -1922,10 +1935,13 @@
       for (var j = 0; j <= 3; j++) {
         var cell = document.createElement("td");
         cell.style.width = '20px';
+        cell.style.textAlign = 'center';
         var textField = document.createElement("input");
         if (j == 0){
           //var inputID = "Number of tins";
           var inputID = drug + "_" + i + "_number_of_tins";
+          var inputValue = drug_cms_packsizes[drug];
+          textField.value = inputValue;
           var field_type = "tabs_per_tin"
         }
 
@@ -2000,6 +2016,7 @@
         addedRowsHash[drug] = 1;
       }
       batch_table.appendChild(row);
+      jQuery("#batch-table td:first-child, #batch-table th:first-child").hide();
       //////////////////////////////////
     }
   }
@@ -2346,7 +2363,7 @@
 </script>
 <style>
   #popupkeyboard{
-    margin-top: 270px;
+    margin-top: 50px !important;
     border-spacing: 5px;
 
   }
