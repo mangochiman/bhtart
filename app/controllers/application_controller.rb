@@ -30,7 +30,7 @@ class ApplicationController < GenericApplicationController
         session_date.to_date])
     return hiv_clinic_consultations.count
   end
-  
+
   def patient_has_stopped_fast_track_at_adherence?(patient, session_date = Date.today)
     stop_reason_concept_id = Concept.find_by_name('STOP REASON').concept_id
     fast_track_stop_reason_obs = patient.person.observations.find(:last, :conditions => ["DATE(obs_datetime) = ? AND
@@ -78,7 +78,7 @@ class ApplicationController < GenericApplicationController
     return false if latest_tb_treatment_status.blank?
     return true if (latest_tb_treatment_status.match(/YES/i))
     return false
-    
+
   end
 
   def patient_last_appointment_date(patient,  session_date = Date.today)
@@ -99,14 +99,14 @@ class ApplicationController < GenericApplicationController
         return true
       end
     end
-    
+
     return false #If not fast track OR fast track but missed their appointment dates
   end
 
   def fast_track_obs_date(patient, session_date = Date.today)
     fast_track_concept_id = Concept.find_by_name("FAST").concept_id
     fast_track_assesment_encounter_type_id = EncounterType.find_by_name("FAST TRACK ASSESMENT").encounter_type_id
-    fast_track_obs = patient.person.observations.find(:last, :joins => [:encounter], 
+    fast_track_obs = patient.person.observations.find(:last, :joins => [:encounter],
         :conditions => ["encounter_type =? AND DATE(obs_datetime) <= ? AND
         concept_id =?", fast_track_assesment_encounter_type_id, session_date, fast_track_concept_id]
     )
@@ -129,7 +129,7 @@ class ApplicationController < GenericApplicationController
     if (patient_has_visited_on_scheduled_date(patient,  session_date) == false)
       fast_track_patient = false
     end
-    
+
     return fast_track_patient
   end
 
@@ -143,7 +143,7 @@ class ApplicationController < GenericApplicationController
     return false if latest_tb_status.blank?
     return true if (latest_tb_status.match(/TB SUSPECTED|CONFIRMED/i))
     return false
-    
+
   end
 
   def patient_has_psychosis?(patient, session_date = Date.today)
@@ -207,7 +207,7 @@ class ApplicationController < GenericApplicationController
     task = main_next_task(Location.current_location, patient,session_date)
     sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
     dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
-    
+
     if vl_routine_check_activated
       if (@template.improved_viral_load_check(patient) == true)
         #WORKFLOW FOR HIV VIRAL LOAD GOES HERE
@@ -225,7 +225,7 @@ class ApplicationController < GenericApplicationController
               end
             end
           end
-          
+
           if (prescribe_drugs_obs.answer_string.squish.upcase == 'NO')
             #Still do viral load if treatment is not required
             if !(session[:hiv_viral_load_today_patient].to_i == patient.id)
@@ -262,7 +262,7 @@ class ApplicationController < GenericApplicationController
           encounter_type =? AND DATE(encounter_datetime) =?", patient.id,
             cervical_cancer_screening_encounter_type_id, Date.today]
         )
-        
+
         terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
 
         via_referral_outcome_answers = Observation.find(:all, :joins => [:encounter],
@@ -315,9 +315,9 @@ class ApplicationController < GenericApplicationController
 
     begin
       return task.url if task.present? && task.url.present?
-      return "/patients/show/#{patient.id}" 
+      return "/patients/show/#{patient.id}"
     rescue
-      return "/patients/show/#{patient.id}" 
+      return "/patients/show/#{patient.id}"
     end
   end
 
@@ -328,7 +328,7 @@ class ApplicationController < GenericApplicationController
     patient_cervical_cancer_encounter = Encounter.find(:last, :conditions => ["patient_id =? AND encounter_type =?",
         patient.patient_id, cervical_cancer_encounter_type])
     return false if patient_cervical_cancer_encounter.blank?
-    
+
     patient_cervical_cancer_encounter.observations.each do |observation|
       next unless observation.concept.fullname.match(/POSITIVE CRYO/i)
       if observation.answer_string.squish.match(/Cryo Done/i)
@@ -337,19 +337,19 @@ class ApplicationController < GenericApplicationController
       end
       return false
     end
-    
+
   end
-  
+
   def continue_tb_treatment(patient,session_date)
     tb_visit = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
       :conditions =>["patient_id = ? AND encounter_type = ?
-                    AND DATE(encounter_datetime) = ?",patient.id,               
+                    AND DATE(encounter_datetime) = ?",patient.id,
         EncounterType.find_by_name("TB VISIT").id,session_date.to_date])
-                                                                                
-    tb_visit.observations.map{|o|              
-      o.to_s.upcase.strip.squish                                          
-    }.include?("CONTINUE TREATMENT: YES") rescue false                     
-                                                                                
+
+    tb_visit.observations.map{|o|
+      o.to_s.upcase.strip.squish
+    }.include?("CONTINUE TREATMENT: YES") rescue false
+
   end
 
   def tb_next_form(location , patient , session_date = Date.today)
@@ -369,7 +369,7 @@ class ApplicationController < GenericApplicationController
         return task
       end
     end
-     
+
     #we get the sequence of clinic questions(encounters) form the GlobalProperty table
     #property: list.of.clinical.encounters.sequentially
     #property_value: ?
@@ -409,13 +409,13 @@ class ApplicationController < GenericApplicationController
     end
     art_reason = patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue nil
     reason_for_art = art_reason.map{|c|ConceptName.find(c.value_coded_name_id).name}.join(',') rescue ''
-    
+
     tb_reception_attributes = []
     tb_obs = Encounter.find(:first,:order => "encounter_datetime DESC",
       :conditions => ["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
         session_date,patient.id,EncounterType.find_by_name('TB RECEPTION').id]).observations rescue []
     (tb_obs || []).each do | obs |
-      tb_reception_attributes << obs.to_s.squish.strip 
+      tb_reception_attributes << obs.to_s.squish.strip
     end
 
     tb_encounters.each do | type |
@@ -474,7 +474,7 @@ class ApplicationController < GenericApplicationController
 
         tb_clinic_encounter = Encounter.find(:first,
           :conditions => ["encounter_type = ? AND patient_id = ?
-            AND DATE(encounter_datetime) <= ?",    
+            AND DATE(encounter_datetime) <= ?",
             EncounterType.find_by_name("TB clinic visit").id,patient.id,
             session_date.to_date],:order => "encounter_datetime DESC,
             encounter.date_created DESC")
@@ -496,14 +496,14 @@ class ApplicationController < GenericApplicationController
             return task
           end
         end
-          
+
         refered_to_htc_concept_id = ConceptName.find_by_name("Refer to HTC").concept_id
         observation = Observation.find(:all,
           :conditions => ["encounter_id = ?", Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
               :conditions =>["DATE(encounter_datetime) <= ? AND patient_id = ? AND encounter_type = ?",
                 session_date.to_date, patient.id,EncounterType.find_by_name("update hiv status").id]).encounter_id]).to_s
 
-					
+
         #if hiv_status.blank? and user_selected_activities.match(/Manage HIV Status Visits/i)
         if observation.match(/Refer to HTC:  Yes/i) and user_selected_activities.match(/Manage HIV Status Visits/i)
           task.encounter_type = 'Refered to HTC'
@@ -747,16 +747,16 @@ class ApplicationController < GenericApplicationController
         end
       when 'HIV CLINIC REGISTRATION'
         next unless PatientService.patient_hiv_status(patient).match(/Positive/i)
-       
+
         next unless continue_tb_treatment(patient,session_date)
- 
+
         enrolled_in_hiv_program = Concept.find(Observation.find(:last,
-            :conditions => ["person_id = ? AND concept_id = ?",patient.id, 
+            :conditions => ["person_id = ? AND concept_id = ?",patient.id,
               ConceptName.find_by_name("Patient enrolled in HIV program").concept_id]).value_coded).concept_names.map{|c|
           c.name}[0].upcase rescue nil
-      
+
         next unless enrolled_in_hiv_program == 'YES'
-  
+
         enrolled_in_hiv_program = patient.patient_programs.collect{|p|p.program.name}.include?('HIV PROGRAM') rescue false
         next if enrolled_in_hiv_program
 
@@ -819,7 +819,7 @@ class ApplicationController < GenericApplicationController
         vitals = PatientService.checks_if_vitals_are_need(patient,session_date,task,user_selected_activities)
         return vitals unless vitals.blank?
 
-    
+
         if user_selected_activities.match(/Manage TB Registration visits/i)
           task.url = "/encounters/new/tb_registration?show&patient_id=#{patient.id}"
           return task
@@ -923,7 +923,7 @@ class ApplicationController < GenericApplicationController
         goto_hiv_clinic_consultation_answered = clinic_visit.observations.map{|obs| obs.to_s.strip.upcase }.include? 'ART visit:'.upcase rescue false
 
         next if not goto_hiv_clinic_consultation and goto_hiv_clinic_consultation_answered
-          
+
 
         hiv_clinic_consultation = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
           :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
@@ -942,7 +942,7 @@ class ApplicationController < GenericApplicationController
           next unless MedicationService.tb_medication(order.drug_order.drug)
           drugs_given_before = true
         end
-           
+
         tb_adherence = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
           :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
             session_date.to_date,patient.id,EncounterType.find_by_name(type).id])
@@ -966,7 +966,7 @@ class ApplicationController < GenericApplicationController
           arv_drugs_given = true
           break
         end unless arv_drugs_given
-          
+
         art_adherence = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
           :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
             session_date.to_date,patient.id,EncounterType.find_by_name(type).id])
@@ -979,7 +979,7 @@ class ApplicationController < GenericApplicationController
           return task
         end if art_drugs_given_before
       when 'TREATMENT'
-=begin 
+=begin
           tb_treatment_encounter = Encounter.find(:first,:order => "encounter_datetime DESC,date_created DESC",
                                    :joins => "INNER JOIN obs USING(encounter_id)",
                                    :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ? AND concept_id = ?",
@@ -989,7 +989,7 @@ class ApplicationController < GenericApplicationController
           :joins => "INNER JOIN obs USING(encounter_id)",
           :conditions =>["DATE(encounter_datetime) = ? AND patient_id = ? AND encounter_type = ?",
             session_date.to_date,patient.id,EncounterType.find_by_name(type).id])
-    
+
         next unless tb_treatment_encounter.blank?
 
 
@@ -1054,7 +1054,7 @@ class ApplicationController < GenericApplicationController
         end if not treatment.blank?
 
         complete = DrugOrder.all_orders_complete(patient,session_date.to_date)
-         
+
         if not complete and user_selected_activities.match(/Manage drug dispensations/i)
           task.url = "/patients/treatment_dashboard/#{patient.id}"
           return task
@@ -1062,7 +1062,7 @@ class ApplicationController < GenericApplicationController
           task.url = "/patients/show/#{patient.id}"
           return task
         end if not treatment.blank?
-         
+
         appointment = Encounter.find(:first,:conditions =>["patient_id = ? AND
                         encounter_type = ? AND DATE(encounter_datetime) = ?",
             patient.id,EncounterType.find_by_name('APPOINTMENT').id,session_date],
@@ -1159,7 +1159,7 @@ class ApplicationController < GenericApplicationController
 
     task.encounter_type = "NONE"
     task.url = "/patients/show/#{patient.id}"
-    return task.url
+    return task
   end
 
   def next_form(location , patient , session_date = Date.today)
@@ -1182,7 +1182,7 @@ class ApplicationController < GenericApplicationController
     if current_program_location == "TB program"
       return tb_next_form(location , patient , session_date)
     end
-    
+
     if current_user_activities.blank?
       task.encounter_type = "NO TASKS SELECTED"
       task.url = "/patients/show/#{patient.id}"
@@ -1194,7 +1194,7 @@ class ApplicationController < GenericApplicationController
     current_day_encounters = Encounter.find(:all,
       :conditions =>["patient_id = ? AND DATE(encounter_datetime) = ?",
         patient.id,session_date.to_date]).map{|e|e.name.upcase}
-    
+
     if current_day_encounters.include?("TB RECEPTION")
       return tb_next_form(location , patient , session_date)
     end
@@ -1211,7 +1211,7 @@ class ApplicationController < GenericApplicationController
     #5. Manage HIV first visit - HIV CLINIC REGISTRATION
     #6. Manage drug dispensations - DISPENSING
     #7. Manage HIV clinic consultations - HIV CLINIC CONSULTATION
-    #8. Manage TB reception visits -? 
+    #8. Manage TB reception visits -?
     #9. Manage prescriptions - TREATMENT
     #10. Manage appointments - APPOINTMENT
     #11. Manage ART adherence - ART ADHERENCE
@@ -1234,10 +1234,10 @@ class ApplicationController < GenericApplicationController
     #fast_track_patient = false
     #latest_fast_track_answer = patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     #fast_track_patient = true if latest_fast_track_answer == 'YES'
-    
+
     #fast_track_patient = false if (tb_suspected_or_confirmed?(patient, session_date) == true)
     #fast_track_patient = false if (is_patient_on_htn_treatment?(patient, session_date) == true)
-    
+
     if (fast_track_patient?(patient, session_date) || fast_track_done_today(patient, session_date))
       #fast_track_done_today method: this is to for tracking a patient if the patient is a fast track after even the visit is done on that day
       return fast_track_next_form(location , patient , session_date)
@@ -1256,13 +1256,13 @@ class ApplicationController < GenericApplicationController
 			encounter_available = Encounter.find(:first,:conditions =>["patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ?",
           patient.id,EncounterType.find_by_name(type).id, session_date],
         :order =>'encounter_datetime DESC,date_created DESC',:limit => 1) rescue nil
-      
+
       # next if encounter_available.nil?
-      
+
       reception = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
           patient.id,session_date,EncounterType.find_by_name('HIV RECEPTION').id]).observations.collect{| r | r.to_s}.join(',') rescue ''
-        
-      task.encounter_type = type 
+
+      task.encounter_type = type
       case type
       when 'VITALS'
         if encounter_available.blank? and user_selected_activities.match(/Manage Vitals/i)
@@ -1290,7 +1290,7 @@ class ApplicationController < GenericApplicationController
           task.url = "/patients/show/#{patient.id}"
           return task
         end
-          
+
         #if a nurse has refered a patient to a doctor/clinic
         concept_id = ConceptName.find_by_name("Refer to ART clinician").concept_id
         ob = Observation.find(:first,:conditions =>["person_id = ? AND concept_id = ? AND obs_datetime >= ? AND obs_datetime <= ?",
@@ -1310,7 +1310,7 @@ class ApplicationController < GenericApplicationController
             arv_drugs_given = true
             break
           end
-                                                                          
+
           if arv_drugs_given
             if adherence_encounter_available.blank? and user_selected_activities.match(/Manage ART adherence/i)
               task.encounter_type = "ART ADHERENCE"
@@ -1324,7 +1324,7 @@ class ApplicationController < GenericApplicationController
           end
         end if refer_to_clinician
 
-          
+
         if not encounter_available.blank? and refer_to_clinician
           task.url = "/patients/show/#{patient.id}"
           task.encounter_type = task.encounter_type + " (Clinician)"
@@ -1347,7 +1347,7 @@ class ApplicationController < GenericApplicationController
           end
         end if clinician_or_doctor
       when 'HIV STAGING'
-        next unless reason_for_art.blank? 
+        next unless reason_for_art.blank?
         staging = session["#{patient.id}"]["#{session_date.to_date}"][:stage_patient] rescue []
         if ! staging.blank?
           next if staging == "No"
@@ -1372,7 +1372,7 @@ class ApplicationController < GenericApplicationController
         transfer_in = encounter_hiv_clinic_registration.observations.collect{|r|r.to_s.strip.upcase}.include?('HAS TRANSFER LETTER: YES'.upcase) rescue []
         hiv_staging = Encounter.find(:first,:conditions =>["patient_id = ? AND encounter_type = ?",
             patient.id,EncounterType.find_by_name('HIV STAGING').id],:order => "encounter_datetime DESC")
-          
+
         if transfer_in and hiv_staging.blank? and user_selected_activities.match(/Manage HIV first visits/i)
           task.url = "/encounters/new/hiv_staging?show&patient_id=#{patient.id}"
           task.encounter_type = 'HIV STAGING'
@@ -1450,14 +1450,14 @@ class ApplicationController < GenericApplicationController
           arv_drugs_given = true
           break
         end
-      
+
         MedicationService.art_drug_prescribed_before(patient,session_date).each do |order|
           arv_drugs_given = true
           break
         end unless arv_drugs_given
-          
+
         next unless arv_drugs_given
-         
+
         if arv_drugs_given
           if encounter_available.blank? and user_selected_activities.match(/Manage ART adherence/i)
             task.url = "/encounters/new/art_adherence?show&patient_id=#{patient.id}"
@@ -1465,7 +1465,7 @@ class ApplicationController < GenericApplicationController
           elsif encounter_available.blank? and not user_selected_activities.match(/Manage ART adherence/i)
             task.url = "/patients/show/#{patient.id}"
             return task
-          end 
+          end
         end
       end
     end
@@ -1494,7 +1494,7 @@ class ApplicationController < GenericApplicationController
 
       # By default, we don't want to skip this task
       skip = false
- 
+
       # Skip this task if this is a gender specific task and the gender does not match?
       # For example, if this is a female specific check and the patient is not female, we want to skip it
       skip = true if task.gender.present? && patient.person.gender != task.gender
@@ -1513,7 +1513,7 @@ class ApplicationController < GenericApplicationController
               task.has_obs_value_numeric,
               task.has_obs_value_text])
         end
-        
+
         # Only the most recent obs
         # For example, if there are mutliple REFER TO CLINICIAN = yes, than only take the most recent one
         if (task.has_obs_scope == 'RECENT')
@@ -1522,7 +1522,7 @@ class ApplicationController < GenericApplicationController
               o.value_datetime == task.has_obs_value_datetime && o.value_numeric == task.has_obs_value_numeric &&
               o.value_text == task.has_obs_value_text )
         end
-          
+
         skip = true unless obs.present?
       end
 
@@ -1554,21 +1554,21 @@ class ApplicationController < GenericApplicationController
             task.has_program_workflow_state_id], :include => :patient_program)
         skip = true unless patient_state.present?
       end
-      
+
       # Check for a particular relationship, skip this task if the patient does not have the relationship
       # For example, if there is a CHW training update, skip this task if the person is not a CHW
-      if task.has_relationship_type_id.present?        
+      if task.has_relationship_type_id.present?
         skip = true unless patient.relationships.first(
           :conditions => ['relationship.relationship = ?', task.has_relationship_type_id])
       end
- 
+
       # Check for a particular identifier at this location
       # For example, this patient can only get to the Pre-ART room if they already have a pre-ART number, otherwise they need to go back to registration
       if task.has_identifier_type_id.present?
         skip = true unless patient.patient_identifiers.first(
           :conditions => ['patient_identifier.identifier_type = ? AND patient_identifier.location_id = ?', task.has_identifier_type_id, Location.current_health_center.location_id])
       end
-  
+
       if task.has_encounter_type_today.present?
         enc = nil
         if todays_encounters.collect{|e|e.name}.include?(task.has_encounter_type_today)
@@ -1579,22 +1579,22 @@ class ApplicationController < GenericApplicationController
 
       arv_drugs_given = false
       MedicationService.art_drug_given_before(patient,session_date).each do |order|
-        arv_drugs_given = true                                              
+        arv_drugs_given = true
         break
       end
 
       if task.encounter_type == 'ART ADHERENCE' and not arv_drugs_given
         skip = true
       end
-      
+
       if task.encounter_type == 'HIV CLINIC CONSULTATION' and (reason_for_art_eligibility(patient).blank? or reason_for_art_eligibility(patient).match(/unknown/i))
         skip = true
       end
-      
+
       if task.encounter_type == 'HIV STAGING' and not (reason_for_art_eligibility(patient).blank? or reason_for_art_eligibility(patient).match(/unknown/i))
         skip = true
       end
-      
+
       # Reverse the condition if the task wants the negative (for example, if the patient doesn't have a specific program yet, then run this task)
       skip = !skip if task.skip_if_has == 1
 
@@ -1610,21 +1610,21 @@ class ApplicationController < GenericApplicationController
       task.url = task.url.gsub(/\{person\}/, "#{patient.person.person_id rescue nil}")
       task.url = task.url.gsub(/\{location\}/, "#{location.location_id}")
       Rails.logger.debug "next_task: #{task.id} - #{task.description}"
-      
+
       return task
     end
   end
-  
-  
+
+
   def validate_task(patient, task, location, session_date = Date.today)
     #return task unless task.has_program_id == 1
     return task if task.encounter_type == 'REGISTRATION'
     # allow EID patients at HIV clinic, but don't validate tasks
     return task if task.has_program_id == 4
-    
+
     #check if the latest HIV program is closed - if yes, the app should redirect the user to update state screen
     if patient.encounters.find_by_encounter_type(EncounterType.find_by_name('HIV CLINIC REGISTRATION').id)
-      latest_hiv_program = [] ; patient.patient_programs.collect{ | p |next unless p.program_id == 1 ; latest_hiv_program << p } 
+      latest_hiv_program = [] ; patient.patient_programs.collect{ | p |next unless p.program_id == 1 ; latest_hiv_program << p }
       if latest_hiv_program.last.closed?
         task.url = '/patients/programs_dashboard/{patient}' ; task.encounter_type = 'Program enrolment'
         return task
@@ -1637,30 +1637,30 @@ class ApplicationController < GenericApplicationController
 
     #if the following happens - that means the patient is a transfer in and the reception are trying to stage from the transfer in sheet
     if task.encounter_type == 'HIV STAGING' and location.name.match(/RECEPTION/i)
-      return task 
+      return task
     end
 
     #if the following happens - that means the patient was refered to see a clinician
     if task.description.match(/REFER/i) and location.name.match(/Clinician/i)
-      return task 
+      return task
     end
 
     if patient.encounters.find_by_encounter_type(EncounterType.find_by_name(art_encounters[0]).id).blank? and task.encounter_type != art_encounters[0]
-      task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
-      task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[0].gsub(' ','_')}") 
+      task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
+      task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[0].gsub(' ','_')}")
       return task
     elsif patient.encounters.find_by_encounter_type(EncounterType.find_by_name(art_encounters[0]).id).blank? and task.encounter_type == art_encounters[0]
       return task
     end
-    
+
     hiv_reception = Encounter.find(:first,
       :conditions =>["patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ?",
         patient.id,EncounterType.find_by_name(art_encounters[1]).id,session_date],
       :order =>'encounter_datetime DESC')
 
     if hiv_reception.blank? and task.encounter_type != art_encounters[1]
-      task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
-      task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[1].gsub(' ','_')}") 
+      task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
+      task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[1].gsub(' ','_')}")
       return task
     elsif hiv_reception.blank? and task.encounter_type == art_encounters[1]
       return task
@@ -1668,7 +1668,7 @@ class ApplicationController < GenericApplicationController
 
     reception = Encounter.find(:first,:conditions =>["patient_id = ? AND DATE(encounter_datetime) = ? AND encounter_type = ?",
         patient.id,session_date,EncounterType.find_by_name(art_encounters[1]).id]).collect{|r|r.to_s}.join(',') rescue ''
-    
+
     if reception.match(/PATIENT PRESENT FOR CONSULTATION:  YES/i)
       vitals = Encounter.find(:first,
         :conditions =>["patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ?",
@@ -1676,8 +1676,8 @@ class ApplicationController < GenericApplicationController
         :order =>'encounter_datetime DESC')
 
       if vitals.blank? and task.encounter_type != art_encounters[2]
-        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
-        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[2].gsub(' ','_')}") 
+        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
+        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[2].gsub(' ','_')}")
         return task
       elsif vitals.blank? and task.encounter_type == art_encounters[2]
         return task
@@ -1691,8 +1691,8 @@ class ApplicationController < GenericApplicationController
     if ((reasons.blank?) and (task.encounter_type == art_encounters[3]))
       return task
     elsif hiv_staging.blank? and task.encounter_type != art_encounters[3]
-      task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
-      task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[3].gsub(' ','_')}") 
+      task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
+      task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[3].gsub(' ','_')}")
       return task
     elsif hiv_staging.blank? and task.encounter_type == art_encounters[3]
       return task
@@ -1711,14 +1711,14 @@ class ApplicationController < GenericApplicationController
 
       if art_visit.blank? and task.encounter_type != art_encounters[4]
         #checks if we need to do a pre art visit
-        if task.encounter_type == 'PART_FOLLOWUP' 
+        if task.encounter_type == 'PART_FOLLOWUP'
           return task
         elsif reasons.upcase == 'UNKNOWN' or reasons.blank?
-          task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
+          task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
           return task
         end
-        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
-        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[4].gsub(' ','_')}") 
+        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
+        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[4].gsub(' ','_')}")
         return task
       elsif art_visit.blank? and task.encounter_type == art_encounters[4]
         return task
@@ -1727,8 +1727,8 @@ class ApplicationController < GenericApplicationController
 
     arv_drugs_given = false
     MedicationService.drug_given_before(patient,session_date).each do |order|
-      next unless MedicationService.arv(order.drug_order.drug)            
-      arv_drugs_given = true                                              
+      next unless MedicationService.arv(order.drug_order.drug)
+      arv_drugs_given = true
     end
 
     if arv_drugs_given
@@ -1736,10 +1736,10 @@ class ApplicationController < GenericApplicationController
         :conditions =>["patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = ?",
           patient.id,EncounterType.find_by_name(art_encounters[5]).id,session_date],
         :order =>'encounter_datetime DESC',:limit => 1)
-      
+
       if art_adherance.blank? and task.encounter_type != art_encounters[5]
-        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
-        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[5].gsub(' ','_')}") 
+        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
+        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[5].gsub(' ','_')}")
         return task
       elsif art_adherance.blank? and task.encounter_type == art_encounters[5]
         return task
@@ -1752,8 +1752,8 @@ class ApplicationController < GenericApplicationController
           patient.id,EncounterType.find_by_name(art_encounters[6]).id,session_date],
         :order =>'encounter_datetime DESC',:limit => 1)
       if art_treatment.blank? and task.encounter_type != art_encounters[6]
-        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}" 
-        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[6].gsub(' ','_')}") 
+        task.url = "/patients/summary?patient_id={patient}&skipped={encounter_type}"
+        task.url = task.url.gsub(/\{encounter_type\}/, "#{art_encounters[6].gsub(' ','_')}")
         return task
       elsif art_treatment.blank? and task.encounter_type == art_encounters[6]
         return task
@@ -1762,33 +1762,33 @@ class ApplicationController < GenericApplicationController
 
     task
   end
-    
 
-  def latest_state(patient_obj,visit_date)                                     
+
+  def latest_state(patient_obj,visit_date)
     program_id = Program.find_by_name('HIV PROGRAM').id
     patient_state = PatientState.find(:first,
       :joins => "INNER JOIN patient_program p
-       ON p.patient_program_id = patient_state.patient_program_id",             
+       ON p.patient_program_id = patient_state.patient_program_id",
       :conditions =>["patient_state.voided = 0 AND p.voided = 0
-       AND p.program_id = ? AND start_date <= ? AND p.patient_id =?",           
+       AND p.program_id = ? AND start_date <= ? AND p.patient_id =?",
         program_id,visit_date.to_date,patient_obj.id],
       :order => "start_date DESC, date_created DESC")
-                                                                                
+
     return if patient_state.blank?
     ConceptName.find_by_concept_id(patient_state.program_workflow_state.concept_id).name
   end
-  
+
 	def require_hiv_clinic_registration(patient_obj = nil)
 		require_registration = false
 		patient = patient_obj || find_patient
 
-		hiv_clinic_registration = Encounter.find(:first,:conditions =>["patient_id = ? 
+		hiv_clinic_registration = Encounter.find(:first,:conditions =>["patient_id = ?
 		              AND encounter_type = ?",patient.id,
         EncounterType.find_by_name("HIV CLINIC REGISTRATION").id],
       :order =>'encounter_datetime DESC,date_created DESC')
 
 		require_registration = true if hiv_clinic_registration.blank?
-	
+
 		if !require_registration
 			session_date = session[:datetime].to_date rescue Date.today
 
@@ -1816,7 +1816,7 @@ class ApplicationController < GenericApplicationController
     else
       'ART'
     end
-  end 
+  end
 
   def confirm_before_creating
     property = GlobalProperty.find_by_property("confirm.before.creating")
@@ -1864,7 +1864,7 @@ class ApplicationController < GenericApplicationController
           session_date.strftime('%Y-%m-%d 00:00:00'),
           session_date.strftime('%Y-%m-%d 23:59:59')
         ]).answer_string.downcase.strip rescue nil) == "yes"
-    
+
     todays_encounters = patient.encounters.find_by_date(session_date)
     sbp_threshold = CoreService.get_global_property_value("htn.systolic.threshold").to_i
     dbp_threshold = CoreService.get_global_property_value("htn.diastolic.threshold").to_i
@@ -1902,7 +1902,7 @@ class ApplicationController < GenericApplicationController
             if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
               return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
                 :encounter_type => "HYPERTENSION MANAGEMENT")
-            elsif !referred_to_clinician 
+            elsif !referred_to_clinician
               return Task.new(:url => "/htn_encounter/bp_management?patient_id=#{patient.id}",
                 :encounter_type => "HYPERTENSION MANAGEMENT")
             else

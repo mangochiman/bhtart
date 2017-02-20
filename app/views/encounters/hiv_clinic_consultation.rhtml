@@ -1,3 +1,12 @@
+
+<script src="/javascripts/jquery-1.3.2.min.js" type="text/javascript"></script>
+<script language="javascript" type="text/javascript" src="/javascripts/jquery.js"></script>
+<script language="javascript" type="text/javascript" src="/javascripts/jquery.flot.js"></script>
+
+<%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
+<%= javascript_include_tag "Highcharts/js/highcharts" %>
+<%= javascript_include_tag "vitals_trail" %>
+
 <link rel="stylesheet" href="/stylesheets/yes_no_btn.css" type="text/css"/>
 
 <style type="text/css">
@@ -1050,6 +1059,85 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     
   }
   
+  function expandChart(e) {
+    zoomChart('container_' + e, weightObs);
+  }
+
+  function loadCharts() {
+    var frame = document.getElementById('inputFrame' + tstCurrentPage);
+    var chartDiv = document.createElement('div');
+    chartDiv.setAttribute('class','boxer');
+    chartDiv.setAttribute('style','width:99%; height:98%; margin:0 auto;')
+    frame.appendChild(chartDiv);
+
+
+    var chartDivRow = document.createElement('div');
+    chartDivRow.setAttribute('class','box-row');
+
+    var chartDivRow2 = document.createElement('div');
+    chartDivRow2.setAttribute('class','box-row');
+    
+
+    chartDiv.appendChild(chartDivRow);
+    chartDiv.appendChild(chartDivRow2);
+
+
+    var charts = ['one','two','three','four'];
+    for(var i = 0; i < charts.length; i++){
+      var chart = document.createElement('div');
+      chart.setAttribute('id','container_' + charts[i]);
+      chart.setAttribute('style',"min-width: 49.5%; height: 280px; margin: 0 auto;");
+      chart.setAttribute('class','box');
+      chart.setAttribute('data-toggle','modal');
+      chart.setAttribute('data-target','.bd-example-modal-lg');
+      chart.setAttribute('onmousedown',"expandChart('" + charts[i] + "');");
+
+      if(charts[i] == 'one' || charts[i] == 'two'){
+        chartDivRow.appendChild(chart);
+      }else{
+        chartDivRow2.appendChild(chart);
+      }
+    }
+
+    for(var i = 0; i < charts.length; i++){
+      //createChart(charts[i]);
+    }
+
+    plotWeightTrailGraph('container_one', weightObs);
+    plotBabyGraph('container_three');
+
+  }
+
+/*
+  var weightObs = [];
+  <%#(@weight_trail || {}).sort_by{ |x,b| x.to_date }.each do |date, weight|%>
+    weightObs.push(['<%#=date.to_date%>', <%#= weight %>]);
+  <%#end%>
+
+
+  var standard_high_weight = [];
+  var standard_low_weight = [];
+  var median_weight = [];
+  var age_in_months = [];
+  var weight_trail = [];
+
+  <%#(@weight_height_for_age[1] || {}).sort_by {|x, y| x }.each do |age, data|%>
+    weight_trail.push(null);
+  <%#end%>
+
+  <%#(@weight_height_for_age[0] || []).each do |age, data|%>
+      m_index = <%#=age%>;
+      weight_trail[m_index] = <%#=data%>;
+   <%#end%>
+
+   <%#(@weight_height_for_age[1] || {}).sort_by {|x, y| x }.each do |age, data|%>
+      standard_low_weight.push(<%#=data[:standard_low_weight]%>);
+      standard_high_weight.push(<%#=data[:standard_high_weight]%>);
+      median_weight.push(<%#=data[:median_weight]%>);
+      age_in_months.push(<%#=age%>);
+    <%#end%>
+*/
+
 </script>
 
 <form action="/encounters/create" method='post'>
@@ -1057,6 +1145,15 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%= hidden_field_tag "encounter[patient_id]", @patient.id %>
   <%= hidden_field_tag "encounter[encounter_datetime]", DateTime.now() %>
   <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
+
+
+  <%#= text_field_tag :summary, nil, { 
+    :tt_onLoad => "__$('keyboard').style.display = 'none';loadCharts();showCategory2('Clinic consultation');", 
+    :optional => "true",
+    :tt_pageStyleClass => "NoControls" } 
+  %>
+
+
 
   <% side_effects_array.each do |element| %>
     <%= touch_hidden_tag "MALAWI ART SIDE EFFECTS", @patient, "", :id => "#{element}" %>
@@ -2087,3 +2184,67 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 </script>
 
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>
+
+
+<div id="popupLargeChart" class="popup" style="width:100%; margin:0, auto; " onmousedown="hideChart();"></div>
+
+
+<style>
+#vitals_table {
+  width: 100%;
+  height: 98%;
+}
+
+.chart_containers {
+  width: 40%;
+}
+
+
+
+
+
+
+
+
+
+
+
+.boxer {
+   display: table;
+   border-collapse: collapse;
+}
+
+.boxer .box-row {
+   display: table-row;
+}
+
+.boxer .box {
+   display: table-cell;
+   text-align: left;
+   vertical-align: top;
+   border: 1px solid black;
+}
+
+
+ #popupLargeChart {
+    position:absolute;
+    top: 10%;
+    left: 11%;
+    margin:-50px 0 0 -100px; /* [-(height/2)px 0 0 -(width/2)px] */
+    display:none;
+
+
+    background-color: #F4F4F4;
+    border: 2px solid #E0E0E0;
+    border-radius: 15px;
+    width: 90% !important;
+    height: 80%;
+    z-index: 991;
+
+
+
+
+
+  }
+
+</style>

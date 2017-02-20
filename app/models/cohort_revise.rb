@@ -318,7 +318,7 @@ EOF
 
 
     ActiveRecord::Base.connection.execute <<EOF
-      DROP FUNCTION IF EXISTS `oitiated_check`;
+      DROP FUNCTION IF EXISTS `re_initiated_check`;
 EOF
 
     ActiveRecord::Base.connection.execute <<EOF
@@ -340,7 +340,7 @@ set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE nam
 set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
 
 
-set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 56)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
+set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 14)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
 
 set check_two = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
 
@@ -363,7 +363,7 @@ DETERMINISTIC
 BEGIN
 DECLARE set_outcome varchar(25) default 'N/A';
 DECLARE date_of_death DATE;
-DECLARE num_of_months INT;
+DECLARE num_of_days INT;
 
 IF set_status = 'Patient died' THEN
 
@@ -374,12 +374,12 @@ IF set_status = 'Patient died' THEN
   END IF;
 
 
-  set num_of_months = (TIMESTAMPDIFF(month, date(date_enrolled), date(date_of_death)));
+  set num_of_days = (TIMESTAMPDIFF(day, date(date_enrolled), date(date_of_death)));
 
-  IF num_of_months < 2 THEN set set_outcome ="1st month";
-  ELSEIF num_of_months = 2 THEN set set_outcome ="2nd month";
-  ELSEIF num_of_months = 3 THEN set set_outcome ="3rd month";
-  ELSEIF num_of_months > 3 THEN set set_outcome ="4+ months";
+  IF num_of_days <= 30 THEN set set_outcome ="1st month";
+  ELSEIF num_of_days <= 60 THEN set set_outcome ="2nd month";
+  ELSEIF num_of_days <= 91 THEN set set_outcome ="3rd month";
+  ELSEIF num_of_days > 91 THEN set set_outcome ="4+ months";
   END IF;
 
 
@@ -845,7 +845,7 @@ EOF
     patient_list = [] if patient_list.blank?
 
     hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
-    #method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
+    method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
     family_planning_action_to_take_concept_id = ConceptName.find_by_name("Family planning, action to take").concept_id
     none_concept_id = ConceptName.find_by_name("None").concept_id
 
@@ -854,12 +854,12 @@ EOF
       FROM obs o
        inner join encounter e on e.encounter_id = o.encounter_id AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       WHERE o.voided = 0 AND e.voided = 0
-      AND (o.concept_id = #{family_planning_action_to_take_concept_id} AND o.value_coded != #{none_concept_id})
+      AND (o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}) AND o.value_coded != #{none_concept_id})
       AND o.person_id IN (#{patient_ids.join(',')})
       AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
                                   WHERE obs.voided = 0
-                    							AND (obs.concept_id = #{family_planning_action_to_take_concept_id})
+                    							AND (obs.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}))
                     							AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
@@ -947,7 +947,7 @@ EOF
       total_pregnant_females << person['person_id'].to_i
     end
 
-    return [] if total_pregnant_females.blank?
+    total_pregnant_females = [0] if total_pregnant_females.blank?
 
     hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
     breastfeeding_concept_id = ConceptName.find_by_name("Breast feeding?").concept_id
@@ -964,6 +964,7 @@ EOF
       							AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       GROUP BY obs.person_id;
 EOF
+
     return results
   end
 

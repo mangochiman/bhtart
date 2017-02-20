@@ -1007,8 +1007,18 @@ class EncountersController < GenericEncountersController
     ######################################################################################
 
 
+=begin
+    ################################# if hiv clinic consultation ##########################################
+    if params[:encounter_type].upcase == "HIV_CLINIC_CONSULTATION"
+      session_date = (session[:datetime].to_date rescue Date.today).strftime('%Y-%m-%d 23:59:59')
+      vitals = VitalsService.weight_trail(@patient, session_date)
+      @weight_trail           = vitals['weight_trail']
+      @weight_height_for_age  = vitals['weight_height_for_age']
 
-
+      #raise @weight_height_for_age[1].keys.sort.inspect
+    end
+    ######################################################################################
+=end
 
 
 		if PatientIdentifier.site_prefix == "MPC"

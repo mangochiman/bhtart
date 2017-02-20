@@ -30,13 +30,22 @@ def easy_art_setup
   database = YAML::load_file('config/database.yml')[environment]['database']
   host = YAML::load_file('config/database.yml')[environment]['host']
 
+
+  `mysql -h #{host} -u #{username} -p#{password} #{database} < db/bart2_views_schema_additions.sql`
   `mysql -h #{host} -u #{username} -p#{password} #{database} < db/openmrs_metadata_1_7.sql`
   `mysql -h #{host} -u #{username} -p#{password} #{database} < db/revised_regimens.sql`
   `rake db:migrate`
+  `mysql -h #{host} -u #{username} -p#{password} #{database} < db/drug_order_barcodes.sql`
 
+  create_reinitiated_check_view
+  puts "==========================SCRIPT ENDED============================================="
 end
 
 def create_reinitiated_check_view
+  ActiveRecord::Base.connection.execute <<EOF
+    DROP FUNCTION IF EXISTS `re_initiated_check`;
+EOF
+
   ActiveRecord::Base.connection.execute <<EOF
 CREATE FUNCTION re_initiated_check(set_patient_id INT, set_date_enrolled DATE) RETURNS VARCHAR(15)
 DETERMINISTIC
@@ -56,7 +65,7 @@ set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE nam
 set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
 
 
-set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 56)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
+set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 14)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
 
 set check_two = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
 

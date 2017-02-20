@@ -1079,9 +1079,17 @@ class GenericRegimensController < ApplicationController
 	end
 
   def suggest_all
+=begin
     medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i 
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*", 
       :group => 'drug.drug_id')
+=end
+
+    medications = []
+    (Drug.all || []).each do |d|
+      next unless MedicationService.arv(d)
+      medications << d
+    end
 
     session_date = session[:datetime].to_date rescue Date.today
     patient = Patient.find(params[:patient_id])
@@ -1297,9 +1305,16 @@ class GenericRegimensController < ApplicationController
 
   def formulations_all
     names = params[:names].split('::')
+=begin
     medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i 
       ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
       :conditions => ["drug.name IN(?)", names], :group => "drug.drug_id")
+=end
+
+    medications = []
+    (Drug.find(:all, :conditions =>["name IN(?)", names],:group =>"drug_id") || []).each do |d|
+      medications << d
+    end
 
     names.each do |drug_name|
       if (drug_name.match(/Cotrimoxazole|Isoniazid|Pyridoxine/i))

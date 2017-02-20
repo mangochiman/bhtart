@@ -122,7 +122,8 @@ dateToday = session[:datetime].to_date rescue Date.today
         data: { patient_id: "<%= @patient.id -%>", data: "weight", currentWeight:currentWeight },
         success: function(results){
           obs = JSON.parse(results)
-          plotBabyGraph(obs);
+          //plotBabyGraph(obs);
+          plotGraph(obs);
         }
       })
 
@@ -620,6 +621,13 @@ Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
   <!-- NEW ART GUIDELINES. Screen all adults (30+ years) for hypertension at least once at the time of ART initiation. -->
   <% if CoreService.get_global_property_value("activate.htn.enhancement").to_s != "true" %>
     <% if @patient_bean.age >= 30 %>
+
+      <%= select_tag "capture_bp", options_for_select([['Yes','YES'],['No','NO']]),
+          :id => 'capture_bp',
+          :helpText => "Measure <b>blood pressure</b> (BP)?",
+          :tt_onLoad => "showCategory2('Current vitals');",
+          :tt_pageStyleClass => 'NoKeyboard' %>
+
       <%= touch_text_field_tag "SYSTOLIC BLOOD PRESSURE", @patient, nil,{
         :id => "systolic_blood_pressure",
         :field_type => "number",
@@ -630,6 +638,7 @@ Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
         :absoluteMax => 220,
         :validationRule => "^([0-9]+)|Unknown$",
         :validationMessage => "You must enter numbers only (for example 157)",
+        :condition => '$("capture_bp").value == "YES"',
         :tt_pageStyleClass => "KeyboardNumeric NumbersOnly" } %>
 
 
@@ -642,6 +651,7 @@ Find more at: http://www.skillsyouneed.com/num/percent-change.html#ixzz4TIacWujf
         :absoluteMin => 30,
         :validationRule => "^([0-9]+)|Unknown$",
         :validationMessage => "You must enter numbers only (for example 157)",
+        :condition => '$("capture_bp").value == "YES"',
         :tt_pageStyleClass => "Keyboard Numeric NumbersOnly"} %>
     <% end %>
   <% end %>
