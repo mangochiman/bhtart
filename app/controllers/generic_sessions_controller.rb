@@ -140,8 +140,10 @@ class GenericSessionsController < ApplicationController
         end
 
       end
+      
       date_diff_in_months = 0 if disp_rate.to_i == 0
-
+      month_of_stock = month_of_stock - date_diff_in_months
+      
       @list[drug_cms_name] = {
         "month_of_stock" => month_of_stock,
         "stock_level" => stock_level,
@@ -153,7 +155,6 @@ class GenericSessionsController < ApplicationController
       }
 
     end
-   
     @list = @list.sort_by{|k, v|k}
 
     render :layout => false
@@ -196,7 +197,8 @@ class GenericSessionsController < ApplicationController
 
       end
       date_diff_in_months = 0 if disp_rate.to_i == 0
-
+      month_of_stock = month_of_stock - date_diff_in_months
+      
       @list[drug_cms_name] = {
         "month_of_stock" => month_of_stock,
         "stock_level" => stock_level,
@@ -209,7 +211,6 @@ class GenericSessionsController < ApplicationController
 
     end
     @list = @list.sort_by{|k, v|k}
-
     render :layout => false
   end
 
