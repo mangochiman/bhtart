@@ -1,6 +1,7 @@
 User.current = User.find_by_username('admin')
 ScriptStarted = Time.now
-Parent_path = '/home/pachawo/Documents/msf/'
+Source_path = '/home/deliwe/Desktop/Work/Fuchia/msf'
+Destination_path = '/home/deliwe/Desktop/Work/Fuchia/msf/msf_sql/'
 require 'fastercsv'
 
 def start
@@ -12,23 +13,24 @@ def start
   person_address_sql = "INSERT INTO person_address (person_id, city_village, date_created, creator, uuid) VALUES "
   person_attribute_sql = "INSERT INTO person_attribute (person_id, value, date_created, person_attribute_type_id, creator, uuid) VALUES "
 
-  `touch /home/pachawo/pats/person.sql && echo '#{person_sql}' >> /home/pachawo/pats/person.sql`
-  `touch /home/pachawo/pats/patient.sql && echo '#{patient_sql}' >> /home/pachawo/pats/patient.sql`
-  `touch /home/pachawo/pats/person_name.sql && echo '#{person_name_sql}' >> /home/pachawo/pats/person_name.sql`
-  `touch /home/pachawo/pats/person_address.sql && echo '#{person_address_sql}' >> /home/pachawo/pats/person_address.sql`
-  `touch /home/pachawo/pats/person_attribute.sql && echo '#{person_attribute_sql}' >> /home/pachawo/pats/person_attribute.sql`
+  `cd #{Destination_path} && touch person.sql patient.sql person_name.sql person_address.sql person_attribute.sql`
+  `echo -n '#{person_sql}' >> #{Destination_path}person.sql`
+  `echo -n '#{patient_sql}' >> #{Destination_path}patient.sql`
+  `echo -n '#{person_name_sql}' >> #{Destination_path}person_name.sql`
+  `echo -n '#{person_address_sql}' >>  #{Destination_path}person_address.sql`
+  `echo -n '#{person_attribute_sql}' >> #{Destination_path}person_attribute.sql`
 
-  FasterCSV.foreach("#{Parent_path}/TbPatient.csv", :headers => true, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
+  FasterCSV.foreach("#{Source_path}/TbPatient.csv", :headers => true, :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
     names = row[9].split(' ')
     given_name = nil ; middle_name = nil ; family_name = nil
 
     (names || []).each_with_index do |name, i|
       next if name.blank?
       n = name.titleize.squish
-      n = n.gsub('*','Unknown') 
-      given_name = n if i == 0  
+      n = n.gsub('*','Unknown')
+      given_name = n if i == 0
       if i == 1 and names.length > 2
-	middle_name = n 
+	middle_name = n
       else
         family_name = n if i == 1
       end
@@ -37,10 +39,10 @@ def start
 
     age_estimate = false
     gender = row[10].squish.to_i rescue 'Unknown'
-    date_created = row[1]  
+    date_created = row[1]
     date_created = get_proper_date(date_created)
     date_created = date_created.to_date.strftime("%Y-%m-%d 01:00:00") rescue Date.today.strftime("%Y-%m-%d 01:00:00")
-    age_estimate_date_created = row[14] 
+    age_estimate_date_created = row[13]
     date_of_death =get_proper_date(row[21]) unless row[21].blank?
     is_dead = row[20] rescue nil
     city_village = row[3] rescue nil
@@ -50,7 +52,7 @@ def start
     city_village = "Unknown" if city_village.blank?
     occupation = references[occupation]
     occupation = "Unknown" if occupation.blank?
-    
+
 
     if row[11].blank?
       age_estimate = true
@@ -76,18 +78,18 @@ def start
 EOF
 
   if death_date.blank?
-    insert_person = "(#{row[0]}, \"#{dob.to_date}\",#{age_estimate}, #{is_dead}, \"#{gender}\",null,\"#{date_created}\", #{User.current.id}, \"#{uuid.values.first}\"),"  
+    insert_person = "(#{row[0]}, \"#{dob.to_date}\",#{age_estimate}, #{is_dead}, \"#{gender}\",null,\"#{date_created}\", #{User.current.id}, \"#{uuid.values.first}\"),"
   else
     insert_person = "(#{row[0]}, \"#{dob.to_date}\",#{age_estimate}, #{is_dead},\"#{gender}\",\"#{ date_of_death}\",\"#{date_created}\", #{User.current.id},"
     insert_person += "\"#{uuid.values.first}\"),"
   end
-  
+
   puts ">>>Person #{row[0]}"
-  `echo -n '#{insert_person}' >> /home/pachawo/pats/person.sql`
-  
+  `echo -n '#{insert_person}' >> #{Destination_path}person.sql`
+
   insert_patient = "(#{row[0]},#{User.current.id},\"#{date_created}\"),"
   puts ">>>Patient details for #{row[0]}"
-  `echo -n '#{insert_patient}' >> /home/pachawo/pats/patient.sql`
+  `echo -n '#{insert_patient}' >> #{Destination_path}patient.sql`
 
   uuid = ActiveRecord::Base.connection.select_one <<EOF
     select uuid();
@@ -95,14 +97,14 @@ EOF
 
     insert_person_name = "(#{row[0]},\"#{middle_name}\",\"#{given_name}\",\"#{family_name}\",#{User.current.id},\"#{date_created}\",\"#{uuid.values.first}\"),"
     puts ">>>Person name for #{row[0]}"
-    `echo -n '#{insert_person_name}' >> /home/pachawo/pats/person_name.sql`
+    `echo -n '#{insert_person_name}' >>  #{Destination_path}person_name.sql`
 
     uuid = ActiveRecord::Base.connection.select_one <<EOF
             select uuid();
 EOF
     insert_person_address = "(#{row[0]},\"#{city_village}\", \"#{date_created}\", #{User.current.id}, \"#{uuid.values.first}\"),"
     puts ">>>Person address for #{row[0]}"
-    `echo -n '#{insert_person_address}' >> /home/pachawo/pats/person_address.sql`
+    `echo -n '#{insert_person_address}' >> #{Destination_path}person_address.sql`
 
     uuid = ActiveRecord::Base.connection.select_one <<EOF
         select uuid();
@@ -110,30 +112,27 @@ EOF
     attr_type_id = PersonAttributeType.find_by_name("Occupation").id
     insert_person_attr = "(#{row[0]}, \"#{occupation}\", \"#{date_created}\", \"#{attr_type_id}\", #{User.current.id}, \"#{uuid.values.first}\"),"
     puts ">>>Person attributes for #{row[0]}"
-    `echo -n '#{insert_person_attr}' >> /home/pachawo/pats/person_attribute.sql`
-  end 
-  
+    `echo -n '#{insert_person_attr}' >> #{Destination_path}person_attribute.sql`
+  end
+
   puts "...........Please wait..............."
-  person_file_content = File.read("/home/pachawo/pats/person.sql")[0...-1]
-  File.open("/home/pachawo/pats/person.sql", "w"){|sql| sql.puts person_file_content << ";"}
-  
-  patient_file_content = File.read("/home/pachawo/pats/patient.sql")[0...-1]
-  File.open("/home/pachawo/pats/patient.sql", "w"){|sql| sql.puts patient_file_content << ";"}
-  
-  person_name_file_content = File.read("/home/pachawo/pats/person_name.sql")[0...-1]
-  File.open("/home/pachawo/pats/person_name.sql", "w"){|sql| sql.puts person_name_file_content << ";"}
-  
-  person_address_file_content = File.read("/home/pachawo/pats/person_address.sql")[0...-1]
-  File.open("/home/pachawo/pats/person_address.sql", "w"){|sql| sql.puts person_address_file_content << ";"}
-  
-  person_attribute_file_content = File.read("/home/pachawo/pats/person_attribute.sql")[0...-1]
-  File.open("/home/pachawo/pats/person_attribute.sql", "w"){|sql| sql.puts person_attribute_file_content << ";"}
-  
+  person_file_content = File.read("#{Destination_path}person.sql")[0...-1]
+  File.open("#{Destination_path}person.sql", "w"){|sql| sql.puts person_file_content << ";"}
+
+  patient_file_content = File.read("#{Destination_path}patient.sql")[0...-1]
+  File.open("#{Destination_path}patient.sql", "w"){|sql| sql.puts patient_file_content << ";"}
+
+  person_name_file_content = File.read("#{Destination_path}person_name.sql")[0...-1]
+  File.open("#{Destination_path}person_name.sql", "w"){|sql| sql.puts person_name_file_content << ";"}
+
+  person_address_file_content = File.read("#{Destination_path}person_address.sql")[0...-1]
+  File.open("#{Destination_path}person_address.sql", "w"){|sql| sql.puts person_address_file_content << ";"}
+
+  person_attribute_file_content = File.read("#{Destination_path}person_attribute.sql")[0...-1]
+  File.open("#{Destination_path}person_attribute.sql", "w"){|sql| sql.puts person_attribute_file_content << ";"}
+
   puts "Script time #{ScriptStarted} - #{Time.now}"
 end
-
-
-
 
 def get_proper_date (unfomatted_date)
     unfomatted_date = unfomatted_date.split("/")
@@ -147,7 +146,7 @@ def get_proper_date (unfomatted_date)
       year = "20#{year_of_birth}"
     end
 
-    fomatted_date = "#{year}-#{unfomatted_date[0]}-#{unfomatted_date[1]}" 
+    fomatted_date = "#{year}-#{unfomatted_date[0]}-#{unfomatted_date[1]}"
 end
 
 def generate_date_of_birth(age, date_recorded)
@@ -158,7 +157,7 @@ end
 #function that loads csv file data into a hash
 def get_references
   references_hash = {}
-  FasterCSV.foreach("#{Parent_path}/TbReference.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
+  FasterCSV.foreach("#{Source_path}/TbReference.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
     references_hash[row[0]] = row[6]
   end
   return references_hash
