@@ -194,6 +194,9 @@ table tr:hover td {
   <tbody>
 
   <%
+  file = "/home/mwatha/Desktop/disaggregated_cohort" + "__#{Location.current_health_center.name}" + ".csv"
+  rows = []
+
   hr_sep = 'Male'
   @disaggregated_age_groups.sort_by{|x, y | x }.each do |counter, genders|
     genders.each do |gender, age_groups|
@@ -229,6 +232,8 @@ table tr:hover td {
         <td <%=(check_point[1] rescue nil)%>><%=num[1]%></td>
         <td <%=(check_point[2] rescue nil)%>><%=num[2]%></td>
         <td <%=(check_point[3] rescue nil)%>><%=num[3]%></td>
+
+        <%rows << [ counter, age_group, gender, num[0], num[1], num[2], num[3] ] %>
       </tr>
     <%end
     end
@@ -240,6 +245,14 @@ table tr:hover td {
 
 </div>
 
+  <%
+  FasterCSV.open( file, 'w' ) do |csv|
+    csv << ["", "Age group", "Gender", "A", "B", "C", "D"]
+    rows.each do |r|
+      csv << [ r[0], r[1], r[2], r[4], r[5], r[6] ]
+    end
+  end
+%>
 <script>
 
 function validateReport(x, y, err_msg) {
