@@ -2835,7 +2835,8 @@ pyridoxine_options = ["","25", "50"]
     <%= touch_hidden_tag "Appointment type", @patient, nil, :id => "appointment_interval_type" %>
 
     <!-- Fast  track questions -->
-    <% if not @fast_track_patient == true %>
+    <% enable_fast_track = GlobalProperty.find_by_property('enable.fast.track').property_value == 'true' rescue false %>
+    <% if not @fast_track_patient == true and enable_fast_track == true %>
       <%= select_tag "fast_track_yes_no", options_for_select([['Yes','Yes'],['No','No']]),
         {:id => "book_for_fast_track",
         :multiple => false,
