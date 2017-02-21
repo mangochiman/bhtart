@@ -109,7 +109,10 @@
   var patientBirthdateEstimated = "<%=@patient.person.birthdate_estimated %>";
   var median_weight_height = <%= @median_weight_height.to_json -%>;
   var sessionDate = new Date('<%=  @session_date.to_date.strftime('%d/%b/%Y') %>');
-  
+  var birthYear = parseInt('<%= @birth_date.year %>');
+  var birthMonth = parseInt('<%= @birth_date.month %>');
+  var birthDay = parseInt('<%= @birth_date.day %>');
+
   function checkTestDate(td){
     var testDate = createDates($('year_art_last_taken').value, $('month_art_last_taken').value , td.value);
     var years = testDate.getFullYear();
@@ -1246,7 +1249,7 @@
     <%= text_field_tag "year_art_last_taken", nil,
       { :helpText => 'Year last taken ARVs<span style="font-size:0.7em;font-style:italic"> (Chaka chimene munamwa ma ARV komaliza ndi chiti?)</span>',
       :field_type => 'number',
-      :absoluteMin => "1890", :min => "1940", :absoluteMax => (session[:datetime].to_date.year rescue Date.today.year),
+      :absoluteMin => "#{@birth_date.year}", :min => "#{@birth_date.year}", :absoluteMax => (session[:datetime].to_date.year rescue Date.today.year),
       :tt_pageStyleClass => "Numeric NumbersOnly",
       :condition => '$("ever_received_art").value == "YES"',
       :id => "year_art_last_taken" }  %>
@@ -2183,6 +2186,17 @@
       rule = rule + "|Unknown";
       return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
     }
+    if (year_taken_art == birthYear){
+      currentMonth = [];
+
+      for(var i = birthMonth - 1; i < availableMonths.length; i++){
+        currentMonth.push(availableMonths[i]);
+      }
+
+      rule = currentMonth.join("|");
+      rule = rule + "|Unknown";
+      return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+    }
   }
 
   function validateDayARTTaken(){
@@ -2198,6 +2212,12 @@
     if (year_taken_art == currYear) {
       if (month_taken_art == currMonth){
         return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMax',currDay);
+      }
+    }
+
+    if (year_taken_art == birthYear) {
+      if (month_taken_art == birthMonth){
+        return $('touchscreenInput'+tstCurrentPage).setAttribute('absoluteMin',birthDay);
       }
     }
   }

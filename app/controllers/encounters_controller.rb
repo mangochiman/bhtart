@@ -4,6 +4,7 @@ class EncountersController < GenericEncountersController
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
 		@patient_bean = PatientService.get_patient(@patient.person)
     @gender = @patient.person.gender.upcase
+    @birth_date = @patient.person.birthdate.to_date
 		session_date = session[:datetime].to_date rescue Date.today
     @previous_weight = Patient.previous_weight(@patient, session_date)
 
