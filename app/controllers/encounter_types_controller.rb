@@ -40,6 +40,12 @@ class EncounterTypesController < GenericEncounterTypesController
   end
 
   def show
+		if params["encounter_type"].downcase == "lab orders"
+
+			redirect_to "/lims?id=#{params[:patient_id]}&location_id=#{session[:location_id]}&user_id=#{User.current.id rescue nil}" and return
+
+		end
+
     patient = Patient.find(params[:patient_id])
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true"
       if params[:encounter_type].downcase == "vitals"

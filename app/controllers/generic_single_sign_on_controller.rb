@@ -5,6 +5,8 @@ class GenericSingleSignOnController < ApplicationController
 		sign_in(:user, user) if user
 		authenticate_user! if user
 		user_token = nil
+    location = nil
+
 		if !user.blank?
 			if current_user.authentication_token.blank?
 				current_user.reset_authentication_token 
@@ -12,7 +14,15 @@ class GenericSingleSignOnController < ApplicationController
 			user_token = current_user.authentication_token
       User.current = current_user
 			current_user.save!
-			render :json => {:auth_token => current_user.authentication_token }.to_json, :status => :ok
+
+      if !params[:location].blank?
+        loc = Location.find(params[:location])
+        loc = Location.find_by_name(params[:location]) if loc.blank?
+
+        location = loc.name rescue nil
+      end
+
+			render :json => {:auth_token => current_user.authentication_token, :name => user.name, :location => location }.to_json, :status => :ok
 		else
 			render :json => {:auth_token => '' }.to_json, :status => :false
 		end

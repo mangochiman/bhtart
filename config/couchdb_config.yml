@@ -1,0 +1,13 @@
+site_code : BBC
+site_name : Balaka BLM Clinic
+ip_address: 127.0.0.1
+database : validation_result2
+username : pach
+password : pachccc123
+port : 5984
+
+dashboard_host : 192.168.12.209
+dashboard_port : 5984
+dashboard_username : admin
+dashboard_password : Samson1991
+dashboard_database : data_quality_dashboard_development

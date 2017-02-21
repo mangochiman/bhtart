@@ -102,7 +102,7 @@ class GenericDrugController < ApplicationController
       @drug_short_names[drug_name] = "#{drug.short_name} #{drug.strength} #{drug.tabs}"
       current_stock = Pharmacy.last_physical_count(drug.drug_inventory_id)/drug.pack_size
       @drug_weights[drug.weight] =  [drug.name, drug_name, drug.short_name, drug.tabs, drug.pack_size,
-                                     current_stock, drug.strength]
+        current_stock, drug.strength]
       @drugs << drug_name
     end
 
@@ -167,7 +167,7 @@ class GenericDrugController < ApplicationController
   end
 
   def delivery
-    @formatted = preformat_regimen
+    @formatted = preformat_regimen.sort
     @drugs = {} #regimen_name_map
     @cms_drugs = {}
 
@@ -176,6 +176,8 @@ class GenericDrugController < ApplicationController
       @cms_drugs[drug_name] = drug.name
       @drugs[drug_name] = "#{drug.short_name} #{drug.strength} "
     end
+
+    #raise @formatted.to_yaml
   end
 
   def capture_cms_drugs
@@ -848,4 +850,39 @@ class GenericDrugController < ApplicationController
     end
   end
 
+  def drug_movement_report_menu
+    @drugs = []
+    drugs = preformat_regimen
+    drugs.each do |drug_name|
+      drug_id = Drug.find_by_name(drug_name).drug_id
+      drug_cms = DrugCms.find(drug_id) rescue nil
+      next if drug_cms.blank?
+      @drugs << [drug_name, drug_id]
+    end
+    @drugs = @drugs.sort_by{|k, v|k}
+  end
+
+  def process_drug_movement_report
+    start_year = params[:start_year]
+    start_month = params[:start_month]
+    start_day = params[:start_day]
+    end_year = params[:end_year]
+    end_month = params[:end_month]
+    end_day = params[:end_day]
+    drug_id = params[:drug_id]
+    
+    start_date = (start_year + "-" + start_month + "-" + start_day).to_date
+    end_date = (end_year + "-" + end_month + "-" + end_day).to_date
+    packsize = Pharmacy.pack_size(drug_id)
+    @drug_name = Drug.find(drug_id).name
+
+    @stocks = {}
+    ((start_date..end_date).to_a).each do |date|
+      stock_level = (Pharmacy.drug_stock_on(drug_id, date)/packsize).round rescue 0
+      @stocks[date]= {"stock_count" => stock_level,"pack_size" => packsize}
+    end
+    
+    render :layout => "report"
+  end
+  
 end

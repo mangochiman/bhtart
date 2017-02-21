@@ -537,9 +537,7 @@
   }
 
 <% options = "<option>" "" "</option>"
-#raise @drugs.to_yaml
-@formatted.each{|drug|
-  #raise drug[0].to_yaml
+@formatted.sort_by{|i| (@cms_drugs[i].downcase rescue nil)}.each{|drug|
   next if @cms_drugs[drug].blank?
   options += "<option value = '#{drug}'>#{@cms_drugs[drug]}</option>"
 }
@@ -567,7 +565,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
       {
       :id => "relocation_or_disposal",
       :field_type => 'alpha',
-      :helpText => "Select Task To Do",
+      :helpText => "Select Task",
       :tt_pageStyleClass => "NoKeyboard"}
   %>
 
@@ -575,7 +573,7 @@ disposal_reasons = ["", "Expired", "Damaged", "Missing"]
       {
       :id => 'relocation_facility',
       :field_type => 'alpha',
-      :helpText => "Select Facility to Relocate Items to",
+      :helpText => "Destination",
       :ajaxURL => '/programs/locations?q=',
       :condition => "$('relocation_or_disposal').value.toUpperCase() == 'RELOCATIONS'",
       :allowFreeText => true }
