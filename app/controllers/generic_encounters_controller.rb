@@ -848,6 +848,29 @@ class GenericEncountersController < ApplicationController
     dispensing_enc_type =  EncounterType.find_by_name('DISPENSING').id
     patient_id = @encounter.patient_id
     current_day = session[:datetime].to_date rescue Date.today
+    patient = encounter.patient
+    
+    if encounter.name == 'DISPENSING'
+      if !(Patient.ever_had_dispensations(patient, current_day))
+        hiv_program_id = Program.find_by_name("HIV Program").program_id
+        patient_hiv_program = patient.patient_programs.find_last_by_program_id(hiv_program_id)
+        current_state = patient_hiv_program.patient_states.current.last
+        
+        previous_state = patient_hiv_program.patient_states.find(:last,
+          :conditions => ["patient_state_id < ?", current_state.patient_state_id])
+        
+        program_workflow_state = patient_hiv_program.patient_states.current.last.program_workflow_state
+
+        if (program_workflow_state.concept.shortname.upcase == "ON ARVS")
+          ActiveRecord::Base.transaction do
+            current_state.void
+            previous_state.end_date = nil
+            previous_state.save
+          end
+        end
+        
+      end
+    end
 
     if tb_reg == @encounter.encounter_type.to_i
           void_prog = PatientProgram.find(:last, :conditions => ['DATE(date_enrolled) = ? AND patient_id = ? AND program_id = ?',

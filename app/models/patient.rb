@@ -527,4 +527,12 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return previous_patient_weight
   end
 
+  def self.ever_had_dispensations(patient, session_date)
+    dispensing_enc_type_id =  EncounterType.find_by_name('DISPENSING').id
+    dispensation_encounters = patient.encounters.find(:all, :conditions => ["encounter_type =? AND
+        (DATE(encounter_datetime) < ? OR DATE(encounter_datetime) > ?)", dispensing_enc_type_id, session_date, session_date])
+    return true unless dispensation_encounters.blank?
+    return false
+  end
+
 end
