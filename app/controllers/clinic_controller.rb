@@ -81,7 +81,8 @@ class ClinicController < GenericClinicController
 		["Set Hypertension Screening Age", "/properties/set_htn_age_threshold"],
 		["Set Hypertension BP Thresholds", "/properties/set_htn_bp_thresholds"],
 		["Cervical Cancel Module Properties", "/properties/cervical_cancer_module_properties"],
-		["New ART Guidelines start date", "/properties/new_art_start_date"]
+		["New ART Guidelines start date", "/properties/new_art_start_date"],
+		["Activate Fast track", "/properties/creation?value=enable_fast_track"]
 	  ]
 	else
 	  @settings = []
