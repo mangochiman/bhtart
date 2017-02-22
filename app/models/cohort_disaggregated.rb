@@ -180,12 +180,13 @@ Unique PatientProgram entries at the current location for those patients with at
     return [] if alive_on_art_patient_ids.blank?
 
     tb_treatment = ConceptName.find_by_name('TB treatment').concept_id
+    tb_status_id = ConceptName.find_by_name('TB status').concept_id
     clinical_consultation = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
 
     data = ActiveRecord::Base.connection.select_all <<EOF
     SELECT t1.patient_id FROM obs t3
     INNER JOIN temp_earliest_start_date t1 ON t1.patient_id = t3.person_id
-    WHERE t3.concept_id = #{tb_treatment} AND t3.voided = 0
+    WHERE t3.concept_id IN(#{tb_treatment},#{tb_status_id}) AND t3.voided = 0
     AND t3.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
     AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
     AND gender = '#{gender.first}' AND t1.date_enrolled BETWEEN 
