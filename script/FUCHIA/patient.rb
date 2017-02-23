@@ -1,7 +1,7 @@
 User.current = User.find_by_username('admin')
 ScriptStarted = Time.now
-Source_path = '/home/deliwe/Desktop/Work/Fuchia/msf'
-Destination_path = '/home/deliwe/Desktop/Work/Fuchia/msf/msf_sql/'
+Source_path = '/home/user/Desktop/Work/Fuchia/msf'
+Destination_path = '/home/user/Desktop/Work/Fuchia/msf/'
 require 'fastercsv'
 
 def start
@@ -42,7 +42,7 @@ def start
     date_created = row[1]
     date_created = get_proper_date(date_created)
     date_created = date_created.to_date.strftime("%Y-%m-%d 01:00:00") rescue Date.today.strftime("%Y-%m-%d 01:00:00")
-    age_estimate_date_created = row[13]
+    age_estimate_date_created = row[14]
     date_of_death =get_proper_date(row[21]) unless row[21].blank?
     is_dead = row[20] rescue nil
     city_village = row[3] rescue nil
