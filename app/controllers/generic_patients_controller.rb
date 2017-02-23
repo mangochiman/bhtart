@@ -13,7 +13,7 @@ class GenericPatientsController < ApplicationController
     session.delete(:cervical_cancer_patient) if session[:cervical_cancer_patient]
     session_date = session[:datetime].to_date rescue Date.today
 
-    @patient_bean = PatientService.get_patient(@patient.person)
+    @patient_bean = PatientService.get_patient(@patient.person, session_date)
     @encounters = @patient.encounters.find_by_date(session_date)
     @diabetes_number = DiabetesService.diabetes_number(@patient)
     @prescriptions = @patient.orders.unfinished.prescriptions.all
