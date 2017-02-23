@@ -452,7 +452,7 @@
           reasonForArtEligibility = "PRESUMED SEVERE HIV";
         } else if (whoStage >= 3) {
           reasonForArtEligibility = whoStageConcept(whoStage, "PEDS");
-        } else if (ageInMonths < 12 && firstPositiveHivTestType == "HIV DNA POLYMERASE CHAIN REACTION") {
+        } else if (ageInMonths < 12 && firstPositiveHivTestType.toUpperCase() == "HIV DNA POLYMERASE CHAIN REACTION") {
           reasonForArtEligibility = "HIV DNA POLYMERASE CHAIN REACTION";
         } else if (ageInMonths < 24) {
           reasonForArtEligibility = "HIV infected";
