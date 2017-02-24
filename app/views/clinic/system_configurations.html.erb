@@ -353,7 +353,7 @@
         </tr>
         <tr>
           <td style="background-color: #FFF68F; font-size: 14pt">Set Clinic Days</td>
-          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @clinic_days.join("<br />") || "Not Set" %></td>
+          <td style="text-align:center; background-color: #FFF68F; font-size: 14pt"><%= @clinic_days.join("<br />") rescue "Not Set" %></td>
           <td id="number" style="text-align:center" onclick="changeProperty('/properties/clinic_days')">Change</td>
         </tr>
         <tr>
