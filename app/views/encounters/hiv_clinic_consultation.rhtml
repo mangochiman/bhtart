@@ -187,13 +187,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         familyPlanningMethods = familyPlanningLogic[first_family_planning];
         for (var key in familyPlanningMethods){
           value = familyPlanningMethods[key];
-          liOption = jQuery( "li[tstvalue=" + key + "]" )[0];
+          liOption = jQuery( "li[tstvalue='" + key + "']" )[0];
           if (liOption){
             if (value == 'N'){
               jQuery(liOption).addClass("disabled-li");
               liOption.onclick = function(){
-                //jQuery(liOption).addClass("disabled-li");
-                console.log('Disabled')
               }
             }
           }
@@ -203,20 +201,18 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
   function resetElements(liOptions){
-    //disabled-li
     jQuery( "li" ).removeClass( "disabled-li");
     for (var i=0; i<=liOptions.length - 1; i++){
       tstvalue = liOptions[i].getAttribute('tstvalue');
       if (tstvalue.match(/NONE/i))continue;
       liOptions[i].onclick = function(){
         updateTouchscreenInputForSelect(__$('optionValue' + this.id), this);
-        console.log('resetting')
       }
     }
   }
 
   function startFamilyPlanningTimer(){
-    family_planning_interval = window.setInterval("controlFamilyPlanningMethodsSelection()", 500);
+    family_planning_interval = window.setInterval("controlFamilyPlanningMethodsSelection()", 100);
   }
 
   function stopFamilyPlanningTimer(){
