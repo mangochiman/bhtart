@@ -264,8 +264,8 @@
           <td style="text-align: center;"><%=datum['gender']%></td>
           <td style="text-align: center;"><%=datum['age']%></td>
           <td style="text-align: right;"><%=datum['phone_number']%></td>
-          <td style="text-align: right;"><%=datum['date_appointment_made'].to_date.strftime('%a %d %b, %Y')%></td>
-          <td style="text-align: right;"><%=datum['appointment_date'].to_date.strftime('%a %d %b, %Y')%></td>
+          <td style="text-align: right;"><%=datum['date_appointment_made'].to_date.strftime('%a %d %b, %Y') rescue datum['date_appointment_made']%></td>
+          <td style="text-align: right;"><%=datum['appointment_date'].to_date.strftime('%a %d %b, %Y') rescue datum['appointment_date']%></td>
           <td style="text-align: right; padding-right: 10px;"><%=datum['date_came'].to_date.strftime('%a %d %b, %Y') rescue 'No' %></td>
        </tr>
     <% end %>

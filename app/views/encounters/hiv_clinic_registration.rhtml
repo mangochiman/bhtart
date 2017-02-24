@@ -1149,7 +1149,7 @@
   }
 
 
- function everReceivedARTMonth() {
+  function everReceivedARTMonth() {
     var ever_received_art = $('ever_received_art').value;
     var ever_registered_at_ART_clinic = $("ever_registered_at_ART_clinic").value;
     var year_started_art = $("year_started_art").value;
@@ -1164,9 +1164,9 @@
       return "false";
 
     return "true";
- }
+  }
 
- function everReceivedARTDay() {
+  function everReceivedARTDay() {
     var ever_received_art = $('ever_received_art').value;
     var ever_registered_at_ART_clinic = $("ever_registered_at_ART_clinic").value;
     var year_started_art = $("year_started_art").value;
@@ -1185,7 +1185,7 @@
       return "false";
 
     return "true";
- }
+  }
 
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
@@ -1463,19 +1463,19 @@
 
     <% if @patient_bean.age > 9 %>
 
-    <%= touch_yes_no_unknown_tag "IS PATIENT PREGNANT?", @patient, nil,
-      {:id => "pregnant" ,
-      :condition => "patientGender != 'MALE' && showConditions() == true",
-      :tt_onUnLoad => 'hideCategory();',
-      :tt_onLoad => "showCategory2('when starting ART');",
-      :helpText => "Pregnant at initiation?" } %>
+      <%= touch_yes_no_unknown_tag "IS PATIENT PREGNANT?", @patient, nil,
+        {:id => "pregnant" ,
+        :condition => "patientGender != 'MALE' && showConditions() == true",
+        :tt_onUnLoad => 'hideCategory();',
+        :tt_onLoad => "showCategory2('when starting ART');",
+        :helpText => "Pregnant at initiation?" } %>
 
-    <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
-      {	:id => "breast_feeding" ,
-      :condition => "patientGender != 'MALE' && showConditions() == true",
-      :tt_onUnLoad => 'hideCategory();',
-      :tt_onLoad => "showCategory2('when starting ART');",
-      :helpText => "Breastfeeding at initiation?" } %>
+      <%= touch_yes_no_unknown_tag "IS PATIENT BREAST FEEDING?", @patient, nil,
+        {	:id => "breast_feeding" ,
+        :condition => "patientGender != 'MALE' && showConditions() == true",
+        :tt_onUnLoad => 'hideCategory();',
+        :tt_onLoad => "showCategory2('when starting ART');",
+        :helpText => "Breastfeeding at initiation?" } %>
 
     <% end %>
 
@@ -2296,17 +2296,24 @@
       rule = availableMonths.join("|");
       rule = rule + "|Unknown";
       return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
-    } else{
+    }
+    else{
       if (year_of_cd4 == year_started_art){
-        currentMonth = [];
-        numOfloops = (date.getMonth() + 1);
+        if (year_of_cd4 < currYear){
+          rule = availableMonths.join("|");
+          rule = rule + "|Unknown";
+          return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
+        }else{
+          currentMonth = [];
+          numOfloops = (date.getMonth() + 1);
 
-        for(var i = 0; i < numOfloops; i++){
-          currentMonth.push(availableMonths[i]);
+          for(var i = 0; i < numOfloops; i++){
+            currentMonth.push(availableMonths[i]);
+          }
+          rule = currentMonth.join("|");
+          rule = rule + "|Unknown";
+          return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
         }
-        rule = currentMonth.join("|");
-        rule = rule + "|Unknown";
-        return $('touchscreenInput'+tstCurrentPage).setAttribute('validationRule',rule);
       }else{
         rule = availableMonths.join("|");
         rule = rule + "|Unknown";
@@ -2582,7 +2589,7 @@
   }
  
 
-    function alertOnNormalBMI(){
+  function alertOnNormalBMI(){
     try {
       severe_weight_loss_option_id = severe_weight_loss_option_input.id;
     }catch(e){
@@ -2657,7 +2664,7 @@
   #btnContainer {
     width: 99.9%;
   }
-.btns {
+  .btns {
     -moz-user-select: none;
     background-image: none;
     border: 1px solid transparent;
@@ -2706,20 +2713,20 @@
   <table style="width: 99.9%; margin-bottom: 95px;">
     <tr>
       <td style="text-align: center; font-weight: bold; color: green;
-      border-style: solid; border-width: 0px 0px 2px 0px;">
+          border-style: solid; border-width: 0px 0px 2px 0px;">
         Notice
       </td>
     </tr>
     <tr>
       <td style="text-align: center; font-weight: bold; color: black;">
         Patient has a BMI of:&nbsp;<span id="currentBMI"></span><p>
-        Are you sure with your selection?</p>
+          Are you sure with your selection?</p>
       </td>
     </tr>
-  <table>
+    <table>
 
-  <div id="btnContainer">
-    <input type="button" class="btns" id="yesBtn" onmousedown="selectCondition();" value="Yes, select condition" />
-    <input type="button" class="btns" id="noBtn" onmousedown="closeAlertOnNormalBMI();" value="No" />
-  </div>
-</div>
+      <div id="btnContainer">
+        <input type="button" class="btns" id="yesBtn" onmousedown="selectCondition();" value="Yes, select condition" />
+        <input type="button" class="btns" id="noBtn" onmousedown="closeAlertOnNormalBMI();" value="No" />
+      </div>
+      </div>
