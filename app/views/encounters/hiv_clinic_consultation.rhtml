@@ -964,7 +964,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
       if (tstValue.match(/NONE/i)){
         liOptions[i].onclick = function(){
-           jQuery( "li" ).removeClass( "disabled-li");
+          jQuery( "li" ).removeClass( "disabled-li");
           selectedValues = $("touchscreenInput" + tstCurrentPage).value.split(";")
           currentLiItem = this;
 
@@ -1104,11 +1104,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   }
 
-/*
+  /*
   var weightObs = [];
-  <%#(@weight_trail || {}).sort_by{ |x,b| x.to_date }.each do |date, weight|%>
+<%#(@weight_trail || {}).sort_by{ |x,b| x.to_date }.each do |date, weight|%>
     weightObs.push(['<%#=date.to_date%>', <%#= weight %>]);
-  <%#end%>
+<%#end%>
 
 
   var standard_high_weight = [];
@@ -1117,22 +1117,22 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   var age_in_months = [];
   var weight_trail = [];
 
-  <%#(@weight_height_for_age[1] || {}).sort_by {|x, y| x }.each do |age, data|%>
+<%#(@weight_height_for_age[1] || {}).sort_by {|x, y| x }.each do |age, data|%>
     weight_trail.push(null);
-  <%#end%>
+<%#end%>
 
-  <%#(@weight_height_for_age[0] || []).each do |age, data|%>
+<%#(@weight_height_for_age[0] || []).each do |age, data|%>
       m_index = <%#=age%>;
       weight_trail[m_index] = <%#=data%>;
-   <%#end%>
+<%#end%>
 
-   <%#(@weight_height_for_age[1] || {}).sort_by {|x, y| x }.each do |age, data|%>
+<%#(@weight_height_for_age[1] || {}).sort_by {|x, y| x }.each do |age, data|%>
       standard_low_weight.push(<%#=data[:standard_low_weight]%>);
       standard_high_weight.push(<%#=data[:standard_high_weight]%>);
       median_weight.push(<%#=data[:median_weight]%>);
       age_in_months.push(<%#=age%>);
-    <%#end%>
-*/
+<%#end%>
+   */
 
 </script>
 
@@ -1143,11 +1143,11 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%= hidden_field_tag "encounter[provider_id]", current_user.user_id %>
 
 
-  <%#= text_field_tag :summary, nil, { 
-    :tt_onLoad => "__$('keyboard').style.display = 'none';loadCharts();showCategory2('Clinic consultation');", 
-    :optional => "true",
-    :tt_pageStyleClass => "NoControls" } 
-  %>
+<%#= text_field_tag :summary, nil, { 
+:tt_onLoad => "__$('keyboard').style.display = 'none';loadCharts();showCategory2('Clinic consultation');", 
+:optional => "true",
+:tt_pageStyleClass => "NoControls" } 
+%>
 
 
 
@@ -1468,14 +1468,13 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     end
   end%>
 
-  <%if @obs_ans.match(/Prescribe drugs: Yes/i) %>
-    <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
-  <%else%>
-    <%  session_date = session[:datetime].to_date rescue nil
-    medication_options_allergic_to_sulphur_no = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
-    #medication_options_allergic_to_sulphur_yes = ['ARVs','IPT','NONE OF THE ABOVE']
-    medication_options_allergic_to_sulphur_yes = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
-  %>
+  <%
+  session_date = session[:datetime].to_date rescue nil
+  medication_options_allergic_to_sulphur_no = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
+  #medication_options_allergic_to_sulphur_yes = ['ARVs','IPT','NONE OF THE ABOVE']
+  medication_options_allergic_to_sulphur_yes = ['ARVs','CPT','IPT','NONE OF THE ABOVE']
+%>
+  <% unless art_adherence_to_be_done %>
     <%  if session_date %>
       <%= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
         {:id => "prescribe_drugs",
@@ -1514,6 +1513,51 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
     <% end %>
     <%= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
+  <% end  %>
+
+    
+  <%if @obs_ans.match(/Prescribe drugs: Yes/i) %>
+    <%#= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
+
+  <%else%>
+    <%  if session_date %>
+      <%#= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
+        {:id => "prescribe_drugs",
+        :tt_onLoad => "showCategory2('Prescription');controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
+        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() != 'YES'" ,
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
+
+      <%#= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
+        {:id => "prescribe_drugs",
+        :tt_onLoad => "showCategory2('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
+        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
+
+
+    <% else %>
+      <%#= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_no),
+        {:id => "prescribe_drugs",
+        :tt_onLoad => "showCategory2('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
+        :condition => "$('refer_to_clinician').value == 'NO' && ($('allergic_to_sulphur').value.toUpperCase() == 'NO' || $('allergic_to_sulphur').value.toUpperCase() == 'UNKNOWN')" ,
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
+
+      <%#= touch_select_tag "Medication orders", @patient, options_for_select(medication_options_allergic_to_sulphur_yes),
+        {:id => "prescribe_drugs",
+        :tt_onLoad => "showCategory2('Prescription'); controlNoneSelection(); setIPTOptionForPopup();",
+        :tt_onUnLoad => "hideCategory();removeFastTrackAssesmentButton();",
+        :condition => "$('refer_to_clinician').value == 'NO' && $('allergic_to_sulphur').value.toUpperCase() == 'YES'" ,
+        :multiple => true,
+        :helpText => "Medication to prescribe during this visit: #{help_text}" } %>
+
+
+    <% end %>
+    <%#= touch_hidden_tag "Prescribe drugs", @patient, "YES", :id => "prescribe_drugs" %>
   <%end unless art_adherence_to_be_done %>
 
   <% session_date = session[:datetime].to_date rescue nil
@@ -2186,16 +2230,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
 
 <style>
-#vitals_table {
-  width: 100%;
-  height: 98%;
-}
+  #vitals_table {
+    width: 100%;
+    height: 98%;
+  }
 
-.chart_containers {
-  width: 40%;
-}
-
-
+  .chart_containers {
+    width: 40%;
+  }
 
 
 
@@ -2205,24 +2247,26 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
 
 
-.boxer {
-   display: table;
-   border-collapse: collapse;
-}
-
-.boxer .box-row {
-   display: table-row;
-}
-
-.boxer .box {
-   display: table-cell;
-   text-align: left;
-   vertical-align: top;
-   border: 1px solid black;
-}
 
 
- #popupLargeChart {
+  .boxer {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .boxer .box-row {
+    display: table-row;
+  }
+
+  .boxer .box {
+    display: table-cell;
+    text-align: left;
+    vertical-align: top;
+    border: 1px solid black;
+  }
+
+
+  #popupLargeChart {
     position:absolute;
     top: 10%;
     left: 11%;
