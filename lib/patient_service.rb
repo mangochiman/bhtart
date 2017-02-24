@@ -1265,10 +1265,9 @@ EOF
         ").map(&:patient_id)
 
         patient_to_be_archived = Person.find_by_sql(["
-          SELECT * FROM person WHERE person_id IN(?) AND dead = 1 AND voided = 0 LIMIT 1
-
-        ", patient_ids]).first.patient rescue nil
-
+          SELECT * FROM person WHERE person_id IN(?) AND dead = 1 AND voided = 0 LIMIT 1", 
+          patient_ids]).first.patient rescue nil
+=begin
         if patient_to_be_archived.blank?
           #patient_to_be_archived = self.get_patient_to_be_archived_that_has_transfered_out(patient_ids)
           patient_to_be_archived = self.get_patient_to_be_archived_based_on_waste_state(patient_ids)
@@ -1287,6 +1286,7 @@ EOF
                                                                                PatientIdentifierType.find_by_name("Filing Number").id],
                                                           :group=>"patient_id",:order => "identifier DESC").patient rescue nil
         end
+=end
       end
 
       if patient_to_be_archived
@@ -1304,8 +1304,10 @@ EOF
         filing_number.save
 
         #void current filing number
-        current_filing_numbers =  PatientIdentifier.find(:all,:conditions=>["patient_id=? AND identifier_type = ?",
-                                                                            patient_to_be_archived.id,PatientIdentifierType.find_by_name("Filing Number").id])
+        current_filing_numbers =  PatientIdentifier.find(:all,
+          :conditions=>["patient_id=? AND identifier_type = ?",
+          patient_to_be_archived.id,PatientIdentifierType.find_by_name("Filing Number").id])
+
         current_filing_numbers.each do | f_number |
           f_number.voided = 1
           f_number.voided_by = User.current.id
@@ -1313,16 +1315,47 @@ EOF
           f_number.date_voided = Time.now()
           f_number.save
         end
+
+        return patient_to_be_archived
       else
-        filing_number = PatientIdentifier.new()
-        filing_number.patient_id = current_patient.id
-        filing_number.identifier_type = active_filing_number_identifier_type.id
-        filing_number.identifier = next_filing_number
-        filing_number.save
+        return current_patient
       end
     end
 
-    return true
+  end
+  
+  def self.archive_patient(primary, secondary)
+
+    active_filing_number_identifier_type = PatientIdentifierType.find_by_name("Filing Number")
+    dormant_filing_number_identifier_type = PatientIdentifierType.find_by_name('Archived filing number')
+
+    filing_number = PatientIdentifier.new()
+    filing_number.patient_id = secondary.id
+    filing_number.identifier_type = dormant_filing_number_identifier_type.id
+    filing_number.identifier = PatientIdentifier.next_filing_number("Archived filing number")
+    filing_number.save
+
+    #assigning "patient_to_be_archived" filing number to the new patient
+    filing_number= PatientIdentifier.new()
+    filing_number.patient_id = primary.id
+    filing_number.identifier_type = active_filing_number_identifier_type.id
+    filing_number.identifier = self.get_patient_identifier(secondary, 'Filing Number')
+    filing_number.save
+
+    #void current filing number
+    current_filing_numbers =  PatientIdentifier.find(:all,
+      :conditions=>["patient_id=? AND identifier_type = ?",
+      secondary.id,PatientIdentifierType.find_by_name("Filing Number").id])
+
+    current_filing_numbers.each do | f_number |
+      f_number.voided = 1
+      f_number.voided_by = User.current.id
+      f_number.void_reason = "Archived - filing number given to:#{primary.id}"
+      f_number.date_voided = Time.now()
+      f_number.save
+    end
+
+    return nil
   end
 
   def self.get_patient_to_be_archived_that_has_transfered_out(patient_ids = [])
@@ -1350,13 +1383,21 @@ EOF
   end
 
 
-  def self.get_patient_to_be_archived_based_on_waste_state(patient_ids = [])
+  def self.get_patient_to_be_archived_based_on_waste_state(limit)
     #The following function will get all transferred out patients
     #with active filling numbers and select one to be archived
-    return nil if patient_ids.blank?
+    limit_one = (limit - 18)
+    limit_two = (limit)
 
+    active_filing_number_identifier_type = PatientIdentifierType.find_by_name("Filing Number")
+
+    patient_ids = PatientIdentifier.find_by_sql("
+      SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
+      WHERE voided = 0 AND identifier_type = #{active_filing_number_identifier_type.id}
+      GROUP BY identifier
+    ").map(&:patient_id)
+    
     #here we remove all ids that have any encounter today.
-
     patient_ids_with_todays_encounters = Encounter.find_by_sql("
       SELECT DISTINCT(patient_id) patient_id FROM encounter
         WHERE voided = 0 AND encounter_datetime BETWEEN '#{Date.today.strftime('%Y-%m-%d 00:00:00')}'
@@ -1364,11 +1405,10 @@ EOF
     ").map(&:patient_id)
 
     patient_ids_with_todays_active_filing_numbers = PatientIdentifier.find_by_sql("
-        SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
-          WHERE voided = 0 AND date_created BETWEEN '#{Date.today.strftime('%Y-%m-%d 00:00:00')}'
-              AND '#{Date.today.strftime('%Y-%m-%d 23:59:59')}'
-            AND identifier_type = #{PatientIdentifierType.find_by_name('Filing number').id}
-                                                                                  ").map(&:patient_id)
+      SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
+      WHERE voided = 0 AND date_created BETWEEN '#{Date.today.strftime('%Y-%m-%d 00:00:00')}'
+      AND '#{Date.today.strftime('%Y-%m-%d 23:59:59')}'
+      AND identifier_type = #{PatientIdentifierType.find_by_name('Filing number').id}").map(&:patient_id)
 
     patient_ids = (patient_ids - patient_ids_with_todays_encounters)
     patient_ids = (patient_ids - patient_ids_with_todays_active_filing_numbers)
@@ -1383,10 +1423,10 @@ WHERE state IN (2, 3, 4, 5, 6, 8)
   AND start_date = (SELECT max(start_date) FROM patient_state t
     WHERE t.patient_program_id = s.patient_program_id
   )
-LIMIT 1;
+LIMIT #{limit_one}, #{limit_two};
 EOF
 
-    return outcomes.first.patient_id rescue nil
+    return outcomes rescue nil
   end
 
   def self.patients_with_the_least_encounter_datetime(patient_ids = [])
