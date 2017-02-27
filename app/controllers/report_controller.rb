@@ -229,10 +229,12 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
         details ={
             'patient_id' => person_id,
             'name' => patient.name,
+            'gender' => patient.person.gender,
             'age' => PatientService.cul_age(patient.person.birthdate , patient.person.birthdate_estimated ),
             'dosses_missed' => (result['missed_dosses'] rescue []),
             'exp_tab_remaining' => (result['expected_remaining'] || []),
             'booked_date' => last_appointment.obs_datetime.to_date.strftime('%d/%b/%Y') ,
+            'appointment_date' => last_appointment.value_datetime.to_date.strftime('%d/%b/%Y') ,
             'phone_number' => get_phone(person_id),
             'overdue' => (@end_date.to_date - last_appointment.value_datetime.to_date).to_i,
             'came_late' => next_visit,
@@ -241,8 +243,9 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
         }
         @data << details
       end
+      
     end
-
+    
     render "missed_appointment_report"
   end
   
