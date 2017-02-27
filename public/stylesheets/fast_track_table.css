@@ -10,6 +10,7 @@
 #inclusion, #exclusion {
   font-size: 25px;
   font-weight: bold;
+  width: 48%;
 }
 
 #left_table {
@@ -17,3 +18,5 @@
   border-width: 0px 1px 0px 0px;
 }
 
+#exclusion {
+}
