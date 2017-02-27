@@ -2,6 +2,8 @@
 <%= javascript_include_tag 'miscellaneous.js'%>
 <%=  stylesheet_link_tag  'miscellaneous.css'%>
 
+<%= stylesheet_link_tag 'yes_no_btn'%>
+
 <div id="confirmatory-test-popup-div">
   <div id="confirmatory-test-popup-header">
     <center style='color: orange;' id="main-pop-header">Starter pack needed for 14 days</center>
@@ -29,6 +31,7 @@
 
 
 <style type="text/css">
+
   .Bclear {
     background-color: clear !important;
     text-decoration: line-through;
@@ -2393,7 +2396,335 @@ end
     newBtn.setAttribute('onclick', "updateForm(this);")
   }
 
+  function buttonClicked(e) {
+    var category = e.getAttribute('category').replace('_list','');
+    var key = e.getAttribute('key');
+    
+    if(e.id.match(/no_btn_container_/i)) {
+      var index = e.id.replace("no_btn_container_",'');
+      
+      var hidden_checkbox = document.getElementById(category + '_no_checkbox_' + index);
+      var off_hidden_checkbox = document.getElementById(category + '_yes_checkbox_' + index);
+      var off_label_checkbox = document.getElementById(category + '_yes_label_' + index);
+      var on_label_checkbox = document.getElementById(category + '_no_label_' + index);
+    }else{
+      var index = e.id.replace("yes_btn_container_",'');
+      var hidden_checkbox = document.getElementById(category + '_yes_checkbox_' + index);
+      var off_hidden_checkbox = document.getElementById(category + '_no_checkbox_' + index);
+      var off_label_checkbox = document.getElementById(category + '_no_label_' + index);
+      var on_label_checkbox = document.getElementById(category + '_yes_label_' + index);
+    }
+
+    off_hidden_checkbox.checked = false;
+    off_label_checkbox.setAttribute('style','color: black; background-color: ""');
+    on_label_checkbox.setAttribute('style','color: white; background-color: lightgreen;');
+
+    if(hidden_checkbox.checked) {
+      hidden_checkbox.checked = false;
+    }else{
+      hidden_checkbox.checked = true;
+    }
+
+    var ft_concept = document.getElementById('fast_track_concept_' + e.getAttribute('concept_id'));
+    ft_concept.value = e.getAttribute('concept_ans');
+  
+/*
+    if(e.id.match(/no_/i)) {
+      __$(key).value = '';
+      if(category == 'side_effects') {
+        updateSideEffectNoValue(e);
+      }else{
+        updateTBSymptomNoValue(e);
+      }
+    }else{
+      __$(key).value = key;
+      if(category == 'side_effects') {
+        updateSideEffectYesValue(e)
+      }else{
+        updateTBSymptomYesValue(e);
+      }
+    } */
+  }
+
+  function gotoNextPageOnlyIf() {
+    var fast_track_attributes = (document.getElementById('touchscreenInput' + tstCurrentPage));
+    var nextBtn = document.getElementById('nextButton');
+
+    sex = "<%=@patient.person.gender.first.upcase%>";
+    var fast_track_attr = [
+        ['Adult 18 years +', '9533'],['No side effects/OI', '9539'],
+        ['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540'],
+        ['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538'],
+        ['Last VL < 1000','9536'], ['TB symtom screening negative', '2186'],
+        ['Good adherence (appointment and dose)','9537'], ['Not on IPT or on IPT for 6 months + without complications', '9527']
+      ];
+
+    for(var i = 0; i < fast_track_attr.length; i++){
+      if(sex == 'M' && fast_track_attr[i][1] == '9538')
+        continue;
+
+      var inputbox = document.getElementById("fast_track_concept_" + fast_track_attr[i][1]);
+      if(inputbox.value.length < 1) {
+        var msg = inputbox.name;
+        //alert(msg.replace('fast_track_concept','').replace('[','').replace(']','') + " is not selected");
+        return;
+      }
+    }
+    
+    fast_track_attributes.setAttribute("optional", true); 
+    nextButton.setAttribute('onmousedown', 'gotoNextPage();');
+    gotoNextPage();
+  }
+
+  function changeNextButton() {
+    var nextBtn = document.getElementById('nextButton');
+    nextButton.setAttribute('onmousedown', 'gotoNextPageOnlyIf();')
+    fast_track_attributes.removeAttribute("optional"); 
+    //fast_track_attributes.setAttribute("optional", true); 
+    //gotoNextPage();
+  }
+
+  function preselectedAssessments() {
+    inputboxes = document.getElementsByClassName('assessments_for_ft');
+    for(var i = 0; i < inputboxes.length; i++) {
+      var concept_id = (inputboxes[i].id.replace('fast_track_concept_',''));
+      var ans = (inputboxes[i].value);
+      if(ans == 'YES') {
+        var btns = document.getElementsByClassName('switch-yes');
+      }else if(ans == 'NO'){
+        var btns = document.getElementsByClassName('switch-no');
+      }else{
+        continue;
+      }
+
+      //alert(ans);
+      //alert(btns.length);
+
+      for(var x = 0; x < btns.length; x++){
+        if(btns[x].getAttribute('concept_id') == concept_id){
+          buttonClicked(btns[x]);
+          break;
+        }
+      }
+    
+    }
+  }
+
   function buildFastTrackTable() {
+    table = document.createElement('table');
+    table.setAttribute('id', 'fast-track-table');
+
+    <%if @patient.person.gender.first.upcase == 'M'%>
+      var inclusion_list_arr = [
+        ['Adult', 9533], ['On 1st line',9535],['Last VL < 1000', 9536],
+        ['TB screen neg',2186],['Good adherence', 9537]
+      ];
+
+      var exclusion_list_arr = [
+        ['SE / OI', 9539],['Needs BP / diabetes', 9540],
+        ['Started IPT', 9527],['On ART < 12', 9534]
+      ];
+    <%else%>
+      var inclusion_list_arr = [
+        ['Adult', 9533], ['On 1st line',9535],['Last VL < 1000', 9536],
+        ['TB screen neg',2186],['Good adherence', 9537]
+      ];
+
+      var exclusion_list_arr = [
+        ['SE / OI', 9539],['Needs BP / diabetes', 9540], ['Preg / BF', 9538],
+        ['Started IPT', 9527],['On ART < 12', 9534]
+    <%end%>
+
+    var tr = document.createElement('tr');
+    var th = document.createElement('th');
+    th.setAttribute('id','inclusion')
+    tr.appendChild(th);
+    th.innerHTML = 'Inclusion'
+
+    th = document.createElement('th');
+    th.setAttribute('id','exclusion')
+    tr.appendChild(th);
+    th.innerHTML = 'Exclusion'
+    table.appendChild(tr);
+
+
+    tr = document.createElement('tr');
+    var inclusion_list = document.createElement('td');
+    inclusion_list.setAttribute('id','inclusion_list')
+    tr.appendChild(inclusion_list);
+
+    var exclusion_list = document.createElement('td');
+    exclusion_list.setAttribute('id','exclusion_list')
+    tr.appendChild(exclusion_list);
+
+    table.appendChild(tr);
+
+
+    var ltable = document.createElement('table');
+    ltable.setAttribute('id','left_table');
+    var ltr = document.createElement('tr');
+
+    for(var i = 0; i < inclusion_list_arr.length; i++){
+      var ltd = document.createElement('td');
+      ltd.setAttribute('id', inclusion_list_arr[i][1]);
+      ltd.innerHTML = inclusion_list_arr[i][0];
+      ltr.appendChild(ltd);
+
+      /******************* yes section starts *************************/
+      ltd = document.createElement('td');
+      ltr.appendChild(ltd);
+
+      var leftDiv = document.createElement('div');
+      leftDiv.setAttribute('class','switch switch-yes');
+      leftDiv.setAttribute('id','yes_btn_container_' + i);
+      leftDiv.setAttribute('category','inclusion_list');
+      leftDiv.setAttribute('key', inclusion_list_arr[i][0]);
+      leftDiv.setAttribute('onmousedown','buttonClicked(this);');
+      leftDiv.setAttribute('concept_id', inclusion_list_arr[i][1]);
+      leftDiv.setAttribute('concept_ans', 'YES');
+      ltd.appendChild(leftDiv);
+
+      var hiddenCheckBox = document.createElement('input');
+      hiddenCheckBox.setAttribute('type','checkbox');
+      hiddenCheckBox.setAttribute('class','hidden-checkbox');
+      hiddenCheckBox.setAttribute('id','inclusion_yes_checkbox_' + i);
+      leftDiv.appendChild(hiddenCheckBox);
+
+      var l = document.createElement('label');
+      l.setAttribute('id', 'inclusion_yes_label_' + i);
+      leftDiv.appendChild(l);
+
+      xi = document.createElement('i');
+      l.appendChild(xi);
+      /******************* yes section ends *************************/
+
+
+
+
+      /******************* no section starts *************************/
+      ltd = document.createElement('td');
+      ltr.appendChild(ltd);
+
+      var leftDiv = document.createElement('div');
+      leftDiv.setAttribute('class','switch switch-no');
+      leftDiv.setAttribute('id','no_btn_container_' + i);
+      leftDiv.setAttribute('category','inclusion_list');
+      leftDiv.setAttribute('key', inclusion_list_arr[i][0]);
+      leftDiv.setAttribute('onmousedown','buttonClicked(this);');
+      leftDiv.setAttribute('concept_id', inclusion_list_arr[i][1]);
+      leftDiv.setAttribute('concept_ans', 'NO');
+      ltd.appendChild(leftDiv);
+
+      var hiddenCheckBox = document.createElement('input');
+      hiddenCheckBox.setAttribute('type','checkbox');
+      hiddenCheckBox.setAttribute('class','hidden-checkbox');
+      hiddenCheckBox.setAttribute('id','inclusion_no_checkbox_' + i);
+      leftDiv.appendChild(hiddenCheckBox);
+
+      var l = document.createElement('label');
+      l.setAttribute('id', 'inclusion_no_label_' + i);
+      leftDiv.appendChild(l);
+
+      xi = document.createElement('i');
+      l.appendChild(xi);
+      /******************* no section ends *************************/
+      
+      ltable.appendChild(ltr);
+      ltr = document.createElement('tr');
+    }
+    inclusion_list.appendChild(ltable); 
+
+
+
+    var rtable = document.createElement('table');
+    rtable.setAttribute('id','right_table');
+    var rtr = document.createElement('tr');
+
+    for(var i = 0; i < exclusion_list_arr.length; i++){
+      var rtd = document.createElement('td');
+      rtd.setAttribute('id', exclusion_list_arr[i][1]);
+      rtd.innerHTML = exclusion_list_arr[i][0];
+      rtr.appendChild(rtd);
+
+      /******************* yes section starts *************************/
+      rtd = document.createElement('td');
+      rtr.appendChild(rtd);
+
+      var leftDiv = document.createElement('div');
+      leftDiv.setAttribute('class','switch switch-yes');
+      leftDiv.setAttribute('id','yes_btn_container_' + i);
+      leftDiv.setAttribute('category','exclusion_list');
+      leftDiv.setAttribute('key', exclusion_list_arr[i][0]);
+      leftDiv.setAttribute('onmousedown','buttonClicked(this);');
+      leftDiv.setAttribute('concept_id', exclusion_list_arr[i][1]);
+      leftDiv.setAttribute('concept_ans', 'YES');
+      rtd.appendChild(leftDiv);
+
+      var hiddenCheckBox = document.createElement('input');
+      hiddenCheckBox.setAttribute('type','checkbox');
+      hiddenCheckBox.setAttribute('class','hidden-checkbox');
+      hiddenCheckBox.setAttribute('id','exclusion_yes_checkbox_' + i);
+      leftDiv.appendChild(hiddenCheckBox);
+
+      var l = document.createElement('label');
+      l.setAttribute('id', 'exclusion_yes_label_' + i);
+      leftDiv.appendChild(l);
+
+      xi = document.createElement('i');
+      l.appendChild(xi);
+      /******************* yes section ends *************************/
+
+
+
+
+      /******************* no section starts *************************/
+      rtd = document.createElement('td');
+      rtr.appendChild(rtd);
+
+      var leftDiv = document.createElement('div');
+      leftDiv.setAttribute('class','switch switch-no');
+      leftDiv.setAttribute('id','no_btn_container_' + i);
+      leftDiv.setAttribute('category','exclusion_list');
+      leftDiv.setAttribute('key', exclusion_list_arr[i][0]);
+      leftDiv.setAttribute('onmousedown','buttonClicked(this);');
+      leftDiv.setAttribute('concept_id', exclusion_list_arr[i][1]);
+      leftDiv.setAttribute('concept_ans', 'NO');
+      rtd.appendChild(leftDiv);
+
+      var hiddenCheckBox = document.createElement('input');
+      hiddenCheckBox.setAttribute('type','checkbox');
+      hiddenCheckBox.setAttribute('class','hidden-checkbox');
+      hiddenCheckBox.setAttribute('id','exclusion_no_checkbox_' + i);
+      leftDiv.appendChild(hiddenCheckBox);
+
+      var l = document.createElement('label');
+      l.setAttribute('id', 'exclusion_no_label_' + i);
+      leftDiv.appendChild(l);
+
+      xi = document.createElement('i');
+      l.appendChild(xi);
+      /******************* no section ends *************************/
+      
+      rtable.appendChild(rtr);
+      rtr = document.createElement('tr');
+    }
+ 
+    <%if @patient.person.gender.first.upcase == 'M'%>
+      rtd = document.createElement('td');
+      rtd.setAttribute('colspan', '3');
+      rtd.setAttribute('colspan', '3');
+      rtd.innerHTML = "&nbsp;";
+      rtr.appendChild(rtd);
+      rtable.appendChild(rtr);
+    <%end%>
+ 
+    exclusion_list.appendChild(rtable); 
+
+    $('inputFrame'+tstCurrentPage).appendChild(table);
+  }
+
+  
+  function buildFastTrackTable2() {
     table = document.createElement('table');
     table.setAttribute('id', 'fast-track-table');
     /* 
@@ -2576,6 +2907,7 @@ pyridoxine_options = ["","25", "50"]
 #end%>
 
 
+ 
     <!-- TB regimen -->
     <% if current_user.activities.include?('Manage Lab Orders') or current_user.activities.include?('Manage Lab Results') or
         current_user.activities.include?('Manage Sputum Submissions') or current_user.activities.include?('Manage TB Clinic Visits') or
@@ -2837,21 +3169,43 @@ pyridoxine_options = ["","25", "50"]
     <!-- Fast  track questions -->
     <% enable_fast_track = GlobalProperty.find_by_property('enable.fast.track').property_value == 'true' rescue false %>
     <% if not @fast_track_patient == true and enable_fast_track == true %>
-      <%= select_tag "fast_track_yes_no", options_for_select([['Yes','Yes'],['No','No']]),
+
+      <%= select_tag "assess_fast_track", options_for_select([['Yes','YES'],['No','NO']]),
+          :id => 'assess_fast_track',
+          :helpText => "Assess for fast track visit (next appointment)",
+          :tt_onLoad => "showCategory2('Fast track');",
+          :tt_pageStyleClass => 'NoKeyboard' %>
+
+      <%= text_field_tag :fast_track_attributes, nil, 
+          { :tt_onLoad => "changeNextButton();showCategory2('Fast track');
+            $('clearButton').style.display='none';$('keyboard').style.display = 'none';
+            buildFastTrackTable(); preselectedAssessments();",
+            :tt_onUnLoad => "",
+            :condition => '$("assess_fast_track").value == "YES"',
+            :tt_pageStyleClass => "NoControls" } 
+      %>
+
+      <%fast_track_attr = [
+        ['Adult 18 years +', '9533'],['No side effects/OI', '9539'],
+        ['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540'],
+        ['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538'],
+        ['Last VL < 1000','9536'], ['TB symtom screening negative', '2186'],
+        ['Good adherence (appointment and dose)','9537'], ['Not on IPT or on IPT for 6 months + without complications', '9527']
+      ]
+      (fast_track_attr).each do |name, concept_id|
+        next if @patient.person.gender.first.upcase == 'M' and concept_id == '9538'
+      %>
+        <input type="hidden" class='assessments_for_ft' name="fast_track_concept[<%=concept_id%>]" id="fast_track_concept_<%=concept_id%>" />
+      <%end%>
+
+      <%= select_tag "fast_track_yes_no", options_for_select([['',''],['Yes','Yes'],['No','No']]),
         {:id => "book_for_fast_track",
         :multiple => false,
         :tt_onLoad => "showCategory2('Fast track');",
-        :helpText => "Book fast track visit (next appointment)"
+        :condition => '$("assess_fast_track").value == "YES"',
+        :helpText => "Book for fast track (next appointment)"
       } %>
 
-      <%= text_field "fast_track_attributes" , '',
-        :tt_onLoad => "$('clearButton').style.display='none'; $('keyboard').style.display = 'none';buildFastTrackTable();",
-        :tt_onUnLoad => "$('clearButton').style.display='';",
-        :condition => "$('book_for_fast_track').value.toUpperCase() == 'YES'",
-        :optional => "false",
-        :helpText => "<div class='custom-helptext' style='text-align:center;'>
-  Check eligibility for <b style='color:green'>Fast Track</b> at next visit</div>"
-    %>
 
     <%end%>
     <!-- Fast  track questions ends -->
@@ -3091,7 +3445,6 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
     <% else %>
       <%= hidden_field_tag "filter[provider]", nil %>
     <%end%>
-    <input type="hidden" name="fast_track_concept_ids" id="fast_tracK_obs" />
   </form>
   <div id="previous_drugs_dispensed">
   </div>
