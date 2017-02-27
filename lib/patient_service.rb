@@ -1414,10 +1414,21 @@ EOF
     patient_ids = (patient_ids - patient_ids_with_todays_active_filing_numbers)
     patient_ids = [0] if patient_ids.blank?
 
+
+    patient_ids_with_future_app = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT person_id FROM obs WHERE concept_id = #{ConceptName.find_by_name('Appointment date').concept_id} 
+    AND voided = 0 AND value_datetime >= '#{(Date.today - 2.month).strftime('%Y-%m-%d 00:00:00')}'
+    GROUP BY person_id;
+EOF
+
+    no_patient_ids = [0] if patient_ids_with_future_app.blank?
+    no_patient_ids = patient_ids_with_future_app.map{|ad| ad['person_id'].to_i }
+
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
 select patient_id,state,start_date,end_date from patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
-AND p.patient_id IN(#{patient_ids.join(',')})
+AND p.patient_id IN(#{patient_ids.join(',')}) 
+AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
 WHERE state IN (2, 3, 4, 5, 6, 8)
   AND state != 7
   AND start_date = (SELECT max(start_date) FROM patient_state t
