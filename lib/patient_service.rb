@@ -1386,7 +1386,7 @@ EOF
   def self.get_patient_to_be_archived_based_on_waste_state(limit)
     #The following function will get all transferred out patients
     #with active filling numbers and select one to be archived
-    limit_one = (limit - 18)
+    limit_one = (limit - 15)
     limit_two = (limit)
 
     active_filing_number_identifier_type = PatientIdentifierType.find_by_name("Filing Number")

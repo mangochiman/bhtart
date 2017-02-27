@@ -51,7 +51,7 @@ function showActiveFiles() {
   var t = document.createElement('table');
   t.setAttribute('id', 'active_files_table');
   
-  boxes = 18 ; attrs = 0; tr = document.createElement('tr'); t.appendChild(tr);
+  boxes = 15 ; attrs = 0; tr = document.createElement('tr'); t.appendChild(tr);
 
   for(var i = 0; i < boxes; i++) {
     var td = document.createElement('td');
@@ -95,7 +95,7 @@ function showActiveFiles() {
     divT.appendChild(divR);
     /*....................................... */
     spanR = document.createElement('span');
-    spanR.innerHTML = "Filing num:";
+    spanR.innerHTML = "Fng num:";
     spanR.setAttribute('class','title-headers');
     divR.appendChild(spanR);
     /*....................................... */
@@ -121,7 +121,7 @@ function showActiveFiles() {
     td.appendChild(divT);
     tr.appendChild(td);
 
-    if(attrs == 5) {
+    if(attrs == 4) {
       attrs = 0;
       tr = document.createElement('tr');
       t.appendChild(tr);
@@ -137,7 +137,7 @@ function showActiveFiles() {
 }
 
 
-var search_limit = 18;
+var search_limit = 15;
                
 function loadData() {
                                                                               
@@ -152,7 +152,7 @@ function loadData() {
         if(results == 'undefined' || results == '' || results == '"not validate"') {                           
           return;                                                               
         }else{                                                                  
-          search_limit += 18;
+          search_limit += 15;
           updateTable(results);                                                           
         }                                                                       
       }                                                                         
@@ -174,7 +174,7 @@ function updateTable(results) {
     filing_number = document.getElementById('filing_number_' + i);
     app.innerHTML = data[i]['next_app'];
     lv.innerHTML = data[i]['last_visit'];
-    outcome.innerHTML = data[i]['outcome'];
+    outcome.innerHTML = data[i]['outcome'].replace('transferred out','TO');
     filing_number.innerHTML = data[i]['filing_number'];
 
     onmousedown = document.getElementById('onmousedown_' + i);
@@ -314,7 +314,7 @@ function reFreshList() {
   position: absolute;
   margin-top: 100px;
   width: 600px;
-  margin-left: 430px;
+  margin-left: 18%;
   z-index: 991;
 }
 
@@ -368,7 +368,7 @@ function reFreshList() {
   position: absolute;
   margin-top: 100px;
   width: 600px;
-  margin-left: 430px;
+  margin-left: 18%;
   z-index: 991;
 }
 
