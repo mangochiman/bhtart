@@ -777,9 +777,13 @@ class GenericPeopleController < ApplicationController
     end
     if use_filing_number and hiv_session
 
-      PatientService.set_patient_filing_number(person.patient)
-      archived_patient = PatientService.patient_to_be_archived(person.patient)
-      message = PatientService.patient_printing_message(person.patient,archived_patient,creating_new_patient = true)
+      archived_patient = PatientService.set_patient_filing_number(person.patient)
+      if not archived_patient == person.patient
+        message = PatientService.patient_printing_message(person.patient, archived_patient, creating_new_patient = true)
+      else
+        redirect_to "/patients/assign_filing_number_manually?patient_id=#{person.id}" and return
+      end
+
       unless message.blank?
         print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}" , next_task(person.patient),message,true,person.id)
       else
@@ -789,6 +793,61 @@ class GenericPeopleController < ApplicationController
       print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
     end
   end
+
+  def assign_filing_number_manually
+  end
+
+  def archive_patient
+    primary = params[:primary_id]
+    secondary = params[:secondary_id]
+
+    patient_to_be_archived = Patient.find(secondary)
+    current_patient = Patient.find(primary)
+    PatientService.archive_patient(current_patient, patient_to_be_archived)
+
+    message = PatientService.patient_printing_message(current_patient, patient_to_be_archived, creating_new_patient = true)
+    print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{primary}", next_task(current_patient), message, true, primary)
+  end
+
+  def load_patients_to_be_archived
+    patients = PatientService.get_patient_to_be_archived_based_on_waste_state(params[:limit].to_i)
+    data = [];
+
+    (patients || []).each do |p|
+      patient_id = p['patient_id']
+
+      visit = Encounter.find_by_sql("SELECT MAX(encounter_datetime) 
+      visit_date FROM encounter WHERE voided = 0 AND patient_id = #{patient_id}")
+      
+      visit_date = visit.first['visit_date'].to_date.strftime('%d/%b/%Y') rescue 'N/A'
+
+      concept_name = ConceptName.find_by_name('Appointment date').concept_id
+      app_date = Observation.find_by_sql("SELECT MAX(value_datetime) 
+      app_date FROM obs WHERE voided = 0 AND person_id = #{patient_id}
+      AND concept_id = #{concept_name}")
+      
+      app_date = app_date.first['app_date'].to_date.strftime('%d/%b/%Y') rescue 'N/A'
+      
+      state = ProgramWorkflowState.find(p['state']) rescue nil
+      outcome = ConceptName.find_by_concept_id(state.concept_id).name unless state.blank?
+
+      identifier_type = PatientIdentifierType.find_by_name('Filing number').id
+      filing_number = PatientIdentifier.find_by_sql("SELECT identifier 
+      number FROM patient_identifier WHERE voided = 0 AND patient_id = #{patient_id}
+      AND identifier_type = #{identifier_type}")
+      
+      number = filing_number.first['number'] rescue 'N/A'
+
+      data << {
+        :outcome => (outcome.gsub('Patient','') rescue 'N/A'), :next_app => app_date,
+        :patient_id => p['patient_id'], :last_visit => visit_date,
+        :filing_number => number
+      }
+    end
+
+    render :text => data.to_json and return
+  end
+
 
   def set_datetime
     if request.post?
