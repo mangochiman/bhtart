@@ -1423,7 +1423,7 @@ WHERE state IN (2, 3, 4, 5, 6, 8)
   AND start_date = (SELECT max(start_date) FROM patient_state t
     WHERE t.patient_program_id = s.patient_program_id
   )
-LIMIT #{limit_one}, #{limit_two};
+GROUP BY p.patient_id LIMIT #{limit_one}, #{limit_two};
 EOF
 
     return outcomes rescue nil

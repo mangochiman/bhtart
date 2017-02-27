@@ -31,9 +31,13 @@
   color: blue;
 }
 
+#clearButton { display: none; }
 </style>
 
 <script>
+
+var tt_cancel_destination = "/patients/show/<%=params[:patient_id]%>";
+
 
 function archivePatient(e) {
   document.getElementById("regimen-change-popup-div").style.display = 'inline';
@@ -160,6 +164,8 @@ function loadData() {
 
 function updateTable(results) {
   data = JSON.parse(results);
+  document.getElementById("regimen-change-popup-div2").style.display = 'none';
+  document.getElementById("regimen-change-cover").style.display = 'none';
   
   for(var i = 0; i < data.length; i++) {
     app = document.getElementById('next_app_' + i);
@@ -193,12 +199,29 @@ function Archive() {
   document.location = '/patients/archive_patient?primary_id=' + "<%= params[:patient_id]%>&" + "secondary_id=" + second_id; 
 }
 
+
+function showWaitMsg() {
+  document.getElementById("regimen-change-popup-div2").style.display = 'inline';
+  document.getElementById("regimen-change-cover").style.display = 'inline';
+}
+
+function addefreshBtn() {
+  btn = document.getElementById('nextButton');
+  btn.innerHTML = "<span>Refresh list</span>";
+  btn.setAttribute('onmousedown','reFreshList();')
+}
+
+function reFreshList() {
+  showWaitMsg();             
+  loadData();
+}
+
 </script>
 
 <form>
     
     <%= text_field_tag :summary, nil, { 
-      :tt_onLoad => "showActiveFiles();
+      :tt_onLoad => "showWaitMsg();addefreshBtn();showActiveFiles();
       __$('keyboard').style.display = 'none';", 
       :id => 'active_files_window',
       :helpText => 'Active filing number assignment',
@@ -234,6 +257,26 @@ function Archive() {
   </div>
 
 </div>
+
+
+
+<div id="regimen-change-popup-div2">
+  <div id="regimen-change-popup-header2">
+    Fetching files to archive ....
+  </div>
+
+  <div class="btn-div">
+    <div style="padding-top: 35px; text-align: center;">
+      <span style="font-weight: bold; font-size: 35px;">Please wait </span><blink>....</blink>
+    </div>
+  </div>
+
+</div>
+
+
+
+
+
 
 
 <style>
@@ -314,5 +357,33 @@ function Archive() {
   bottom: 0px;
   margin-right: 27px;
 }
+
+#regimen-change-popup-div2 {
+  display: none;
+  background-color: #F4F4F4;
+  border: 2px solid #E0E0E0;
+  border-radius: 15px;
+  height: 170px;
+  padding: 5px;
+  position: absolute;
+  margin-top: 100px;
+  width: 600px;
+  margin-left: 430px;
+  z-index: 991;
+}
+
+#regimen-change-popup-header2{
+  border-bottom: 2px solid #7D9EC0;
+  margin-left: -5px;
+  width: 101.5%;
+  background-color: #FFFFFF;
+  margin-top: -5px;
+  padding-top: 5px;
+  border-radius: 15px 15px 0 0;
+  font-size: 14pt;
+  font-weight: bolder;
+  text-align: center;
+}
+
 </style>
 
