@@ -1284,7 +1284,7 @@
       :condition => '$("taken_art_in_last_two_months").value == "YES" && $("year_art_last_taken").value.toUpperCase() == "UNKNOWN"',
       :helpText => "Taken ARV's in the last two weeks? <span style='font-size:0.7em;font-style:italic'>(Kodi mwamwa ma ARV sabata ziwiri zapitazi?)</span>" } %>
 
-    <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
+    <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
       {	:id => "last_art_drugs_taken",
       :condition => '$("ever_received_art").value == "YES"',
       :tt_onLoad => "addCustomRegimenButton(); lastOtherDrugs = ''; $('otherMedications').value = '';",
@@ -1299,7 +1299,7 @@
         formulation = 'Ritonavir' if formulation.squish.upcase == 'R'
       %>
 
-        <%= touch_numeric_tag "#{formulation.squish}", @patient, nil,
+        <%#= touch_numeric_tag "#{formulation.squish}", @patient, nil,
           {
           :id => "#{formulation}",
           :field_type => 'number',
@@ -1321,7 +1321,7 @@
   :multiple => true,
   :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
 
-    <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
+    <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
       {
       :id => "otherMedications",
       :field_type => 'number',
@@ -1332,7 +1332,7 @@
       :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
 
     <% @other_medications.each do |key, value|  %>
-      <%= touch_numeric_tag "#{value}", @patient, nil,
+      <%#= touch_numeric_tag "#{value}", @patient, nil,
         {
         :id => "#{key}",
         :field_type => 'number',
