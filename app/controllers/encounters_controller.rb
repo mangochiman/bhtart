@@ -66,7 +66,11 @@ class EncountersController < GenericEncountersController
 
     @confirmatory_hiv_test_type = Patient.type_of_hiv_confirmatory_test(@patient, session_date) rescue ""
     @hiv_clinic_registration_date = Patient.date_of_hiv_clinic_registration(@patient, session_date) rescue ""
-    
+
+    @ever_received_answer = Observation.find(:last, :conditions => ["person_id =? AND concept_id =? AND
+      DATE(obs_datetime) =?", @patient.id, Concept.find_by_name('EVER RECEIVED ART').concept_id, session_date]
+    ).answer_string.squish.upcase rescue ""
+
     #@fast_track_patient = false
     #@latest_fast_track_answer = @patient.person.observations.recent(1).question("FAST").first.answer_string.squish.upcase rescue nil
     #@fast_track_patient = true if @latest_fast_track_answer == 'YES'
@@ -707,7 +711,7 @@ class EncountersController < GenericEncountersController
 
 		@arv_drugs = nil
 
-		if (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION'
+		if (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_REGISTRATION' || (params[:encounter_type].upcase rescue '') == 'HIV_CLINIC_CONSULTATION'
 			other = []
 
 =begin
