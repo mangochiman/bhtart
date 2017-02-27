@@ -213,7 +213,7 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
       last_appointment = Observation.find_by_sql("SELECT person_id, obs_datetime ,value_datetime FROM obs
                                 WHERE person_id = #{person_id}
                                 AND concept_id = #{appoinment} AND DATE(value_datetime) <= DATE('#{@end_date}') AND voided = 0
-                                ORDER BY obs_datetime LIMIT 1").first
+                                ORDER BY obs_datetime DESC LIMIT 1").first
 
       first_obs = Observation.find_by_sql("SELECT person_id, obs_datetime FROM obs
                                             WHERE person_id = #{person_id}
