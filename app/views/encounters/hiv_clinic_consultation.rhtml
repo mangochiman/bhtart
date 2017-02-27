@@ -1165,7 +1165,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   <%= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
     {	:id => "last_art_drugs_taken",
     :condition => 'everReceivedARTAnswer == "YES"',
-    :tt_onLoad => "addCustomRegimenButton(); lastOtherDrugs = ''; $('otherMedications').value = '';",
+    :tt_onLoad => "showCategory2('Transfer-In patient'); addCustomRegimenButton(); lastOtherDrugs = ''; $('otherMedications').value = '';",
     :tt_onUnLoad => 'updateLastARVDrugs(); removeCustomRegimenButton();',
     :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
@@ -1182,7 +1182,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
         :id => "#{formulation}",
         :field_type => 'number',
         :tt_pageStyleClass => "NumbersOnly",
-        :tt_onLoad => "jQuery('#Unknown').show();",
+        :tt_onLoad => "jQuery('#Unknown').show(); showCategory2('Transfer-In patient');",
         :condition => "parseInt($('last_art_drugs_taken').value.trim().match(/\\d+/)) == parseInt(#{regimen_index})",
         :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
 
@@ -1203,7 +1203,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     {
     :id => "otherMedications",
     :field_type => 'number',
-    :tt_onLoad => "jQuery('#Unknown').show();",
+    :tt_onLoad => "jQuery('#Unknown').show(); showCategory2('Transfer-In patient');",
     :tt_onUnLoad => 'updateLastOtherMedications();',
     :condition => "$('last_art_drugs_taken').value.trim().toUpperCase() == 'OTHER'",
     :multiple => true,
@@ -1215,7 +1215,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       :id => "#{key}",
       :field_type => 'number',
       :tt_pageStyleClass => "NumbersOnly",
-      :tt_onLoad => "jQuery('#Unknown').show();",
+      :tt_onLoad => "jQuery('#Unknown').show(); showCategory2('Transfer-In patient');",
       :condition => "lastOtherDrugs.split(';').indexOf('#{key}') != -1",
       :helpText  => "Total tabs of #{key.squish} brought to clinic"} %>
   <% end %>
@@ -1749,7 +1749,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
           if (currentLiItem.style.backgroundColor.match(/lightblue/i)){
 
             for (var j=0; j<=selectedValues.length - 1; j++){
-              liElement = jQuery("[tstvalue=" + selectedValues[j] + "]")[0];
+              liElement = jQuery("[tstvalue='" + selectedValues[j] + "']")[0];
               if (liElement){
                 id = liElement.getAttribute("id");
                 updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
@@ -1757,14 +1757,14 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
             }
           }else{
             for (var j=0; j<=selectedValues.length - 1; j++){
-              liElement = jQuery("[tstvalue=" + selectedValues[j] + "]")[0];
+              liElement = jQuery("[tstvalue='" + selectedValues[j] + "']")[0];
               if (liElement){
                 id = liElement.getAttribute("id");
                 updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
               }
             }
             
-            noneElement = jQuery("[tstvalue=NONE OF THE ABOVE]")[0];
+            noneElement = jQuery("[tstvalue='NONE OF THE ABOVE']")[0];
             noneElementID = noneElement.getAttribute("id");
             updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement)
           }
@@ -1773,7 +1773,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       }
       else{
         liOptions[i].onmouseup = function(){
-          noneElement = jQuery("[tstvalue=NONE OF THE ABOVE]")[0];
+          noneElement = jQuery("[tstvalue='NONE OF THE ABOVE']")[0];
           noneElementID = noneElement.getAttribute("id");
           if (noneElement.style.backgroundColor.match(/lightblue/i)){
             updateTouchscreenInputForSelect(__$('optionValue' + noneElementID), noneElement);
