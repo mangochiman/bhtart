@@ -280,7 +280,7 @@ The following block of code should be replaced by a more cleaner function
     end
 
     if use_filing_number and PatientService.get_patient_identifier(patient, 'Filing Number').blank?
-      @links << ["Filing Number (Create)","/patients/set_filing_number/#{patient.id}"]
+      @links << ["Filing Number (Create)","/patients/assign_filing_number_manually?patient_id=#{patient.id}"]
     end
 
     if use_user_selected_activities

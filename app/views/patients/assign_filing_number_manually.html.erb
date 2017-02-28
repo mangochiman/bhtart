@@ -196,7 +196,7 @@ function Archive() {
   details = document.getElementById('regimen-change-yes');
   second_id = details.getAttribute('patient_id');
 
-  document.location = '/patients/archive_patient?primary_id=' + "<%= params[:patient_id]%>&" + "secondary_id=" + second_id; 
+  document.location = '/people/archive_patient?primary_id=' + "<%= params[:patient_id]%>&" + "secondary_id=" + second_id; 
 }
 
 
