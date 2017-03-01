@@ -56,7 +56,8 @@ div {
   <%= text_field_tag("observations[][value_datetime]", session_date.strftime("%Y-%m-%d"),
     {
       :field_type => 'calendar',
-      :tt_onLoad => "setAttributes();showCategory('Next Appointment'); __$('category').style.display = 'none';showSelectedDates();",
+      :tt_onLoad => "setAttributes();showCategory('Next Appointment'); 
+      __$('category').style.display = 'none';showSelectedDates();",
       :min => "#{session_date}", 
       :max => "#{(session_date.to_date + 1.year).strftime("%Y-%m-%d")}",
       :ajaxCalendarUrl => "/patients/number_of_booked_patients?date=",
