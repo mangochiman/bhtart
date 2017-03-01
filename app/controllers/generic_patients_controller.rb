@@ -279,8 +279,15 @@ The following block of code should be replaced by a more cleaner function
       @links << ["Filing Number (Print)","/patients/print_filing_number/#{patient.id}"]
     end
 
+
+    if use_filing_number and not PatientService.get_patient_identifier(patient, 'Archived filing number').blank?
+      @links << ["Archive number (Print)","/patients/print_archive_filing_number/#{patient.id}"]
+    end
+
     if use_filing_number and PatientService.get_patient_identifier(patient, 'Filing Number').blank?
-      @links << ["Filing Number (Create)","/people/redirections?person_id=#{patient.id}"]
+      if PatientService.get_patient_identifier(patient, 'Archived filing number').blank?
+        @links << ["Filing Number (Create)","/people/redirections?person_id=#{patient.id}"]
+      end
     end
 
     if use_user_selected_activities
@@ -499,6 +506,10 @@ EOF
     print_and_redirect("/patients/filing_number_label/#{params[:id]}", "/patients/show/#{params[:id]}")
   end
 
+  def print_archive_filing_number
+    print_and_redirect("/patients/archive_filing_number_label/#{params[:id]}", "/patients/show/#{params[:id]}")
+  end
+
   def print_transfer_out_label
     print_and_redirect("/patients/transfer_out_label?patient_id=#{params[:id]}", "/patients/show/#{params[:id]}")
   end
@@ -534,6 +545,12 @@ EOF
   def filing_number_label
     patient = Patient.find(params[:id])
     label_commands = patient_filing_number_label(patient)
+    send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
+  end
+
+  def archive_filing_number_label
+    patient = Patient.find(params[:id])
+    label_commands = patient_archive_filing_number_label(patient)
     send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
   end
 
@@ -1988,6 +2005,21 @@ EOF
 
   def patient_filing_number_label(patient, num = 1)
     file = PatientService.get_patient_identifier(patient, 'Filing Number')[0..9]
+    file_type = file.strip[3..4]
+    version_number=file.strip[2..2]
+    number = file
+    len = number.length - 5
+    number = number[len..len] + "   " + number[(len + 1)..(len + 2)]  + " " +  number[(len + 3)..(number.length)]
+
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text("#{number}",75, 30, 0, 4, 4, 4, false)
+    label.draw_text("Filing area #{file_type}",75, 150, 0, 2, 2, 2, false)
+    label.draw_text("Version number: #{version_number}",75, 200, 0, 2, 2, 2, false)
+    label.print(num)
+  end
+
+  def patient_archive_filing_number_label(patient, num = 1)
+    file = PatientService.get_patient_identifier(patient, 'Archived filing number')[0..9]
     file_type = file.strip[3..4]
     version_number=file.strip[2..2]
     number = file
