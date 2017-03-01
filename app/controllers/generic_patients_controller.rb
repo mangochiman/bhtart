@@ -561,6 +561,15 @@ EOF
     send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
   end
 
+  def filing_number_national_id_and_archive_filing_number
+    patient = Patient.find(params[:patient_id])
+    archived_patient = Patient(params[:secondary_patient_id])
+
+    label_commands = PatientService.patient_national_id_label(patient) + patient_filing_number_label(patient) + patient_archive_filing_number_label(archive_patient)
+
+    send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
+  end
+
   def visit_label
     session_date = session[:datetime].to_date rescue Date.today
     print_string = patient_visit_label(@patient, session_date) rescue (raise "Unable to find patient (#{params[:patient_id]}) or generate a visit label for that patient")
