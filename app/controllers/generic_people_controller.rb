@@ -785,7 +785,7 @@ class GenericPeopleController < ApplicationController
       end
 
       unless message.blank?
-        print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}" , next_task(person.patient),message,true,person.id)
+        print_and_redirect("/patients/filing_number_national_id_and_archive_filing_number?patient_id=#{person.id}&:secondary_patient_id=#{archived_patient.id}" , next_task(person.patient),message,true,person.id)
       else
         print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
       end
