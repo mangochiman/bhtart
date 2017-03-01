@@ -45,7 +45,7 @@
 }
 
 .hidden-checkbox {
-  visibility: hidden;
+  visibility: hidden !important;
   position: absolute;
 }
 
@@ -57,11 +57,13 @@
 .switch-no label:before, .switch-no label:after {
   content: "NO";
   left: 22px !important;
+  top: 36%;
 }
 
 .switch-yes label:before, .switch-yes label:after {
   content: "YES";
   left: 15px !important;
+  top: 36%;
 }
 
 .switch label {

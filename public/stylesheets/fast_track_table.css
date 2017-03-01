@@ -1,27 +1,22 @@
 
 #fast-track-table {
+  height: 90%;
   width: 100%;
   border-collapse: collapse;
   border-width: 0px;
   font-size: 20px;
 }
 
-#fast-track-table th, td{
-  font-weight: normal;
+#inclusion, #exclusion {
+  font-size: 25px;
+  font-weight: bold;
+  width: 48%;
+}
+
+#left_table {
   border-style: solid;
-  border-width: 0px 0px 1px 0px;
+  border-width: 0px 1px 0px 0px;
 }
 
-.fast_track_checkbox {
+#exclusion {
 }
-      
-#fast-track-table img {
-  user-drag: none;
-  user-select: none;
-  -moz-user-select: none;
-  -webkit-user-drag: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  pointer-events: none;
-}
-
