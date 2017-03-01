@@ -777,15 +777,15 @@ class GenericPeopleController < ApplicationController
     end
     if use_filing_number and hiv_session
 
-      archived_patient = PatientService.set_patient_filing_number(person.patient)
-      if not archived_patient == person.patient
-        message = PatientService.patient_printing_message(person.patient, archived_patient, creating_new_patient = true)
+      @archived_patient = PatientService.set_patient_filing_number(person.patient)
+      if not @archived_patient == person.patient
+        message = PatientService.patient_printing_message(person.patient, @archived_patient, creating_new_patient = true)
       else
         redirect_to "/patients/assign_filing_number_manually?patient_id=#{person.id}" and return
       end
 
       unless message.blank?
-        print_and_redirect("/patients/filing_number_national_id_and_archive_filing_number?patient_id=#{person.id}&:secondary_patient_id=#{archived_patient.id}" , next_task(person.patient),message,true,person.id)
+        print_and_redirect("/patients/filing_number_national_id_and_archive_filing_number?patient_id=#{person.id}&:secondary_patient_id=#{@archived_patient.id}" , next_task(person.patient),message,true,person.id)
       else
         print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
       end

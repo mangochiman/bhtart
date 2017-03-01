@@ -80,7 +80,11 @@
   }
 
   function printLabel() {
-    document.location = "/patients/filing_number_and_national_id?patient_id=<%=@patient_id%>"
+    <%if @archived_patient.blank?%>
+      document.location = "/patients/filing_number_and_national_id?patient_id=<%=@patient_id%>";
+    <%else%>
+      document.location = "/patients/filing_number_national_id_and_archive_filing_number?patient_id=<%=@person_id%>&secondary_patient_id=<%@archived_patient.id%>";
+    <%end%>
   }
 
   function done() {
