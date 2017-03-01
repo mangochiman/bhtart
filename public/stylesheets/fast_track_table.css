@@ -1,3 +1,6 @@
+#clearButton {
+  display: inline;
+}
 
 #fast-track-table {
   height: 90%;
@@ -10,7 +13,6 @@
 #inclusion, #exclusion {
   font-size: 25px;
   font-weight: bold;
-  width: 48%;
 }
 
 #left_table {
@@ -19,4 +21,14 @@
 }
 
 #exclusion {
+  width: 52%;
 }
+
+.exclusion_titles {
+  width: 62%;
+}
+
+.inclusion_titles {
+  width: 58%;
+}
+

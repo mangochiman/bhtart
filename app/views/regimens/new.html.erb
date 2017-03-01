@@ -2446,9 +2446,10 @@ end
     } */
   }
 
-  function gotoNextPageOnlyIf() {
+  function gotoNextPageOnlyIf(e) {
     var fast_track_attributes = (document.getElementById('touchscreenInput' + tstCurrentPage));
-    var nextBtn = document.getElementById('nextButton');
+   // var nextBtn = document.getElementById('nextButton');
+    //var regularBtn = document.getElementById('normal_visit');
 
     sex = "<%=@patient.person.gender.first.upcase%>";
     var fast_track_attr = [
@@ -2472,14 +2473,46 @@ end
     }
     
     fast_track_attributes.setAttribute("optional", true); 
-    nextButton.setAttribute('onmousedown', 'gotoNextPage();');
+    //nextBtn.setAttribute('onmousedown', 'gotoNextPage();');
+
+    var fast_track_ans = document.getElementById('book_for_fast_track');
+    if(e.id == 'normal_visit') {
+      fast_track_ans.value = 'No';
+    }else{
+      fast_track_ans.value = 'Yes';
+    }
+
     gotoNextPage();
+  }
+
+  function removeRegularBtn() {
+    var regularBtn = document.getElementById('normal_visit');
+    var buttonsDiv = document.getElementById('buttons');
+    buttonsDiv.removeChild(regularBtn);
   }
 
   function changeNextButton() {
     var nextBtn = document.getElementById('nextButton');
-    nextButton.setAttribute('onmousedown', 'gotoNextPageOnlyIf();')
-    fast_track_attributes.removeAttribute("optional"); 
+    nextBtn.setAttribute('onmousedown', 'gotoNextPageOnlyIf(this);');
+    nextBtn.innerHTML = "<span>FT app.</span>";
+    
+    try {
+      fast_track_attributes.removeAttribute("optional"); 
+    }catch(e){
+      return;
+    };
+
+    var buttonsDiv = document.getElementById('buttons');
+    var backButton = document.getElementById('backButton');
+    
+    var normalVisit = document.createElement('button');
+    normalVisit.setAttribute('class','button green navButton');
+    normalVisit.setAttribute('id','normal_visit');
+    normalVisit.setAttribute('onmousedown','gotoNextPageOnlyIf(this);');
+    normalVisit.setAttribute('style','display: block;');
+    normalVisit.innerHTML = "<span>Regular app.</span>";
+
+    buttonsDiv.insertBefore(normalVisit, backButton);
     //fast_track_attributes.setAttribute("optional", true); 
     //gotoNextPage();
   }
@@ -2516,23 +2549,28 @@ end
 
     <%if @patient.person.gender.first.upcase == 'M'%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['On 1st line',9535],['Last VL < 1000', 9536],
-        ['TB screen neg',2186],['Good adherence', 9537]
+        ['Adult', 9533], ['On 1st line ART',9535],
+        ['Good adherence', 9537], ['Last VL < 1000', 9536],
+        ['TB screen neg',2186]
       ];
 
       var exclusion_list_arr = [
-        ['SE / OI', 9539],['Needs BP / diabetes', 9540],
-        ['Started IPT', 9527],['On ART < 12', 9534]
+        ['Started ART <12 months ago', 9534],  ['Started IPT <12 months ago', 9527],
+        ['Needs BP / diabetes treatment', 9540],
+        ['Any side effects / HIV related dis.', 9539]
       ];
     <%else%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['On 1st line',9535],['Last VL < 1000', 9536],
-        ['TB screen neg',2186],['Good adherence', 9537]
+        ['Adult', 9533], ['On 1st line ART',9535],
+        ['Good adherence', 9537], ['Last VL < 1000', 9536],
+        ['TB screen neg',2186]
       ];
 
       var exclusion_list_arr = [
-        ['SE / OI', 9539],['Needs BP / diabetes', 9540], ['Preg / BF', 9538],
-        ['Started IPT', 9527],['On ART < 12', 9534]
+        ['Started ART <12 months ago', 9534], ['Started IPT <12 months ago', 9527],
+        ['Needs BP / diabetes treatment', 9540],
+        ['Any side effects / HIV related dis.', 9539], ['Preg / BF', 9538]
+      ];
     <%end%>
 
     var tr = document.createElement('tr');
@@ -2544,7 +2582,7 @@ end
     th = document.createElement('th');
     th.setAttribute('id','exclusion')
     tr.appendChild(th);
-    th.innerHTML = 'Exclusion'
+    th.innerHTML = 'Exclusion';
     table.appendChild(tr);
 
 
@@ -2567,6 +2605,7 @@ end
     for(var i = 0; i < inclusion_list_arr.length; i++){
       var ltd = document.createElement('td');
       ltd.setAttribute('id', inclusion_list_arr[i][1]);
+      ltd.setAttribute('class', 'inclusion_titles');
       ltd.innerHTML = inclusion_list_arr[i][0];
       ltr.appendChild(ltd);
 
@@ -2643,6 +2682,7 @@ end
     for(var i = 0; i < exclusion_list_arr.length; i++){
       var rtd = document.createElement('td');
       rtd.setAttribute('id', exclusion_list_arr[i][1]);
+      rtd.setAttribute('class', 'exclusion_titles');
       rtd.innerHTML = exclusion_list_arr[i][0];
       rtr.appendChild(rtd);
 
@@ -3180,8 +3220,8 @@ pyridoxine_options = ["","25", "50"]
           { :tt_onLoad => "changeNextButton();showCategory2('Fast track');
             $('clearButton').style.display='none';$('keyboard').style.display = 'none';
             buildFastTrackTable(); preselectedAssessments();",
-            :tt_onUnLoad => "",
             :condition => '$("assess_fast_track").value == "YES"',
+            :tt_onUnload => 'removeRegularBtn();',
             :tt_pageStyleClass => "NoControls" } 
       %>
 
@@ -3198,15 +3238,7 @@ pyridoxine_options = ["","25", "50"]
         <input type="hidden" class='assessments_for_ft' name="fast_track_concept[<%=concept_id%>]" id="fast_track_concept_<%=concept_id%>" />
       <%end%>
 
-      <%= select_tag "fast_track_yes_no", options_for_select([['',''],['Yes','Yes'],['No','No']]),
-        {:id => "book_for_fast_track",
-        :multiple => false,
-        :tt_onLoad => "showCategory2('Fast track');",
-        :condition => '$("assess_fast_track").value == "YES"',
-        :helpText => "Book for fast track (next appointment)"
-      } %>
-
-
+      <input type="hidden" id="book_for_fast_track" name="fast_track_yes_no" />
     <%end%>
     <!-- Fast  track questions ends -->
 
