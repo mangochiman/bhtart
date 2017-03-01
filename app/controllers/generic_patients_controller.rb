@@ -1149,6 +1149,7 @@ EOF
   end
 
   def number_of_booked_patients
+    params[:date] = Date.today if params[:date].blank?
     date = params[:date].to_date
     encounter_type = EncounterType.find_by_name('APPOINTMENT')
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
