@@ -1082,6 +1082,14 @@ EOF
     @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
     @arv_number = PatientService.get_patient_identifier(@patient, 'ARV Number')
 
+
+    type = EncounterType.find_by_name('APPOINTMENT')
+    @appointment_already_set = Encounter.find(:first, 
+      :conditions => ["encounter_type = ? AND patient_id = ?
+      AND encounter_datetime BETWEEN ? AND ?",type.id, @patient.id,
+      session_date.strftime('%Y-%m-%d 00:00:00'),
+      session_date.strftime('%Y-%m-%d 23:59:59')]).blank? != true
+
     render :template => 'dashboards/treatment_dashboard', :layout => false
   end
 
