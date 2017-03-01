@@ -57,7 +57,8 @@ div {
     {
       :field_type => 'calendar',
       :tt_onLoad => "setAttributes();showCategory('Next Appointment'); __$('category').style.display = 'none';showSelectedDates();",
-      :minDate => "#{session_date}",
+      :min => "#{session_date}", 
+      :max => "#{(session_date.to_date + 1.year).strftime("%Y-%m-%d")}",
       :ajaxCalendarUrl => "/patients/number_of_booked_patients?date=",
       :tt_onUnLoad => "__$('observations__value_datetime').value = hideInfo();"
       }) %>
