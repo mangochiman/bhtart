@@ -815,7 +815,6 @@ class GenericPeopleController < ApplicationController
 
     (patients || []).each do |p|
       patient_id = p['patient_id']
-
       visit = Encounter.find_by_sql("SELECT MAX(encounter_datetime) 
       visit_date FROM encounter WHERE voided = 0 AND patient_id = #{patient_id}")
       
@@ -840,7 +839,7 @@ class GenericPeopleController < ApplicationController
 
       data << {
         :outcome => (outcome.gsub('Patient','') rescue 'N/A'), :next_app => app_date,
-        :patient_id => p['patient_id'], :last_visit => visit_date,
+        :patient_id => patient_id, :last_visit => visit_date,
         :filing_number => number
       }
     end
