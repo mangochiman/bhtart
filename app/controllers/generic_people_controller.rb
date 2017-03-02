@@ -769,6 +769,23 @@ class GenericPeopleController < ApplicationController
     end
   end
 
+  def display_duplicate_filing_numbers
+    duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(params[:patient_id])
+    @active = duplicate_filing_numbers.first
+    @dormant = duplicate_filing_numbers.last
+  end
+  
+  def void_filing_numbers 
+
+    ActiveRecord::Base.connection.execute <<EOF
+      UPDATE patient_identifier SET voided = 1, void_reason = 'Patient had multiple filing numbers'
+      WHERE voided = 0 AND patient_id = #{params[:patient_id]}
+      AND identifier IN(#{params[:filing_numbers]});
+EOF
+
+    redirect_to "/people/confirm?found_person_id=#{params[:patient_id]}"
+  end
+
   def redirections
     person = Person.find(params[:person_id])
     hiv_session = false
@@ -776,6 +793,12 @@ class GenericPeopleController < ApplicationController
       hiv_session = true
     end
     if use_filing_number and hiv_session
+
+      duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(person.id)
+      unless duplicate_filing_numbers.blank?
+        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{person.id}"
+        return
+      end
 
       @archived_patient = PatientService.set_patient_filing_number(person.patient)
       if not @archived_patient == person.patient
