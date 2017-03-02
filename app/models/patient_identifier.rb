@@ -133,4 +133,57 @@ EOF
     end rescue nil 
   end
 
+  def self.fetch_duplicate_filing_numbers(patient_id)
+
+    active  = PatientIdentifierType.find_by_name("Filing number").id
+    dormant = PatientIdentifierType.find_by_name("Archived filing number").id
+
+    active_files = ActiveRecord::Base.connection.select_all <<EOF                             
+        SELECT patient_id, count(identifier) c FROM patient_identifier
+        WHERE identifier_type = #{active} AND voided = 0
+        AND patient_id = #{patient_id} GROUP BY patient_id HAVING c > 1;
+EOF
+
+
+    dormant_files = ActiveRecord::Base.connection.select_all <<EOF                             
+        SELECT patient_id, count(identifier) c FROM patient_identifier
+        WHERE identifier_type = #{dormant} AND voided = 0
+        AND patient_id = #{patient_id} GROUP BY patient_id HAVING c > 1;
+EOF
+
+    active_filing_numbers = []
+    dormant_filing_numbers = []
+
+    unless active_files.blank?
+      files = ActiveRecord::Base.connection.select_all <<EOF                             
+          SELECT identifier FROM patient_identifier
+          WHERE identifier_type = #{active} AND voided = 0
+          AND patient_id = #{patient_id};
+EOF
+      
+      (files || []).each do |f|
+        active_filing_numbers << f['identifier']
+      end
+
+    end
+
+
+    unless dormant_files.blank?
+      files = ActiveRecord::Base.connection.select_all <<EOF                             
+          SELECT identifier FROM patient_identifier
+          WHERE identifier_type = #{dormant} AND voided = 0
+          AND patient_id = #{patient_id};
+EOF
+      
+      (files || []).each do |f|
+        dormant_filing_numbers << f['identifier']
+      end
+      
+    end
+
+
+
+    return active_filing_numbers, dormant_filing_numbers
+  end
+
 end
