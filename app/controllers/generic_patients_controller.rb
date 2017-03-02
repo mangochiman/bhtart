@@ -279,8 +279,15 @@ The following block of code should be replaced by a more cleaner function
       @links << ["Filing Number (Print)","/patients/print_filing_number/#{patient.id}"]
     end
 
+
+    if use_filing_number and not PatientService.get_patient_identifier(patient, 'Archived filing number').blank?
+      @links << ["Archive number (Print)","/patients/print_archive_filing_number/#{patient.id}"]
+    end
+
     if use_filing_number and PatientService.get_patient_identifier(patient, 'Filing Number').blank?
-      @links << ["Filing Number (Create)","/patients/set_filing_number/#{patient.id}"]
+      if PatientService.get_patient_identifier(patient, 'Archived filing number').blank?
+        @links << ["Filing Number (Create)","/people/redirections?person_id=#{patient.id}"]
+      end
     end
 
     if use_user_selected_activities
@@ -499,6 +506,10 @@ EOF
     print_and_redirect("/patients/filing_number_label/#{params[:id]}", "/patients/show/#{params[:id]}")
   end
 
+  def print_archive_filing_number
+    print_and_redirect("/patients/archive_filing_number_label/#{params[:id]}", "/patients/show/#{params[:id]}")
+  end
+
   def print_transfer_out_label
     print_and_redirect("/patients/transfer_out_label?patient_id=#{params[:id]}", "/patients/show/#{params[:id]}")
   end
@@ -537,9 +548,24 @@ EOF
     send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
   end
 
+  def archive_filing_number_label
+    patient = Patient.find(params[:id])
+    label_commands = patient_archive_filing_number_label(patient)
+    send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
+  end
+
   def filing_number_and_national_id
     patient = Patient.find(params[:patient_id])
     label_commands = PatientService.patient_national_id_label(patient) + patient_filing_number_label(patient)
+
+    send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
+  end
+
+  def filing_number_national_id_and_archive_filing_number
+    patient = Patient.find(params[:patient_id])
+    archived_patient = Patient(params[:secondary_patient_id])
+
+    label_commands = PatientService.patient_national_id_label(patient) + patient_filing_number_label(patient) + patient_archive_filing_number_label(archive_patient)
 
     send_data(label_commands,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{patient.id}#{rand(10000)}.lbl", :disposition => "inline")
   end
@@ -1056,6 +1082,14 @@ EOF
     @reason_for_art_eligibility = PatientService.reason_for_art_eligibility(@patient)
     @arv_number = PatientService.get_patient_identifier(@patient, 'ARV Number')
 
+
+    type = EncounterType.find_by_name('APPOINTMENT')
+    @appointment_already_set = Encounter.find(:first, 
+      :conditions => ["encounter_type = ? AND patient_id = ?
+      AND encounter_datetime BETWEEN ? AND ?",type.id, @patient.id,
+      session_date.strftime('%Y-%m-%d 00:00:00'),
+      session_date.strftime('%Y-%m-%d 23:59:59')]).blank? != true
+
     render :template => 'dashboards/treatment_dashboard', :layout => false
   end
 
@@ -1123,6 +1157,7 @@ EOF
   end
 
   def number_of_booked_patients
+    params[:date] = Date.today if params[:date].blank?
     date = params[:date].to_date
     encounter_type = EncounterType.find_by_name('APPOINTMENT')
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
@@ -1988,6 +2023,21 @@ EOF
 
   def patient_filing_number_label(patient, num = 1)
     file = PatientService.get_patient_identifier(patient, 'Filing Number')[0..9]
+    file_type = file.strip[3..4]
+    version_number=file.strip[2..2]
+    number = file
+    len = number.length - 5
+    number = number[len..len] + "   " + number[(len + 1)..(len + 2)]  + " " +  number[(len + 3)..(number.length)]
+
+    label = ZebraPrinter::StandardLabel.new
+    label.draw_text("#{number}",75, 30, 0, 4, 4, 4, false)
+    label.draw_text("Filing area #{file_type}",75, 150, 0, 2, 2, 2, false)
+    label.draw_text("Version number: #{version_number}",75, 200, 0, 2, 2, 2, false)
+    label.print(num)
+  end
+
+  def patient_archive_filing_number_label(patient, num = 1)
+    file = PatientService.get_patient_identifier(patient, 'Archived filing number')[0..9]
     file_type = file.strip[3..4]
     version_number=file.strip[2..2]
     number = file
