@@ -2506,7 +2506,7 @@ end
     };
 
     var buttonsDivContainer = document.getElementById('buttons');
-    var backButton = document.getElementById('backButton');
+    var setBackButton = document.getElementById('backButton');
     
     var normalVisit = document.createElement('button');
     normalVisit.setAttribute('class','button green navButton');
@@ -2515,7 +2515,7 @@ end
     normalVisit.setAttribute('style','display: block;');
     normalVisit.innerHTML = "<span>Regular app.</span>";
 
-    buttonsDivContainer.insertBefore(normalVisit, backButton);
+    buttonsDivContainer.insertBefore(normalVisit, setBackButton);
   }
 
   function preselectedAssessments() {
