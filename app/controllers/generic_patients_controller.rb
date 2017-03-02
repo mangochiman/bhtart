@@ -65,7 +65,7 @@ class GenericPatientsController < ApplicationController
       fast_track_answers = @patient.person.observations.question("FAST").all.collect{|o|o.answer_string.squish.upcase}
 
       if (latest_fast_track_answer == 'YES')
-        if (@task.encounter_type rescue 'NONE').match(/NONE/i)
+        if (@task.encounter_type || 'NONE').match(/NONE/i)
           last_two_fast_track_answers = [fast_track_answers[-2], fast_track_answers[-1]].compact #Trying to find for two consecutive YES answers for fast track question
           if (last_two_fast_track_answers.length > 1)
             uniq_fast_track_answers = last_two_fast_track_answers.uniq
