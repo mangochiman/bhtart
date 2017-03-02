@@ -1116,11 +1116,11 @@ class EncountersController < GenericEncountersController
         ['Implant', 'CONTRACEPTIVE IMPLANT'],
         ['Male condoms', 'MALE CONDOMS'],
         ['Female condoms', 'FEMALE CONDOMS'],
+        ['Tubal ligation', 'TUBAL LIGATION'],
         ['None of the above', 'NONE'],
         #['Rhythm method', 'RYTHM METHOD'],
         #['Withdrawal method', 'WITHDRAWAL METHOD'],
         #['Abstinence', 'ABSTINENCE'],
-        #['Tubal ligation', 'TUBAL LIGATION'],
         #['Vasectomy', 'VASECTOMY']
       ],
       'male_family_planning_methods' => [
