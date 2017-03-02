@@ -977,7 +977,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
               if (selected_value.match(/INTRAUTERINE/i)){
                 selected_value = 'INTRAUTERINE CONTRACEPTION';
               }
-              liElement = jQuery("[tstvalue=" + selected_value + "]")[0];
+              liElement = jQuery("[tstvalue='" + selected_value + "']")[0];
               if (liElement){
                 id = liElement.getAttribute("id");
                 updateTouchscreenInputForSelect(__$('optionValue' + id), liElement)
@@ -993,7 +993,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
                 selected_value = 'INTRAUTERINE CONTRACEPTION';
               }
 
-              liElement = jQuery("[tstvalue=" + selected_value + "]")[0];
+              liElement = jQuery("[tstvalue='" + selected_value + "']")[0];
               console.log(liElement)
               if (liElement){
                 id = liElement.getAttribute("id");
