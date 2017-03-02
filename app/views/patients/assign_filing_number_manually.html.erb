@@ -168,18 +168,21 @@ function updateTable(results) {
   document.getElementById("regimen-change-cover").style.display = 'none';
   
   for(var i = 0; i < data.length; i++) {
-    app = document.getElementById('next_app_' + i);
-    lv = document.getElementById('last_visit_' + i);
-    outcome = document.getElementById('outcome_' + i);
-    filing_number = document.getElementById('filing_number_' + i);
-    app.innerHTML = data[i]['next_app'];
-    lv.innerHTML = data[i]['last_visit'];
-    outcome.innerHTML = data[i]['outcome'].replace('transferred out','TO');
-    filing_number.innerHTML = data[i]['filing_number'];
-
-    onmousedown = document.getElementById('onmousedown_' + i);
-    onmousedown.setAttribute('patient_id', data[i]['patient_id']);
-    onmousedown.setAttribute('onmousedown',"archivePatient(this);"); 
+    try {
+      app = document.getElementById('next_app_' + i);
+      lv = document.getElementById('last_visit_' + i);
+      outcome = document.getElementById('outcome_' + i);
+      filing_number = document.getElementById('filing_number_' + i);
+      app.innerHTML = data[i]['next_app'];
+      lv.innerHTML = data[i]['last_visit'];
+      outcome.innerHTML = data[i]['outcome'].replace('transferred out','TO');
+      filing_number.innerHTML = data[i]['filing_number'];
+      btnArchive = document.getElementById('onmousedown_' + i);
+      btnArchive.setAttribute('patient_id', data[i]['patient_id']);
+      btnArchive.setAttribute('onmousedown',"archivePatient(this);"); 
+    }catch(e) {
+      continue;
+    }
   }
    
 }
@@ -191,12 +194,12 @@ function cancelArchive() {
 
 function Archive() {
   document.getElementById("regimen-change-popup-div").style.display = 'none';
-  document.getElementById("regimen-change-cover").style.display = 'none';
-
+  //document.getElementById("regimen-change-cover").style.display = 'none';
+  
   details = document.getElementById('regimen-change-yes');
   second_id = details.getAttribute('patient_id');
 
-  document.location = '/patients/archive_patient?primary_id=' + "<%= params[:patient_id]%>&" + "secondary_id=" + second_id; 
+  document.location = '/people/archive_patient?primary_id=' + "<%= params[:patient_id]%>&" + "secondary_id=" + second_id; 
 }
 
 
@@ -224,7 +227,7 @@ function reFreshList() {
       :tt_onLoad => "showWaitMsg();addefreshBtn();showActiveFiles();
       __$('keyboard').style.display = 'none';", 
       :id => 'active_files_window',
-      :helpText => 'Active filing number assignment',
+      :helpText => 'Select filing number to archive',
       :tt_pageStyleClass => "NoControls" 
     } %>
 

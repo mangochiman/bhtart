@@ -97,6 +97,37 @@
             document.getElementById('set_appointment').style.display='inline';
 
     }
+
+
+    function enableAppointBtn() {
+
+      if(total_required_all >= total_dispensed_all) {
+
+        var optimized_days = document.getElementsByClassName('optimized_interval')[0];
+        try {
+          optimized_days = parseInt(optimized_days.innerHTML.replace('days','').replace('day',''));
+        }catch(e) {
+          optimized_days = 30;
+        }
+        
+        <%curr_date = session[:datetime].to_date rescue Date.today %>
+
+        var currDate =  new Date(<%= curr_date.year%>,<%= (curr_date.month - 1)%>,<%= curr_date.day%>);
+        currDate.setDate(currDate.getDate() + optimized_days);
+
+        var set_date = (currDate.getFullYear());
+        set_date += "-" + (currDate.getMonth() + 1);
+        set_date += "-" + (currDate.getDate());
+
+
+        var url = "/encounter_types/show?encounter_type=Appointment&id=show";
+        url += "&patient_id=<%= @patient.id -%>&date=" + set_date;
+        window.parent.location = url;
+      }  
+    }  
+
+    var total_required_all = 0;
+    var total_dispensed_all = 0;
 </script>
 
 <body onload="showAppointmentButton();">
@@ -207,7 +238,9 @@
                                 <td style="text-align: right; padding-right: 10px;"><%=hanging_pills%>&nbsp;<%=hanging_pills == 'N/A' ? nil : drug_unit%></td>
                               <%end unless @appointment_type.blank?%>
                               <td style="text-align: right; padding-right: 10px;"><%=MedicationService.prescription_interval(order)%>&nbsp;days</td>
-                              <td style="text-align: right; padding-right: 10px;"><%=MedicationService.optimized_interval(order)%>&nbsp;days</td>
+                              <td class="optimized_interval" style="text-align: right; padding-right: 10px;">
+                                <%=MedicationService.optimized_interval(order)%>&nbsp;days
+                              </td>
                               <td style="text-align: right; padding-right: 10px;"><%="#{total_required} #{drug_unit}"%></td>
                               <td style="text-align:right; padding-right: 10px;" id = "<%=order.id%>"><%= total_dispensed %>&nbsp;<%= drug_unit %></td>
                             </tr>
@@ -222,10 +255,17 @@
                                }else{
                                 row.setAttribute('style','color: red; text-align: right; padding-right: 5px;');
                                }
+
+                               total_required_all += total_required;
+                               total_dispensed_all += total_required;
                             </script>
                         <% end %>
                       </table>
                   <% end %>
+      
+                  <%if @appointment_already_set == true %>
+                    <script>enableAppointBtn();</script>
+                  <%end%>
               <% else %>
                   <div class="data">No prescriptions are available for this patient (<%=current_day%>)</div>
               <% end %>
