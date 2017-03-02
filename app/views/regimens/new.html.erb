@@ -2490,8 +2490,8 @@ end
 
   function removeRegularBtn() {
     var regularBtn = document.getElementById('normal_visit');
-    var buttonsDiv = document.getElementById('buttons');
-    buttonsDiv.removeChild(regularBtn);
+    var buttonsDivContainer = document.getElementById('buttons');
+    buttonsDivContainer.removeChild(regularBtn);
   }
 
   function changeNextButton() {
@@ -2505,7 +2505,7 @@ end
       return;
     };
 
-    var buttonsDiv = document.getElementById('buttons');
+    var buttonsDivContainer = document.getElementById('buttons');
     var backButton = document.getElementById('backButton');
     
     var normalVisit = document.createElement('button');
@@ -2515,9 +2515,7 @@ end
     normalVisit.setAttribute('style','display: block;');
     normalVisit.innerHTML = "<span>Regular app.</span>";
 
-    buttonsDiv.insertBefore(normalVisit, backButton);
-    //fast_track_attributes.setAttribute("optional", true); 
-    //gotoNextPage();
+    buttonsDivContainer.insertBefore(normalVisit, backButton);
   }
 
   function preselectedAssessments() {
