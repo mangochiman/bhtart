@@ -60,6 +60,29 @@ function showActiveFiles() {
     var divT = document.createElement('div');
     divT.setAttribute('class', 'table-div');
     divT.setAttribute('id', "onmousedown_" + i);
+
+
+
+
+    divR = document.createElement('div');
+    divR.setAttribute('class', 'table-row');
+    divT.appendChild(divR);
+    /*......................................................................... */
+    spanR = document.createElement('span');
+    spanR.innerHTML = "Nat ID:";
+    spanR.setAttribute('class','title-headers');
+    divR.appendChild(spanR);
+    /*....................................... */
+    spanR = document.createElement('span');
+    spanR.setAttribute('id','national_id_' + i);
+    divR.appendChild(spanR);
+    /*......................................................................... */
+
+
+
+
+
+
     
     var divR = document.createElement('div');
     divR.setAttribute('class', 'table-row');
@@ -118,6 +141,10 @@ function showActiveFiles() {
     divR.appendChild(spanR);
 
 
+
+
+
+
     td.appendChild(divT);
     tr.appendChild(td);
 
@@ -173,10 +200,15 @@ function updateTable(results) {
       lv = document.getElementById('last_visit_' + i);
       outcome = document.getElementById('outcome_' + i);
       filing_number = document.getElementById('filing_number_' + i);
+      nationa_id = document.getElementById('national_id_' + i);
+
+
       app.innerHTML = data[i]['next_app'];
       lv.innerHTML = data[i]['last_visit'];
       outcome.innerHTML = data[i]['outcome'].replace('transferred out','TO');
       filing_number.innerHTML = data[i]['filing_number'];
+      nationa_id.innerHTML = data[i]['national_id'];
+
       btnArchive = document.getElementById('onmousedown_' + i);
       btnArchive.setAttribute('patient_id', data[i]['patient_id']);
       btnArchive.setAttribute('onmousedown',"archivePatient(this);"); 

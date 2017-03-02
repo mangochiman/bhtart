@@ -813,6 +813,9 @@ class GenericPeopleController < ApplicationController
     patients = PatientService.get_patient_to_be_archived_based_on_waste_state(params[:limit].to_i)
     data = [];
 
+    filing_number_identifier_type = PatientIdentifierType.find_by_name('Filing number').id
+    nat_identifier_type = PatientIdentifierType.find_by_name('National id').id
+
     (patients || []).each do |p|
       patient_id = p['patient_id']
       visit = Encounter.find_by_sql("SELECT MAX(encounter_datetime) 
@@ -830,18 +833,23 @@ class GenericPeopleController < ApplicationController
       state = ProgramWorkflowState.find(p['state']) rescue nil
       outcome = ConceptName.find_by_concept_id(state.concept_id).name unless state.blank?
 
-      identifier_type = PatientIdentifierType.find_by_name('Filing number').id
       filing_number = PatientIdentifier.find_by_sql("SELECT identifier 
       number FROM patient_identifier WHERE voided = 0 AND patient_id = #{patient_id}
-      AND identifier_type = #{identifier_type}")
+      AND identifier_type = #{filing_number_identifier_type}")
+      
+      nat_number = PatientIdentifier.find_by_sql("SELECT identifier 
+      number FROM patient_identifier WHERE voided = 0 AND patient_id = #{patient_id}
+      AND identifier_type = #{nat_identifier_type}")
       
       number = filing_number.first['number'] rescue 'N/A'
+      nat_number = nat_number.first['number'] rescue 'N/A'
 
       data << {
         :outcome => (outcome.gsub('Patient','') rescue 'N/A'), :next_app => app_date,
         :patient_id => patient_id, :last_visit => visit_date,
-        :filing_number => number
+        :filing_number => number, :national_id => nat_number
       }
+
     end
 
     render :text => data.to_json and return
