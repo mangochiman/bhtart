@@ -2042,7 +2042,7 @@ EOF
     version_number=file.strip[2..2]
     number = file[5..-1]
     
-    number = number[0..1] + "   " + number[2..3]  + " " +  number[4..-1]
+    number = number[0..1] + " " + number[2..3]  + " " +  number[4..-1]
 
     label = ZebraPrinter::StandardLabel.new
     label.draw_text("#{number}",75, 30, 0, 4, 4, 4, false)
