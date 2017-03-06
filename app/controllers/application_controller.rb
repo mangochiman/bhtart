@@ -6,8 +6,13 @@ class ApplicationController < GenericApplicationController
     end
     settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
     enabled = settings['enable_lims']
-    return true if (enabled.to_s == 'true')
-    return false if (enabled.to_s == 'false')
+
+    begin
+      return true if (enabled.to_s == 'true')
+      return false 
+    rescue
+      return false 
+    end
   end
 
   def latest_lims_vl(patient)
