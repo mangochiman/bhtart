@@ -785,7 +785,7 @@ class GenericPeopleController < ApplicationController
     ActiveRecord::Base.connection.execute <<EOF
       UPDATE patient_identifier SET voided = 1, void_reason = 'Patient had multiple filing numbers'
       WHERE voided = 0 AND patient_id = #{params[:patient_id]}
-      AND identifier IN(#{identifier.join(',')});
+      AND identifier IN(#{identifiers.join(',')});
 EOF
 
     redirect_to "/people/confirm?found_person_id=#{params[:patient_id]}"
