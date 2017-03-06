@@ -778,7 +778,7 @@ class GenericPeopleController < ApplicationController
   def void_filing_numbers 
 
     identifiers = []
-    (params[:filing_numbers] || []).each do |f|
+    (params[:filing_numbers].split(',') || []).each do |f|
       identifiers << "'#{f}'"
     end
 
