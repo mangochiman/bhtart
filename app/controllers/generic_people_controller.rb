@@ -795,7 +795,7 @@ EOF
     if use_filing_number and hiv_session
 
       duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(person.id)
-      unless duplicate_filing_numbers.blank?
+      if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
         redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{person.id}"
         return
       end
