@@ -132,9 +132,10 @@ class GenericClinicController < ApplicationController
   end
 
   def viral_load_tab
-
-    settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
-    url = settings['lims_national_dashboard_ip'] + "/api/viral_load_stats"
+    if national_lims_activated
+      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+      url = settings['lims_national_dashboard_ip'] + "/api/viral_load_stats"
+    end
     data = JSON.parse(RestClient.get(url)) rescue {}
 
     @data = {}
