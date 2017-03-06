@@ -777,10 +777,15 @@ class GenericPeopleController < ApplicationController
   
   def void_filing_numbers 
 
+    identifiers = []
+    (params[:filing_numbers] || []).each do |f|
+      identifiers << "'#{f}'"
+    end
+
     ActiveRecord::Base.connection.execute <<EOF
       UPDATE patient_identifier SET voided = 1, void_reason = 'Patient had multiple filing numbers'
       WHERE voided = 0 AND patient_id = #{params[:patient_id]}
-      AND identifier IN(#{params[:filing_numbers]});
+      AND identifier IN(#{identifier.join(',')});
 EOF
 
     redirect_to "/people/confirm?found_person_id=#{params[:patient_id]}"
