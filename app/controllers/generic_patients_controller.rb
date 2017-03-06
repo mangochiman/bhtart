@@ -2040,9 +2040,9 @@ EOF
     file = PatientService.get_patient_identifier(patient, 'Archived filing number')[0..9]
     file_type = file.strip[3..4]
     version_number=file.strip[2..2]
-    number = file
-    len = number.length - 5
-    number = number[len..len] + "   " + number[(len + 1)..(len + 2)]  + " " +  number[(len + 3)..(number.length)]
+    number = file[5..-1]
+    
+    number = number[0..1] + "   " + number[2..3]  + " " +  number[4..-1]
 
     label = ZebraPrinter::StandardLabel.new
     label.draw_text("#{number}",75, 30, 0, 4, 4, 4, false)
