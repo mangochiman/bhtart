@@ -151,6 +151,14 @@ EOF
         AND patient_id = #{patient_id} GROUP BY patient_id HAVING c > 1;
 EOF
 
+    dormant_and_active_files = ActiveRecord::Base.connection.select_all <<EOF                             
+        SELECT patient_id, count(identifier) c FROM patient_identifier
+        WHERE identifier_type IN(#{dormant},#{active}) AND voided = 0
+        AND patient_id = #{patient_id} GROUP BY patient_id HAVING c > 1;
+EOF
+
+    ###############################################################################
+
     active_filing_numbers = []
     dormant_filing_numbers = []
 
@@ -181,6 +189,21 @@ EOF
       
     end
 
+    unless dormant_and_active_files.blank?
+      files = ActiveRecord::Base.connection.select_all <<EOF                             
+          SELECT identifier, identifier_type FROM patient_identifier
+          WHERE identifier_type IN(#{dormant},#{active}) AND voided = 0
+          AND patient_id = #{patient_id};
+EOF
+      
+      (files || []).each do |f|
+        if f['identifier_type'].to_i == 17
+          active_filing_numbers << f['identifier']
+        else
+          dormant_filing_numbers << f['identifier']
+        end
+      end
+    end
 
 
     return active_filing_numbers, dormant_filing_numbers
