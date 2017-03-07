@@ -1,6 +1,5 @@
 class ApplicationController < GenericApplicationController
   def national_lims_activated
-
     if !File.exists?("#{Rails.root}/config/lims.yml")
       return false
     end
