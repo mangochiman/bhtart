@@ -1,14 +1,18 @@
 # Methods added to this helper will be available to all templates in the application.
 module ApplicationHelper
   def national_lims_activated
-
     if !File.exists?("#{Rails.root}/config/lims.yml")
       return false
     end
     settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
     enabled = settings['enable_lims']
-    return false if (enabled.to_s == 'false' rescue true )
-    true
+
+    begin
+      return true if (enabled.to_s == 'true')
+      return false 
+    rescue
+      return false 
+    end
   end
 
   def link_to_onmousedown(name, options = {}, html_options = nil, *parameters_for_method_reference)
