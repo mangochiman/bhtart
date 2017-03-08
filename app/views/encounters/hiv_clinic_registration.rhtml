@@ -1187,6 +1187,7 @@
     return "true";
   }
 
+
 </script>
 <%#= raise @patient.person.birthdate.day.to_s %>
 <%# if @patient.patient_programs.current.local.map(&:program).map(&:name).include?('HIV PROGRAM') %>
@@ -1284,12 +1285,12 @@
       :condition => '$("taken_art_in_last_two_months").value == "YES" && $("year_art_last_taken").value.toUpperCase() == "UNKNOWN"',
       :helpText => "Taken ARV's in the last two weeks? <span style='font-size:0.7em;font-style:italic'>(Kodi mwamwa ma ARV sabata ziwiri zapitazi?)</span>" } %>
 
-    <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
-      {	:id => "last_art_drugs_taken",
-      :condition => '$("ever_received_art").value == "YES"',
-      :tt_onLoad => "addCustomRegimenButton(); lastOtherDrugs = ''; $('otherMedications').value = '';",
-      :tt_onUnLoad => 'updateLastARVDrugs(); removeCustomRegimenButton();',
-      :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
+  <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@arv_drugs),
+  {	:id => "last_art_drugs_taken",
+  :condition => '$("ever_received_art").value == "YES"',
+  :tt_onLoad => "addCustomRegimenButton(); lastOtherDrugs = ''; $('otherMedications').value = '';",
+  :tt_onUnLoad => 'updateLastARVDrugs(); removeCustomRegimenButton();',
+  :helpText => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"  } %>
 
     <% @regimen_formulations.each do |regimen_index, formulations| %>
 
@@ -1299,14 +1300,14 @@
         formulation = 'Ritonavir' if formulation.squish.upcase == 'R'
       %>
 
-        <%#= touch_numeric_tag "#{formulation.squish}", @patient, nil,
-          {
-          :id => "#{formulation}",
-          :field_type => 'number',
-          :tt_pageStyleClass => "NumbersOnly",
-          :tt_onLoad => "jQuery('#Unknown').show();",
-          :condition => "parseInt($('last_art_drugs_taken').value.trim().match(/\\d+/)) == parseInt(#{regimen_index})",
-          :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
+      <%#= touch_numeric_tag "#{formulation.squish}", @patient, nil,
+      {
+      :id => "#{formulation}",
+      :field_type => 'number',
+      :tt_pageStyleClass => "NumbersOnly",
+      :tt_onLoad => "jQuery('#Unknown').show();",
+      :condition => "parseInt($('last_art_drugs_taken').value.trim().match(/\\d+/)) == parseInt(#{regimen_index})",
+      :helpText  => "Total tabs of #{formulation.squish} brought to clinic"} %>
 
       <% end %>
     <% end %>
@@ -1321,25 +1322,25 @@
   :multiple => true,
   :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
 
-    <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
-      {
-      :id => "otherMedications",
-      :field_type => 'number',
-      :tt_onLoad => "jQuery('#Unknown').show();",
-      :tt_onUnLoad => 'updateLastOtherMedications();',
-      :condition => "$('last_art_drugs_taken').value.trim().toUpperCase() == 'OTHER'",
-      :multiple => true,
-      :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
+  <%#= touch_select_tag "LAST ART DRUGS TAKEN", @patient, options_for_select(@other_medications),
+  {
+  :id => "otherMedications",
+  :field_type => 'number',
+  :tt_onLoad => "jQuery('#Unknown').show();",
+  :tt_onUnLoad => 'updateLastOtherMedications();',
+  :condition => "$('last_art_drugs_taken').value.trim().toUpperCase() == 'OTHER'",
+  :multiple => true,
+  :helpText  => "Last ARV drugs taken <span style='font-size:0.7em;font-style:italic'>(Ntundu wa ma ARV amene munamwa komaliza)</span>"} %>
 
     <% @other_medications.each do |key, value|  %>
-      <%#= touch_numeric_tag "#{value}", @patient, nil,
-        {
-        :id => "#{key}",
-        :field_type => 'number',
-        :tt_pageStyleClass => "NumbersOnly",
-        :tt_onLoad => "jQuery('#Unknown').show();",
-        :condition => "lastOtherDrugs.split(';').indexOf('#{key}') != -1",
-        :helpText  => "Total tabs of #{key.squish} brought to clinic"} %>
+    <%#= touch_numeric_tag "#{value}", @patient, nil,
+    {
+    :id => "#{key}",
+    :field_type => 'number',
+    :tt_pageStyleClass => "NumbersOnly",
+    :tt_onLoad => "jQuery('#Unknown').show();",
+    :condition => "lastOtherDrugs.split(';').indexOf('#{key}') != -1",
+    :helpText  => "Total tabs of #{key.squish} brought to clinic"} %>
     <% end %>
 
     <%= touch_yes_no_tag "Ever registered at ART clinic", @patient, nil,
@@ -1921,7 +1922,8 @@
     height: 240px;
     padding: 5px;
     position: absolute;
-    margin-top: 100px;
+    top: 40%;
+    /*margin-top: 100px;*/
     width: 560px;
     /*margin-left: 430px;*/
     left: 40%;
@@ -1968,6 +1970,8 @@
   function showConfirmatoryTestPopup(){
     document.getElementById("confirmatory-test-popup-div").style.display = 'inline';
     document.getElementById("confirmatory-test-cover").style.display = 'inline';
+
+    jQuery('#confirmatory-test-popup-div').center();
   }
 
   function setUnknownConfirmatoryTestForPopup(){
@@ -2629,9 +2633,17 @@
     displayCountOfSelectedConditions();
     closeAlertOnNormalBMI();
   }
- 
-</script>
 
+  jQuery.fn.center = function() {
+    parent = this.parent();
+    this.css({
+      "position": "absolute",
+      "top": (((jQuery(parent).height() - this.outerHeight()) / 2) + jQuery(parent).scrollTop() - 100 + "px"),
+      "left": (((jQuery(parent).width() - this.outerWidth()) / 2) + jQuery(parent).scrollLeft() + "px")
+    });
+    return this;
+  }
+</script>
 <script language="javascript" type="text/javascript" src="/javascripts/show_category_hack.js" defer="true"></script>
 
 <style>
@@ -2730,3 +2742,5 @@
         <input type="button" class="btns" id="noBtn" onmousedown="closeAlertOnNormalBMI();" value="No" />
       </div>
       </div>
+
+
