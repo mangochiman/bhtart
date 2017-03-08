@@ -15,12 +15,12 @@
     </span>
     <div style="padding-top: 65px;">
       <span id="confirmatory-test-yes" onclick="hideConfirmatoryTestPopup();resetRegimen();gotoNextPage();" 
-        class="confirmatory-test-my_button" 
-        style="position: relative;">Prescribe starter pack</span>
-      
-    <span id="confirmatory-test-no" onclick="hideConfirmatoryTestPopup();" 
-        class="confirmatory-test-my_button" 
-        style="position: relative;">Cancel</span>
+            class="confirmatory-test-my_button"
+            style="position: relative;">Prescribe starter pack</span>
+
+      <span id="confirmatory-test-no" onclick="hideConfirmatoryTestPopup();"
+            class="confirmatory-test-my_button"
+            style="position: relative;">Cancel</span>
     </div>
   </div>
 </div>
@@ -137,11 +137,11 @@
     document.getElementById("confirmatory-test-cover").style.display = 'inline';
     selected_starter_pack = document.getElementById("regimen_concept_id").value;
     document.getElementById("selected_starter_pack").innerHTML = selected_starter_pack;
-    <%if @patient_initiated.match(/Re-initiated/i) %> 
+<%if @patient_initiated.match(/Re-initiated/i) %> 
       initiation_type = 'Re-initiation / Re-start'
-    <%elsif @patient_initiated.match(/Initiation/i) %> 
+<%elsif @patient_initiated.match(/Initiation/i) %> 
       initiation_type = 'First time initiation'
-    <%end%>
+<%end%>
     document.getElementById("initiation_type").innerHTML = initiation_type;
 
   }
@@ -159,7 +159,7 @@
   }
 
   function checkIfStarterPack() {
-    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
+<%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
       concept = document.getElementById("regimen_concept_id");
       if(concept.value.match(/NVP|Nevirapine/i)) {
         sel = document.getElementById('tt_currentUnorderedListOptions');
@@ -197,11 +197,11 @@
           sel.appendChild(option);
         }
       }
-    <%end%>
+<%end%>
   }
 
   function disableOptimiseButtonForStarterPacks(){
-    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %>
+<%if @patient_initiated.match(/Re-initiated|Initiation/i) %>
       concept = document.getElementById("regimen_concept_id");
       jQuery('#optimize_interval').removeClass('gray').addClass('green');
       jQuery('#optimize_interval').attr("onmousedown", 'onSetAppointmentIntervalType("Optimize - including hanging pills")');
@@ -211,7 +211,7 @@
         jQuery('#optimize_interval').removeAttr("onmousedown");
       }
 
-    <%end%>
+<%end%>
   }
 
 </script>
@@ -830,10 +830,14 @@
   function changeRegimen(){
     id = document.getElementById("regimen_concept_id").value
     element = document.getElementById('nextButton')
-    element.setAttribute("onmousedown", "contraindicators()")
+    element.setAttribute("onmousedown", "contraindicators()");
   }
 
-function changeRegimenOld(){
+  function centerPopup(){
+    jQuery('.popup-div').center();
+  }
+
+  function changeRegimenOld(){
     id = document.getElementById("regimen_concept_id").value
 <% unless @side_effects_answers.blank? %>
       element = document.getElementById('nextButton')
@@ -885,7 +889,7 @@ function changeRegimenOld(){
   function checkIFstartpackNeed() {
     var on_tb_treatment = '<%= @on_tb_treatment %>';
 
-    <%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
+<%if @patient_initiated.match(/Re-initiated|Initiation/i) %> 
       selected_regimen = document.getElementById('touchscreenInput' + tstCurrentPage).value;
       if(selected_regimen.match(/NVP|Nevirapine/i)) {
         showConfirmatoryTestPopup();
@@ -897,7 +901,7 @@ function changeRegimenOld(){
         resetRegimen();
         gotoNextPage();
       }
-    <%else%>
+<%else%>
       selected_regimen = document.getElementById('touchscreenInput' + tstCurrentPage).value;
       if(selected_regimen.match(/ATV/i) && on_tb_treatment == 'true') {
         showTBtreatmentPopup();
@@ -907,7 +911,7 @@ function changeRegimenOld(){
         resetRegimen();
         gotoNextPage();
       }
-    <%end%>
+<%end%>
   }
 
 
@@ -995,8 +999,8 @@ function changeRegimenOld(){
       display += "<th class='title'>Alternate Regimen 2: </th></tr>";
       /* display += "<tr><td class='title main'>Current <td><table>";
 <% (@regimen_formulations || []).each do |data| %>
-                                                                                                                        regimens.push('<%=data[0].split(" ").first%>');
-                                                                                                                        display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
+                                                                                                                            regimens.push('<%=data[0].split(" ").first%>');
+                                                                                                                            display += "<tr><td>" + "<%=data[0].split(" ").first%> " + "</td></tr>"
 <%end%>
                                 display += "</table></td><td><table>";
                                 for (x=0; x < adverse_events[regimen_index[0].toString()]["contraindications"].length; x++){
@@ -1536,56 +1540,56 @@ function changeRegimenOld(){
   function showDrugStockAvailability(reg_id){
     /*
 <% if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false) %>
-      jQuery.ajax({
-        type: "POST",
-        url: "/regimens/drug_stock_availability",
-        data: "concept_id=" + reg_id + "&patient_id=<%= @patient.id %>",
-        success: function(result){
-          drug_stock = document.getElementById('drug_stock');
-          stock_hash = result;
-          html = "<div id='stock'>";
-          html += "<div style='position: absolute; width:100%;'>";
-          html += "<table cellspacing='0' style='position:absolute; width:100%; left: 0%;'>";
-          html += "<tr>";
-          html += "<td class='table_header' colspan='5'><center><span>Drug Stock Availability</span></center></td>";
-          html += "</tr>";
+          jQuery.ajax({
+            type: "POST",
+            url: "/regimens/drug_stock_availability",
+            data: "concept_id=" + reg_id + "&patient_id=<%= @patient.id %>",
+            success: function(result){
+              drug_stock = document.getElementById('drug_stock');
+              stock_hash = result;
+              html = "<div id='stock'>";
+              html += "<div style='position: absolute; width:100%;'>";
+              html += "<table cellspacing='0' style='position:absolute; width:100%; left: 0%;'>";
+              html += "<tr>";
+              html += "<td class='table_header' colspan='5'><center><span>Drug Stock Availability</span></center></td>";
+              html += "</tr>";
 
-          html += "<tr style='background-color: #CDC8B1; line-height: 2em; font-size: 18px;'>";
-          html += "<td style='min-width: 130px;'><span class='stock_header_left'>Drug Name</span></td>";
-          html += "<td style='min-width: 130px;'><span class='consumption_rate_header'>Consumption Rate(tabs)</span></td>";
-          html += "<td style='min-width: 100px;'><span class='stock_header_right'>Available Stock(tins)</span></td>";
-          html += "<td style='min-width: 100px;'><span class='drug_pack_size_header'>Pack Size(tabs)</span></td>";
+              html += "<tr style='background-color: #CDC8B1; line-height: 2em; font-size: 18px;'>";
+              html += "<td style='min-width: 130px;'><span class='stock_header_left'>Drug Name</span></td>";
+              html += "<td style='min-width: 130px;'><span class='consumption_rate_header'>Consumption Rate(tabs)</span></td>";
+              html += "<td style='min-width: 100px;'><span class='stock_header_right'>Available Stock(tins)</span></td>";
+              html += "<td style='min-width: 100px;'><span class='drug_pack_size_header'>Pack Size(tabs)</span></td>";
 
-          html += "<td style='min-width: 100px;'><span class='estimated_stock_out_date_header'>Estimated stock out date</span></td>";
-          html += "</tr>";
+              html += "<td style='min-width: 100px;'><span class='estimated_stock_out_date_header'>Estimated stock out date</span></td>";
+              html += "</tr>";
 
-          html += "<tbody>";
-          for (var drug_id in stock_hash){
-            drug_name = stock_hash[drug_id]["drug_name"];
-            current_stock = stock_hash[drug_id]["current_stock"];
-            consumption_rate = stock_hash[drug_id]["consumption_rate"];
-            estimated_stock_out_date = stock_hash[drug_id]["estimated_stock_out_date"];
-            drug_pack_size = stock_hash[drug_id]["drug_pack_size"];
+              html += "<tbody>";
+              for (var drug_id in stock_hash){
+                drug_name = stock_hash[drug_id]["drug_name"];
+                current_stock = stock_hash[drug_id]["current_stock"];
+                consumption_rate = stock_hash[drug_id]["consumption_rate"];
+                estimated_stock_out_date = stock_hash[drug_id]["estimated_stock_out_date"];
+                drug_pack_size = stock_hash[drug_id]["drug_pack_size"];
 
-            html += "<tr>";
-            html += "<td><span class='drug_name'>" + drug_name + "</span></td>";
-            html += "<td><span class='consumption_rate'>" + consumption_rate + "</span></td>";
-            html += "<td><span class='current_stock'>" + current_stock + "</span></td>";
-            html += "<td><span class='drug_pack_size'>" + drug_pack_size + "</span></td>";
-            html += "<td><span class='estimated_stock_out_date'>" + estimated_stock_out_date + "</span></td>";
-            html += "</tr>";
-          }
+                html += "<tr>";
+                html += "<td><span class='drug_name'>" + drug_name + "</span></td>";
+                html += "<td><span class='consumption_rate'>" + consumption_rate + "</span></td>";
+                html += "<td><span class='current_stock'>" + current_stock + "</span></td>";
+                html += "<td><span class='drug_pack_size'>" + drug_pack_size + "</span></td>";
+                html += "<td><span class='estimated_stock_out_date'>" + estimated_stock_out_date + "</span></td>";
+                html += "</tr>";
+              }
 
-          html += "<tbody>";
-          html += "</table>";
-          html += "</div>";
-          html += "</div>";
-          drug_stock.style.display='inline';
-          drug_stock.innerHTML = html;
-        }
-      });
+              html += "<tbody>";
+              html += "</table>";
+              html += "</div>";
+              html += "</div>";
+              drug_stock.style.display='inline';
+              drug_stock.innerHTML = html;
+            }
+          });
 <% end %>
-*/
+     */
   }
 
   function showDrugStock(){
@@ -1700,56 +1704,56 @@ function changeRegimenOld(){
   }
 
   function showDrugStockAvailability(reg_id){
-/*
+    /*
 <% if (CoreService.get_global_property_value('activate.drug.management').to_s == "true" rescue false) %>
-      jQuery.ajax({
-        type: "POST",
-        url: "/regimens/drug_stock_availability",
-        data: "concept_id=" + reg_id + "&patient_id=<%= @patient.id %>",
-        success: function(result){
-          drug_stock = document.getElementById('drug_stock');
-          stock_hash = result;
-          html = "<div id='stock'>";
-          html += "<div style='position: absolute; width:100%;'>";
-          html += "<table cellspacing='0' style='position:absolute; width:100%; left: 0%;'>";
-          html += "<tr>";
-          html += "<td class='table_header' colspan='5'><center><span>Drug Stock Availability</span></center></td>";
-          html += "</tr>";
+          jQuery.ajax({
+            type: "POST",
+            url: "/regimens/drug_stock_availability",
+            data: "concept_id=" + reg_id + "&patient_id=<%= @patient.id %>",
+            success: function(result){
+              drug_stock = document.getElementById('drug_stock');
+              stock_hash = result;
+              html = "<div id='stock'>";
+              html += "<div style='position: absolute; width:100%;'>";
+              html += "<table cellspacing='0' style='position:absolute; width:100%; left: 0%;'>";
+              html += "<tr>";
+              html += "<td class='table_header' colspan='5'><center><span>Drug Stock Availability</span></center></td>";
+              html += "</tr>";
 
-          html += "<tr style='background-color: #CDC8B1; line-height: 2em; font-size: 18px;'>";
-          html += "<td style='min-width: 130px;'><span class='stock_header_left'>Drug Name</span></td>";
-          html += "<td style='min-width: 130px;'><span class='consumption_rate_header'>Consumption Rate(tabs)</span></td>";
-          html += "<td style='min-width: 100px;'><span class='stock_header_right'>Available Stock(tins)</span></td>";
-          html += "<td style='min-width: 100px;'><span class='drug_pack_size_header'>Pack Size(tabs)</span></td>";
+              html += "<tr style='background-color: #CDC8B1; line-height: 2em; font-size: 18px;'>";
+              html += "<td style='min-width: 130px;'><span class='stock_header_left'>Drug Name</span></td>";
+              html += "<td style='min-width: 130px;'><span class='consumption_rate_header'>Consumption Rate(tabs)</span></td>";
+              html += "<td style='min-width: 100px;'><span class='stock_header_right'>Available Stock(tins)</span></td>";
+              html += "<td style='min-width: 100px;'><span class='drug_pack_size_header'>Pack Size(tabs)</span></td>";
 
-          html += "<td style='min-width: 100px;'><span class='estimated_stock_out_date_header'>Estimated stock out date</span></td>";
-          html += "</tr>";
+              html += "<td style='min-width: 100px;'><span class='estimated_stock_out_date_header'>Estimated stock out date</span></td>";
+              html += "</tr>";
 
-          html += "<tbody>";
-          for (var drug_id in stock_hash){
-            drug_name = stock_hash[drug_id]["drug_name"];
-            current_stock = stock_hash[drug_id]["current_stock"];
-            consumption_rate = stock_hash[drug_id]["consumption_rate"];
-            estimated_stock_out_date = stock_hash[drug_id]["estimated_stock_out_date"];
-            drug_pack_size = stock_hash[drug_id]["drug_pack_size"];
+              html += "<tbody>";
+              for (var drug_id in stock_hash){
+                drug_name = stock_hash[drug_id]["drug_name"];
+                current_stock = stock_hash[drug_id]["current_stock"];
+                consumption_rate = stock_hash[drug_id]["consumption_rate"];
+                estimated_stock_out_date = stock_hash[drug_id]["estimated_stock_out_date"];
+                drug_pack_size = stock_hash[drug_id]["drug_pack_size"];
 
-            html += "<tr>";
-            html += "<td><span class='drug_name'>" + drug_name + "</span></td>";
-            html += "<td><span class='consumption_rate'>" + consumption_rate + "</span></td>";
-            html += "<td><span class='current_stock'>" + current_stock + "</span></td>";
-            html += "<td><span class='drug_pack_size'>" + drug_pack_size + "</span></td>";
-            html += "<td><span class='estimated_stock_out_date'>" + estimated_stock_out_date + "</span></td>";
-            html += "</tr>";
-          }
+                html += "<tr>";
+                html += "<td><span class='drug_name'>" + drug_name + "</span></td>";
+                html += "<td><span class='consumption_rate'>" + consumption_rate + "</span></td>";
+                html += "<td><span class='current_stock'>" + current_stock + "</span></td>";
+                html += "<td><span class='drug_pack_size'>" + drug_pack_size + "</span></td>";
+                html += "<td><span class='estimated_stock_out_date'>" + estimated_stock_out_date + "</span></td>";
+                html += "</tr>";
+              }
 
-          html += "<tbody>";
-          html += "</table>";
-          html += "</div>";
-          html += "</div>";
-          drug_stock.style.display='inline';
-          drug_stock.innerHTML = html;
-        }
-      });
+              html += "<tbody>";
+              html += "</table>";
+              html += "</div>";
+              html += "</div>";
+              drug_stock.style.display='inline';
+              drug_stock.innerHTML = html;
+            }
+          });
 <% end %>*/
   }
 
@@ -2240,7 +2244,7 @@ end
   }
 
   function addButton(){
-   // __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
+    // __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
     var button = document.createElement("button");
     button.id = "addHere";
     button.innerHTML = "<span>Customize</span>";
@@ -2431,7 +2435,7 @@ end
     var ft_concept = document.getElementById('fast_track_concept_' + e.getAttribute('concept_id'));
     ft_concept.value = e.getAttribute('concept_ans');
   
-/*
+    /*
     if(e.id.match(/no_/i)) {
       __$(key).value = '';
       if(category == 'side_effects') {
@@ -2451,17 +2455,17 @@ end
 
   function gotoNextPageOnlyIf(e) {
     var fast_track_attributes = (document.getElementById('touchscreenInput' + tstCurrentPage));
-   // var nextBtn = document.getElementById('nextButton');
+    // var nextBtn = document.getElementById('nextButton');
     //var regularBtn = document.getElementById('normal_visit');
 
     sex = "<%=@patient.person.gender.first.upcase%>";
     var fast_track_attr = [
-        ['Adult 18 years +', '9533'],['No side effects/OI', '9539'],
-        ['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540'],
-        ['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538'],
-        ['Last VL < 1000','9536'], ['TB symtom screening negative', '2186'],
-        ['Good adherence (appointment and dose)','9537'], ['Not on IPT or on IPT for 6 months + without complications', '9527']
-      ];
+      ['Adult 18 years +', '9533'],['No side effects/OI', '9539'],
+      ['On ART for 12 months', '9534'],['No BP / diabetes treatment', '9540'],
+      ['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538'],
+      ['Last VL < 1000','9536'], ['TB symtom screening negative', '2186'],
+      ['Good adherence (appointment and dose)','9537'], ['Not on IPT or on IPT for 6 months + without complications', '9527']
+    ];
 
     for(var i = 0; i < fast_track_attr.length; i++){
       if(sex == 'M' && fast_track_attr[i][1] == '9538')
@@ -2546,7 +2550,7 @@ end
     table = document.createElement('table');
     table.setAttribute('id', 'fast-track-table');
 
-    <%if @patient.person.gender.first.upcase == 'M'%>
+<%if @patient.person.gender.first.upcase == 'M'%>
       var inclusion_list_arr = [
         ['Adult', 9533], ['On 1st line ART',9535],
         ['Good adherence', 9537], ['Last VL < 1000', 9536],
@@ -2558,7 +2562,7 @@ end
         ['Needs BP / diabetes treatment', 9540],
         ['Any side effects / HIV related dis.', 9539]
       ];
-    <%else%>
+<%else%>
       var inclusion_list_arr = [
         ['Adult', 9533], ['On 1st line ART',9535],
         ['Good adherence', 9537], ['Last VL < 1000', 9536],
@@ -2570,7 +2574,7 @@ end
         ['Needs BP / diabetes treatment', 9540],
         ['Any side effects / HIV related dis.', 9539], ['Preg / BF', 9538]
       ];
-    <%end%>
+<%end%>
 
     var tr = document.createElement('tr');
     var th = document.createElement('th');
@@ -2747,15 +2751,15 @@ end
       rtable.appendChild(rtr);
       rtr = document.createElement('tr');
     }
- 
-    <%if @patient.person.gender.first.upcase == 'M'%>
+
+<%if @patient.person.gender.first.upcase == 'M'%>
       rtd = document.createElement('td');
       rtd.setAttribute('colspan', '3');
       rtd.setAttribute('colspan', '3');
       rtd.innerHTML = "&nbsp;";
       rtr.appendChild(rtd);
       rtable.appendChild(rtr);
-    <%end%>
+<%end%>
  
     exclusion_list.appendChild(rtable); 
 
@@ -2785,7 +2789,7 @@ end
         [['Last VL < 1000','9536'], ['Not on IPT or on IPT for 6 months + without complications', '9527']],
         [['Good adherence (appointment and dose)','9537']]
       ];
-    
+
 <%end%>
 
     counter = 1;
@@ -2947,7 +2951,7 @@ pyridoxine_options = ["","25", "50"]
 #end%>
 
 
- 
+
     <!-- TB regimen -->
     <% if current_user.activities.include?('Manage Lab Orders') or current_user.activities.include?('Manage Lab Results') or
         current_user.activities.include?('Manage Sputum Submissions') or current_user.activities.include?('Manage TB Clinic Visits') or
@@ -3132,10 +3136,10 @@ pyridoxine_options = ["","25", "50"]
       <%= select_tag :regimen_concept_id, nil, {
         :ajaxUrl => "",
         :allowFreeText => 'false',
-        :tt_onLoad => "hideCategory();checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);modifyPage(); startRegimenChangeInterval();",
+        :tt_onLoad => "hideCategory();checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);modifyPage(); startRegimenChangeInterval(); centerPopup();",
         :condition => 'hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value != "YES"',
         :helpText => "Select ART regimen.#{@current_regimen_text} Current patient weight: <b>#{@current_weight}</b>",
-        :optional => 'false' , 
+        :optional => 'false' ,
         :tt_onUnload => "resetRegimen();removeButton(); stopRegimenChangeInterval();"}%>
     <% end %>
 
@@ -3200,7 +3204,7 @@ pyridoxine_options = ["","25", "50"]
       :id => "interval_to_next_visit",
       :condition => '$("prescribe_arvs").value == "YES" || $("cpt_given").value == "YES" || $("ipt_given").value == "YES"',
       :tt_onLoad => "checkIfStarterPack();addPrescriptionBtn();__$('keyboard').style.display = 'none';
-      showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value); setTimeout('disableOptimiseButtonForStarterPacks();', 300);",
+  showCategory2('Prescription'); showAvailableStock($('regimen_concept_id').value); setTimeout('disableOptimiseButtonForStarterPacks();', 300);",
       :tt_onUnLoad => "removePrescriptionBtn();hideStockLevelDetails(); removeOnclickEvent();",
       :helpText => 'Interval to next visit' } %>
 
@@ -3211,17 +3215,17 @@ pyridoxine_options = ["","25", "50"]
     <% if not @fast_track_patient == true and enable_fast_track == true %>
 
       <%= select_tag "assess_fast_track", options_for_select([['Yes','YES'],['No','NO']]),
-          :id => 'assess_fast_track',
-          :helpText => "Assess for fast track visit (next appointment)",
-          :tt_onLoad => "showCategory2('Fast track');",
-          :tt_pageStyleClass => 'NoKeyboard' %>
+        :id => 'assess_fast_track',
+        :helpText => "Assess for fast track visit (next appointment)",
+        :tt_onLoad => "showCategory2('Fast track');",
+        :tt_pageStyleClass => 'NoKeyboard' %>
 
-      <%= text_field_tag :fast_track_attributes, nil, 
-          { :tt_onLoad => "changeNextButton();showCategory2('Fast track');$('clearButton').style.display='none';$('keyboard').style.display = 'none';buildFastTrackTable(); preselectedAssessments();",
-            :condition => '$("assess_fast_track").value == "YES"',
-            :tt_onUnload => 'removeRegularBtn();',
-            :tt_pageStyleClass => "NoControls" } 
-      %>
+      <%= text_field_tag :fast_track_attributes, nil,
+        { :tt_onLoad => "changeNextButton();showCategory2('Fast track');$('clearButton').style.display='none';$('keyboard').style.display = 'none';buildFastTrackTable(); preselectedAssessments();",
+        :condition => '$("assess_fast_track").value == "YES"',
+        :tt_onUnload => 'removeRegularBtn();',
+        :tt_pageStyleClass => "NoControls" }
+    %>
 
       <%fast_track_attr = [
         ['Adult 18 years +', '9533'],['No side effects/OI', '9539'],
@@ -3710,12 +3714,22 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
     document.getElementById("regimen-change-cover").style.display = 'inline';
   }
 
-function sortDates(array) {
+  function sortDates(array) {
     return array.sort(function(a, b) {
       var x = new Date(a).getTime(); var y = new Date(b).getTime();
-        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+      return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     });
-}
+  }
 
+  jQuery.fn.center = function() {
+    parent = this.parent();
+    this.css({
+      "position": "absolute",
+      "top": (((jQuery(parent).height() - this.outerHeight()) / 2) + jQuery(parent).scrollTop() - 100 + "px"),
+      "left": (((jQuery(parent).width() - this.outerWidth()) / 2) + jQuery(parent).scrollLeft() + "px")
+    });
+    return this;
+  }
+  
 </script>
 

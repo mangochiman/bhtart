@@ -1104,6 +1104,28 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   }
 
+  function formatNoControlInput(){
+
+    __$('inputFrame' + tstCurrentPage).style.background = "white";
+    __$('inputFrame' + tstCurrentPage).style.marginTop = "6%";
+    __$('page' + tstCurrentPage).style.marginTop = "2.5%";
+    __$('inputFrame' + tstCurrentPage).style.border = "hidden";
+    __$('infoBar' + tstCurrentPage).style.border = "hidden";
+
+    var noControlInput = document.getElementById("touchscreenInput" + tstCurrentPage);
+    var helptext = __$("helpText" + tstCurrentPage);
+
+    //noControlInput.style.width = "400px"
+    //noControlInput.style.fontSize = "50px"
+    //noControlInput.style.marginLeft = "33%";
+    //noControlInput.style.height = "80px";
+    //helptext.style.position = "absolute";
+    //helptext.style.left = "20%";
+    //helptext.style.top = "20%";
+    //helptext.style.paddingTop = "100px";
+    jQuery('#helpText' + tstCurrentPage).center();
+  }
+
   /*
   var weightObs = [];
 <%#(@weight_trail || {}).sort_by{ |x,b| x.to_date }.each do |date, weight|%>
@@ -1290,24 +1312,33 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     :multiple => true,
     :tt_pageStyleClass => "NoKeyboard",
     :helpText => "What method are you currently on?" } %>
+      <% if !@terminal_family_planning_method %>
+        <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
+          {:id => "fpm_used",
+          :condition => "$('pregnant').value != 'YES'",
+          :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning(); setOptionsForSafeFamilyPlanningMethodsPopup();', 300);",
+          :tt_onUnLoad => "stopFamilyPlanningTimer(); updateFamilyPlanningHiddenField();",
+          :multiple => true,
+          :tt_pageStyleClass => "NoKeyboard",
+          :helpText => "What method are you currently on?" } %>
 
-      <%= touch_select_tag "FAMILY PLANNING METHOD", @patient, options_for_select(@select_options['family_planning_methods']),
-        {:id => "fpm_used",
-        :condition => "$('pregnant').value != 'YES'",
-        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning(); setOptionsForSafeFamilyPlanningMethodsPopup();', 300);",
-        :tt_onUnLoad => "stopFamilyPlanningTimer(); updateFamilyPlanningHiddenField();",
-        :multiple => true,
-        :tt_pageStyleClass => "NoKeyboard",
-        :helpText => "What method are you currently on?" } %>
-
-      <%= touch_select_tag "FAMILY PLANNING, ACTION TO TAKE", @patient, options_for_select(@select_options['family_planning_methods']),
-        {:id => "fpm_used",
-        :condition => "$('pregnant').value != 'YES'",
-        :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning(); setOptionsForSafeFamilyPlanningMethodsPopup();', 300)",
-        :tt_onUnLoad => "stopFamilyPlanningTimer();",
-        :multiple => true,
-        :tt_pageStyleClass => "NoKeyboard",
-        :helpText => "What method are you providing today?" } %>
+        <%= touch_select_tag "FAMILY PLANNING, ACTION TO TAKE", @patient, options_for_select(@select_options['family_planning_methods']),
+          {:id => "fpm_used",
+          :condition => "$('pregnant').value != 'YES'",
+          :tt_onLoad => "showCategory2('Clinic consultation'); fpm_used=false; startFamilyPlanningTimer(); window.setTimeout('controlNoneSelectionForFamilyPlanning(); setOptionsForSafeFamilyPlanningMethodsPopup();', 300)",
+          :tt_onUnLoad => "stopFamilyPlanningTimer();",
+          :multiple => true,
+          :tt_pageStyleClass => "NoKeyboard",
+          :helpText => "What method are you providing today?" } %>
+      <% else %>
+        <%= text_field_tag "terminal_family_planning", '', {
+          :tt_onLoad => "$('keyboard').style.display = 'none'; formatNoControlInput();",
+          :id => 'fpm_used',
+          :tt_pageStyleClass => "NoControls",
+          :optional => "true",
+          :helpText => 'This patient is on Tubal Ligation method',
+          :style => 'position:absolute'} %>
+      <% end %>
 
       <% if @use_extended_family_planning == "true"  %>
 
@@ -2282,7 +2313,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
 
-function addCustomRegimenButton(){
+  function addCustomRegimenButton(){
     /*var button = document.createElement("button");
     button.id = "customRegimen";
     button.innerHTML = "<span>Customize Regimen</span>";
@@ -2396,3 +2427,16 @@ function addCustomRegimenButton(){
   }
 
 </style>
+<script type="text/javascript">
+
+  jQuery.fn.center = function() {
+    parent = this.parent();
+    this.css({
+      "position": "absolute",
+      "top": (((jQuery(parent).height() - this.outerHeight()) / 2) + jQuery(parent).scrollTop() + "px"),
+      "left": (((jQuery(parent).width() - this.outerWidth()) / 2) + jQuery(parent).scrollLeft() + "px")
+    });
+    return this;
+  }
+  
+</script>
