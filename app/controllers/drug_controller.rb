@@ -164,7 +164,7 @@ class DrugController < GenericDrugController
       :location => location_name
     }
     
-    SendResultsToCouchdb.add_record(data)
+    SendResultsToCouchdb.add_record(data) rescue ''
     render :text => drug_summary.to_json and return    
   end
 
