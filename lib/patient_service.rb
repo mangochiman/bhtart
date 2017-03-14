@@ -1440,7 +1440,8 @@ EOF
 
       encounter_patient_ids = Encounter.find_by_sql(" 
       SELECT patient_id, MAX(encounter_datetime) max_encounter_datetime
-      FROM  encounter WHERE patient_id IN(#{patient_ids.join(',')}) GROUP BY patient_id 
+      FROM  encounter WHERE patient_id IN(#{patient_ids.join(',')}) 
+      AND voided = 0 GROUP BY patient_id 
       HAVING max_encounter_datetime <= '#{(Date.today - 65.day).to_date.strftime('%Y-%m-%d 23:59:59')}';
       ").map{ |e| e.patient_id }.uniq rescue nil
 
