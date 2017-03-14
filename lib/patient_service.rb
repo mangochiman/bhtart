@@ -1425,17 +1425,40 @@ EOF
     no_patient_ids = patient_ids_with_future_app.map{|ad| ad['person_id'].to_i }
 
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
-select patient_id,state,start_date,end_date from patient_state s
+SELECT patient_id,state,start_date,end_date FROM patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
 AND p.patient_id IN(#{patient_ids.join(',')}) 
 AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
 WHERE state IN (2, 3, 4, 5, 6, 8)
   AND state != 7
   AND start_date = (SELECT max(start_date) FROM patient_state t
-    WHERE t.patient_program_id = s.patient_program_id
-  )
+  WHERE t.patient_program_id = s.patient_program_id)
 GROUP BY p.patient_id LIMIT #{limit_one}, #{limit_two};
 EOF
+
+    if outcomes.blank?
+
+      encounter_patient_ids = Encounter.find_by_sql(" 
+      SELECT patient_id, MAX(encounter_datetime) max_encounter_datetime
+      FROM  encounter WHERE patient_id IN(#{patient_ids.join(',')}) GROUP BY patient_id 
+      HAVING max_encounter_datetime <= '#{(Date.today - 65.day).to_date.strftime('%Y-%m-%d 23:59:59')}';
+      ").map{ |e| e.patient_id }.uniq rescue nil
+
+      encounter_patient_ids = [0] if encounter_patient_ids.blank?
+
+      outcomes = ActiveRecord::Base.connection.select_all <<EOF
+SELECT patient_id,state,start_date,end_date FROM patient_state s
+INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
+AND p.patient_id IN(#{patient_ids.join(',')}) 
+AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
+WHERE start_date = (SELECT max(start_date) FROM patient_state t
+    WHERE t.patient_program_id = s.patient_program_id)
+AND p.patient_id IN (#{encounter_patient_ids.join(',')})
+GROUP BY p.patient_id LIMIT #{limit_one}, #{limit_two};
+EOF
+
+    
+    end
 
     return outcomes rescue nil
   end
