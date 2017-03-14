@@ -2548,31 +2548,32 @@ end
 
     <%if @patient.person.gender.first.upcase == 'M'%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['On 1st line ART',9535],
-        ['Good adherence', 9537], ['Last VL < 1000', 9536],
-        ['TB screen neg',2186]
+        ['Above 18 years', 9533], ['On first line ART (5A)',9535],
+        ['Good Adherence(appointment and dose)', 9537], ['Last VL less than 1000', 9536],
+        ["<b>Doesn&#39;t</b> have signs of TB",2186]
       ];
 
       var exclusion_list_arr = [
-        ['Started ART <12 months ago', 9534],  ['Started IPT <12 months ago', 9527],
-        ['Needs BP / diabetes treatment', 9540],
-        ['Any side effects / HIV related dis.', 9539]
+        ['On ART for more than 12 months', 9534],  ['On IPT for more than 12 months', 9527],
+        ["<b>NOT</b> on Hypertension /Diabetic  treatment", 9540],
+        ["<b>Doesn't</b> have drug side effect or OI", 9539]
       ];
     <%else%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['On 1st line ART',9535],
-        ['Good adherence', 9537], ['Last VL < 1000', 9536],
-        ['TB screen neg',2186]
+        ['Above 18 years', 9533], ['On first line ART (5A)',9535],
+        ['Good Adherence(appointment and dose)', 9537], ['Last VL less than 1000', 9536],
+        ["<b>Doesn&#39;t</b> have signs of TB",2186]
       ];
 
       var exclusion_list_arr = [
-        ['Started ART <12 months ago', 9534], ['Started IPT <12 months ago', 9527],
-        ['Needs BP / diabetes treatment', 9540],
-        ['Any side effects / HIV related dis.', 9539], ['Preg / BF', 9538]
+        ['On ART for more than 12 months', 9534],  ['On IPT for more than 12 months', 9527],
+        ["<b>NOT</b> on Hypertension /Diabetic  treatment", 9540],
+        ["<b>Doesn&#39;t</b> have drug side effect or OI", 9539],
+        ['<b>NOT</b> pregnant or breast feeding', 9538]
       ];
     <%end%>
 
-    var tr = document.createElement('tr');
+    /*var tr = document.createElement('tr');
     var th = document.createElement('th');
     th.setAttribute('id','inclusion')
     tr.appendChild(th);
@@ -2582,7 +2583,7 @@ end
     th.setAttribute('id','exclusion')
     tr.appendChild(th);
     th.innerHTML = 'Exclusion';
-    table.appendChild(tr);
+    table.appendChild(tr);*/
 
 
     tr = document.createElement('tr');
@@ -3220,6 +3221,7 @@ pyridoxine_options = ["","25", "50"]
           { :tt_onLoad => "changeNextButton();showCategory2('Fast track');$('clearButton').style.display='none';$('keyboard').style.display = 'none';buildFastTrackTable(); preselectedAssessments();",
             :condition => '$("assess_fast_track").value == "YES"',
             :tt_onUnload => 'removeRegularBtn();',
+            :helpText => 'Check eligibility for <b>Fast Track</b> re-fil (next visit)',
             :tt_pageStyleClass => "NoControls" } 
       %>
 
