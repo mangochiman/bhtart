@@ -358,13 +358,17 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
   }
 
   function condom_only(){
-    var answers = document.getElementById('fpm_used');
+
     var selected_values = [];
-    for (i = 0 ; i < answers.options.length ; i++) {
-      if (answers.options[i].selected){
-        selected_values.push(answers.options[i].value);
+
+    try {
+      var answers = document.getElementById('fpm_used');
+      for (i = 0 ; i < answers.options.length ; i++) {
+        if (answers.options[i].selected){
+          selected_values.push(answers.options[i].value);
+        }
       }
-    }
+    }catch(e) { }
 
     if ((selected_values.indexOf('MALE CONDOMS') != -1)&&(selected_values.length == 1)){
       return true;
