@@ -2554,7 +2554,7 @@ end
       ];
 
       var exclusion_list_arr = [
-        ['On ART for more than 12 months', 9534],  ['On IPT for more than 12 months', 9527],
+        ['On ART for more than 12 months', 9534],  ['<b>Not</b> on IPT or on IPT for 6 months + without complications', 9527],
         ["<b>NOT</b> on Hypertension /Diabetic  treatment", 9540],
         ["<b>Doesn't</b> have drug side effect or OI", 9539]
       ];
@@ -2566,7 +2566,7 @@ end
       ];
 
       var exclusion_list_arr = [
-        ['On ART for more than 12 months', 9534],  ['On IPT for more than 12 months', 9527],
+        ['On ART for more than 12 months', 9534],  ['<b>Not</b> on IPT or on IPT for 6 months + without complications', 9527],
         ["<b>NOT</b> on Hypertension /Diabetic  treatment", 9540],
         ["<b>Doesn&#39;t</b> have drug side effect or OI", 9539],
         ['<b>NOT</b> pregnant or breast feeding', 9538]
@@ -3135,7 +3135,7 @@ pyridoxine_options = ["","25", "50"]
         :allowFreeText => 'false',
         :tt_onLoad => "hideCategory();checkInput(); removeButton();addButton();changeRegimen();set_patient_program_for_suggestions($('patient_program').value);setTimeout('setSelectedRow();setTextToAppear(\" (MoH Recommended)\")',1000);modifyPage(); startRegimenChangeInterval();",
         :condition => 'hasReasonForART() == true && $("prescribe_arvs").value == "YES" && $("continue_existing_regimen").value != "YES"',
-        :helpText => "Select ART regimen.#{@current_regimen_text} Current patient weight: <b>#{@current_weight}</b>",
+        :helpText => "<span style='font-size: 24px;'>Select ART regimen. #{@current_regimen_text}, Current patient weight: <b>#{@current_weight}</b></span>",
         :optional => 'false' , 
         :tt_onUnload => "resetRegimen();removeButton(); stopRegimenChangeInterval();"}%>
     <% end %>
@@ -3218,7 +3218,7 @@ pyridoxine_options = ["","25", "50"]
           :tt_pageStyleClass => 'NoKeyboard' %>
 
       <%= text_field_tag :fast_track_attributes, nil, 
-          { :tt_onLoad => "changeNextButton();showCategory2('Fast track');$('clearButton').style.display='none';$('keyboard').style.display = 'none';buildFastTrackTable(); preselectedAssessments();",
+          { :tt_onLoad => "changeNextButton();showCategory2('Fast track');$('clearButton').style.display='none';$('keyboard').style.display = 'none';buildFastTrackTable();adjusFontSizeForFT();preselectedAssessments();",
             :condition => '$("assess_fast_track").value == "YES"',
             :tt_onUnload => 'removeRegularBtn();',
             :helpText => 'Check eligibility for <b>Fast Track</b> re-fil (next visit)',
@@ -3717,6 +3717,23 @@ function sortDates(array) {
       var x = new Date(a).getTime(); var y = new Date(b).getTime();
         return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     });
+}
+
+function adjusFontSizeForFT() {
+
+  if (window.innerWidth == 1024) {
+
+    var titles = ['inclusion_titles', 'exclusion_titles'];
+
+    for(var t = 0; t < titles.length; t++) {
+      selected_titles = document.getElementsByClassName(titles[t]);
+      for(var i = 0; i < selected_titles.length; i++) {
+        selected_titles[i].style.fontSize = '14px';
+      }
+    }
+
+  }
+
 }
 
 </script>
