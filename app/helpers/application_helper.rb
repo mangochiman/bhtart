@@ -119,6 +119,11 @@ module ApplicationHelper
    get_global_property_value('activate.htn.enhancement').to_s == "true" rescue false
   end
 
+
+  def show_swap_button
+    get_global_property_value("show.swap.button").to_s == "true" rescue false
+  end
+
   def prefix
     get_global_property_value("dc.number.prefix") rescue ""
   end

@@ -1406,6 +1406,16 @@ EOF
     render :partial => "area_chart_adults" and return
   end
 
+  def find_by_menu
+    @select_options = ["ARV Number", "HCC Number"]
+    if request.post?
+      redirect_to("/people/find_by_hcc_number") and return if (params[:find_by].match(/HCC/i))
+      redirect_to("/people/find_by_arv_number") and return if (params[:find_by].match(/ARV/i))
+    end
+
+    #render :layout => "application"
+  end
+  
 	private
 
 	def search_complete_url(found_person_id, primary_person_id)

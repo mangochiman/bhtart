@@ -135,6 +135,7 @@ class DrugController < GenericDrugController
     dispensing_encounter_type = EncounterType.find_by_name("DISPENSING")
     treatment_encounter_type = EncounterType.find_by_name("TREATMENT")
     amount_dispensed_concept = Concept.find_by_name('Amount dispensed')
+    location_name = Location.current_health_center.name rescue ''
 
     drug_summary = {}
     drug_summary["dispensations"] =  get_dispensations(date, dispensing_encounter_type, amount_dispensed_concept)
@@ -150,6 +151,20 @@ class DrugController < GenericDrugController
       drug_summary["supervision_verification_in_details"] = supervision_verification_in_details
     end
 
+    data = {
+      :date => date,
+      :dispensations => drug_summary["dispensations"],
+      :prescriptions => drug_summary["prescriptions"],
+      :stock_level => drug_summary["stock_level"],
+      :consumption_rate => drug_summary["consumption_rate"],
+      :relocations => drug_summary["relocations"],
+      :receipts => drug_summary["receipts"],
+      :supervision_verification => drug_summary["supervision_verification"],
+      :supervision_verification_in_details => supervision_verification_in_details,
+      :location => location_name
+    }
+    
+    SendResultsToCouchdb.add_record(data) rescue ''
     render :text => drug_summary.to_json and return    
   end
 
