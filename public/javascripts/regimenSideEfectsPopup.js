@@ -201,6 +201,16 @@ function contraindicators(){
 
     try {
         selectedRegimenIndex = regimen_concept_id.options[regimen_concept_id.selectedIndex].text.split(" ")[1];
+        regimenMain = document.getElementById('regimenMain');
+        if (regimenMain){
+            regimenMain.parentNode.removeChild(regimenMain)
+        }
+        input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'regimen_main'
+        input.id = 'regimenMain';
+        input.value = selectedRegimenIndex;
+        document.forms[0].appendChild(input)
     }
     catch(err) {
         __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");
@@ -392,12 +402,12 @@ function contraindicators(){
         popupDiv.style.borderRadius = '15px';
         popupDiv.style.height = '503px';
         popupDiv.style.top = '2%';
-        popupDiv.style.left = '23%';
+        //popupDiv.style.left = '23%';
         popupDiv.style.marginTop = '-20px';
         popupDiv.style.marginLeft = '-20px';
         popupDiv.style.position = 'absolute';
         popupDiv.style.marginTop = '29px';
-        popupDiv.style.width = '56%';
+        popupDiv.style.width = '86%';
         popupDiv.style.zIndex = '991';
         content.appendChild(popupDiv);
 
@@ -528,6 +538,7 @@ function contraindicators(){
     else{
         checkIFstartpackNeed();
     }
+    centerPopup();
 }
 
 function hideLibPopup(){
