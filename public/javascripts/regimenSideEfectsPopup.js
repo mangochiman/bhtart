@@ -201,6 +201,16 @@ function contraindicators(){
 
     try {
         selectedRegimenIndex = regimen_concept_id.options[regimen_concept_id.selectedIndex].text.split(" ")[1];
+        regimenMain = document.getElementById('regimenMain');
+        if (regimenMain){
+            regimenMain.parentNode.removeChild(regimenMain)
+        }
+        input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'regimen_main'
+        input.id = 'regimenMain';
+        input.value = selectedRegimenIndex;
+        document.forms[0].appendChild(input)
     }
     catch(err) {
         __$('touchscreenInput' + tstCurrentPage).removeAttribute("optional", "true");

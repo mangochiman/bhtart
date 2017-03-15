@@ -16,7 +16,7 @@ class GenericRegimensController < ApplicationController
     ################################################ check if on TB treatment ##########################
     on_tb_treatment = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?
       AND obs_datetime <= ?", @patient.patient_id, ConceptName.find_by_name('TB treatment').concept_id,
-      allergic_to_sulphur_session_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
+        allergic_to_sulphur_session_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
     
     if on_tb_treatment.match(/Yes/i)
       @on_tb_treatment = true 
@@ -544,7 +544,10 @@ class GenericRegimensController < ApplicationController
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		session_date = session[:datetime] || Time.now()
     weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
-
+    unless params[:regimen_main].blank?
+      params[:regimen] = params[:regimen_main] #This is a hack. Going back and forth when custom regimens have been selected things were crashing
+    end
+ 
 		prescribe_tb_drugs = false
 		prescribe_tb_continuation_drugs = false
 		prescribe_arvs = false
@@ -652,7 +655,7 @@ class GenericRegimensController < ApplicationController
 
       ActiveRecord::Base.transaction do
         fast_track_encounter = @patient.encounters.find(:last, 
-            :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
+          :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
             fast_track_encounter_type, session_date.to_date])
 
         fast_track_encounter.void unless fast_track_encounter.blank?
@@ -814,7 +817,7 @@ class GenericRegimensController < ApplicationController
 
       on_tb_treatment = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?
         AND obs_datetime <= ?", @patient.patient_id, ConceptName.find_by_name('TB treatment').concept_id,
-        session_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
+          session_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
       
       if on_tb_treatment.match(/Yes/i)
         on_tb_treatment = true 
@@ -822,6 +825,10 @@ class GenericRegimensController < ApplicationController
         on_tb_treatment = false
       end
 
+      unless params[:regimen_main].blank?
+        params[:regimen] = params[:regimen_main]
+      end
+      
       patient_initiated =  PatientService.patient_initiated(@patient.patient_id, session_date)
       if patient_initiated.match(/Re-initiated|Initiation/i)
         orders = MedicationService.regimen_medications(params[:regimen], weight, true, on_tb_treatment)
@@ -1151,7 +1158,7 @@ class GenericRegimensController < ApplicationController
       
     on_tb_treatment = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?
       AND obs_datetime <= ?", @patient.patient_id, ConceptName.find_by_name('TB treatment').concept_id,
-      session_date.to_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
+        session_date.to_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
     
     if on_tb_treatment.match(/Yes/i)
       on_tb_treatment = true 
