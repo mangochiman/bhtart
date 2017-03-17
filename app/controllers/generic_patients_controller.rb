@@ -203,8 +203,16 @@ The following block of code should be replaced by a more cleaner function
 
     unless @prescriptions.blank?
       @appointment_type = PatientService.appointment_type(@patient, session_date)
-      if @appointment_type.value_text == 'Optimize - including hanging pills'
-        @hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, session_date)
+      begin
+        if @appointment_type.value_text == 'Optimize - including hanging pills'
+          @hanging_pills = MedicationService.amounts_brought_to_clinic(@patient, session_date)
+        end
+      rescue
+        @appointment_type = Observation.create(:person_id => @patient.id,
+          :obs_datetime => @encounters[0].encounter_datetime,
+          :concept_id => ConceptName.find_by_name('Appointment type').concept_id,
+          :value_text => 'Exact - excluding hanging pills',
+          :encounter_id => @encounters[0].id)
       end
     end
 
