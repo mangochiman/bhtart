@@ -64,6 +64,8 @@ mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_
 #rake openmrs:bootstrap:load:defaults RAILS_ENV=$ENV
 #rake openmrs:bootstrap:load:site SITE=$SITE RAILS_ENV=production#
 
+export RAILS_ENV=$ENV
+
 bundle exec rake db:migrate db:seed
 
 mysql --host=$HOST --user=$USERNAME --password=$PASSWORD $DATABASE < db/bart2_views_schema_additions.sql
