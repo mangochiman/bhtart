@@ -33,20 +33,20 @@ function numericKepadPopup(obj){
     popupDiv.style.backgroundColor = '#F4F4F4';
     popupDiv.style.border = '2px solid #E0E0E0';
     popupDiv.style.borderRadius = '15px';
-    popupDiv.style.height = '425px';
+    popupDiv.style.height = '511px';
     popupDiv.style.top = '2%';
     popupDiv.style.left = '23%';
     popupDiv.style.marginTop = '-20px';
     popupDiv.style.marginLeft = '-20px';
     popupDiv.style.position = 'absolute';
     popupDiv.style.marginTop = '50px';
-    popupDiv.style.width = '34%';
+    popupDiv.style.width = '498px';
     popupDiv.style.zIndex = '991';
     content.appendChild(popupDiv);
 
     popupHeader = document.createElement('div');
     popupHeader.className = 'popup-header';
-    popupHeader.innerHTML = "<input type='text' class='numeric-input' id='numeric-pad-input'></input><br /><br />";
+    popupHeader.innerHTML = "<b style='top: 20px; position: absolute; left: 10px; top: 2px;'>Dose</b><br /><input type='text' class='numeric-input' id='numeric-pad-input'></input><br /><br />";
     popupHeader.style.borderBottom = '2px solid #7D9EC0';
     popupHeader.style.backgroundColor = '#FFFFFF';
     popupHeader.style.paddingTop = '25px';

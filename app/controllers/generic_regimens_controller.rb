@@ -40,6 +40,7 @@ class GenericRegimensController < ApplicationController
       @prescribe_cpt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'CPT')
     end
     @prescribe_ipt_set = prescribe_medication_set(@patient, allergic_to_sulphur_session_date, 'Isoniazid')
+    @custom_regimen_options = custom_regimen_options(@patient)
     ################################################################################################################
 
 		@current_regimen = current_regimen(@patient.id) rescue nil
@@ -794,8 +795,8 @@ class GenericRegimensController < ApplicationController
     params[:regimen] = params[:regimen_all] if ! params[:regimen_all].blank?
 		reduced = false
     #weight = @current_weight = PatientService.get_patient_attribute_value(@patient, "current_weight")
-
-    unless params[:regimen_concept_id_all].blank?
+    regimen_concept_id_all = (params[:regimen_concept_id_all].reject(&:empty?) rescue []) #remove empty elements
+    unless regimen_concept_id_all.blank?
       drug_names = params[:drug_names].keys
       drug_ids = Drug.find(:all, :conditions => ["name IN (?)", drug_names]).map(&:drug_id)
       regimen_name = MedicationService.regimen_interpreter(drug_ids)
@@ -811,10 +812,8 @@ class GenericRegimensController < ApplicationController
           :regimen_index => regimen_name
         }
       end
-      
     else
       ########################### if patient is being initiated/re started and if given regimen that contains NVP ##########
-
       on_tb_treatment = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?
         AND obs_datetime <= ?", @patient.patient_id, ConceptName.find_by_name('TB treatment').concept_id,
           session_date.strftime('%Y-%m-%d 23:59:59')], :order =>"obs_datetime DESC").to_s #rescue ''
@@ -844,6 +843,7 @@ class GenericRegimensController < ApplicationController
 
     regimen_drug_ids = orders.collect{|o|o[:drug_id]}
     selected_regimen = MedicationService.regimen_interpreter(regimen_drug_ids) if prescribe_arvs
+    #raise orders.inspect
 		#orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:regimen]})
 		ActiveRecord::Base.transaction do
 			# Need to write an obs for the regimen they are on, note that this is ARV
@@ -1128,6 +1128,47 @@ class GenericRegimensController < ApplicationController
 		render :layout => false
 	end
 
+  def custom_regimen_options(patient)
+    medications = Drug.find(:all,:joins =>"INNER JOIN moh_regimen_ingredient i
+      ON i.drug_inventory_id = drug.drug_id", :select => "drug.*, i.*",
+      :group => 'drug.drug_id')
+
+    session_date = session[:datetime].to_date rescue Date.today
+
+    allergic_to_sulphur = Patient.allergic_to_sulpher(patient, session_date)
+
+    if allergic_to_sulphur == 'Yes'
+      prescribe_cpt_set = false
+    else
+      prescribe_cpt_set = prescribe_medication_set(patient, session_date, 'CPT')
+    end
+    prescribe_ipt_set = prescribe_medication_set(patient, session_date, 'Isoniazid')
+
+    if prescribe_cpt_set == true
+      cpt_drug_names = ['TMP/SMX (Cotrimoxazole 120mg tablet)', 'TMP/SMX (Cotrimoxazole 240mg tablet)',
+        'Cotrimoxazole (480mg tablet)', 'Cotrimoxazole (960mg)'
+      ]
+      cpt_drugs = Drug.find(:all, :conditions => ["name IN (?)", cpt_drug_names])
+      cpt_drugs.each do |cpt_drug|
+        medications << cpt_drug
+      end
+    end
+
+    if prescribe_ipt_set == true
+      pyridoxine_ipt_drug_names = ['INH or H (Isoniazid 100mg tablet)', 'Pyridoxine (50mg)']
+      pyridoxine_ipt_drugs = Drug.find(:all, :conditions => ["name IN (?)", pyridoxine_ipt_drug_names])
+      pyridoxine_ipt_drugs.each do |drug|
+        medications << drug
+      end
+    end
+
+    medication_options = (medications || []).map do | m |
+      [m.name , m.drug_id ]
+    end
+
+    return medication_options
+	end
+  
 	def dosing
 		@patient = Patient.find(params[:patient_id] || session[:patient_id]) rescue nil
 		@criteria = Regimen.criteria(PatientService.get_patient_attribute_value(@patient, "current_weight")).all(:conditions => {:concept_id => params[:id]}, :include => :regimen_drug_orders)
