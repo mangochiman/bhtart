@@ -1433,7 +1433,8 @@ WHERE state IN (2, 3, 4, 5, 6, 8)
   AND state != 7
   AND start_date = (SELECT max(start_date) FROM patient_state t
   WHERE t.patient_program_id = s.patient_program_id)
-GROUP BY p.patient_id LIMIT #{limit_one}, #{limit_two};
+GROUP BY p.patient_id ORDER BY state
+LIMIT #{limit_one}, #{limit_two};
 EOF
 
     if outcomes.blank?
@@ -1442,7 +1443,7 @@ EOF
       SELECT patient_id, MAX(encounter_datetime) max_encounter_datetime
       FROM  encounter WHERE patient_id IN(#{patient_ids.join(',')}) 
       AND voided = 0 GROUP BY patient_id 
-      HAVING max_encounter_datetime <= '#{(Date.today - 65.day).to_date.strftime('%Y-%m-%d 23:59:59')}';
+      HAVING max_encounter_datetime <= '#{(Date.today - 150.day).to_date.strftime('%Y-%m-%d 23:59:59')}';
       ").map{ |e| e.patient_id }.uniq rescue nil
 
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
@@ -1455,7 +1456,7 @@ AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
 WHERE start_date = (SELECT max(start_date) FROM patient_state t
     WHERE t.patient_program_id = s.patient_program_id)
 AND p.patient_id IN (#{encounter_patient_ids.join(',')})
-GROUP BY p.patient_id LIMIT #{limit_one}, #{limit_two};
+GROUP BY p.patient_id ORDER BY state LIMIT #{limit_one}, #{limit_two};
 EOF
 
     
