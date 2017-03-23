@@ -1166,7 +1166,7 @@ class GenericRegimensController < ApplicationController
       [m.name , m.drug_id ]
     end
 
-    return medication_options
+    return medication_options.sort_by{|k, v|k}
 	end
   
 	def dosing
