@@ -2928,7 +2928,7 @@ EOF
       if exists_person_attribute
         exists_person_attribute.update_attributes({'value' => attribute[:occupation].to_s})
       else
-        attribute = {'value' => params[:person]["Occupation"],
+        attribute = {'value' =>  attribute[:occupation].to_s,
           'person_attribute_type_id' => occupation_attribute.id,
           'person_id' => patient.id}
         PersonAttribute.create(attribute)
