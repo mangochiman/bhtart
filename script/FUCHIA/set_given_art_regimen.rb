@@ -21,7 +21,7 @@ def start
       next
     end
 
-    dispensed_arvs = get_dispensed_arvs(order_id)
+    dispensed_arvs = get_dispensed_arvs(person_id, obs_datetime)
     unless dispensed_arvs.blank?
       arv_regimen = MedicationService.regimen_interpreter(dispensed_arvs)
       unless arv_regimen.match(/unknown/i)
@@ -47,10 +47,16 @@ def set_regimen(person_id, obs_datetime, arv_regimen)
   puts "Set: #{arv_regimen} for patient_id: #{person_id}"
 end
 
-def get_dispensed_arvs(order_id)
+def get_dispensed_arvs(patient_id, obs_datetime)
+  start_date = obs_datetime.strftime('%Y-%m-%d 00:00:00')
+  end_date = obs_datetime.strftime('%Y-%m-%d 23:59:59')
+
+  order_ids = Order.find(:all, :conditions => ["patient_id = ? AND start_date BETWEEN ? AND ?",
+    patient_id, start_date, end_date]).map(&:order_id) rescue [0]
+
   return Drug.find(:all, :joins =>"INNER JOIN drug_order o ON o.drug_inventory_id = drug.drug_id", 
-    :conditions =>["concept_id IN(?) AND o.order_id = ?", 
-    @@arv_concept_ids, order_id],:group => "o.drug_inventory_id").map(&:drug_id)
+    :conditions =>["concept_id IN(?) AND o.order_id IN(?)", 
+    @@arv_concept_ids, order_ids],:group => "o.drug_inventory_id").map(&:drug_id)
 end
 
 start 

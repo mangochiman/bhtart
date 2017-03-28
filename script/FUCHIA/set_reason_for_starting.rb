@@ -252,7 +252,7 @@ def self.get_reason_for_Art_eligibility(patient_id, age, start_date)
     end
 
       if ob.concept_id == 5497
-        reason = 'CD4 count' if not reason.match(/pregnant/i) or not reason.match(/breastfeding/i)
+        reason = 'Unknown' if not reason.match(/pregnant/i) or not reason.match(/breastfeding/i)
         if ob.value_numeric <= 250
           reason = 'CD4 count less than or equal to 250'
         elsif ob.value_numeric <= 350
