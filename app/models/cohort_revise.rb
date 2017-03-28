@@ -655,6 +655,44 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.get_tb_status('Confirmed TB NOT on treatment')
     cohort.unknown_tb_status = self.get_tb_status('unknown_tb_status')
 
+   
+=begin
+  The following block of code make sure the patients that were screened for TB and 
+  those not but are on ART should add up to Total Alive and on ART
+=end     
+    #===============================================================================================================
+    unknown_tb_status = [] ; unknow_tb_status_patient_ids = []
+    (cohort.total_alive_and_on_art || []).each do |row|
+      patient_id = row['patient_id'].to_i ; patient_id_found = []
+      
+      (cohort.tb_suspected || []).each do |s|
+        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+      end
+
+      (cohort.tb_not_suspected || []).each do |s|
+        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+      end if patient_id_found.blank?
+
+      (cohort.tb_confirmed_on_tb_treatment || []).each do |s|
+        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+      end if patient_id_found.blank?
+
+      (cohort.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
+        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+      end if patient_id_found.blank?
+
+      (cohort.unknown_tb_status || []).each do |s|
+        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+      end if patient_id_found.blank?
+
+      unknown_tb_status << {:patient_id => patient_id, :tb_status => 'unknown_tb_status' } if patient_id_found.blank?
+    end
+
+    cohort.unknown_tb_status = (cohort.unknown_tb_status + unknown_tb_status) unless unknown_tb_status.blank?
+    #===============================================================================================================
+
+
+
 =begin
   ART adherence
 
@@ -1122,7 +1160,11 @@ EOF
 
     (data || []).each do |patient_tb_status|
       status = patient_tb_status['tb_status']
-      status = 'unknown_tb_status' if status.blank?
+      begin
+        status = 'unknown_tb_status' if status.blank? || status.match(/Unknown/i)
+      rescue
+        status = 'unknown_tb_status' 
+      end
       tb_status << {
         :patient_id => patient_tb_status['person_id'].to_i,
         :tb_status => status

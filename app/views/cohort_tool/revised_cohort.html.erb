@@ -1391,7 +1391,7 @@
       <td class="number reason_class">
           <a href="javascript:drillDown('asymptomatic');" id="asymptomatic" class="reason">
               <%= @cohort.asymptomatic.count %>
-          </a>
+          </a>        
       </td>
       <td>
           &nbsp;
@@ -2404,7 +2404,7 @@
           &nbsp;
       </td>
       <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
-          <b>Unk</b>nown (not circled)
+          <b>Unk</b>own (not circled)
       </td>
       <td colspan="2" class="number side_effects_class">
           <a href="javascript:drillDown('unknown_side_effects');" class="side_effects">
@@ -2605,7 +2605,7 @@
   var total_registered = parseInt(document.getElementById("total_registered").innerHTML);
   var cum_total_registered = parseInt(document.getElementById("cum_total_registered").innerHTML);
   var total_alive_and_on_art = parseInt(document.getElementById("total_alive_and_on_art").innerHTML);
-
+  
   report_inconsistency = 0;
 
   /**############### Initializing total values to zero ####################*/
@@ -2636,7 +2636,7 @@
   age = document.getElementsByClassName("age");
   cum_age = document.getElementsByClassName("cum-age");
   reasons = document.getElementsByClassName("reason");
-  cum_reasons = document.getElementsByClassName("cum_reasons");
+  cum_reasons = document.getElementsByClassName("cum-reason");
   conditions = document.getElementsByClassName("condition");
   cum_conditions = document.getElementsByClassName("cum-condition");
   dead = document.getElementsByClassName("dead");
@@ -2653,15 +2653,15 @@
   /***************************************************************/
 
   for(var i = 0; i < on_art.length; i++){
-
-    total_on_art += parseInt(on_art[i].innerHTML);
-
+    
+    total_on_art += parseInt(on_art[i].innerHTML); 
+  
   }
-
+  
   for(var i = 0; i < cum_on_art.length; i++){
-
-    total_cum_on_art += parseInt(cum_on_art[i].innerHTML);
-
+  
+    total_cum_on_art += parseInt(cum_on_art[i].innerHTML); 
+  
   }
 
   if(total_on_art !== total_registered){
@@ -2682,7 +2682,7 @@
   }
 
   if(total_cum_on_art !== cum_total_registered){
-
+    
     cum_patients_consistency_div = document.getElementById("patients_consistency");
     cum_patients_on_art = document.getElementsByClassName("cum_patients_on_art");
     report_inconsistency += 1;
@@ -2693,7 +2693,7 @@
     for(var i = 0; i < cum_patients_on_art.length; i++){
 
       cum_patients_on_art[i].style.border = "3px solid red"
-
+    
     }
 
   }
@@ -2704,37 +2704,37 @@
   /** Compare the sum of Males, Non-pregnant Females and         */
   /** Pregnant Females against total registered                  */
   /***************************************************************/
-
+  
   for(var i = 0; i < gender.length; i++){
-
+  
     total_gender += parseInt(gender[i].innerHTML);
-
+  
   }
 
   for(var i = 0; i < cum_gender.length; i++){
-
+  
     total_cum_gender += parseInt(cum_gender[i].innerHTML);
-
+ 
   }
 
   if(total_gender !== total_registered){
-
+  
     gender_class = document.getElementsByClassName("gender_class")
     gender_consistency_div = document.getElementById("gender_consistency");
     report_inconsistency += 1;
 
     gender_consistency_div.innerHTML = "26. Newly total registered in quarter is not equal to ";
     gender_consistency_div.innerHTML += "the sum of (Newly registered in quarter) values from 30 through 32";
-
+    
     for(var i = 0; i < gender_class.length; i++){
-
+      
       gender_class[i].style.border = "3px solid red"
-
+    
     }
-
+ 
   }
 
-  if(total_cum_gender !== cum_total_registered){
+  if(total_cum_gender !== cum_total_registered){ 
 
     cum_gender_class = document.getElementsByClassName("cum_gender_class")
     cum_gender_consistency_div = document.getElementById("cum_gender_consistency");
@@ -2744,11 +2744,11 @@
     cum_gender_consistency_div.innerHTML += "the sum of (Cumulative ever registered) values from 30 through 32";
 
     for(var i = 0; i < cum_gender_class.length; i++){
-
+    
       cum_gender_class[i].style.border = "3px solid red"
-
+   
     }
-
+ 
   }
 
   /***************************************************************/
@@ -2762,13 +2762,13 @@
 
   for(var i = 0; i < age.length; i++){
 
-    total_age += parseInt(age[i].innerHTML);
+    total_age += parseInt(age[i].innerHTML); 
 
   }
 
   for(var i = 0; i < cum_age.length; i++){
 
-    total_cum_age += parseInt(cum_age[i].innerHTML);
+    total_cum_age += parseInt(cum_age[i].innerHTML); 
 
   }
 
@@ -2815,17 +2815,17 @@
 
   for(var i = 0; i < reasons.length; i++){
 
-    total_reasons += parseInt(reasons[i].innerHTML);
+    total_reasons += parseInt(reasons[i].innerHTML); 
 
   }
 
   for(var i = 0; i < cum_reasons.length; i++){
 
-    total_cum_reasons += parseInt(cum_reasons[i].innerHTML);
+    total_cum_reasons += parseInt(cum_reasons[i].innerHTML); 
 
   }
 
-  if(total_reasons !== total_registered){
+  if(total_reasons !== total_registered){ 
 
     reason_class = document.getElementsByClassName("reason_class")
     reasons_consistency_div = document.getElementById("reasons_consistency");
@@ -2869,17 +2869,17 @@
 
   for(var i = 0; i < conditions.length; i++){
 
-    total_conditions += parseInt(conditions[i].innerHTML);
+    total_conditions += parseInt(conditions[i].innerHTML); 
 
   }
 
   for(var i = 0; i < cum_conditions.length; i++){
 
-    total_cum_conditions += parseInt(cum_conditions[i].innerHTML);
+    total_cum_conditions += parseInt(cum_conditions[i].innerHTML); 
 
   }
 
-  if(total_conditions !== total_registered){
+  if(total_conditions !== total_registered){  
 
     condition_class = document.getElementsByClassName("condition_class");
     conditions_consistency_div = document.getElementById("conditions_consistency");
@@ -2890,7 +2890,7 @@
 
     for(var i = 0; i < condition_class.length; i++){
 
-      condition_class[i].style.border = "3px solid red"
+      condition_class[i].style.border = "3px solid red" 
 
     }
 
@@ -2907,14 +2907,14 @@
 
     for(var i = 0; i < cum_condition_class.length; i++){
 
-      cum_condition_class[i].style.border = "3px solid red"
+      cum_condition_class[i].style.border = "3px solid red" 
 
     }
 
   }
 
   /***************************************************************/
-
+  
   /*****************************block 6***************************/
   /*  Comparing the sum of the values of all the patients died   */
   /*  against the value "Died total"
@@ -2922,7 +2922,7 @@
 
   for(var i = 0; i < dead.length; i++){
 
-    total_dead += parseInt(dead[i].innerHTML);
+    total_dead += parseInt(dead[i].innerHTML); 
 
   }
 
@@ -2938,14 +2938,14 @@
 
     for(var i = 0; i < dead_class.length; i++){
 
-      dead_class[i].style.border = "3px solid red"
+      dead_class[i].style.border = "3px solid red" 
 
     }
 
   }
 
   /***************************************************************/
-
+  
   /*****************************block 7***************************/
   /*  Comparing the sum of Total alive and on ART, Died total,   */
   /*  Defaulted, Stopped taking ARVs and Transferred Out against */
@@ -2957,7 +2957,7 @@
     total_registered_on_art += parseInt(registered_on_art[i].innerHTML);
 
   }
-
+  
   if(total_registered_on_art !== cum_total_registered){
 
     reg_on_art_class = document.getElementsByClassName("reg_on_art_class");
@@ -3016,7 +3016,7 @@
 
   for(var i = 0; i < tb_status.length; i++){
 
-    total_tb_status += parseInt(tb_status[i].innerHTML);
+    total_tb_status += parseInt(tb_status[i].innerHTML); 
 
   }
 
@@ -3032,7 +3032,7 @@
 
     for(var i = 0; i < tb_status_class.length; i++){
 
-      tb_status_class[i].style.border = "3px solid red"
+      tb_status_class[i].style.border = "3px solid red" 
 
     }
 
@@ -3062,14 +3062,14 @@
 
     for(var i = 0; i < pregnant_class.length; i++){
 
-      pregnant_class[i].style.border = "3px solid red"
+      pregnant_class[i].style.border = "3px solid red" 
 
     }
 
   }
 
   /***************************************************************/
-
+  
   /*****************************block 11**************************/
   /*  Comparing the sum of all the value in Side effects against */
   /*  total alive                                                */
@@ -3080,7 +3080,7 @@
     total_side_effects += parseInt(side_effects[i].innerHTML);
 
   }
-
+  
   if(total_side_effects !== total_alive_and_on_art){
 
     side_effects_class = document.getElementsByClassName("side_effects_class");
@@ -3092,7 +3092,7 @@
 
     for(var i = 0; i < side_effects_class.length; i++){
 
-      side_effects_class[i].style.border = "3px solid red"
+      side_effects_class[i].style.border = "3px solid red" 
 
     }
 
@@ -3110,7 +3110,7 @@
     total_adherence += parseInt(adherence[i].innerHTML);
 
   }
-
+  
   if(total_adherence !== total_alive_and_on_art){
 
     adherence_class = document.getElementsByClassName("adherence_class");
@@ -3122,19 +3122,19 @@
 
     for(var i = 0; i < adherence_class.length; i++){
 
-      adherence_class[i].style.border = "3px solid red"
+      adherence_class[i].style.border = "3px solid red" 
     }
   }
 
   /***************************************************************/
-
+  
   if(report_inconsistency > 0){
     var title_div = document.createElement("div");
     var title = document.createTextNode("This report has the following ("+report_inconsistency+") inconsistences:");
     title_div.setAttribute("id", "incosistence_title");
-    title_div.appendChild(title);
+    title_div.appendChild(title); 
 
-    var current_div = document.getElementById("consistency_check");
+    var current_div = document.getElementById("consistency_check"); 
     document.body.insertBefore(title_div, current_div);
   }
 </script>
