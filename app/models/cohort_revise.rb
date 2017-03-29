@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-#=begin
+=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -33,7 +33,7 @@ EOF
                 and (`s`.`state` = 7))
         group by `p`.`patient_id`;
 EOF
-
+=end
 =begin
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
@@ -544,25 +544,25 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.cum_children_12_23_months = self.children_12_23_months(cum_start_date, end_date)
 
 =begin
+        Current EPISODE OF TB
+
+        Unique PatientProgram entries at the current location for those patients with at least one state
+        ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having a
+        CURRENT EPISODE OF TB observation at the HIV staging encounter on the initiation date
+=end
+
+        cohort.current_episode_of_tb = self.current_episode_of_tb(start_date, end_date)
+        cohort.cum_current_episode_of_tb = self.current_episode_of_tb(cum_start_date, end_date)
+
+=begin
     TB within the last 2 years
 
     Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
     and earliest start date of the 'ON ARVs' state within the quarter
     and having a TB WITHIN THE LAST 2 YEARS observation at the HIV staging encounter on the initiation date
 =end
-    cohort.tb_within_the_last_two_years = self.tb_within_the_last_two_years(start_date, end_date)
-    cohort.cum_tb_within_the_last_two_years = self.tb_within_the_last_two_years(cum_start_date, end_date)
-
-=begin
-    Current EPISODE OF TB
-
-    Unique PatientProgram entries at the current location for those patients with at least one state
-    ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having a
-    CURRENT EPISODE OF TB observation at the HIV staging encounter on the initiation date
-=end
-
-    cohort.current_episode_of_tb = self.current_episode_of_tb(start_date, end_date)
-    cohort.cum_current_episode_of_tb = self.current_episode_of_tb(cum_start_date, end_date)
+    cohort.tb_within_the_last_two_years = self.tb_within_the_last_two_years(cohort.current_episode_of_tb, start_date, end_date)
+    cohort.cum_tb_within_the_last_two_years = self.tb_within_the_last_two_years(cohort.cum_current_episode_of_tb, cum_start_date, end_date)
 
 =begin
     No TB
@@ -655,43 +655,40 @@ Unique PatientProgram entries at the current location for those patients with at
     cohort.tb_confirmed_currently_not_yet_on_tb_treatment = self.get_tb_status('Confirmed TB NOT on treatment')
     cohort.unknown_tb_status = self.get_tb_status('unknown_tb_status')
 
-   
 =begin
-  The following block of code make sure the patients that were screened for TB and 
-  those not but are on ART should add up to Total Alive and on ART
-=end     
+      The following block of code make sure the patients that were screened for TB and
+      those not but are on ART should add up to Total Alive and on ART
+=end
     #===============================================================================================================
     unknown_tb_status = [] ; unknow_tb_status_patient_ids = []
     (cohort.total_alive_and_on_art || []).each do |row|
-      patient_id = row['patient_id'].to_i ; patient_id_found = []
-      
-      (cohort.tb_suspected || []).each do |s|
-        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-      end
+    patient_id = row['patient_id'].to_i ; patient_id_found = []
 
-      (cohort.tb_not_suspected || []).each do |s|
-        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-      end if patient_id_found.blank?
+    (cohort.tb_suspected || []).each do |s|
+      patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+    end
 
-      (cohort.tb_confirmed_on_tb_treatment || []).each do |s|
-        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-      end if patient_id_found.blank?
+    (cohort.tb_not_suspected || []).each do |s|
+      patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+    end if patient_id_found.blank?
 
-      (cohort.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
-        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-      end if patient_id_found.blank?
+    (cohort.tb_confirmed_on_tb_treatment || []).each do |s|
+      patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+    end if patient_id_found.blank?
 
-      (cohort.unknown_tb_status || []).each do |s|
-        patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
-      end if patient_id_found.blank?
+    (cohort.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |s|
+      patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+    end if patient_id_found.blank?
 
-      unknown_tb_status << {:patient_id => patient_id, :tb_status => 'unknown_tb_status' } if patient_id_found.blank?
+    (cohort.unknown_tb_status || []).each do |s|
+      patient_id_found << s[:patient_id] if s[:patient_id] == patient_id
+    end if patient_id_found.blank?
+
+    unknown_tb_status << {:patient_id => patient_id, :tb_status => 'unknown_tb_status' } if patient_id_found.blank?
     end
 
     cohort.unknown_tb_status = (cohort.unknown_tb_status + unknown_tb_status) unless unknown_tb_status.blank?
     #===============================================================================================================
-
-
 
 =begin
   ART adherence
@@ -1160,11 +1157,7 @@ EOF
 
     (data || []).each do |patient_tb_status|
       status = patient_tb_status['tb_status']
-      begin
-        status = 'unknown_tb_status' if status.blank? || status.match(/Unknown/i)
-      rescue
-        status = 'unknown_tb_status' 
-      end
+      status = 'unknown_tb_status' if status.blank?
       tb_status << {
         :patient_id => patient_tb_status['person_id'].to_i,
         :tb_status => status
@@ -1333,6 +1326,7 @@ EOF
   def self.kaposis_sarcoma(start_date, end_date)
     #KAPOSIS SARCOMA
     concept_id = ConceptName.find_by_name('KAPOSIS SARCOMA').concept_id
+    yes_concept_id = ConceptName.find_by_name('Yes').concept_id
     who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     registered = []
 
@@ -1340,7 +1334,8 @@ EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded = #{concept_id}) AND concept_id = #{who_stages_criteria}
+      AND ((value_coded = #{concept_id} AND concept_id = #{who_stages_criteria})
+      OR (concept_id = #{concept_id}) AND value_coded = #{yes_concept_id} )
       AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
 EOF
 
@@ -1353,6 +1348,7 @@ EOF
   def self.current_episode_of_tb(start_date, end_date)
     #CURRENT EPISODE OF TB
     eptb_concept_id = ConceptName.find_by_name('EXTRAPULMONARY TUBERCULOSIS (EPTB)').concept_id
+    yes_concept_id = ConceptName.find_by_name('Yes').concept_id
     pulmonary_tb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS').concept_id
     current_ptb_concept_id = ConceptName.find_by_name('PULMONARY TUBERCULOSIS (CURRENT)').concept_id
 
@@ -1363,7 +1359,8 @@ EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id})) AND concept_id = #{who_stages_criteria}
+       AND ( (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND concept_id = #{who_stages_criteria} )
+       OR (concept_id IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND value_coded = #{yes_concept_id}))
       AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
 EOF
 
@@ -1372,18 +1369,29 @@ EOF
     end
   end
 
-  def self.tb_within_the_last_two_years(start_date, end_date)
+  def self.tb_within_the_last_two_years(patients_with_current_tb, start_date, end_date)
+    #patients with current episode of tb
+    patients_with_current_tb_episode = []
+    (patients_with_current_tb || []).each do |patient|
+      patients_with_current_tb_episode << patient['patient_id'].to_i
+    end
+
+    patients_with_current_tb_episode = [0] if patients_with_current_tb_episode.blank?
+
     #Pulmonary tuberculosis within the last 2 years
     pulmonary_tb_within_last_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
     ptb_within_the_past_two_yrs_concept_id = ConceptName.find_by_name('Ptb within the past two years').concept_id
     who_stages_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
+    yes_concept_id = ConceptName.find_by_name('Yes').concept_id
     registered = []
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded IN (#{pulmonary_tb_within_last_2yrs_concept_id}, #{ptb_within_the_past_two_yrs_concept_id})) AND concept_id = #{who_stages_criteria}
+      AND ((value_coded IN (#{pulmonary_tb_within_last_2yrs_concept_id}, #{ptb_within_the_past_two_yrs_concept_id}) AND concept_id = #{who_stages_criteria})
+      OR (concept_id IN (#{pulmonary_tb_within_last_2yrs_concept_id}, #{ptb_within_the_past_two_yrs_concept_id}) AND value_coded = #{yes_concept_id}))
+      AND patient_id NOT IN (#{patients_with_current_tb_episode.join(',')})
       AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id;
 EOF
 
@@ -1625,14 +1633,15 @@ EOF
 
   def self.presumed_severe_hiv_disease_in_infants(start_date, end_date)
     reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('PRESUMED SEVERE HIV').concept_id
+    reason1_concept_id = ConceptName.find_by_name('PRESUMED SEVERE HIV').concept_id
+    reason2_concept_id = ConceptName.find_by_name('PRESUMED SEVERE HIV CRITERIA IN INFANTS').concept_id
 
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id}
+      AND concept_id = #{reason_for_art} AND value_coded IN (#{reason1_concept_id}, #{reason2_concept_id})
       AND voided = 0 GROUP BY patient_id;
 EOF
 
