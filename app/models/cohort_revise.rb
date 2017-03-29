@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-=begin
+#=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -33,7 +33,7 @@ EOF
                 and (`s`.`state` = 7))
         group by `p`.`patient_id`;
 EOF
-=end
+#=end
 =begin
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
