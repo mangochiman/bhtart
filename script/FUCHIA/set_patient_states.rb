@@ -2,21 +2,16 @@ require 'fastercsv'
 User.current = User.find_by_username('admin')
 ScriptStared = Time.now()
 @@program = Program.find_by_name('HIV program')
-
+@@reason_for_starting = ConceptName.find_by_name("Reason for ART eligibility").concept
 
 def start
-  amount_dispensed = ConceptName.find_by_name('Amount dispensed').concept
-
-  patient_data = Patient.find(:all, :joins =>"INNER JOIN obs ON obs.person_id = patient.patient_id
-    INNER JOIN person p ON p.person_id = patient.patient_id",
-    :conditions => ["concept_id = ?", amount_dispensed.id], 
-    :select => "p.person_id patient_id, p.birthdate, p.dead, p.death_date, 
-    MIN(obs_datetime) start_date", :group => "obs.person_id")
+  patient_data = Observation.find(:all, :conditions => ["concept_id = ?", @@reason_for_starting.id], :group => 'person_id')
 
   (patient_data|| []).each_with_index do |data, i|
     begin
-      start_date = data['start_date'].to_date
-      patient_id = data['patient_id'].to_i
+      start_date = data.obs_datetime.to_date
+      patient_id = data.person_id.to_i
+      puts "........................ #{(i + 1)} of #{patient_data.count}"
     rescue
       puts "############## ERROR"
       next
@@ -29,12 +24,12 @@ def start
 
 
     begin
-      death_date = data['death_date'].to_date
+      death_date = Person.find(patient_id).death_date.to_date
       last_state.update_attributes(:end_date => death_date)
       last_state = PatientState.create(:patient_program_id => patient_program.id, :state => 3, 
         :start_date => death_date, :end_date => death_date)
 
-      puts "Update outcome to dead: #{patient_id}  #{death_date}"
+      #puts "Update outcome to dead: #{patient_id}  #{death_date}"
     rescue
       #puts "Update outcome to On ART: #{patient_id}  #{start_date}"
     end
@@ -55,9 +50,9 @@ def start
         last_state.update_attributes(:end_date => transfer_out_date)
         PatientState.create(:patient_program_id => patient_program.id, :state => 2, 
           :start_date => transfer_out_date, :end_date => transfer_out_date)
-        puts "Update outcome to transfer out: #{patient_id}  #{transfer_out_date}"
+        #puts "Update outcome to transfer out: #{patient_id}  #{transfer_out_date}"
       rescue
-        puts "Update outcome to On ART: #{patient_id}  #{start_date}"
+        #puts "Update outcome to On ART: #{patient_id}  #{start_date}"
       end 
 
       break 
