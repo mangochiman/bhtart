@@ -1280,7 +1280,7 @@ EOF
   def self.died_in(month_str)
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+      SELECT t.patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
       INNER JOIN temp_earliest_start_date t USING(patient_id)
       WHERE cum_outcome = 'Patient died' GROUP BY patient_id
       HAVING died_in = '#{month_str}';
