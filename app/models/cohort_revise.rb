@@ -1466,6 +1466,7 @@ EOF
     reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
     reason_concept_id = ConceptName.find_by_name('Unknown').concept_id
     reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+    reason1_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
     reason3_concept_id = ConceptName.find_by_name('None').concept_id
 
     registered = []
@@ -1473,7 +1474,7 @@ EOF
       SELECT * FROM temp_earliest_start_date t
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded IN (#{reason_concept_id}, #{reason4_concept_id}, #{reason3_concept_id}))
+      AND concept_id = #{reason_for_art} AND (value_coded IN (#{reason_concept_id}, #{reason4_concept_id}, #{reason3_concept_id}, #{reason1_concept_id}))
       AND voided = 0 GROUP BY patient_id;
 EOF
     (total_registered || []).each do |patient|
@@ -1566,8 +1567,8 @@ EOF
 
   def self.asymptomatic(start_date, end_date)
     reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason3_concept_id = ConceptName.find_by_name('LYMPHOCYTES').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+    #reason3_concept_id = ConceptName.find_by_name('LYMPHOCYTES').concept_id
+    #reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
     reason2_concept_id = ConceptName.find_by_name('ASYMPTOMATIC').concept_id
 
     registered = []
@@ -1576,8 +1577,7 @@ EOF
       INNER JOIN obs ON t.patient_id = obs.person_id
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND concept_id = #{reason_for_art}
-      AND (value_coded = #{reason3_concept_id}
-      OR value_coded = #{reason4_concept_id} OR value_coded = #{reason2_concept_id})
+      AND (value_coded = #{reason2_concept_id})
       AND voided = 0 GROUP BY patient_id;
 EOF
 
@@ -1593,7 +1593,6 @@ EOF
     reason5_concept_id = ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
     reason_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
     reason3_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
     registered = []
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
@@ -1602,7 +1601,7 @@ EOF
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND concept_id = #{reason_for_art} AND
       (value_coded = #{reason_concept_id} OR value_coded = #{reason2_concept_id}
-      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}
+      OR value_coded = #{reason3_concept_id}
       OR value_coded = #{reason5_concept_id}) AND voided = 0 GROUP BY patient_id;
 EOF
 
