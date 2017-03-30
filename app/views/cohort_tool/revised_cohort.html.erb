@@ -986,7 +986,7 @@
           Males (all ages)
       </td>
       <td  class="number gender_class">
-          <a href="javascript:drillDown('all_males');" id="all_males" class="gender">
+          <a href="javascript:drillDown('all_males');" id="all_males" class="gender1">
               <%= @cohort.all_males.count %>
           </a>
       </td>
@@ -1016,7 +1016,7 @@
           Non-pregnant Females (all ages)
       </td>
       <td class="number gender_class">
-          <a href="javascript:drillDown('non_pregnant_females');" id="non_pregnant_females" class="gender">
+          <a href="javascript:drillDown('non_pregnant_females');" id="non_pregnant_females" class="gender1">
               <%= @cohort.non_pregnant_females.count %>
           </a>
       </td>
@@ -1046,7 +1046,7 @@
           Pregnant Females (all ages)
       </td>
       <td class="number gender_class">
-          <a href="javascript:drillDown('pregnant_females_all_ages');" id="pregnant_females_all_ages" class="gender">
+          <a href="javascript:drillDown('pregnant_females_all_ages');" id="pregnant_females_all_ages" class="gender1">
               <%= @cohort.pregnant_females_all_ages.count %>
           </a>
       </td>
@@ -2217,7 +2217,7 @@
           <b>Preg</b>nant
       </td>
       <td colspan="2" class="number pregnant_class">
-          <a href="javascript:drillDown('total_pregnant');" class="gender">
+          <a href="javascript:drillDown('total_pregnant');" class="preg_breastfeed">
               <%= "#{@cohort.total_pregnant_women.count}" %>
           </a>
       </td>
@@ -2236,7 +2236,7 @@
           <b>B</b>reast<b>f</b>eeding
       </td>
       <td colspan="2" class="number pregnant_class">
-          <a href="javascript:drillDown('total_breastfeeding');" class="gender">
+          <a href="javascript:drillDown('total_breastfeeding');" class="preg_breastfeed">
              <%= "#{@cohort.total_breastfeeding_women.count}" %>
           </a>
       </td>
@@ -2255,7 +2255,7 @@
           All <b>others</b> (not circled)
       </td>
       <td colspan="2" class="number pregnant_class ">
-          <a href="javascript:drillDown('all_other_patients');" class="gender">
+          <a href="javascript:drillDown('all_other_patients');" class="preg_breastfeed">
               <%= "#{@cohort.total_other_patients.count}" %>
           </a>
       </td>
@@ -2631,7 +2631,7 @@
   /**################# getting class objects ##############################*/
   on_art = document.getElementsByClassName("on-art");
   cum_on_art = document.getElementsByClassName("cum-on-art")
-  gender = document.getElementsByClassName("gender");
+  gender1 = document.getElementsByClassName("gender1");
   cum_gender = document.getElementsByClassName("cum-gender");
   age = document.getElementsByClassName("age");
   cum_age = document.getElementsByClassName("cum-age");
@@ -2645,7 +2645,7 @@
   tb_status = document.getElementsByClassName("tb_status");
   side_effects = document.getElementsByClassName("side_effects");
   adherence = document.getElementsByClassName("adherence");
-  pregnant = document.getElementsByClassName("pregnant");
+  pregnant = document.getElementsByClassName("preg_breastfeed");
 
   /****************************block 1****************************/
   /** Compare the sum of patients  initiated, re-initiated and   */
@@ -2705,11 +2705,12 @@
   /** Pregnant Females against total registered                  */
   /***************************************************************/
 
-  for(var i = 0; i < gender.length; i++){
+  for(var i = 0; i < gender1.length; i++){
 
-    total_gender += parseInt(gender[i].innerHTML);
+    total_gender += parseInt(gender1[i].innerHTML);
 
   }
+  console.log(total_gender);
 
   for(var i = 0; i < cum_gender.length; i++){
 
@@ -2918,7 +2919,7 @@
   /*****************************block 6***************************/
   /*  Comparing the sum of the values of all the patients died   */
   /*  against the value "Died total"
-  /***************************************************************/
+   /***************************************************************/
 
   for(var i = 0; i < dead.length; i++){
 
@@ -2989,7 +2990,7 @@
 
   }
 
- if(total_alive_and_on_art != total_regimen){
+  if(total_alive_and_on_art != total_regimen){
 
     regimen_class = document.getElementsByClassName("regimen_class");
     regimen_consistency_div = document.getElementById("regimen_consistency");
@@ -3001,7 +3002,7 @@
 
     for(var i =0; i < regimen_class.length; i++){
 
-       regimen_class[i].style.border = "3px solid red"
+      regimen_class[i].style.border = "3px solid red"
 
     }
 
