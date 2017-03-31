@@ -1,6 +1,6 @@
 class CohortRevise
 
-
+  @@reason_for_starting = []
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -448,6 +448,37 @@ Unique PatientProgram entries at the current location for those patients with at
       #Unknown age
       cohort.unknown_age = self.unknown_age(start_date, end_date)
       cohort.cum_unknown_age = self.unknown_age(cum_start_date, end_date)
+
+=begin
+      The following block - we are calculating all reason for starting for Quarter and Cumulative
+=end
+      ###########################################################################################
+      initiated_reason_on_art_concept = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
+      
+      reason_for_starting = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.*, (select name from concept_name 
+      where concept_id= obs.value_coded and name is not null and name <> '' limit 1) reason,
+      obs.value_coded AS reason_for_starting_concept_id
+      FROM temp_earliest_start_date e
+      right join obs ON person_id = patient_id
+      AND concept_id = #{initiated_reason_on_art_concept.id}
+      where date_enrolled between '#{cum_start_date.to_date}' and '#{end_date}'
+      group by person_id;
+EOF
+
+      (reason_for_starting || []).each do |data|
+        @@reason_for_starting << {
+          :patient_id => data['patient_id'].to_i,
+          :gender => data['gender'], :birthdate => (data['birthdate'].to_date rescue nil),
+          :earliest_start_date => (data['earliest_start_date'].to_date rescue nil),
+          :date_enrolled => data['date_enrolled'].to_date,
+          :reason_for_starting => data['reason'],
+          :age_at_initiation => data['age_at_initiation'].to_i, 
+          :age_in_days => data['age_in_days'].to_i,
+          :reason_for_starting_concept_id => data['reason_for_starting_concept_id'].to_i
+         }
+      end
+      ###########################################################################################
 
 =begin
       Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
@@ -1449,206 +1480,159 @@ EOF
     reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (value_coded = #{reason_concept_id}) AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_id == r[:reason_for_starting_concept_id]
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.unknown_other_reason_outside_guidelines(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('Unknown').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
-    reason3_concept_id = ConceptName.find_by_name('None').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('Unknown').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+    reason_concept_ids << ConceptName.find_by_name('None').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded IN (#{reason_concept_id}, #{reason4_concept_id}, #{reason3_concept_id}))
-      AND voided = 0 GROUP BY patient_id;
-EOF
-    (total_registered || []).each do |patient|
-      registered << patient
+
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.who_stage_four(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('WHO stage IV adult').concept_id
-    reason2_concept_id = ConceptName.find_by_name('WHO stage IV peds').concept_id
-    reason3_concept_id = ConceptName.find_by_name('WHO STAGE 4').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('WHO stage IV adult').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage IV peds').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO STAGE 4').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id}
-      OR value_coded = #{reason2_concept_id} OR value_coded = #{reason3_concept_id})
-      AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.who_stage_three(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason_concept_id = ConceptName.find_by_name('WHO stage III adult').concept_id
-    reason2_concept_id = ConceptName.find_by_name('WHO stage III peds').concept_id
-    reason3_concept_id = ConceptName.find_by_name('WHO STAGE 3').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('WHO stage III adult').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage III peds').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO STAGE 3').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id}
-      OR value_coded = #{reason2_concept_id} OR value_coded = #{reason3_concept_id})
-      AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.pregnant_women(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
     reason_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id}
-      AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_id == r[:reason_for_starting_concept_id]
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.breastfeeding_mothers(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
     reason_concept_id = ConceptName.find_by_name('BREASTFEEDING').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND value_coded = #{reason_concept_id}
-      AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_id == r[:reason_for_starting_concept_id]
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.asymptomatic(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason3_concept_id = ConceptName.find_by_name('LYMPHOCYTES').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-    reason2_concept_id = ConceptName.find_by_name('ASYMPTOMATIC').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+    reason_concept_ids << ConceptName.find_by_name('ASYMPTOMATIC').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art}
-      AND (value_coded = #{reason3_concept_id}
-      OR value_coded = #{reason4_concept_id} OR value_coded = #{reason2_concept_id})
-      AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.who_stage_two(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason2_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 750').concept_id
-    reason5_concept_id = ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
-    reason_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
-    reason3_concept_id = ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
-    reason4_concept_id = ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 750').concept_id
+    reason_concept_ids << ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
+    reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
+    reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND
-      (value_coded = #{reason_concept_id} OR value_coded = #{reason2_concept_id}
-      OR value_coded = #{reason3_concept_id} OR value_coded = #{reason4_concept_id}
-      OR value_coded = #{reason5_concept_id}) AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.confirmed_hiv_infection_in_infants_pcr(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
     reason_concept_id = ConceptName.find_by_name('HIV PCR').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND (value_coded = #{reason_concept_id})
-      AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless (r[:reason_for_starting_concept_id] == reason_concept_id)
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.presumed_severe_hiv_disease_in_infants(start_date, end_date)
-    reason_for_art = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept_id
-    reason1_concept_id = ConceptName.find_by_name('PRESUMED SEVERE HIV').concept_id
-    reason2_concept_id = ConceptName.find_by_name('PRESUMED SEVERE HIV CRITERIA IN INFANTS').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('PRESUMED SEVERE HIV').concept_id
+    reason_concept_ids << ConceptName.find_by_name('PRESUMED SEVERE HIV CRITERIA IN INFANTS').concept_id
 
     registered = []
-    total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      INNER JOIN obs ON t.patient_id = obs.person_id
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND concept_id = #{reason_for_art} AND value_coded IN (#{reason1_concept_id}, #{reason2_concept_id})
-      AND voided = 0 GROUP BY patient_id;
-EOF
 
-    (total_registered || []).each do |patient|
-      registered << patient
+    (@@reason_for_starting || []).each do |r|
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      registered << r
     end
 
+    return registered
   end
 
   def self.unknown_age(start_date, end_date)
