@@ -917,6 +917,25 @@ class CohortToolController < GenericCohortToolController
 		render :layout => 'report'
   end
 
+  def void_multiple_start_reasons
+    concept = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
+
+    (params[:data_inconsistents_patient_ids].split(',') || []).each do |patient_id|
+      obs = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?",
+        patient_id, concept.id],:order => "obs_datetime ASC, date_created ASC", :limit => 1)
+
+      next if obs.blank?
+      ActiveRecord::Base.connection.execute <<EOF
+        UPDATE obs set voided = 1, void_reason = "Voided multiple start reasons"
+        WHERE voided = 0 AND person_id = #{patient_id} AND concept_id = #{concept.id}
+        AND obs_id != #{obs.id};
+EOF
+
+    end
+
+    redirect_to '/' and return
+  end
+
   def out_of_range_arv_number
 
 		include_url_params_for_back_button
@@ -1874,7 +1893,7 @@ EOF
                  FROM obs
                  WHERE (SELECT COUNT(*)
                         FROM obs observation
-                        WHERE   observation.concept_id = ?
+                        WHERE   observation.concept_id = ? AND observation.voided = 0
                                 AND observation.person_id = obs.person_id) > 1
                                 AND date_created >= ? AND date_created <= ?
                                 AND obs.concept_id = ?

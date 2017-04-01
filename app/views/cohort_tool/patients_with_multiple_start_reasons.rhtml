@@ -290,10 +290,10 @@
     </thead>
 
     <tbody>
-      <% session[:mastercard_ids] = [] %>
-      <% session[:mastercard_counter] = 0 %>
-      <%@report.each do |data_row|%>
-        <% session[:mastercard_ids] << data_row['person_id'].to_i %>
+      <script> var patient_mastercard_ids = [];</script>
+
+      <%(@report || []).each do |data_row|%>
+        <script>patient_mastercard_ids.push(<%=data_row['person_id'].to_i%>);</script>
       <tr>
       <td id="number" align='center'><%= link_to_onmousedown "#{data_row['person_id']}",{:controller =>"patients", :action => 'mastercard',
           :patient_id => "#{data_row['person_id']}" ,:source =>"patients_with_multiple_start_reasons", :quarter => "#{@report_quarter}"}%></td>
@@ -308,11 +308,51 @@
     </tbody>
   </table>
 
-<div class="horizontal_line">
-      <hr width="100%" color="gray"/>
-    </div>
-    <div id="keypad">
-      <span class="keypad">
-      </span>
 
+
+  <div class="horizontal_line">
+    <hr width="100%" color="gray"/>
   </div>
+
+  <div id="keypad">
+    <span class="keypad">
+  </span>
+
+  <form action="/cohort_tool/void_multiple_start_reasons" method="post" id="data_inconsistent" style="visibility: hidden;">
+    <input type="hidden" name="data_inconsistents_patient_ids" id="patient_ids" />
+  </form>
+
+</div>
+
+<script>
+
+<%unless @report.blank?%>
+
+var myVar = setInterval(function(){ addVoidBtn() }, 1000);
+
+function voidInconsistents() {
+  document.getElementById('patient_ids').value = patient_mastercard_ids.join(',');
+  document.getElementById('data_inconsistent').submit();
+}
+
+function addVoidBtn() {
+  try {
+    var footer = document.getElementById('footer');
+    var btn = document.createElement('button');
+    btn.setAttribute('id','clean_data');
+    btn.setAttribute('class','green left');
+    btn.setAttribute('style','position :relative; float: left;');
+    btn.innerHTML = "<span>Void multiple reasons</span>";
+    btn.setAttribute('onmousedown','voidInconsistents();')
+    footer.appendChild(btn);
+    myStopFunction();
+  }catch(e){
+  }
+}
+
+function myStopFunction() {
+  clearInterval(myVar);
+}
+
+<%end%>
+</script>
