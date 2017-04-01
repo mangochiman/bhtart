@@ -2588,12 +2588,18 @@ EOF
     if defaulted_dates
       defaulted_dates.each do |pat_def_date|
         state_name = 'Defaulter'
+        rerun_outcome = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT patient_outcome(#{patient_obj.patient_id}, DATE('#{pat_def_date.to_date}')) AS outcome;
+EOF
+
+        #raise rerun_outcome['outcome'].inspect
+        next unless rerun_outcome['outcome'].match(/defaul/i)
         all_patient_states << [state_name, pat_def_date]
       end
     end
 
     #=begin
-    all_patient_states.each do |outcome, outcome_date|
+    (all_patient_states || []).each do |outcome, outcome_date|
       visit_date = outcome_date.to_date rescue nil
       next if visit_date.blank?
       patient_visits[visit_date] = Mastercard.new() if patient_visits[visit_date].blank?

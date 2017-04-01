@@ -245,7 +245,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF TIMESTAMPDIFF(month, my_expiry_date, my_end_date) > 1 THEN
+    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 56 THEN
         SET flag = 1;
     END IF;
 
@@ -462,7 +462,7 @@ Unique PatientProgram entries at the current location for those patients with at
       FROM temp_earliest_start_date e
       right join obs ON person_id = patient_id
       AND concept_id = #{initiated_reason_on_art_concept.id}
-      where date_enrolled between '#{cum_start_date.to_date}' and '#{end_date}'
+      where date_enrolled between '#{cum_start_date.to_date}' and '#{end_date.to_date}'
       group by person_id;
 EOF
 
@@ -1477,12 +1477,14 @@ EOF
   end
 
   def self.children_12_23_months(start_date, end_date)
-    reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('HIV Infected').concept_id
+    reason_concept_ids << ConceptName.find_by_name('HIV DNA polymerase chain reaction').concept_id
 
     registered = []
 
     (@@reason_for_starting || []).each do |r|
-      next unless reason_concept_id == r[:reason_for_starting_concept_id]
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
       next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
       registered << r
     end

@@ -384,8 +384,8 @@
                     <td style="padding-left: 10px;"><%= data[:name].capitalize %></td>
                     <td style="text-align: center;"><%= data[:gender] %></td>
                     <td style="text-align: center;"><%= data[:birthdate] %></td>
-                    <td style="padding-left: 10px;"><%= data[:reason_for_starting].capitalize %></td>
-                    <td style="padding-left: 10px;"><%= data[:outcome].capitalize %></td>
+                    <td style="padding-left: 10px;"><%= (data[:reason_for_starting].capitalize rescue nil) %></td>
+                    <td style="padding-left: 10px;"><%= (data[:outcome].capitalize rescue nil) %></td>
                     <td align='center' class="create_button">
                         <%= link_to_onmousedown "View",{
                                 :controller =>"patients",
