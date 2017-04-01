@@ -2595,7 +2595,7 @@
   </div>
 </div>
 
-<form id="patients" method="post" action="/cohort_tool/list_more_details">
+<form id="patients" method="post" action="/cohort_tool/list_more_details" name="pat_drilldown">
   <input id='patient_ids' type='hidden' name = 'patient_ids' />
   <input id='indicator' type='hidden' name = 'indicator' />
 </form>
@@ -3621,7 +3621,12 @@
 
         document.getElementById('patient_ids').value = patient_ids.join(',');
         document.getElementById('indicator').value = indicator;
-        document.getElementById('patients').submit();
+
+        document.pat_drilldown.target = "myList";
+        var w = (window.innerWidth - 80) ; var h = (window.innerHeight - 8);
+        window.open("","myList","width=" + w + ",height=" + h + ",toolbar=0");
+        document.pat_drilldown.submit();
+
     }
 
 </script>
