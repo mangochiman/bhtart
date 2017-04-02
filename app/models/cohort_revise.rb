@@ -245,7 +245,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 56 THEN
+    IF TIMESTAMPDIFF(month, my_expiry_date, my_end_date) > 1 THEN
         SET flag = 1;
     END IF;
 
@@ -454,15 +454,15 @@ Unique PatientProgram entries at the current location for those patients with at
 =end
       ###########################################################################################
       initiated_reason_on_art_concept = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
-      
+
       reason_for_starting = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.*, (select name from concept_name 
+      SELECT e.*, (select name from concept_name
       where concept_id= obs.value_coded and name is not null and name <> '' limit 1) reason,
       obs.value_coded AS reason_for_starting_concept_id
       FROM temp_earliest_start_date e
       right join obs ON person_id = patient_id
       AND concept_id = #{initiated_reason_on_art_concept.id}
-      where date_enrolled between '#{cum_start_date.to_date}' and '#{end_date.to_date}'
+      where date_enrolled between '#{cum_start_date.to_date}' and '#{end_date}'
       group by person_id;
 EOF
 
@@ -473,7 +473,7 @@ EOF
           :earliest_start_date => (data['earliest_start_date'].to_date rescue nil),
           :date_enrolled => data['date_enrolled'].to_date,
           :reason_for_starting => data['reason'],
-          :age_at_initiation => data['age_at_initiation'].to_i, 
+          :age_at_initiation => data['age_at_initiation'].to_i,
           :age_in_days => data['age_in_days'].to_i,
           :reason_for_starting_concept_id => data['reason_for_starting_concept_id'].to_i
          }
@@ -1477,14 +1477,12 @@ EOF
   end
 
   def self.children_12_23_months(start_date, end_date)
-    reason_concept_ids = []
-    reason_concept_ids << ConceptName.find_by_name('HIV Infected').concept_id
-    reason_concept_ids << ConceptName.find_by_name('HIV DNA polymerase chain reaction').concept_id
+    reason_concept_id = ConceptName.find_by_name('HIV Infected').concept_id
 
     registered = []
 
     (@@reason_for_starting || []).each do |r|
-      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
+      next unless reason_concept_id == r[:reason_for_starting_concept_id]
       next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
       registered << r
     end
@@ -1496,6 +1494,10 @@ EOF
     reason_concept_ids = []
     reason_concept_ids << ConceptName.find_by_name('Unknown').concept_id
     reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
     reason_concept_ids << ConceptName.find_by_name('None').concept_id
 
     registered = []
@@ -1573,8 +1575,6 @@ EOF
 
   def self.asymptomatic(start_date, end_date)
     reason_concept_ids = []
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
     reason_concept_ids << ConceptName.find_by_name('ASYMPTOMATIC').concept_id
 
     registered = []
@@ -1594,7 +1594,7 @@ EOF
     reason_concept_ids << ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
     reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
     reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+    #reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
     registered = []
 
