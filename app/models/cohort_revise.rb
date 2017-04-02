@@ -265,6 +265,7 @@ BEGIN
 DECLARE set_program_id INT;
 DECLARE set_patient_state INT;
 DECLARE set_outcome varchar(25);
+DECLARE set_date_started date;
 
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
@@ -299,7 +300,7 @@ IF set_patient_state = 7 THEN
   END IF;
 END IF;
 
-IF set_outcome IS NULL THEN
+IF set_outcome IS NULL OR set_outcome = 'Pre-ART (Continue)' THEN
   SET set_patient_state = current_defaulter(patient_id, visit_date);
 
   IF set_patient_state = 1 THEN
@@ -310,6 +311,13 @@ IF set_outcome IS NULL THEN
     SET set_outcome = 'On antiretrovirals';
   END IF;
 
+  IF set_outcome = 'Pre-ART (Continue)' THEN
+    SET set_date_started = (SELECT date_antiretrovirals_started(patient_id, visit_date));
+    
+    IF set_date_started IS NOT NULL THEN
+      SET set_outcome = 'On antiretrovirals';
+    END IF;
+  END IF;
 END IF;
 
 RETURN set_outcome;
