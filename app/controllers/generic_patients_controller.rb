@@ -2569,17 +2569,26 @@ EOF
       patient_states = PatientState.find(:all,
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
-          program_id,patient_obj.patient_id],:order => "patient_state_id ASC")
+          program_id,patient_obj.patient_id],
+          :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
     else
       patient_states = PatientState.find(:all,
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND start_date = ? AND p.patient_id =?",
-          program_id,encounter_date.to_date,patient_obj.patient_id],:order => "patient_state_id ASC")
+          program_id,encounter_date.to_date,patient_obj.patient_id],
+          :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
     end
 
     all_patient_states = []
     patient_states.each do |state|
       state_name = state.program_workflow_state.concept.fullname rescue 'Unknown state'
+      if state_name.match(/Pre-ART/i)
+        calculated_state = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT patient_outcome(#{patient_obj.patient_id}, DATE('#{state.start_date.to_date}')) AS outcome;
+EOF
+
+        state_name = calculated_state['outcome']
+      end
       all_patient_states << [state_name, state.start_date]
     end
 
