@@ -313,7 +313,7 @@ IF set_outcome IS NULL OR set_outcome = 'Pre-ART (Continue)' THEN
 
   IF set_outcome = 'Pre-ART (Continue)' THEN
     SET set_date_started = (SELECT date_antiretrovirals_started(patient_id, visit_date));
-    
+
     IF set_date_started IS NOT NULL THEN
       SET set_outcome = 'On antiretrovirals';
     END IF;
@@ -470,6 +470,7 @@ Unique PatientProgram entries at the current location for those patients with at
       FROM temp_earliest_start_date e
       right join obs ON person_id = patient_id
       AND concept_id = #{initiated_reason_on_art_concept.id}
+      AND obs.voided = 0
       where date_enrolled between '#{cum_start_date.to_date}' and '#{end_date}'
       group by person_id;
 EOF
