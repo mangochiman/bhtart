@@ -3227,132 +3227,132 @@
                break;
             case 'children_below_24_months_at_art_initiation':
             <% (@cohort.children_below_24_months_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_children_below_24_months_at_art_initiation':
             <% (@cohort.cum_children_below_24_months_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'children_24_months_14_years_at_art_initiation':
             <% (@cohort.children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_children_24_months_14_years_at_art_initiation':
             <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'adults_at_art_initiation':
             <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_adults_at_art_initiation':
             <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'presumed_severe_hiv_disease_in_infants':
             <% (@cohort.presumed_severe_hiv_disease_in_infants || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_presumed_severe_hiv_disease_in_infants':
             <% (@cohort.cum_presumed_severe_hiv_disease_in_infants || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'confirmed_hiv_infection_in_infants_pcr':
             <% (@cohort.confirmed_hiv_infection_in_infants_pcr || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_confirmed_hiv_infection_in_infants_pcr':
             <% (@cohort.cum_confirmed_hiv_infection_in_infants_pcr || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'children_12_23_months':
             <% (@cohort.children_12_23_months || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_children_12_23_months':
             <% (@cohort.cum_children_12_23_months || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'pregnant_women':
             <% (@cohort.pregnant_women || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_pregnant_women':
             <% (@cohort.cum_pregnant_women || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'breastfeeding_mothers':
             <% (@cohort.breastfeeding_mothers || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_breastfeeding_mothers':
             <% (@cohort.cum_breastfeeding_mothers || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'who_stage_two':
             <% (@cohort.who_stage_two || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_who_stage_two':
             <% (@cohort.cum_who_stage_two || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'asymptomatic':
             <% (@cohort.asymptomatic || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_asymptomatic':
             <% (@cohort.cum_asymptomatic || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'who_stage_three':
             <% (@cohort.who_stage_three || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_who_stage_three':
             <% (@cohort.cum_who_stage_three || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'who_stage_four':
             <% (@cohort.who_stage_four || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_who_stage_four':
             <% (@cohort.cum_who_stage_four || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'unknown_other_reason_outside_guidelines':
             <% (@cohort.unknown_other_reason_outside_guidelines || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'cum_unknown_other_reason_outside_guidelines':
             <% (@cohort.cum_unknown_other_reason_outside_guidelines || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'no_tb':
