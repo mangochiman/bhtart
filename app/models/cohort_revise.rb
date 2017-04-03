@@ -4,7 +4,7 @@ class CohortRevise
 
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-#=begin
+=begin
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -33,7 +33,7 @@ EOF
                 and (`s`.`state` = 7))
         group by `p`.`patient_id`;
 EOF
-#=end
+=end
 =begin
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
@@ -1505,8 +1505,8 @@ EOF
     reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
     reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
     reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-    reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
-    reason_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
+    #reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
+    #reason_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
     reason_concept_ids << ConceptName.find_by_name('None').concept_id
 
     registered = []
@@ -1585,6 +1585,11 @@ EOF
   def self.asymptomatic(start_date, end_date)
     reason_concept_ids = []
     reason_concept_ids << ConceptName.find_by_name('ASYMPTOMATIC').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage I peds').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage II adult').concept_id
+    reason_concept_ids << ConceptName.find_by_name('WHO stage II peds').concept_id
 
     registered = []
 
