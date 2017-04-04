@@ -478,7 +478,7 @@ class CohortToolController < GenericCohortToolController
     @start_date = date_range.first
     @end_date   = date_range.last
     @report_name = 'Missing start reasons'
-    
+
     @people = CohortRevise.patient_with_missing_start_reasons(@start_date, @end_date)
     render :layout =>"report"
   end
@@ -1774,7 +1774,6 @@ EOF
 		logger.info("cohort")
 		render :layout => false
 	end
-
 	def list_more_details
 		@patient_ids = params[:patient_ids]
     @report_name = params[:indicator].upcase.gsub('_', ' ')
@@ -1789,8 +1788,11 @@ EOF
         Where e.patient_id = #{patient_id.to_i};
 EOF
 
+
+	  arv_number = PatientService.get_patient_identifier(patient, 'ARV Number')
+	  splitted_arv_number = arv_number.split("-").last.to_i rescue 0
       @people[patient_id.to_i] = {
-        :arv_number => PatientService.get_patient_identifier(patient, 'ARV Number'),
+        :arv_number => splitted_arv_number.to_i,
         :name => "#{names.given_name} #{names.family_name}",
         :gender => (temp_earliest['gender'] rescue 'Unknown'),
         :birthdate => temp_earliest['birthdate'],
@@ -1800,6 +1802,7 @@ EOF
         :outcome => temp_earliest['cum_outcome']
       }
     end
+
 		render :layout => false
 	end
 
