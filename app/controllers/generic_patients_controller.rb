@@ -2566,11 +2566,13 @@ EOF
     #patients currents/available states (patients outcome/s)
     program_id = Program.find_by_name('HIV PROGRAM').id
     if encounter_date.blank?
+=begin
       patient_states = PatientState.find(:all,
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
           program_id,patient_obj.patient_id],
           :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
+=end
     else
       patient_states = PatientState.find(:all,
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
@@ -2580,7 +2582,7 @@ EOF
     end
 
     all_patient_states = []
-    patient_states.each do |state|
+    (patient_states || []).each do |state|
       state_name = state.program_workflow_state.concept.fullname rescue 'Unknown state'
       if state_name.match(/Pre-ART/i)
         calculated_state = ActiveRecord::Base.connection.select_one <<EOF

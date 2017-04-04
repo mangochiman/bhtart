@@ -2,13 +2,10 @@ class CohortRevise
 
   @@reason_for_starting = []
 
-  def self.get_indicators(start_date, end_date)
-  time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-=begin
+  def self.create_temp_earliest_start_date_table
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
-
 
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
@@ -33,7 +30,16 @@ EOF
                 and (`s`.`state` = 7))
         group by `p`.`patient_id`;
 EOF
-=end
+
+  end
+
+  def self.get_indicators(start_date, end_date)
+  time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+
+#=begin
+  self.create_temp_earliest_start_date_table
+#=end
+
 =begin
     ActiveRecord::Base.connection.execute <<EOF
       CREATE TABLE temp_earliest_start_date
@@ -471,10 +477,11 @@ Unique PatientProgram entries at the current location for those patients with at
       right join obs ON person_id = patient_id
       AND concept_id = #{initiated_reason_on_art_concept.id}
       AND obs.voided = 0
-      where date_enrolled between '#{cum_start_date.to_date}' and '#{end_date}'
+      where date_enrolled <= '#{end_date}'
       group by person_id;
 EOF
 
+      #raise reason_for_starting.count.inspect
       (reason_for_starting || []).each do |data|
         @@reason_for_starting << {
           :patient_id => data['patient_id'].to_i,
@@ -863,6 +870,42 @@ EOF
       (data1.length rescue 0),
       (data2.length rescue 0),
        0]
+  end
+
+  def self.patient_with_missing_start_reasons(start_date, end_date)
+    begin
+      patients = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date e 
+      WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}';
+EOF
+
+      reason_for_starting = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
+      data = {}
+      (patients || []).each do |p|
+        patient = Patient.find(p['patient_id'].to_i)
+        reason_for_starting = PatientService.reason_for_art_eligibility(patient)
+        next unless reason_for_starting.blank?
+
+        patient_outcome = ActiveRecord::Base.connection.select_one <<EOF
+            SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome; 
+EOF
+
+        patient_obj = PatientService.get_patient(patient.person)
+        data[patient_obj.patient_id] = {
+          :arv_number => patient_obj.arv_number,
+          :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+          :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+          :name => patient_obj.name,
+          :gender => patient_obj.sex,
+          :birthdate => patient_obj.birth_date,
+          :outcome => patient_outcome['outcome']
+        }
+      end
+
+      return data
+    rescue
+      raise "Try running the revised cohort before this report"
+    end
   end
 
   private
