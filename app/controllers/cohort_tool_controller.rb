@@ -343,6 +343,7 @@ class CohortToolController < GenericCohortToolController
 
     return store
 	end
+
   def select
     @cohort_quarters  = [""]
     @report_type      = params[:report_type]
@@ -431,6 +432,11 @@ class CohortToolController < GenericCohortToolController
 					:report_type  => params[:report_type]
         return
 
+			when "missing_start_reasons"
+				redirect_to :action       => "missing_start_reasons",
+					:quarter      => params[:report],
+					:report_type  => params[:report_type]
+        return
 			when "drug_stock_report"
 				start_date  = "#{params[:start_year]}-#{params[:start_month]}-#{params[:start_day]}"
 				end_date    = "#{params[:end_year]}-#{params[:end_month]}-#{params[:end_day]}"
@@ -461,6 +467,19 @@ class CohortToolController < GenericCohortToolController
 
     @encounters = records_that_were_corrected(@quarter)
 
+    render :layout =>"report"
+  end
+
+  def missing_start_reasons
+    @quarter    = params[:quarter]
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    date_range  = Report.generate_cohort_date_range(@quarter)
+    @start_date = date_range.first
+    @end_date   = date_range.last
+    @report_name = 'Missing start reasons'
+    
+    @people = CohortRevise.patient_with_missing_start_reasons(@start_date, @end_date)
     render :layout =>"report"
   end
 
