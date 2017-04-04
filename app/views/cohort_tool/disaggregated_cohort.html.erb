@@ -194,7 +194,7 @@ table tr:hover td {
   <tbody>
 
   <%
-  file = "~/disaggregated_cohort" + "_#{Location.current_health_center.name}" + ".csv"
+  file = "#{Rails.root.to_s}/public/data/disaggregated_cohort/disaggregated_cohort" + "_#{Location.current_health_center.name}" + ".csv"
   rows = []
 
   hr_sep = 'Male'

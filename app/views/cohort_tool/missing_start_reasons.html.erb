@@ -411,7 +411,8 @@
         </div>
         <div id="footer" class="dark">
             <div id="buttons" class="buttons" style="top:0px">
-                <button id="logout" class="green left" style="position :relative; float:right;"><span>Finish</span></button>
+                <button id="logout" class="green left" 
+                style="position :relative; float:right;" onmousedown="javascript:location='/'"><span>Finish</span></button>
                 <button id="find" class="blue" style="width:200px;" style="right:-0px; float:right;"><span>Back</span></button>
             </div>
         </div>
@@ -420,3 +421,14 @@
 </body>
 
 </html>
+
+<script>
+
+function changeFinish() {
+  var f = document,getElementById('logout');
+  f.setAttribute('onmousedown', "javascript:document.location='/'");
+}
+
+changeFinish();
+
+</script>
