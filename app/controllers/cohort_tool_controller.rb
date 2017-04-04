@@ -941,7 +941,7 @@ class CohortToolController < GenericCohortToolController
 
     (params[:data_inconsistents_patient_ids].split(',') || []).each do |patient_id|
       obs = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?",
-        patient_id, concept.id],:order => "obs_datetime ASC, date_created ASC", :limit => 1)
+        patient_id, concept.id],:order => "obs_datetime DESC, date_created DESC", :limit => 1)
 
       next if obs.blank?
       ActiveRecord::Base.connection.execute <<EOF
