@@ -944,11 +944,8 @@ module PatientService
   end
 
   def self.reason_for_art_eligibility(patient)
-    concept = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
-    obs = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?",
-      patient.patient_id, concept.id],:order => "obs_datetime DESC, date_created DESC", :limit => 1)
-
-    return ConceptName.find_by_concept_id(obs.value_coded).name rescue nil
+    reasons = patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue nil
+    reasons.map{|c|ConceptName.find(c.value_coded_name_id).name}.join(',') rescue nil
   end
 
   def self.patient_appointment_dates(patient, start_date, end_date = nil)
