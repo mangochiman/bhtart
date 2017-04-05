@@ -1774,10 +1774,15 @@ EOF
 		logger.info("cohort")
 		render :layout => false
 	end
+
 	def list_more_details
 		@patient_ids = params[:patient_ids]
     @report_name = params[:indicator].upcase.gsub('_', ' ')
 		@logo = CoreService.get_global_property_value('logo').to_s
+		@site_code = ActiveRecord::Base.connection.select_one <<EOF
+		select * from global_property where property = 'site_prefix';
+EOF
+
     @people = {}
     (@patient_ids.split(',') || []).each do |patient_id|
       names =  PersonName.find_last_by_person_id(patient_id.to_i)
@@ -1787,12 +1792,11 @@ EOF
         RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
         Where e.patient_id = #{patient_id.to_i};
 EOF
+			arv_number = PatientService.get_patient_identifier(patient, 'ARV Number')
+		  arv_number = @site_code['property_value'] + "-ARV-0" if arv_number.blank?
 
-
-	  arv_number = PatientService.get_patient_identifier(patient, 'ARV Number')
-	  splitted_arv_number = arv_number.split("-").last.to_i rescue 0
-      @people[patient_id.to_i] = {
-        :arv_number => splitted_arv_number.to_i,
+			@people[patient_id.to_i] = {
+        :arv_number => arv_number,
         :name => "#{names.given_name} #{names.family_name}",
         :gender => (temp_earliest['gender'] rescue 'Unknown'),
         :birthdate => temp_earliest['birthdate'],
@@ -1802,6 +1806,8 @@ EOF
         :outcome => temp_earliest['cum_outcome']
       }
     end
+
+		@sorted_list = @people.sort_by{|patient_id, data| data[:arv_number].split('-').last.to_i}
 
 		render :layout => false
 	end

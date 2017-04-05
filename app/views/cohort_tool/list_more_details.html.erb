@@ -377,13 +377,9 @@
             </thead>
             <tbody>
 
-            <% (@people || []).each do |patient_id, data| %>
+            <% (  @sorted_list || []).each do |patient_id, data| %>
                 <tr>
-                    <% if data[:arv_number] != 0 %>
-                      <td style="padding-left: 10px;"><%= data[:arv_number] %></td>
-                    <% else %>
-                      <td style="padding-left: 10px;"></td>                    
-                    <% end %>
+                    <td style="padding-left: 10px;"><%= data[:arv_number] %></td>
                     <td style="text-align: center;"><%= data[:earliest_start_date] %></td>
                     <td style="text-align: center;"><%= data[:date_enrolled] %></td>
                     <td style="padding-left: 10px;"><%= data[:name].capitalize %></td>
