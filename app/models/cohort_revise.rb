@@ -1332,11 +1332,18 @@ EOF
     unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT t.patient_id,
-      last_text_for_obs(t.patient_id, #{dispensing_encounter_id}, #{regimen_category}, #{regimem_given_concept}, #{unknown_regimen_given}, '#{end_date}') regimen_category
-      FROM temp_earliest_start_date t
-      WHERE t.patient_id IN (#{patient_ids.join(', ')}) GROUP BY patient_id;
+      SELECT e.patient_id, t.value_text regimen_category
+      FROM temp_earliest_start_date e
+      INNER JOIN obs t ON t.person_id = e.patient_id AND t.concept_id = #{regimen_category} AND t.voided = 0
+      WHERE e.patient_id IN (#{patient_ids.join(', ')})
+      AND t.obs_datetime = (
+        SELECT MAX(t2.obs_datetime) FROM obs t2 WHERE t2.concept_id = #{regimen_category} AND t2.voided = 0 AND
+        t2.person_id = t.person_id AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      )
+      GROUP BY e.patient_id;
 EOF
+
+
     (data || []).each do |regimen_attr|
         regimen = regimen_attr['regimen_category']
         regimen = 'unknown_regimen' if regimen.blank? || regimen == 'Unknown'
