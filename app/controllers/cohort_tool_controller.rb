@@ -1793,7 +1793,7 @@ EOF
         Where e.patient_id = #{patient_id.to_i};
 EOF
 			arv_number = PatientService.get_patient_identifier(patient, 'ARV Number')
-		  arv_number = @site_code['property_value'] + "-ARV-0" if arv_number.blank?
+		  arv_number = "" if arv_number.blank?
 
 			@people[patient_id.to_i] = {
         :arv_number => arv_number,
