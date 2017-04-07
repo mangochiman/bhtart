@@ -875,7 +875,7 @@ EOF
   def self.patient_with_missing_start_reasons(start_date, end_date)
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date e 
+      SELECT * FROM temp_earliest_start_date e
       WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}';
 EOF
 
@@ -887,7 +887,7 @@ EOF
         next unless reason_for_starting.blank?
 
         patient_outcome = ActiveRecord::Base.connection.select_one <<EOF
-            SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome; 
+            SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome;
 EOF
 
         patient_obj = PatientService.get_patient(patient.person)
@@ -1352,7 +1352,6 @@ EOF
           :regimen_category => regimen
         }
       end
-
       return regimens
   end
 
@@ -1764,9 +1763,8 @@ EOF
 
   def self.non_pregnant_females(start_date, end_date, pregnant_women = [])
     registered = [] ; pregnant_women_ids = []
-
     (pregnant_women || []).each do |patient|
-      pregnant_women_ids << patient[:patient_id]
+      pregnant_women_ids << patient['patient_id'].to_i
     end
     pregnant_women_ids = [0] if pregnant_women_ids.blank?
 
@@ -1786,6 +1784,7 @@ EOF
 
   def self.pregnant_females_all_ages(start_date, end_date)
     registered = [] ; patient_id_plus_date_enrolled = []
+=begin
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
@@ -1795,25 +1794,30 @@ EOF
     (data || []).each do |patient|
       patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
     end
-
+=end
     yes_concept_id = ConceptName.find_by_name('Yes').concept_id
     preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
     patient_preg_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
     preg_at_initiation_concept_id = ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id
 
-    (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-      result = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT * FROM obs
-        WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
-        AND '#{(date_enrolled + 30.days).strftime('%Y-%m-%d 23:59:59')}'
-        AND person_id = #{patient_id}
-        AND value_coded = #{yes_concept_id}
-        AND concept_id IN (#{preg_concept_id}, #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
-        AND voided = 0 GROUP BY person_id;
+    #(patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
+      registered = ActiveRecord::Base.connection.select_all <<EOF
+              SELECT t.* , o.value_coded FROM temp_earliest_start_date t
+                INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
+              WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+              AND (gender = 'F' OR gender = 'Female')
+              AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
+              AND (gender = 'F' OR gender = 'Female')
+              AND o.obs_datetime = (SELECT MAX(obs.obs_datetime) FROM obs obs
+                                    WHERE obs.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
+                                    AND obs.person_id = o.person_id
+                                    AND DATE(obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}')
+              GROUP BY patient_id
+              HAVING value_coded = #{yes_concept_id};
 EOF
-      registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
-    end
 
+      #registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
+  #  end
     return registered
   end
 
