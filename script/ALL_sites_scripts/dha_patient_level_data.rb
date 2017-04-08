@@ -9,7 +9,7 @@ end
 
 def sample
   facility_name = GlobalProperty.find_by_sql("select property_value from global_property where property = 'current_health_center_name'").map(&:property_value).first
-
+  end_date = '2016-12-31 23:59:59'
   file = "/home/user/dha_patient_level_data_" + "#{facility_name}" + ".csv"
 
   patient_details = ActiveRecord::Base.connection.select_all <<EOF
@@ -20,8 +20,8 @@ def sample
         esd.earliest_start_date AS date_of_initiation,
         DATE(en.encounter_datetime) AS visit_date
       FROM earliest_start_date esd
-        INNER JOIN encounter en ON en.patient_id = esd.patient_id AND en.voided = 0 
-      WHERE DATE(en.encounter_datetime) <= '2016-12-31 23:59:59'
+        INNER JOIN encounter en ON en.patient_id = esd.patient_id AND en.voided = 0
+      WHERE DATE(en.encounter_datetime) <= '#{end_date}'
       GROUP BY esd.patient_id, DATE(en.encounter_datetime);
 EOF
 
