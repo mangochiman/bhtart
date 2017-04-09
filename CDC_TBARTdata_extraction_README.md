@@ -4,4 +4,4 @@ Instructions on CDC data extraction:
 3. load bart2_schema additions.yml
 4. on the terminal run this:
    script/runner script/runner script/ALL_sites_scripts/cdc_tbart_data_extraction.rb
-5. This will take a while depending on the size of the data. After it has finished it will save a file CDCDataExtraction_TBART__name_of_the_facility.txt. For example, if you  are running St_Martins data the name will be CDCDataExtraction_TBART_St Martin Hospital.txt. This file wil be in the home folder of the application "National ART".
+5. This will take a while depending on the size of the data. After it has finished it will save a file CDCDataExtraction_TBART__name_of_the_facility.txt. For example, if you  are running St_Martins data the name will be CDCDataExtraction_TBART_St_Martins.csv
