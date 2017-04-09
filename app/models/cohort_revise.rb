@@ -475,8 +475,7 @@ Unique PatientProgram entries at the current location for those patients with at
       obs.value_coded AS reason_for_starting_concept_id
       FROM temp_earliest_start_date e
       right join obs ON person_id = patient_id
-      AND concept_id = #{initiated_reason_on_art_concept.id}
-      AND obs.voided = 0
+      WHERE concept_id = #{initiated_reason_on_art_concept.id} AND obs.voided = 0
       group by person_id;
 EOF
 
@@ -486,7 +485,7 @@ EOF
           :patient_id => data['patient_id'].to_i,
           :gender => data['gender'], :birthdate => (data['birthdate'].to_date rescue nil),
           :earliest_start_date => (data['earliest_start_date'].to_date rescue nil),
-          :date_enrolled => data['date_enrolled'].to_date,
+          :date_enrolled => (data['date_enrolled'].to_date rescue '2000-01-01'.to_date),
           :reason_for_starting => data['reason'],
           :age_at_initiation => data['age_at_initiation'].to_i,
           :age_in_days => data['age_in_days'].to_i,
