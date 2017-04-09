@@ -34,10 +34,10 @@ EOF
   end
 
   def self.get_indicators(start_date, end_date)
-  time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+    time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
 
 #=begin
-  self.create_temp_earliest_start_date_table
+    self.create_temp_earliest_start_date_table
 #=end
 
 =begin
@@ -477,7 +477,6 @@ Unique PatientProgram entries at the current location for those patients with at
       right join obs ON person_id = patient_id
       AND concept_id = #{initiated_reason_on_art_concept.id}
       AND obs.voided = 0
-      where date_enrolled <= '#{end_date}'
       group by person_id;
 EOF
 
@@ -1343,10 +1342,17 @@ EOF
       GROUP BY e.patient_id;
 EOF
 
+    current_cohort_regimens = [
+      "0P", "2P","4P","9P","11P","0A","2A","4A",
+      "5A","6A","7A","8A","9A","10A","11A","12A"
+    ]
 
     (data || []).each do |regimen_attr|
         regimen = regimen_attr['regimen_category']
-        regimen = 'unknown_regimen' if regimen.blank? || regimen == 'Unknown'
+        if regimen.blank? or regimen == 'Unknown' or not current_cohort_regimens.include?(regimen)
+          regimen = 'unknown_regimen' 
+        end
+
         regimens << {
           :patient_id => regimen_attr['patient_id'].to_i,
           :regimen_category => regimen
@@ -1407,8 +1413,7 @@ EOF
       ActiveRecord::Base.connection.execute <<EOF
         CREATE TABLE temp_patient_outcomes
           SELECT patient_id, patient_outcome(patient_id, '#{end_date}') cum_outcome
-        FROM temp_earliest_start_date
-        WHERE date_enrolled <= '#{end_date}';
+        FROM temp_earliest_start_date;
 EOF
 #=end
   end
