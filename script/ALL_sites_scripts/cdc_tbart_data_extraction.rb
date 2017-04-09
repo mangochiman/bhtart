@@ -1,3 +1,4 @@
+require 'fastercsv'
 
 Source_db = YAML.load(File.open(File.join(RAILS_ROOT, "config/database.yml"), "r"))['production']["database"]
 CDCDataExtraction = 1
@@ -16,22 +17,26 @@ def start
   total_tb_art_hiv_total, tb_art_hiv_total_less_15_female, tb_art_hiv_total_less_15_male, tb_art_hiv_total_more_15_female, tb_art_hiv_total_more_15_male= tb_art_hiv_total(start_date, end_date, nil, nil)
 
   if CDCDataExtraction == 1
-    $resultsOutput = File.open("./CDCDataExtraction_TBART" + "#{facility_name}" + ".txt", "w")
-    $resultsOutput  << "TB-HIV patients on ART...........................................................\n"
-    $resultsOutput  << "total_tb_hiv_on_art_total: #{total_tb_hiv_on_art_total}\n tb_hiv_on_art_total_less_15_female: #{tb_hiv_on_art_total_less_15_female}\n tb_hiv_on_art_total_less_15_male: #{tb_hiv_on_art_total_less_15_male}\n tb_hiv_on_art_total_more_15_female: #{tb_hiv_on_art_total_more_15_female}\n tb_hiv_on_art_total_more_15_male: #{tb_hiv_on_art_total_more_15_male}\n"
-    $resultsOutput  << "TB-HIV patients...........................................................\n"
-    $resultsOutput  << "tb_art_hiv_total_total: #{total_tb_art_hiv_total}\n tb_art_hiv_total_less_15_female: #{tb_art_hiv_total_less_15_female}\n tb_art_hiv_total_less_15_male: #{tb_art_hiv_total_less_15_male}\n tb_art_hiv_total_more_15_female: #{tb_art_hiv_total_more_15_female}\n tb_art_hiv_total_more_15_male: #{tb_art_hiv_total_more_15_male}\n"
+    file = "/home/deliwe/Desktop/cdc_data_extraction/cdc_tbart_data_extraction_" + "#{facility_name}" + ".csv"
+
+    FasterCSV.open( file, 'w' ) do |csv|
+      csv << ["Facility_Name", "Category", "Total_TB_HIV_on_ARV", "Less_than_15yrs_female", "Less_than_15yrs_male", "More_than_15yrs_female", "More_than_15yrs_male"]
+	  csv << ["#{facility_name}", "TB-HIV patients on ART", "#{total_tb_hiv_on_art_total}", "#{tb_hiv_on_art_total_less_15_female}", "#{tb_hiv_on_art_total_less_15_male}", "#{tb_hiv_on_art_total_more_15_female}", "#{tb_hiv_on_art_total_more_15_male}"]
+
+	  csv << ["#{facility_name}", "TB-ART patients (HIV)", "#{total_tb_art_hiv_total}", "#{tb_art_hiv_total_less_15_female}", "#{tb_art_hiv_total_less_15_male}", "#{tb_art_hiv_total_more_15_female}", "#{tb_art_hiv_total_more_15_male}"]
+
+    end
   end
 
   if CDCDataExtraction == 1
-    $resultsOutput.close()
+    #{}$resultsOutput.close()
   end
 end
 
 def self.tb_art_hiv_total(start_date, end_date, min_age = nil, max_age = nil, gender = [])
  patient_ids = []
  new_on_art = ActiveRecord::Base.connection.select_all <<EOF
-   SELECT * FROM earliest_start_date esd
+   SELECT * FROM temp_earliest_start_date esd
      INNER JOIN patient_program pp on pp.patient_id = esd.patient_id and pp.voided = 0
      INNER JOIN orders ord on ord.patient_id = pp.patient_id and ord.voided = 0
      INNER JOIN person p on p.person_id = esd.patient_id
@@ -93,7 +98,7 @@ end
 
 def self.tb_hiv_on_art_total(start_date, end_date, min_age = nil, max_age = nil, gender = [])
     new_on_art = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT esd.* FROM earliest_start_date esd
+      SELECT esd.* FROM temp_earliest_start_date esd
         INNER JOIN patient_program pp on pp.patient_id = esd.patient_id and pp.voided = 0
         INNER JOIN orders ord on ord.patient_id = pp.patient_id and ord.voided = 0
         INNER JOIN person p on p.person_id = esd.patient_id
