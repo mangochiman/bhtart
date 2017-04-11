@@ -59,6 +59,51 @@ EOF
 
 =end
 
+
+ActiveRecord::Base.connection.execute <<EOF
+  DROP FUNCTION IF EXISTS `patient_reason_for_starting_art`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION patient_reason_for_starting_art(my_patient_id INT) RETURNS INT
+BEGIN
+  DECLARE reason_for_art_eligibility INT DEFAULT 0;
+  DECLARE reason_concept_id INT;
+  DECLARE coded_concept_id INT;
+  DECLARE max_obs_datetime DATETIME;
+
+  SET reason_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' AND voided = 0 LIMIT 1);
+  SET max_obs_datetime = (SELECT MAX(obs_datetime) FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0);
+  SET coded_concept_id = (SELECT value_coded FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0 AND obs_datetime = max_obs_datetime  LIMIT 1);
+  SET reason_for_art_eligibility = (coded_concept_id);
+
+
+  RETURN reason_for_art_eligibility;
+END;
+EOF
+
+
+
+ActiveRecord::Base.connection.execute <<EOF
+  DROP FUNCTION IF EXISTS `patient_current_regimen`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION patient_current_regimen(my_patient_id INT, my_date DATE) RETURNS VARCHAR(10)
+BEGIN
+  DECLARE regimen_concept_id INT;
+  DECLARE max_obs_datetime DATETIME;
+  DECLARE regimen_cat VARCHAR(10) DEFAULT 'N/A';
+
+  SET regimen_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'REGIMEN CATEGORY' AND voided = 0 LIMIT 1);
+  SET max_obs_datetime = (SELECT MAX(obs_datetime) FROM obs WHERE person_id = my_patient_id AND concept_id = regimen_concept_id AND voided = 0 AND DATE(obs_datetime) <= DATE(my_date));
+  
+  SET regimen_cat = (SELECT value_text FROM obs WHERE person_id = my_patient_id AND concept_id = regimen_concept_id AND voided = 0 AND      obs_datetime = max_obs_datetime  LIMIT 1);
+
+  RETURN regimen_cat;
+END;
+EOF
+
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `last_text_for_obs`;
 EOF
@@ -470,16 +515,10 @@ Unique PatientProgram entries at the current location for those patients with at
       initiated_reason_on_art_concept = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
 
       reason_for_starting = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.*, (select name from concept_name
-      where concept_id= obs.value_coded and name is not null and name <> '' limit 1) reason,
-      obs.value_coded AS reason_for_starting_concept_id
-      FROM temp_earliest_start_date e
-      right join obs ON person_id = patient_id
-      WHERE concept_id = #{initiated_reason_on_art_concept.id} AND obs.voided = 0
-      group by person_id;
+      SELECT e.*, patient_reason_for_starting_art(e.patient_id) reason_for_starting_concept_id
+      FROM temp_earliest_start_date e group by e.patient_id;
 EOF
 
-      #raise reason_for_starting.count.inspect
       (reason_for_starting || []).each do |data|
         @@reason_for_starting << {
           :patient_id => data['patient_id'].to_i,
@@ -489,7 +528,7 @@ EOF
           :reason_for_starting => data['reason'],
           :age_at_initiation => data['age_at_initiation'].to_i,
           :age_in_days => data['age_in_days'].to_i,
-          :reason_for_starting_concept_id => data['reason_for_starting_concept_id'].to_i
+          :reason_for_starting_concept_id => (data['reason_for_starting_concept_id'].to_i rescue nil)
          }
       end
       ###########################################################################################
@@ -1330,14 +1369,9 @@ EOF
     unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.patient_id, t.value_text regimen_category
-      FROM temp_earliest_start_date e
-      INNER JOIN obs t ON t.person_id = e.patient_id AND t.concept_id = #{regimen_category} AND t.voided = 0
-      WHERE e.patient_id IN (#{patient_ids.join(', ')})
-      AND t.obs_datetime = (
-        SELECT MAX(t2.obs_datetime) FROM obs t2 WHERE t2.concept_id = #{regimen_category} AND t2.voided = 0 AND
-        t2.person_id = t.person_id AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-      )
+      SELECT e.patient_id, patient_current_regimen(e.patient_id, DATE('#{end_date.to_date}')) regimen_category
+      FROM temp_earliest_start_date e 
+      WHERE patient_id IN(#{patient_ids.join(',')})
       GROUP BY e.patient_id;
 EOF
 
