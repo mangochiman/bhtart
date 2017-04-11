@@ -100,6 +100,10 @@ BEGIN
   
   SET regimen_cat = (SELECT value_text FROM obs WHERE person_id = my_patient_id AND concept_id = regimen_concept_id AND voided = 0 AND      obs_datetime = max_obs_datetime  LIMIT 1);
 
+  IF regimen_cat IS NULL THEN
+    SET regimen_cat = 'N/A';
+  END IF;
+
   RETURN regimen_cat;
 END;
 EOF
@@ -1382,6 +1386,7 @@ EOF
 
     (data || []).each do |regimen_attr|
         regimen = regimen_attr['regimen_category']
+
         if regimen.blank? or regimen == 'Unknown' or not current_cohort_regimens.include?(regimen)
           regimen = 'unknown_regimen' 
         end
