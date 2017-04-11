@@ -2,7 +2,9 @@ class CohortRevise
 
   @@reason_for_starting = []
 
-  def self.create_temp_earliest_start_date_table
+  def self.create_temp_earliest_start_date_table(end_date)
+    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+
     ActiveRecord::Base.connection.execute <<EOF
       DROP TABLE IF EXISTS `temp_earliest_start_date`;
 EOF
@@ -27,7 +29,8 @@ EOF
             ((`p`.`voided` = 0)
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
-                and (`s`.`state` = 7))
+                and (`s`.`state` = 7)
+                and `p`.`date_enrolled` <= '#{end_date}')
         group by `p`.`patient_id`;
 EOF
 
@@ -37,7 +40,7 @@ EOF
     time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
 
 #=begin
-    self.create_temp_earliest_start_date_table
+    self.create_temp_earliest_start_date_table(end_date)
 #=end
 
 =begin

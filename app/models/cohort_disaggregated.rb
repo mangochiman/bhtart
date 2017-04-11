@@ -31,47 +31,9 @@ class CohortDisaggregated
       cohort.all_males = CohortRevise.males(start_date, end_date)
       cohort.cum_all_males = CohortRevise.males(cum_start_date, end_date)
 
-      #Pregnant females (all ages)
-=begin
-Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter and having gender of related PERSON entry as F for female and 'IS PATIENT PREGNANT?' observation answered 'YES' in related HIV CLINIC CONSULTATION encounters within 28 days from earliest registration date OR in HIV Staging encounters
-=end
-      cohort.pregnant_females_all_ages = CohortRevise.pregnant_females_all_ages(start_date, end_date)
-      cohort.cum_pregnant_females_all_ages = CohortRevise.pregnant_females_all_ages(cum_start_date, end_date)
-
-      #Non-pregnant females (all ages)
-=begin
-      Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
-      and earliest start date of the 'ON ARVs' state within the quarter and having gender of
-      related PERSON entry as F for female and no entries of 'IS PATIENT PREGNANT?' observation answered 'YES'
-      in related HIV CLINIC CONSULTATION encounters not within 28 days from earliest registration date
-=end
-      cohort.non_pregnant_females = CohortRevise.non_pregnant_females(start_date, end_date, cohort.pregnant_females_all_ages)
-      cohort.cum_non_pregnant_females = CohortRevise.non_pregnant_females(cum_start_date, end_date, cohort.cum_pregnant_females_all_ages)
-
       #Unknown age
       cohort.unknown_age = CohortRevise.unknown_age(start_date, end_date)
       cohort.cum_unknown_age = CohortRevise.unknown_age(cum_start_date, end_date)
-
-=begin
-    Breastfeeding mothers
-
-    Unique PatientProgram entries at the current location for those patients with at least one state
-    ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
-    and having a REASON FOR ELIGIBILITY observation with an answer as BREASTFEEDING
-=end
-    cohort.breastfeeding_mothers = CohortRevise.breastfeeding_mothers(start_date, end_date)
-    cohort.cum_breastfeeding_mothers = CohortRevise.breastfeeding_mothers(cum_start_date, end_date)
-
-=begin
-  Pregnant women
-
-  Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
-  and earliest start date of the 'ON ARVs' state within the quarter
-  and having a REASON FOR ELIGIBILITY observation with an answer as PATIENT PREGNANT
-=end
-    cohort.pregnant_women = CohortRevise.pregnant_women(start_date, end_date)
-    cohort.cum_pregnant_women = CohortRevise.pregnant_women(cum_start_date, end_date)
-
 
 =begin
     No TB
@@ -87,6 +49,35 @@ Unique PatientProgram entries at the current location for those patients with at
     and latest state is ON ARVs  (Excluding defaulters)
 =end
     cohort.total_alive_and_on_art = CohortRevise.get_outcome('On antiretrovirals')
+
+
+=begin
+  Pregnant women
+
+  Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
+  and earliest start date of the 'ON ARVs' state within the quarter
+  and having a REASON FOR ELIGIBILITY observation with an answer as PATIENT PREGNANT
+=end
+    cohort.total_pregnant_women = CohortRevise.total_pregnant_women(cohort.total_alive_and_on_art, end_date)
+
+=begin
+    Breastfeeding mothers
+
+    Unique PatientProgram entries at the current location for those patients with at least one state
+    ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
+    and having a REASON FOR ELIGIBILITY observation with an answer as BREASTFEEDING
+=end
+    cohort.total_breastfeeding_women = CohortRevise.total_breastfeeding_women(cohort.total_alive_and_on_art, end_date)
+
+      #Non-pregnant females (all ages)
+=begin
+      Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
+      and earliest start date of the 'ON ARVs' state within the quarter and having gender of
+      related PERSON entry as F for female and no entries of 'IS PATIENT PREGNANT?' observation answered 'YES'
+      in related HIV CLINIC CONSULTATION encounters not within 28 days from earliest registration date
+=end
+      cohort.non_pregnant_females = CohortRevise.non_pregnant_females(start_date, end_date, cohort.total_pregnant_women)
+      cohort.cum_non_pregnant_females = CohortRevise.non_pregnant_females(cum_start_date, end_date, cohort.total_pregnant_women)
 
 
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -160,61 +151,36 @@ Unique PatientProgram entries at the current location for those patients with at
     females_not_fnp = []
     a, b, c, d = self.get_fp(start_date, end_date)
 
-    (a || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-    
-    (b || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-    
-    (c || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-    
-    (d || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-  
-    a, b, c, d = self.get_fbf(start_date, end_date)
+    a2, b2, c2, d2 = self.get_fbf(start_date, end_date)
 
-    (a || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-    
-    (b || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-    
-    (c || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-    
-    (d || []).each do |data|
-      females_not_fnp << data[:patient_id]
-    end
-
-    females_not_fnp = females_not_fnp.uniq rescue []
     started_on_art = [] ; alive_on_art = []
     started_on_ipt = [] ; screened_for_tb = []
 
     (self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if females_not_fnp.include?(fnp['patient_id'].to_i)
+      next if a.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
+      next if a2.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
+
       started_on_art << {:patient_id => fnp['patient_id'].to_i, :date_enrolled => fnp['date_enrolled'].to_date}
     end
 
     (self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if females_not_fnp.include?(fnp['patient_id'].to_i)
+      next if b.each{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
+      next if b2.each{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
+
       alive_on_art << {:patient_id => fnp['patient_id'].to_i}
     end
 
     (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if females_not_fnp.include?(fnp['patient_id'].to_i)
+      next if c.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
+      next if c2.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
+
       started_on_ipt << {:patient_id => fnp['patient_id'].to_i}
     end
-
+    
     (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if females_not_fnp.include?(fnp['patient_id'].to_i)
+      next if d.map{|i| i[:patient_id] }.include?(fnp['patient_id'].to_i)
+      next if d2.map{|i| i[:patient_id] }.include?(fnp['patient_id'].to_i)
+
       screened_for_tb << {:patient_id => fnp['patient_id'].to_i}
     end
 
@@ -338,13 +304,13 @@ EOF
 
   def self.get_fp(start_date, end_date)
       age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
-      cum_pregnant_women = @@cohort.cum_pregnant_females_all_ages
+      cum_pregnant_women = @@cohort.total_pregnant_women
       
       return [[], [], [], []] if cum_pregnant_women.blank?
       pregnant_women_patient_ids = []
       
       (cum_pregnant_women).each do |p|
-        pregnant_women_patient_ids << p[:patient_id].to_i
+        pregnant_women_patient_ids << p['person_id'].to_i
       end
 
       started_on_art = [] ; alive_on_art = [] 
@@ -359,6 +325,8 @@ EOF
         next unless pregnant_women_patient_ids.include?(p['patient_id'].to_i)
         alive_on_art << {:patient_id => p['patient_id'].to_i}
       end
+
+      #raise self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date).count.inspect
 
       (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |p|
         next unless pregnant_women_patient_ids.include?(p['patient_id'].to_i)
@@ -378,7 +346,7 @@ EOF
 
   def self.get_fbf(start_date, end_date)
       age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
-      cum_breastfeeding_mothers = @@cohort.cum_breastfeeding_mothers
+      cum_breastfeeding_mothers = @@cohort.total_breastfeeding_women
 
       return [[], [], [], []] if cum_breastfeeding_mothers.blank?
       fbf_women_patient_ids = []
@@ -386,8 +354,21 @@ EOF
       started_on_art = [] ; alive_on_art = []
       started_on_ipt = [] ; screened_for_tb = []
 
+
+      #########################################################################
+      cum_pregnant_women = @@cohort.total_pregnant_women
+      pregnant_women_patient_ids = []
+      
+      (cum_pregnant_women).each do |p|
+        pregnant_women_patient_ids << p['person_id'].to_i
+      end
+      #########################################################################
+
+
+
       (cum_breastfeeding_mothers).each do |w|
-        fbf_women_patient_ids << w['patient_id'].to_i
+        next if pregnant_women_patient_ids.include?(w['person_id'].to_i)
+        fbf_women_patient_ids << w['person_id'].to_i
       end
 
       (self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fbf|
