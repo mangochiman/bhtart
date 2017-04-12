@@ -79,7 +79,6 @@ class CohortDisaggregated
       cohort.non_pregnant_females = CohortRevise.non_pregnant_females(start_date, end_date, cohort.total_pregnant_women)
       cohort.cum_non_pregnant_females = CohortRevise.non_pregnant_females(cum_start_date, end_date, cohort.total_pregnant_women)
 
-
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
 
@@ -88,6 +87,7 @@ class CohortDisaggregated
   def self.get_data(start_date, end_date, gender, age_group, cohort)
 
     @@cohort = cohort
+    @@cohort_cum_start_date = CohortRevise.get_cum_start_date
 
     if gender == 'Male' || gender == 'Female'
       if age_group == '50+ years' 
@@ -103,9 +103,9 @@ class CohortDisaggregated
       gender = gender.first
     
       started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
-      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
-      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date)
-      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date)
+      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
+      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
+      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
 
       return [(started_on_art.length rescue 0), 
         (alive_on_art.length rescue 0), 
@@ -116,9 +116,9 @@ class CohortDisaggregated
     if gender == 'M'
       age_from = 0  ; age_to = 1000 ; yrs_months = 'year'
       started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
-      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
-      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date)
-      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date)
+      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
+      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
+      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
 
       return [(started_on_art.length rescue 0), 
         (alive_on_art.length rescue 0), 
@@ -148,39 +148,74 @@ class CohortDisaggregated
   def self.get_fnp(start_date, end_date)
     age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
 
-    females_not_fnp = []
-    a, b, c, d = self.get_fp(start_date, end_date)
-
-    a2, b2, c2, d2 = self.get_fbf(start_date, end_date)
+    females_pregnant = [] ; cum_females_pregnant = []
+    breast_feeding_women = [] ; cum_breast_feeding_women = []
 
     started_on_art = [] ; alive_on_art = []
     started_on_ipt = [] ; screened_for_tb = []
 
-    (self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if a.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
-      next if a2.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
 
+    ###############################################################
+    (@@cohort.total_breastfeeding_women || []).each do |p|
+      date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT date_enrolled FROM temp_earliest_start_date e 
+      WHERE patient_id = #{p['person_id']};
+EOF
+
+      date_enrolled = date_enrolled_str['date_enrolled'].to_date
+      if date_enrolled >= start_date.to_date and end_date.to_date <= end_date.to_date
+        breast_feeding_women << p['person_id'].to_i
+        breast_feeding_women = breast_feeding_women.uniq
+      else
+        cum_breast_feeding_women << p['person_id'].to_i
+        cum_breast_feeding_women = cum_breast_feeding_women.uniq
+      end
+    end
+
+    cum_pregnant_women = @@cohort.total_pregnant_women
+    (cum_pregnant_women || []).each do |p|
+      next if breast_feeding_women.include?(p['person_id'].to_i)
+
+      date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT date_enrolled FROM temp_earliest_start_date e 
+        WHERE patient_id = #{p['person_id'].to_i};
+EOF
+
+      date_enrolled = date_enrolled_str['date_enrolled'].to_date
+      if date_enrolled >= start_date.to_date and end_date.to_date <= end_date.to_date
+        females_pregnant << p['person_id'].to_i
+        females_pregnant = females_pregnant.uniq
+      else
+        cum_females_pregnant << p['person_id'].to_i
+        cum_females_pregnant = cum_females_pregnant.uniq
+      end
+    end
+    
+    cum_females_pregnant = (cum_females_pregnant + females_pregnant).uniq rescue []
+    cum_breast_feeding_women = (cum_breast_feeding_women + breast_feeding_women) rescue []
+    #####################################################################
+
+    (self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
+      next if females_pregnant.include?(fnp['patient_id'].to_i)
+      next if breast_feeding_women.include?(fnp['patient_id'].to_i)
       started_on_art << {:patient_id => fnp['patient_id'].to_i, :date_enrolled => fnp['date_enrolled'].to_date}
     end
 
-    (self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if b.each{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
-      next if b2.each{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
-
+    (self.get_alive_on_art(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |fnp|
+      next if cum_females_pregnant.include?(fnp['patient_id'].to_i)
+      next if cum_breast_feeding_women.include?(fnp['patient_id'].to_i)
       alive_on_art << {:patient_id => fnp['patient_id'].to_i}
     end
 
-    (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if c.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
-      next if c2.map{|i| i[:patient_id].to_i }.include?(fnp['patient_id'].to_i)
-
+    (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |fnp|
+      next if cum_females_pregnant.include?(fnp['patient_id'].to_i)
+      next if cum_breast_feeding_women.include?(fnp['patient_id'].to_i)
       started_on_ipt << {:patient_id => fnp['patient_id'].to_i}
     end
     
-    (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
-      next if d.map{|i| i[:patient_id] }.include?(fnp['patient_id'].to_i)
-      next if d2.map{|i| i[:patient_id] }.include?(fnp['patient_id'].to_i)
-
+    (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |fnp|
+      next if cum_females_pregnant.include?(fnp['patient_id'].to_i)
+      next if cum_breast_feeding_women.include?(fnp['patient_id'].to_i)
       screened_for_tb << {:patient_id => fnp['patient_id'].to_i}
     end
 
@@ -189,6 +224,7 @@ class CohortDisaggregated
 
   def self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date)
     alive_on_art_patient_ids = []
+    start_date = @@cohort_cum_start_date
 
     (@@cohort.total_alive_and_on_art || []).each do |data|
       alive_on_art_patient_ids << data['patient_id'].to_i
@@ -310,7 +346,15 @@ EOF
       pregnant_women_patient_ids = []
       
       (cum_pregnant_women).each do |p|
-        pregnant_women_patient_ids << p['person_id'].to_i
+        date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT date_enrolled FROM temp_earliest_start_date e 
+        WHERE patient_id = #{p['person_id'].to_i};
+EOF
+
+        date_enrolled = date_enrolled_str['date_enrolled'].to_date
+        if date_enrolled >= @@cohort_cum_start_date.to_date and end_date.to_date <= end_date.to_date
+          pregnant_women_patient_ids << p['person_id'].to_i
+        end
       end
 
       started_on_art = [] ; alive_on_art = [] 
@@ -321,19 +365,17 @@ EOF
         started_on_art << p
       end
 
-      (self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |p|
+      (self.get_alive_on_art(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |p|
         next unless pregnant_women_patient_ids.include?(p['patient_id'].to_i)
         alive_on_art << {:patient_id => p['patient_id'].to_i}
       end
 
-      #raise self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date).count.inspect
-
-      (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |p|
+      (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |p|
         next unless pregnant_women_patient_ids.include?(p['patient_id'].to_i)
         started_on_ipt << {:patient_id => p['patient_id'].to_i}
       end
 
-      (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |p|
+      (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |p|
         next unless pregnant_women_patient_ids.include?(p['patient_id'].to_i)
         screened_for_tb << {:patient_id => p['patient_id'].to_i}
       end
@@ -360,7 +402,15 @@ EOF
       pregnant_women_patient_ids = []
       
       (cum_pregnant_women).each do |p|
-        pregnant_women_patient_ids << p['person_id'].to_i
+        date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT date_enrolled FROM temp_earliest_start_date e 
+        WHERE patient_id = #{p['person_id'].to_i};
+EOF
+
+        date_enrolled = date_enrolled_str['date_enrolled'].to_date
+        if date_enrolled >= @@cohort_cum_start_date.to_date and end_date.to_date <= end_date.to_date
+          pregnant_women_patient_ids << p['person_id'].to_i
+        end
       end
       #########################################################################
 
@@ -368,7 +418,15 @@ EOF
 
       (cum_breastfeeding_mothers).each do |w|
         next if pregnant_women_patient_ids.include?(w['person_id'].to_i)
-        fbf_women_patient_ids << w['person_id'].to_i
+        date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT date_enrolled FROM temp_earliest_start_date e 
+        WHERE patient_id = #{w['person_id'].to_i};
+EOF
+
+        date_enrolled = date_enrolled_str['date_enrolled'].to_date
+        if date_enrolled >= @@cohort_cum_start_date.to_date and end_date.to_date <= end_date.to_date
+          fbf_women_patient_ids << w['person_id'].to_i
+        end
       end
 
       (self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fbf|
@@ -376,17 +434,17 @@ EOF
         started_on_art << {:patient_id => fbf['patient_id'].to_i, :date_enrolled => fbf['date_enrolled'].to_date}
       end
 
-      (self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fbf|
+      (self.get_alive_on_art(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |fbf|
         next unless fbf_women_patient_ids.include?(fbf['patient_id'].to_i)
         alive_on_art << {:patient_id => fbf['patient_id'].to_i}
       end
 
-      (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fbf|
+      (self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |fbf|
         next unless fbf_women_patient_ids.include?(fbf['patient_id'].to_i)
         started_on_ipt << {:patient_id => fbf['patient_id'].to_i}
       end
 
-      (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fbf|
+      (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |fbf|
         next unless fbf_women_patient_ids.include?(fbf['patient_id'].to_i)
         screened_for_tb << {:patient_id => fbf['patient_id'].to_i}
       end
