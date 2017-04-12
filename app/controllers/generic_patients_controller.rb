@@ -625,6 +625,10 @@ EOF
       @from_report = true
       session[:from_report] = false
     end
+    
+
+    session[:mastercard_ids] = [] if session[:mastercard_ids].blank?
+
     #the parameter are used to re-construct the url when the mastercard is called from a Data cleaning report
     @quarter = params[:quarter]
     @arv_start_number = params[:arv_start_number]

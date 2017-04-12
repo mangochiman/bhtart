@@ -1813,7 +1813,7 @@ EOF
       pregnant_women_ids << patient['patient_id'].to_i
     end
     pregnant_women_ids = [0] if pregnant_women_ids.blank?
-
+    
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
