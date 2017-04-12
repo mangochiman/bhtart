@@ -358,7 +358,7 @@ IF set_patient_state = 7 THEN
   END IF;
 END IF;
 
-IF set_outcome IS NULL OR set_outcome = 'Pre-ART (Continue)' THEN
+IF set_outcome IS NULL THEN
   SET set_patient_state = current_defaulter(patient_id, visit_date);
 
   IF set_patient_state = 1 THEN
@@ -366,16 +366,9 @@ IF set_outcome IS NULL OR set_outcome = 'Pre-ART (Continue)' THEN
   END IF;
 
   IF set_outcome IS NULL THEN
-    SET set_outcome = 'On antiretrovirals';
+    SET set_outcome = 'Unknown';
   END IF;
 
-  IF set_outcome = 'Pre-ART (Continue)' THEN
-    SET set_date_started = (SELECT date_antiretrovirals_started(patient_id, visit_date));
-
-    IF set_date_started IS NOT NULL THEN
-      SET set_outcome = 'On antiretrovirals';
-    END IF;
-  END IF;
 END IF;
 
 RETURN set_outcome;
