@@ -1426,9 +1426,15 @@ EOF
   def self.get_outcome(outcome)
     registered = []
 
+    if outcome == 'Pre-ART (Continue)'
+      sql_patch = "cum_outcome = '#{outcome}' OR cum_outcome = 'Unknown'"
+    else
+      sql_patch = "cum_outcome = '#{outcome}'"
+    end
+
     total_alive_and_on_art = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_patient_outcomes
-      WHERE cum_outcome = '#{outcome}' GROUP BY patient_id;
+      WHERE #{sql_patch} GROUP BY patient_id;
 EOF
     (total_alive_and_on_art || []).each do |patient|
       registered << patient
