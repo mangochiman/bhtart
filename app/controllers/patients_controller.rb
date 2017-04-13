@@ -473,4 +473,15 @@ EOF
     render :text => next_url and return
   end
 
+  def render_date_enrolled_in_art
+    patient_identifier = PatientIdentifier.find_by_identifier(params[:identifier])
+    date_enrolled = ""
+    unless patient_identifier.blank?
+      patient_id = patient_identifier.patient_id
+      patient_temp_earliest_start_date = ActiveRecord::Base.connection.select_all("SELECT date_enrolled FROM temp_earliest_start_date WHERE patient_id = #{patient_id}")
+      date_enrolled = patient_temp_earliest_start_date.last["date_enrolled"]
+    end
+    render :text => date_enrolled and return
+  end
+
 end
