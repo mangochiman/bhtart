@@ -479,7 +479,7 @@ EOF
     unless patient_identifier.blank?
       patient_id = patient_identifier.patient_id
       patient_temp_earliest_start_date = ActiveRecord::Base.connection.select_all("SELECT date_enrolled FROM temp_earliest_start_date WHERE patient_id = #{patient_id}")
-      date_enrolled = patient_temp_earliest_start_date.last["date_enrolled"]
+      date_enrolled = patient_temp_earliest_start_date.last["date_enrolled"] rescue nil
     end
     render :text => date_enrolled and return
   end
