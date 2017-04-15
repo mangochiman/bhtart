@@ -1,6 +1,6 @@
 <style>
 #disaggregated_cohort {
-  width: 98%;
+  width: 90%;
   border-collapse: collapse;
   font-size: 16px;
 }
@@ -250,7 +250,7 @@ table tr:hover td {
     csv << ["", "Age group", "Gender", "A", "B", "C", "D"]
     rows.each_with_index do |r, i|
       if (i+1) > 24
-        csv << [ r[0], r[1], r[2],'', r[3], r[4], r[5], r[6] ]
+        csv << [ r[0], r[1], r[2], r[3], r[4], r[5], r[6] ]
       else
         csv << [ r[0], r[1], r[2], r[3], r[4], r[5], r[6] ]
       end
