@@ -248,8 +248,12 @@ table tr:hover td {
   <%
   FasterCSV.open( file, 'w' ) do |csv|
     csv << ["", "Age group", "Gender", "A", "B", "C", "D"]
-    rows.each do |r|
-      csv << [ r[0], r[1], r[2], r[4], r[5], r[6] ]
+    rows.each_with_index do |r, i|
+      if (i+1) > 24
+        csv << [ r[0], r[1], r[2],'', r[3], r[4], r[5], r[6] ]
+      else
+        csv << [ r[0], r[1], r[2], r[3], r[4], r[5], r[6] ]
+      end
     end
   end
 %>
