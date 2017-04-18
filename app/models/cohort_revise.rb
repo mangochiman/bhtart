@@ -1733,12 +1733,16 @@ EOF
   end
 
   def self.pregnant_women(start_date, end_date)
-    reason_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
+    reason_concept_ids = []
+    reason_concept_ids << ConceptName.find_by_name('PATIENT PREGNANT').concept_id
+    reason_concept_ids << ConceptName.find_by_name('Is patient pregnant at initiation?').concept_id
+    reason_concept_ids << ConceptName.find_by_name('Patient pregnant state').concept_id
+    reason_concept_ids << ConceptName.find_by_name('Is patient pregnant?').concept_id
 
     registered = []
 
     (@@reason_for_starting || []).each do |r|
-      next unless reason_concept_id == r[:reason_for_starting_concept_id]
+      next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
       next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
       registered << r
     end
