@@ -1449,6 +1449,7 @@
       available_options = document.getElementsByTagName('li');
       for(i=0; i<available_options.length; i++){
         available_options[i].onclick = function(){
+          updateTouchscreenInputForSelect(this);
           showDrugStockDetails(parseInt(this.getAttribute("tstvalue")));
         }
       }
