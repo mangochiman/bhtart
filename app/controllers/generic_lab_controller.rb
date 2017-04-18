@@ -213,7 +213,8 @@ class GenericLabController < ApplicationController
                :return_json => 'true'
       }
 
-      test_date = "#{params[:test_day]}/#{params[:test_month]}/#{params[:test_year]}".to_datetime.strftime("%Y%m%d%H%M%S")
+      #test_date = "#{params[:test_day]}/#{params[:test_month]}/#{params[:test_year]}".to_datetime.strftime("%Y%m%d%H%M%S")
+      test_date = "#{params[:test_day]}-#{params[:test_month]}-#{params[:test_year]}".to_datetime.strftime("%Y%m%d%H%M%S")
       #Post to NLIMS
       data = JSON.parse(RestClient::Request.execute(:method => 'post',  :url => create_url, :payload => json.to_json, :headers => {"Content-Type" => "application/json"})) #rescue nil
 
