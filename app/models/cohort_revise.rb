@@ -972,6 +972,63 @@ EOF
     end
   end
 
+  def self.on_art_patients_with_no_arvs_dispensations(start_date, end_date)
+    arv_drugs = MedicationService.arv_drugs
+    arv_drugs = arv_drugs.map{ |d| d.concept_id }
+
+    start_date = start_date.to_date ; end_date = end_date.to_date
+
+    data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT patient_id FROM orders o
+    INNER JOIN drug_order drg ON drg.order_id = o.order_id
+    AND o.voided = 0
+    WHERE drug_inventory_id IN( 
+      SELECT drug_id FROM drug
+      WHERE concept_id IN(#{arv_drugs.join(',')})
+
+    ) GROUP BY patient_id;
+ 
+EOF
+
+    patient_ids = data.map{ |d| d['patient_id'].to_i  } 
+
+    begin
+      patients = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT * FROM temp_earliest_start_date 
+      WHERE patient_id NOT IN(#{patient_ids.join(',')});
+EOF
+
+    rescue
+      raise "Try running the revised cohort before this report"
+    end
+      
+    reason_for_starting = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
+    data = {}
+
+    (patients || []).each do |p|
+      patient = Patient.find(p['patient_id'].to_i)
+      reason_for_starting = PatientService.reason_for_art_eligibility(patient)
+      #next unless reason_for_starting.blank?
+
+      patient_outcome = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome;
+EOF
+
+      patient_obj = PatientService.get_patient(patient.person)
+      data[patient_obj.patient_id] = {
+        :arv_number => patient_obj.arv_number,
+        :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+        :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+        :name => patient_obj.name,
+        :gender => patient_obj.sex,
+        :birthdate => patient_obj.birth_date,
+        :outcome => patient_outcome['outcome']
+      }
+    end
+ 
+    return data  
+  end
+
   private
 
   def self.total_patients_with_screened_bp(patients_list, end_date)

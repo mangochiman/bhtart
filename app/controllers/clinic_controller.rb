@@ -51,6 +51,7 @@ class ClinicController < GenericClinicController
 	  ['Out of range ARV number' , '/cohort_tool/select?report_type=out_of_range_arv_number'],
 	  ['Data Consistency Check' , '/cohort_tool/select?report_type=data_consistency_check'],
 	  ['Missing Start Reasons' , '/cohort_tool/select?report_type=missing_start_reasons'],
+	  ['On ART patients with No ARVs dispensations' , '/cohort_tool/select?report_type=on_art_patients_with_no_arvs_dispensations'],
 	  ['Incomplete Visits' , '/cohort_tool/select?report_type=incomplete_visit']
 	]
 	render :layout => false
