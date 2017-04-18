@@ -1906,8 +1906,7 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     end
   end
 
-  def self.period_on_treatment(start_date, today = session_date)
-		today = Date.today if today.blank?
+  def self.period_on_treatment(start_date, today = Date.today)
     years = (today.year - start_date.year)
     months = (today.month - start_date.month)
     (years * 12) + months
