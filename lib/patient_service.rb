@@ -944,15 +944,8 @@ module PatientService
   end
 
   def self.reason_for_art_eligibility(patient)
-=begin
     reasons = patient.person.observations.recent(1).question("REASON FOR ART ELIGIBILITY").all rescue nil
     reasons.map{|c|ConceptName.find(c.value_coded_name_id).name}.join(',') rescue nil
-=end
-    reason_for_art = ActiveRecord::Base.connection.select_one <<EOF
-    SELECT  (select name from concept_name where concept_id = patient_reason_for_starting_art(#{patient.id}) limit 1) reason;
-EOF
-
-    return reason_for_art['reason'] rescue nil
   end
 
   def self.patient_appointment_dates(patient, start_date, end_date = nil)
