@@ -1128,8 +1128,7 @@ EOF
   def self.missing_arv_dispensions(start_date, end_date)
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.*, cum_outcome FROM temp_earliest_start_date e
-      RIGHT JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
+      SELECT * FROM temp_earliest_start_date e
       WHERE date_enrolled IS NULL;
 EOF
 
@@ -1142,10 +1141,11 @@ EOF
     (patients || []).each do |p|
       patient = Patient.find(p['patient_id'].to_i)
 
-      patient_outcome = p['cum_outcome']
-      person = Person.find(p['patient_id'])
+      patient_outcome = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome;
+EOF
 
-      patient_obj = PatientService.get_patient(person)
+      patient_obj = PatientService.get_patient(patient.person)
       data[patient_obj.patient_id] = {
         :arv_number => patient_obj.arv_number,
         :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
