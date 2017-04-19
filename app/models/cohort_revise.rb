@@ -1125,6 +1125,41 @@ EOF
     return data  
   end
 
+  def self.missing_arv_dispensions(start_date, end_date)
+    begin
+      patients = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.*, cum_outcome FROM temp_earliest_start_date e
+      RIGHT JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
+      WHERE date_enrolled IS NULL;
+EOF
+
+    rescue
+      raise "Try running the revised cohort before this report"
+    end 
+    
+    data = {}
+
+    (patients || []).each do |p|
+      patient = Patient.find(p['patient_id'].to_i)
+
+      patient_outcome = p['cum_outcome']
+      person = Person.find(p['patient_id'])
+
+      patient_obj = PatientService.get_patient(person)
+      data[patient_obj.patient_id] = {
+        :arv_number => patient_obj.arv_number,
+        :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+        :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+        :name => patient_obj.name,
+        :gender => patient_obj.sex,
+        :birthdate => patient_obj.birth_date,
+        :outcome => patient_outcome['outcome']
+      }
+    end
+ 
+    return data  
+  end
+
   private
 
   def self.total_patients_with_screened_bp(patients_list, end_date)
