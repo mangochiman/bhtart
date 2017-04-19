@@ -3,8 +3,6 @@ class CohortRevise
   @@reason_for_starting = []
 
   def self.create_temp_earliest_start_date_table(end_date)
-    end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-
 
     ##########################################################
     ActiveRecord::Base.connection.execute <<EOF
@@ -56,8 +54,7 @@ EOF
             ((`p`.`voided` = 0)
                 and (`s`.`voided` = 0)
                 and (`p`.`program_id` = 1)
-                and (`s`.`state` = 7)
-                and `p`.`date_enrolled` <= '#{end_date}')
+                and (`s`.`state` = 7))
         group by `p`.`patient_id`;
 EOF
 
@@ -106,6 +103,28 @@ BEGIN
   SET max_obs_datetime = (SELECT MAX(obs_datetime) FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0);
   SET coded_concept_id = (SELECT value_coded FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0 AND obs_datetime = max_obs_datetime  LIMIT 1);
   SET reason_for_art_eligibility = (coded_concept_id);
+
+
+  RETURN reason_for_art_eligibility;
+END;
+EOF
+
+ActiveRecord::Base.connection.execute <<EOF
+  DROP FUNCTION IF EXISTS `patient_reason_for_starting_art_text`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION patient_reason_for_starting_art_text(my_patient_id INT) RETURNS VARCHAR(255)
+BEGIN
+  DECLARE reason_for_art_eligibility VARCHAR(255);
+  DECLARE reason_concept_id INT;
+  DECLARE coded_concept_id INT;
+  DECLARE max_obs_datetime DATETIME;
+
+  SET reason_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Reason for ART eligibility' AND voided = 0 LIMIT 1);
+  SET max_obs_datetime = (SELECT MAX(obs_datetime) FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0);
+  SET coded_concept_id = (SELECT value_coded FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0 AND obs_datetime = max_obs_datetime  LIMIT 1);
+  SET reason_for_art_eligibility = (SELECT name FROM concept_name WHERE concept_id = coded_concept_id AND LENGTH(name) > 0 LIMIT 1);
 
 
   RETURN reason_for_art_eligibility;
@@ -354,7 +373,7 @@ DECLARE set_date_started date;
 
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
-SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND start_date <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND start_date <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
 
 
 IF set_patient_state = 1 THEN
@@ -939,15 +958,14 @@ EOF
   def self.patient_with_missing_start_reasons(start_date, end_date)
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date e
+      SELECT e.*, patient_reason_for_starting_art_text(e.patient_id) reason FROM temp_earliest_start_date e
       WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}';
 EOF
 
-      reason_for_starting = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
       data = {}
       (patients || []).each do |p|
         patient = Patient.find(p['patient_id'].to_i)
-        reason_for_starting = PatientService.reason_for_art_eligibility(patient)
+        reason_for_starting = p['reason'] 
         next unless reason_for_starting.blank?
 
         patient_outcome = ActiveRecord::Base.connection.select_one <<EOF
@@ -1015,6 +1033,84 @@ EOF
 EOF
 
       patient_obj = PatientService.get_patient(patient.person)
+      data[patient_obj.patient_id] = {
+        :arv_number => patient_obj.arv_number,
+        :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+        :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+        :name => patient_obj.name,
+        :gender => patient_obj.sex,
+        :birthdate => patient_obj.birth_date,
+        :outcome => patient_outcome['outcome']
+      }
+    end
+ 
+    return data  
+  end
+
+  def self.patient_on_pre_ART_but_have_arvs_dispensed(start_date, end_date)
+    
+    begin
+      patients = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.* FROM temp_earliest_start_date e
+      INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
+      WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+      AND cum_outcome LIKE '%Pre-%';
+EOF
+
+    rescue
+      raise "Try running the revised cohort before this report"
+    end 
+    
+    
+    data = {}
+
+    (patients || []).each do |p|
+      patient = Patient.find(p['patient_id'].to_i)
+      reason_for_starting = PatientService.reason_for_art_eligibility(patient)
+      #next unless reason_for_starting.blank?
+
+      patient_outcome = ActiveRecord::Base.connection.select_one <<EOF
+          SELECT patient_outcome(#{patient.patient_id}, DATE('#{end_date.to_date}')) AS outcome;
+EOF
+
+      patient_obj = PatientService.get_patient(patient.person)
+      data[patient_obj.patient_id] = {
+        :arv_number => patient_obj.arv_number,
+        :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+        :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+        :name => patient_obj.name,
+        :gender => patient_obj.sex,
+        :birthdate => patient_obj.birth_date,
+        :outcome => patient_outcome['outcome']
+      }
+    end
+ 
+    return data  
+  end
+
+  def self.patients_with_pre_art_or_unknown_outcome(start_date, end_date)
+    
+    begin
+      patients = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.*, cum_outcome FROM temp_patient_outcomes o
+      INNER JOIN temp_earliest_start_date e ON e.patient_id = o.patient_id
+      WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+      AND cum_outcome LIKE '%Pre-%' OR cum_outcome LIKE '%Unknown%';
+EOF
+
+    rescue
+      raise "Try running the revised cohort before this report"
+    end 
+    
+    data = {}
+
+    (patients || []).each do |p|
+      patient = Patient.find(p['patient_id'].to_i)
+
+      patient_outcome = p['cum_outcome']
+      person = Person.find(p['patient_id'])
+
+      patient_obj = PatientService.get_patient(person)
       data[patient_obj.patient_id] = {
         :arv_number => patient_obj.arv_number,
         :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
@@ -1535,8 +1631,8 @@ EOF
 
       ActiveRecord::Base.connection.execute <<EOF
         CREATE TABLE temp_patient_outcomes
-          SELECT patient_id, patient_outcome(patient_id, '#{end_date}') cum_outcome
-        FROM temp_earliest_start_date;
+          SELECT patient_id, patient_outcome(e.patient_id, '#{end_date}') cum_outcome
+        FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{end_date}';
 EOF
 #=end
   end
