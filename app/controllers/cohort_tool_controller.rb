@@ -468,8 +468,26 @@ class CohortToolController < GenericCohortToolController
 					:quarter      => params[:report],
 					:report_type  => params[:report_type]
         return
+			when "missing_arv_dispensions"
+				redirect_to :action       => "missing_arv_dispensions",
+					:quarter      => params[:report],
+					:report_type  => params[:report_type]
+        return
       end
     end
+  end
+
+  def missing_arv_dispensions
+    @quarter    = params[:quarter]
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    date_range  = Report.generate_cohort_date_range(@quarter)
+    @start_date = date_range.first
+    @end_date   = date_range.last
+    @report_name = 'Missing ARV dispensions'
+
+    @people = CohortRevise.missing_arv_dispensions(@start_date, @end_date)
+    render :layout =>"report"
   end
 
   def patient_with_pre_art_or_unknown_outcome
@@ -479,7 +497,7 @@ class CohortToolController < GenericCohortToolController
     date_range  = Report.generate_cohort_date_range(@quarter)
     @start_date = date_range.first
     @end_date   = date_range.last
-    @report_name = 'On ART patients with no ARVs dispensations'
+    @report_name = 'Patient with Pre-ART/Unknown_outcome'
 
     @people = CohortRevise.patients_with_pre_art_or_unknown_outcome(@start_date, @end_date)
     render :layout =>"report"

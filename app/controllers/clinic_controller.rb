@@ -53,7 +53,8 @@ class ClinicController < GenericClinicController
 	  ['Missing Start Reasons' , '/cohort_tool/select?report_type=missing_start_reasons'],
 	 # ['On ART patients with No ARVs dispensations' , '/cohort_tool/select?report_type=on_art_patients_with_no_arvs_dispensations'],
 	  ['Patient on Pre-ART but have ARVS dispensed' , '/cohort_tool/select?report_type=patient_on_pre_ART_but_have_arvs_dispensed'],
-	  ['patients with pre ART/unknown outcome' , '/cohort_tool/select?report_type=patient_with_pre_art_or_unknown_outcome'],
+	  ['Patients with Pre-ART/Unknown outcome' , '/cohort_tool/select?report_type=patient_with_pre_art_or_unknown_outcome'],
+	  ['Missing ARV dispensions' , '/cohort_tool/select?report_type=missing_arv_dispensions'],
 	  ['Incomplete Visits' , '/cohort_tool/select?report_type=incomplete_visit']
 	]
 	render :layout => false
