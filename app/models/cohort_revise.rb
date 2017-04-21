@@ -1094,8 +1094,7 @@ EOF
       patients = ActiveRecord::Base.connection.select_all <<EOF
       SELECT e.*, cum_outcome FROM temp_patient_outcomes o
       INNER JOIN temp_earliest_start_date e ON e.patient_id = o.patient_id
-      WHERE date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
-      AND cum_outcome LIKE '%Pre-%' OR cum_outcome LIKE '%Unknown%';
+      WHERE cum_outcome LIKE '%Pre-%' OR cum_outcome LIKE '%Unknown%';
 EOF
 
     rescue
@@ -1129,7 +1128,7 @@ EOF
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date e
-      WHERE date_enrolled IS NULL;
+      WHERE (date_enrolled IS NULL OR LENGTH(date_enrolled) < 1);
 EOF
 
     rescue
