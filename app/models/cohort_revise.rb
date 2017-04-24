@@ -384,7 +384,7 @@ IF set_patient_state = 2   THEN
   SET set_outcome = 'Patient transferred out';
 END IF;
 
-IF set_patient_state = 3 THEN
+IF set_patient_state = 3 OR set_patient_state = 127 THEN
   SET set_outcome = 'Patient died';
 END IF;
 
