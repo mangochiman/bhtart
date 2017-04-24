@@ -9,20 +9,22 @@ class CohortRevise
       DROP FUNCTION IF EXISTS patient_start_date;
 EOF
 
+    arv_concept_ids = MedicationService.arv_drugs.map(&:concept_id)
+
     ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION patient_start_date(patient_id int) RETURNS VARCHAR(10) 
+CREATE FUNCTION patient_start_date(my_patient_id int) RETURNS DATE 
 DETERMINISTIC
 BEGIN
-DECLARE start_date VARCHAR(10);
-DECLARE dispension_concept_id INT;
-DECLARE arv_concept INT;
+DECLARE my_start_date DATE;
+DECLARE min_start_date DATETIME;
+DECLARE arv_concept_id INT(11);
 
-set dispension_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'AMOUNT DISPENSED');
-set arv_concept = (SELECT concept_id FROM concept_name WHERE name = "ANTIRETROVIRAL DRUGS");
+SET arv_concept_id = (SELECT concept_id FROM concept_name WHERE name ='ANTIRETROVIRAL DRUGS' LIMIT 1);
 
-set start_date = (SELECT DATE(obs_datetime) FROM obs WHERE voided = 0 AND person_id = patient_id AND concept_id = dispension_concept_id AND value_drug IN (SELECT drug_id    FROM drug d WHERE d.concept_id IN (SELECT cs.concept_id FROM concept_set cs WHERE cs.concept_set = arv_concept)) ORDER BY DATE(obs_datetime) ASC LIMIT 1);
+SET my_start_date = (SELECT DATE(o.start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id)) AND d.quantity > 0 AND o.start_date = (SELECT min(start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE d.quantity > 0 AND o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id))) LIMIT 1);
 
-RETURN start_date;
+
+RETURN my_start_date;
 END;
 EOF
     ##########################################################
@@ -1092,7 +1094,8 @@ EOF
     
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.*, cum_outcome FROM temp_patient_outcomes o
+      SELECT e.*, cum_outcome, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
+      FROM temp_patient_outcomes o
       INNER JOIN temp_earliest_start_date e ON e.patient_id = o.patient_id
       WHERE cum_outcome LIKE '%Pre-%' OR cum_outcome LIKE '%Unknown%';
 EOF
@@ -1117,6 +1120,7 @@ EOF
         :name => patient_obj.name,
         :gender => patient_obj.sex,
         :birthdate => patient_obj.birth_date,
+        :reason_for_starting => p['reason_for_starting'],
         :outcome => patient_outcome['outcome']
       }
     end
@@ -1127,7 +1131,8 @@ EOF
   def self.missing_arv_dispensions(start_date, end_date)
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date e
+      SELECT e.*, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting 
+      FROM temp_earliest_start_date e
       WHERE (date_enrolled IS NULL OR LENGTH(date_enrolled) < 1);
 EOF
 
@@ -1151,6 +1156,7 @@ EOF
         :date_enrolled => (p['date_enrolled'].to_date rescue nil),
         :name => patient_obj.name,
         :gender => patient_obj.sex,
+        :reason_for_starting => p['reason_for_starting'],
         :birthdate => patient_obj.birth_date,
         :outcome => patient_outcome['outcome']
       }
