@@ -6,13 +6,13 @@ class CohortRevise
 
     ##########################################################
     ActiveRecord::Base.connection.execute <<EOF
-      DROP FUNCTION IF EXISTS patient_start_date;
+      DROP FUNCTION IF EXISTS patient_date_enrolled;
 EOF
 
     arv_concept_ids = MedicationService.arv_drugs.map(&:concept_id)
 
     ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION patient_start_date(my_patient_id int) RETURNS DATE 
+CREATE FUNCTION patient_date_enrolled(my_patient_id int) RETURNS DATE 
 DETERMINISTIC
 BEGIN
 DECLARE my_start_date DATE;
@@ -43,7 +43,7 @@ EOF
             `pe`.`gender` AS `gender`,
             `pe`.`birthdate`,
             date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-            cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+            cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
             `person`.`death_date` AS `death_date`,
             (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
             (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
@@ -447,9 +447,9 @@ set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE nam
 set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
 
 
-set check_one = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 14)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
+set check_one = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 14)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
 
-set check_two = (SELECT esd.patient_id FROM temp_earliest_start_date esd INNER JOIN clinic_registration_encounter e ON esd.patient_id = e.patient_id INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND esd.date_enrolled = set_date_enrolled AND esd.patient_id = set_patient_id GROUP BY esd.patient_id);
+set check_two = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = taken_arvs_concept AND o.voided = 0 WHERE  ((o.concept_id = taken_arvs_concept AND o.value_coded = no_concept)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
 
 if check_one >= 1 then set re_initiated ="Re-initiated";
 elseif check_two >= 1 then set re_initiated ="Re-initiated";
