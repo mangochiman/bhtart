@@ -59,8 +59,14 @@ class GenericProgramsController < ApplicationController
     if params[:program]
       program = params[:program]
       @program = PatientProgram.find(program)
+      
+      (@program.patient_states || []).each do |s|
+        s.void
+      end
+
       @program.void
     end
+
     if params[:state]
       state = params[:state]
       @patient_state = PatientState.find(state)
