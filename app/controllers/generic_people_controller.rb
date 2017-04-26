@@ -857,10 +857,10 @@ EOF
       AND concept_id = #{concept_name}")
       
       app_date = app_date.first['app_date'].to_date.strftime('%d/%b/%Y') rescue 'N/A'
-      
+=begin      
       state = ProgramWorkflowState.find(p['state']) rescue nil
       outcome = ConceptName.find_by_concept_id(state.concept_id).name unless state.blank?
-
+=end
       filing_number = PatientIdentifier.find_by_sql("SELECT identifier 
       number FROM patient_identifier WHERE voided = 0 AND patient_id = #{patient_id}
       AND identifier_type = #{filing_number_identifier_type}")
@@ -873,7 +873,7 @@ EOF
       nat_number = nat_number.first['number'] rescue 'N/A'
 
       data << {
-        :outcome => (outcome.gsub('Patient','') rescue 'N/A'), :next_app => app_date,
+        :outcome => p['cal_state'], :next_app => app_date,
         :patient_id => patient_id, :last_visit => visit_date,
         :filing_number => number, :national_id => nat_number
       }

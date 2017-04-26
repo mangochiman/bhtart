@@ -1456,14 +1456,16 @@ EOF
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
 
       outcomes = ActiveRecord::Base.connection.select_all <<EOF
-SELECT patient_id,state,start_date,end_date FROM patient_state s
+SELECT patient_id,state,start_date,end_date, patient_outcome(patient_id, current_date) cal_state FROM patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
 AND p.patient_id IN(#{patient_ids.join(',')}) 
 AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
 WHERE start_date = (SELECT max(start_date) FROM patient_state t
     WHERE t.patient_program_id = s.patient_program_id)
 AND p.patient_id IN (#{encounter_patient_ids.join(',')})
-GROUP BY p.patient_id ORDER BY state LIMIT #{limit_one}, #{limit_two};
+GROUP BY p.patient_id 
+HAVING cal_state != 'On antiretrovirals'
+ORDER BY state LIMIT #{limit_one}, #{limit_two};
 EOF
 
     
