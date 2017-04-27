@@ -2689,7 +2689,7 @@ def process_all_guardians_not_on_arvs
                                             guardian_id NOT IN (SELECT
                                                                   patient_id
                                                                 FROM
-                                                                 earliest_start_date)
+                                                                 temp_earliest_start_date)
                                         GROUP BY guardian_id").each{|guardian| guardian}
      guardian_list.each do |guardian|
        a_hash[:patient_id] = patient_id
