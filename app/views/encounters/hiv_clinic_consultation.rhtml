@@ -638,15 +638,18 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       hidden_checkbox.checked = true;
     }
 
+    inputID = key + '_child_concept';
     if(e.id.match(/no_/i)) {
-      __$(key).value = '';
+      //__$(key).value = '';
+      __$(inputID).value = 'No';
       if(category == 'side_effects') {
         updateSideEffectNoValue(e);
       }else{
         updateTBSymptomNoValue(e);
       }
     }else{
-      __$(key).value = key;
+      //__$(key).value = key;
+      __$(inputID).value = 'Yes';
       if(category == 'side_effects') {
         updateSideEffectYesValue(e)
       }else{
@@ -1178,11 +1181,13 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
 
   <% side_effects_array.each do |element| %>
-    <%= touch_hidden_tag "MALAWI ART SIDE EFFECTS", @patient, "", :id => "#{element}" %>
+    <%= touch_hidden_tag "MALAWI ART SIDE EFFECTS", @patient, "#{element}", :id => "#{element}" %>
+    <%= touch_hidden_tag "#{element}", @patient, "", :id => "#{element}_child_concept", :parent_concept_name => "MALAWI ART SIDE EFFECTS"%>
   <% end %>
 
   <% tb_symptoms_array.each do |element| %>
-    <%= touch_hidden_tag "Routine Tuberculosis Screening", @patient, "", :id => "#{element}" %>
+    <%= touch_hidden_tag "ROUTINE TUBERCULOSIS SCREENING", @patient, "#{element}", :id => "#{element}" %>
+    <%= touch_hidden_tag "#{element}", @patient, "", :id => "#{element}_child_concept", :parent_concept_name => "ROUTINE TUBERCULOSIS SCREENING"%>
   <% end %>
 
   <%= touch_hidden_tag "TB STATUS", @patient, "", :id => "tb_status_hack" %>
