@@ -21,7 +21,7 @@ ART tables in OpenMRS
 
 UniqPatientIds = []
 Connection = ActiveRecord::Base.connection
-Current_date = "2016-03-25 12:00:52".to_date #Date.today
+Current_date = Date.today
 
 def start
   patient_ids_in_earliest_start_date = get_earliest_start_date_patients
@@ -31,7 +31,7 @@ def start
 =end
 
   if patient_ids_in_earliest_start_date.blank?
-    puts "No changes found on #{Current_date.strftime('%A, %d %B %Y')}" 
+    puts "No changes found on #{Current_date.strftime('%A, %d %B %Y')}"
     return
   end
 
@@ -40,8 +40,8 @@ def start
   enc_patient_ids = Connection.select_all("
     SELECT patient_id FROM encounter e
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
@@ -55,7 +55,7 @@ def start
   obs_patient_ids = Connection.select_all("
     SELECT person_id FROM obs
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
@@ -63,11 +63,11 @@ def start
 =begin
   Getting all changed rows in orders table
 =end
-  
+
   orders_patient_ids = Connection.select_all("
     SELECT patient_id FROM orders
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
@@ -79,92 +79,92 @@ def start
   patient_patient_ids = Connection.select_all("
     SELECT patient_id FROM patient
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
 
 =begin
   Getting all changed rows in person table
-=end  
+=end
 
   person_patient_ids = Connection.select_all("
     SELECT person_id FROM person
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in person_name table
-=end    
+=end
 
   person_name_patient_ids = Connection.select_all("
     SELECT person_id FROM person_name
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in person_address table
-=end    
+=end
 
   person_address_patient_ids = Connection.select_all("
     SELECT person_id FROM person_address
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in person_attribute table
-=end    
+=end
    person_attribute_patient_ids = Connection.select_all("
     SELECT person_id FROM person_attribute
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in patient_identifier table
-=end    
+=end
 
   patient_identifier_patient_ids = Connection.select_all("
     SELECT patient_id FROM patient_identifier
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
 
 =begin
   Getting all changed rows in patient_program table
-=end    
+=end
 
   patient_program_patient_ids = Connection.select_all("
     SELECT patient_id FROM patient_program
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
 
 =begin
   Getting all changed rows in patient_state table
-=end    
+=end
 
   patient_state_patient_ids = Connection.select_all("
-    SELECT p.patient_id FROM patient_program p 
+    SELECT p.patient_id FROM patient_program p
     inner join patient_state s ON s.patient_program_id = p.patient_program_id
     where (date(s.date_created)= '#{Current_date}' OR date(s.date_changed)='#{Current_date}')
     AND p.patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
@@ -182,107 +182,107 @@ def start
   patient_patient_ids = Connection.select_all("
     SELECT patient_id FROM patient
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
 
 =begin
   Getting all changed rows in person table
-=end  
+=end
 
   puts "Getting all changed rows in person table"
 
   person_patient_ids = Connection.select_all("
     SELECT person_id FROM person
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in person_name table
-=end    
+=end
 
   puts "Getting all changed rows in person_name table"
 
   person_name_patient_ids = Connection.select_all("
     SELECT person_id FROM person_name
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in person_address table
-=end    
+=end
 
   puts "Getting all changed rows in person_address table"
 
   person_address_patient_ids = Connection.select_all("
     SELECT person_id FROM person_address
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in person_attribute table
-=end    
-  
+=end
+
    puts "Getting all changed rows in person_attribute table"
 
    person_attribute_patient_ids = Connection.select_all("
     SELECT person_id FROM person_attribute
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND person_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY person_id
   ").collect{|p|p["person_id"].to_i}
 
 =begin
   Getting all changed rows in patient_identifier table
-=end    
+=end
 
   puts "Getting all changed rows in patient_identifier table"
 
   patient_identifier_patient_ids = Connection.select_all("
     SELECT patient_id FROM patient_identifier
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
 
 =begin
   Getting all changed rows in patient_program table
-=end    
+=end
 
   puts "Getting all changed rows in patient_program table"
 
   patient_program_patient_ids = Connection.select_all("
     SELECT patient_id FROM patient_program
     WHERE (DATE(date_created) = '#{Current_date}' OR
-    DATE(date_changed) = '#{Current_date}' OR 
-    DATE(date_voided) = '#{Current_date}') 
+    DATE(date_changed) = '#{Current_date}' OR
+    DATE(date_voided) = '#{Current_date}')
     AND patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
     GROUP BY patient_id
   ").collect{|p|p["patient_id"].to_i}
 
 =begin
   Getting all changed rows in patient_state table
-=end    
+=end
 
   puts "Getting all changed rows in patient_state table"
 
   patient_state_patient_ids = Connection.select_all("
-    SELECT p.patient_id FROM patient_program p 
+    SELECT p.patient_id FROM patient_program p
     inner join patient_state s ON s.patient_program_id = p.patient_program_id
     where (date(s.date_created)= '#{Current_date}' OR date(s.date_changed)='#{Current_date}')
     AND p.patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
@@ -292,12 +292,12 @@ def start
 
 =begin
   Getting all changed rows in program_workflow table
-=end    
+=end
 
   puts "Getting all changed rows in program_workflow table"
 
   program_workflow_patient_ids = Connection.select_all("
-    SELECT p.patient_id FROM patient_program p 
+    SELECT p.patient_id FROM patient_program p
     inner join program_workflow w ON p.program_id = w.program_id
     where (date(w.date_created)= '#{Current_date}' OR date(w.date_changed)='#{Current_date}')
     AND p.patient_id IN(#{patient_ids_in_earliest_start_date.join(',')})
@@ -307,7 +307,7 @@ def start
 
 =begin
   Getting all changed rows in program_workflow_state table
-=end    
+=end
 
   puts "Getting all changed rows in program_workflow_state table"
 
@@ -328,7 +328,7 @@ def start
 
    relationship_patient_ids = Connection.select_all("
     SELECT person_a FROM relationship
-    where (DATE(date_created) = '#{Current_date}' OR 
+    where (DATE(date_created) = '#{Current_date}' OR
     DATE(date_voided) = '#{Current_date}')
     AND person_a IN(#{patient_ids_in_earliest_start_date.join(',')})
     group by person_a;
@@ -386,11 +386,11 @@ def updating_flat_cohort_table(patient_ids)
   data = get_earliest_start_date_patients_data(patient_ids)
 
   (data || []).each do |row|
-  
-    flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{row[:patient_id]}")     
+
+    flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{row[:patient_id]}")
 
     eligible    = flat_table1_record['earliest_start_date']
-    
+
     gender                                      = flat_table1_record['gender']
     dob                                         = flat_table1_record['dob']
     age_in_days                                 = flat_table1_record['age_in_days']
@@ -448,7 +448,7 @@ EOF
 
           puts "....... old_extrapulmonary_tuberculosis_v_date   #{old_extrapulmonary_tuberculosis_v_date}"
 
-          
+
       end #record_exists.blank
 
     end #unless eligible
@@ -461,7 +461,7 @@ def updating_obs_table(patient_ids)
 
     flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 WHERE patient_id = '#{patient_id}'
       AND (DATE(visit_date) = '#{Current_date}')")
-    
+
     next if flat_table2_record.blank?
 
     visit =  flat_table2_record['ID']
@@ -477,7 +477,7 @@ def updating_obs_table(patient_ids)
 
       obs_records = Connection.select_all("
       SELECT * FROM obs WHERE person_id = '#{patient_id}'
-      AND (DATE(date_created) = '#{Current_date}' OR 
+      AND (DATE(date_created) = '#{Current_date}' OR
       DATE(date_voided) = '#{Current_date}')
     ")
 
@@ -497,7 +497,7 @@ def updating_obs_table(patient_ids)
 
       if encounter_type.present?
 
-        pregnant_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
+        pregnant_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
           LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
           WHERE name = 'Is patient pregnant?' AND voided = 0 AND retired = 0")
         pregnant = pregnant_record['concept_id']
@@ -532,7 +532,7 @@ def updating_obs_table(patient_ids)
                         WHERE name = 'Method of family planning' AND voided = 0 AND retired = 0 ")
         method_of_family_planning = method_of_family_planning_record['concept_id']
 
-        
+
         symptom_present_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'Symptom present' AND voided = 0 AND retired = 0 LIMIT 1")
@@ -544,7 +544,7 @@ def updating_obs_table(patient_ids)
                     WHERE name = 'malawi ART side effects' AND voided = 0 AND retired = 0 ")
         malawi_ART_side_effects = malawi_ART_side_effects_record['concept_id']
 
-        
+
         drug_induced_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'Drug induced' AND voided = 0 AND retired = 0 ")
@@ -556,19 +556,19 @@ def updating_obs_table(patient_ids)
                         WHERE name = 'Malawi ART side effects' AND voided = 0 AND retired = 0")
         side_effects = side_effects_record['concept_id']
 
-        
+
         routine_tb_screening_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'Routine TB Screening' AND voided = 0 AND retired = 0")
         routine_tb_screening = routine_tb_screening_record['concept_id']
 
-        
+
         allergic_to_sulphur_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'Allergic to sulphur' AND voided = 0 AND retired = 0 ")
         allergic_to_sulphur = allergic_to_sulphur_record['concept_id']
 
-    
+
         tb_status_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'TB status' AND voided = 0 AND retired = 0 ")
@@ -596,7 +596,7 @@ def updating_obs_table(patient_ids)
         cpt_given_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'CPT given' AND voided = 0 AND retired = 0 ")
-        cpt_given = cpt_given_record['concept_id']  
+        cpt_given = cpt_given_record['concept_id']
 
 
         ipt_given_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
@@ -629,13 +629,13 @@ def updating_obs_table(patient_ids)
         transfer_within_responsibility = transfer_within_responsibility_record['concept_id']
 
 
-  
+
         reason_for_eligibility_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                       WHERE name = 'Reason for ART eligibility' AND voided = 0 AND retired = 0 LIMIT 1")
         reason_for_eligibility = reason_for_eligibility['concept_id'] rescue nil
 
-        
+
         who_stage_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                       WHERE name = 'WHO stage' AND voided = 0 AND retired = 0 ")
@@ -680,18 +680,18 @@ def updating_obs_table(patient_ids)
         #raise patient_present.inspect
         case concept_id
         when patient_present
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
-          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Unknown' AND voided = 0 AND retired = 0 ")
           unknown = unknown_record['concept_id']
 
@@ -728,7 +728,7 @@ EOF
               puts "........... Updating record into flat_table2 (patient_present: value_coded = yes): #{patient_id}"
             end #voided
 
-          
+
           when no
             value_record = Connection.select_one("SELECT name FROM concept_name WHERE concept_name_id = #{value_coded_name_id}")
             value = value_record['name']
@@ -758,7 +758,7 @@ EOF
 EOF
               puts "........... Updating record into flat_table2 (patient_present: value_coded = no): #{patient_id}"
             end #voided
-          
+
 
           when unknown
             value_record = Connection.select_one("SELECT name FROM concept_name WHERE concept_name_id = #{value_coded_name_id}")
@@ -786,7 +786,7 @@ EOF
                 puts "........... Updating record into flat_table2 (patient_present: value_coded = unknown): #{patient_id}"
 
             end #voided
-    
+
           end #case
 
           if (value_text == 'Yes')
@@ -820,7 +820,7 @@ EOF
               else
                 Connection.execute <<EOF
                 UPDATE flat_table2 SET patient_present_yes = "#{patient_yes}", patient_present_no = NULL, patient_present_yes_enc_id = "#{encounter_id}", patient_present_no_enc_id = NULL, patient_present_unknown = NULL, patient_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}";
-EOF                
+EOF
                 puts "........... Updating record into flat_table2 (patient_present: value_text = patient_yes): #{patient_id}"
 
               end #visit
@@ -832,7 +832,7 @@ EOF
                 puts "........... Updating record into flat_table2 (patient_present: value_text = patient_yes): #{patient_id}"
 
             end #voided
-       
+
           end
           when patient_no
             if voided.blank?
@@ -844,7 +844,7 @@ EOF
 
               else
                 Connection.execute <<EOF
-                UPDATE flat_table2 SET patient_present_no = "#{patient_no}", patient_present_yes = NULL, patient_present_no_enc_id = "#{encounter_id}", patient_present_yes_enc_id = NULL, patient_present_unknown = NULL, patient_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}";    
+                UPDATE flat_table2 SET patient_present_no = "#{patient_no}", patient_present_yes = NULL, patient_present_no_enc_id = "#{encounter_id}", patient_present_yes_enc_id = NULL, patient_present_unknown = NULL, patient_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}";
 EOF
                 puts "........... Updating record into flat_table2 (patient_present: value_text = patient_no): #{patient_id}"
 
@@ -868,7 +868,7 @@ EOF
 
               else
                 Connection.execute <<EOF
-                UPDATE flat_table2 SET patient_present_no = NULL, patient_present_yes = NULL, patient_present_no_enc_id = NULL, patient_present_yes_enc_id = NULL, patient_present_unknown = "#{patient_unknown}", patient_present_unknown_enc_id = "#{encounter_id}" WHERE flat_table2.id = "#{visit}"; 
+                UPDATE flat_table2 SET patient_present_no = NULL, patient_present_yes = NULL, patient_present_no_enc_id = NULL, patient_present_yes_enc_id = NULL, patient_present_unknown = "#{patient_unknown}", patient_present_unknown_enc_id = "#{encounter_id}" WHERE flat_table2.id = "#{visit}";
 EOF
                 puts "........... Updating record into flat_table2 (patient_present: value_text = patient_unknown): #{patient_id}"
 
@@ -876,27 +876,27 @@ EOF
 
             else
               Connection.execute <<EOF
-              UPDATE flat_table2 SET patient_present_no = NULL, patient_present_yes = NULL, patient_present_no_enc_id = NULL, patient_present_yes_enc_id = NULL, patient_present_unknown = NULL, patient_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}"; 
+              UPDATE flat_table2 SET patient_present_no = NULL, patient_present_yes = NULL, patient_present_no_enc_id = NULL, patient_present_yes_enc_id = NULL, patient_present_unknown = NULL, patient_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}";
 EOF
               puts "........... Updating record into flat_table2 (patient_present: value_text = patient_unknown): #{patient_id}"
 
             end #voided
 
-          end #case
+          #end #case
 
         when guardian_present
-            yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+            yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
-          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Unknown' AND voided = 0 AND retired = 0 ")
           unknown = unknown_record['concept_id']
 
@@ -979,7 +979,7 @@ EOF
               else
                 Connection.execute <<EOF
                 UPDATE flat_table2 SET guardian_present_no = NULL, guardian_present_yes = NULL, guardian_present_no_enc_id = NULL, guardian_present_yes_enc_id = NULL, guardian_present_unknown = "#{value}", guardian_present_unknown_enc_id = encounter_id WHERE flat_table2.id = "#{visit}";
-EOF                
+EOF
               end #end visit
 
             else
@@ -990,8 +990,8 @@ EOF
           end
 
 
-          end       
-            
+          end
+
           if (value_text == 'YES')
             guardian_yes = 'Yes'
 
@@ -1038,7 +1038,7 @@ EOF
 EOF
               else
                 Connection.execute <<EOF
-                UPDATE flat_table2 SET guardian_present_no = "#{guardian_no}", guardian_present_yes = NULL, guardian_present_no_enc_id = "#{encounter_id}", guardian_present_yes_enc_id = NULL, guardian_present_unknown = NULL, guardian_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}";    
+                UPDATE flat_table2 SET guardian_present_no = "#{guardian_no}", guardian_present_yes = NULL, guardian_present_no_enc_id = "#{encounter_id}", guardian_present_yes_enc_id = NULL, guardian_present_unknown = NULL, guardian_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}";
 EOF
               end #end visit
 
@@ -1056,25 +1056,25 @@ EOF
 EOF
               else
                 Connection.execute <<EOF
-                UPDATE flat_table2 SET guardian_present_no = NULL, guardian_present_yes = NULL, guardian_present_no_enc_id = NULL, guardian_present_yes_enc_id = NULL, guardian_present_unknown = "#{guardian_unknown}", guardian_present_unknown_enc_id = "#{encounter_id}" WHERE flat_table2.id = "#{visit}"; 
+                UPDATE flat_table2 SET guardian_present_no = NULL, guardian_present_yes = NULL, guardian_present_no_enc_id = NULL, guardian_present_yes_enc_id = NULL, guardian_present_unknown = "#{guardian_unknown}", guardian_present_unknown_enc_id = "#{encounter_id}" WHERE flat_table2.id = "#{visit}";
 EOF
               end #end visit
 
             else
               Connection.execute <<EOF
-              UPDATE flat_table2 SET guardian_present_no = NULL, guardian_present_yes = NULL, guardian_present_no_enc_id = NULL, guardian_present_yes_enc_id = NULL, guardian_present_unknown = NULL, guardian_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}"; 
+              UPDATE flat_table2 SET guardian_present_no = NULL, guardian_present_yes = NULL, guardian_present_no_enc_id = NULL, guardian_present_yes_enc_id = NULL, guardian_present_unknown = NULL, guardian_present_unknown_enc_id = NULL WHERE flat_table2.id = "#{visit}";
 EOF
             end #end voided
-          end # end case
+          #end # end case
 
         when transfer_within_responsibility
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
@@ -1121,20 +1121,20 @@ EOF
 EOF
             end #voided
           end #case value_coded
-          
+
         when breastfeeding
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
-          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Unknown' AND voided = 0 AND retired = 0 ")
           unknown = unknown_record['concept_id']
 
@@ -1187,7 +1187,7 @@ EOF
             value = value_record['name']
 
             encounter_type_record = Connection.select_one("SELECT * FROM encounter e WHERE e.encounter_id = #{encounter_id} AND voided = #{voided}")
-            encounter_type = encounter_type_record['encounter_type']  
+            encounter_type = encounter_type_record['encounter_type']
 
             if visit.blank?
               if (encounter_type == 52)
@@ -1273,18 +1273,18 @@ EOF
           end #end case
 
         when breast_feeding
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
-          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Unknown' AND voided = 0 AND retired = 0 ")
           unknown = unknown_record['concept_id']
 
@@ -1337,7 +1337,7 @@ EOF
             value = value_record['name']
 
             encounter_type_record = Connection.select_one("SELECT * FROM encounter e WHERE e.encounter_id = #{encounter_id} AND voided = #{voided}")
-            encounter_type = encounter_type_record['encounter_type']  
+            encounter_type = encounter_type_record['encounter_type']
 
             if visit.blank?
               if (encounter_type == 52)
@@ -1423,18 +1423,18 @@ EOF
           end #end case
 
         when breast_feeding2
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
-          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Unknown' AND voided = 0 AND retired = 0 ")
           unknown = unknown_record['concept_id']
 
@@ -1487,7 +1487,7 @@ EOF
             value = value_record['name']
 
             encounter_type_record = Connection.select_one("SELECT * FROM encounter e WHERE e.encounter_id = #{encounter_id} AND voided = #{voided}")
-            encounter_type = encounter_type_record['encounter_type']  
+            encounter_type = encounter_type_record['encounter_type']
 
             if visit.blank?
               if (encounter_type == 52)
@@ -1573,13 +1573,13 @@ EOF
           end #end case
 
         when continue_existing_regimen
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
@@ -1588,7 +1588,7 @@ EOF
 
             value_record = Connection.select_one("SELECT name FROM concept_name WHERE concept_name_id = #{value_coded_name_id}")
             value = value_record['name']
-            
+
             if voided.blank?
               if visit.blank?
                 Connection.execute <<EOF
@@ -1639,13 +1639,13 @@ EOF
           end #case
 
         when prescribe_arvs
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
@@ -1707,13 +1707,13 @@ EOF
 
 
         when cpt_given
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
@@ -1775,46 +1775,46 @@ EOF
         when arv_regimen_type
           arv_regimen_type_unknown_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'UNKNOWN ANTIRETROVIRAL DRUG' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC")
           arv_regimen_type_unknown = arv_regimen_type_unknown_record['concept_name_id']
-    
+
           arv_regimen_type_d4T_3TC_NVP_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'd4T/3TC/NVP' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_d4T_3TC_NVP = arv_regimen_type_d4T_3TC_NVP_record['concept_name_id']
-    
+
           arv_regimen_type_triomune_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'triomune' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_triomune = arv_regimen_type_triomune_record['concept_name_id']
-    
+
           arv_regimen_type_triomune_30_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'triomune-30' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_triomune_30 = arv_regimen_type_triomune_30_record['concept_name_id']
-    
+
           arv_regimen_type_triomune_40_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'triomune-40' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_triomune_40 = arv_regimen_type_triomune_40_record['concept_name_id']
-    
+
           arv_regimen_type_AZT_3TC_NVP_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'AZT/3TC/NVP' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_AZT_3TC_NVP = arv_regimen_type_AZT_3TC_NVP_record['concept_name_id']
-    
+
           arv_regimen_type_AZT_3TC_LPV_r_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'AZT/3TC+LPV/r' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_AZT_3TC_LPV_r = arv_regimen_type_AZT_3TC_LPV_r_record['concept_name_id']
-    
+
           arv_regimen_type_AZT_3TC_EFV_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'AZT/3TC+EFV' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_AZT_3TC_EFV = arv_regimen_type_AZT_3TC_EFV_record['concept_name_id']
-    
+
           arv_regimen_type_d4T_3TC_EFV_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'd4T/3TC/EFV' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_d4T_3TC_EFV = arv_regimen_type_d4T_3TC_EFV_record['concept_name_id']
-    
+
           arv_regimen_type_TDF_3TC_NVP_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'TDF/3TC+NVP' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_TDF_3TC_NVP = arv_regimen_type_TDF_3TC_NVP_record['concept_name_id']
-    
+
           arv_regimen_type_TDF_3TC_EFV_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'TDF/3TC/EFV' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_TDF_3TC_EFV = arv_regimen_type_TDF_3TC_EFV_record['concept_name_id']
-    
+
           arv_regimen_type_ABC_3TC_LPV_r_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'ABC/3TC+LPV/r' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_ABC_3TC_LPV_r = arv_regimen_type_ABC_3TC_LPV_r_record['concept_name_id']
-    
+
           arv_regimen_type_TDF_3TC_LPV_r_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'TDF/3TC+LPV/r' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_TDF_3TC_LPV_r = arv_regimen_type_TDF_3TC_LPV_r_record['concept_name_id']
-    
+
           arv_regimen_type_d4T_3TC_d4T_3TC_NVP_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'd4T/3TC + d4T/3TC/NVP (Starter pack)' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_d4T_3TC_d4T_3TC_NVP = arv_regimen_type_d4T_3TC_d4T_3TC_NVP_record['concept_name_id']
-    
+
           arv_regimen_type_AZT_3TC_AZT_3TC_NVP_record = Connection.select_one("SELECT concept_name.concept_name_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'AZT/3TC + AZT/3TC/NVP (Starter pack)' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           arv_regimen_type_AZT_3TC_AZT_3TC_NVP = arv_regimen_type_AZT_3TC_AZT_3TC_NVP_record['concept_name_id']
 
@@ -1894,7 +1894,7 @@ EOF
 
             else
               Connection.execute <<EOF
-              UPDATE flat_table2 SET arv_regimen_type_TDF_3TC_LPV_r = NULL, arv_regimen_type_TDF_3TC_LPV_r_enc_id = NULL WHERE flat_table2.id = "#{visit}";            
+              UPDATE flat_table2 SET arv_regimen_type_TDF_3TC_LPV_r = NULL, arv_regimen_type_TDF_3TC_LPV_r_enc_id = NULL WHERE flat_table2.id = "#{visit}";
 EOF
             end #voided
 
@@ -2567,37 +2567,37 @@ EOF
         when method_of_family_planning
           family_planning_method_oral_contraceptive_pills_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Oral contraceptive pills' AND voided = 0 AND retired = 0 ")
           family_planning_method_oral_contraceptive_pills = family_planning_method_oral_contraceptive_pills_record['concept_id']
-    
+
           family_planning_method_depo_provera_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Depo-provera' AND voided = 0 AND retired = 0")
           family_planning_method_depo_provera = family_planning_method_depo_provera_record['concept_id']
-    
+
           family_planning_method_intrauterine_contraception_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Intrauterine contraception' AND voided = 0 AND retired = 0 ")
           family_planning_method_intrauterine_contraception = family_planning_method_intrauterine_contraception_record['concept_id']
-    
+
           family_planning_method_contraceptive_implant_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Contraceptive implant' AND voided = 0 AND retired = 0 ")
           family_planning_method_contraceptive_implant = family_planning_method_contraceptive_implant_record['concept_id']
-    
+
           family_planning_method_male_condoms_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Male condoms' AND voided = 0 AND retired = 0 ")
           family_planning_method_male_condoms = family_planning_method_male_condoms_record['concept_id']
-    
+
           family_planning_method_female_condoms_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Female condoms' AND voided = 0 AND retired = 0 ")
           family_planning_method_female_condoms = family_planning_method_female_condoms_record['concept_id']
-    
+
           family_planning_method_rythm_method_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Rhythm method' AND voided = 0 AND retired = 0 ")
           family_planning_method_rythm_method = family_planning_method_rythm_method_record['concept_id']
-    
+
           family_planning_method_withdrawal_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Withdrawal method' AND voided = 0 AND retired = 0 ")
           family_planning_method_withdrawal = family_planning_method_withdrawal_record['concept_id']
-    
+
           family_planning_method_abstinence_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Abstinence' AND voided = 0 AND retired = 0 ")
           family_planning_method_abstinence = family_planning_method_abstinence_record['concept_id']
-    
+
           family_planning_method_tubal_ligation_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Tubal ligation' AND voided = 0 AND retired = 0 ")
           family_planning_method_tubal_ligation = family_planning_method_tubal_ligation_record['concept_id']
-    
+
           family_planning_method_vasectomy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Vasectomy' AND voided = 0 AND retired = 0 ")
           family_planning_method_vasectomy = family_planning_method_vasectomy_record['concept_id']
-    
+
           family_planning_method_emergency_contraception_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Emergency contraception' AND voided = 0 AND retired = 0 ")
           family_planning_method_emergency_contraception = family_planning_method_emergency_contraception_record['concept_id']
 
@@ -2972,7 +2972,7 @@ EOF
                 INSERT INTO flat_table2 (patient_id, visit_date, currently_using_family_planning_method_no, currently_using_family_planning_method_no_enc_id) VALUES ("#{patient_id}", '#{Current_date}', "#{value}", "#{encounter_id}");
 EOF
                 puts "........... Inserting record into flat_table2 (currently_using_family_planning_method: value_coded==no): #{patient_id}"
-  
+
               else
                 Connection.execute <<EOF
                 UPDATE flat_table2 SET currently_using_family_planning_method_no = "#{value}", currently_using_family_planning_method_yes = NULL, currently_using_family_planning_method_no_enc_id = "#{encounter_id}", currently_using_family_planning_method_yes_enc_id = NULL WHERE flat_table2.id = "#{visit}";
@@ -2993,61 +2993,61 @@ EOF
         when symptom_present
           symptom_present_lipodystrophy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Lipodystrophy' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_lipodystrophy = symptom_present_lipodystrophy_record['concept_id']
-    
+
           symptom_present_anemia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Anemia' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_anemia = symptom_present_anemia_record['concept_id']
-    
+
           symptom_present_jaundice_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Jaundice' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_jaundice = symptom_present_jaundice_record['concept_id']
-    
+
           symptom_present_lactic_acidosis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Lactic acidosis' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_lactic_acidosis = symptom_present_lactic_acidosis_record['concept_id']
-    
+
           symptom_present_fever_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Fever' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_fever = symptom_present_fever_record['concept_id']
 
           symptom_present_skin_rash_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Skin rash' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_skin_rash = symptom_present_skin_rash_record['concept_id']
-    
+
           symptom_present_abdominal_pain_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Abdominal pain' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_abdominal_pain = symptom_present_abdominal_pain_record['concept_id']
-    
+
           symptom_present_anorexia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Anorexia' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_anorexia = symptom_present_anorexia_record['concept_id']
-    
+
           symptom_present_cough_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Cough' AND concept_name_type = 'FULLY_SPECIFIED' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_cough = symptom_present_cough_record['concept_id']
-    
+
           symptom_present_diarrhea_record = ("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Diarrhea' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_diarrhea = symptom_present_diarrhea_record['concept_id']
-    
+
           symptom_present_hepatitis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Hepatitis' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_hepatitis = symptom_present_hepatitis_record['concept_id']
-    
+
           symptom_present_leg_pain_numbness_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Leg pain / numbness' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_leg_pain_numbness = symptom_present_leg_pain_numbness_record['concept_id']
-    
+
           symptom_present_peripheral_neuropathy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Peripheral neuropathy' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_peripheral_neuropathy = symptom_present_peripheral_neuropathy_record['concept_id']
-    
+
           symptom_present_vomiting_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Vomiting' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_vomiting = symptom_present_vomiting_record['concept_id']
-    
+
           symptom_present_other_symptom_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Other symptom' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_other_symptom = symptom_present_other_symptom_record['concept_id']
 
           symptom_present_kidney_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Kidney Failure' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_kidney_failure = symptom_present_kidney_failure_record['concept_id']
-    
+
           symptom_present_nightmares_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Nightmares' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_nightmares = symptom_present_nightmares_record['concept_id']
-    
+
           symptom_present_diziness_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Dizziness' AND concept_name_type = 'FULLY_SPECIFIED' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_diziness = symptom_present_diziness_record['concept_id']
-    
+
           symptom_present_psychosis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Psychosis' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_psychosis = symptom_present_psychosis_record['concept_id']
-    
+
           symptom_present_blurry_vision_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Blurry Vision' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           symptom_present_blurry_vision = symptom_present_blurry_vision_record['concept_id']
 
@@ -4067,34 +4067,34 @@ EOF
         when side_effects
           side_effects_no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'No' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_no = side_effects_no_record['concept_id']
-    
+
           side_effects_peripheral_neuropathy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Peripheral neuropathy' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_peripheral_neuropathy = side_effects_peripheral_neuropathy_record['concept_id']
-    
+
           side_effects_hepatitis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Hepatitis' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_hepatitis = side_effects_hepatitis_record['concept_id']
-    
+
           side_effects_skin_rash_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Skin rash' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_skin_rash = side_effects_skin_rash_record['concept_id']
-    
+
           side_effects_lipodystrophy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Lipodystrophy' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_lipodystrophy = side_effects_lipodystrophy_record['concept_id']
-    
+
           side_effects_other_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'other' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_other = side_effects_other_record['concept_id']
-    
+
           side_effects_kidney_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Kidney Failure ' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_kidney_failure = side_effects_kidney_failure_record['concept_id']
-    
+
           side_effects_nightmares_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Nightmares' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_nightmares = side_effects_nightmares_record['concept_id']
-    
+
           side_effects_diziness_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Dizziness' AND concept_name_type = 'FULLY_SPECIFIED' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_diziness = side_effects_diziness_record['concept_id']
-    
+
           side_effects_psychosis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Psychosis' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           side_effects_psychosis = side_effects_psychosis_record['concept_id']
-    
+
           side_effects_blurry_vision_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Blurry Vision' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
 
           case value_coded
@@ -4366,13 +4366,13 @@ EOF
         when routine_tb_screening
           routine_tb_screening_fever_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Fever' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           routine_tb_screening_fever = routine_tb_screening_fever_record['concept_id']
-    
+
           routine_tb_screening_night_sweats_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Night sweats' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           routine_tb_screening_night_sweats = routine_tb_screening_night_sweats_record['concept_id']
-    
+
           routine_tb_screening_cough_of_any_duration_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Cough of any duration' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           routine_tb_screening_cough_of_any_duration = routine_tb_screening_cough_of_any_duration_record['concept_id']
-    
+
           routine_tb_screening_weight_loss_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Weight loss / Failure to thrive / malnutrition' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
 
           case value_coded
@@ -4474,13 +4474,13 @@ EOF
           end #case
 
         when allergic_to_sulphur
-          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          yes_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'Yes' AND voided = 0 AND retired = 0 ")
           yes = yes_record['concept_id']
 
-          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name 
-                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id 
+          no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                 WHERE name = 'No' AND voided = 0 AND retired = 0 ")
           no = no_record['concept_id']
 
@@ -4543,16 +4543,16 @@ EOF
         when tb_status
           tb_status_tb_not_suspected_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'TB NOT suspected' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           tb_status_tb_not_suspected = tb_status_tb_not_suspected_record['concept_id']
-    
+
           tb_status_tb_suspected_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'TB suspected' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           tb_status_tb_suspected = tb_status_tb_suspected_record['concept_id']
-    
+
           tb_status_confirmed_tb_not_on_treatment_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Confirmed TB NOT on treatment' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           tb_status_confirmed_tb_not_on_treatment = tb_status_confirmed_tb_not_on_treatment_record['concept_id']
-    
+
           tb_status_confirmed_tb_on_treatment_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Confirmed TB on treatment' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
           tb_status_confirmed_tb_on_treatment = tb_status_confirmed_tb_on_treatment_record['concept_id']
-    
+
           tb_status_unknown_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE name = 'Unknown' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
 
           case value_coded
@@ -4805,7 +4805,7 @@ EOF
 
               end #answer
             end #value_text
-          
+
           else
             Connection.execute <<EOF
             UPDATE flat_table1 SET confirmatory_hiv_test_location = NULL WHERE flat_table1.patient_id = "#{patient_id}" ;
@@ -5358,7 +5358,7 @@ EOF
           moderate_weight_loss_10_unexplained = moderate_weight_loss_10_unexplained_record['concept_id']
 
 =begin
-  
+
 cd4_percentage_available_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'CD4 percent available' AND voided = 0 AND retired = 0 ")
@@ -5367,9 +5367,9 @@ cd4_percentage_available_record = Connection.select_one("SELECT concept_name.con
           acute_necrotizing_ulcerative_stomatitis_gingivitis_or_period_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                         WHERE name = 'Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis' AND voided = 0 AND retired = 0 ")
-          acute_necrotizing_ulcerative_stomatitis_gingivitis_or_period = acute_necrotizing_ulcerative_stomatitis_gingivitis_or_period_record['concept_id']  
+          acute_necrotizing_ulcerative_stomatitis_gingivitis_or_period = acute_necrotizing_ulcerative_stomatitis_gingivitis_or_period_record['concept_id']
 =end
-          
+
 
           moderate_unexplained_wasting_malnutrition_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -5549,7 +5549,7 @@ cd4_percentage_available_record = Connection.select_one("SELECT concept_name.con
                     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                     WHERE name = 'Who stages criteria present' AND voided = 0 AND retired = 0 ")
           who_crit_stage = who_crit_stage_record['concept_id']
-          
+
           if voided.blank?
             case concept_id
             when missed_hiv_drug_construct
@@ -5567,7 +5567,7 @@ cd4_percentage_available_record = Connection.select_one("SELECT concept_name.con
               missed_hiv_drug_construct5 = flat_table2_record['missed_hiv_drug_construct5'] rescue nil
 
               if visit.blank?
-                case 
+                case
                 when missed_hiv_drug_construct1.blank?
                   Connection.execute <<EOF
                   INSERT INTO flat_table2 (patient_id, visit_date, missed_hiv_drug_construct1, missed_hiv_drug_construct1_enc_id) VALUES ("#{patient_id}", '#{Current_date}', "#{value_text}", "#{encounter_id}");
@@ -5602,7 +5602,7 @@ EOF
 
               else
 
-                case 
+                case
                 when missed_hiv_drug_construct1.blank?
                   if voided.blank?
                     Connection.execute <<EOF
@@ -5681,7 +5681,7 @@ EOF
               end #visit
 
 #######################################################################################################################################
-              
+
             when what_was_the_patient_adherence_for_this_drug
 
               flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 WHERE ID = '#{visit}' ")
@@ -5697,7 +5697,7 @@ EOF
               what_was_the_patient_adherence_for_this_drug5 = flat_table2_record['what_was_the_patient_adherence_for_this_drug5']
 
               if visit.blank?
-                case 
+                case
                 when what_was_the_patient_adherence_for_this_drug1.blank?
                   if value_numeric.blank?
                     Connection.execute <<EOF
@@ -5776,7 +5776,7 @@ EOF
 
                 else
 
-                  case 
+                  case
                   when what_was_the_patient_adherence_for_this_drug1.blank?
                     if voided.blank?
                       if value_numeric.blank?
@@ -5899,9 +5899,9 @@ EOF
 
                   end #case
 
-              end #visit   
+              end #visit
 
- ##############################################################################################################################         
+ ##############################################################################################################################
 
             when amount_of_drug_remaining_at_home
 
@@ -5918,7 +5918,7 @@ EOF
               amount_of_drug5_remaining_at_home = flat_table2_record['amount_of_drug5_remaining_at_home']
 
               if visit.blank?
-                case 
+                case
                 when amount_of_drug1_remaining_at_home.blank?
                   Connection.execute <<EOF
                   INSERT INTO flat_table2 (patient_id, visit_date, amount_of_drug1_remaining_at_home, amount_of_drug1_remaining_at_home_enc_id) VALUES ("#{patient_id}", '#{Current_date}', "#{value_numeric}", "#{encounter_id}");
@@ -5953,7 +5953,7 @@ EOF
 
               else
 
-                case 
+                case
                 when amount_of_drug1_remaining_at_home.blank?
                   if voided.blank?
                     Connection.execute <<EOF
@@ -6048,7 +6048,7 @@ EOF
               amount_of_drug5_brought_to_clinic = flat_table2_record['amount_of_drug5_brought_to_clinic']
 
               if visit.blank?
-                case 
+                case
                 when amount_of_drug1_brought_to_clinic.blank?
                   Connection.execute <<EOF
                   INSERT INTO flat_table2 (patient_id, visit_date, amount_of_drug1_brought_to_clinic, amount_of_drug1_brought_to_clinic_enc_id) VALUES ("#{patient_id}", '#{Current_date}', "#{value_numeric}", "#{encounter_id}");
@@ -6083,7 +6083,7 @@ EOF
 
               else
 
-                case 
+                case
                 when amount_of_drug1_brought_to_clinic.blank?
                   if voided.blank?
                     Connection.execute <<EOF
@@ -6367,7 +6367,7 @@ EOF
                 puts ".......... Updating record into flat_table2 (temperature): #{patient_id}"
 
               end #voided
-              
+
   ####################################################################################################################################
 
             when bmi
@@ -6404,7 +6404,7 @@ EOF
             when systolic_blood_pressure
 
               if voided.blank?
-                
+
                 if value_numeric.blank?
                   sys_value = value_text
                 else
@@ -6500,7 +6500,7 @@ EOF
               end #voided
 
   ####################################################################################################################################
-            
+
             when weight_for_age
               if voided.blank?
                 if value_numeric.blank?
@@ -6569,7 +6569,7 @@ EOF
 
             when ever_received_art
               if voided.blank?
-                answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE concept.concept_id = in_field_value_coded AND voided = 0 AND retired = 0") 
+                answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id WHERE concept.concept_id = in_field_value_coded AND voided = 0 AND retired = 0")
                 answer = answer_record['name']
 
                 Connection.execute <<EOF
@@ -6584,8 +6584,8 @@ EOF
                 puts ".......... Updating record into flat_table1 (ever_received_art): #{patient_id}"
 
               end #voided
-              
-           
+
+
 
   ###################################################################################################################################
 
@@ -6689,7 +6689,7 @@ EOF
               end #voided
 
   ###################################################################################################################################
-            
+
             when has_transfer_letter
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -6710,7 +6710,7 @@ EOF
               end #voided
 
   ###################################################################################################################################
-            
+
 
             when art_init_loc
               if voided.blank?
@@ -6756,7 +6756,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (date_started_art): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when cd4_count_loc
@@ -6786,7 +6786,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cd4_count_loc): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when cd4_percent_loc
@@ -6858,12 +6858,12 @@ EOF
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                   WHERE  concept.concept_id = '#{value_coded}' AND voided = 0 AND retired = 0 ")
                 answer = answer_record['name']
-              
+
                 Connection.execute <<EOF
                 UPDATE flat_table1 SET cd4_count_less_than_250 = "#{answer}" WHERE flat_table1.patient_id= "#{patient_id}";
 EOF
                 puts ".......... Updating record into flat_table1 (cd4_count_less_than_250): #{patient_id}"
-              
+
               else
                 Connection.execute <<EOF
                 UPDATE flat_table1 SET cd4_count_less_than_250 = NULL WHERE flat_table1.patient_id= "#{patient_id}";
@@ -6871,7 +6871,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cd4_count_less_than_250): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when cd4_count_less_than_350
@@ -6970,7 +6970,7 @@ EOF
               end #voided
 
   ###################################################################################################################################
-            
+
             when unspecified_stage_1_cond
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7054,7 +7054,7 @@ EOF
               end #voided
 
   #################################################################################################################################
-            
+
             when parotid_enlargement_pers_unexp
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7073,9 +7073,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (parotid_enlargement_pers_unexp): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
-            
+
             when lineal_gingival_erythema
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7096,7 +7096,7 @@ EOF
               end #voided
 
   ###############################################################################################################################
-            
+
             when herpes_zoster
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7115,7 +7115,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (herpes_zoster): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when resp_tract_infections_rec
@@ -7136,7 +7136,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (resp_tract_infections_rec): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when unspecified_stage2_condition
@@ -7220,7 +7220,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (hepatosplenomegaly_unexplained): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when oral_hairy_leukoplakia
@@ -7261,9 +7261,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (severe_weight_loss): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
-            
+
             when fever_persistent_unexplained
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7282,7 +7282,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (fever_persistent_unexplained): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when pulmonary_tuberculosis
@@ -7345,7 +7345,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (severe_bacterial_infection): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when bacterial_pnuemonia
@@ -7366,7 +7366,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (bacterial_pnuemonia): #{patient_id}"
 
               end #voided
-              
+
   ###############################################################################################################################
 
             when symptomatic_lymphoid_interstitial_pnuemonitis
@@ -7387,7 +7387,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (symptomatic_lymphoid_interstitial_pnuemonitis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when chronic_hiv_assoc_lung_disease
@@ -7408,7 +7408,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (chronic_hiv_assoc_lung_disease): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when unspecified_stage3_condition
@@ -7429,7 +7429,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (unspecified_stage3_condition): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when aneamia
@@ -7450,7 +7450,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (aneamia): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when neutropaenia
@@ -7471,7 +7471,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (neutropaenia): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when thrombocytopaenia_chronic
@@ -7492,7 +7492,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (thrombocytopaenia_chronic): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when diarhoea
@@ -7513,9 +7513,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (diarhoea): #{patient_id}"
 
               end #voided
-              
+
   ###################################################################################################################################
-            
+
             when oral_candidiasis
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7536,7 +7536,7 @@ EOF
               end #voided
 
   ##################################################################################################################################
-            
+
             when acute_necrotizing_ulcerative_gingivitis
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7555,7 +7555,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (acute_necrotizing_ulcerative_gingivitis): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when lymph_node_tuberculosis
@@ -7576,7 +7576,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (lymph_node_tuberculosis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when toxoplasmosis_of_brain
@@ -7597,9 +7597,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (toxoplasmosis_of_brain): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
-            
+
             when cryptococcal_meningitis
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7618,7 +7618,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cryptococcal_meningitis): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when progressive_multifocal_leukoencephalopathy
@@ -7639,7 +7639,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (progressive_multifocal_leukoencephalopathy): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when disseminated_mycosis
@@ -7660,7 +7660,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (disseminated_mycosis): #{patient_id}"
 
               end #voided
-              
+
   ###################################################################################################################################
 
             when candidiasis_of_oesophagus
@@ -7681,7 +7681,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (disseminated_mycosis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when extrapulmonary_tuberculosis
@@ -7702,7 +7702,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (extrapulmonary_tuberculosis): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when cerebral_non_hodgkin_lymphoma
@@ -7723,7 +7723,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cerebral_non_hodgkin_lymphoma): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when hiv_encephalopathy
@@ -7744,7 +7744,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (hiv_encephalopathy): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when bacterial_infections_severe_recurrent
@@ -7765,7 +7765,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (bacterial_infections_severe_recurrent): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when unspecified_stage_4_condition
@@ -7786,9 +7786,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (unspecified_stage_4_condition): #{patient_id}"
 
               end #voided
-            
+
   #################################################################################################################################
-            
+
             when pnuemocystis_pnuemonia
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7807,7 +7807,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (pnuemocystis_pnuemonia): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when disseminated_non_tuberculosis_mycobactierial_infection
@@ -7828,9 +7828,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (disseminated_non_tuberculosis_mycobactierial_infection): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
-            
+
             when cryptosporidiosis
               if voided.blank
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -7849,7 +7849,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cryptosporidiosis): #{patient_id}"
 
               end #voided
-  
+
   ################################################################################################################################
 
             when isosporiasis
@@ -7870,7 +7870,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (isosporiasis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when symptomatic_hiv_asscoiated_nephropathy
@@ -7891,7 +7891,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (symptomatic_hiv_asscoiated_nephropathy): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when chronic_herpes_simplex_infection
@@ -7912,7 +7912,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (chronic_herpes_simplex_infection): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when cytomegalovirus_infection
@@ -7933,7 +7933,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cytomegalovirus_infection): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when toxoplasomis_of_the_brain_1month
@@ -7954,7 +7954,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (toxoplasomis_of_the_brain_1month): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when recto_vaginal_fitsula
@@ -7975,7 +7975,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (recto_vaginal_fitsula): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when pnuemocystis_pnuemonia
@@ -7996,9 +7996,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (pnuemocystis_pnuemonia): #{patient_id}"
 
               end #voided
-            
+
   #################################################################################################################################
-            
+
             when mod_wght_loss_less_thanequal_to_10_perc
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -8017,7 +8017,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (mod_wght_loss_less_thanequal_to_10_perc): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when seborrhoeic_dermatitis
@@ -8038,7 +8038,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (seborrhoeic_dermatitis): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when hepatitis_b_or_c_infection
@@ -8059,7 +8059,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (hepatitis_b_or_c_infection): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when kaposis_sarcoma
@@ -8080,7 +8080,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (kaposis_sarcoma): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when non_typhoidal_salmonella_bacteraemia_recurrent
@@ -8101,7 +8101,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (non_typhoidal_salmonella_bacteraemia_recurrent): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when leishmaniasis_atypical_disseminated
@@ -8122,7 +8122,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (leishmaniasis_atypical_disseminated): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when cerebral_or_b_cell_non_hodgkin_lymphoma
@@ -8143,7 +8143,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cerebral_or_b_cell_non_hodgkin_lymphoma): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when invasive_cancer_of_cervix
@@ -8164,7 +8164,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (invasive_cancer_of_cervix): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when cryptococcal_meningitis_or_other_eptb_cryptococcosis
@@ -8193,7 +8193,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cryptococcal_meningitis_or_other_eptb_cryptococcosis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when candidiasis_of_oesophagus_trachea_bronchi_or_lungs
@@ -8222,7 +8222,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (candidiasis_of_oesophagus_trachea_bronchi_or_lungs): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when severe_unexplained_wasting_malnutrition
@@ -8251,7 +8251,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (severe_unexplained_wasting_malnutrition): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when diarrhoea_chronic_less_1_month_unexplained
@@ -8280,7 +8280,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (diarrhoea_chronic_less_1_month_unexplained): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when moderate_weight_loss_10_unexplained
@@ -8309,7 +8309,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (moderate_weight_loss_10_unexplained): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when acute_necrotizing_ulcerative_stomatitis_gingivitis_or_period
@@ -8338,7 +8338,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (acute_necrotizing_ulcerative_stomatitis_gingivitis_or_period): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when moderate_unexplained_wasting_malnutrition
@@ -8367,7 +8367,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (moderate_unexplained_wasting_malnutrition): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when diarrhoea_persistent_unexplained_14_days_or_more
@@ -8394,7 +8394,7 @@ EOF
                 WHERE flat_table1.patient_id= "#{patient_id}";
 EOF
               end #voided
-              
+
   ##################################################################################################################################
 
             when acute_ulcerative_mouth_infections
@@ -8423,7 +8423,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (acute_ulcerative_mouth_infections): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when anaemia_unexplained_8_g_dl
@@ -8452,7 +8452,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (anaemia_unexplained_8_g_dl): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when atypical_mycobacteriosis_disseminated_or_lung
@@ -8481,7 +8481,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (atypical_mycobacteriosis_disseminated_or_lung): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when bacterial_infections_sev_recurrent_excluding_pneumonia
@@ -8510,7 +8510,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (atypical_mycobacteriosis_disseminated_or_lung): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when cancer_cervix
@@ -8539,7 +8539,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cancer_cervix): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when chronic_herpes_simplex_infection_genital
@@ -8558,7 +8558,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cancer_cervix): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when cryptosporidiosis_chronic_with_diarrhoea
@@ -8587,9 +8587,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (cryptosporidiosis_chronic_with_diarrhoea): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
-            
+
             when cytomegalovirus_infection_retinitis_or_other_organ
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -8616,9 +8616,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (cytomegalovirus_infection_retinitis_or_other_organ): #{patient_id}"
 
               end #voided
-              
+
   ###############################################################################################################################
-            
+
             when cytomegalovirus_of_an_organ_other_than_liver
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -8645,7 +8645,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cytomegalovirus_of_an_organ_other_than_liver): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when fungal_nail_infections
@@ -8674,7 +8674,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (fungal_nail_infections): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when herpes_simplex_infection_mucocutaneous_visceral
@@ -8701,7 +8701,7 @@ EOF
                   WHERE flat_table1.patient_id= "#{patient_id}";
 EOF
               end #voided
-              
+
   ###############################################################################################################################
 
             when hiv_associated_cardiomyopathy
@@ -8730,9 +8730,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (hiv_associated_cardiomyopathy): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
-            
+
             when hiv_associated_nephropathy
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -8759,9 +8759,9 @@ EOF
                 puts ".......... Updating record into flat_table1 (hiv_associated_nephropathy): #{patient_id}"
 
               end #voided
-              
+
   ###################################################################################################################################
-            
+
             when invasive_cancer_cervix
               if voided.blank?
                 answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -8788,7 +8788,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (invasive_cancer_cervix): #{patient_id}"
 
               end #voided
-              
+
   ####################################################################################################################################
 
             when isosporiasis_1_month
@@ -8817,7 +8817,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (isosporiasis_1_month): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when leishmaniasis_atypical_disseminated
@@ -8846,7 +8846,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (leishmaniasis_atypical_disseminated): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when minor_mucocutaneous_manifestations_seborrheic_dermatitis
@@ -8875,7 +8875,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (minor_mucocutaneous_manifestations_seborrheic_dermatitis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when cd4_percentage_available
@@ -8904,7 +8904,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (cd4_percentage_available): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when moderate_unexplained_malnutrition
@@ -8962,7 +8962,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (molluscum_contagiosum_extensive): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when non_typhoidal_salmonella_bacteraemia_recurrent
@@ -8991,7 +8991,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (non_typhoidal_salmonella_bacteraemia_recurrent): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when oral_candidiasis_from_age_2_months
@@ -9020,7 +9020,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (oral_candidiasis_from_age_2_months): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when oral_thrush
@@ -9049,7 +9049,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (oral_thrush): #{patient_id}"
 
               end #voided
-              
+
   ##############################################################################################################################
 
             when perform_extended_staging
@@ -9078,7 +9078,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (perform_extended_staging): #{patient_id}"
 
               end #voided
-              
+
   ###############################################################################################################################
 
             when pneumocystis_carinii_pneumonia
@@ -9107,7 +9107,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (pneumocystis_carinii_pneumonia): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when pneumonia_severe
@@ -9136,7 +9136,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (pneumonia_severe): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when recurrent_bacteraemia_or_sepsis_with_nts
@@ -9165,7 +9165,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (recurrent_bacteraemia_or_sepsis_with_nts): #{patient_id}"
 
               end #voided
-              
+
   ###############################################################################################################################
 
             when recurrent_severe_presumed_pneumonia
@@ -9194,7 +9194,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (recurrent_severe_presumed_pneumonia): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when recurrent_upper_respiratory_tract_bac_sinusitis
@@ -9223,7 +9223,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (recurrent_upper_respiratory_tract_bac_sinusitis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when seborrhoeic_dermatitis
@@ -9252,7 +9252,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (seborrhoeic_dermatitis): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when sepsis_severe
@@ -9281,7 +9281,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (sepsis_severe): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when tb_lymphadenopathy
@@ -9310,7 +9310,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (tb_lymphadenopathy): #{patient_id}"
 
               end #voided
-              
+
   ##################################################################################################################################
 
             when unexplained_anaemia_neutropenia_or_thrombocytopenia
@@ -9339,7 +9339,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (unexplained_anaemia_neutropenia_or_thrombocytopenia): #{patient_id}"
 
               end #voided
-              
+
   #################################################################################################################################
 
             when visceral_leishmaniasis
@@ -9368,7 +9368,7 @@ EOF
                 puts ".......... Updating record into flat_table1 (visceral_leishmaniasis): #{patient_id}"
 
               end #voided
-              
+
   ################################################################################################################################
 
             when who_crit_stage
@@ -9814,7 +9814,7 @@ EOF
                 if (answer == 'Angular cheilitis')
                   Connection.execute <<EOF
                     UPDATE flat_table1 SET angular_chelitis = NULL WHERE flat_table1.patient_id= "#{patient_id}";
-EOF               
+EOF
                   puts ".......... Updating record into flat_table1 (who_crit_stage: angular_chelitis): #{patient_id}"
 
                 end #angular_chelitis
@@ -10219,7 +10219,7 @@ EOF
 
         end #case concept_id
 
-        
+
 
 
 
@@ -10229,7 +10229,7 @@ EOF
 
         current_state_record = Connection.select_one("SELECT IFNULL(current_state_for_program(#{patient_id},1,'#{Current_date}'), 'Unknown') AS state")
 
-        current_state = current_state_record['state']       
+        current_state = current_state_record['state']
 
         if current_hiv_program_state.blank?
           patient_program_record = Connection.select_one("SELECT * FROM patient_program WHERE patient_id = #{patient_id}
@@ -10267,11 +10267,11 @@ end
 def updating_drug_orders_table(patient_ids)
   (patient_ids || []).each do |patient_id|
     drug_order_rec = Connection.select_all("
-      SELECT * FROM drug_order d 
+      SELECT * FROM drug_order d
       INNER JOIN orders o ON d.order_id = o.order_id
       INNER JOIN encounter e ON o.encounter_id = e.encounter_id
       WHERE e.patient_id = #{patient_id}
-      AND (DATE(o.date_created) = '#{Current_date}' OR  
+      AND (DATE(o.date_created) = '#{Current_date}' OR
       DATE(o.date_voided) = '#{Current_date}')
       AND o.voided = 0 ")
 
@@ -10289,7 +10289,7 @@ def updating_drug_orders_table(patient_ids)
 
       quantity = drug_order['quantity']
 
-      flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 
+      flat_table2_record = Connection.select_one("SELECT * FROM flat_table2
         WHERE drug_order_id1 = '#{order_id}' OR drug_order_id2 = '#{order_id}' OR drug_order_id3 = '#{order_id}' OR
         drug_order_id4 = '#{order_id}' OR drug_order_id5 = '#{order_id}'")
 
@@ -10308,11 +10308,11 @@ def updating_drug_orders_table(patient_ids)
       drug_set2 = drug_set['drug_order_id2'] rescue nil
 
       drug_set3 = drug_set['drug_order_id3'] rescue nil
-    
+
       drug_set4 = drug_set['drug_order_id4'] rescue nil
-    
+
       drug_set5 = drug_set['drug_order_id5'] rescue nil
-      
+
 
       drug_name = drug_name_rec['name']
 
@@ -10322,10 +10322,10 @@ def updating_drug_orders_table(patient_ids)
 
       unless drug_set1.blank?
         Connection.execute <<EOF
-            UPDATE flat_table2 SET drug_inventory_id1 = "#{drug_inventory_id}", drug_name1 = @"#{drug_name}", 
+            UPDATE flat_table2 SET drug_inventory_id1 = "#{drug_inventory_id}", drug_name1 = @"#{drug_name}",
                 drug_equivalent_daily_dose1 = "#{equivalent_daily_dose}", drug_dose1 = "#{dose}",
                 drug_frequency1 = "#{frequency}", drug_quantity1 = "#{quantity}", drug_order_id1 = "#{order_id}",
-                drug_inventory_id1_enc_id = "#{encounter_id}", drug_name1_enc_id = "#{encounter_id}", 
+                drug_inventory_id1_enc_id = "#{encounter_id}", drug_name1_enc_id = "#{encounter_id}",
                 drug_equivalent_daily_dose1_enc_id = "#{encounter_id}", drug_dose1_enc_id = "#{encounter_id}",
                 drug_frequency1_enc_id = "#{encounter_id}", drug_quantity1_enc_id = "#{encounter_id}", drug_order_id1_enc_id = "#{encounter_id}"
             WHERE flat_table2.id = "#{visit}";
@@ -10335,48 +10335,48 @@ EOF
 
       unless drug_set2.blank?
         Connection.execute <<EOF
-          UPDATE flat_table2 SET drug_inventory_id2 = "#{drug_inventory_id}", drug_name2 = "#{drug_name}", 
+          UPDATE flat_table2 SET drug_inventory_id2 = "#{drug_inventory_id}", drug_name2 = "#{drug_name}",
                 drug_equivalent_daily_dose2 = "#{equivalent_daily_dose}", drug_dose2 = "#{dose}",
                 drug_frequency2 = "#{frequency}", drug_quantity2 = "#{quantity}", drug_order_id2 = "#{order_id}",
-                drug_inventory_id2_enc_id = "#{encounter_id}", drug_name2_enc_id = "#{encounter_id}", 
+                drug_inventory_id2_enc_id = "#{encounter_id}", drug_name2_enc_id = "#{encounter_id}",
                 drug_equivalent_daily_dose2_enc_id = "#{encounter_id}", drug_dose2_enc_id = "#{encounter_id}",
-                drug_frequency2_enc_id = "#{encounter_id}", drug_quantity2_enc_id = "#{encounter_id}", drug_order_id2_enc_id = "#{encounter_id}" 
+                drug_frequency2_enc_id = "#{encounter_id}", drug_quantity2_enc_id = "#{encounter_id}", drug_order_id2_enc_id = "#{encounter_id}"
           WHERE flat_table2.id = "#{visit}";
 EOF
       end
 
       unless drug_set3.blank?
         Connection.execute <<EOF
-          UPDATE flat_table2 SET drug_inventory_id3 = "#{drug_inventory_id}", drug_name3 = "#{drug_name}", 
+          UPDATE flat_table2 SET drug_inventory_id3 = "#{drug_inventory_id}", drug_name3 = "#{drug_name}",
                 drug_equivalent_daily_dose3 = "#{equivalent_daily_dose}", drug_dose3 = "#{dose}",
                 drug_frequency3 = "#{frequency}", drug_quantity3 = "#{quantity}", drug_order_id3 = "#{order_id}",
-                drug_inventory_id3_enc_id = "#{encounter_id}", drug_name3_enc_id = "#{encounter_id}", 
+                drug_inventory_id3_enc_id = "#{encounter_id}", drug_name3_enc_id = "#{encounter_id}",
                 drug_equivalent_daily_dose3_enc_id = "#{encounter_id}", drug_dose3_enc_id = "#{encounter_id}",
-                drug_frequency3_enc_id = "#{encounter_id}", drug_quantity3_enc_id = "#{encounter_id}", drug_order_id3_enc_id =  "#{encounter_id}"   
+                drug_frequency3_enc_id = "#{encounter_id}", drug_quantity3_enc_id = "#{encounter_id}", drug_order_id3_enc_id =  "#{encounter_id}"
           WHERE flat_table2.id = "#{visit}";
 EOF
       end
 
       unless drug_set4.blank?
         Connection.execute <<EOF
-          UPDATE flat_table2 SET drug_inventory_id4 = "#{drug_inventory_id}", drug_name4 = "#{drug_name}", 
+          UPDATE flat_table2 SET drug_inventory_id4 = "#{drug_inventory_id}", drug_name4 = "#{drug_name}",
                 drug_equivalent_daily_dose4 = "#{equivalent_daily_dose}", drug_dose4 = "#{dose}",
                 drug_frequency4 = "#{frequency}", drug_quantity4 = "#{quantity}", drug_order_id4 = "#{order_id}",
-                drug_inventory_id4_enc_id = "#{encounter_id}", drug_name4_enc_id = "#{encounter_id}", 
+                drug_inventory_id4_enc_id = "#{encounter_id}", drug_name4_enc_id = "#{encounter_id}",
                 drug_equivalent_daily_dose4_enc_id = "#{encounter_id}", drug_dose4_enc_id = "#{encounter_id}",
-                drug_frequency4_enc_id = "#{encounter_id}", drug_quantity4_enc_id = "#{encounter_id}", drug_order_id4_enc_id =  "#{encounter_id}"   
+                drug_frequency4_enc_id = "#{encounter_id}", drug_quantity4_enc_id = "#{encounter_id}", drug_order_id4_enc_id =  "#{encounter_id}"
           WHERE flat_table2.id = "#{visit}";
 EOF
       end
 
       unless drug_set5.blank?
         Connection.execute <<EOF
-          UPDATE flat_table2 SET drug_inventory_id5 = "#{drug_inventory_id}", drug_name5 = "#{drug_name}", 
+          UPDATE flat_table2 SET drug_inventory_id5 = "#{drug_inventory_id}", drug_name5 = "#{drug_name}",
                 drug_equivalent_daily_dose5 = "#{equivalent_daily_dose}", drug_dose5 = "#{dose}",
                 drug_frequency5 = "#{frequency}", drug_quantity5 = "#{quantity}", drug_order_id5 = "#{order_id}",
-                drug_inventory_id5_enc_id = "#{encounter_id}", drug_name5_enc_id = "#{encounter_id}", 
+                drug_inventory_id5_enc_id = "#{encounter_id}", drug_name5_enc_id = "#{encounter_id}",
                 drug_equivalent_daily_dose5_enc_id = "#{encounter_id}", drug_dose5_enc_id = "#{encounter_id}",
-                drug_frequency5_enc_id = "#{encounter_id}", drug_quantity5_enc_id = "#{encounter_id}", drug_order_id5_enc_id = "#{encounter_id}"      
+                drug_frequency5_enc_id = "#{encounter_id}", drug_quantity5_enc_id = "#{encounter_id}", drug_order_id5_enc_id = "#{encounter_id}"
           WHERE flat_table2.id = "#{visit}";
 
 EOF
@@ -10387,14 +10387,14 @@ EOF
     end
 
   end
-  
+
 end
 
 def updating_orders_tables(patient_ids)
   (patient_ids || []).each do |patient_id|
 
     flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 WHERE patient_id = #{patient_id} AND (DATE(visit_date) = '#{Current_date}')")
-    
+
     next if flat_table2_record.blank?
 
     visit = flat_table2_record['ID']
@@ -10402,25 +10402,25 @@ def updating_orders_tables(patient_ids)
     drug_set = Connection.select_one("SELECT * FROM flat_table2 WHERE ID = #{visit}")
 
     drug_set1 = drug_set['drug_order_id1']
-    
+
     drug_set2 = drug_set['drug_order_id2']
-    
+
     drug_set3 = drug_set['drug_order_id3']
-    
+
     drug_set4 = drug_set['drug_order_id4']
-    
+
     drug_set5 = drug_set['drug_order_id5']
 
     orders_rec = Connection.select_all("
       SELECT * FROM orders o
       INNER JOIN encounter e ON o.encounter_id = e.encounter_id
       WHERE e.patient_id = #{patient_id}
-      AND (DATE(o.date_created) = '#{Current_date}' OR  
+      AND (DATE(o.date_created) = '#{Current_date}' OR
       DATE(o.date_voided) = '#{Current_date}')
       AND o.voided = 0 ")
 
 
-    
+
     (orders_rec).each do |order|
       #raise order['order_id'].inspect
 
@@ -10434,27 +10434,27 @@ def updating_orders_tables(patient_ids)
         if voided == 0
           if visit.blank?
             Connection.execute <<EOF
-              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id1, 
-                drug_encounter_id1, drug_start_date1, drug_auto_expire_date1, 
-                drug_order_id1_enc_id, drug_encounter_id1_enc_id, drug_start_date1_enc_id, drug_auto_expire_date1_enc_id) 
-              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}", 
+              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id1,
+                drug_encounter_id1, drug_start_date1, drug_auto_expire_date1,
+                drug_order_id1_enc_id, drug_encounter_id1_enc_id, drug_start_date1_enc_id, drug_auto_expire_date1_enc_id)
+              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}",
                 "#{start_date}", "#{auto_expire_date}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}");
 EOF
-      
+
           else
             Connection.execute <<EOF
               UPDATE flat_table2 SET drug_order_id1 = "#{order_id}", drug_encounter_id1 = "#{encounter_id}", drug_start_date1 = "#{start_date}", drug_auto_expire_date1 = "#{auto_expire_date}",
-                    drug_order_id1_enc_id = "#{encounter_id}", drug_encounter_id1_enc_id = "#{encounter_id}", 
-                    drug_start_date1_enc_id = "#{encounter_id}", drug_auto_expire_date1_enc_id = "#{encounter_id}" 
+                    drug_order_id1_enc_id = "#{encounter_id}", drug_encounter_id1_enc_id = "#{encounter_id}",
+                    drug_start_date1_enc_id = "#{encounter_id}", drug_auto_expire_date1_enc_id = "#{encounter_id}"
               WHERE flat_table2.id = "#{visit}";
 EOF
           end
         else
           Connection.execute <<EOF
-            UPDATE flat_table2 SET drug_order_id1 = NULL, drug_encounter_id1 = NULL, 
+            UPDATE flat_table2 SET drug_order_id1 = NULL, drug_encounter_id1 = NULL,
                       drug_start_date1 = NULL, drug_auto_expire_date1 = NULL,
-                      drug_order_id1_enc_id = NULL, drug_encounter_id1_enc_id = NULL, 
-                      drug_start_date1_enc_id = NULL, drug_auto_expire_date1_enc_id = NULL 
+                      drug_order_id1_enc_id = NULL, drug_encounter_id1_enc_id = NULL,
+                      drug_start_date1_enc_id = NULL, drug_auto_expire_date1_enc_id = NULL
             WHERE flat_table2.id = "#{visit}";
 EOF
         end
@@ -10464,17 +10464,17 @@ EOF
         if voided == 0
           if visit.blank?
             Connection.execute <<EOF
-              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id2, 
-                    drug_encounter_id2, drug_start_date2, drug_auto_expire_date2, drug_order_id2_enc_id, 
-                    drug_encounter_id2_enc_id, drug_start_date2_enc_id, drug_auto_expire_date2_enc_id) 
-              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}", 
+              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id2,
+                    drug_encounter_id2, drug_start_date2, drug_auto_expire_date2, drug_order_id2_enc_id,
+                    drug_encounter_id2_enc_id, drug_start_date2_enc_id, drug_auto_expire_date2_enc_id)
+              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}",
                     "#{start_date}", "#{auto_expire_date}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}");
 EOF
           else
             Connection.execute <<EOF
-              UPDATE flat_table2 SET drug_order_id2 = "#{order_id}", drug_encounter_id2 = "#{encounter_id}", 
+              UPDATE flat_table2 SET drug_order_id2 = "#{order_id}", drug_encounter_id2 = "#{encounter_id}",
                     drug_start_date2 = "#{start_date}", drug_auto_expire_date2 = "#{auto_expire_date}" ,
-                    drug_order_id2_enc_id = "#{encounter_id}", drug_encounter_id2_enc_id = "#{encounter_id}", 
+                    drug_order_id2_enc_id = "#{encounter_id}", drug_encounter_id2_enc_id = "#{encounter_id}",
                     drug_start_date2_enc_id = "#{encounter_id}", drug_auto_expire_date2_enc_id = "#{encounter_id}"
               WHERE flat_table2.id = "#{visit}";
 EOF
@@ -10482,111 +10482,111 @@ EOF
 
         else
           Connection.execute <<EOF
-            UPDATE flat_table2 SET drug_order_id2 = NULL, drug_encounter_id2 = NULL, 
+            UPDATE flat_table2 SET drug_order_id2 = NULL, drug_encounter_id2 = NULL,
                       drug_start_date2 = NULL, drug_auto_expire_date2 = NULL ,
-                      drug_order_id2_enc_id = NULL, drug_encounter_id2_enc_id = NULL, 
+                      drug_order_id2_enc_id = NULL, drug_encounter_id2_enc_id = NULL,
                       drug_start_date2_enc_id = NULL, drug_auto_expire_date2_enc_id = NULL
             WHERE flat_table2.id = "#{visit}";
 EOF
         end
-                  
+
       end
 
       if drug_set3.blank?
         if voided == 0
           if visit.blank?
             Connection.execute <<EOF
-              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id3, 
-                    drug_encounter_id3, drug_start_date3, drug_auto_expire_date3, drug_order_id3_enc_id, 
-                    drug_encounter_id3_enc_id, drug_start_date3_enc_id, drug_auto_expire_date3_enc_id) 
-              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}", 
+              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id3,
+                    drug_encounter_id3, drug_start_date3, drug_auto_expire_date3, drug_order_id3_enc_id,
+                    drug_encounter_id3_enc_id, drug_start_date3_enc_id, drug_auto_expire_date3_enc_id)
+              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}",
                     "#{start_date}", "#{auto_expire_date}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}");
 EOF
-          else 
+          else
             Connection.execute <<EOF
-              UPDATE flat_table2 SET drug_order_id3 = "#{order_id}", drug_encounter_id3 = "#{encounter_id}", 
+              UPDATE flat_table2 SET drug_order_id3 = "#{order_id}", drug_encounter_id3 = "#{encounter_id}",
                     drug_start_date3 = "#{start_date}", drug_auto_expire_date3 = "#{auto_expire_date}",
-                    drug_order_id3_enc_id = "#{encounter_id}", drug_encounter_id3_enc_id = "#{encounter_id}", 
-                    drug_start_date3_enc_id = "#{encounter_id}", drug_auto_expire_date3_enc_id = "#{encounter_id}" 
+                    drug_order_id3_enc_id = "#{encounter_id}", drug_encounter_id3_enc_id = "#{encounter_id}",
+                    drug_start_date3_enc_id = "#{encounter_id}", drug_auto_expire_date3_enc_id = "#{encounter_id}"
               WHERE flat_table2.id = "#{visit}";
 EOF
           end
 
         else
           Connection.execute <<EOF
-            UPDATE flat_table2 SET drug_order_id3 = NULL, drug_encounter_id3 = NULL, 
+            UPDATE flat_table2 SET drug_order_id3 = NULL, drug_encounter_id3 = NULL,
                       drug_start_date3 = NULL, drug_auto_expire_date3 = NULL,
-                      drug_order_id3_enc_id = NULL, drug_encounter_id3_enc_id = NULL, 
-                      drug_start_date3_enc_id = NULL, drug_auto_expire_date3_enc_id = NULL 
+                      drug_order_id3_enc_id = NULL, drug_encounter_id3_enc_id = NULL,
+                      drug_start_date3_enc_id = NULL, drug_auto_expire_date3_enc_id = NULL
             WHERE flat_table2.id = "#{visit}";
 EOF
         end
-        
+
       end
 
       if drug_set4.blank?
         if voided == 0
           if visit.blank?
             Connection.execute <<EOF
-              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id4, 
-                    drug_encounter_id4, drug_start_date4, drug_auto_expire_date4, drug_order_id4_enc_id, 
-                    drug_encounter_id4_enc_id, drug_start_date4_enc_id, drug_auto_expire_date4_enc_id) 
-              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}", 
+              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id4,
+                    drug_encounter_id4, drug_start_date4, drug_auto_expire_date4, drug_order_id4_enc_id,
+                    drug_encounter_id4_enc_id, drug_start_date4_enc_id, drug_auto_expire_date4_enc_id)
+              VALUES ("#{patient_id}", "#{Current_date}", "#{order_id}", "#{encounter_id}",
                     "#{start_date}", "#{auto_expire_date}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}");
 EOF
 
           else
             Connection.execute <<EOF
-              UPDATE flat_table2 SET drug_order_id4 = "#{order_id}", drug_encounter_id4 = "#{encounter_id}", 
+              UPDATE flat_table2 SET drug_order_id4 = "#{order_id}", drug_encounter_id4 = "#{encounter_id}",
                     drug_start_date4 = "#{start_date}", drug_auto_expire_date4 = "#{auto_expire_date}",
-                    drug_order_id4_enc_id = "#{encounter_id}", drug_encounter_id4_enc_id = "#{encounter_id}", 
-                    drug_start_date4_enc_id = "#{encounter_id}", drug_auto_expire_date4_enc_id = "#{encounter_id}" 
+                    drug_order_id4_enc_id = "#{encounter_id}", drug_encounter_id4_enc_id = "#{encounter_id}",
+                    drug_start_date4_enc_id = "#{encounter_id}", drug_auto_expire_date4_enc_id = "#{encounter_id}"
               WHERE flat_table2.id = "#{visit}";
 EOF
           end
 
         else
           Connection.execute <<EOF
-            UPDATE flat_table2 SET drug_order_id4 = NULL, drug_encounter_id4 = NULL, 
+            UPDATE flat_table2 SET drug_order_id4 = NULL, drug_encounter_id4 = NULL,
                       drug_start_date4 = NULL, drug_auto_expire_date4 = NULL,
-                      drug_order_id4_enc_id = NULL, drug_encounter_id4_enc_id = NULL, 
+                      drug_order_id4_enc_id = NULL, drug_encounter_id4_enc_id = NULL,
                       drug_start_date4_enc_id = NULL, drug_auto_expire_date4_enc_id = NULL
             WHERE flat_table2.id = "#{visit}";
 EOF
         end
-        
+
       end
 
       if drug_set5.blank?
         if voided == 0
           if visit.blank?
             Connection.execute <<EOF
-              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id5, 
-                    drug_encounter_id5, drug_start_date5, drug_auto_expire_date5, drug_order_id5_enc_id, 
-                    drug_encounter_id5_enc_id, drug_start_date5_enc_id, drug_auto_expire_date5_enc_id) 
-              VALUES ("#{patient_id}", in_visit_date, "#{order_id}", "#{encounter_id}", 
+              INSERT INTO flat_table2 (patient_id, visit_date, drug_order_id5,
+                    drug_encounter_id5, drug_start_date5, drug_auto_expire_date5, drug_order_id5_enc_id,
+                    drug_encounter_id5_enc_id, drug_start_date5_enc_id, drug_auto_expire_date5_enc_id)
+              VALUES ("#{patient_id}", in_visit_date, "#{order_id}", "#{encounter_id}",
                     "#{start_date}", "#{auto_expire_date}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}", "#{encounter_id}");
 EOF
           else
             Connection.execute <<EOF
-              UPDATE flat_table2 SET drug_order_id5 = "#{order_id}", drug_encounter_id5 = "#{encounter_id}", 
+              UPDATE flat_table2 SET drug_order_id5 = "#{order_id}", drug_encounter_id5 = "#{encounter_id}",
                     drug_start_date5 = "#{start_date}", drug_auto_expire_date5 = "#{auto_expire_date}",
-                    drug_order_id5_enc_id = "#{encounter_id}", drug_encounter_id5_enc_id = "#{encounter_id}", 
-                    drug_start_date5_enc_id = "#{encounter_id}", drug_auto_expire_date5_enc_id = "#{encounter_id}" 
+                    drug_order_id5_enc_id = "#{encounter_id}", drug_encounter_id5_enc_id = "#{encounter_id}",
+                    drug_start_date5_enc_id = "#{encounter_id}", drug_auto_expire_date5_enc_id = "#{encounter_id}"
               WHERE flat_table2.id = "#{visit}";
 EOF
           end
-          
+
         else
           Connection.execute <<EOF
-            UPDATE flat_table2 SET drug_order_id5 = NULL, drug_encounter_id5 = NULL, 
+            UPDATE flat_table2 SET drug_order_id5 = NULL, drug_encounter_id5 = NULL,
                       drug_start_date5 = NULL, drug_auto_expire_date5 = NULL,
-                      drug_order_id5_enc_id = NULL, drug_encounter_id5_enc_id = NULL, 
-                      drug_start_date5_enc_id = NULL, drug_auto_expire_date5_enc_id = NULL 
+                      drug_order_id5_enc_id = NULL, drug_encounter_id5_enc_id = NULL,
+                      drug_start_date5_enc_id = NULL, drug_auto_expire_date5_enc_id = NULL
             WHERE flat_table2.id = "#{visit}";
 EOF
         end
-        
+
       end
 
     end
@@ -10595,7 +10595,7 @@ EOF
 end
 
 def upadating_other_fields(patient_ids)
-  
+
 end
 
 def upating_relationship_table(patient_ids)
@@ -10604,11 +10604,11 @@ def upating_relationship_table(patient_ids)
     relationship_rec = Connection.select_all("
       SELECT * FROM relationship
       WHERE person_a = '#{person_id}' AND
-      (DATE(date_created) = '#{Current_date}' OR 
+      (DATE(date_created) = '#{Current_date}' OR
       DATE(date_voided) = '#{Current_date}')
     ")
 
-    
+
     (relationship_rec).each do |relationship|
       #--Get the guardian's person_id
       guardian_id = relationship['person_b']
@@ -10634,7 +10634,7 @@ def upating_relationship_table(patient_ids)
         if (guardian_person_id1 == guardian_id)
           guardian_exist = guardian_id
 
-        elsif (guardian_person_id2 == guardian_id) 
+        elsif (guardian_person_id2 == guardian_id)
           guardian_exist = guardian_id
 
         elsif (guardian_person_id3 == guardian_id)
@@ -10673,7 +10673,7 @@ def upating_relationship_table(patient_ids)
 
         elsif (guardian_to_which_patient5 == guardian_to_which_patient)
           patient_exist = guardian_to_which_patient
-          
+
         else
           patient_exist = 0
         end
@@ -10760,18 +10760,18 @@ EOF
 end
 
 def updating_patient_program_table(patient_ids)
-  
+
   data = get_earliest_start_date_patients_data(patient_ids)
   (data || []).each do |row|
-  
+
 
       #raise row.inspect
 
-      flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{row[:patient_id]}")  
+      flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{row[:patient_id]}")
 
       earliest_start_date = flat_table1_record['earliest_start_date'].to_date rescue nil
       date_enrolled       = flat_table1_record['date_enrolled'].to_date rescue nil
-      age_at_initiation   = flat_table1_record['age_at_initiation'] 
+      age_at_initiation   = flat_table1_record['age_at_initiation']
       age_in_days         = flat_table1_record['age_in_days']
 
       unless row[:earliest_start_date] == earliest_start_date
@@ -10781,31 +10781,31 @@ def updating_patient_program_table(patient_ids)
       unless row[:date_enrolled] == date_enrolled
         date_enrolled = row[1]
       end unless row[:date_enrolled].blank? rescue nil
-      
+
       unless row[:age_at_initiation] == age_at_initiation
         age_at_initiation = row[:age_at_initiation]
       end
-        
+
       unless row[:age_in_days] == age_in_days
         age_in_days = row[:age_in_days]
       end
-     
+
       if not earliest_start_date.blank? and not date_enrolled.blank?
         Connection.execute <<EOF
-UPDATE flat_table1 
-  SET earliest_start_date = '#{earliest_start_date}', date_enrolled = '#{date_enrolled}', 
+UPDATE flat_table1
+  SET earliest_start_date = '#{earliest_start_date}', date_enrolled = '#{date_enrolled}',
   age_at_initiation = #{age_at_initiation}, age_in_days = #{age_in_days} WHERE patient_id = #{row[:patient_id]};
 EOF
-  
+
       elsif earliest_start_date.blank? and date_enrolled.blank?
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET age_at_initiation = #{age_at_initiation}, age_in_days = #{age_in_days} WHERE patient_id = #{row[:patient_id]};
 EOF
-  
+
       end
   puts "........... Updating record into flat_table1 (Patient_program): #{row[0]}"
-      
+
   end
 end
 
@@ -10820,10 +10820,10 @@ def updating_person_attributes_table(patient_ids)
   (patient_ids || []).each do |person_id|
     person_attributes_records = Connection.select_all("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}') AND voided = 0")
 
-    flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")  
+    flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")
 
     occupation = flat_table1_record['occupation']
     cell_phone_number = flat_table1_record['cellphone_number']
@@ -10835,42 +10835,42 @@ def updating_person_attributes_table(patient_ids)
     #1. updating occupation (New)
     occupation_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{occupation_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{occupation_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
     unless occupation_rec['value'] == occupation
       occupation = occupation_rec['value']
       Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
 SET occupation = "#{occupation}" WHERE patient_id = #{person_id};
 EOF
 
     end unless occupation_rec.blank?
-  
+
     occupation_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{occupation_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{occupation_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 1 ORDER BY date_created DESC LIMIT 1")
 
     (occupation_rec || []).each do |occup|
       if occup['value'] == occupation
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
 SET occupation = NULL WHERE patient_id = #{person_id};
 EOF
       end
     end
    #............................................................................................. occupation end
-    
+
     #2. Updating cell phone number
      cell_phone_number_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{cell_phone_number_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{cell_phone_number_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
@@ -10879,16 +10879,16 @@ EOF
     unless cell_phone_number_rec['value'] == cell_phone_number
       cell_phone_number = cell_phone_number_rec['value']
       Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
 SET cellphone_number = "#{cell_phone_number}" WHERE patient_id = #{person_id};
 EOF
 
     end unless cell_phone_number_rec.blank?
-  
+
     cell_phone_number_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{cell_phone_number_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{cell_phone_number_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 1 ORDER BY date_created DESC LIMIT 1")
 
@@ -10899,7 +10899,7 @@ EOF
 
       puts "updating person: #{person_id}"
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
 SET cellphone_number = NULL WHERE patient_id = #{person_id};
 EOF
       end
@@ -10910,8 +10910,8 @@ EOF
     #3. Updating home phone number
      home_phone_number_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{home_phone_number_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{home_phone_number_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
@@ -10920,24 +10920,24 @@ EOF
     unless home_phone_number_rec['value'] == home_phone_number
       home_phone_number = home_phone_number_rec['value']
       Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
 SET home_phone_number = "#{home_phone_number}" WHERE patient_id = #{person_id};
 EOF
 
 
     end unless home_phone_number_rec.blank?
-  
+
     home_phone_number_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{home_phone_number_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{home_phone_number_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 1 ORDER BY date_created DESC LIMIT 1")
 
     (cell_phone_number_rec || []).each do |homephone|
       if homephone['value'] == home_phone_number
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
 SET home_phone_number = NULL WHERE patient_id = #{person_id};
 EOF
       end
@@ -10948,8 +10948,8 @@ EOF
     #4. Updating office_phone_number
      office_phone_number_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{office_phone_number_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{office_phone_number_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
@@ -10961,18 +10961,18 @@ SET office_phone_number = "#{office_phone_number}" WHERE patient_id = #{person_i
 EOF
 
     end unless office_phone_number_rec.blank?
-  
+
     office_phone_number_rec = Connection.select_one("
       SELECT * FROM person_attribute WHERE person_id = #{person_id}
-      AND person_attribute_type_id = #{office_phone_number_id} 
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND person_attribute_type_id = #{office_phone_number_id}
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}')
       AND voided = 1 ORDER BY date_created DESC LIMIT 1")
 
     (office_phone_number_rec || []).each do |officephone|
       if officephone['value'] == office_phone_number
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
 SET office_phone_number = NULL WHERE patient_id = #{person_id};
 EOF
       end
@@ -10997,12 +10997,12 @@ def updating_patient_identifier_table(patient_ids)
   (patient_ids || []).each do |patient_identifier_patient_id|
     patient_identifier_records = Connection.select_all("
       SELECT * FROM patient_identifier WHERE patient_id = #{patient_identifier_patient_id}
-      AND (DATE(date_created) = '#{Current_date}' 
+      AND (DATE(date_created) = '#{Current_date}'
       OR DATE(date_voided) = '#{Current_date}') AND voided = 0")
 
-    patient_id = patient_identifier_patient_id.to_i 
-    flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{patient_id}")  
-      
+    patient_id = patient_identifier_patient_id.to_i
+    flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{patient_id}")
+
     (patient_identifier_records || []).each do |row|
 
       old_nat_id = flat_table1_record['nat_id']
@@ -11017,30 +11017,30 @@ def updating_patient_identifier_table(patient_ids)
       openmrs_filing_number = Connection.select_one("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
         AND identifier_type = #{filing_number_id}
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
       unless openmrs_filing_number['identifier'] == filing_number
         filing_number = openmrs_filing_number['identifier']
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET filing_number = "#{filing_number}" WHERE patient_id = #{patient_id};
 EOF
 
       end unless openmrs_filing_number.blank?
-    
+
       openmrs_filing_number = Connection.select_all("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
-        AND identifier_type = #{filing_number_id} AND LENGTH(identifier) = 6 
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND identifier_type = #{filing_number_id} AND LENGTH(identifier) = 6
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 1")
 
       (openmrs_filing_number || []).each do |filing_num|
         if filing_num['identifier'] ==  filing_number
           Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET filing_number = NULL WHERE patient_id = #{patient_id};
 EOF
         end
@@ -11053,30 +11053,30 @@ EOF
      openmrs_archived_filing_number = Connection.select_one("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
         AND identifier_type = #{archived_filing_number_id}
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
       unless openmrs_archived_filing_number['identifier'] == archived_filing_number
         archived_filing_number = openmrs_archived_filing_number['identifier']
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET archived_filing_number = "#{archived_filing_number}" WHERE patient_id = #{patient_id};
 EOF
 
       end unless openmrs_archived_filing_number.blank?
-    
+
       openmrs_archived_filing_number = Connection.select_all("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
         AND identifier_type = #{archived_filing_number_id}
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 1")
 
       (openmrs_archived_filing_number || []).each do |arc_filing_num|
         if arc_filing_num['identifier'] ==  archived_filing_number
           Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET archived_filing_number = NULL WHERE patient_id = #{patient_id};
 EOF
         end
@@ -11088,68 +11088,68 @@ EOF
       #1. updating national Id (New: with 6 char)
       openmrs_new_nat_id = Connection.select_one("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
-        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) = 6 
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) = 6
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
       unless openmrs_new_nat_id['identifier'] == new_nat_id
         new_nat_id = openmrs_new_nat_id['identifier']
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET new_nat_id = "#{new_nat_id}" WHERE patient_id = #{patient_id};
 EOF
 
       end unless openmrs_new_nat_id.blank?
-    
+
       openmrs_new_nat_id = Connection.select_all("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
-        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) = 6 
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) = 6
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 1")
 
       (openmrs_new_nat_id || []).each do |nat_num|
         if nat_num['identifier'] ==  new_nat_id
           Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET new_nat_id = NULL WHERE patient_id = #{patient_id};
 EOF
         end
       end
      #............................................................................................. New national ids end
-      
-      
-      
-      
+
+
+
+
       #2. updating national Id (old: with 13 char)
       openmrs_old_nat_id = Connection.select_one("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
-        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) != 6 
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) != 6
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 0 ORDER BY date_created DESC LIMIT 1")
 
       unless openmrs_old_nat_id['identifier'] == old_nat_id
         old_nat_id = openmrs_old_nat_id['identifier']
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET nat_id = "#{old_nat_id}" WHERE patient_id = #{patient_id};
 EOF
 
       end unless openmrs_old_nat_id.blank?
-      
+
       openmrs_old_nat_ids = Connection.select_all("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
-        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) != 6 
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND identifier_type = #{nat_id_type_id} AND LENGTH(identifier) != 6
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 1")
 
       (openmrs_old_nat_ids || []).each do |nat_num|
         if nat_num['identifier'] ==  new_nat_id
           Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET nat_id = NULL WHERE patient_id = #{patient_id};
 EOF
         end
@@ -11162,15 +11162,15 @@ EOF
       #3. updating ARV number (adding ARV number)
       openmrs_arv_number = Connection.select_one("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
-        AND identifier_type = #{arv_number_type_id} 
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND identifier_type = #{arv_number_type_id}
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 0 ORDER BY date_created DESC LIMIT 1")
-      
+
       unless openmrs_arv_number['identifier'] == arv_number
         arv_number = openmrs_arv_number['identifier']
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET arv_number = "#{arv_number}" WHERE patient_id = #{patient_id};
 EOF
 
@@ -11179,23 +11179,23 @@ EOF
       #updating ARV number (removing ARV number if voided)
       openmrs_arv_numbers = Connection.select_all("
         SELECT * FROM patient_identifier WHERE patient_id = #{patient_id}
-        AND identifier_type = #{arv_number_type_id} 
-        AND (DATE(date_created) = '#{Current_date}' 
+        AND identifier_type = #{arv_number_type_id}
+        AND (DATE(date_created) = '#{Current_date}'
         OR DATE(date_voided) = '#{Current_date}')
         AND voided = 1")
-      
+
       (openmrs_arv_numbers || []).each do |arv_num|
         if arv_num['identifier'] ==  arv_number
           Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET arv_number = NULL WHERE patient_id = #{patient_id};
 EOF
         end
       end
-     #............................................................................................. ARV numbers end 
+     #............................................................................................. ARV numbers end
 
 
-    
+
       puts "........... Updating record into flat_table1 (patient_identifier): #{patient_id}"
     end
   end
@@ -11206,15 +11206,15 @@ def updating_person_address_table(person_ids)
   (person_ids || []).each do |person_address_person_id|
     person_address_records = Connection.select_all("
       SELECT * FROM person_address WHERE person_id = #{person_address_person_id}
-      AND (DATE(date_created) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND (DATE(date_created) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
       OR DATE(date_voided) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}')
       AND voided = 0")
 
     #puts "person address records: #{person_address_person_id}"
 
     (person_address_records || []).each do |row|
-      person_id = row['person_id'].to_i 
-      flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")  
+      person_id = row['person_id'].to_i
+      flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")
       current_address = flat_table1_record['current_address']
       home_district = flat_table1_record['home_district']
       ta = flat_table1_record['ta']
@@ -11237,8 +11237,8 @@ def updating_person_address_table(person_ids)
       end
 
       Connection.execute <<EOF
-UPDATE flat_table1 
-  SET current_address = "#{current_address}", home_district = "#{home_district}", 
+UPDATE flat_table1
+  SET current_address = "#{current_address}", home_district = "#{home_district}",
   ta = "#{ta}", landmark = "#{landmark}" WHERE patient_id = #{person_id};
 EOF
 
@@ -11251,14 +11251,14 @@ def updating_person_name_table(person_ids)
   (person_ids || []).each do |person_name_person_id|
     person_name_records = Connection.select_all("
       SELECT * FROM person_name WHERE person_id = #{person_name_person_id}
-      AND (DATE(date_created) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND (DATE(date_created) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
       OR DATE(date_changed) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
       OR DATE(date_voided) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}')
       AND voided = 0")
-    
+
     (person_name_records || []).each do |row|
-      person_id = row['person_id'].to_i 
-      flat_table1_rocord = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")  
+      person_id = row['person_id'].to_i
+      flat_table1_rocord = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")
       given_name = flat_table1_rocord['given_name']
       middle_name = flat_table1_rocord['middle_name']
       family_name = flat_table1_rocord['family_name']
@@ -11277,59 +11277,59 @@ def updating_person_name_table(person_ids)
 
       puts "........... Updating record into flat_table1 (names): #{person_id}"
       Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET given_name = "#{given_name}", family_name = "#{family_name}" WHERE patient_id = #{person_id};
 EOF
-     
-      unless middle_name.blank? 
+
+      unless middle_name.blank?
         Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET middle_name = "#{middle_name}" WHERE patient_id = #{person_id};
 EOF
-     
+
      end
-      
+
     end
 
   end
-      
+
 end
 
 def updating_person_table(person_ids)
   (person_ids || []).each do |person_id|
     person_records = Connection.select_all("
       SELECT * FROM person WHERE person_id = #{person_id}
-      AND (DATE(date_created) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND (DATE(date_created) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
       OR DATE(date_changed) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
       OR DATE(date_voided) = '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}')
       AND '#{Current_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
     ")
-    
+
     unless person_records.blank?
       (person_records || []).each do |row|
-        flat_table1_rocord = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")  
+        flat_table1_rocord = Connection.select_one("SELECT * FROM flat_table1 WHERE patient_id = #{person_id}")
         if flat_table1_rocord.blank?
           puts "........... Inserting new record into flat_table1: #{person_id}"
           Connection.execute <<EOF
-INSERT INTO flat_table1 
-(patient_id, gender, dob, dob_estimated) 
+INSERT INTO flat_table1
+(patient_id, gender, dob, dob_estimated)
 VALUES(#{person_id}, '#{row['gender']}', '#{row['birthdate']}', #{row['birthdate_estimated']})
 EOF
-  
+
         else
           person_table_dob = row['birthdate'].to_date rescue nil
           person_table_dob_estimated = row['birthdate_estimated'].to_i
-          person_table_gender = row['gender'] 
+          person_table_gender = row['gender']
           person_table_death_date = row['death_date'].to_date rescue nil
-          person_voided = row['voided'].to_i 
+          person_voided = row['voided'].to_i
 
           dob = flat_table1_rocord['dob'].to_date rescue nil
-          dob_estimated = flat_table1_rocord['dob_estimated'].to_i 
+          dob_estimated = flat_table1_rocord['dob_estimated'].to_i
           gender = flat_table1_rocord['gender']
           death_date = flat_table1_rocord['death_date'].to_date rescue nil
 
           unless dob == person_table_dob
-            dob = person_table_dob 
+            dob = person_table_dob
           end
 
           unless person_table_dob == dob_estimated
@@ -11349,22 +11349,22 @@ EOF
             Connection.execute <<EOF
 DELETE flat_table1 WHERE patient_id = #{person_id}
 EOF
-  
+
          else
            puts "........... Updating record into flat_table1: #{person_id}"
            Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET dob = '#{dob}', dob_estimated = #{dob_estimated}, gender = '#{gender}'
   WHERE patient_id = #{person_id};
 EOF
-  
+
            unless death_date.blank?
              Connection.execute <<EOF
-UPDATE flat_table1 
+UPDATE flat_table1
   SET death_date = '#{death_date}' WHERE patient_id = #{person_id};
 EOF
-  
-           end 
+
+           end
          end
 
         end
@@ -11386,14 +11386,14 @@ def updating_encounter_table(patient_ids)
     puts "encounter table: patient_id: #{patient_id}"
     encounters = Connection.select_all("
       SELECT * FROM encounter WHERE patient_id = #{patient_id}
-      AND encounter_datetime BETWEEN '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
-      AND '#{Current_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
-      AND encounter_type IN(#{art_encounters_ids.join(',')}) 
+      AND encounter_datetime BETWEEN '#{Current_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+      AND '#{Current_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND encounter_type IN(#{art_encounters_ids.join(',')})
     ")
 
     if encounters.length > 0
       (encounters || []).each do |e|
-        
+
       end
     end
   end
@@ -11402,7 +11402,7 @@ end
 
 def get_earliest_start_date_patients
   art_patient_ids = Connection.select_all("
-   select 
+   select
         `p`.`patient_id` AS `patient_id`,
         cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
         date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
@@ -11430,7 +11430,7 @@ end
 
 def get_earliest_start_date_patients_data(patient_ids)
   records = Connection.select_all("
-   select 
+   select
         `p`.`patient_id` AS `patient_id`,
         cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
         date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
@@ -11453,10 +11453,10 @@ def get_earliest_start_date_patients_data(patient_ids)
         )
     group by `p`.`patient_id`
   ").collect do |p|
-    { 
-      :patient_id => p["patient_id"].to_i, :date_enrolled => p['date_enrolled'], 
+    {
+      :patient_id => p["patient_id"].to_i, :date_enrolled => p['date_enrolled'],
       :earliest_start_date => p['earliest_start_date'], :death_date => (p['death_date'].to_date rescue nil), :age_at_initiation => p['age_at_initiation'], :age_in_days => p['age_in_days']
-    } 
+    }
   end
   return records
 end
