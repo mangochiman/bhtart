@@ -2534,11 +2534,16 @@ EOF
         #symptoms = obs.to_s.split(':').map do | sy |
           #sy.sub(concept_name,'').strip.capitalize
         #end rescue []
-        symptom = obs.answer_string.squish
-        patient_visits[visit_date].s_eff += "<br/>" + symptom unless patient_visits[visit_date].s_eff.blank?
-        patient_visits[visit_date].s_eff = symptom if patient_visits[visit_date].s_eff.blank?
+        next if !obs.obs_group_id.blank?
+        child_obs = Observation.find(:last, :conditions => ["obs_group_id = ?", obs.obs_id])
+        unless child_obs.blank?
+          answer_string = child_obs.answer_string.squish
+          next if answer_string.match(/NO/i)
+          symptom = child_obs.concept.fullname
+          patient_visits[visit_date].s_eff += "<br/>" + symptom unless patient_visits[visit_date].s_eff.blank?
+          patient_visits[visit_date].s_eff = symptom if patient_visits[visit_date].s_eff.blank?
+        end
         
-
       elsif concept_name.upcase == 'AMOUNT OF DRUG BROUGHT TO CLINIC'
         drug = Drug.find(obs.order.drug_order.drug_inventory_id) rescue nil
         #tb_medical = MedicationService.tb_medication(drug) unless drug.nil?
