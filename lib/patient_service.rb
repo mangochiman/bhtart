@@ -1432,7 +1432,7 @@ EOF
     no_patient_ids = patient_ids_with_future_app.map{|ad| ad['person_id'].to_i }
 
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
-SELECT patient_id,state,start_date,end_date, patient_outcome(patient_id, current_date) cal_state FROM patient_state s
+SELECT patient_id,state,start_date,end_date FROM patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
 AND p.patient_id IN(#{patient_ids.join(',')}) 
 AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
@@ -1456,7 +1456,7 @@ EOF
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
 
       outcomes = ActiveRecord::Base.connection.select_all <<EOF
-SELECT patient_id,state,start_date,end_date, patient_outcome(patient_id, current_date) cal_state FROM patient_state s
+SELECT patient_id,state,start_date,end_date  FROM patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
 AND p.patient_id IN(#{patient_ids.join(',')}) 
 AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
