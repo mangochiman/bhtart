@@ -1013,7 +1013,7 @@ class CohortToolController < GenericCohortToolController
 
     (params[:data_inconsistents_patient_ids].split(',') || []).each do |patient_id|
       obs = Observation.find(:first, :conditions =>["person_id = ? AND concept_id = ?",
-        patient_id, concept.id],:order => "obs_datetime DESC, date_created DESC", :limit => 1)
+          patient_id, concept.id],:order => "obs_datetime DESC, date_created DESC", :limit => 1)
 
       next if obs.blank?
       ActiveRecord::Base.connection.execute <<EOF
@@ -1674,12 +1674,12 @@ EOF
 		session[:views]=nil; session[:chidren]; session[:nil]
 
 		case params[:quarter_type].downcase
-			when 'general'
-				render :template => '/cohort_tool/revised_cohort_survival_analysis', :layout => false and return
-			when 'women'
-				render :template => '/cohort_tool/revised_women_cohort_survival_analysis', :layout => false and return
-			when 'children'
-				render :template => '/cohort_tool/revised_children_cohort_survival_analysis', :layout => false and return
+    when 'general'
+      render :template => '/cohort_tool/revised_cohort_survival_analysis', :layout => false and return
+    when 'women'
+      render :template => '/cohort_tool/revised_women_cohort_survival_analysis', :layout => false and return
+    when 'children'
+      render :template => '/cohort_tool/revised_children_cohort_survival_analysis', :layout => false and return
 		end
 	end
 
@@ -1805,12 +1805,12 @@ EOF
 		session[:views]=nil; session[:chidren]; session[:nil]
 
 		case params[:quarter_type].downcase
-			when 'general'
-				render :template => '/cohort_tool/revised_cohort_survival_analysis', :layout => false and return
-			when 'women'
-				render :template => '/cohort_tool/revised_women_cohort_survival_analysis', :layout => false and return
-			when 'children'
-				render :template => '/cohort_tool/revised_children_cohort_survival_analysis', :layout => false and return
+    when 'general'
+      render :template => '/cohort_tool/revised_cohort_survival_analysis', :layout => false and return
+    when 'women'
+      render :template => '/cohort_tool/revised_women_cohort_survival_analysis', :layout => false and return
+    when 'children'
+      render :template => '/cohort_tool/revised_children_cohort_survival_analysis', :layout => false and return
 		end
 	end
 
@@ -1889,23 +1889,23 @@ EOF
 	end
 
   def download_pdf
-	    quarter = params[:quarter]
-        zoom = 0.8
-        file_directory = params[:file_directory]
-        file_name = params[:file_name]
-        output = "#{file_name}.pdf"
+    quarter = params[:quarter]
+    zoom = 0.8
+    file_directory = params[:file_directory]
+    file_name = params[:file_name]
+    output = "#{file_name}.pdf"
 
-        if file_name.include? 'analysis' # Check if report is for survival analysis & print in landscape orientation
-          print_url = "wkhtmltopdf --zoom #{zoom} -s A4 -O landscape http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
-        else
-          print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
-        end
+    if file_name.include? 'analysis' # Check if report is for survival analysis & print in landscape orientation
+      print_url = "wkhtmltopdf --zoom #{zoom} -s A4 -O landscape http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
+    else
+      print_url = "wkhtmltopdf --zoom #{zoom} -s A4 http://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}#{file_directory}#{file_name}?quarter='#{quarter}' #{Rails.root}/tmp/#{output}"
+    end
 
-        Kernel.system print_url
+    Kernel.system print_url
 
-        pdf_filename = File.join(Rails.root, "tmp/#{output}")
-        send_file(pdf_filename, :filename => "#{output}", :type => "application/pdf")
-	    return
+    pdf_filename = File.join(Rails.root, "tmp/#{output}")
+    send_file(pdf_filename, :filename => "#{output}", :type => "application/pdf")
+    return
   end
 
   def adherence
@@ -3176,5 +3176,308 @@ EOF
 
     render :layout => "report"
   end
+
+  def process_fast_track_report
+    @logo = CoreService.get_global_property_value('logo') rescue nil
+    @location_name = Location.current_health_center.name rescue nil
+    start_date = (params[:start_day] + '-' + params[:start_month] + '-' + params[:start_year]).to_date
+    end_date = (params[:end_day] + '-' + params[:end_month] + '-' + params[:end_year]).to_date
+    @start_date = start_date
+    @end_date = end_date
+
+    fast_track_encounter_type_id = EncounterType.find_by_name("FAST TRACK ASSESMENT").encounter_type_id
+    above_18_concept_id = Concept.find_by_name("Adult 18 years +").concept_id
+    on_first_line_art_concept_id = Concept.find_by_name("on First Line ART").concept_id
+    good_adherence_concept_id = Concept.find_by_name("Good Adherence last 2 visits").concept_id
+    last_vl_less_than_1000_concept_id = Concept.find_by_name("Last Viral Load < 1000").concept_id
+    doesnt_have_signs_of_tb_concept_id = Concept.find_by_name("Smear negative").concept_id
+    on_art_for_more_than_12_months_concept_id = Concept.find_by_name("On ART for 12 months +").concept_id
+    not_on_ipt_for_more_than_6_months_concept_id = Concept.find_by_name("Not On Second Line Treatment OR on IPT").concept_id
+    not_on_hypertension_diabetic_treatment_concept_id = Concept.find_by_name("No BP / diabetes treatment").concept_id
+    doesnt_have_drug_side_effect_or_oi_concept_id = Concept.find_by_name("No Side Effects, OI / TB").concept_id
+    not_pregnant_or_breast_feeding_concept_id = Concept.find_by_name("Not Pregnant / Breastfeeding").concept_id
+
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_above_18_years")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_on_first_line_art")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_good_adherence")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_last_vl_less_than_1000")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_doesnt_have_signs_of_tb")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_on_art_for_more_than_12_months")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_not_on_ipt_for_more_than_6_months")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_not_on_hypertension_diabetic_treatment")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_doesnt_have_drug_side_effect_or_oi")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_not_pregnant_or_breast_feeding")
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_above_18_years
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{above_18_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{above_18_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_on_first_line_art
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{on_first_line_art_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{on_first_line_art_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_good_adherence
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{good_adherence_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{good_adherence_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_last_vl_less_than_1000
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{last_vl_less_than_1000_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{last_vl_less_than_1000_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_doesnt_have_signs_of_tb
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{doesnt_have_signs_of_tb_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{doesnt_have_signs_of_tb_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_on_art_for_more_than_12_months
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{on_art_for_more_than_12_months_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{on_art_for_more_than_12_months_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_not_on_ipt_for_more_than_6_months
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{not_on_ipt_for_more_than_6_months_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{not_on_ipt_for_more_than_6_months_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_not_on_hypertension_diabetic_treatment
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{not_on_hypertension_diabetic_treatment_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{not_on_hypertension_diabetic_treatment_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_doesnt_have_drug_side_effect_or_oi
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{doesnt_have_drug_side_effect_or_oi_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{doesnt_have_drug_side_effect_or_oi_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+    CREATE table ft_not_pregnant_or_breast_feeding
+    SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
+    (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
+    obs.voided = 0 AND obs.concept_id = #{not_pregnant_or_breast_feeding_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
+    WHERE  o.concept_id = #{not_pregnant_or_breast_feeding_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
+    AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
+EOF
+
+    data = {}
+    patient_ids = []
+    visit_dates = []
+    ft_above_18_years_hash = {}
+    ft_on_first_line_art_hash = {}
+    ft_good_adherence_hash = {}
+    ft_last_vl_less_than_1000_hash = {}
+    ft_doesnt_have_signs_of_tb_hash = {}
+    ft_on_art_for_more_than_12_months_hash = {}
+    ft_not_on_ipt_for_more_than_6_months_hash = {}
+    ft_not_on_hypertension_diabetic_treatment_hash = {}
+    ft_doesnt_have_drug_side_effect_or_oi_hash = {}
+    ft_not_pregnant_or_breast_feeding_hash = {}
+
+    ft_above_18_years_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_above_18_years")
+    ft_on_first_line_art_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_on_first_line_art")
+    ft_good_adherence_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_good_adherence")
+    ft_last_vl_less_than_1000_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_last_vl_less_than_1000")
+    ft_doesnt_have_signs_of_tb_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_doesnt_have_signs_of_tb")
+    ft_on_art_for_more_than_12_months_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_on_art_for_more_than_12_months")
+    ft_not_on_ipt_for_more_than_6_months_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_not_on_ipt_for_more_than_6_months")
+    ft_not_on_hypertension_diabetic_treatment_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_not_on_hypertension_diabetic_treatment")
+    ft_doesnt_have_drug_side_effect_or_oi_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_doesnt_have_drug_side_effect_or_oi")
+    ft_not_pregnant_or_breast_feeding_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_not_pregnant_or_breast_feeding")
+
+    ft_above_18_years_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_above_18_years_hash[person_id] = {} if ft_above_18_years_hash[person_id].blank?
+      ft_above_18_years_hash[person_id][visit_date] if ft_above_18_years_hash[person_id][visit_date].blank?
+      ft_above_18_years_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_on_first_line_art_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_on_first_line_art_hash[person_id] = {} if ft_on_first_line_art_hash[person_id].blank?
+      ft_on_first_line_art_hash[person_id][visit_date] if ft_on_first_line_art_hash[person_id][visit_date].blank?
+      ft_on_first_line_art_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_good_adherence_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_good_adherence_hash[person_id] = {} if ft_good_adherence_hash[person_id].blank?
+      ft_good_adherence_hash[person_id][visit_date] if ft_good_adherence_hash[person_id][visit_date].blank?
+      ft_good_adherence_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_last_vl_less_than_1000_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_last_vl_less_than_1000_hash[person_id] = {} if ft_last_vl_less_than_1000_hash[person_id].blank?
+      ft_last_vl_less_than_1000_hash[person_id][visit_date] if ft_last_vl_less_than_1000_hash[person_id][visit_date].blank?
+      ft_last_vl_less_than_1000_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_doesnt_have_signs_of_tb_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_doesnt_have_signs_of_tb_hash[person_id] = {} if ft_doesnt_have_signs_of_tb_hash[person_id].blank?
+      ft_doesnt_have_signs_of_tb_hash[person_id][visit_date] if ft_doesnt_have_signs_of_tb_hash[person_id][visit_date].blank?
+      ft_doesnt_have_signs_of_tb_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_on_art_for_more_than_12_months_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_on_art_for_more_than_12_months_hash[person_id] = {} if ft_on_art_for_more_than_12_months_hash[person_id].blank?
+      ft_on_art_for_more_than_12_months_hash[person_id][visit_date] if ft_on_art_for_more_than_12_months_hash[person_id][visit_date].blank?
+      ft_on_art_for_more_than_12_months_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_not_on_ipt_for_more_than_6_months_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_not_on_ipt_for_more_than_6_months_hash[person_id] = {} if ft_not_on_ipt_for_more_than_6_months_hash[person_id].blank?
+      ft_not_on_ipt_for_more_than_6_months_hash[person_id][visit_date] if ft_not_on_ipt_for_more_than_6_months_hash[person_id][visit_date].blank?
+      ft_not_on_ipt_for_more_than_6_months_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_not_on_hypertension_diabetic_treatment_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_not_on_hypertension_diabetic_treatment_hash[person_id] = {} if ft_not_on_hypertension_diabetic_treatment_hash[person_id].blank?
+      ft_not_on_hypertension_diabetic_treatment_hash[person_id][visit_date] if ft_not_on_hypertension_diabetic_treatment_hash[person_id][visit_date].blank?
+      ft_not_on_hypertension_diabetic_treatment_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ft_doesnt_have_drug_side_effect_or_oi_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_doesnt_have_drug_side_effect_or_oi_hash[person_id] = {} if ft_doesnt_have_drug_side_effect_or_oi_hash[person_id].blank?
+      ft_doesnt_have_drug_side_effect_or_oi_hash[person_id][visit_date] if ft_doesnt_have_drug_side_effect_or_oi_hash[person_id][visit_date].blank?
+      ft_doesnt_have_drug_side_effect_or_oi_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+    #ft_not_pregnant_or_breast_feeding_data
+
+    ft_not_pregnant_or_breast_feeding_data.each do |row|
+      person_id = row["person_id"]
+      visit_date = row["visit_date"]
+      answer = row["answer"]
+      ft_not_pregnant_or_breast_feeding_hash[person_id] = {} if ft_not_pregnant_or_breast_feeding_hash[person_id].blank?
+      ft_not_pregnant_or_breast_feeding_hash[person_id][visit_date] if ft_not_pregnant_or_breast_feeding_hash[person_id][visit_date].blank?
+      ft_not_pregnant_or_breast_feeding_hash[person_id][visit_date] = answer
+      patient_ids << person_id
+      visit_dates << visit_date
+    end
+
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_above_18_years")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_on_first_line_art")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_good_adherence")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_last_vl_less_than_1000")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_doesnt_have_signs_of_tb")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_on_art_for_more_than_12_months")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_not_on_ipt_for_more_than_6_months")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_not_on_hypertension_diabetic_treatment")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_doesnt_have_drug_side_effect_or_oi")
+    ActiveRecord::Base.connection.execute("DROP table IF EXISTS ft_not_pregnant_or_breast_feeding")
+
+    @visit_dates =  visit_dates.uniq.sort_by{|d|d.to_date}
+    @patient_ids = patient_ids.uniq
+
+    @fast_track_data = {
+          "ft_above_18_years_hash" => ft_above_18_years_hash,
+          "ft_on_first_line_art_hash" => ft_on_first_line_art_hash,
+          "ft_good_adherence_hash" => ft_good_adherence_hash,
+          "ft_last_vl_less_than_1000_hash" => ft_last_vl_less_than_1000_hash,
+          "ft_doesnt_have_signs_of_tb_hash" => ft_doesnt_have_signs_of_tb_hash,
+          "ft_on_art_for_more_than_12_months_hash" => ft_on_art_for_more_than_12_months_hash,
+          "ft_not_on_ipt_for_more_than_6_months_hash" => ft_not_on_ipt_for_more_than_6_months_hash,
+          "ft_not_on_hypertension_diabetic_treatment_hash" => ft_not_on_hypertension_diabetic_treatment_hash,
+          "ft_doesnt_have_drug_side_effect_or_oi_hash" => ft_doesnt_have_drug_side_effect_or_oi_hash,
+          "ft_not_pregnant_or_breast_feeding_hash" => ft_not_pregnant_or_breast_feeding_hash
+    }
+
+=begin
+ActiveRecord::Base.connection.execute <<EOF
+DROP table IF EXISTS above_18_years;
+EOF
+=end
+    render :layout => "report"
+  end
+
 
 end
