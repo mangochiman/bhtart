@@ -879,7 +879,7 @@ EOF
         #update current_hiv_program_start_date
         Connection.execute <<EOF
 INSERT INTO flat_table2 (patient_id, visit_date, current_hiv_program_state, current_hiv_program_start_date)
-VALUES ("#{patient}", '#{visit_date}', "#{patient_state['state']}", '#{visit_date}');
+VALUES ("#{patient}", '#{visit_date}', "#{patient_outcome}", '#{visit_date}');
 EOF
   end #end if visit blank?
 end
@@ -2363,9 +2363,7 @@ def process_hiv_staging_obs(encounter, visit)
       value = value_record['name']
 
       encounter_type_record = Connection.select_one("SELECT en.* FROM encounter_type en INNER JOIN encounter e ON e.encounter_type = en.encounter_type_id WHERE e.encounter_id = #{patient['encounter_id']} LIMIT 1")
-      puts "#{encounter_type_record}"
       encounter_type_name = encounter_type_record['name']
-
 
       if flat_table1_record.blank?
         if (encounter_type_name == 'HIV STAGING')
