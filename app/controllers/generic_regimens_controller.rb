@@ -138,12 +138,14 @@ class GenericRegimensController < ApplicationController
 
 		hiv_symptoms_ids += hiv_additional_symptoms_ids
 
-    side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
-    symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
+    #side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
+    #symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
 
-    side_effects_contraindications = @patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
-        DATE(obs_datetime) <= ?", [side_effects_concept_id, symptom_present_conept_id], session_date])
+    #side_effects_contraindications = @patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
+        #DATE(obs_datetime) <= ?", [side_effects_concept_id, symptom_present_conept_id], session_date])
 
+    side_effects_contraindications = Patient.side_effects_obs_ever(@patient, session_date)
+    
     @side_effects_answers = Patient.todays_side_effects(@patient, session_date)
     contraindication_date = Patient.date_of_first_hiv_clinic_enc(@patient, session_date)
 
