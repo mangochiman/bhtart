@@ -3212,7 +3212,7 @@ EOF
     CREATE table ft_above_18_years
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{above_18_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{above_18_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{above_18_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3222,17 +3222,16 @@ EOF
     CREATE table ft_on_first_line_art
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{on_first_line_art_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{on_first_line_art_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{on_first_line_art_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
 EOF
-
     ActiveRecord::Base.connection.execute <<EOF
     CREATE table ft_good_adherence
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{good_adherence_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{good_adherence_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{good_adherence_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3242,7 +3241,7 @@ EOF
     CREATE table ft_last_vl_less_than_1000
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{last_vl_less_than_1000_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{last_vl_less_than_1000_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{last_vl_less_than_1000_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3252,7 +3251,7 @@ EOF
     CREATE table ft_doesnt_have_signs_of_tb
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{doesnt_have_signs_of_tb_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{doesnt_have_signs_of_tb_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{doesnt_have_signs_of_tb_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3262,7 +3261,7 @@ EOF
     CREATE table ft_on_art_for_more_than_12_months
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{on_art_for_more_than_12_months_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{on_art_for_more_than_12_months_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{on_art_for_more_than_12_months_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3272,7 +3271,7 @@ EOF
     CREATE table ft_not_on_ipt_for_more_than_6_months
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{not_on_ipt_for_more_than_6_months_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{not_on_ipt_for_more_than_6_months_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{not_on_ipt_for_more_than_6_months_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3282,7 +3281,7 @@ EOF
     CREATE table ft_not_on_hypertension_diabetic_treatment
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{not_on_hypertension_diabetic_treatment_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{not_on_hypertension_diabetic_treatment_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{not_on_hypertension_diabetic_treatment_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3292,7 +3291,7 @@ EOF
     CREATE table ft_doesnt_have_drug_side_effect_or_oi
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{doesnt_have_drug_side_effect_or_oi_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{doesnt_have_drug_side_effect_or_oi_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{doesnt_have_drug_side_effect_or_oi_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3302,7 +3301,7 @@ EOF
     CREATE table ft_not_pregnant_or_breast_feeding
     SELECT o.person_id as person_id, DATE(o.obs_datetime) as visit_date,
     (SELECT name FROM concept_name WHERE concept_id = (SELECT value_coded FROM obs WHERE obs.person_id = o.person_id AND
-    obs.voided = 0 AND obs.concept_id = #{not_pregnant_or_breast_feeding_concept_id} AND DATE(obs.obs_datetime) = DATE(obs.obs_datetime) LIMIT 1) LIMIT 1) as answer
+    obs.voided = 0 AND obs.concept_id = #{not_pregnant_or_breast_feeding_concept_id} AND DATE(obs.obs_datetime) = DATE(o.obs_datetime) LIMIT 1) LIMIT 1) as answer
     FROM obs o INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = #{fast_track_encounter_type_id} AND e.voided = 0
     WHERE  o.concept_id = #{not_pregnant_or_breast_feeding_concept_id} AND DATE(obs_datetime) >= '#{start_date}'
     AND DATE(obs_datetime) <= '#{end_date}' GROUP BY o.person_id, DATE(o.obs_datetime);
@@ -3324,6 +3323,7 @@ EOF
 
     ft_above_18_years_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_above_18_years")
     ft_on_first_line_art_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_on_first_line_art")
+    #raise ft_on_first_line_art_data.inspect
     ft_good_adherence_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_good_adherence")
     ft_last_vl_less_than_1000_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_last_vl_less_than_1000")
     ft_doesnt_have_signs_of_tb_data = ActiveRecord::Base.connection.select_all("SELECT * FROM ft_doesnt_have_signs_of_tb")
@@ -3471,6 +3471,7 @@ EOF
           "ft_not_pregnant_or_breast_feeding_hash" => ft_not_pregnant_or_breast_feeding_hash
     }
 
+    #raise @fast_track_data.to_yaml
 =begin
 ActiveRecord::Base.connection.execute <<EOF
 DROP table IF EXISTS above_18_years;

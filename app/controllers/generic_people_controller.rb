@@ -392,7 +392,7 @@ class GenericPeopleController < ApplicationController
     @task = main_next_task(Location.current_location, @person.patient, session_date)
 		@arv_number = PatientService.get_patient_identifier(@person, 'ARV Number')
     @tb_number = PatientService.get_patient_identifier(@person, 'District TB Number')
-		@patient_bean = PatientService.get_patient(@person)
+		@patient_bean = PatientService.get_patient(@person, session_date)
 
 
 		@art_start_date = PatientService.date_antiretrovirals_started(@person.patient)
