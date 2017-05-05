@@ -1253,8 +1253,8 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
 
   <!-- TRANSFER IN END -->
 
-  <% if @patient_is_child_bearing_female && !@ter_family_planning_method_done %>
-    <% if @currently_using_family_planning_methods.nil? %>
+  <% if @patient_is_child_bearing_female %>
+    <% if !@terminal_family_planning_method %>
       <% if @is_patient_pregnant_value.nil?%>
 
         <%= touch_yes_no_unknown_tag "IS PATIENT PREGNANT?", @patient, nil,
