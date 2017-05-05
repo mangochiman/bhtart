@@ -1073,7 +1073,12 @@ class GenericRegimensController < ApplicationController
 
 	def suggested
 		session_date = session[:datetime].to_date rescue Date.today
-		patient_program = PatientProgram.find(params[:id])
+    begin
+		  patient_program = PatientProgram.find(params[:id])
+    rescue
+		  patient_program = PatientProgram.find(session[:active_patient_id])
+    end
+
 		render :layout => false and return unless patient_program
 		current_weight = PatientService.get_patient_attribute_value(patient_program.patient, "current_weight", session_date)
 		#@options = MedicationService.regimen_options(current_weight, patient_program.program)

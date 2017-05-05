@@ -1464,7 +1464,6 @@ WHERE start_date = (SELECT max(start_date) FROM patient_state t
     WHERE t.patient_program_id = s.patient_program_id)
 AND p.patient_id IN (#{encounter_patient_ids.join(',')})
 GROUP BY p.patient_id 
-HAVING cal_state != 'On antiretrovirals'
 ORDER BY state LIMIT #{limit_one}, #{limit_two};
 EOF
 
