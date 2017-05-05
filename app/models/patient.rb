@@ -508,13 +508,46 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
   end
 
   def self.todays_side_effects(patient, session_date = Date.today)
-     side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
+    side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
     symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
 
-    side_effects_contraindications = patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
+    side_effects_observations = patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
         DATE(obs_datetime) = ?", [side_effects_concept_id, symptom_present_conept_id], session_date]
-    ).collect{|o|o.answer_string.squish}
+    )
+    side_effects_contraindications = []
+    side_effects_observations.each do |obs|
+      next if !obs.obs_group_id.blank?
+      child_obs = Observation.find(:last, :conditions => ["obs_group_id = ?", obs.obs_id])
+      unless child_obs.blank?
+        answer_string = child_obs.answer_string.squish
+        next if answer_string.match(/NO/i)
+        side_effects_contraindications << child_obs.concept.fullname
+      end
+    end
+
     return side_effects_contraindications
+  end
+
+  def self.side_effects_obs_ever(patient, session_date = Date.today)
+    side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
+    symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
+
+    side_effects_observations = patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
+        DATE(obs_datetime) <= ?", [side_effects_concept_id, symptom_present_conept_id], session_date]
+    )
+    side_effects_obs_ever = []
+    side_effects_observations.each do |obs|
+      next if !obs.obs_group_id.blank?
+      child_obs = Observation.find(:last, :conditions => ["obs_group_id = ?", obs.obs_id])
+      unless child_obs.blank?
+        answer_string = child_obs.answer_string.squish
+        next if answer_string.match(/NO/i)
+        side_effects_obs_ever << obs
+        #side_effects_ever << child_obs.concept.fullname
+      end
+    end
+
+    return side_effects_obs_ever
   end
 
   def self.previous_weight(patient, session_date)

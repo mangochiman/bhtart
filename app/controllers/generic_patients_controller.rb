@@ -628,14 +628,13 @@ EOF
     
 
     session[:mastercard_ids] = [] if session[:mastercard_ids].blank?
-
+    session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
     #the parameter are used to re-construct the url when the mastercard is called from a Data cleaning report
     @quarter = params[:quarter]
     @arv_start_number = params[:arv_start_number]
     @arv_end_number = params[:arv_end_number]
     @active_patient = Patient.find(session[:active_patient_id]) rescue ""
-    @active_patient_age = PatientService.get_patient(@active_patient.person).age rescue ""
-    
+    @active_patient_age = PatientService.get_patient(@active_patient.person, session_date).age rescue ""
     child_parent_raltionship_type = RelationshipType.find(:first, :conditions => ["a_is_to_b =? AND b_is_to_a =?",
         'Child', 'Parent']).relationship_type_id
     @guardian_id = @active_patient.relationships.find(:last, :conditions => ["relationship =?",
@@ -683,7 +682,7 @@ EOF
     @arv_start_number = params[:arv_start_number]
     @arv_end_number = params[:arv_end_number]
     @show_mastercard_counter = false
-
+    session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
     if params[:patient_id].blank?
 
       @show_mastercard_counter = true
@@ -702,7 +701,7 @@ EOF
 
       end
       @patient_id = session[:mastercard_ids][session[:mastercard_counter]]
-      @data_demo = mastercard_demographics(Patient.find(@patient_id))
+      @data_demo = mastercard_demographics(Patient.find(@patient_id), session_date)
       @visits = visits(Patient.find(@patient_id))
       @patient_art_start_date = PatientService.patient_art_start_date(@patient_id)
       # elsif session[:mastercard_ids].length.to_i != 0
@@ -712,7 +711,7 @@ EOF
     else
       @patient_id = params[:patient_id]
       @patient_art_start_date = PatientService.patient_art_start_date(@patient_id)
-      @data_demo = mastercard_demographics(Patient.find(@patient_id))
+      @data_demo = mastercard_demographics(Patient.find(@patient_id), session_date)
       #raise @data_demo.eptb.to_yaml
       @visits = visits(Patient.find(@patient_id))
     end
@@ -1133,8 +1132,8 @@ EOF
     when "4"
       @type = "blue"
     end
-
-    @mastercard = mastercard_demographics(@patient)
+    session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
+    @mastercard = mastercard_demographics(@patient, session_date)
     @patient_art_start_date = PatientService.patient_art_start_date(@patient.id)
     @visits = visits(@patient)   # (@patient, (session[:datetime].to_date rescue Date.today))
 
@@ -2097,8 +2096,8 @@ EOF
     end
   end
 
-  def mastercard_demographics(patient_obj)
-    patient_bean = PatientService.get_patient(patient_obj.person)
+  def mastercard_demographics(patient_obj, session_date = Date.today)
+    patient_bean = PatientService.get_patient(patient_obj.person, session_date)
     visits = Mastercard.new()
     visits.patient_id = patient_obj.id
     visits.arv_number = patient_bean.arv_number
