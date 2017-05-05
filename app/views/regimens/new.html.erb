@@ -1801,7 +1801,7 @@
 
       html += "<tbody>";
 
-  <% @drug_stock.each do |drug_id, values| %>
+  <% (@drug_stock || {}).each do |drug_id, values| %>
     <%
     drug_name = values["drug_name"]
     current_stock = values["current_stock"]
