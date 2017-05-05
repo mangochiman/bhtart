@@ -711,7 +711,7 @@ def process_appointment_encounter(encounter, type = 0) #type 0 normal encounter,
     return generate_sql_string(a_hash) if type == 1
 
     encounter.observations.each do |obs|
-      if obs.concept_id == 5096 #appointment_date
+      if obs.concept_id.to_i == 5096 #appointment_date
         a_hash[:appointment_date] = obs.value_datetime.to_date rescue nil
 		    a_hash[:appointment_date_enc_id] = encounter.encounter_id
       end
@@ -733,31 +733,31 @@ def process_vitals_encounter(encounter, type = 0) #type 0 normal encounter, 1 ge
     return generate_sql_string(a_hash) if type == 1
 
     encounter.observations.each do |obs|
-      if obs.concept_id == 5089 #weight
+      if obs.concept_id.to_i == 5089 #weight
         a_hash[:weight] = obs.value_numeric
 		    a_hash[:weight_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 5090 #height
+      elsif obs.concept_id.to_i == 5090 #height
         a_hash[:height] = obs.value_numeric
 		    a_hash[:height_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 5088 #temperature
+      elsif obs.concept_id.to_i == 5088 #temperature
         a_hash[:temperature] = obs.value_numeric
 		    a_hash[:temperature_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 2137 #bmi
+      elsif obs.concept_id.to_i == 2137 #bmi
         a_hash[:bmi] = obs.value_numeric
 		    a_hash[:bmi_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 5085 #systolic blood pressure
+      elsif obs.concept_id.to_i == 5085 #systolic blood pressure
         a_hash[:systolic_blood_pressure] = obs.value_numeric
 		    a_hash[:systolic_blood_pressure_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 5086 #diastolic blood pressure
+      elsif obs.concept_id.to_i == 5086 #diastolic blood pressure
         a_hash[:diastolic_blood_pressure] = obs.value_numeric
 		    a_hash[:diastolic_blood_pressure_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 1822 #weight for height
+      elsif obs.concept_id.to_i == 1822 #weight for height
         a_hash[:weight_for_height] = obs.value_numeric
 		    a_hash[:weight_for_height_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 6396 #weight for age
+      elsif obs.concept_id.to_i == 6396 #weight for age
         a_hash[:weight_for_age] = obs.value_numeric
 		    a_hash[:weight_for_age_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 6397 #height_for_age
+      elsif obs.concept_id.to_i == 6397 #height_for_age
         a_hash[:height_for_age] = obs.value_numeric
 		    a_hash[:height_for_age_enc_id] = encounter.encounter_id
       end
@@ -779,7 +779,7 @@ def process_hiv_reception_encounter(encounter, type = 0) #type 0 normal encounte
 
     encounter.observations.each do |obs|
 
-      if obs.concept_id == 2122 #Guardian Present
+      if obs.concept_id.to_i == 2122 #Guardian Present
     		if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
     			a_hash[:guardian_present] = 'Yes'
     			a_hash[:guardian_present_enc_id] = encounter.encounter_id
@@ -799,7 +799,7 @@ def process_hiv_reception_encounter(encounter, type = 0) #type 0 normal encounte
     		  a_hash[:guardian_present] = 'Unknown'
     			a_hash[:guardian_present_enc_id] = encounter.encounter_id
     		end
-      elsif obs.concept_id == 1805 #Patient Present
+      elsif obs.concept_id.to_i == 1805 #Patient Present
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_present] = 'Yes'
           a_hash[:patient_present_enc_id] = encounter.encounter_id
@@ -828,11 +828,11 @@ def process_dispensing_obs(encounter, type = 0) #type 0 normal encounter, 1 gene
     return generate_sql_string(a_hash) if type == 1
 
     encounter.observations.each do |obs|
-      if obs.concept_id == 8375 #regimen_category_treatment
+      if obs.concept_id.to_i == 8375 #regimen_category_treatment
 
         a_hash[:regimen_category_dispensed] = obs.value_text
         a_hash[:regimen_category_dispensed_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 2559 #arv_regimens_received_construct_record
+      elsif obs.concept_id.to_i == 2559 #arv_regimens_received_construct_record
         a_hash[:arv_regimens_received_construct] = obs.to_s.split(':')[1].strip rescue nil
         a_hash[:arv_regimens_received_construct_enc_id] = encounter.encounter_id
       end
@@ -853,7 +853,7 @@ def process_treatment_obs(encounter, type = 0) #type 0 normal encounter, 1 gener
     return generate_sql_string(a_hash) if type == 1
 
     encounter.observations.each do |obs|
-      if obs.concept_id == 656 #IPT given
+      if obs.concept_id.to_i == 656 #IPT given
     		if obs.value_coded == 1065 #&& obs.value_coded_name_id == 1102
     			a_hash[:ipt_given] = 'Yes'
     			a_hash[:ipt_given_enc_id] = encounter.encounter_id
@@ -862,7 +862,7 @@ def process_treatment_obs(encounter, type = 0) #type 0 normal encounter, 1 gener
     			a_hash[:ipt_given_enc_id] = encounter.encounter_id
 
     		end
-      elsif obs.concept_id == 7024 #CPT given
+      elsif obs.concept_id.to_i == 7024 #CPT given
         if obs.value_coded == 1065 #&& obs.value_coded_name_id == 1102
           a_hash[:cpt_given] = 'Yes'
           a_hash[:cpt_given_enc_id] = encounter.encounter_id
@@ -870,13 +870,13 @@ def process_treatment_obs(encounter, type = 0) #type 0 normal encounter, 1 gener
           a_hash[:cpt_given] = 'No'
           a_hash[:cpt_given_enc_id] = encounter.encounter_id
         end
-      elsif obs.concept_id == 190 #condoms_given
+      elsif obs.concept_id.to_i == 190 #condoms_given
         a_hash[:condoms_given] = obs.value_numeric
         a_hash[:condoms_given_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 8375 #regimen_category_treatment
+      elsif obs.concept_id.to_i == 8375 #regimen_category_treatment
         a_hash[:regimen_category_treatment] = obs.value_text
         a_hash[:regimen_category_treatment_enc_id] = encounter.encounter_id
-      elsif obs.concept_id == 6882 #what_type_of_ARV_regimen
+      elsif obs.concept_id.to_i == 6882 #what_type_of_ARV_regimen
         a_hash[:type_of_ARV_regimen_given] = obs.to_s.split(':')[1].strip rescue nil
         a_hash[:type_of_ARV_regimen_given_enc_id] = encounter.encounter_id
       end
@@ -899,7 +899,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
     return generate_sql_string(a_hash) if type == 1
 
     encounter.observations.each do |obs|
-      if obs.concept_id == 6131 #Patient Pregnant
+      if obs.concept_id.to_i == 6131 #Patient Pregnant
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
@@ -913,7 +913,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
         end
-      elsif obs.concept_id == 1755 #Patient Pregnant
+      elsif obs.concept_id.to_i == 1755 #Patient Pregnant
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
@@ -927,7 +927,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
         end
-      elsif obs.concept_id == 7965 #breastfeeding
+      elsif obs.concept_id.to_i == 7965 #breastfeeding
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_breastfeeding] = 'Yes'
           a_hash[:patient_breastfeeding_enc_id] = encounter.encounter_id
@@ -941,7 +941,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:patient_breastfeeding_enc_id] = encounter.encounter_id
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
         end
-    	elsif obs.concept_id == 7459 #tb status
+    	elsif obs.concept_id.to_i == 7459 #tb status
     		if obs.value_coded == 7454 && obs.value_coded_name_id == 10270
     			a_hash[:tb_status_tb_not_suspected] = 'Yes'
     			a_hash[:tb_status_tb_not_suspected_enc_id] = encounter.encounter_id
@@ -958,7 +958,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
     			a_hash[:tb_status_unknown] = 'Yes'
           a_hash[:tb_status_unknown_enc_id] = encounter.encounter_id
     		end
-      elsif obs.concept_id == 1717 #using family planning methods
+      elsif obs.concept_id.to_i == 1717 #using family planning methods
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:currently_using_family_planning_method] = 'Yes'
           a_hash[:currently_using_family_planning_method_enc_id] = encounter.encounter_id
@@ -966,7 +966,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:currently_using_family_planning_method] = 'No'
           a_hash[:currently_using_family_planning_method_enc_id] = encounter.encounter_id
         end
-      elsif obs.concept_id == 374 #family planning method
+      elsif obs.concept_id.to_i == 374 #family planning method
         if obs.value_coded == 780 && obs.value_coded_name_id == 10736
           a_hash[:family_planning_method_oral_contraceptive_pills] = 'Yes'
           a_hash[:family_planning_method_oral_contraceptive_pills_enc_id] = encounter.encounter_id
@@ -1004,7 +1004,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:family_planning_method_emergency_contraception] = 'Yes'
           a_hash[:family_planning_method_emergency_contraception_enc_id] = encounter.encounter_id
         end
-     elsif obs.concept_id == 1293 #symptoms present
+     elsif obs.concept_id.to_i == 1293 #symptoms present
         if obs.value_coded == 2148 && obs.value_coded_name_id == 2325
           a_hash[:symptom_present_lipodystrophy] = 'Yes'
           a_hash[:symptom_present_lipodystrophy_enc_id] = encounter.encounter_id
@@ -1066,7 +1066,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:symptom_present_blurry_vision] = 'Yes'
           a_hash[:symptom_present_blurry_vision_enc_id] = encounter.encounter_id
         end
-      elsif obs.concept_id == 7755 #malawi_art_side_effects
+      elsif obs.concept_id.to_i == 7755 #malawi_art_side_effects
          if obs.value_coded == 29 && obs.value_coded_name_id == 30
            a_hash[:side_effects_hepatitis] = 'Yes'
            a_hash[:side_effects_hepatitis_enc_id] = encounter.encounter_id
@@ -1107,7 +1107,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
            a_hash[:side_effects_gynaecomastia] = 'Yes'
            a_hash[:side_effects_gynaecomastia_enc_id] = encounter.encounter_id
          end
-      elsif obs.concept_id == 8012 #allergic to sulpher
+      elsif obs.concept_id.to_i == 8012 #allergic to sulpher
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:allergic_to_sulphur] = 'Yes'
           a_hash[:allergic_to_sulphur_enc_id] = encounter.encounter_id
@@ -1123,7 +1123,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
             a_hash[:allergic_to_sulphur_enc_id] = encounter.encounter_id
           end
         end
-      elsif obs.concept_id == 7874 #prescribe arvs
+      elsif obs.concept_id.to_i == 7874 #prescribe arvs
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:prescribe_arvs] = 'Yes'
           a_hash[:prescribe_arvs_enc_id] = encounter.encounter_id
@@ -1139,7 +1139,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
             a_hash[:prescribe_arvs_enc_id] = encounter.encounter_id
           end
         end
-      elsif obs.concept_id == 656 #prescribe ipt
+      elsif obs.concept_id.to_i == 656 #prescribe ipt
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:prescribe_ipt] = 'Yes'
           a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
@@ -1155,7 +1155,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
             a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
           end
         end
-      elsif obs.concept_id == 8259 #routine tb screening
+      elsif obs.concept_id.to_i == 8259 #routine tb screening
 	      if obs.value_coded == 5945 && obs.value_coded_name_id == 4315
 		      a_hash[:routine_tb_screening_fever] = 'Yes'
 		      a_hash[:routine_tb_screening_fever_enc_id] = encounter.encounter_id
@@ -1170,7 +1170,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:routine_tb_screening_weight_loss_failure_enc_id] = encounter.encounter_id
 	      end
 
-      elsif obs.concept_id == 7567 #drug induced symptoms
+      elsif obs.concept_id.to_i == 7567 #drug induced symptoms
         if obs.value_coded == 2148 && obs.value_coded_name_id == 2325
           a_hash[:drug_induced_lipodystrophy] = 'Yes'
           a_hash[:drug_induced_lipodystrophy_enc_id] = encounter.encounter_id
@@ -1251,7 +1251,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
   return generate_sql_string(a_hash) if type == 1
 
   (encounter || []).each do | obs |
-    if obs.concept_id == 2552 #FOLLOW UP AGREEMENT
+    if obs.concept_id.to_i == 2552 #FOLLOW UP AGREEMENT
       ans_registration = ""
       if obs.value_coded
         ans_registration = obs.to_s.split(':')[1].strip rescue nil
@@ -1266,10 +1266,10 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       end
       a_hash[:agrees_to_followup] = ans_registration rescue nil
 
-    elsif obs.concept_id == 7882 #CONFIRMATORY HIV TEST DATE
+    elsif obs.concept_id.to_i == 7882 #CONFIRMATORY HIV TEST DATE
       a_hash[:confirmatory_hiv_test_date] = obs.value_datetime.to_date rescue nil
 
-    elsif obs.concept_id == 7881 #CONFIRMATORY HIV TEST LOCATION
+    elsif obs.concept_id.to_i == 7881 #CONFIRMATORY HIV TEST LOCATION
      if obs.value_text
        conf_loc_name = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
        if conf_loc_name
@@ -1281,7 +1281,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       hiv_location = Location.find_by_location_id(obs.value_numeric).name rescue nil
       a_hash[:confirmatory_hiv_test_location] = hiv_location rescue nil
      end
-    elsif obs.concept_id == 7750 #LOCATION OF ART INITIATION
+    elsif obs.concept_id.to_i == 7750 #LOCATION OF ART INITIATION
       if obs.value_text
         loc_of_art = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
         if loc_of_art
@@ -1294,7 +1294,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         a_hash[:confirmatory_hiv_test_location] = art_location rescue nil
       end
 
-    elsif obs.concept_id == 7752 #HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS
+    elsif obs.concept_id.to_i == 7752 #HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS
       ans_registration = ""
       if obs.value_coded
         ans_registration = obs.to_s.split(':')[1].strip rescue nil
@@ -1309,10 +1309,10 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       end
       a_hash[:taken_art_in_last_two_months] = ans_registration rescue nil
 
-    elsif obs.concept_id == 7880 #Confirmatory HIV Test Type
+    elsif obs.concept_id.to_i == 7880 #Confirmatory HIV Test Type
       a_hash[:type_of_confirmatory_hiv_test] = obs.to_s.split(':')[1] rescue nil
 
-    elsif obs.concept_id == 6394 #HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS
+    elsif obs.concept_id.to_i == 6394 #HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS
       ans_registration = ""
       if obs.value_coded
         ans_registration = obs.to_s.split(':')[1].strip rescue nil
@@ -1327,7 +1327,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       end
       a_hash[:taken_art_in_last_two_weeks] = ans_registration rescue nil
 
-    elsif obs.concept_id == 6393 #HAS TRANSFER LETTER
+    elsif obs.concept_id.to_i == 6393 #HAS TRANSFER LETTER
       ans_registration = ""
       if obs.value_coded
         ans_registration = obs.to_s.split(':')[1].strip rescue nil
@@ -1342,10 +1342,10 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       end
       a_hash[:has_transfer_letter] = ans_registration rescue nil
 
-    elsif obs.concept_id == 2516 #DATE ANTIRETROVIRALS STARTED
+    elsif obs.concept_id.to_i == 2516 #DATE ANTIRETROVIRALS STARTED
       a_hash[:date_started_art] = obs.value_datetime.to_date rescue nil
 
-    elsif obs.concept_id == 7937 #EVER REGISTERED AT ART CLINIC
+    elsif obs.concept_id.to_i == 7937 #EVER REGISTERED AT ART CLINIC
       ans_registration = ""
       if obs.value_coded
         ans_registration = obs.to_s.split(':')[1].strip rescue nil
@@ -1360,7 +1360,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       end
       a_hash[:ever_registered_at_art_clinic] = ans_registration rescue nil
 
-    elsif obs.concept_id == 7754 #EVER RECEIVED ART?
+    elsif obs.concept_id.to_i == 7754 #EVER RECEIVED ART?
       ans_registration = ""
       if obs.value_coded
         ans_registration = obs.to_s.split(':')[1].strip rescue nil
@@ -1375,7 +1375,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       end
       a_hash[:ever_received_art] = ans_registration rescue nil
 
-    elsif obs.concept_id == 7753 #LAST ART DRUGS TAKEN
+    elsif obs.concept_id.to_i == 7753 #LAST ART DRUGS TAKEN
       last_drug = ""
       if obs.value_coded
         last_drug = obs.to_s.split(':')[1].strip rescue nil
@@ -1383,7 +1383,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         last_drug = Drug.find_by_concept_id(obs.value_text).name rescue nil
       end
       a_hash[:last_art_drugs_taken] = last_drug rescue nil
-    elsif obs.concept_id == 7751 #DATE ART LAST TAKEN
+    elsif obs.concept_id.to_i == 7751 #DATE ART LAST TAKEN
       a_hash[:date_art_last_taken] = obs.value_datetime.to_date rescue nil
       a_hash[:date_art_last_taken_v_date] = obs.obs_datetime.to_date rescue nil
     end
@@ -1406,7 +1406,7 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
   return generate_sql_string(a_hash) if type == 1
 
   (encounter || []).each do | obs |
-    if obs.concept_id == 6131 #Patient Pregnant
+    if obs.concept_id.to_i == 6131 #Patient Pregnant
       if !obs.value_coded.blank?
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
@@ -1436,7 +1436,7 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
         end
       end
-    elsif obs.concept_id == 1755 #Patient Pregnant
+    elsif obs.concept_id.to_i == 1755 #Patient Pregnant
       if !obs.value_coded.blank?
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
@@ -1466,7 +1466,7 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
         end
       end
-    elsif obs.concept_id == 7965 #breastfeeding
+    elsif obs.concept_id.to_i == 7965 #breastfeeding
       if !obs.value_coded.blank?
         if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_breastfeeding] = 'Yes'
@@ -1496,7 +1496,7 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
         end
       end
-    elsif obs.concept_id == 9099 #cd4 count location
+    elsif obs.concept_id.to_i == 9099 #cd4 count location
       if obs.value_text
         cd4_count_loc = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
        if cd4_count_loc
@@ -1509,34 +1509,40 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         a_hash[:cd4_count_location] = cd4_location rescue nil
       end
 
-
-    elsif obs.concept_id == 5497 #cd4_count
+    elsif obs.concept_id.to_i == 5497 #cd4_count
       a_hash[:cd4_count] = obs.value_numeric.to_i rescue nil
-    elsif obs.concept_id == 9098 #cd4_count_modifier
+    elsif obs.concept_id.to_i == 9098 #cd4_count_modifier
       a_hash[:cd4_count_modifier] = obs.to_s.split(':')[1].strip rescue nil
-    elsif obs.concept_id == 730 #cd4_count_percent
+    elsif obs.concept_id.to_i == 730 #cd4_count_percent
       a_hash[:cd4_count_percent] = obs.to_s.split(':')[1].strip rescue nil
-    elsif obs.concept_id == 6831 #cd4_count_datetime
+    elsif obs.concept_id.to_i == 6831 #cd4_count_datetime
       a_hash[:cd4_count_datetime] = obs.value_datetime.to_date rescue nil
 
-    elsif (obs.concept_id == 2743 || obs.value_coded == 5006) || (obs.concept_id == 5006) #asymptomatic
-      if obs.value_coded == 5006
+    elsif (obs.value_coded == 5006) #asymptomatic
+      if (obs.value_text == '1065' || obs.value_coded == 1065)
         a_hash[:asymptomatic] = 'Yes'
-      else
-        if (obs.value_text == '1065' || obs.value_coded == 1065)
-          a_hash[:asymptomatic] = 'Yes'
-        elsif (obs.value_text == '1065' || obs.value_coded == 1066)
-          a_hash[:asymptomatic] = 'No'
-        elsif (obs.value_text == '1067' || obs.value_coded == 1067)
-          a_hash[:asymptomatic] = 'Unknown'
-        end
+      elsif (obs.value_text == '1065' || obs.value_coded == 1066)
+        a_hash[:asymptomatic] = 'No'
+      elsif (obs.value_text == '1067' || obs.value_coded == 1067)
+        a_hash[:asymptomatic] = 'Unknown'
       end
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5328) || (obs.concept_id == 5328) #persistent_generalized_lymphadenopathy
+    elsif obs.concept_id.to_i == 7563 #reason_for_starting_art
+      reason_for_starting = ""
+      if obs.value_coded
+        reason_for_starting = ConceptName.find_by_concept_name_id(obs.value_coded_name_id).name rescue nil
+      elsif obs.value_text
+        reason_for_starting = ConceptName.find_by_concept_id(obs.value_text) rescue nil
+      end
+      a_hash[:reason_for_eligibility] = reason_for_starting rescue nil
+      a_hash[:reason_for_starting_v_date] = obs.obs_datetime.to_date rescue nil
+      a_hash[:reason_for_eligibility_enc_id] = obs.encounter_id rescue nil
+
+    elsif obs.concept_id.to_i == 7562 #who_stage
+      a_hash[:who_stage] = obs.to_s.split(':')[1].strip rescue nil
+
+    elsif (obs.concept_id.to_i == 5328) #persistent_generalized_lymphadenopathy
       ans_staging = ""
-      if obs.value_coded == 5328
-        a_hash[:persistent_generalized_lymphadenopathy] = 'Yes'
-      else
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:persistent_generalized_lymphadenopathy] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1544,14 +1550,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:persistent_generalized_lymphadenopathy] = 'Unknown'
         end
-      end
-      #a_hash[:persistent_generalized_lymphadenopathy] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 6757) || (obs.concept_id == 6757) #unspecified_stage_1_cond
-      ans_staging = ""
-      if obs.value_coded == 6757
-        a_hash[:unspecified_stage_1_cond] = 'Yes'
-      else
+    elsif  (obs.concept_id.to_i == 6757) #unspecified_stage_1_cond
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage_1_cond] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1559,14 +1559,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage_1_cond] = 'Unknown'
         end
-      end
-      #a_hash[:unspecified_stage_1_cond] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 1212) || (obs.concept_id == 1212) #molluscumm_contagiosum
-      ans_staging = ""
-      if obs.value_coded == 1212
-        a_hash[:molluscumm_contagiosum] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 1212) #molluscumm_contagiosum
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:molluscumm_contagiosum] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1574,14 +1568,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:molluscumm_contagiosum] = 'Unknown'
         end
-      end
-      #a_hash[:molluscumm_contagiosum] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 6775) || (obs.concept_id == 6775)#wart_virus_infection_extensive
-      ans_staging = ""
-      if obs.value_coded == 6775
-        a_hash[:wart_virus_infection_extensive] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 6775) #wart_virus_infection_extensive
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:wart_virus_infection_extensive] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1589,14 +1577,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:wart_virus_infection_extensive] = 'Unknown'
         end
-      end
-      #a_hash[:wart_virus_infection_extensive] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 2576) || (obs.concept_id == 2576) #oral_ulcerations_recurrent
-      ans_staging = ""
-      if obs.value_coded == 2576
-        a_hash[:oral_ulcerations_recurrent] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 2576) #oral_ulcerations_recurrent
         if (obs.value_text == '1065' || obs.value_coded == 1065)
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:oral_ulcerations_recurrent] = 'Yes'
@@ -1604,14 +1586,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:oral_ulcerations_recurrent] = 'Unknown'
         end
-      end
-      #a_hash[:oral_ulcerations_recurrent] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 1210) || (obs.concept_id == 1210) #parotid_enlargement_persistent_unexplained
-      ans_staging = ""
-      if obs.value_coded == 1210
-        a_hash[:parotid_enlargement_persistent_unexplained] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 1210) #parotid_enlargement_persistent_unexplained
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:parotid_enlargement_persistent_unexplained] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1619,29 +1595,17 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:parotid_enlargement_persistent_unexplained] = 'Unknown'
         end
-      end
-      #a_hash[:parotid_enlargement_persistent_unexplained] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 2891) || (obs.concept_id == 2891) #lineal_gingival_erythema
-      ans_staging = ""
-      if obs.value_coded == 2891
-        a_hash[:lineal_gingival_erythema] = 'Yes'
-      else
-        if (obs.value_text == '1065' || obs.value_coded == 1065)
+    elsif (obs.concept_id.to_i == 2891) #lineal_gingival_erythema
+         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:lineal_gingival_erythema] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:lineal_gingival_erythema] = 'No'
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:lineal_gingival_erythema] = 'Unknown'
         end
-      end
-      #a_hash[:lineal_gingival_erythema] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 836) || (obs.concept_id == 836)  #herpes_zoster
-      ans_staging = ""
-      if obs.value_coded == 836
-        a_hash[:herpes_zoster] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 836)  #herpes_zoster
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:herpes_zoster] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1649,14 +1613,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:herpes_zoster] = 'Unknown'
         end
-      end
-      #a_hash[:herpes_zoster] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 5012) || (obs.concept_id == 5012) #respiratory_tract_infections_recurrent
-      ans_staging = ""
-      if obs.value_coded == 5012
-        a_hash[:respiratory_tract_infections_recurrent] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5012) #respiratory_tract_infections_recurrent
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:respiratory_tract_infections_recurrent] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1664,14 +1622,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:respiratory_tract_infections_recurrent] = 'Unknown'
         end
-      end
-      #a_hash[:respiratory_tract_infections_recurrent] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 6758) || (obs.concept_id == 6758) #unspecified_stage2_condition
-      ans_staging = ""
-      if obs.value_coded == 6758
-        a_hash[:unspecified_stage2_condition] = 'Yes'
-      else
+    elsif  (obs.concept_id.to_i == 6758) #unspecified_stage2_condition
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage2_condition] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1679,14 +1631,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage2_condition] = 'Unknown'
         end
-      end
-      #a_hash[:unspecified_stage2_condition] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 2575) || (obs.concept_id == 2575) #angular_chelitis
-      ans_staging = ""
-      if obs.value_coded == 2575
-        a_hash[:angular_chelitis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 2575) #angular_chelitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:angular_chelitis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1694,14 +1640,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:angular_chelitis] = 'Unknown'
         end
-      end
-      #a_hash[:angular_chelitis] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 2577) || (obs.concept_id == 2577) #papular_pruritic_eruptions
-      ans_staging = ""
-      if obs.value_coded == 2577
-        a_hash[:papular_pruritic_eruptions] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 2577) #papular_pruritic_eruptions
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:papular_pruritic_eruptions] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1709,14 +1649,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:papular_pruritic_eruptions] = 'Unknown'
         end
-      end
-      #a_hash[:papular_pruritic_eruptions] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 7537) || (obs.concept_id == 7537) #hepatosplenomegaly_unexplained
-      ans_staging = ""
-      if obs.value_coded == 7537
-        a_hash[:hepatosplenomegaly_unexplained] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7537) #hepatosplenomegaly_unexplained
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:hepatosplenomegaly_unexplained] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1724,14 +1658,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:hepatosplenomegaly_unexplained] = 'Unknown'
         end
-      end
-      #a_hash[:hepatosplenomegaly_unexplained] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 5337) || (obs.concept_id == 5337) #oral_hairy_leukoplakia
-      ans_staging = ""
-      if obs.value_coded == 5337
-        a_hash[:oral_hairy_leukoplakia] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5337) #oral_hairy_leukoplakia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:oral_hairy_leukoplakia] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1739,14 +1667,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:oral_hairy_leukoplakia] = 'Unknown'
         end
-      end
-      #a_hash[:oral_hairy_leukoplakia] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7540) || (obs.concept_id == 7540) #severe_weight_loss
-      ans_staging = ""
-      if obs.value_coded == 7540
-        a_hash[:severe_weight_loss] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7540) #severe_weight_loss
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:severe_weight_loss] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1754,14 +1676,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:severe_weight_loss] = 'Unknown'
         end
-      end
-      #a_hash[:severe_weight_loss] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 5027) || (obs.concept_id == 5027) #fever_persistent_unexplained
-      ans_staging = ""
-      if obs.value_coded == 5027
-        a_hash[:fever_persistent_unexplained] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5027) #fever_persistent_unexplained
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:fever_persistent_unexplained] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1769,15 +1685,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:fever_persistent_unexplained] = 'Unknown'
         end
-      end
-      #a_hash[:fever_persistent_unexplained] = ans_staging rescue nil
 
-    elsif  (obs.concept_id == 2743 && obs.value_coded == 2891) || (obs.concept_id == 2891) #pulmonary_tuberculosis
-      ans_staging = ""
-      if obs.value_coded == 8206
-        a_hash[:pulmonary_tuberculosis] = 'Yes'
-        a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
-      else
+    elsif  (obs.concept_id.to_i == 2891) #pulmonary_tuberculosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:pulmonary_tuberculosis] = 'Yes'
           a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
@@ -1788,16 +1697,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:pulmonary_tuberculosis] = 'Unknown'
           a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         end
-      end
-      #a_hash[:pulmonary_tuberculosis] = ans_staging rescue nil
-      #a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7539) || (obs.concept_id == 7539) #pulmonary_tuberculosis_last_2_years
-      ans_staging = ""
-      if obs.value_coded == 7539
-        a_hash[:pulmonary_tuberculosis_last_2_years] = 'Yes'
-        a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
-      else
+    elsif (obs.concept_id.to_i == 7539) #pulmonary_tuberculosis_last_2_years
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:pulmonary_tuberculosis_last_2_years] = 'Yes'
           a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
@@ -1808,15 +1709,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:pulmonary_tuberculosis_last_2_years] = 'Unknown'
           a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
         end
-      end
-      #a_hash[:pulmonary_tuberculosis_last_2_years] = ans_staging rescue nil
-      #a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5333) || (obs.concept_id == 5333) #severe_bacterial_infection
-      ans_staging = ""
-      if obs.value_coded == 5333
-        a_hash[:severe_bacterial_infection] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5333) #severe_bacterial_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:severe_bacterial_infection] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1824,14 +1718,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:severe_bacterial_infection] = 'Unknown'
         end
-      end
-      #a_hash[:severe_bacterial_infection] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 1215) || (obs.concept_id == 1215) #bacterial_pnuemonia
-      ans_staging = ""
-      if obs.value_coded == 1215
-        a_hash[:bacterial_pnuemonia] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 1215) #bacterial_pnuemonia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:bacterial_pnuemonia] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1839,14 +1727,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:bacterial_pnuemonia] = 'Unknown'
         end
-      end
-      #a_hash[:bacterial_pnuemonia] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5024) || (obs.concept_id == 5024) #symptomatic_lymphoid_interstitial_pnuemonitis
-      ans_staging = ""
-      if obs.value_coded == 5024
-        a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5024) #symptomatic_lymphoid_interstitial_pnuemonitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1854,14 +1736,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'Unknown'
         end
-      end
-      #a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 2889) || (obs.concept_id == 2889) #chronic_hiv_assoc_lung_disease
-      ans_staging = ""
-      if obs.value_coded == 2889
-        a_hash[:chronic_hiv_assoc_lung_disease] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 2889) #chronic_hiv_assoc_lung_disease
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:chronic_hiv_assoc_lung_disease] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1869,14 +1745,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:chronic_hiv_assoc_lung_disease] = 'Unknown'
         end
-      end
-      #a_hash[:chronic_hiv_assoc_lung_disease] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 6759) || (obs.concept_id == 6759) #unspecified_stage3_condition
-      ans_staging = ""
-      if obs.value_coded == 6759
-        a_hash[:unspecified_stage3_condition] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 6759) #unspecified_stage3_condition
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage3_condition] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1884,14 +1754,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage3_condition] = 'Unknown'
         end
-      end
-      #a_hash[:unspecified_stage3_condition] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 3) || (obs.concept_id == 2891) #aneamia
-      ans_staging = ""
-      if obs.value_coded == 3
-        a_hash[:aneamia] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 3) #aneamia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:aneamia] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1899,14 +1763,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:aneamia] = 'Unknown'
         end
-      end
-      #a_hash[:aneamia] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7954) || (obs.concept_id == 7954) #neutropaenia
-      ans_staging = ""
-      if obs.value_coded == 7954
-        a_hash[:neutropaenia] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7954) #neutropaenia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:neutropaenia] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1914,14 +1772,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:neutropaenia] = 'Unknown'
         end
-      end
-      #a_hash[:neutropaenia] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7955) || (obs.concept_id == 7955) #thrombocytopaenia_chronic
-      ans_staging = ""
-      if obs.value_coded == 7955
-        a_hash[:thrombocytopaenia_chronic]  = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7955) #thrombocytopaenia_chronic
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:thrombocytopaenia_chronic]  = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1929,14 +1781,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:thrombocytopaenia_chronic]  = 'Unknown'
         end
-      end
-      #a_hash[:thrombocytopaenia_chronic] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 16) || (obs.concept_id == 16) #diarhoea
-      ans_staging = ""
-      if obs.value_coded == 16
-        a_hash[:diarhoea] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 16) #diarhoea
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:diarhoea] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1944,14 +1790,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:diarhoea] = 'Unknown'
         end
-      end
-      #a_hash[:diarhoea] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5334) || (obs.concept_id == 5334) #oral_candidiasis
-      ans_staging = ""
-      if obs.value_coded == 5334
-        a_hash[:oral_candidiasis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5334) #oral_candidiasis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:oral_candidiasis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1959,14 +1799,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:oral_candidiasis] = 'Unknown'
         end
-      end
-      #a_hash[:oral_candidiasis] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7546) || (obs.concept_id == 7546) #acute_necrotizing_ulcerative_gingivitis
-      ans_staging = ""
-      if obs.value_coded == 7546
-        a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7546) #acute_necrotizing_ulcerative_gingivitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1974,14 +1808,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'Unknown'
         end
-      end
-      #a_hash[:acute_necrotizing_ulcerative_gingivitis] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7547) || (obs.concept_id == 7547) #lymph_node_tuberculosis
-      ans_staging = ""
-      if obs.value_coded == 7547
-        a_hash[:lymph_node_tuberculosis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7547) #lymph_node_tuberculosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:lymph_node_tuberculosis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -1989,14 +1817,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:lymph_node_tuberculosis] = 'Unknown'
         end
-      end
-    #  a_hash[:lymph_node_tuberculosis] = ans_staging rescue nil
 
-  elsif (obs.concept_id == 2743 && obs.value_coded == 2583) || (obs.concept_id == 2583) #toxoplasmosis_of_the_brain
-      ans_staging = ""
-      if obs.value_coded == 2583
-        a_hash[:toxoplasmosis_of_the_brain] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 2583) #toxoplasmosis_of_the_brain
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:toxoplasmosis_of_the_brain] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2004,14 +1826,9 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:toxoplasmosis_of_the_brain] = 'Unknown'
         end
-      end
-      #a_hash[:toxoplasmosis_of_the_brain] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 1359) || (obs.concept_id == 1359) #cryptococcal_meningitis
-      ans_staging = ""
-      if obs.value_coded == 1359
-        a_hash[:cryptococcal_meningitis] = 'Yes'
-      else
+
+    elsif (obs.concept_id.to_i == 1359) #cryptococcal_meningitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cryptococcal_meningitis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2019,14 +1836,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cryptococcal_meningitis] = 'Unknown'
         end
-      end
-      #a_hash[:cryptococcal_meningitis] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5046) || (obs.concept_id == 5046) #progressive_multifocal_leukoencephalopathy
-      ans_staging = ""
-      if obs.value_coded == 5046
-        a_hash[:progressive_multifocal_leukoencephalopathy] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5046) #progressive_multifocal_leukoencephalopathy
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:progressive_multifocal_leukoencephalopathy] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2034,14 +1845,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:progressive_multifocal_leukoencephalopathy] = 'Unknown'
         end
-      end
-      #a_hash[:progressive_multifocal_leukoencephalopathy] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7550) || (obs.concept_id == 7550) #disseminated_mycosis
-      ans_staging = ""
-      if obs.value_coded == 7550
-        a_hash[:disseminated_mycosis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7550) #disseminated_mycosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:disseminated_mycosis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2049,14 +1854,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:disseminated_mycosis] = 'Unknown'
         end
-      end
-      #a_hash[:disseminated_mycosis] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7553) || (obs.concept_id == 7553) #candidiasis_of_oesophagus
-      ans_staging = ""
-      if obs.value_coded == 7553
-        a_hash[:candidiasis_of_oesophagus] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7553) #candidiasis_of_oesophagus
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:candidiasis_of_oesophagus] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2064,15 +1863,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:candidiasis_of_oesophagus] = 'Unknown'
         end
-      end
-      #a_hash[:candidiasis_of_oesophagus] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 1547) || (obs.concept_id == 1547) #extrapulmonary_tuberculosis
-      ans_staging = ""
-      if obs.value_coded == 1547
-        a_hash[:extrapulmonary_tuberculosis] = 'Yes'
-        a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
-      else
+    elsif  (obs.concept_id.to_i == 1547) #extrapulmonary_tuberculosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:extrapulmonary_tuberculosis] = 'Yes'
           a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
@@ -2083,15 +1875,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:extrapulmonary_tuberculosis] = 'Unknown'
           a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         end
-      end
-      #a_hash[:extrapulmonary_tuberculosis] = ans_staging rescue nil
-      #a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 2587) || (obs.concept_id == 2587) #cerebral_non_hodgkin_lymphoma
-      ans_staging = ""
-      if obs.value_coded == 2587
-        a_hash[:cerebral_non_hodgkin_lymphoma] = 'Yes'
-      else
+    elsif  (obs.concept_id.to_i == 2587) #cerebral_non_hodgkin_lymphoma
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cerebral_non_hodgkin_lymphoma] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2099,15 +1884,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cerebral_non_hodgkin_lymphoma] = 'Unknown'
         end
-      end
-      #a_hash[:cerebral_non_hodgkin_lymphoma] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 507) || (obs.concept_id == 507) #kaposis
-      ans_staging = ""
-      if obs.value_coded == 507
-        a_hash[:kaposis_sarcoma] = 'Yes'
-        a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
-      else
+    elsif (obs.concept_id.to_i == 507) #kaposis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:kaposis_sarcoma] = 'Yes'
           a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
@@ -2118,15 +1896,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:kaposis_sarcoma] = 'Unknown'
           a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
         end
-      end
-      #a_hash[:kaposis_sarcoma] = ans_staging rescue nil
-      #a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 1362) || (obs.concept_id == 1362) #hiv_encephalopathy
-      ans_staging = ""
-      if obs.value_coded == 1362
-        a_hash[:hiv_encephalopathy] = 'Yes'
-      else
+    elsif  (obs.concept_id.to_i == 1362) #hiv_encephalopathy
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:hiv_encephalopathy] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2134,14 +1905,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:hiv_encephalopathy] = 'Unknown'
         end
-      end
-      #a_hash[:hiv_encephalopathy] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 2894) || (obs.concept_id == 2894) #bacterial_infections_severe_recurrent
-      ans_staging = ""
-      if obs.value_coded == 2894
-        a_hash[:bacterial_infections_severe_recurrent] = 'Yes'
-      else
+    elsif  (obs.concept_id.to_i == 2894) #bacterial_infections_severe_recurrent
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:bacterial_infections_severe_recurrent] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2149,14 +1914,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:bacterial_infections_severe_recurrent] = 'Unknown'
         end
-      end
-      #a_hash[:bacterial_infections_severe_recurrent] = ans_staging rescue nil
 
-    elsif obs.concept_id == 6763 #unspecified_stage_4_condition
-      ans_staging = ""
-      if (obs.concept_id == 2743 && obs.value_coded == 6763) || (obs.concept_id == 6763)
-        a_hash[:unspecified_stage_4_condition] = 'Yes'
-      else
+    elsif obs.concept_id.to_i == 6763 #unspecified_stage_4_condition
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage_4_condition] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2164,14 +1923,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage_4_condition] = 'Unknown'
         end
-      end
-      #a_hash[:unspecified_stage_4_condition] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 882) || (obs.concept_id == 882) #pnuemocystis_pnuemonia
-      ans_staging = ""
-      if obs.value_coded == 882
-        a_hash[:pnuemocystis_pnuemonia] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 882) #pnuemocystis_pnuemonia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:pnuemocystis_pnuemonia] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2179,14 +1932,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:pnuemocystis_pnuemonia] = 'Unknown'
         end
-      end
-      #a_hash[:pnuemocystis_pnuemonia] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 2585) || (obs.concept_id == 2585) #disseminated_non_tuberculosis_mycobacterial_infection
-      ans_staging = ""
-      if obs.value_coded == 2585
-        a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 2585) #disseminated_non_tuberculosis_mycobacterial_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2194,14 +1941,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'Unknown'
         end
-      end
-      #a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5034) || (obs.concept_id == 5034) #cryptosporidiosis
-      ans_staging = ""
-      if obs.value_coded == 5034
-        a_hash[:cryptosporidiosis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5034) #cryptosporidiosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cryptosporidiosis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2209,14 +1950,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cryptosporidiosis] = 'Unknown'
         end
-      end
-      #a_hash[:cryptosporidiosis] = ans_staging rescue nil
 
-    elsif(obs.concept_id == 2743 && obs.value_coded == 2858) || (obs.concept_id == 2858) #isosporiasis
-      ans_staging = ""
-      if obs.value_coded == 2858
-        a_hash[:isosporiasis] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 2858) #isosporiasis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:isosporiasis] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2224,14 +1959,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:isosporiasis] = 'Unknown'
         end
-      end
-      #a_hash[:isosporiasis] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7957) || (obs.concept_id == 7957) #symptomatic_hiv_associated_nephropathy
-      ans_staging = ""
-      if obs.value_coded == 7957
-        a_hash[:symptomatic_hiv_associated_nephropathy] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7957) #symptomatic_hiv_associated_nephropathy
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:symptomatic_hiv_associated_nephropathy] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2239,14 +1968,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:symptomatic_hiv_associated_nephropathy] = 'Unknown'
         end
-      end
-      #a_hash[:symptomatic_hiv_associated_nephropathy] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5344) || (obs.concept_id == 5344) #chronic_herpes_simplex_infection
-      ans_staging = ""
-      if obs.value_coded == 5344
-        a_hash[:chronic_herpes_simplex_infection] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5344) #chronic_herpes_simplex_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:chronic_herpes_simplex_infection] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2254,14 +1977,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:chronic_herpes_simplex_infection] = 'Unknown'
         end
-      end
-      #a_hash[:chronic_herpes_simplex_infection] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7551) || (obs.concept_id == 7551) #cytomegalovirus_infection
-      ans_staging = ""
-      if obs.value_coded == 7551
-        a_hash[:cytomegalovirus_infection] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7551) #cytomegalovirus_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cytomegalovirus_infection] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2269,14 +1986,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cytomegalovirus_infection] = 'Unknown'
         end
-      end
-      #a_hash[:cytomegalovirus_infection] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 5048) || (obs.concept_id == 5048) #toxoplasomis_of_the_brain_1month
-      ans_staging = ""
-      if obs.value_coded == 5048
-        a_hash[:toxoplasomis_of_the_brain_1month] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 5048) #toxoplasomis_of_the_brain_1month
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:toxoplasomis_of_the_brain_1month] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2284,14 +1995,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:toxoplasomis_of_the_brain_1month] = 'Unknown'
         end
-      end
-      #a_hash[:toxoplasomis_of_the_brain_1month] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 7961) || (obs.concept_id == 7961) #recto_vaginal_fitsula
-      ans_staging = ""
-      if obs.value_coded == 7961
-        a_hash[:recto_vaginal_fitsula] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 7961) #recto_vaginal_fitsula
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:recto_vaginal_fitsula] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2299,14 +2004,8 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:recto_vaginal_fitsula] = 'Unknown'
         end
-      end
-      #a_hash[:recto_vaginal_fitsula] = ans_staging rescue nil
 
-    elsif (obs.concept_id == 2743 && obs.value_coded == 823) || (obs.concept_id == 823) #moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl
-      ans_staging = ""
-      if obs.value_coded == 823
-        a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'Yes'
-      else
+    elsif (obs.concept_id.to_i == 823) #moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'Yes'
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
@@ -2314,26 +2013,121 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'Unknown'
         end
-      end
-      #a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = ans_staging rescue nil
-
-    elsif obs.concept_id == 7563 #reason_for_starting_art
-      reason_for_starting = ""
-      if obs.value_coded
-        reason_for_starting = ConceptName.find_by_concept_name_id(obs.value_coded_name_id).name rescue nil
-      elsif obs.value_text
-        reason_for_starting = ConceptName.find_by_concept_id(obs.value_text) rescue nil
-      end
-
-      a_hash[:reason_for_eligibility] = reason_for_starting rescue nil
-      a_hash[:reason_for_starting_v_date] = obs.obs_datetime.to_date rescue nil
-      a_hash[:reason_for_eligibility_enc_id] = obs.encounter_id rescue nil
-    elsif obs.concept_id == 7562 #who_stage
-      a_hash[:who_stage] = obs.to_s.split(':')[1].strip rescue nil
-    elsif obs.concept_id == 2743 #who_stages_criteria_present
+    elsif obs.concept_id.to_i == 2743 #who_stages_criteria_present
       a_hash[:who_stages_criteria_present] = obs.to_s.split(':')[1].strip rescue nil
       a_hash[:who_stages_criteria_present_enc_id] = obs.encounter_id rescue nil
       a_hash[:who_stages_criteria_present_v_date] = obs.obs_datetime.to_date rescue nil
+
+        if (obs.value_coded == 5328) #persistent_generalized_lymphadenopathy
+    	    a_hash[:persistent_generalized_lymphadenopathy] = 'Yes'
+        elsif (obs.value_coded == 5006) #asymptomatic
+          a_hash[:asymptomatic] = 'Yes'
+        elsif  (obs.value_coded== 6757) #unspecified_stage_1_cond
+          a_hash[:unspecified_stage_1_cond] = 'Yes'
+        elsif (obs.value_coded== 1212) #molluscumm_contagiosum
+          a_hash[:molluscumm_contagiosum] = 'Yes'
+        elsif (obs.value_coded== 6775) #wart_virus_infection_extensive
+          a_hash[:wart_virus_infection_extensive] = 'Yes'
+        elsif (obs.value_coded== 2576) #oral_ulcerations_recurrent
+          a_hash[:oral_ulcerations_recurrent] = 'Yes'
+        elsif (obs.value_coded== 1210) #parotid_enlargement_persistent_unexplained
+          a_hash[:parotid_enlargement_persistent_unexplained] = 'Yes'
+        elsif (obs.value_coded== 2891) #lineal_gingival_erythema
+          a_hash[:lineal_gingival_erythema] = 'Yes'
+        elsif (obs.value_coded== 836)  #herpes_zoster
+          a_hash[:herpes_zoster] = 'Yes'
+        elsif (obs.value_coded== 5012) #respiratory_tract_infections_recurrent
+          a_hash[:respiratory_tract_infections_recurrent] = 'Yes'
+        elsif  (obs.value_coded== 6758) #unspecified_stage2_condition
+          a_hash[:unspecified_stage2_condition] = 'Yes'
+        elsif (obs.value_coded== 2575) #angular_chelitis
+          a_hash[:angular_chelitis] = 'Yes'
+        elsif (obs.value_coded== 2577) #papular_pruritic_eruptions
+          a_hash[:papular_pruritic_eruptions] = 'Yes'
+        elsif (obs.value_coded== 7537) #hepatosplenomegaly_unexplained
+          a_hash[:hepatosplenomegaly_unexplained] = 'Yes'
+        elsif (obs.value_coded== 5337) #oral_hairy_leukoplakia
+          a_hash[:oral_hairy_leukoplakia] = 'Yes'
+        elsif (obs.value_coded== 7540) #severe_weight_loss
+          a_hash[:severe_weight_loss] = 'Yes'
+        elsif (obs.value_coded== 5027) #fever_persistent_unexplained
+          a_hash[:fever_persistent_unexplained] = 'Yes'
+        elsif  (obs.value_coded== 2891) #pulmonary_tuberculosis
+          a_hash[:pulmonary_tuberculosis] = 'Yes'
+          a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
+        elsif (obs.value_coded== 7539) #pulmonary_tuberculosis_last_2_years
+          a_hash[:pulmonary_tuberculosis_last_2_years] = 'Yes'
+          a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
+        elsif (obs.value_coded== 5333) #severe_bacterial_infection
+          a_hash[:severe_bacterial_infection] = 'Yes'
+        elsif (obs.value_coded== 1215) #bacterial_pnuemonia
+          a_hash[:bacterial_pnuemonia] = 'Yes'
+        elsif (obs.value_coded== 5024) #symptomatic_lymphoid_interstitial_pnuemonitis
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'Yes'
+        elsif (obs.value_coded== 2889) #chronic_hiv_assoc_lung_disease
+          a_hash[:chronic_hiv_assoc_lung_disease] = 'Yes'
+        elsif (obs.value_coded== 6759) #unspecified_stage3_condition
+          a_hash[:unspecified_stage3_condition] = 'Yes'
+        elsif (obs.value_coded== 3) #aneamia
+          a_hash[:aneamia] = 'Yes'
+        elsif (obs.value_coded== 7954) #neutropaenia
+          a_hash[:neutropaenia] = 'Yes'
+        elsif (obs.value_coded== 7955) #thrombocytopaenia_chronic
+          a_hash[:thrombocytopaenia_chronic]  = 'Yes'
+        elsif (obs.value_coded== 16) #diarhoea
+          a_hash[:diarhoea] = 'Yes'
+        elsif (obs.value_coded== 5334) #oral_candidiasis
+          a_hash[:oral_candidiasis] = 'Yes'
+        elsif (obs.value_coded== 7546) #acute_necrotizing_ulcerative_gingivitis
+          a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'Yes'
+        elsif (obs.value_coded== 7547) #lymph_node_tuberculosis
+          a_hash[:lymph_node_tuberculosis] = 'Yes'
+        elsif (obs.value_coded== 2583) #toxoplasmosis_of_the_brain
+          a_hash[:toxoplasmosis_of_the_brain] = 'Yes'
+        elsif (obs.value_coded== 1359) #cryptococcal_meningitis
+          a_hash[:cryptococcal_meningitis] = 'Yes'
+        elsif (obs.value_coded== 5046) #progressive_multifocal_leukoencephalopathy
+          a_hash[:progressive_multifocal_leukoencephalopathy] = 'Yes'
+        elsif (obs.value_coded== 7550) #disseminated_mycosis
+          a_hash[:disseminated_mycosis] = 'Yes'
+        elsif (obs.value_coded== 7553) #candidiasis_of_oesophagus
+          a_hash[:candidiasis_of_oesophagus] = 'Yes'
+        elsif  (obs.value_coded== 1547) #extrapulmonary_tuberculosis
+          a_hash[:extrapulmonary_tuberculosis] = 'Yes'
+          a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
+        elsif  (obs.value_coded== 2587) #cerebral_non_hodgkin_lymphoma
+          a_hash[:cerebral_non_hodgkin_lymphoma] = 'Yes'
+        elsif (obs.value_coded== 507) #kaposis
+          a_hash[:kaposis_sarcoma] = 'Yes'
+          a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
+        elsif  (obs.value_coded== 1362) #hiv_encephalopathy
+          a_hash[:hiv_encephalopathy] = 'Yes'
+        elsif  (obs.value_coded== 2894) #bacterial_infections_severe_recurrent
+          a_hash[:bacterial_infections_severe_recurrent] = 'Yes'
+        elsif obs.value_coded== 6763 #unspecified_stage_4_condition
+          a_hash[:unspecified_stage_4_condition] = 'Yes'
+        elsif (obs.value_coded== 882) #pnuemocystis_pnuemonia
+          a_hash[:pnuemocystis_pnuemonia] = 'Yes'
+        elsif (obs.value_coded== 2585) #disseminated_non_tuberculosis_mycobacterial_infection
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'Yes'
+        elsif (obs.value_coded== 5034) #cryptosporidiosis
+          a_hash[:cryptosporidiosis] = 'Yes'
+        elsif (obs.value_coded== 2858) #isosporiasis
+          a_hash[:isosporiasis] = 'Yes'
+        elsif (obs.value_coded== 7957) #symptomatic_hiv_associated_nephropathy
+          a_hash[:symptomatic_hiv_associated_nephropathy] = 'Yes'
+        elsif (obs.value_coded== 5344) #chronic_herpes_simplex_infection
+          a_hash[:chronic_herpes_simplex_infection] = 'Yes'
+        elsif (obs.value_coded== 7551) #cytomegalovirus_infection
+          a_hash[:cytomegalovirus_infection] = 'Yes'
+        elsif (obs.value_coded== 5048) #toxoplasomis_of_the_brain_1month
+          a_hash[:toxoplasomis_of_the_brain_1month] = 'Yes'
+        elsif (obs.value_coded== 7961) #recto_vaginal_fitsula
+          a_hash[:recto_vaginal_fitsula] = 'Yes'
+        elsif (obs.value_coded== 823) #moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'Yes'
+        else
+        end
     else
     end
   end
@@ -2689,7 +2483,7 @@ def process_all_guardians_not_on_arvs
                                             guardian_id NOT IN (SELECT
                                                                   patient_id
                                                                 FROM
-                                                                 temp_earliest_start_date)
+                                                                 earliest_start_date)
                                         GROUP BY guardian_id").each{|guardian| guardian}
      guardian_list.each do |guardian|
        a_hash[:patient_id] = patient_id

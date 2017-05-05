@@ -12,7 +12,7 @@ EOF
     arv_concept_ids = MedicationService.arv_drugs.map(&:concept_id)
 
     ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION patient_date_enrolled(my_patient_id int) RETURNS DATE 
+CREATE FUNCTION patient_date_enrolled(my_patient_id int) RETURNS DATE
 DETERMINISTIC
 BEGIN
 DECLARE my_start_date DATE;
@@ -148,7 +148,7 @@ BEGIN
 
   SET regimen_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'REGIMEN CATEGORY' AND voided = 0 LIMIT 1);
   SET max_obs_datetime = (SELECT MAX(obs_datetime) FROM obs WHERE person_id = my_patient_id AND concept_id = regimen_concept_id AND voided = 0 AND DATE(obs_datetime) <= DATE(my_date));
-  
+
   SET regimen_cat = (SELECT value_text FROM obs WHERE person_id = my_patient_id AND concept_id = regimen_concept_id AND voided = 0 AND      obs_datetime = max_obs_datetime  LIMIT 1);
 
   IF regimen_cat IS NULL THEN
@@ -564,9 +564,10 @@ Unique PatientProgram entries at the current location for those patients with at
 
       reason_for_starting = ActiveRecord::Base.connection.select_all <<EOF
       SELECT e.*, patient_reason_for_starting_art(e.patient_id) reason_for_starting_concept_id
-      FROM temp_earliest_start_date e group by e.patient_id;
+      FROM temp_earliest_start_date e
+      WHERE e.date_enrolled <= '#{end_date}'
+      GROUP BY e.patient_id;
 EOF
-
       (reason_for_starting || []).each do |data|
         @@reason_for_starting << {
           :patient_id => data['patient_id'].to_i,
@@ -967,7 +968,7 @@ EOF
       data = {}
       (patients || []).each do |p|
         patient = Patient.find(p['patient_id'].to_i)
-        reason_for_starting = p['reason'] 
+        reason_for_starting = p['reason']
         next unless reason_for_starting.blank?
 
         patient_outcome = ActiveRecord::Base.connection.select_one <<EOF
@@ -1002,26 +1003,26 @@ EOF
     SELECT patient_id FROM orders o
     INNER JOIN drug_order drg ON drg.order_id = o.order_id
     AND o.voided = 0
-    WHERE drug_inventory_id IN( 
+    WHERE drug_inventory_id IN(
       SELECT drug_id FROM drug
       WHERE concept_id IN(#{arv_drugs.join(',')})
 
     ) GROUP BY patient_id;
- 
+
 EOF
 
-    patient_ids = data.map{ |d| d['patient_id'].to_i  } 
+    patient_ids = data.map{ |d| d['patient_id'].to_i  }
 
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date 
+      SELECT * FROM temp_earliest_start_date
       WHERE patient_id NOT IN(#{patient_ids.join(',')});
 EOF
 
     rescue
       raise "Try running the revised cohort before this report"
     end
-      
+
     reason_for_starting = ConceptName.find_by_name('REASON FOR ART ELIGIBILITY').concept
     data = {}
 
@@ -1045,12 +1046,12 @@ EOF
         :outcome => patient_outcome['outcome']
       }
     end
- 
-    return data  
+
+    return data
   end
 
   def self.patient_on_pre_ART_but_have_arvs_dispensed(start_date, end_date)
-    
+
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
       SELECT e.* FROM temp_earliest_start_date e
@@ -1061,9 +1062,9 @@ EOF
 
     rescue
       raise "Try running the revised cohort before this report"
-    end 
-    
-    
+    end
+
+
     data = {}
 
     (patients || []).each do |p|
@@ -1086,12 +1087,12 @@ EOF
         :outcome => patient_outcome['outcome']
       }
     end
- 
-    return data  
+
+    return data
   end
 
   def self.patients_with_pre_art_or_unknown_outcome(start_date, end_date)
-    
+
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
       SELECT e.*, cum_outcome, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
@@ -1102,8 +1103,8 @@ EOF
 
     rescue
       raise "Try running the revised cohort before this report"
-    end 
-    
+    end
+
     data = {}
 
     (patients || []).each do |p|
@@ -1124,22 +1125,22 @@ EOF
         :outcome => patient_outcome['outcome']
       }
     end
- 
-    return data  
+
+    return data
   end
 
   def self.missing_arv_dispensions(start_date, end_date)
     begin
       patients = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.*, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting 
+      SELECT e.*, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
       FROM temp_earliest_start_date e
       WHERE (date_enrolled IS NULL OR LENGTH(date_enrolled) < 1);
 EOF
 
     rescue
       raise "Try running the revised cohort before this report"
-    end 
-    
+    end
+
     data = {}
 
     (patients || []).each do |p|
@@ -1161,8 +1162,8 @@ EOF
         :outcome => patient_outcome['outcome']
       }
     end
- 
-    return data  
+
+    return data
   end
 
   private
@@ -1590,7 +1591,7 @@ EOF
 
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT e.patient_id, patient_current_regimen(e.patient_id, DATE('#{end_date.to_date}')) regimen_category
-      FROM temp_earliest_start_date e 
+      FROM temp_earliest_start_date e
       WHERE patient_id IN(#{patient_ids.join(',')})
       GROUP BY e.patient_id;
 EOF
@@ -1604,7 +1605,7 @@ EOF
         regimen = regimen_attr['regimen_category']
 
         if regimen.blank? or regimen == 'Unknown' or not current_cohort_regimens.include?(regimen)
-          regimen = 'unknown_regimen' 
+          regimen = 'unknown_regimen'
         end
 
         regimens << {
@@ -2036,7 +2037,7 @@ EOF
       pregnant_women_ids << patient['patient_id'].to_i
     end
     pregnant_women_ids = [0] if pregnant_women_ids.blank?
-    
+
     data = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'

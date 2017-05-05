@@ -23,7 +23,7 @@ def get_all_patients
     $temp_outfile_5 = File.open("./db/flat_tables_init_output/guardians_initialized_in_flat_cohort_table-" + @started_at + ".sql", "w")
 
     patient_list = Patient.find_by_sql("SELECT patient_id FROM #{@source_db}.flat_table1
-                                        WHERE patient_id IN (SELECT patient_id FROM #{@source_db}.temp_earliest_start_date) GROUP BY patient_id").map(&:patient_id)
+                                        WHERE patient_id IN (SELECT patient_id FROM #{@source_db}.earliest_start_date) GROUP BY patient_id").map(&:patient_id)
 
     $flat_table_1_patients_list = Encounter.find_by_sql("SELECT *
                                               FROM #{@source_db}.flat_table1
@@ -34,7 +34,7 @@ def get_all_patients
 
   $guardians_not_on_art = []
   $guardians_not_on_art = Patient.find_by_sql("SELECT * FROM #{@source_db}.guardians
-                                               WHERE guardian_id NOT IN (SELECT patient_id FROM #{@source_db}.temp_earliest_start_date ) GROUP BY guardian_id")
+                                               WHERE guardian_id NOT IN (SELECT patient_id FROM #{@source_db}.earliest_start_date ) GROUP BY guardian_id")
     patient_list.each do |p|
       $temp_outfile_3 << "#{p},"
       puts ">>working on patient>>>#{p}<<<<<<<"
