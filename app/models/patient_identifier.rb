@@ -104,16 +104,13 @@ class PatientIdentifier < ActiveRecord::Base
     
     
     possible_identifiers_limit = GlobalProperty.find_by_property("filing.number.limit").property_value.to_i rescue 30000
-=begin    
-    possible_identifiers = Array.new(possible_identifiers_range){|i|prefix + ((len_of_identifier - 1) + i +1).to_s}
-    ((possible_identifiers)-(available_numbers.compact.uniq)).first
-=end
+    
     possible_identifiers = []
-    1.upto(possible_identifiers_limit).each do |num| 
-      possible_identifiers << "#{prefix}#{num.to_s.rjust(possible_identifiers_limit.to_s.length,'0')}"
+    1.upto(possible_identifiers_limit).each do |num|
+      possible_identifiers << "#{prefix}#{num.to_s.rjust(5, '0')}"
     end
 
-    ((possible_identifiers)-(available_numbers.compact.uniq)).first
+    return ((available_numbers.compact.uniq) - (possible_identifiers)).sort.first
   end
 
   def after_save
