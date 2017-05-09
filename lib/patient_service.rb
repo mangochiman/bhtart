@@ -1444,7 +1444,7 @@ GROUP BY p.patient_id ORDER BY state
 LIMIT #{limit_one}, #{limit_two};
 EOF
 
-    if outcomes.blank?
+    if outcomes.blank? or outcomes.length < 5
 
       encounter_patient_ids = Encounter.find_by_sql(" 
       SELECT patient_id, MAX(encounter_datetime) max_encounter_datetime
