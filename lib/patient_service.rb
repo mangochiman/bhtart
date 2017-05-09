@@ -1259,12 +1259,9 @@ EOF
       active_filing_number_identifier_type = PatientIdentifierType.find_by_name("Filing Number")
       dormant_filing_number_identifier_type = PatientIdentifierType.find_by_name('Archived filing number')
 
-      if (next_filing_number[5..-1].to_i >= global_property_value.to_i)
-=begin
-        all_filing_numbers = PatientIdentifier.find(:all, :conditions =>["identifier_type = ?",
-            PatientIdentifierType.find_by_name("Filing Number").id],:group=>"identifier")
-				patient_ids = all_filing_numbers.collect{|i|i.patient_id}
-=end
+      patient_to_be_archived = []
+
+      if (next_filing_number[5..-1].to_i > global_property_value.to_i)
         patient_ids = PatientIdentifier.find_by_sql("
           SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
           WHERE voided = 0 AND identifier_type = #{active_filing_number_identifier_type.id}
@@ -1274,29 +1271,17 @@ EOF
         patient_to_be_archived = Person.find_by_sql(["
           SELECT * FROM person WHERE person_id IN(?) AND dead = 1 AND voided = 0 LIMIT 1", 
           patient_ids]).first.patient rescue nil
-=begin
-        if patient_to_be_archived.blank?
-          #patient_to_be_archived = self.get_patient_to_be_archived_that_has_transfered_out(patient_ids)
-          patient_to_be_archived = self.get_patient_to_be_archived_based_on_waste_state(patient_ids)
-
-          if (!patient_to_be_archived.blank?)
-            patient_to_be_archived = Patient.find(patient_to_be_archived)
-          end
-        end
-
-        if patient_to_be_archived.blank?
-          patient_to_be_archived = self.patients_with_the_least_encounter_datetime(patient_ids)
-        end
-
-        if patient_to_be_archived.blank?
-          patient_to_be_archived = PatientIdentifier.find(:last,:conditions =>["identifier_type = ?",
-                                                                               PatientIdentifierType.find_by_name("Filing Number").id],
-                                                          :group=>"patient_id",:order => "identifier DESC").patient rescue nil
-        end
-=end
+      else
+        #assigning "patient_to_be_archived" filing number to the new patient
+        filing_number = PatientIdentifier.new()
+        filing_number.patient_id = current_patient.id
+        filing_number.identifier_type = active_filing_number_identifier_type.id
+        filing_number.identifier = next_filing_number
+        filing_number.save
+        return 
       end
 
-      if patient_to_be_archived
+      unless patient_to_be_archived.blank?
         filing_number = PatientIdentifier.new()
         filing_number.patient_id = patient_to_be_archived.id
         filing_number.identifier_type = dormant_filing_number_identifier_type.id
