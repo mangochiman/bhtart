@@ -90,7 +90,7 @@ class PatientIdentifier < ActiveRecord::Base
   end
 
   def self.next_filing_number(type = 'Filing Number')
-    available_numbers = self.find(:all,
+    available_numbers = PatientIdentifier.find(:all,
                                   :conditions => ['identifier_type = ?',
                                   PatientIdentifierType.find_by_name(type).id]).map{ | i | i.identifier }
     
@@ -101,8 +101,17 @@ class PatientIdentifier < ActiveRecord::Base
 
     len_of_identifier = (filing_number_prefix.split(",")[0][-1..-1] + "00000").to_i if type.match(/filing/i)
     len_of_identifier = (filing_number_prefix.split(",")[1][-1..-1] + "00000").to_i if type.match(/Archived/i)
-    possible_identifiers_range = GlobalProperty.find_by_property("filing.number.range").property_value.to_i rescue 300000
-    possible_identifiers = Array.new(possible_identifiers_range){|i|prefix + (len_of_identifier + i +1).to_s}
+    
+    
+    possible_identifiers_limit = GlobalProperty.find_by_property("filing.number.limit").property_value.to_i rescue 30000
+=begin    
+    possible_identifiers = Array.new(possible_identifiers_range){|i|prefix + ((len_of_identifier - 1) + i +1).to_s}
+    ((possible_identifiers)-(available_numbers.compact.uniq)).first
+=end
+    possible_identifiers = []
+    1.upto(possible_identifiers_limit).each do |num| 
+      possible_identifiers << "#{prefix}#{num.to_s.rjust(possible_identifiers_limit.to_s.length,'0')}"
+    end
 
     ((possible_identifiers)-(available_numbers.compact.uniq)).first
   end
