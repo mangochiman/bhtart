@@ -110,7 +110,7 @@ class PatientIdentifier < ActiveRecord::Base
       possible_identifiers << "#{prefix}#{num.to_s.rjust(5, '0')}"
     end
 
-    return ((available_numbers.compact.uniq) - (possible_identifiers)).sort.first
+    return ((possible_identifiers) - (available_numbers.compact.uniq)).sort.first
   end
 
   def after_save
