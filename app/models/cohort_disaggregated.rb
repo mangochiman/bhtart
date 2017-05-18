@@ -329,6 +329,7 @@ EOF
     SELECT patient_id, date_enrolled FROM temp_earliest_start_date
     WHERE gender = '#{gender}' AND date_enrolled BETWEEN
     '#{start_date.to_date}' AND '#{end_date.to_date}' AND
+    (DATE(date_enrolled) = DATE(earliest_start_date)) AND
     patient_id IN(#{alive_on_art_patient_ids.join(',')})
     AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}')) 
     BETWEEN #{age_from} AND #{age_to}
