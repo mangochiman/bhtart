@@ -142,7 +142,7 @@ class GenericRegimensController < ApplicationController
     #symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
 
     #side_effects_contraindications = @patient.person.observations.find(:all, :conditions => ["concept_id IN (?) AND
-        #DATE(obs_datetime) <= ?", [side_effects_concept_id, symptom_present_conept_id], session_date])
+    #DATE(obs_datetime) <= ?", [side_effects_concept_id, symptom_present_conept_id], session_date])
 
     side_effects_contraindications = Patient.side_effects_obs_ever(@patient, session_date)
     
@@ -651,15 +651,15 @@ class GenericRegimensController < ApplicationController
 
 
     ######################################################################################
-    unless params[:fast_track_yes_no].blank?
-      fast_track_status = params[:fast_track_yes_no]
-      fast_track_encounter_type = EncounterType.find_by_name("FAST TRACK ASSESMENT")
-      #concept_ids = params[:fast_track_concept_ids].split(",")
+    fast_track_status = params[:fast_track_yes_no]
+    fast_track_encounter_type = EncounterType.find_by_name("FAST TRACK ASSESMENT")
+    fast_track_encounter = @patient.encounters.find(:last,
+      :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
+        fast_track_encounter_type, session_date.to_date])
+    #concept_ids = params[:fast_track_concept_ids].split(",")
 
+    unless params[:fast_track_yes_no].blank? 
       ActiveRecord::Base.transaction do
-        fast_track_encounter = @patient.encounters.find(:last, 
-          :conditions => ["encounter_type =? AND DATE(encounter_datetime) =?",
-            fast_track_encounter_type, session_date.to_date])
 
         fast_track_encounter.void unless fast_track_encounter.blank?
         fast_track_encounter = Encounter.new
@@ -690,9 +690,41 @@ class GenericRegimensController < ApplicationController
             :value_coded => Concept.find_by_name(fast_track_status).concept_id,
             :obs_datetime => encounter.encounter_datetime
           })
+
+        fast_track_encounter.observations.create({
+          :person_id => @patient.patient_id,
+          :concept_id => Concept.find_by_name("ASSESS FOR FAST TRACK?").concept_id,
+          :value_coded => Concept.find_by_name("YES").concept_id,
+          :obs_datetime => encounter.encounter_datetime
+        })
       end
       
     end if params[:assess_fast_track] == 'YES'
+    
+    #This part will execute when Assess Fast Track is NO
+    if params[:assess_fast_track] == 'NO'
+      fast_track_encounter.void unless fast_track_encounter.blank?
+      fast_track_encounter = Encounter.new
+      fast_track_encounter.encounter_type = fast_track_encounter_type.encounter_type_id
+      fast_track_encounter.patient_id = params[:patient_id]
+      fast_track_encounter.encounter_datetime = session_date
+
+      if params['encounter']
+        unless params['encounter']['creator'].blank?
+          fast_track_encounter.provider_id = params['encounter']['provider']
+        end
+      end
+
+      fast_track_encounter.save
+
+      fast_track_encounter.observations.create({
+          :person_id => @patient.patient_id,
+          :concept_id => Concept.find_by_name("ASSESS FOR FAST TRACK?").concept_id,
+          :value_coded => Concept.find_by_name("NO").concept_id,
+          :obs_datetime => encounter.encounter_datetime
+        })
+    end
+
     ######################################################################################
 		orders = RegimenDrugOrder.all(:conditions => {:regimen_id => params[:tb_regimen]})
 		ActiveRecord::Base.transaction do
