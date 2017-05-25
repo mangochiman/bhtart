@@ -372,6 +372,7 @@ DECLARE set_program_id INT;
 DECLARE set_patient_state INT;
 DECLARE set_outcome varchar(25);
 DECLARE set_date_started date;
+DECLARE set_patient_state_died INT;
 
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
@@ -389,6 +390,19 @@ END IF;
 IF set_patient_state = 3 OR set_patient_state = 127 THEN
   SET set_outcome = 'Patient died';
 END IF;
+
+/* ............... This block of code checks if the patient has any state that is "died" */
+
+IF set_patient_state != 3 AND set_patient_state != 127 THEN
+  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND start_date <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
+
+  IF set_patient_state_died = 3 OR set_patient_state_died = 127 THEN
+    SET set_outcome = 'Patient died';
+    SET set_patient_state = 3;
+  END IF;
+END IF;
+/* ....................  ends here .................... */
+
 
 IF set_patient_state = 6 THEN
   SET set_outcome = 'Treatment stopped';
