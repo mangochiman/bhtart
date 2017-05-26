@@ -1,4 +1,9 @@
 class CohortToolController < GenericCohortToolController
+  
+  def pdf_printout_cohort
+    @cohort = {}
+    render :layout => false
+  end
 
 	def case_findings
 
