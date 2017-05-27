@@ -573,7 +573,7 @@ BEGIN
 
 DECLARE date_started DATE;
 
-SET date_started = (SELECT MIN(start_date) FROM patient_state WHERE voided = 0 AND state = 7 AND patient_program_id IN (SELECT patient_program_id FROM patient_program WHERE patient_id = set_patient_id AND voided = 0 AND program_id = 1));
+SET date_started = (SELECT MIN(start_date) FROM patient_state s INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id WHERE s.voided = 0 AND s.state = 7 AND p.program_id = 1 AND p.patient_id = set_patient_id);
 
 RETURN date_started;
 END$$
