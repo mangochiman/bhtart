@@ -628,9 +628,9 @@ module MedicationService
 
     amounts_brought_to_clinic = ActiveRecord::Base.connection.select_all <<EOF
       SELECT obs.*, drug_order.* FROM obs INNER JOIN drug_order ON obs.order_id = drug_order.order_id
-      INNER JOIN encounter e ON e.encounter_id = obs.encounter_id 
-      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
+      INNER JOIN encounter e ON e.encounter_id = obs.encounter_id AND e.voided = 0
       AND e.encounter_type = #{EncounterType.find_by_name('ART ADHERENCE').id}
+      WHERE obs.concept_id = #{ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC').concept_id}
       AND obs.obs_datetime >= '#{session_date.to_date.strftime('%Y-%m-%d 00:00:00')}'                         
       AND obs.obs_datetime <= '#{session_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND person_id = #{patient.id} AND obs.voided = 0 AND value_numeric IS NOT NULL;
