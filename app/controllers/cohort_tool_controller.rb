@@ -1,7 +1,9 @@
 class CohortToolController < GenericCohortToolController
   
   def pdf_printout_cohort
-    @cohort = {}
+    @cohort = params[:cohort_params]
+    @cohort_year = params[:cohort_year]
+    @cohort_quarter = params[:cohort_quarter]
     render :layout => false
   end
 
