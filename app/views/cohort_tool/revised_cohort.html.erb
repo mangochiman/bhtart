@@ -2578,20 +2578,8 @@
 <!-- Controls -->
 <div class="row-button-print">
   <div class="buttons">
-      <%= button_to 'Finish', {
-              :action => 'finish'
-      }, {
-                            :class => 'button button-finish'
-                    } %>
-
-      <%= button_to 'Print', {
-              :action => 'download_pdf',
-              :quarter => params[:quarter],
-              :file_directory => '/cohort_tool/' ,
-              :file_name => 'revised_cohort_to_print'
-      }, {
-                            :class => 'button button-print'
-                    } %>
+    <button class="button button-finish" onmousedown="javascript:location='/'">Print</button>
+    <button class="button button-print" onmousedown="javascript:printPDF();">Print</button>
   </div>
 </div>
 
@@ -2601,6 +2589,7 @@
 </form>
 
 <script type="text/javascript">
+  var print_pdf_attr = {};
   /**############### Initializing numbers to be compared #################*/
   var total_registered = parseInt(document.getElementById("total_registered").innerHTML);
   var cum_total_registered = parseInt(document.getElementById("cum_total_registered").innerHTML);
@@ -3629,5 +3618,160 @@
 
     }
 
+
+    <%
+    cohort_numbers = '"@cohort[:total_registered]", 
+"@cohort[:cum_total_registered]",
+"@cohort[:initiated_on_art_first_time]",
+"@cohort[:cum_initiated_on_art_first_time]",            
+"@cohort[:re_initiated_on_art]",
+"@cohort[:cum_re_initiated_on_art]",
+"@cohort[:transfer_in]",
+"@cohort[:cum_transfer_in]",
+"@cohort[:all_males]",
+"@cohort[:cum_all_males]",
+"@cohort[:non_pregnant_females]",
+"@cohort[:cum_non_pregnant_females]",
+"@cohort[:pregnant_females_all_ages]",
+"@cohort[:cum_pregnant_females_all_ages]",
+"@cohort[:unknown_age]", 
+"@cohort[:cum_unknown_age]",              
+"@cohort[:children_below_24_months_at_art_initiation]",
+"@cohort[:cum_children_below_24_months_at_art_initiation]",
+"@cohort[:children_24_months_14_years_at_art_initiation]",
+"@cohort[:cum_children_24_months_14_years_at_art_initiation]",
+"@cohort[:cum_children_24_months_14_years_at_art_initiation]",
+"@cohort[:cum_children_24_months_14_years_at_art_initiation]", 
+"@cohort[:presumed_severe_hiv_disease_in_infants]",
+"@cohort[:cum_presumed_severe_hiv_disease_in_infants]", 
+"@cohort[:confirmed_hiv_infection_in_infants_pcr]",
+"@cohort[:cum_confirmed_hiv_infection_in_infants_pcr]",
+"@cohort[:children_12_23_months]",
+"@cohort[:cum_children_12_23_months]", 
+"@cohort[:pregnant_women]", 
+"@cohort[:cum_pregnant_women]", 
+"@cohort[:breastfeeding_mothers]", 
+"@cohort[:cum_breastfeeding_mothers]", 
+"@cohort[:who_stage_two]",
+"@cohort[:cum_who_stage_two]",
+"@cohort[:asymptomatic]", 
+"@cohort[:cum_asymptomatic]",
+"@cohort[:who_stage_three]", 
+"@cohort[:cum_who_stage_three]",
+"@cohort[:who_stage_four]", 
+"@cohort[:cum_who_stage_four]",
+"@cohort[:unknown_other_reason_outside_guidelines]",
+"@cohort[:cum_unknown_other_reason_outside_guidelines]",
+"@cohort[:no_tb]",
+"@cohort[:cum_no_tb]",
+"@cohort[:tb_within_the_last_two_years]", 
+"@cohort[:cum_tb_within_the_last_two_years]", 
+"@cohort[:current_episode_of_tb]", 
+"@cohort[:cum_current_episode_of_tb]", 
+"@cohort[:kaposis_sarcoma]", 
+"@cohort[:cum_kaposis_sarcoma]",
+"@cohort[:total_alive_and_on_art]",
+"@cohort[:died_within_the_1st_month_of_art_initiation]", 
+"@cohort[:died_within_the_2nd_month_of_art_initiation]", 
+"@cohort[:died_within_the_3rd_month_of_art_initiation]",
+"@cohort[:died_after_the_3rd_month_of_art_initiation]",
+"@cohort[:died_total]",
+"@cohort[:defaulted]",
+"@cohort[:stopped_art]",
+"@cohort[:transfered_out]", 
+"@cohort[:zero_p]",
+"@cohort[:one_p]", 
+"@cohort[:two_p]",
+"@cohort[:three_p]", 
+"@cohort[:four_p]",
+"@cohort[:nine_p]",
+"@cohort[:elleven_p]",
+"@cohort[:zero_a]",              
+"@cohort[:one_a]",              
+"@cohort[:two_a]",
+"@cohort[:three_a]",
+"@cohort[:four_a]",
+"@cohort[:five_a]", 
+"@cohort[:six_a]", 
+"@cohort[:seven_a]",
+"@cohort[:eight_a]",
+"@cohort[:nine_a]",
+"@cohort[:ten_a]",
+"@cohort[:elleven_a]", 
+"@cohort[:twelve_a]", 
+"@cohort[:unknown_regimen]", 
+"@cohort[:total_patients_without_side_effects]",
+"@cohort[:total_patients_with_side_effects]", 
+"@cohort[:unknown_side_effects]",
+"@cohort[:patients_with_0_6_doses_missed_at_their_last_visit]",
+"@cohort[:patients_with_7_plus_doses_missed_at_their_last_visit]",
+"@cohort[:patients_with_unknown_adhrence]",
+"@cohort[:tb_not_suspected]",
+"@cohort[:tb_suspected]",
+"@cohort[:tb_confirmed_currently_not_yet_on_tb_treatment]",
+"@cohort[:tb_confirmed_on_tb_treatment]",
+"@cohort[:unknown_tb_status]", 
+"@cohort[:total_other_patients]",
+"@cohort[:total_breastfeeding_women]",
+"@cohort[:total_pregnant_women]",
+"@cohort[:total_patients_on_arvs_and_cpt]",
+"@cohort[:total_patients_on_arvs_and_ipt]",
+"@cohort[:total_patients_on_family_planning]",
+"@cohort[:total_patients_with_screened_bp]",
+"@cohort[:total_registered]",
+"@cohort[:adults_at_art_initiation]",
+"@cohort[:cum_adults_at_art_initiation]"'
+
+    cohort_attr = cohort_numbers.tr(" \t\r\n", '').split(',')
+    (cohort_attr || []).each do |cohort_number|
+      c_attr = cohort_number[1..-2].sub("@cohort[:",'').sub(']','') %>
+      <script>
+        print_pdf_attr["<%= c_attr %>"] = <%= @cohort.send(c_attr).count rescue @cohort.send(c_attr) %>;
+      </script><%
+    end
+
+    %>
+
 </script>
+
+<form id="pdf" method="post" action="/cohort_tool/pdf_printout_cohort.pdf" name="pdf_printout">
+</form>
+
+<script>
+
+function printPDF() { 
+  var pdfForm = document.getElementById('pdf')
+  for (name in print_pdf_attr){
+    var input = document.createElement('input');
+    input.setAttribute('type','hidden');
+    input.setAttribute('name',"cohort_params[" + name + "]");
+    input.setAttribute('value', print_pdf_attr[name]);
+    pdfForm.appendChild(input);
+  }
+
+  var year = <%= @quarter.match(/[0-9](.*)/i)[1].to_i rescue nil %>
+  <%year = @quarter.match(/[0-9](.*)/i)[0].to_i rescue nil%>
+  var cohort_quarter = '<%= (year.blank? == true ? nil : ": #{year}") %>';
+
+  var input = document.createElement('input');
+  input.setAttribute('type','hidden');
+  input.setAttribute('name',"cohort_year");
+  input.setAttribute('value', year);
+  pdfForm.appendChild(input);
+
+  input = document.createElement('input');
+  input.setAttribute('type','hidden');
+  input.setAttribute('name',"cohort_quarter");
+  input.setAttribute('value', cohort_quarter);
+  pdfForm.appendChild(input);
+
+
+  document.pdf_printout.target = "my_pdf";
+  var w = (window.innerWidth - 80) ; var h = (window.innerHeight - 8);
+  window.open("","my_pdf","width=" + w + ",height=" + h + ",toolbar=0");
+  document.pdf_printout.submit();
+}
+
+</script>
+
 <!- ###   ### -->
