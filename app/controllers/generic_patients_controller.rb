@@ -2528,7 +2528,12 @@ EOF
       elsif concept_name.upcase == 'REGIMEN CATEGORY'
         #patient_visits[visit_date].reg = 'Unknown' if obs.value_coded == ConceptName.find_by_name("Unknown antiretroviral drug").concept_id
         #patient_visits[visit_date].reg = obs.value_text if !patient_visits[visit_date].reg
-        patient_visits[visit_date].reg = obs.value_text.gsub('Unknown', 'Non Standard') if !patient_visits[visit_date].reg
+        reg = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT patient_current_regimen(#{obs.person_id}, DATE('#{visit_date.to_date}')) AS regimen_category;
+EOF
+
+        patient_visits[visit_date].reg = reg['regimen_category'] unless reg['regimen_category'].blank? 
+        #obs.value_text.gsub('Unknown', 'Non Standard') if !patient_visits[visit_date].reg
       elsif (concept_name.upcase == 'DRUG INDUCED' || concept_name.upcase == 'MALAWI ART SIDE EFFECTS')
         #symptoms = obs.to_s.split(':').map do | sy |
           #sy.sub(concept_name,'').strip.capitalize
