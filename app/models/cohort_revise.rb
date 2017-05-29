@@ -3,7 +3,7 @@ class CohortRevise
   @@reason_for_starting = []
 
   def self.create_temp_earliest_start_date_table(end_date)
-
+        
     ##########################################################
     ActiveRecord::Base.connection.execute <<EOF
       DROP FUNCTION IF EXISTS patient_date_enrolled;
@@ -142,14 +142,205 @@ EOF
     ActiveRecord::Base.connection.execute <<EOF
 CREATE FUNCTION patient_current_regimen(my_patient_id INT, my_date DATE) RETURNS VARCHAR(10)
 BEGIN
-  DECLARE regimen_concept_id INT;
   DECLARE max_obs_datetime DATETIME;
   DECLARE regimen_cat VARCHAR(10) DEFAULT 'N/A';
 
-  SET regimen_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'REGIMEN CATEGORY' AND voided = 0 LIMIT 1);
-  SET max_obs_datetime = (SELECT MAX(obs_datetime) FROM obs WHERE person_id = my_patient_id AND concept_id = regimen_concept_id AND voided = 0 AND DATE(obs_datetime) <= DATE(my_date));
+  SET max_obs_datetime = (SELECT MAX(start_date) FROM orders o INNER JOIN obs ON obs.order_id = o.order_id INNER JOIN drug_order od ON od.order_id = o.order_id AND od.drug_inventory_id IN(SELECT * FROM arv_drug) AND obs.voided = 0 AND o.voided = 0 AND DATE(obs_datetime) <= DATE(my_date) WHERE obs.person_id = my_patient_id AND od.quantity > 0);
 
-  SET regimen_cat = (SELECT value_text FROM obs WHERE person_id = my_patient_id AND concept_id = regimen_concept_id AND voided = 0 AND      obs_datetime = max_obs_datetime  LIMIT 1);
+  SET @drug_ids := (SELECT GROUP_CONCAT(d.drug_inventory_id ORDER BY d.drug_inventory_id ASC) FROM drug_order d INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id INNER  JOIN orders o ON d.order_id = o.order_id AND d.quantity > 0 INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.encounter_type = 25 WHERE o.voided = 0 AND date(o.start_date) = DATE(max_obs_datetime) AND e.patient_id = my_patient_id order by ad.drug_id ASC);
+
+  SET @regimen_zero_p_one     := ('733,968');
+  SET @regimen_zero_p_two     := ('22,733');
+
+  SET @regimen_zero_a_one     := ('22,969');
+  SET @regimen_zero_a_two     := ('969,968');
+
+  SET @regimen_two_p_one      := ('732');
+  SET @regimen_two_p_two      := ('732,736');
+  SET @regimen_two_p_three    := ('39,732');
+
+  SET @regimen_two_a_one      := ('731');
+  SET @regimen_two_a_two      := ('39,731');
+  SET @regimen_two_a_three    := ('731,736');
+
+  SET @regimen_four_p_one     := ('30,736');
+  SET @regimen_four_p_two     := ('11,736');
+
+  SET @regimen_four_a_one     := ('11,39');
+  SET @regimen_four_a_two     := ('30,39');
+
+  SET @regimen_five_a         := ('735');
+
+  SET @regimen_six_a          := ('22,734');
+
+  SET @regimen_seven_a        := ('734,932');
+
+  SET @regimen_eight_a        := ('39,932');
+
+  SET @regimen_nine_p_one     := ('74,733');
+  SET @regimen_nine_p_two     := ('73,733');
+  SET @regimen_nine_p_three   := ('733,979');
+
+  SET @regimen_nine_a_one     := ('73,969');
+  SET @regimen_nine_a_two     := ('74,969');
+
+  SET @regimen_ten_a          := ('73,734');
+
+  SET @regimen_eleven_p_one   := ('74,736');
+  SET @regimen_eleven_p_two   := ('73,736');
+
+  SET @regimen_eleven_a_one   := ('39,73');
+  SET @regimen_eleven_a_two   := ('39,74');
+
+  SET @regimen_twelve_a       := ('954,976,977,978');
+
+  /* Regimen ZERO ............................................................................. */
+  IF @drug_ids IN(@regimen_zero_p_one) AND (length(@drug_ids) = length(@regimen_zero_p_one)) THEN
+    SET regimen_cat = ('0P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_zero_p_two) AND (length(@drug_ids) = length(@regimen_zero_p_two)) THEN
+    SET regimen_cat = ('0P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_zero_a_one) AND (length(@drug_ids) = length(@regimen_zero_a_one)) THEN
+    SET regimen_cat = ('0A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_zero_a_two) AND (length(@drug_ids) = length(@regimen_zero_a_two)) THEN
+    SET regimen_cat = ('0A');
+  END IF;
+  /* Regimen ZERO ENDS ............................................................................. */
+
+
+  /* Regimen TWO ............................................................................. */
+  IF @drug_ids IN(@regimen_two_p_one) AND (length(@drug_ids) = length(@regimen_two_p_one)) THEN
+    SET regimen_cat = ('2P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_p_two) AND (length(@drug_ids) = length(@regimen_two_p_two)) THEN
+    SET regimen_cat = ('2P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_p_three) AND (length(@drug_ids) = length(@regimen_two_p_three)) THEN
+    SET regimen_cat = ('2P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_a_one) AND (length(@drug_ids) = length(@regimen_two_a_one)) THEN
+    SET regimen_cat = ('2A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_a_two) AND (length(@drug_ids) = length(@regimen_two_a_two)) THEN
+    SET regimen_cat = ('2A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_two_a_three) AND (length(@drug_ids) = length(@regimen_two_a_three)) THEN
+    SET regimen_cat = ('2A');
+  END IF;
+  /* Regimen TWO ENDS............................................................................. */
+
+
+
+  /* Regimen FOUR ............................................................................. */
+  IF @drug_ids IN(@regimen_four_p_one) AND (length(@drug_ids) = length(@regimen_four_p_one)) THEN
+    SET regimen_cat = ('4P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_four_p_two) AND (length(@drug_ids) = length(@regimen_four_p_two)) THEN
+    SET regimen_cat = ('4P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_four_a_one) AND (length(@drug_ids) = length(@regimen_four_a_one)) THEN
+    SET regimen_cat = ('4A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_four_a_two) AND (length(@drug_ids) = length(@regimen_four_a_two)) THEN
+    SET regimen_cat = ('4A');
+  END IF;
+  /* Regimen FOUR ENDS............................................................................. */
+
+
+  /* Regimen FIVE............................................................................. */
+  IF @drug_ids IN(@regimen_five_a) AND (length(@drug_ids) = length(@regimen_five_a)) THEN
+    SET regimen_cat = ('5A');
+  END IF;
+  /* Regimen FIVE ENDS............................................................................. */
+
+  /* Regimen SIX............................................................................. */
+  IF @drug_ids IN(@regimen_six_a) AND (length(@drug_ids) = length(@regimen_six_a)) THEN
+    SET regimen_cat = ('6A');
+  END IF;
+  /* Regimen SIX ENDS............................................................................. */
+
+  /* Regimen SEVEN............................................................................. */
+  IF @drug_ids IN(@regimen_seven_a) AND (length(@drug_ids) = length(@regimen_seven_a)) THEN
+    SET regimen_cat = ('7A');
+  END IF;
+  /* Regimen SEVEN ENDS............................................................................. */
+
+  /* Regimen EIGHT............................................................................. */
+  IF @drug_ids IN(@regimen_eight_a) AND (length(@drug_ids) = length(@regimen_eight_a)) THEN
+    SET regimen_cat = ('8A');
+  END IF;
+  /* Regimen EIGHT ENDS ............................................................................. */
+
+
+  /* Regimen NINE............................................................................. */
+  IF @drug_ids IN(@regimen_nine_p_one) AND (length(@drug_ids) = length(@regimen_nine_p_one)) THEN
+    SET regimen_cat = ('9P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_nine_p_two) AND (length(@drug_ids) = length(@regimen_nine_p_two)) THEN
+    SET regimen_cat = ('9P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_nine_p_three) AND (length(@drug_ids) = length(@regimen_nine_p_three)) THEN
+    SET regimen_cat = ('9P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_nine_a_one) AND (length(@drug_ids) = length(@regimen_nine_a_one)) THEN
+    SET regimen_cat = ('9A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_nine_a_two) AND (length(@drug_ids) = length(@regimen_nine_a_two)) THEN
+    SET regimen_cat = ('9A');
+  END IF;
+  /* Regimen NINE ENDS............................................................................. */
+
+
+  /* Regimen TEN............................................................................. */
+  IF @drug_ids IN(@regimen_ten_a) AND (length(@drug_ids) = length(@regimen_ten_a)) THEN
+    SET regimen_cat = ('10A');
+  END IF;
+  /* Regimen TEN ENDS............................................................................. */
+
+
+  /* Regimen ELEVEN............................................................................. */
+  IF @drug_ids IN(@regimen_eleven_p_one) AND (length(@drug_ids) = length(@regimen_eleven_p_one)) THEN
+    SET regimen_cat = ('11P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_eleven_p_two) AND (length(@drug_ids) = length(@regimen_eleven_p_two)) THEN
+    SET regimen_cat = ('11P');
+  END IF;
+
+  IF @drug_ids IN(@regimen_eleven_a_one) AND (length(@drug_ids) = length(@regimen_eleven_a_one)) THEN
+    SET regimen_cat = ('11A');
+  END IF;
+
+  IF @drug_ids IN(@regimen_eleven_a_two) AND (length(@drug_ids) = length(@regimen_eleven_a_two)) THEN
+    SET regimen_cat = ('11A');
+  END IF;
+  /* Regimen ELEVEN ENDS............................................................................. */
+
+
+  /* Regimen TWELVE............................................................................. */
+  IF @drug_ids IN(@regimen_twelve_a) AND (length(@drug_ids) = length(@regimen_twelve_a)) THEN
+    SET regimen_cat = ('12A');
+  END IF;
+  /* Regimen TWELVE ENDS............................................................................. */
+
+
 
   IF regimen_cat IS NULL THEN
     SET regimen_cat = 'N/A';
@@ -336,6 +527,10 @@ BEGIN
     END IF;
 
     IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
+    
+      IF my_daily_dose = 0 OR LENGTH(my_daily_dose) < 1 OR my_daily_dose IS NULL THEN
+        SET my_daily_dose = 1;
+      END IF;
 
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
