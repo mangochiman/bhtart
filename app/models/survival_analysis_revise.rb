@@ -179,7 +179,6 @@ EOF
       "number_stopped_treatment" => number_stopped_treatment,
       "number_transferred_out" => number_transferred_out
     }
-
     return registered
   end
 
