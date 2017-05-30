@@ -3,7 +3,7 @@ class SurvivalAnalysis
   def self.report(cohort, patient_state, min_age=nil, max_age=nil, sex = nil)
 		#raise patient_state["Defaulted"].to_yaml
 		program_id = Program.find_by_name('HIV PROGRAM').id
-    survival_end_date = cohort.end_date.to_date ; 
+    survival_end_date = cohort.end_date.to_date ;
     survival_start_date = cohort.start_date.to_date
     displayed_date = survival_end_date
     first_registration_date = PatientProgram.find(:first,:conditions =>["program_id = ? AND voided = 0",program_id],
@@ -15,7 +15,7 @@ class SurvivalAnalysis
 		if sex == "female"
 			start_of_6_months = survival_start_date - 6.months
 			end_of_6_months = survival_end_date.to_date - 6.months
-		
+
 			if end_of_6_months >= first_registration_date
 		    date_ranges << {:start_date => start_of_6_months.to_date,
 		                    :end_date   => end_of_6_months.to_date}
@@ -32,7 +32,7 @@ class SurvivalAnalysis
 		survival_analysis_outcomes = {}
 		views = {}
 		key = ""
-		
+
 		date_ranges.sort_by {|x,i| x[:end_date] <=>  x[:start_date]}.each_with_index do |range, i|
 			program_id = Program.find_by_name('HIV PROGRAM').id
 			transferred = []; arvs =[]; stopped = []; defaulted=[]; dead=[]; unknown =[]; total = []
@@ -54,15 +54,15 @@ class SurvivalAnalysis
 			else
 				key = "#{(i + 1)*12} month survival: outcomes by end of #{(range[:end_date] + (i + 1).year).strftime('%B %Y')}"
 			end
-			 
+
 			 survival_analysis_outcomes[key] = {
         'Number Alive and on ART' => 0,
         'Number Dead' => 0, 'Number Defaulted' => 0 ,
         'Number Stopped Treatment' => 0, 'Number Transferred out' => 0,
         "Section date range" => "#{range[:start_date].strftime('%B %Y')} to #{range[:end_date].strftime('%B %Y')}",
         'Unknown' => 0,'New patients registered for ART' => states.length}
-        
-        
+
+
       patient_state['Transferred out'] = [] if patient_state['Transferred out'].blank?
       patient_state['Stopped taking ARVs'] = [] if patient_state['Stopped taking ARVs'].blank?
       patient_state['Unknown outcomes'] = [] if  patient_state['Unknown outcomes'].blank?
@@ -74,7 +74,7 @@ class SurvivalAnalysis
 				total << patient_id.to_i
 				patient_id = patient_id.to_i
 						#raise patient_id.to_yaml if patient_state['Defaulted'].include?(patient_id.patient_id)
-						
+
          if patient_state['Defaulted'].include?(patient_id)
 						defaulted << patient_id
             survival_analysis_outcomes[key]['Number Defaulted']+=1
