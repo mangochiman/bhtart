@@ -167,7 +167,7 @@
 <table class="table-main" border="2px;">
     <tr>
         <th colspan="10" class="text-left border-null text-header">
-            General Cohort Survival Analysis
+            <%= Location.current_health_center.name %>  General Cohort Survival Analysis 
         </th>
     </tr>
     <tr>
@@ -214,8 +214,11 @@
         </td>
     </tr>
     <% @name_of_quarter = @quarter.split.first %>
-    <%  (@cohort.general_survival_analysis.sort || []).each do |range, data| %>
-        <% if data['number_alive_and_on_arvs'].count.to_i > 1 %>
+    <%
+     cohort = @cohort.general_survival_analysis.sort_by{|range, data| range}.reverse!
+     %>
+    <%  (cohort || []).each do |range, data| %>
+        <% if data['number_alive_and_on_arvs'] %>
 
     <tr>
         <td class="text-bold border-null-right table-main-data">

@@ -90,7 +90,7 @@ class CohortDisaggregated
     @@cohort_cum_start_date = CohortRevise.get_cum_start_date
 
     if gender == 'Male' || gender == 'Female'
-      if age_group == '50+ years' 
+      if age_group == '50+ years'
         yrs_months = 'year' ; age_to = 1000 ; age_from = 50
       elsif age_group.match(/years/i)
         age_from, age_to = age_group.sub(' years','').split('-')
@@ -101,17 +101,17 @@ class CohortDisaggregated
       end
 
       gender = gender.first
-    
+
       started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
       alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
       started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
       screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
 
-      return [(started_on_art.length rescue 0), 
-        (alive_on_art.length rescue 0), 
-        (started_on_ipt.length rescue 0), 
+      return [(started_on_art.length rescue 0),
+        (alive_on_art.length rescue 0),
+        (started_on_ipt.length rescue 0),
         (screened_for_tb.length rescue 0)]
-    end 
+    end
 
     if gender == 'M'
       age_from = 0  ; age_to = 1000 ; yrs_months = 'year'
@@ -120,9 +120,9 @@ class CohortDisaggregated
       started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
       screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
 
-      return [(started_on_art.length rescue 0), 
-        (alive_on_art.length rescue 0), 
-        (started_on_ipt.length rescue 0), 
+      return [(started_on_art.length rescue 0),
+        (alive_on_art.length rescue 0),
+        (started_on_ipt.length rescue 0),
         (screened_for_tb.length rescue 0)]
     end
 
@@ -143,7 +143,7 @@ class CohortDisaggregated
     end
 
     return [0, 0, 0, 0]
-  end 
+  end
 
   def self.get_fnp(start_date, end_date)
     age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
@@ -158,7 +158,7 @@ class CohortDisaggregated
     ###############################################################
     (@@cohort.total_breastfeeding_women || []).each do |p|
       date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
-      SELECT date_enrolled FROM temp_earliest_start_date e 
+      SELECT date_enrolled FROM temp_earliest_start_date e
       WHERE patient_id = #{p['person_id']};
 EOF
 
@@ -177,7 +177,7 @@ EOF
       next if breast_feeding_women.include?(p['person_id'].to_i)
 
       date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT date_enrolled FROM temp_earliest_start_date e 
+        SELECT date_enrolled FROM temp_earliest_start_date e
         WHERE patient_id = #{p['person_id'].to_i};
 EOF
 
@@ -190,7 +190,7 @@ EOF
         cum_females_pregnant = cum_females_pregnant.uniq
       end
     end
-    
+
     cum_females_pregnant = (cum_females_pregnant + females_pregnant).uniq rescue []
     cum_breast_feeding_women = (cum_breast_feeding_women + breast_feeding_women) rescue []
     #####################################################################
@@ -212,7 +212,7 @@ EOF
       next if cum_breast_feeding_women.include?(fnp['patient_id'].to_i)
       started_on_ipt << {:patient_id => fnp['patient_id'].to_i}
     end
-    
+
     (self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date) || []).each do |fnp|
       next if cum_females_pregnant.include?(fnp['patient_id'].to_i)
       next if cum_breast_feeding_women.include?(fnp['patient_id'].to_i)
@@ -240,19 +240,19 @@ EOF
     SELECT t1.patient_id FROM obs t3
     INNER JOIN temp_earliest_start_date t1 ON t1.patient_id = t3.person_id
     WHERE t3.concept_id IN(#{tb_treatment},#{tb_status_id}) AND t3.voided = 0
-    AND t3.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
-    AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
-    AND gender = '#{gender.first}' AND t1.date_enrolled BETWEEN 
-    '#{start_date.to_date}' AND '#{end_date.to_date}' 
-    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}')) 
+    AND t3.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+    AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+    AND gender = '#{gender.first}' AND t1.date_enrolled BETWEEN
+    '#{start_date.to_date}' AND '#{end_date.to_date}'
+    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}'))
     BETWEEN #{age_from} AND #{age_to} AND t1.patient_id IN(#{alive_on_art_patient_ids.join(',')})
     AND t3.obs_datetime = (
 
-      SELECT MAX(obs_datetime) FROM obs t4 
+      SELECT MAX(obs_datetime) FROM obs t4
       INNER JOIN encounter e ON e.encounter_id = t4.encounter_id
       AND e.encounter_type = #{clinical_consultation}
       WHERE t3.person_id = t4.person_id
-      AND t4.voided = 0 AND t4.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND t4.voided = 0 AND t4.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
       AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
 
     )
@@ -270,7 +270,7 @@ EOF
     data = ActiveRecord::Base.connection.select_all <<EOF
     SELECT patient_id FROM temp_earliest_start_date
     WHERE gender = '#{gender}' AND earliest_start_date <= '#{end_date.to_date}'
-    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}')) 
+    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}'))
     BETWEEN #{age_from} AND #{age_to};
 EOF
 
@@ -288,11 +288,11 @@ EOF
     data = ActiveRecord::Base.connection.select_all <<EOF
     SELECT obs.person_id patient_id FROM obs
     WHERE concept_id = #{amount_dispensed} AND obs.voided = 0
-    AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}' 
+    AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
     AND value_drug IN(#{ipt_drug_ids.join(',')}) AND obs.person_id IN(#{patient_ids.join(',')});
 EOF
 
-    return data 
+    return data
   end
 
   def self.get_alive_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
@@ -308,7 +308,7 @@ EOF
     SELECT patient_id FROM temp_earliest_start_date
     WHERE gender = '#{gender}' AND earliest_start_date <= '#{end_date.to_date}' AND
     patient_id IN(#{alive_on_art_patient_ids.join(',')})
-    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}')) 
+    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}'))
     BETWEEN #{age_from} AND #{age_to};
 EOF
 
@@ -317,38 +317,29 @@ EOF
   end
 
   def self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
-    alive_on_art_patient_ids = []
-
-    (@@cohort.total_alive_and_on_art || []).each do |data|
-      alive_on_art_patient_ids << data['patient_id'].to_i
-    end
-
-    return [] if alive_on_art_patient_ids.blank?
 
     data = ActiveRecord::Base.connection.select_all <<EOF
     SELECT patient_id, date_enrolled FROM temp_earliest_start_date
     WHERE gender = '#{gender}' AND date_enrolled BETWEEN
     '#{start_date.to_date}' AND '#{end_date.to_date}' AND
-    (DATE(date_enrolled) = DATE(earliest_start_date)) AND
-    patient_id IN(#{alive_on_art_patient_ids.join(',')})
-    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}')) 
+    (DATE(date_enrolled) = DATE(earliest_start_date))
+    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}'))
     BETWEEN #{age_from} AND #{age_to}
 EOF
 
     return data
-
   end
 
   def self.get_fp(start_date, end_date)
       age_from = 0  ; age_to = 1000 ; yrs_months = 'year' ; gender = 'F'
       cum_pregnant_women = @@cohort.total_pregnant_women
-      
+
       return [[], [], [], []] if cum_pregnant_women.blank?
       pregnant_women_patient_ids = []
-      
+
       (cum_pregnant_women).each do |p|
         date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT date_enrolled FROM temp_earliest_start_date e 
+        SELECT date_enrolled FROM temp_earliest_start_date e
         WHERE patient_id = #{p['person_id'].to_i};
 EOF
 
@@ -358,7 +349,7 @@ EOF
         end
       end
 
-      started_on_art = [] ; alive_on_art = [] 
+      started_on_art = [] ; alive_on_art = []
       started_on_ipt = [] ; screened_for_tb = []
 
       (self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |p|
@@ -382,7 +373,7 @@ EOF
       end
 
 
-      return [started_on_art, alive_on_art, 
+      return [started_on_art, alive_on_art,
         started_on_ipt, screened_for_tb]
   end
 
@@ -393,7 +384,7 @@ EOF
 
       return [[], [], [], []] if cum_breastfeeding_mothers.blank?
       fbf_women_patient_ids = []
-      
+
       started_on_art = [] ; alive_on_art = []
       started_on_ipt = [] ; screened_for_tb = []
 
@@ -401,10 +392,10 @@ EOF
       #########################################################################
       cum_pregnant_women = @@cohort.total_pregnant_women
       pregnant_women_patient_ids = []
-      
+
       (cum_pregnant_women).each do |p|
         date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT date_enrolled FROM temp_earliest_start_date e 
+        SELECT date_enrolled FROM temp_earliest_start_date e
         WHERE patient_id = #{p['person_id'].to_i};
 EOF
 
@@ -420,7 +411,7 @@ EOF
       (cum_breastfeeding_mothers).each do |w|
         next if pregnant_women_patient_ids.include?(w['person_id'].to_i)
         date_enrolled_str = ActiveRecord::Base.connection.select_one <<EOF
-        SELECT date_enrolled FROM temp_earliest_start_date e 
+        SELECT date_enrolled FROM temp_earliest_start_date e
         WHERE patient_id = #{w['person_id'].to_i};
 EOF
 
@@ -450,7 +441,7 @@ EOF
         screened_for_tb << {:patient_id => fbf['patient_id'].to_i}
       end
 
-      return [started_on_art, alive_on_art, 
+      return [started_on_art, alive_on_art,
         started_on_ipt, screened_for_tb]
   end
 
