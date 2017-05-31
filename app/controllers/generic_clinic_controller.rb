@@ -222,7 +222,7 @@ class GenericClinicController < ApplicationController
       ['Missing Dispensations' , '/cohort_tool/select?report_type=prescriptions_without_dispensations'],
       ['Multiple Start Reasons' , '/cohort_tool/select?report_type=patients_with_multiple_start_reasons'],
       ['Out of range ARV number' , '/cohort_tool/select?report_type=out_of_range_arv_number'],
-      ['Data Consistency Check' , '/cohort_tool/select?report_type=data_consistency_check']
+      ['Data Consistency Check' , '/cohort_tool/data_consistency_check_menu']
     ]
     render :layout => false
   end
