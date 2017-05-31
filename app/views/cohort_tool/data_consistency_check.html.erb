@@ -358,7 +358,6 @@
         <%= image_tag(@logo, :class => "logo")%>
         <br /><b style="margin-left:175px; margin-top: 0px"><%= @current_location_name %></b><br />
         <b style="position:relative; top:0px; margin-left:175px">
-            Total patients
             <%= @report_name.gsub(/cum/i, '').humanize.split.map{|w| w.capitalize}.join(' ') %>
         </b>
         <br />
@@ -368,30 +367,30 @@
             <thead>
             <tr>
                 <th style="padding-left: 10px; text-align: left;">ARV number</th>
-                <th>Earliest start date</th>
-                <th>Date enrolled</th>
+                <th>Name</th>
                 <th>Gender</th>
-                <th>Birth Date</th>
-                <th style="padding-left: 10px; text-align: left;">Outcome</th>
-                <th>Phone number</th>
+                <th>Birthdate</th>
+                <th>Death date</th>
+                <th>Service<br />accessed</th>
+                <th>Date<br />accessed</th>
                 <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
-            <% (@data || []).each do |patient_id, data| %>
+            <% (@data || []).each do |data| %>
                 <tr>
                     <td style="padding-left: 10px;"><%= data[:arv_number] %></td>
-                    <td style="text-align: center;"><%= data[:earliest_start_date] %></td>
-                    <td style="text-align: center;"><%= data[:date_enrolled] %></td>
+                    <td style="padding-left: 10px;"><%= data[:name] %></td>
                     <td style="text-align: center;"><%= data[:gender] %></td>
                     <td style="text-align: center;"><%= data[:birthdate] %></td>
-                    <td style="padding-left: 10px;"><%= (data[:outcome].capitalize rescue nil) %></td>
-                    <td style="padding-left: 10px;"><%= data[:phone_number] %></td>
+                    <td style="text-align: center;"><%= data[:death_date] %></td>
+                    <td style="padding-left: 10px;"><%= data[:service_name] %></td>
+                    <td style="padding-left: 10px;"><%= data[:latest_visit_date] %></td>
                     <td align='center' class="create_button">
                         <%= link_to_onmousedown "View",{
                                 :controller =>"patients",
                                 :action => 'mastercard',
-                                :patient_id => patient_id 
+                                :patient_id => data[:patient_id]
                         }%>
                     </td>
                 </tr>

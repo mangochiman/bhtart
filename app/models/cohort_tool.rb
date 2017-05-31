@@ -150,6 +150,7 @@ EOF
         :date_enrolled => (d['date_enrolled'].to_date rescue nil),
         :birthdate => (d['birthdate'].to_date rescue nil),
         :gender => (d['gender']),
+        :phone_number => self.get_phone(d['patient_id'].to_i),
         :death_date => (d['death_date'].to_date rescue nil),
         :outcome => d['cum_outcome']
       }
@@ -157,6 +158,19 @@ EOF
  
 		return patient_data
 	end
+
+  def self.get_phone(patient_id)
+    patient = Patient.find(patient_id)
+    phone = PatientService.get_attribute(patient, "Cell phone number")
+
+    if phone.nil?
+      phone = PatientService.get_attribute(patient, "Home phone number")
+      if phone.nil?
+        phone = PatientService.get_attribute(patient, "Office phone number")
+      end
+    end
+    return phone.nil? ? " " : phone
+  end
 
   def self.outcomes_total(outcome, end_date=Date.today, regimen_ids = [], start_date = nil)
 

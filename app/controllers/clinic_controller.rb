@@ -49,7 +49,7 @@ class ClinicController < GenericClinicController
 	 # ['Missing Dispensations' , '/cohort_tool/select?report_type=prescriptions_without_dispensations'],
 	  ['Multiple Start Reasons' , '/cohort_tool/select?report_type=patients_with_multiple_start_reasons'],
 	  ['Out of range ARV number' , '/cohort_tool/select?report_type=out_of_range_arv_number'],
-	  ['Data Consistency Check' , '/cohort_tool/select?report_type=data_consistency_check'],
+	  ['Data Consistency Check' , '/cohort_tool/data_consistency_check_menu'],
 	  ['Missing Start Reasons' , '/cohort_tool/select?report_type=missing_start_reasons'],
 	 # ['On ART patients with No ARVs dispensations' , '/cohort_tool/select?report_type=on_art_patients_with_no_arvs_dispensations'],
 	  ['Patient on Pre-ART but have ARVS dispensed' , '/cohort_tool/select?report_type=patient_on_pre_ART_but_have_arvs_dispensed'],

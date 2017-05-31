@@ -367,31 +367,27 @@
         <table id="table_id" width="99%">
             <thead>
             <tr>
-                <th style="padding-left: 10px; text-align: left;">ARV number</th>
-                <th>Earliest start date</th>
-                <th>Date enrolled</th>
+                <th>ARV number</th>
+                <th>Name</th>
                 <th>Gender</th>
-                <th>Birth Date</th>
-                <th style="padding-left: 10px; text-align: left;">Outcome</th>
-                <th>Phone number</th>
+                <th>Birthdate</th>
+                <th>Obs date<br />created</th>
                 <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
-            <% (@data || []).each do |patient_id, data| %>
+            <% (@data || []).each do |data| %>
                 <tr>
                     <td style="padding-left: 10px;"><%= data[:arv_number] %></td>
-                    <td style="text-align: center;"><%= data[:earliest_start_date] %></td>
-                    <td style="text-align: center;"><%= data[:date_enrolled] %></td>
-                    <td style="text-align: center;"><%= data[:gender] %></td>
-                    <td style="text-align: center;"><%= data[:birthdate] %></td>
-                    <td style="padding-left: 10px;"><%= (data[:outcome].capitalize rescue nil) %></td>
-                    <td style="padding-left: 10px;"><%= data[:phone_number] %></td>
+                    <td style="padding-left: 10px;"><%= data[:name] %></td>
+                    <td style="padding-left: 10px;"><%= data[:gender] %></td>
+                    <td style="padding-left: 10px;"><%= data[:birthdate] %></td>
+                    <td style="padding-left: 10px;"><%= data[:date_created] %></td>
                     <td align='center' class="create_button">
                         <%= link_to_onmousedown "View",{
                                 :controller =>"patients",
                                 :action => 'mastercard',
-                                :patient_id => patient_id 
+                                :patient_id => data[:patient_id]
                         }%>
                     </td>
                 </tr>
