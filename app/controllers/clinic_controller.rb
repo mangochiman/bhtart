@@ -55,7 +55,8 @@ class ClinicController < GenericClinicController
 	  ['Patient on Pre-ART but have ARVS dispensed' , '/cohort_tool/select?report_type=patient_on_pre_ART_but_have_arvs_dispensed'],
 	  ['Patients with Pre-ART/Unknown outcome' , '/cohort_tool/select?report_type=patient_with_pre_art_or_unknown_outcome'],
 	  ['Missing ARV dispensions' , '/cohort_tool/select?report_type=missing_arv_dispensions'],
-	  ['Incomplete Visits' , '/cohort_tool/select?report_type=incomplete_visit']
+	  ['Incomplete Visits' , '/cohort_tool/select?report_type=incomplete_visit'],
+	  ["Patient's outcome" , '/cohort_tool/select?report_type=patients_outcomes']
 	]
 	render :layout => false
   end

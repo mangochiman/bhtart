@@ -161,7 +161,11 @@ class ReportController < GenericReportController
   def missed_appointment_duration
     render :layout => "menu"
   end
+
   def missed_appointment_report
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    @report_name  = 'Missed appointments'
 
     @data = []
     @report = "Missed appointments"
@@ -183,14 +187,14 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
       result = adherence(record.person_id, record.visit_date)
 
       details ={
-        'patient_id' => record.person_id,
-        'name' => patient.name,
-        'gender' => patient.person.gender,
-        'age' => PatientService.cul_age(patient.person.birthdate , patient.person.birthdate_estimated),
-        'phone_number' => get_phone(record.person_id),
-        'date_came' => record.date_came,
-        'date_appointment_made' => record.visit_date,
-        'appointment_date' => record.appointment_date
+        :patient_id => record.person_id,
+        :name => patient.name,
+        :gender => patient.person.gender,
+        :birthdate => (patient.person.birthdate.to_date.strftime('%d/%b/%Y') rescue nil),
+        :phone_number => get_phone(record.person_id),
+        :date_came => (record.date_came.to_date.strftime('%d/%b/%Y') rescue nil),
+        :date_appointment_made => (record.visit_date.to_date.strftime('%d/%b/%Y') rescue nil),
+        :appointment_date => (record.appointment_date.to_date.strftime('%d/%b/%Y') rescue nil)
       }
       @data << details
     end
@@ -199,54 +203,12 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
 
 
   def defaulted_patients_report
-    @data = []
-    @report = "defaulted"
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    @report_name  = 'Defaulters'
 
     @end_date = (params[:end_month].to_s + "/" + params[:end_day].to_s + "/" + params[:end_year].to_s).to_date
-
-    report = CohortTool.defaulted_patients(@end_date).uniq
-
-    report.each do |person_id|
-      patient = Patient.find(person_id)
-      appoinment = Concept.find_by_name('appointment date').concept_id
-
-      last_appointment = Observation.find_by_sql("SELECT person_id, obs_datetime ,value_datetime FROM obs
-                                WHERE person_id = #{person_id}
-                                AND concept_id = #{appoinment} AND DATE(value_datetime) <= DATE('#{@end_date}') AND voided = 0
-                                ORDER BY obs_datetime DESC LIMIT 1").first
-
-      first_obs = Observation.find_by_sql("SELECT person_id, obs_datetime FROM obs
-                                            WHERE person_id = #{person_id}
-                                            AND voided = 0 order by obs_datetime ASC LIMIT 1").first
-
-      next_visit = last_appointment.nil? ? nil : Observation.find(:first, :conditions =>  ["person_id = ? AND obs_datetime > ?",
-                                                                                           person_id, last_appointment.value_datetime])
-
-      next_visit = next_visit.nil? ? "No" : next_visit.obs_datetime.to_date
-      unless last_appointment.blank?
-        result = adherence(last_appointment.person_id, last_appointment.value_datetime) rescue []
-
-        details ={
-            'patient_id' => person_id,
-            'name' => patient.name,
-            'gender' => patient.person.gender,
-            'age' => PatientService.cul_age(patient.person.birthdate , patient.person.birthdate_estimated ),
-            'dosses_missed' => (result['missed_dosses'] rescue []),
-            'exp_tab_remaining' => (result['expected_remaining'] || []),
-            'booked_date' => last_appointment.obs_datetime.to_date.strftime('%d/%b/%Y') ,
-            'appointment_date' => last_appointment.value_datetime.to_date.strftime('%d/%b/%Y') ,
-            'phone_number' => get_phone(person_id),
-            'overdue' => (@end_date.to_date - last_appointment.value_datetime.to_date).to_i,
-            'came_late' => next_visit,
-            'date_registered' => first_obs.nil? ? '' : first_obs.obs_datetime.to_date,
-            'last_visit_date' => last_appointment.obs_datetime.to_date
-        }
-        @data << details
-      end
-      
-    end
-    
-    render "missed_appointment_report"
+    @data = CohortTool.defaulted_patients(@end_date)
   end
   
   def get_phone(patient_id)
