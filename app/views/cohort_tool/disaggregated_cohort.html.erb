@@ -140,7 +140,7 @@ table tr:last-child td:last-child {
 table tr:hover td {
   background: #f2f2f2;
   background: -webkit-gradient(linear, left top, left bottom, from(#f2f2f2), to(#f0f0f0));
-  background: -moz-linear-gradient(top,  #f2f2f2,  #f0f0f0);  
+  background: -moz-linear-gradient(top,  #f2f2f2,  #f0f0f0);
 }
 
 </style>
@@ -149,9 +149,9 @@ table tr:hover td {
 
 <div class="table-container">
 <table id="disaggregated_cohort" cellspacing='0'>
- 
+
   <thead>
- 
+
   <caption id='err_msg'></caption>
 
   <tr>
@@ -207,7 +207,7 @@ table tr:hover td {
         <tr>
         <%hr_sep = gender.upcase
       end if counter < 26
-      
+
       check_point = []
 
       if counter <= 24
@@ -305,13 +305,13 @@ female_screened_for_tb == fp_screened_for_tb_26, fnp_screened_for_tb_27, fbf_scr
   ['female_started_on_art', ['fp_started_on_art_26','fnp_started_on_art_27',
     'fbf_started_on_art_28'],"Column A: 13 to 24 == (26 + 27 + 28)"],
 
-    ['female_alive_on_art', ['fp_alive_on_art_26', 'fnp_alive_on_art_27', 
+    ['female_alive_on_art', ['fp_alive_on_art_26', 'fnp_alive_on_art_27',
     'fbf_alive_on_art_28'],"Column B: 13 to 24 == (26 + 27 + 28)"],
 
     ['female_started_on_ipt', ['fp_started_on_ipt_26', 'fnp_started_on_ipt_27',
     'fbf_started_on_ipt_28'],"Column C: 13 to 24 == (25 + 27 + 28)"],
 
-    ['female_screened_for_tb', ['fp_screened_for_tb_26', 'fnp_screened_for_tb_27', 
+    ['female_screened_for_tb', ['fp_screened_for_tb_26', 'fnp_screened_for_tb_27',
       'fbf_screened_for_tb_28'],"Column D: 13 to 24 == (26 + 27 + 28)"]
   ]
 
@@ -330,7 +330,7 @@ function validateReport2(x, y, err_msg) {
   var e1  =   document.getElementById(y[1]);
   var e2  =   document.getElementById(y[2]);
 
-  var all_total = 0; 
+  var all_total = 0;
   var all_females = (parseInt(e.innerHTML) + parseInt(e1.innerHTML));
   all_females +=  (parseInt(e2.innerHTML))
 
