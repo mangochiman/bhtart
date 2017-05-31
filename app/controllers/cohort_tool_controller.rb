@@ -7,12 +7,50 @@ class CohortToolController < GenericCohortToolController
     render :layout => false
   end
 
+  def patients_outcomes
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    @report_name  = 'Current patients outcomes'
+
+    @quarter  = params[:quarter]
+    @start_date, @end_date = Report.generate_cohort_date_range(@quarter)
+    CohortRevise.create_temp_earliest_start_date_table(@end_date)
+    CohortRevise.update_cum_outcome(@end_date)
+
+    data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT
+    (SELECT identifier FROM patient_identifier i WHERE i.patient_id = e.patient_id
+    AND i.voided = 0 AND i.identifier_type = #{PatientIdentifierType.find_by_name('ARV number').id} 
+    ORDER BY date_created DESC limit 1) AS arv_number,
+    e.*, o.cum_outcome FROM temp_earliest_start_date e 
+    RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+    WHERE date_enrolled <='#{@end_date.strftime('%Y-%m-%d')}';
+EOF
+
+    @data = {}
+    (data || []).each do |d|
+      @data[d['patient_id'].to_i] = {
+        :arv_number => d['arv_number'],
+        :earliest_start_date => (d['earliest_start_date'].to_date rescue nil),
+        :date_enrolled => (d['date_enrolled'].to_date rescue nil),
+        :birthdate => (d['birthdate'].to_date rescue nil),
+        :gender => (d['gender']),
+        :death_date => (d['death_date'].to_date rescue nil),
+        :outcome => d['cum_outcome']
+      }
+    end
+    
+    render :layout =>"report"
+  end
+
 	def case_findings
 
 		@variables = Hash.new(0)
 		@quarter = params[:quarter]
     @start_date,@end_date = Report.generate_cohort_date_range(@quarter)
-    encounters = Encounter.find(:all, :conditions => ["encounter_type = ? and encounter_datetime >= ? and encounter_datetime <= ?", EncounterType.find_by_name("tb registration").id, @start_date, @end_date])
+    encounters = Encounter.find(:all, :conditions => ["encounter_type = ? AND 
+    encounter_datetime >= ? AND encounter_datetime <= ?", 
+    EncounterType.find_by_name("tb registration").id, @start_date, @end_date])
     tbtype = ConceptName.find_by_name("TB classification").concept_id
     patienttype = ConceptName.find_by_name("TB patient category").concept_id
 		@variables["count"] = encounters.length
@@ -477,6 +515,11 @@ class CohortToolController < GenericCohortToolController
         return
 			when "missing_arv_dispensions"
 				redirect_to :action       => "missing_arv_dispensions",
+					:quarter      => params[:report],
+					:report_type  => params[:report_type]
+        return
+			when "patients_outcomes"
+				redirect_to :action => "patients_outcomes",
 					:quarter      => params[:report],
 					:report_type  => params[:report_type]
         return
