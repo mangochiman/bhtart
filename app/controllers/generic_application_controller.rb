@@ -109,7 +109,11 @@ class GenericApplicationController < ActionController::Base
   def use_filing_number
     CoreService.get_global_property_value('use.filing.number').to_s == "true" rescue false
   end 
- 
+
+  def cervical_cancer_activated
+    CoreService.get_global_property_value('activate.cervical.cancer.screening').to_s == "true" rescue false
+  end
+
  def generic_locations
   field_name = "name"
 
