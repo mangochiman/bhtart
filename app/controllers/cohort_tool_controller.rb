@@ -1,11 +1,85 @@
 class CohortToolController < GenericCohortToolController
 
+  def data_consistency_check_menu
+    render :layout =>"report"
+  end
+
+  def males_allegedly_pregnant
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    @report_name  = "Data consistency check: males allegedly pregnant"
+    @start_date = Encounter.find_by_sql('SELECT MIN(encounter_datetime) AS date 
+      FROM encounter WHERE voided = 0')[0]['date'].to_date rescue Date.today
+    @end_date = Date.today
+
+    @data = report_males_allegedly_pregnant(@start_date, @end_date)
+    render :layout =>"report"
+  end
+      
+  def data_consistency_check
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    @report_name  = "Data consistency check: #{params[:type]}"
+    @start_date = Encounter.find_by_sql('SELECT MIN(encounter_datetime) AS date 
+      FROM encounter WHERE voided = 0')[0]['date'].to_date rescue Date.today
+    @end_date = Date.today
+
+    @data = report_dead_with_visits(@start_date, @end_date)
+
+    render :layout =>"report"
+  end
+
+  def pdf_printout_cohort
+    @cohort = params[:cohort_params]
+    @cohort_year = params[:cohort_year]
+    @cohort_quarter = params[:cohort_quarter]
+    render :layout => false
+  end
+
+  def patients_outcomes
+    @logo = CoreService.get_global_property_value('logo').to_s
+    @current_location = Location.current_health_center.name
+    @report_name  = 'Current patients outcomes'
+
+    @quarter  = params[:quarter]
+    @start_date, @end_date = Report.generate_cohort_date_range(@quarter)
+    CohortRevise.create_temp_earliest_start_date_table(@end_date)
+    CohortRevise.update_cum_outcome(@end_date)
+
+    data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT
+    (SELECT identifier FROM patient_identifier i WHERE i.patient_id = e.patient_id
+    AND i.voided = 0 AND i.identifier_type = #{PatientIdentifierType.find_by_name('ARV number').id} 
+    ORDER BY date_created DESC limit 1) AS arv_number,
+    e.*, o.cum_outcome FROM temp_earliest_start_date e 
+    RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+    WHERE date_enrolled <='#{@end_date.strftime('%Y-%m-%d')}';
+EOF
+
+    @data = {}
+    (data || []).each do |d|
+      @data[d['patient_id'].to_i] = {
+        :arv_number => d['arv_number'],
+        :earliest_start_date => (d['earliest_start_date'].to_date rescue nil),
+        :date_enrolled => (d['date_enrolled'].to_date rescue nil),
+        :birthdate => (d['birthdate'].to_date rescue nil),
+        :gender => (d['gender']),
+        :death_date => (d['death_date'].to_date rescue nil),
+        :outcome => d['cum_outcome']
+      }
+    end
+    
+    render :layout =>"report"
+  end
+
 	def case_findings
 
 		@variables = Hash.new(0)
 		@quarter = params[:quarter]
     @start_date,@end_date = Report.generate_cohort_date_range(@quarter)
-    encounters = Encounter.find(:all, :conditions => ["encounter_type = ? and encounter_datetime >= ? and encounter_datetime <= ?", EncounterType.find_by_name("tb registration").id, @start_date, @end_date])
+    encounters = Encounter.find(:all, :conditions => ["encounter_type = ? AND 
+    encounter_datetime >= ? AND encounter_datetime <= ?", 
+    EncounterType.find_by_name("tb registration").id, @start_date, @end_date])
     tbtype = ConceptName.find_by_name("TB classification").concept_id
     patienttype = ConceptName.find_by_name("TB patient category").concept_id
 		@variables["count"] = encounters.length
@@ -470,6 +544,11 @@ class CohortToolController < GenericCohortToolController
         return
 			when "missing_arv_dispensions"
 				redirect_to :action       => "missing_arv_dispensions",
+					:quarter      => params[:report],
+					:report_type  => params[:report_type]
+        return
+			when "patients_outcomes"
+				redirect_to :action => "patients_outcomes",
 					:quarter      => params[:report],
 					:report_type  => params[:report_type]
         return
@@ -1042,6 +1121,7 @@ EOF
 		render :layout => 'report'
   end
 
+=begin
   def data_consistency_check
 		include_url_params_for_back_button
 		date_range  = Report.generate_cohort_date_range(params[:quarter])
@@ -1064,6 +1144,7 @@ EOF
 			['patients with start dates > first receive drug dates', @patients_with_wrong_start_dates.length]]
 		render :layout => 'report'
   end
+=end
 
   def list
     @report = []
@@ -2114,7 +2195,10 @@ EOF
 
   def report_dead_with_visits(start_date, end_date)
     patient_died_concept    = ConceptName.find_by_name('PATIENT DIED').concept_id
-
+    program_id = Program.find_by_name('HIV program').id
+    died_state_ids = ProgramWorkflowState.find(:all, :conditions =>["concept_id = ?",
+      patient_died_concept]).map(&:program_workflow_state_id)
+=begin
     all_dead_patients_with_visits = "SELECT *
     FROM (SELECT observation.person_id AS patient_id, DATE(p.death_date) AS date_of_death, DATE(observation.obs_datetime) AS date_started
           FROM person p right join obs observation ON p.person_id = observation.person_id
@@ -2122,48 +2206,94 @@ EOF
           ORDER BY observation.obs_datetime ASC) AS dead_patients_visits
     WHERE DATE(date_of_death) >= DATE('#{start_date}') AND DATE(date_of_death) <= DATE('#{end_date}')
     GROUP BY patient_id"
-    patients = Patient.find_by_sql([all_dead_patients_with_visits])
+=end
+
+    deaths = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT p.patient_id, s.start_date FROM patient_state s 
+    INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
+    AND s.voided = 0 AND p.voided = 0 AND p.program_id = #{program_id} 
+    WHERE s.state IN(#{died_state_ids.join(',')})
+    AND s.start_date < (
+      SELECT DATE(MAX(encounter_datetime)) FROM encounter e 
+      WHERE e.voided = 0 AND e.patient_id = p.patient_id
+    );
+EOF
+
+    death_dates = {}
+    patient_ids = deaths.map { |d| d['patient_id'].to_i }
+
+    (deaths || []).each do |d|
+      death_dates[d['patient_id'].to_i] = (d['start_date'].to_date.strftime('%d/%b/%Y') rescue nil)
+    end
+
+    #raise death_dates[215580].inspect
+
+    patients = Patient.find(:all, :conditions =>["patient_id IN(?)", patient_ids]) rescue []
 
     patients_data  = []
     patients.each do |patient_data_row|
       person = Person.find(patient_data_row[:patient_id].to_i)
       patient_bean = PatientService.get_patient(person)
-      patients_data <<{ 'person_id' => person.id,
-				'arv_number' => patient_bean.arv_number,
-				'name' => patient_bean.name,
-				'national_id' => patient_bean.national_id,
-				'gender' => patient_bean.sex,
-				'age' => patient_bean.age,
-				'birthdate' => patient_bean.birth_date,
-				'phone' => PatientService.phone_numbers(person),
-				'date_created' => patient_data_row[:date_started]
+         
+      phone_num = ''
+      phone_numbers = PatientService.phone_numbers(person)
+      
+      (phone_numbers.keys || {}).each_with_index do |phone_num_type, i|
+        number = phone_numbers[phone_num_type] 
+        next if number.blank? 
+
+        phone_num += "|#{number}" if i > 0
+        phone_num = "#{number}" if i < 1
+      end
+
+      
+      latest_visit = ActiveRecord::Base.connection.select_one <<EOF
+      SELECT t.name, max(encounter_datetime) latest_visit_date 
+      FROM encounter e INNER JOIN encounter_type t ON e.encounter_type = t.encounter_type_id
+      WHERE patient_id = #{person.id} AND e.voided = 0;
+EOF
+
+      patients_data <<{ :patient_id => person.id,
+				:arv_number => patient_bean.arv_number,
+				:name => patient_bean.name,
+				:national_id => patient_bean.national_id,
+				:gender => patient_bean.sex,
+				:age => patient_bean.age,
+				:birthdate => patient_bean.birth_date,
+        :death_date => death_dates[person.id],
+				:phone => phone_num,
+				:date_created => patient_data_row[:date_started],
+				:service_name => (latest_visit['name'] rescue nil),
+        :latest_visit_date => (latest_visit['latest_visit_date'].to_date.strftime('%d/%b/%Y') rescue nil)
 			}
     end
     patients_data
   end
 
   def report_males_allegedly_pregnant(start_date, end_date)
-    pregnant_patient_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
+    pregnant_patient_concept_ids = []
+    pregnant_patient_concept_ids << ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
+    pregnant_patient_concept_ids << ConceptName.find_by_name('PATIENT PREGNANT').concept_id
+
     patients = PatientIdentifier.find_by_sql(["
-                                   SELECT person.person_id,obs.obs_datetime
-                                       FROM obs INNER JOIN person ON obs.person_id = person.person_id
-                                           WHERE person.gender = 'M' AND
-                                           obs.concept_id = ? AND obs.obs_datetime >= ? AND obs.obs_datetime <= ? AND obs.voided = 0",
-        pregnant_patient_concept_id, '2008-12-23 00:00:00', end_date])
+      SELECT person.person_id,obs.obs_datetime
+      FROM obs INNER JOIN person ON obs.person_id = person.person_id
+      WHERE (person.gender = 'M' OR person.gender = 'Male') AND
+      obs.concept_id IN (?) AND obs.obs_datetime <= ? 
+      AND obs.voided = 0", pregnant_patient_concept_ids, end_date])
 
 		patients_data  = []
 		patients.each do |patient_data_row|
 			person = Person.find(patient_data_row[:person_id].to_i)
 		  patient_bean = PatientService.get_patient(person)
-			patients_data <<{ 'person_id' => person.id,
-				'arv_number' => patient_bean.arv_number,
-				'name' => patient_bean.name,
-				'national_id' => patient_bean.national_id,
-				'gender' => patient_bean.sex,
-				'age' => patient_bean.age,
-				'birthdate' => patient_bean.birth_date,
-				'phone' => PatientService.phone_numbers(person),
-				'date_created' => patient_data_row[:obs_datetime]
+			patients_data <<{ :patient_id => person.id,
+				:arv_number => patient_bean.arv_number,
+				:name => patient_bean.name,
+				:national_id => patient_bean.national_id,
+				:gender => patient_bean.sex,
+				:age => patient_bean.age,
+				:birthdate => patient_bean.birth_date,
+				:date_created => patient_data_row[:obs_datetime]
 			}
 		end
 		patients_data

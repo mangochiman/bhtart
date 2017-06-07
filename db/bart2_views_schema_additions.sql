@@ -573,7 +573,7 @@ BEGIN
 
 DECLARE date_started DATE;
 
-SET date_started = (SELECT MIN(start_date) FROM patient_state WHERE voided = 0 AND state = 7 AND patient_program_id IN (SELECT patient_program_id FROM patient_program WHERE patient_id = set_patient_id AND voided = 0 AND program_id = 1));
+SET date_started = (SELECT MIN(start_date) FROM patient_state s INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id WHERE s.voided = 0 AND s.state = 7 AND p.program_id = 1 AND p.patient_id = set_patient_id);
 
 RETURN date_started;
 END$$
@@ -587,10 +587,13 @@ BEGIN
 DECLARE set_program_id INT;
 DECLARE set_patient_state INT;
 DECLARE set_outcome varchar(25);
+DECLARE set_date_started date;
+DECLARE set_patient_state_died INT;
+DECLARE set_died_concept_id INT;
 
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
-SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND start_date <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
 
 
 IF set_patient_state = 1 THEN
@@ -601,9 +604,24 @@ IF set_patient_state = 2   THEN
   SET set_outcome = 'Patient transferred out';
 END IF;
 
-IF set_patient_state = 3 THEN
+IF set_patient_state = 3 OR set_patient_state = 127 THEN
   SET set_outcome = 'Patient died';
 END IF;
+
+/* ............... This block of code checks if the patient has any state that is "died" */
+
+IF set_patient_state != 3 AND set_patient_state != 127 THEN
+  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
+
+  SET set_died_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Patient died' LIMIT 1);
+
+  IF set_patient_state_died IN(SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = set_died_concept_id AND retired = 0) THEN
+    SET set_outcome = 'Patient died';
+    SET set_patient_state = 3;
+  END IF;
+END IF;
+/* ....................  ends here .................... */
+
 
 IF set_patient_state = 6 THEN
   SET set_outcome = 'Treatment stopped';
@@ -629,7 +647,7 @@ IF set_outcome IS NULL THEN
   END IF;
 
   IF set_outcome IS NULL THEN
-    SET set_outcome = 'On antiretrovirals';
+    SET set_outcome = 'Unknown';
   END IF;
 
 END IF;
@@ -779,7 +797,7 @@ BEGIN
 
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-            SET @expiry_date = ADDDATE(my_start_date, ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
 			IF my_expiry_date IS NULL THEN
 				SET my_expiry_date = @expiry_date;
@@ -791,7 +809,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF DATEDIFF(my_end_date, my_expiry_date) > 56 THEN
+    IF DATEDIFF(my_end_date, my_expiry_date) > 60 THEN
         SET flag = 1;
     END IF;
 
@@ -1241,6 +1259,10 @@ BEGIN
 
 		IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
 
+      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN 
+        SET my_daily_dose = 1;
+      END IF;
+
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
             SET @expiry_date = ADDDATE(my_start_date, ((my_quantity + my_pill_count)/my_daily_dose));
@@ -1255,8 +1277,8 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF DATEDIFF(my_end_date, my_expiry_date) > 56 THEN
-        SET my_defaulted_date = ADDDATE(my_expiry_date, 56);
+    IF DATEDIFF(my_end_date, my_expiry_date) > 60 THEN
+        SET my_defaulted_date = ADDDATE(my_expiry_date, 60);
     END IF;
 
 	RETURN my_defaulted_date;

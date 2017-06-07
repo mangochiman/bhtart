@@ -122,22 +122,55 @@ class CohortTool < ActiveRecord::Base
   def self.defaulted_patients(end_date, regimen_ids=[])
     #PB 2015-09-24 : added e.voided = 0 to exclude voided patients
     #PB 2015-12-30 : added check for HIV program  and also those that are not Transfered Outs, dead or treatment_stopped
-    
+    CohortRevise.create_temp_earliest_start_date_table(end_date.to_date)
+    CohortRevise.update_cum_outcome(end_date.to_date)
     
 		patients = []
     unless regimen_ids.blank?
        conditions = "AND e.patient_id IN (#{regimen_ids})"
     end
-		PatientProgram.find_by_sql("SELECT e.patient_id, patient_outcome(e.patient_id, DATE('#{end_date.to_date.strftime('%Y-%m-%d')}')) AS def,
-                       current_state_for_program(e.patient_id, 1, '#{end_date}') AS state
-											FROM patient_program e LEFT JOIN person p ON p.person_id = e.patient_id
-											WHERE DATE(date_enrolled) <=  '#{end_date}' AND p.dead=0 AND e.voided = 0 and e.program_id = 1
-											HAVING def LIKE '%defaul%' AND state NOT IN (2, 3, 6) #{conditions}").each do | patient |
-      patients << patient.patient_id
+		
+    data = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT
+    (SELECT identifier FROM patient_identifier i WHERE i.patient_id = e.patient_id
+    AND i.voided = 0 AND i.identifier_type = #{PatientIdentifierType.find_by_name('ARV number').id} 
+    ORDER BY date_created DESC limit 1) AS arv_number,
+    e.*, o.cum_outcome FROM temp_earliest_start_date e 
+    RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+    WHERE date_enrolled <='#{end_date.to_date.strftime('%Y-%m-%d')}'
+    AND cum_outcome = 'Defaulted' #{conditions};
+EOF
+
+    patient_data = {}
+
+    (data || []).each do |d|
+      patient_data[d['patient_id'].to_i] = {
+        :arv_number => d['arv_number'],
+        :earliest_start_date => (d['earliest_start_date'].to_date rescue nil),
+        :date_enrolled => (d['date_enrolled'].to_date rescue nil),
+        :birthdate => (d['birthdate'].to_date rescue nil),
+        :gender => (d['gender']),
+        :phone_number => self.get_phone(d['patient_id'].to_i),
+        :death_date => (d['death_date'].to_date rescue nil),
+        :outcome => d['cum_outcome']
+      }
     end
-    
-		return patients 
+ 
+		return patient_data
 	end
+
+  def self.get_phone(patient_id)
+    patient = Patient.find(patient_id)
+    phone = PatientService.get_attribute(patient, "Cell phone number")
+
+    if phone.nil?
+      phone = PatientService.get_attribute(patient, "Home phone number")
+      if phone.nil?
+        phone = PatientService.get_attribute(patient, "Office phone number")
+      end
+    end
+    return phone.nil? ? " " : phone
+  end
 
   def self.outcomes_total(outcome, end_date=Date.today, regimen_ids = [], start_date = nil)
 
