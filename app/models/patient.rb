@@ -568,4 +568,16 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return false
   end
 
+  def self.latest_outcome_date(patient)
+    outcome_dates = []
+    hiv_program_id = Program.find_by_name("HIV PROGRAM").id
+    hiv_program = patient.patient_programs.find(:last, :conditions => ["program_id = ?", hiv_program_id])
+
+    hiv_program.patient_states.each do |ps|
+        outcome_dates << ps.start_date
+    end rescue nil
+    
+    return outcome_dates.last
+  end
+  
 end

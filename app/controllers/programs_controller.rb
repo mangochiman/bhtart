@@ -207,6 +207,7 @@ class ProgramsController < GenericProgramsController
       :conditions => ["patient_id = ? and program_id = ?",
         params[:patient_id], hiv_program_id]).first rescue nil
 
+    @latest_outcome_date = Patient.latest_outcome_date(@patient).to_date.strftime("%d/%b/%Y")
 
     @patient_program_id = patient_program.patient_program_id
 
