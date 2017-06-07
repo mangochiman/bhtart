@@ -70,6 +70,14 @@ class GenericProgramsController < ApplicationController
     if params[:state]
       state = params[:state]
       @patient_state = PatientState.find(state)
+
+      if @patient_state.name.match(/DIED/i)
+        person = @patient_state.patient_program.patient.person
+        person.dead = 0
+        person.death_date = nil
+        person.save
+      end
+
       @patient_state.void
       encounter = Encounter.find_by_sql("
         SELECT encounter_id FROM obs WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = 'PATIENT TRACKING STATE')
