@@ -2528,7 +2528,12 @@ EOF
       elsif concept_name.upcase == 'REGIMEN CATEGORY'
         #patient_visits[visit_date].reg = 'Unknown' if obs.value_coded == ConceptName.find_by_name("Unknown antiretroviral drug").concept_id
         #patient_visits[visit_date].reg = obs.value_text if !patient_visits[visit_date].reg
-        patient_visits[visit_date].reg = obs.value_text.gsub('Unknown', 'Non Standard') if !patient_visits[visit_date].reg
+        reg = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT patient_current_regimen(#{obs.person_id}, DATE('#{visit_date.to_date}')) AS regimen_category;
+EOF
+
+        patient_visits[visit_date].reg = reg['regimen_category'] unless reg['regimen_category'].blank? 
+        #obs.value_text.gsub('Unknown', 'Non Standard') if !patient_visits[visit_date].reg
       elsif (concept_name.upcase == 'DRUG INDUCED' || concept_name.upcase == 'MALAWI ART SIDE EFFECTS')
         #symptoms = obs.to_s.split(':').map do | sy |
           #sy.sub(concept_name,'').strip.capitalize
@@ -2574,13 +2579,11 @@ EOF
     #patients currents/available states (patients outcome/s)
     program_id = Program.find_by_name('HIV PROGRAM').id
     if encounter_date.blank?
-=begin
       patient_states = PatientState.find(:all,
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
           program_id,patient_obj.patient_id],
           :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
-=end
     else
       patient_states = PatientState.find(:all,
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
@@ -2604,7 +2607,7 @@ EOF
 
     defaulted_dates = PatientService.patient_defaulted_dates(patient_obj, session_date) rescue nil
 
-    if defaulted_dates
+    unless defaulted_dates.blank?
       defaulted_dates.each do |pat_def_date|
         state_name = 'Defaulter'
         rerun_outcome = ActiveRecord::Base.connection.select_one <<EOF
@@ -2617,7 +2620,6 @@ EOF
       end
     end
 
-    #=begin
     (all_patient_states || []).each do |outcome, outcome_date|
       visit_date = outcome_date.to_date rescue nil
       next if visit_date.blank?
@@ -2630,10 +2632,13 @@ EOF
 
     end
 
-    #=end
 
     patient_visits.sort.each do |visit_date,data|
       next if visit_date.blank?
+      begin
+        next if patient_visits[visit_date].outcome.match(/defa|died/i)
+      rescue
+      end
       # patient_visits[visit_date].outcome = hiv_state(patient_obj,visit_date)
       #patient_visits[visit_date].date_of_outcome = visit_date
 

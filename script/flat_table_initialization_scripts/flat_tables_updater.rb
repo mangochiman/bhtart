@@ -1594,8 +1594,12 @@ EOF
 #---------------------------------------------------------------------end type_of_confirmatory_hiv_test
 
     when date_started_art
-      value_datetime = patient['value_datetime']
-      if patient['voided'] == 0
+      if patient['value_text'].blank?
+        value_datetime = patient['value_datetime']
+      else
+        value_datetime = patient['value_text']
+      end
+      if patient['voided'].to_i == 0
         puts ".......... Updating record into flat_table1 (date_started_art): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
@@ -6726,117 +6730,117 @@ WHERE  name = 'Malawi ART side effects' AND voided = 0 AND retired = 0 LIMIT 1")
   abdominal_pain_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Abdominal pain' AND voided = 0 AND retired = 0 LIMIT 1")
-  abdominal_pain = abdominal_pain_record['concept_id']
+  abdominal_pain = abdominal_pain_record['concept_id'].to_i
 
   anemia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Anemia' AND voided = 0 AND retired = 0 LIMIT 1")
-  anemia = anemia_record['concept_id']
+  anemia = anemia_record['concept_id'].to_i
 
   anorexia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Anorexia' AND voided = 0 AND retired = 0 LIMIT 1")
-  anorexia = anorexia_record['concept_id']
+  anorexia = anorexia_record['concept_id'].to_i
 
   blurry_vision_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Blurry vision' AND voided = 0 AND retired = 0 LIMIT 1")
-  blurry_vision = blurry_vision_record['concept_id']
+  blurry_vision = blurry_vision_record['concept_id'].to_i
 
   cough_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Cough' AND voided = 0 AND retired = 0 LIMIT 1")
-  cough = cough_record['concept_id']
+  cough = cough_record['concept_id'].to_i
 
   diarrhea_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Diarrhea' AND voided = 0 AND retired = 0 LIMIT 1")
-  diarrhea = diarrhea_record['concept_id']
+  diarrhea = diarrhea_record['concept_id'].to_i
 
   diziness_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Dizziness' AND voided = 0 AND retired = 0 LIMIT 1")
-  diziness = diziness_record['concept_id']
+  diziness = diziness_record['concept_id'].to_i
 
   fever_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'fever' AND voided = 0 AND retired = 0 LIMIT 1")
-  fever = fever_record['concept_id']
+  fever = fever_record['concept_id'].to_i
 
   gynaecomastia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Gynaecomastia' AND voided = 0 AND retired = 0 LIMIT 1")
-  gynaecomastia = gynaecomastia_record['concept_id']
+  gynaecomastia = gynaecomastia_record['concept_id'].to_i
 
   hepatitis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Hepatitis' AND voided = 0 AND retired = 0 LIMIT 1")
-  hepatitis = hepatitis_record['concept_id']
+  hepatitis = hepatitis_record['concept_id'].to_i
 
   jaundice_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Jaundice' AND voided = 0 AND retired = 0 LIMIT 1")
-  jaundice = jaundice_record['concept_id']
+  jaundice = jaundice_record['concept_id'].to_i
 
   kidney_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Kidney failure' AND voided = 0 AND retired = 0 LIMIT 1")
-  kidney_failure = kidney_failure_record['concept_id']
+  kidney_failure = kidney_failure_record['concept_id'].to_i
 
   lactic_acidosis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Lactic acidosis' AND voided = 0 AND retired = 0 LIMIT 1")
-  lactic_acidosis = lactic_acidosis_record['concept_id']
+  lactic_acidosis = lactic_acidosis_record['concept_id'].to_i
 
   leg_pain_numbness_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Leg pain / numbness' AND voided = 0 AND retired = 0 LIMIT 1")
-  leg_pain_numbness = leg_pain_numbness_record['concept_id']
+  leg_pain_numbness = leg_pain_numbness_record['concept_id'].to_i
 
   lipodystrophy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Lipodystrophy' AND voided = 0 AND retired = 0 LIMIT 1")
-  lipodystrophy = lipodystrophy_record['concept_id']
+  lipodystrophy = lipodystrophy_record['concept_id'].to_i
 
   nightmares_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE name = 'Nightmares' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
-  nightmares = nightmares_record['concept_id']
+  nightmares = nightmares_record['concept_id'].to_i
 
   symptom_no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'No' AND voided = 0 AND retired = 0 LIMIT 1")
-  symptom_no = symptom_no_record['concept_id']
+  symptom_no = symptom_no_record['concept_id'].to_i
 
   other_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Other' AND voided = 0 AND retired = 0 LIMIT 1")
-  other = other_record['concept_id']
+  other = other_record['concept_id'].to_i
 
   peripheral_neuropathy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Peripheral neuropathy' AND voided = 0 AND retired = 0 LIMIT 1")
-  peripheral_neuropathy = peripheral_neuropathy_record['concept_id']
+  peripheral_neuropathy = peripheral_neuropathy_record['concept_id'].to_i
 
   psychosis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Psychosis' AND voided = 0 AND retired = 0 LIMIT 1")
-  psychosis = psychosis_record['concept_id']
+  psychosis = psychosis_record['concept_id'].to_i
 
   renal_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Renal failure' AND voided = 0 AND retired = 0 LIMIT 1")
-  renal_failure = renal_failure_record['concept_id']
+  renal_failure = renal_failure_record['concept_id'].to_i
 
   skin_rash_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Skin rash' AND voided = 0 AND retired = 0 LIMIT 1")
-  skin_rash = skin_rash_record['concept_id']
+  skin_rash = skin_rash_record['concept_id'].to_i
 
   vomiting_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Vomiting' AND voided = 0 AND retired = 0 LIMIT 1")
-  vomiting = vomiting_record['concept_id']
+  vomiting = vomiting_record['concept_id'].to_i
 
   #tb screening
   routine_tb_screening_screening_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
@@ -6847,23 +6851,22 @@ WHERE  name = 'Routine Tuberculosis Screening' AND voided = 0 AND retired = 0 LI
   routine_tb_screening_fever_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Fever' AND voided = 0 AND retired = 0 LIMIT 1")
-  routine_tb_screening_fever = routine_tb_screening_fever_record['concept_id']
+  routine_tb_screening_fever = routine_tb_screening_fever_record['concept_id'].to_i
 
   routine_tb_screening_night_sweats_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Night sweats' AND voided = 0 AND retired = 0 LIMIT 1")
-  routine_tb_screening_night_sweats = routine_tb_screening_night_sweats_record['concept_id']
+  routine_tb_screening_night_sweats = routine_tb_screening_night_sweats_record['concept_id'].to_i
 
   routine_tb_screening_cough_of_any_duration_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Cough any duration' AND voided = 0 AND retired = 0 LIMIT 1")
-  routine_tb_screening_cough_of_any_duration = routine_tb_screening_cough_of_any_duration_record['concept_id']
+  routine_tb_screening_cough_of_any_duration = routine_tb_screening_cough_of_any_duration_record['concept_id'].to_i
 
   routine_tb_screening_weight_loss_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Weight loss / Failure to thrive / malnutrition' AND voided = 0 AND retired = 0 LIMIT 1")
-  routine_tb_screening_weight_loss_failure = routine_tb_screening_weight_loss_failure_record['concept_id']
-
+  routine_tb_screening_weight_loss_failure = routine_tb_screening_weight_loss_failure_record['concept_id'].to_i
   #tb status
   tb_status_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
     LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
@@ -6912,6 +6915,11 @@ WHERE  name = 'Isoniazid' AND voided = 0 AND retired = 0 LIMIT 1")
   prescribe_ipt = prescribe_ipt_record['concept_id']
 
   patient_hiv_consultation_obs = Connection.select_all("SELECT * FROM obs WHERE encounter_id = #{encounter['encounter_id']}")
+
+  malawi_art_side_effects_concept_ids =  []
+  Connection.select_all("SELECT * FROM obs WHERE concept_id = #{malawi_art_side_effects.to_i}").each{|obs| malawi_art_side_effects_concept_ids << obs['value_coded'].to_i}
+
+  side_effects_concept_details = Connection.select_all("SELECT * FROM obs o INNER JOIN encounter e ON e.encounter_id = o.encounter_id and e.encounter_type = 53 WHERE concept_id IN (#{malawi_art_side_effects_concept_ids.join(',')})")
 
   (patient_hiv_consultation_obs || []).each do |patient|
     patient_visit_date =  patient['obs_datetime'].to_date.strftime("%Y-%m-%d")
@@ -7497,119 +7505,7 @@ EOF
 #---------------------------------------------------------------------------------------------------------------------end family planning method
 
     when routine_tb_screening_screening
-      case patient['value_coded']
-        when routine_tb_screening_fever
-          patient_check = []
-          patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                                        WHERE patient_id = #{patient['person_id']}
-                                        and visit_date = '#{patient_visit_date}'")
-          if patient_check.blank?
-            #insert
-            Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_fever, routine_tb_screening_fever_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-          else #else visit blank
-            #update
-            if patient['voided'] == "0"
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_fever = 'Yes', routine_tb_screening_fever_enc_id = '#{patient['encounter_id']}'
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            else #else voided
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_fever = NULL, routine_tb_screening_fever_enc_id = NULL
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            end #end voided
-          end #end visit blank
-
-        when routine_tb_screening_night_sweats
-          patient_check = []
-          patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                                        WHERE patient_id = #{patient['person_id']}
-                                        and visit_date = '#{patient_visit_date}'")
-          if patient_check.blank?
-            #insert
-            Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_night_sweats, routine_tb_screening_night_sweats_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-          else #else visit blank
-            #update
-            if patient['voided'] == "0"
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_night_sweats = 'Yes', routine_tb_screening_night_sweats_enc_id = '#{patient['encounter_id']}'
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            else #else voided
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_night_sweats = NULL, routine_tb_screening_night_sweats_enc_id = NULL
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            end #end voided
-          end #end visit blank
-
-        when routine_tb_screening_cough_of_any_duration
-          patient_check = []
-          patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                                        WHERE patient_id = #{patient['person_id']}
-                                        and visit_date = '#{patient_visit_date}'")
-          if patient_check.blank?
-            #insert
-            Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_cough_of_any_duration, routine_tb_screening_cough_of_any_duration_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-          else #else visit blank
-            #update
-            if patient['voided'] == "0"
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_cough_of_any_duration = 'Yes', routine_tb_screening_cough_of_any_duration_enc_id = '#{patient['encounter_id']}'
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            else #else voided
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_cough_of_any_duration = NULL, routine_tb_screening_cough_of_any_duration_enc_id = NULL
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            end #end voided
-          end #end visit blank
-
-        when routine_tb_screening_weight_loss_failure
-          patient_check = []
-          patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                                        WHERE patient_id = #{patient['person_id']}
-                                        and visit_date = '#{patient_visit_date}'")
-          if patient_check.blank?
-            #insert
-            Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_weight_loss_failure, routine_tb_screening_weight_loss_failure_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-          else #else visit blank
-            #update
-            if patient['voided'] == "0"
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_weight_loss_failure = 'Yes', routine_tb_screening_weight_loss_failure_enc_id = '#{patient['encounter_id']}'
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            else #else voided
-              Connection.execute <<EOF
-UPDATE flat_table2
-SET  routine_tb_screening_weight_loss_failure = NULL, routine_tb_screening_weight_loss_failure_enc_id = NULL
-WHERE  flat_table2.id = '#{visit}';
-EOF
-            end #end voided
-          end #end visit blank
-      end #end tb screening value_coded
+      updating_routine_tb_screening(patient['person_id'].to_i, patient['encounter_id'].to_i, patient['value_coded'].to_i, patient['obs_datetime'], patient['voided'].to_i)
 #------------------------------------------------------------------------------------------------------------------------close TB routine screening
     when tb_status
       case patient['value_coded']
@@ -9196,651 +9092,8 @@ EOF
       end #end drug_induced case statement
 #---------------------------------------------------------------------------------------------------------------end drug_induced
     when malawi_art_side_effects
-      case patient['value_coded']
-      when abdominal_pain
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_abdominal_pain, side_effects_abdominal_pain_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_abdominal_pain = 'Yes', side_effects_abdominal_pain_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_abdominal_pain = NULL, side_effects_abdominal_pain_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when anemia
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_anemia, side_effects_anemia_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_anemia = 'Yes', side_effects_anemia_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_anemia = NULL, side_effects_anemia_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when anorexia
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_anorexia, side_effects_anorexia_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_anorexia = 'Yes', side_effects_anorexia_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_anorexia = NULL, side_effects_anorexia_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when blurry_vision
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_blurry_vision, side_effects_blurry_vision_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_blurry_vision = 'Yes', side_effects_blurry_vision_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_blurry_vision = NULL, side_effects_blurry_vision_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when cough
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_cough, side_effects_cough_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_cough = 'Yes', side_effects_cough_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_cough = NULL, side_effects_cough_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when diarrhea
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_diarrhea, side_effects_diarrhea_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_diarrhea = 'Yes', side_effects_diarrhea_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_diarrhea = NULL, side_effects_diarrhea_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when diziness
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_diziness, side_effects_diziness_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_diziness = 'Yes', side_effects_diziness_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_diziness = NULL, side_effects_diziness_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when fever
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_fever, side_effects_fever_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-         else #else visit blank
-           #update
-           if patient['voided'] == "0"
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_fever = 'Yes', side_effects_fever_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-           else #else voided
-             Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_fever = NULL, side_effects_fever_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when hepatitis
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-         #insert
-         Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_hepatitis, side_effects_hepatitis_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_hepatitis = 'Yes', side_effects_hepatitis_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_hepatitis = NULL, side_effects_hepatitis_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-         end #end voided
-       end #end visit blank
-
-      when jaundice
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_jaundice, side_effects_jaundice_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-           #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_jaundice = 'Yes', side_effects_jaundice_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_jaundice = NULL, side_effects_jaundice_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when kidney_failure
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_kidney_failure, side_effects_kidney_failure_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_kidney_failure = 'Yes', side_effects_kidney_failure_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_kidney_failure = NULL, side_effects_kidney_failure_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when lactic_acidosis
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_lactic_acidosis, side_effects_lactic_acidosis_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_lactic_acidosis = 'Yes', side_effects_lactic_acidosis_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_lactic_acidosis = NULL, side_effects_lactic_acidosis_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when leg_pain_numbness
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_leg_pain_numbness, side_effects_leg_pain_numbness_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_leg_pain_numbness = 'Yes', side_effects_leg_pain_numbness_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_leg_pain_numbness = NULL, side_effects_leg_pain_numbness_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when lipodystrophy
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_lipodystrophy, side_effects_lipodystrophy_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_lipodystrophy = 'Yes', side_effects_lipodystrophy_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_lipodystrophy = NULL, side_effects_lipodystrophy_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when symptom_no
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_no, side_effects_no_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_no = 'Yes', side_effects_no_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_no = NULL, side_effects_no_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when other
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_other, side_effects_othe_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_other = 'Yes', side_effects_other_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_other = NULL, side_effects_other_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when peripheral_neuropathy
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_peripheral_neuropathy, side_effects_peripheral_neuropathy_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_peripheral_neuropathy = 'Yes', side_effects_peripheral_neuropathy_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_peripheral_neuropathy = NULL, side_effects_peripheral_neuropathy_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when psychosis
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_psychosis, side_effects_psychosis_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_psychosis = 'Yes', side_effects_psychosis_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_psychosis = NULL, side_effects_psychosis_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when renal_failure
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, sysmptom_present_renal_failure, sysmptom_present_renal_failure_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  sysmptom_present_renal_failure = 'Yes', sysmptom_present_renal_failure_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  sysmptom_present_renal_failure = NULL, sysmptom_present_renal_failure_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when skin_rash
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_skin_rash, side_effects_skin_rash_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_skin_rash = 'Yes', side_effects_skin_rash_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_skin_rash = NULL, side_effects_skin_rash_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when vomiting
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_vomiting, side_effects_vomiting_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_vomiting = 'Yes', side_effects_vomiting_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_vomiting = NULL, side_effects_vomiting_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when nightmares
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_nightmares, side_effects_nightmares_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_nightmares = 'Yes', side_effects_nightmares_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_nightmares = NULL, side_effects_nightmares_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-
-      when gynaecomastia
-              patient_check = []
-              patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-        if patient_check.blank?
-          #insert
-          Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, side_effects_gynaecomastia, side_effects_gynaecomastia_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), 'Yes', '#{patient['encounter_id']}') ;
-EOF
-        else #else visit blank
-          #update
-          if patient['voided'] == "0"
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_gynaecomastia = 'Yes', side_effects_gynaecomastia_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          else #else voided
-            Connection.execute <<EOF
-UPDATE flat_table2
-SET  side_effects_gynaecomastia = NULL, side_effects_gynaecomastia_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-          end #end voided
-        end #end visit blank
-      end #end side_effects case statement
+      updating_side_effects(patient['person_id'].to_i, patient['encounter_id'].to_i, patient['value_coded'].to_i, patient['obs_datetime'])
+#--------------------------------------------------------------------------------------------------------------end malawi_art_side_effects
     end #closing case statement
   end #closing patient_hiv_consultation_obs
 end
@@ -11979,6 +11232,919 @@ EOF
       puts "........... Updating record into flat_table1 (patient_identifier): #{patient_id}"
     end
   end
+
+end
+
+def updating_routine_tb_screening(obs_person_id, obs_encounter_id, routine_screening_id, obs_visit_date, obs_voided)
+  #tb screening
+  routine_tb_screening_screening_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+    LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE name = 'Routine Tuberculosis Screening' AND voided = 0 AND retired = 0 LIMIT 1")
+  routine_tb_screening_screening = routine_tb_screening_screening_record['concept_id']
+
+  routine_tb_screening_fever_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+    LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE name = 'Fever' AND voided = 0 AND retired = 0 LIMIT 1")
+  routine_tb_screening_fever = routine_tb_screening_fever_record['concept_id'].to_i
+
+  routine_tb_screening_night_sweats_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+    LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE name = 'Night sweats' AND voided = 0 AND retired = 0 LIMIT 1")
+  routine_tb_screening_night_sweats = routine_tb_screening_night_sweats_record['concept_id'].to_i
+
+  routine_tb_screening_cough_of_any_duration_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+    LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE name = 'Cough any duration' AND voided = 0 AND retired = 0 LIMIT 1")
+  routine_tb_screening_cough_of_any_duration = routine_tb_screening_cough_of_any_duration_record['concept_id'].to_i
+
+  routine_tb_screening_weight_loss_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+    LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE name = 'Weight loss / Failure to thrive / malnutrition' AND voided = 0 AND retired = 0 LIMIT 1")
+  routine_tb_screening_weight_loss_failure = routine_tb_screening_weight_loss_failure_record['concept_id'].to_i
+
+  #get the
+  tb_screening_routine_ans = []
+  Connection.select_all("
+          SELECT o.obs_id, o.person_id, o.encounter_id, o.obs_datetime, c.name, o.voided
+          FROM obs o
+            INNER JOIN concept_name c on c.concept_id = o.value_coded
+          WHERE encounter_id = #{obs_encounter_id} AND o.concept_id = #{routine_screening_id}
+          AND obs_datetime = '#{obs_visit_date}' AND person_id = #{obs_person_id} AND concept_name_type = 'FULLY_SPECIFIED'
+          AND c.voided  = 0").each do |patient|
+            tb_screening_routine_ans << patient
+          end
+
+  patient_check = []
+  patient_check = Connection.select_one("SELECT ID FROM flat_table2
+                        WHERE patient_id = #{obs_person_id}
+                        and visit_date = DATE('#{obs_visit_date}')")
+
+
+  unless tb_screening_routine_ans.blank? #unless tb_screening_routine_ans is blank
+    (tb_screening_routine_ans || []).each do |patient_obs|
+      case routine_screening_id #routine_screening case
+        when routine_tb_screening_fever #routine_screening case
+          if patient_check.blank? #check patient_not_in_flat_table2
+            #insert
+            Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_fever, routine_tb_screening_fever_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+          else #check patient_not_in_flat_table2
+            if patient_obs['voided'].to_i == 0 #if voided
+              Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_fever = '#{patient_obs['name']}', routine_tb_screening_fever_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            else #else voided
+              Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_fever = NULL, routine_tb_screening_fever_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            end #end voided
+          end #check patient_not_in_flat_table2
+#------------------------------------------------------------------------------------------------------------end routine_tb_screening_fever
+        when routine_tb_screening_night_sweats
+          if patient_check.blank? #check patient_not_in_flat_table2
+  #insert
+  Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_night_sweats, routine_tb_screening_night_sweats_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+          else #check patient_not_in_flat_table2
+            if patient_obs['voided'].to_i == 0 #if voided
+    Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_night_sweats = '#{patient_obs['name']}', routine_tb_screening_night_sweats_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            else #else voided
+    Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_night_sweats = NULL, routine_tb_screening_night_sweats_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            end #end voided
+          end #check patient_not_in_flat_table2
+#------------------------------------------------------------------------------------------------------------end routine_tb_screening_night_sweats
+        when routine_tb_screening_cough_of_any_duration
+          if patient_check.blank? #check patient_not_in_flat_table2
+            #insert
+            Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_cough_of_any_duration, routine_tb_screening_cough_of_any_duration_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+          else #check patient_not_in_flat_table2
+            if patient_obs['voided'].to_i == 0 #if voided
+              Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_cough_of_any_duration = '#{patient_obs['name']}', routine_tb_screening_cough_of_any_duration_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            else #else voided
+              Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_cough_of_any_duration = NULL, routine_tb_screening_cough_of_any_duration_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            end #end voided
+          end #check patient_not_in_flat_table2
+#------------------------------------------------------------------------------------------------------------end routine_tb_screening_cough_of_any_duration
+        when routine_tb_screening_weight_loss_failure
+          if patient_check.blank? #check patient_not_in_flat_table2
+            #insert
+            Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_weight_loss_failure, routine_tb_screening_weight_loss_failure_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+          else #check patient_not_in_flat_table2
+            if patient_obs['voided'].to_i == 0 #if voided
+              Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_weight_loss_failure = '#{patient_obs['name']}', routine_tb_screening_weight_loss_failure_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            else #else voided
+              Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_weight_loss_failure = NULL, routine_tb_screening_weight_loss_failure_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+            end #end voided
+          end #check patient_not_in_flat_table2
+#------------------------------------------------------------------------------------------------------------end routine_tb_screening_weight_loss_failure
+      end  #end routine_screening case
+    end #end tb_screening_routine_ans
+  else #else unless tb_screening_routine_ans is blank
+    case routine_screening_id #second routine case
+      when routine_tb_screening_fever #when second routine case
+        if patient_check.blank? #check patient_not_in_flat_table2
+          #insert
+          Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_fever, routine_tb_screening_fever_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), 'Yes', '#{obs_encounter_id}') ;
+EOF
+        else #check patient_not_in_flat_table2
+          if obs_voided == 0 #if voided
+            Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_fever = 'Yes', routine_tb_screening_fever_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+          else #else voided
+            Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_fever = NULL, routine_tb_screening_fever_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+          end #end voided
+        end #check patient_not_in_flat_table2
+
+      when  routine_tb_screening_cough_of_any_duration
+        if patient_check.blank? #check patient_not_in_flat_table2
+          #insert
+          Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_cough_of_any_duration, routine_tb_screening_cough_of_any_duration_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), 'Yes', '#{obs_encounter_id}') ;
+EOF
+        else #check patient_not_in_flat_table2
+          if obs_voided == 0 #if voided
+            Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_cough_of_any_duration = 'Yes', routine_tb_screening_cough_of_any_duration_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+          else #else voided
+            Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_cough_of_any_duration = NULL, routine_tb_screening_cough_of_any_duration_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+          end #end voided
+        end #check patient_not_in_flat_table2
+
+      when  routine_tb_screening_weight_loss_failure
+        if patient_check.blank? #check patient_not_in_flat_table2
+          #insert
+          Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_weight_loss_failure, routine_tb_screening_weight_loss_failure_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), 'Yes', '#{obs_encounter_id}') ;
+EOF
+        else #check patient_not_in_flat_table2
+          if obs_voided == 0 #if voided
+            Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_weight_loss_failure = 'Yes', routine_tb_screening_weight_loss_failure_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+          else #else voided
+            Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_weight_loss_failure = NULL, routine_tb_screening_weight_loss_failure_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+          end #end voided
+        end #check patient_not_in_flat_table2
+
+      when  routine_tb_screening_night_sweats
+        if patient_check.blank? #check patient_not_in_flat_table2
+  #insert
+  Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, routine_tb_screening_night_sweats, routine_tb_screening_night_sweats_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), 'Yes', '#{obs_encounter_id}') ;
+EOF
+        else #check patient_not_in_flat_table2
+          if obs_voided == 0 #if voided
+    Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_night_sweats = 'Yes', routine_tb_screening_night_sweats_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+    Connection.execute <<EOF
+UPDATE flat_table2
+SET  routine_tb_screening_night_sweats = NULL, routine_tb_screening_night_sweats_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+    else #else second routine case
+      puts 'No tb routine_screening'
+    end #end second routine case
+  end #end unless tb_screening_routine_ans is blank
+end
+
+def updating_side_effects(obs_person_id, obs_encounter_id, side_effect_id, obs_visit_date)
+  abdominal_pain_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Abdominal pain' AND voided = 0 AND retired = 0 LIMIT 1")
+  abdominal_pain = abdominal_pain_record['concept_id'].to_i
+
+  anemia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Anemia' AND voided = 0 AND retired = 0 LIMIT 1")
+  anemia = anemia_record['concept_id'].to_i
+
+  anorexia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Anorexia' AND voided = 0 AND retired = 0 LIMIT 1")
+  anorexia = anorexia_record['concept_id'].to_i
+
+  blurry_vision_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Blurry vision' AND voided = 0 AND retired = 0 LIMIT 1")
+  blurry_vision = blurry_vision_record['concept_id'].to_i
+
+  cough_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Cough' AND voided = 0 AND retired = 0 LIMIT 1")
+  cough = cough_record['concept_id'].to_i
+
+  diarrhea_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Diarrhea' AND voided = 0 AND retired = 0 LIMIT 1")
+  diarrhea = diarrhea_record['concept_id'].to_i
+
+  diziness_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Dizziness' AND voided = 0 AND retired = 0 LIMIT 1")
+  diziness = diziness_record['concept_id'].to_i
+
+  fever_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'fever' AND voided = 0 AND retired = 0 LIMIT 1")
+  fever = fever_record['concept_id'].to_i
+
+  gynaecomastia_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Gynaecomastia' AND voided = 0 AND retired = 0 LIMIT 1")
+  gynaecomastia = gynaecomastia_record['concept_id'].to_i
+
+  hepatitis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Hepatitis' AND voided = 0 AND retired = 0 LIMIT 1")
+  hepatitis = hepatitis_record['concept_id'].to_i
+
+  jaundice_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Jaundice' AND voided = 0 AND retired = 0 LIMIT 1")
+  jaundice = jaundice_record['concept_id'].to_i
+
+  kidney_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Kidney failure' AND voided = 0 AND retired = 0 LIMIT 1")
+  kidney_failure = kidney_failure_record['concept_id'].to_i
+
+  lactic_acidosis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Lactic acidosis' AND voided = 0 AND retired = 0 LIMIT 1")
+  lactic_acidosis = lactic_acidosis_record['concept_id'].to_i
+
+  leg_pain_numbness_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Leg pain / numbness' AND voided = 0 AND retired = 0 LIMIT 1")
+  leg_pain_numbness = leg_pain_numbness_record['concept_id'].to_i
+
+  lipodystrophy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Lipodystrophy' AND voided = 0 AND retired = 0 LIMIT 1")
+  lipodystrophy = lipodystrophy_record['concept_id'].to_i
+
+  nightmares_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+       WHERE name = 'Nightmares' AND voided = 0 AND retired = 0 ORDER BY concept_name.concept_id DESC ")
+  nightmares = nightmares_record['concept_id'].to_i
+
+  symptom_no_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'No' AND voided = 0 AND retired = 0 LIMIT 1")
+  symptom_no = symptom_no_record['concept_id'].to_i
+
+  other_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Other' AND voided = 0 AND retired = 0 LIMIT 1")
+  other = other_record['concept_id'].to_i
+
+  peripheral_neuropathy_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Peripheral neuropathy' AND voided = 0 AND retired = 0 LIMIT 1")
+  peripheral_neuropathy = peripheral_neuropathy_record['concept_id'].to_i
+
+  psychosis_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Psychosis' AND voided = 0 AND retired = 0 LIMIT 1")
+  psychosis = psychosis_record['concept_id'].to_i
+
+  renal_failure_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  name = 'Renal failure' AND voided = 0 AND retired = 0 LIMIT 1")
+  renal_failure = renal_failure_record['concept_id'].to_i
+
+  skin_rash_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Skin rash' AND voided = 0 AND retired = 0 LIMIT 1")
+  skin_rash = skin_rash_record['concept_id'].to_i
+
+  vomiting_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+    WHERE  name = 'Vomiting' AND voided = 0 AND retired = 0 LIMIT 1")
+  vomiting = vomiting_record['concept_id'].to_i
+
+  #check side_effect_id value
+  side_effect_answer =[]
+  Connection.select_all("
+          SELECT o.obs_id, o.person_id, o.encounter_id, o.obs_datetime, c.name, o.voided
+          FROM obs o
+          	INNER JOIN concept_name c on c.concept_id = o.value_coded
+          WHERE encounter_id = #{obs_encounter_id} AND o.concept_id = #{side_effect_id}
+          AND obs_datetime = '#{obs_visit_date}' AND person_id = #{obs_person_id} AND concept_name_type = 'FULLY_SPECIFIED'
+          AND c.voided  = 0").each do |patient|
+            side_effect_answer << patient
+          end
+  patient_check = []
+  patient_check = Connection.select_one("SELECT ID FROM flat_table2
+                        WHERE patient_id = #{obs_person_id}
+                        and visit_date = DATE('#{obs_visit_date}')")
+
+  unless side_effect_answer.blank?
+    #update the side_effect value
+    (side_effect_answer || []).each do |patient_obs|
+    case side_effect_id
+    when abdominal_pain
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_abdominal_pain, side_effects_abdominal_pain_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_abdominal_pain = '#{patient_obs['name']}', side_effects_abdominal_pain_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_abdominal_pain = NULL, side_effects_abdominal_pain_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#---------------------------------------------------------------------------------------------------end abdominal_pain
+    when anemia
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_anemia, side_effects_anemia_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_anemia = '#{patient_obs['name']}', side_effects_anemia_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_anemia = NULL, side_effects_anemia_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-------------------------------------------------------------------------------------------------------------end anemia
+    when anorexia
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_anorexia, side_effects_anorexia_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_anorexia = '#{patient_obs['name']}', side_effects_anorexia_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_anorexia = NULL, side_effects_anorexia_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#------------------------------------------------------------------------------------------------------------------end anorexia
+    when blurry_vision
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_blurry_vision, side_effects_blurry_vision_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_blurry_vision = '#{patient_obs['name']}', side_effects_blurry_vision_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_blurry_vision = NULL, side_effects_blurry_vision_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------------end blurry_vision
+    when cough
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_cough, side_effects_cough_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_cough = '#{patient_obs['name']}', side_effects_cough_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_cough = NULL, side_effects_cough_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#---------------------------------------------------------------------------------------------------------------end cough
+    when diarrhea
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_diarrhea, side_effects_diarrhea_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_diarrhea = '#{patient_obs['name']}', side_effects_diarrhea_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_diarrhea = NULL, side_effects_diarrhea_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#------------------------------------------------------------------------------------------------------------------end diarrhea
+    when diziness
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_diziness, side_effects_diziness_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_diziness = '#{patient_obs['name']}', side_effects_diziness_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_diziness = NULL, side_effects_diziness_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#----------------------------------------------------------------------------------------------------------------end diziness
+    when fever
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_fever, side_effects_fever_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_fever = '#{patient_obs['name']}', side_effects_fever_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_fever = NULL, side_effects_fever_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------------end fever
+    when gynaecomastia
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_gynaecomastia, side_effects_gynaecomastia_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_gynaecomastia = '#{patient_obs['name']}', side_effects_gynaecomastia_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_gynaecomastia = NULL, side_effects_gynaecomastia_enc_id = NULL WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end gynaecomastia
+    when hepatitis
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_hepatitis, side_effects_hepatitis_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_hepatitis = '#{patient_obs['name']}', side_effects_hepatitis_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_hepatitis = NULL, side_effects_hepatitis_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end jaundice
+    when jaundice
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_jaundice, side_effects_jaundice_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_jaundice = '#{patient_obs['name']}', side_effects_jaundice_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_jaundice = NULL, side_effects_jaundice_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end jaundice
+    when kidney_failure
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_kidney_failure, side_effects_kidney_failure_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_kidney_failure = '#{patient_obs['name']}', side_effects_kidney_failure_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_kidney_failure = NULL, side_effects_kidney_failure_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end kidney_failure
+    when lactic_acidosis
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_lactic_acidosis, side_effects_lactic_acidosis_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_lactic_acidosis = '#{patient_obs['name']}', side_effects_lactic_acidosis_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_lactic_acidosis = NULL, side_effects_lactic_acidosis_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end lactic_acidosis
+    when leg_pain_numbness
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_leg_pain_numbness, side_effects_leg_pain_numbness_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_leg_pain_numbness = '#{patient_obs['name']}', side_effects_leg_pain_numbness_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_leg_pain_numbness = NULL, side_effects_leg_pain_numbness_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end leg_pain_numbness
+    when lipodystrophy
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_lipodystrophy, side_effects_lipodystrophy_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_lipodystrophy = '#{patient_obs['name']}', side_effects_lipodystrophy_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_lipodystrophy = NULL, side_effects_lipodystrophy_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end lipodystrophy
+    when nightmares
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_nightmares, side_effects_nightmares_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_nightmares = '#{patient_obs['name']}', side_effects_nightmares_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_nightmares = NULL, side_effects_nightmares_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end nightmares
+    when symptom_no
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_no, side_effects_no_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_no = '#{patient_obs['name']}', side_effects_no_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_no = NULL, side_effects_no_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end side effects no
+    when other
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_other, side_effects_other_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_other = '#{patient_obs['name']}', side_effects_other_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_other = NULL, side_effects_other_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-----------------------------------------------------------------------------------------------------------end other
+    when peripheral_neuropathy
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_peripheral_neuropathy, side_effects_peripheral_neuropathy_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_peripheral_neuropathy = '#{patient_obs['name']}', side_effects_peripheral_neuropathy_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_peripheral_neuropathy = NULL, side_effects_peripheral_neuropathy_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#----------------------------------------------------------------------------------------------------------end peripheral_neuropathy
+    when psychosis
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_psychosis, side_effects_psychosis_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_psychosis = '#{patient_obs['name']}', side_effects_psychosis_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_psychosis = NULL, side_effects_psychosis_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-------------------------------------------------------------------------------------------------------------------------end psychosis
+    when renal_failure
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_renal_failure, side_effects_renal_failure_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_renal_failure = '#{patient_obs['name']}', side_effects_renal_failure_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_renal_failure = NULL, side_effects_renal_failure_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-------------------------------------------------------------------------------------------------------------------------end renal_failure
+    when skin_rash
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_skin_rash, side_effects_skin_rash_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_skin_rash = '#{patient_obs['name']}', side_effects_skin_rash_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_skin_rash = NULL, side_effects_skin_rash_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+#-------------------------------------------------------------------------------------------------------------------------end skin_rash
+    when vomiting
+      if patient_check.blank? #check patient_not_in_flat_table2
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_vomiting, side_effects_vomiting_enc_id)
+VALUES('#{obs_person_id}', DATE('#{obs_visit_date}'), '#{patient_obs['name']}', '#{obs_encounter_id}') ;
+EOF
+      else #check patient_not_in_flat_table2
+        if patient_obs['voided'].to_i == 0 #if voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_vomiting = '#{patient_obs['name']}', side_effects_vomiting_enc_id = '#{obs_encounter_id}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_vomiting = NULL, side_effects_vomiting_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #check patient_not_in_flat_table2
+    else #else case
+    end #end case
+  end #new one
+  else #else unless
+    #then check save the ordinary way
+  end #end unless
 
 end
 
