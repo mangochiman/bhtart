@@ -78,6 +78,12 @@ class GenericProgramsController < ApplicationController
         person.save
       end
 
+      if @patient_state.name.match(/STOPPED|TRANSFERRED/i)
+        patient_program = @patient_state.patient_program
+        patient_program.date_completed = nil
+        patient_program.save
+      end
+
       @patient_state.void
       encounter = Encounter.find_by_sql("
         SELECT encounter_id FROM obs WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = 'PATIENT TRACKING STATE')
