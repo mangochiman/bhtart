@@ -481,6 +481,14 @@ class GenericPeopleController < ApplicationController
     render :layout => false
 	end
 
+  def inconsistency_outcomes
+    person = Person.find(params[:patient_id])
+    @patient_bean = PatientService.get_patient(person)
+    @patient_states = Patient.states(person.patient)
+    @next_task = next_task(person.patient)
+    render :layout => "menu"
+  end
+  
 	def tranfer_patient_in
 		@data_demo = {}
 		if request.post?
