@@ -1098,8 +1098,8 @@ EOF
     @appointment_already_set = Encounter.find(:first, 
       :conditions => ["encounter_type = ? AND patient_id = ?
       AND encounter_datetime BETWEEN ? AND ?",type.id, @patient.id,
-      session_date.strftime('%Y-%m-%d 00:00:00'),
-      session_date.strftime('%Y-%m-%d 23:59:59')]).blank? != true
+        session_date.strftime('%Y-%m-%d 00:00:00'),
+        session_date.strftime('%Y-%m-%d 23:59:59')]).blank? != true
 
     render :template => 'dashboards/treatment_dashboard', :layout => false
   end
@@ -2536,7 +2536,7 @@ EOF
         #obs.value_text.gsub('Unknown', 'Non Standard') if !patient_visits[visit_date].reg
       elsif (concept_name.upcase == 'DRUG INDUCED' || concept_name.upcase == 'MALAWI ART SIDE EFFECTS')
         #symptoms = obs.to_s.split(':').map do | sy |
-          #sy.sub(concept_name,'').strip.capitalize
+        #sy.sub(concept_name,'').strip.capitalize
         #end rescue []
         next if !obs.obs_group_id.blank?
         child_obs = Observation.find(:last, :conditions => ["obs_group_id = ?", obs.obs_id])
@@ -2583,13 +2583,13 @@ EOF
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND p.patient_id = ?",
           program_id,patient_obj.patient_id],
-          :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
+        :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
     else
       patient_states = PatientState.find(:all,
         :joins => "INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id",
         :conditions =>["patient_state.voided = 0 AND p.voided = 0 AND p.program_id = ? AND start_date = ? AND p.patient_id =?",
           program_id,encounter_date.to_date,patient_obj.patient_id],
-          :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
+        :order => "patient_state.start_date DESC, patient_state.date_created DESC, patient_state_id ASC")
     end
 
     all_patient_states = []
@@ -4124,7 +4124,7 @@ EOF
       if ((data.last[2] == "reviewed") rescue false)
         @date_vl_result_given = Observation.find(:last, :conditions => ["
           person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
-          Concept.find_by_name("Viral load").concept_id, 'Result given to patient', data.last[3].to_date]).value_datetime rescue nil
+            Concept.find_by_name("Viral load").concept_id, 'Result given to patient', data.last[3].to_date]).value_datetime rescue nil
 
         @date_vl_result_given = data.last[3].to_date if @date_vl_result_given.blank?
       end
@@ -4133,39 +4133,39 @@ EOF
       trail = JSON.parse(RestClient.get(trail_url)) rescue []
       @vl_result_hash = []
       (trail || []).each do |order|
-          results = order['results']['Viral Load']
-          if order['status'].match(/rejected|voided/i)
-            @vl_result_hash << [order['_id'], {"result_given" =>  'no',
-                           "result" => order['status'].humanize,
-                           "date_of_sample" => order['date_time'].to_date,
-                           "date_result_given" => "",
-                           "second_line_switch" => '?'
-                        }
-            ]
-            next
-          end
-
-          next if results.blank?
-          timestamp = results.keys.sort.last rescue nil
-          next if (!order['status'].match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
-          result = results[timestamp]['results']
-
-          date_given = nil
-          if ((results[timestamp]['test_status'].downcase.strip == "reviewed") rescue false)
-            date_given = Observation.find(:last, :conditions => ["
-                    person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
-                    Concept.find_by_name("Viral load").concept_id, 'Result given to patient', timestamp.to_date]).value_datetime rescue nil
-
-            date_given = timestamp.to_date.to_date if date_given.blank?
-          end
-
-          @vl_result_hash << [order['_id'], {"result_given" => (results[timestamp]['test_status'].downcase.strip == 'reviewed' ? 'yes' : 'no'),
-                          "result" => (result["Viral Load"] rescue nil),
-                          "date_of_sample" => order['date_time'].to_date,
-                          "date_result_given" => date_given,
-                          "second_line_switch" => '?'
-                        }
+        results = order['results']['Viral Load']
+        if order['status'].match(/rejected|voided/i)
+          @vl_result_hash << [order['_id'], {"result_given" =>  'no',
+              "result" => order['status'].humanize,
+              "date_of_sample" => order['date_time'].to_date,
+              "date_result_given" => "",
+              "second_line_switch" => '?'
+            }
           ]
+          next
+        end
+
+        next if results.blank?
+        timestamp = results.keys.sort.last rescue nil
+        next if (!order['status'].match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
+        result = results[timestamp]['results']
+
+        date_given = nil
+        if ((results[timestamp]['test_status'].downcase.strip == "reviewed") rescue false)
+          date_given = Observation.find(:last, :conditions => ["
+                    person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
+              Concept.find_by_name("Viral load").concept_id, 'Result given to patient', timestamp.to_date]).value_datetime rescue nil
+
+          date_given = timestamp.to_date.to_date if date_given.blank?
+        end
+
+        @vl_result_hash << [order['_id'], {"result_given" => (results[timestamp]['test_status'].downcase.strip == 'reviewed' ? 'yes' : 'no'),
+            "result" => (result["Viral Load"] rescue nil),
+            "date_of_sample" => order['date_time'].to_date,
+            "date_result_given" => date_given,
+            "second_line_switch" => '?'
+          }
+        ]
       end
 
     else
@@ -4181,13 +4181,13 @@ EOF
 
       @date_vl_result_given = Observation.find(:last, :conditions => ["
         person_id =? AND concept_id =? AND value_text REGEXP ?", patient.id,
-        Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
+          Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
 
     end
 
     @reason_for_art = PatientService.reason_for_art_eligibility(patient)
     @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-                                                          patient.patient_id, Concept.find_by_name("Viral load").concept_id]
+        patient.patient_id, Concept.find_by_name("Viral load").concept_id]
     ).answer_string.squish.upcase rescue nil
 
     @high_vl = true
@@ -4426,4 +4426,27 @@ EOF
     redirect_to next_task(patient) and return
   end
 
+  def update_state
+    @patient_state = PatientState.find(params[:state_id])
+    @patient = @patient_state.patient_program.patient
+    @start_date = @patient_state.start_date.strftime('%Y-%m-%d') rescue ""
+    @end_date = @patient_state.end_date.strftime('%Y-%m-%d') rescue ""
+    render :layout => "application"
+  end
+
+  def update_patient_state_dates
+    patient_state = PatientState.find(params[:state_id])
+    patient_id = patient_state.patient_program.patient.patient_id
+
+    patient_state.start_date = params[:start_date].to_date rescue params[:start_date]
+    patient_state.end_date = params[:end_date].to_date rescue params[:end_date]
+    patient_state.save
+    
+    redirect_to("/people/inconsistency_outcomes?patient_id=#{patient_id}")
+  end
+
+  def void_patient_state
+
+  end
+  
 end
