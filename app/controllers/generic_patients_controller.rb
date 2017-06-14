@@ -4446,7 +4446,25 @@ EOF
   end
 
   def void_patient_state
+    patient_state = PatientState.find(params[:state_id])
+    patient_id = patient_state.patient_program.patient.patient_id
 
+    if patient_state.name.match(/DIED/i)
+      person = patient_state.patient_program.patient.person
+      person.dead = 0
+      person.death_date = nil
+      person.save
+    end
+
+    if patient_state.name.match(/STOPPED|TRANSFERRED/i)
+      patient_program = patient_state.patient_program
+      patient_program.date_completed = nil
+      patient_program.save
+    end
+    
+    patient_state.void
+    
+    redirect_to("/people/inconsistency_outcomes?patient_id=#{patient_id}")
   end
   
 end

@@ -368,6 +368,12 @@ class GenericPeopleController < ApplicationController
 		@relation = params[:relation]
 		@person = Person.find(@found_person_id) rescue nil
 		patient = @person.patient
+    if (Patient.has_inconsistency_outcome_dates?(patient))
+      #Data cleaning tool - managing inconsistency outcome dates
+      #mangochiman 14/June/2017
+      redirect_to("/people/inconsistency_outcomes?patient_id=#{patient.patient_id}") and return
+    end
+    
     session[:active_patient_id] = @found_person_id
 		@outcome = patient.patient_programs.last.patient_states.last.program_workflow_state.concept.fullname rescue nil
 
