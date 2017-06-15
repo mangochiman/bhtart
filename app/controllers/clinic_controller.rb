@@ -89,7 +89,8 @@ class ClinicController < GenericClinicController
 		["Cervical Cancel Module Properties", "/properties/cervical_cancer_module_properties"],
 		["New ART Guidelines start date", "/properties/new_art_start_date"],
 		["Activate Fast track", "/properties/creation?value=enable_fast_track"],
-    ["Show Swap Button", "/properties/creation?value=show_swap_button"]
+    ["Show Swap Button", "/properties/creation?value=show_swap_button"],
+    ["DDE Properties", "/properties/dde_properties_menu"]
 	  ]
 	else
 	  @settings = []
