@@ -1,6 +1,7 @@
 class EncounterTypesController < GenericEncounterTypesController
 
   def index
+    patient = Patient.find(params[:patient_id])
     role_privileges = RolePrivilege.find(:all,:conditions => ["role IN (?)", current_user_roles])
     privileges = role_privileges.each.map{ |role_privilege_pair| role_privilege_pair["privilege"].humanize }
  
@@ -28,6 +29,10 @@ class EncounterTypesController < GenericEncounterTypesController
     @available_encounter_types = ((@available_encounter_types) - ((@available_encounter_types - roles_for_the_user) + (roles_for_the_user - @available_encounter_types)))
     if CoreService.get_global_property_value("activate.htn.enhancement").to_s == "true" && patient_present(Patient.find(params[:patient_id]), (session[:datetime].to_date rescue Date.today)) && htn_client?(Patient.find(params[:patient_id]))
       @available_encounter_types << "BP Management"
+    end
+
+    if (cervical_cancer_activated and (patient.person.gender.first.upcase == 'F'))
+      @available_encounter_types << "Cervical cancer screening"
     end
 
     app_name = (what_app? rescue 'ART')
