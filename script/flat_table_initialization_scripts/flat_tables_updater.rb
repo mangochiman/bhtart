@@ -7553,7 +7553,7 @@ EOF
            if patient['voided'] == "0"
              Connection.execute <<EOF
 UPDATE flat_table2
-SET  tb_status_tb_not_suspected = 'Yes', tb_status_tb_suspected_enc_id = '#{patient['encounter_id']}'
+SET  tb_status_tb_suspected = 'Yes', tb_status_tb_suspected_enc_id = '#{patient['encounter_id']}'
 WHERE flat_table2.id = '#{patient_check['ID']}';
 EOF
            else #else voided

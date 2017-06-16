@@ -568,4 +568,48 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return false
   end
 
+  def self.latest_outcome_date(patient)
+    outcome_dates = []
+    hiv_program_id = Program.find_by_name("HIV PROGRAM").id
+    hiv_program = patient.patient_programs.find(:last, :conditions => ["program_id = ?", hiv_program_id])
+
+    hiv_program.patient_states.each do |ps|
+      outcome_dates << ps.start_date
+    end rescue nil
+    
+    return outcome_dates.last
+  end
+
+  def self.states(patient)
+    hiv_program_id = Program.find_by_name("HIV PROGRAM").id
+    hiv_program = patient.patient_programs.find(:last, :conditions => ["program_id = ?", hiv_program_id])
+    return hiv_program.patient_states
+  end
+
+  def self.has_inconsistency_outcome_dates?(patient)
+    hiv_program_id = Program.find_by_name("HIV PROGRAM").id
+    hiv_program = patient.patient_programs.find(:last, :conditions => ["program_id = ?", hiv_program_id])
+    outcome_dates = hiv_program.patient_states.collect{|ps|[ps.start_date, ps.end_date]} rescue []
+    inconsistency_outcome = false
+
+    death_date = patient.person.death_date.to_date rescue patient.person.death_date
+    outcome_dates.each do |dates|
+      start_date = dates[0].to_date rescue dates[0]
+      end_date = dates[1].to_date rescue dates[1]
+
+      if start_date > end_date
+        inconsistency_outcome = true
+      end unless end_date.blank?
+
+      unless death_date.blank?
+        if death_date < start_date
+          inconsistency_outcome = true
+        end
+      end
+
+    end
+
+    return inconsistency_outcome
+  end
+
 end

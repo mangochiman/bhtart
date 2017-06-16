@@ -242,7 +242,7 @@ def get_all_patients(min, max, thread)
         $temp_outfile_10_1 << sql_statements[0]
         $temp_outfile_10_2 << sql_statements[1]
       end
-puts ">>Finished working on patient>>>#{p}<<<<<<<"
+    puts ">>Finished working on patient>>>#{p}<<<<<<<"
     end
 
     #close output files
@@ -780,13 +780,13 @@ def process_hiv_reception_encounter(encounter, type = 0) #type 0 normal encounte
     encounter.observations.each do |obs|
 
       if obs.concept_id.to_i == 2122 #Guardian Present
-    		if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+    		if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
     			a_hash[:guardian_present] = 'Yes'
     			a_hash[:guardian_present_enc_id] = encounter.encounter_id
-    		elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+    		elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
     			a_hash[:guardian_present] = 'No'
     			a_hash[:guardian_present_enc_id] = encounter.encounter_id
-    	  elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+    	  elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
     			a_hash[:guardian_present] = 'Unknown'
     			a_hash[:guardian_present_enc_id] = encounter.encounter_id
     	  elsif obs.value_text == 'Yes'
@@ -800,13 +800,13 @@ def process_hiv_reception_encounter(encounter, type = 0) #type 0 normal encounte
     			a_hash[:guardian_present_enc_id] = encounter.encounter_id
     		end
       elsif obs.concept_id.to_i == 1805 #Patient Present
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_present] = 'Yes'
           a_hash[:patient_present_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:patient_present] = 'No'
           a_hash[:patient_present_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
           a_hash[:patient_present] = 'Unknown'
           a_hash[:patient_present_enc_id] = encounter.encounter_id
         end
@@ -854,19 +854,19 @@ def process_treatment_obs(encounter, type = 0) #type 0 normal encounter, 1 gener
 
     encounter.observations.each do |obs|
       if obs.concept_id.to_i == 656 #IPT given
-    		if obs.value_coded == 1065 #&& obs.value_coded_name_id == 1102
+    		if obs.value_coded.to_i == 1065 #&& obs.value_coded_name_id == 1102
     			a_hash[:ipt_given] = 'Yes'
     			a_hash[:ipt_given_enc_id] = encounter.encounter_id
-    		elsif obs.value_coded == 1066 #&& obs.value_coded_name_id == 1103
+    		elsif obs.value_coded.to_i == 1066 #&& obs.value_coded_name_id == 1103
     			a_hash[:ipt_given] = 'No'
     			a_hash[:ipt_given_enc_id] = encounter.encounter_id
 
     		end
       elsif obs.concept_id.to_i == 7024 #CPT given
-        if obs.value_coded == 1065 #&& obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 #&& obs.value_coded_name_id == 1102
           a_hash[:cpt_given] = 'Yes'
           a_hash[:cpt_given_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1066 #&& obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 #&& obs.value_coded_name_id == 1103
           a_hash[:cpt_given] = 'No'
           a_hash[:cpt_given_enc_id] = encounter.encounter_id
         end
@@ -900,218 +900,218 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
 
     encounter.observations.each do |obs|
       if obs.concept_id.to_i == 6131 #Patient Pregnant
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:patient_pregnant] = 'No'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
           a_hash[:patient_pregnant] = 'Unknown'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
         end
       elsif obs.concept_id.to_i == 1755 #Patient Pregnant
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:patient_pregnant] = 'No'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
           a_hash[:patient_pregnant] = 'Unknown'
           a_hash[:patient_pregnant_enc_id] = encounter.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
         end
       elsif obs.concept_id.to_i == 7965 #breastfeeding
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_breastfeeding] = 'Yes'
           a_hash[:patient_breastfeeding_enc_id] = encounter.encounter_id
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:patient_breastfeeding] = 'No'
           a_hash[:patient_breastfeeding_enc_id] = encounter.encounter_id
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
           a_hash[:patient_breastfeeding] = 'Unknown'
           a_hash[:patient_breastfeeding_enc_id] = encounter.encounter_id
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
         end
     	elsif obs.concept_id.to_i == 7459 #tb status
-    		if obs.value_coded == 7454 && obs.value_coded_name_id == 10270
+    		if obs.value_coded.to_i == 7454 && obs.value_coded_name_id == 10270
     			a_hash[:tb_status_tb_not_suspected] = 'Yes'
     			a_hash[:tb_status_tb_not_suspected_enc_id] = encounter.encounter_id
-    		elsif obs.value_coded == 7455 && obs.value_coded_name_id == 10273
+    		elsif obs.value_coded.to_i == 7455 && obs.value_coded_name_id == 10273
     			a_hash[:tb_status_tb_suspected] = 'Yes'
           a_hash[:tb_status_tb_suspected_enc_id] = encounter.encounter_id
-    		elsif obs.value_coded == 7456 && obs.value_coded_name_id == 10274
+    		elsif obs.value_coded.to_i == 7456 && obs.value_coded_name_id == 10274
     			a_hash[:tb_status_confirmed_tb_not_on_treatment] = 'Yes'
           a_hash[:tb_status_confirmed_tb_not_on_treatment_enc_id] = encounter.encounter_id
-    		elsif obs.value_coded == 7458 && obs.value_coded_name_id == 10279
+    		elsif obs.value_coded.to_i == 7458 && obs.value_coded_name_id == 10279
     			a_hash[:tb_status_confirmed_tb_on_treatment] = 'Yes'
           a_hash[:tb_status_confirmed_tb_on_treatment_enc_id] = encounter.encounter_id
-    		elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+    		elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
     			a_hash[:tb_status_unknown] = 'Yes'
           a_hash[:tb_status_unknown_enc_id] = encounter.encounter_id
     		end
       elsif obs.concept_id.to_i == 1717 #using family planning methods
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:currently_using_family_planning_method] = 'Yes'
           a_hash[:currently_using_family_planning_method_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:currently_using_family_planning_method] = 'No'
           a_hash[:currently_using_family_planning_method_enc_id] = encounter.encounter_id
         end
       elsif obs.concept_id.to_i == 374 #family planning method
-        if obs.value_coded == 780 && obs.value_coded_name_id == 10736
+        if obs.value_coded.to_i == 780 && obs.value_coded_name_id == 10736
           a_hash[:family_planning_method_oral_contraceptive_pills] = 'Yes'
           a_hash[:family_planning_method_oral_contraceptive_pills_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 907 && obs.value_coded_name_id == 931
+        elsif obs.value_coded.to_i == 907 && obs.value_coded_name_id == 931
           a_hash[:family_planning_method_depo_provera] = 'Yes'
           a_hash[:family_planning_method_depo_provera_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 5275 && obs.value_coded_name_id == 10737
+        elsif obs.value_coded.to_i == 5275 && obs.value_coded_name_id == 10737
           a_hash[:family_planning_method_intrauterine_contraception] = 'Yes'
           a_hash[:family_planning_method_intrauterine_contraception_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7857 && obs.value_coded_name_id == 10738
+        elsif obs.value_coded.to_i == 7857 && obs.value_coded_name_id == 10738
           a_hash[:family_planning_method_contraceptive_implant] = 'Yes'
           a_hash[:family_planning_method_contraceptive_implant_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7858 && obs.value_coded_name_id == 10739
+        elsif obs.value_coded.to_i == 7858 && obs.value_coded_name_id == 10739
           a_hash[:family_planning_method_male_condoms] = 'Yes'
           a_hash[:family_planning_method_male_condoms_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7859 && obs.value_coded_name_id == 10740
+        elsif obs.value_coded.to_i == 7859 && obs.value_coded_name_id == 10740
           a_hash[:family_planning_method_female_condoms] = 'Yes'
           a_hash[:family_planning_method_female_condoms_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7860 && obs.value_coded_name_id == 10741
+        elsif obs.value_coded.to_i == 7860 && obs.value_coded_name_id == 10741
           a_hash[:family_planning_method_rythm_method] = 'Yes'
           a_hash[:family_planning_method_rythm_method_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7861 && obs.value_coded_name_id == 10743
+        elsif obs.value_coded.to_i == 7861 && obs.value_coded_name_id == 10743
           a_hash[:family_planning_method_withdrawal] = 'Yes'
           a_hash[:family_planning_method_withdrawal_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1720 && obs.value_coded_name_id == 1876
+        elsif obs.value_coded.to_i == 1720 && obs.value_coded_name_id == 1876
           a_hash[:family_planning_method_abstinence] = 'Yes'
           a_hash[:family_planning_method_abstinence_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1719 && obs.value_coded_name_id == 1874
+        elsif obs.value_coded.to_i == 1719 && obs.value_coded_name_id == 1874
           a_hash[:family_planning_method_tubal_ligation] = 'Yes'
           a_hash[:family_planning_method_tubal_ligation_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1721 && obs.value_coded_name_id == 1877
+        elsif obs.value_coded.to_i == 1721 && obs.value_coded_name_id == 1877
           a_hash[:family_planning_method_vasectomy] = 'Yes'
           a_hash[:family_planning_method_vasectomy_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7862 && obs.value_coded_name_id == 10744
+        elsif obs.value_coded.to_i == 7862 && obs.value_coded_name_id == 10744
           a_hash[:family_planning_method_emergency_contraception] = 'Yes'
           a_hash[:family_planning_method_emergency_contraception_enc_id] = encounter.encounter_id
         end
      elsif obs.concept_id.to_i == 1293 #symptoms present
-        if obs.value_coded == 2148 && obs.value_coded_name_id == 2325
+        if obs.value_coded.to_i == 2148 && obs.value_coded_name_id == 2325
           a_hash[:symptom_present_lipodystrophy] = 'Yes'
           a_hash[:symptom_present_lipodystrophy_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 3 && obs.value_coded_name_id == 3
+        elsif obs.value_coded.to_i == 3 && obs.value_coded_name_id == 3
           a_hash[:symptom_present_anemia] = 'Yes'
           a_hash[:symptom_present_anemia_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 215 && obs.value_coded_name_id == 226
+        elsif obs.value_coded.to_i == 215 && obs.value_coded_name_id == 226
           a_hash[:symptom_present_jaundice] = 'Yes'
           a_hash[:symptom_present_jaundice_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1458 && obs.value_coded_name_id == 1576
+        elsif obs.value_coded.to_i == 1458 && obs.value_coded_name_id == 1576
           a_hash[:symptom_present_lactic_acidosis] = 'Yes'
           a_hash[:symptom_present_lactic_acidosis_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 5945 && obs.value_coded_name_id == 4315
+        elsif obs.value_coded.to_i == 5945 && obs.value_coded_name_id == 4315
           a_hash[:symptom_present_fever] = 'Yes'
           a_hash[:symptom_present_fever_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 512 && obs.value_coded_name_id == 524
+        elsif obs.value_coded.to_i == 512 && obs.value_coded_name_id == 524
           a_hash[:symptom_present_skin_rash] = 'Yes'
           a_hash[:symptom_present_skin_rash_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 151 && obs.value_coded_name_id == 156
+        elsif obs.value_coded.to_i == 151 && obs.value_coded_name_id == 156
           a_hash[:symptom_present_abdominal_pain] = 'Yes'
           a_hash[:symptom_present_abdominal_pain_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 868 && obs.value_coded_name_id == 888
+        elsif obs.value_coded.to_i == 868 && obs.value_coded_name_id == 888
           a_hash[:symptom_present_anorexia] = 'Yes'
           a_hash[:symptom_present_anorexia_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 107 && obs.value_coded_name_id == 110
+        elsif obs.value_coded.to_i == 107 && obs.value_coded_name_id == 110
           a_hash[:symptom_present_cough] = 'Yes'
           a_hash[:symptom_present_cough_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 16 && obs.value_coded_name_id == 17
+        elsif obs.value_coded.to_i == 16 && obs.value_coded_name_id == 17
           a_hash[:symptom_present_diarrhea] = 'Yes'
           a_hash[:symptom_present_diarrhea_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7952 && obs.value_coded_name_id == 10894
+        elsif obs.value_coded.to_i == 7952 && obs.value_coded_name_id == 10894
           a_hash[:symptom_present_leg_pain_numbness] = 'Yes'
           a_hash[:symptom_present_leg_pain_numbness_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 821 && obs.value_coded_name_id == 838
+        elsif obs.value_coded.to_i == 821 && obs.value_coded_name_id == 838
           a_hash[:symptom_present_peripheral_neuropathy] = 'Yes'
           a_hash[:symptom_present_peripheral_neuropathy_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 5980 && obs.value_coded_name_id == 4355
+        elsif obs.value_coded.to_i == 5980 && obs.value_coded_name_id == 4355
           a_hash[:symptom_present_vomiting] = 'Yes'
           a_hash[:symptom_present_vomiting_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 6779 && obs.value_coded_name_id == 4355
+        elsif obs.value_coded.to_i == 6779 && obs.value_coded_name_id == 4355
           a_hash[:symptom_present_other_symptom] = 'Yes'
           a_hash[:symptom_present_other_symptom_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 29 && obs.value_coded_name_id == 30
+        elsif obs.value_coded.to_i == 29 && obs.value_coded_name_id == 30
           a_hash[:symptom_present_hepatitis] = 'Yes'
           a_hash[:symptom_present_hepatitis_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 9242 && obs.value_coded_name_id == 12434
+        elsif obs.value_coded.to_i == 9242 && obs.value_coded_name_id == 12434
           a_hash[:symptom_present_kidney_failure] = 'Yes'
           a_hash[:symptom_present_kidney_failure_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 2150 && obs.value_coded_name_id == 2328
+        elsif obs.value_coded.to_i == 2150 && obs.value_coded_name_id == 2328
           a_hash[:symptom_present_nightmares] = 'Yes'
           a_hash[:symptom_present_nightmares_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 877 && obs.value_coded_name_id == 897
+        elsif obs.value_coded.to_i == 877 && obs.value_coded_name_id == 897
           a_hash[:symptom_present_diziness] = 'Yes'
           a_hash[:symptom_present_diziness_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 219 && obs.value_coded_name_id == 231
+        elsif obs.value_coded.to_i == 219 && obs.value_coded_name_id == 231
           a_hash[:symptom_present_psychosis] = 'Yes'
           a_hash[:symptom_present_psychosis_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 5953 && obs.value_coded_name_id == 4325
+        elsif obs.value_coded.to_i == 5953 && obs.value_coded_name_id == 4325
           a_hash[:symptom_present_blurry_vision] = 'Yes'
           a_hash[:symptom_present_blurry_vision_enc_id] = encounter.encounter_id
         end
       elsif obs.concept_id.to_i == 7755 #malawi_art_side_effects
-         if obs.value_coded == 29 && obs.value_coded_name_id == 30
+         if obs.value_coded.to_i == 29 && obs.value_coded_name_id == 30
            a_hash[:side_effects_hepatitis] = 'Yes'
            a_hash[:side_effects_hepatitis_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 219 && obs.value_coded_name_id == 231
+         elsif obs.value_coded.to_i == 219 && obs.value_coded_name_id == 231
            a_hash[:side_effects_psychosis] = 'Yes'
            a_hash[:side_effects_psychosis_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 512 && obs.value_coded_name_id == 524
+         elsif obs.value_coded.to_i == 512 && obs.value_coded_name_id == 524
            a_hash[:side_effects_skin_rash] = 'Yes'
            a_hash[:side_effects_skin_rash_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 821 && obs.value_coded_name_id == 838
+         elsif obs.value_coded.to_i == 821 && obs.value_coded_name_id == 838
            a_hash[:side_effects_peripheral_neuropathy] = 'Yes'
            a_hash[:side_effects_peripheral_neuropathy_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 877 && obs.value_coded_name_id == 897
+         elsif obs.value_coded.to_i == 877 && obs.value_coded_name_id == 897
            a_hash[:side_effects_diziness] = 'Yes'
            a_hash[:side_effects_diziness_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+         elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
            a_hash[:side_effects_no] = 'Yes'
            a_hash[:side_effects_no_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 2148 && obs.value_coded_name_id == 2325
+         elsif obs.value_coded.to_i == 2148 && obs.value_coded_name_id == 2325
            a_hash[:side_effects_lipodystrophy] = 'Yes'
            a_hash[:side_effects_lipodystrophy_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 2150 && obs.value_coded_name_id == 2328
+         elsif obs.value_coded.to_i == 2150 && obs.value_coded_name_id == 2328
            a_hash[:side_effects_nightmares] = 'Yes'
            a_hash[:side_effects_nightmares_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 3681 && obs.value_coded_name_id == 5037
+         elsif obs.value_coded.to_i == 3681 && obs.value_coded_name_id == 5037
            a_hash[:side_effects_renal_failure] = 'Yes'
            a_hash[:side_effects_renal_failure_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 5953 && obs.value_coded_name_id == 4325
+         elsif obs.value_coded.to_i == 5953 && obs.value_coded_name_id == 4325
            a_hash[:side_effects_blurry_vision] = 'Yes'
            a_hash[:side_effects_blurry_vision_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 6408 && obs.value_coded_name_id == 8873
+         elsif obs.value_coded.to_i == 6408 && obs.value_coded_name_id == 8873
            a_hash[:side_effects_Other] = 'Yes'
            a_hash[:side_effects_Other_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 9242 && obs.value_coded_name_id == 12434
+         elsif obs.value_coded.to_i == 9242 && obs.value_coded_name_id == 12434
            a_hash[:side_effects_kidney_failure] = 'Yes'
            a_hash[:side_effects_kidney_failure_enc_id] = encounter.encounter_id
-         elsif obs.value_coded == 9440 && obs.value_coded_name_id == 12659
+         elsif obs.value_coded.to_i == 9440 && obs.value_coded_name_id == 12659
            a_hash[:side_effects_gynaecomastia] = 'Yes'
            a_hash[:side_effects_gynaecomastia_enc_id] = encounter.encounter_id
          end
       elsif obs.concept_id.to_i == 8012 #allergic to sulpher
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:allergic_to_sulphur] = 'Yes'
           a_hash[:allergic_to_sulphur_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:allergic_to_sulphur] = 'No'
           a_hash[:allergic_to_sulphur_enc_id] = encounter.encounter_id
         elsif obs.value_text
@@ -1124,10 +1124,10 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           end
         end
       elsif obs.concept_id.to_i == 7874 #prescribe arvs
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:prescribe_arvs] = 'Yes'
           a_hash[:prescribe_arvs_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:prescribe_arvs] = 'No'
           a_hash[:prescribe_arvs_enc_id] = encounter.encounter_id
         elsif obs.value_text
@@ -1140,10 +1140,10 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           end
         end
       elsif obs.concept_id.to_i == 656 #prescribe ipt
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:prescribe_ipt] = 'Yes'
           a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:prescribe_ipt] = 'No'
           a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
        elsif obs.value_text
@@ -1151,84 +1151,84 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
             a_hash[:prescribe_ipt] = 'Yes'
             a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
           elsif obs.value_text == 1066
-            a_hash[:prescribe_ipt] = 'No'
+            a_hash[:prescribe_ipt] = 'No'n
             a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
           end
         end
       elsif obs.concept_id.to_i == 8259 #routine tb screening
-	      if obs.value_coded == 5945 && obs.value_coded_name_id == 4315
+	      if obs.value_coded.to_i == 5945 && obs.value_coded_name_id == 4315
 		      a_hash[:routine_tb_screening_fever] = 'Yes'
 		      a_hash[:routine_tb_screening_fever_enc_id] = encounter.encounter_id
-	      elsif obs.value_coded == 6029 && obs.value_coded_name_id == 4407
+	      elsif obs.value_coded.to_i == 6029 && obs.value_coded_name_id == 4407
 		      a_hash[:routine_tb_screening_night_sweats] = 'Yes'
           a_hash[:routine_tb_screening_night_sweats_enc_id] = encounter.encounter_id
-	      elsif obs.value_coded == 8261 && obs.value_coded_name_id == 11335
+	      elsif obs.value_coded.to_i == 8261 && obs.value_coded_name_id == 11335
 		      a_hash[:routine_tb_screening_cough_of_any_duration] = 'Yes'
           a_hash[:routine_tb_screening_cough_of_any_duration_enc_id] = encounter.encounter_id
-	      elsif obs.value_coded == 8260 && obs.value_coded_name_id == 11333
+	      elsif obs.value_coded.to_i == 8260 && obs.value_coded_name_id == 11333
 		      a_hash[:routine_tb_screening_weight_loss_failure] = 'Yes'
           a_hash[:routine_tb_screening_weight_loss_failure_enc_id] = encounter.encounter_id
 	      end
 
       elsif obs.concept_id.to_i == 7567 #drug induced symptoms
-        if obs.value_coded == 2148 && obs.value_coded_name_id == 2325
+        if obs.value_coded.to_i == 2148 && obs.value_coded_name_id == 2325
           a_hash[:drug_induced_lipodystrophy] = 'Yes'
           a_hash[:drug_induced_lipodystrophy_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 3 && obs.value_coded_name_id == 3
+        elsif obs.value_coded.to_i == 3 && obs.value_coded_name_id == 3
           a_hash[:drug_induced_anemia] = 'Yes'
           a_hash[:drug_induced_anemia_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 215 && obs.value_coded_name_id == 226
+        elsif obs.value_coded.to_i == 215 && obs.value_coded_name_id == 226
           a_hash[:drug_induced_jaundice] = 'Yes'
           a_hash[:drug_induced_jaundice_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 1458 && obs.value_coded_name_id == 1576
+        elsif obs.value_coded.to_i == 1458 && obs.value_coded_name_id == 1576
           a_hash[:drug_induced_lactic_acidosis] = 'Yes'
           a_hash[:drug_induced_lactic_acidosis_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 5945 && obs.value_coded_name_id == 4315
+        elsif obs.value_coded.to_i == 5945 && obs.value_coded_name_id == 4315
           a_hash[:drug_induced_fever] = 'Yes'
           a_hash[:drug_induced_fever_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 512 && obs.value_coded_name_id == 524
+        elsif obs.value_coded.to_i == 512 && obs.value_coded_name_id == 524
           a_hash[:drug_induced_skin_rash] = 'Yes'
           a_hash[:drug_induced_skin_rash_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 151 && obs.value_coded_name_id == 156
+        elsif obs.value_coded.to_i == 151 && obs.value_coded_name_id == 156
           a_hash[:drug_induced_abdominal_pain] = 'Yes'
           a_hash[:drug_induced_abdominal_pain_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 868 && obs.value_coded_name_id == 888
+        elsif obs.value_coded.to_i == 868 && obs.value_coded_name_id == 888
           a_hash[:drug_induced_anorexia] = 'Yes'
           a_hash[:drug_induced_anorexia_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 107 && obs.value_coded_name_id == 110
+        elsif obs.value_coded.to_i == 107 && obs.value_coded_name_id == 110
           a_hash[:drug_induced_cough] = 'Yes'
           a_hash[:drug_induced_cough_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 16 && obs.value_coded_name_id == 17
+        elsif obs.value_coded.to_i == 16 && obs.value_coded_name_id == 17
 		      a_hash[:drug_induced_diarrhea] = 'Yes'
           a_hash[:drug_induced_diarrhea_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 7952 && obs.value_coded_name_id == 10894
+        elsif obs.value_coded.to_i == 7952 && obs.value_coded_name_id == 10894
           a_hash[:drug_induced_leg_pain_numbness] = 'Yes'
           a_hash[:drug_induced_leg_pain_numbness_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 821 && obs.value_coded_name_id == 838
+        elsif obs.value_coded.to_i == 821 && obs.value_coded_name_id == 838
           a_hash[:drug_induced_peripheral_neuropathy] = 'Yes'
           a_hash[:drug_induced_peripheral_neuropathy_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 5980 && obs.value_coded_name_id == 4355
+        elsif obs.value_coded.to_i == 5980 && obs.value_coded_name_id == 4355
           a_hash[:drug_induced_vomiting] = 'Yes'
           a_hash[:drug_induced_vomiting_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 6779 && obs.value_coded_name_id == 4355
+        elsif obs.value_coded.to_i == 6779 && obs.value_coded_name_id == 4355
           a_hash[:drug_induced_other] = 'Yes'
           a_hash[:drug_induced_other_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 29 && obs.value_coded_name_id == 30
+        elsif obs.value_coded.to_i == 29 && obs.value_coded_name_id == 30
           a_hash[:drug_induced_hepatitis] = 'Yes'
           a_hash[:drug_induced_hepatitis_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 9242 && obs.value_coded_name_id == 12434
+        elsif obs.value_coded.to_i == 9242 && obs.value_coded_name_id == 12434
           a_hash[:drug_induced_kidney_failure] = 'Yes'
           a_hash[:drug_induced_kidney_failure_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 2150 && obs.value_coded_name_id == 2328
+        elsif obs.value_coded.to_i == 2150 && obs.value_coded_name_id == 2328
           a_hash[:drug_induced_nightmares] = 'Yes'
           a_hash[:drug_induced_nightmares_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 877 && obs.value_coded_name_id == 897
+        elsif obs.value_coded.to_i == 877 && obs.value_coded_name_id == 897
           a_hash[:drug_induced_diziness] = 'Yes'
           a_hash[:drug_induced_diziness_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 219 && obs.value_coded_name_id == 231
+        elsif obs.value_coded.to_i == 219 && obs.value_coded_name_id == 231
           a_hash[:drug_induced_psychosis] = 'Yes'
           a_hash[:drug_induced_psychosis_enc_id] = encounter.encounter_id
-        elsif obs.value_coded == 5953 && obs.value_coded_name_id == 4325
+        elsif obs.value_coded.to_i == 5953 && obs.value_coded_name_id == 4325
           a_hash[:drug_induced_blurry_vision] = 'Yes'
           a_hash[:drug_induced_blurry_vision_enc_id] = encounter.encounter_id
         end
@@ -1408,15 +1408,15 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
   (encounter || []).each do | obs |
     if obs.concept_id.to_i == 6131 #Patient Pregnant
       if !obs.value_coded.blank?
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
           a_hash[:patient_pregnant_enc_id] = obs.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:patient_pregnant] = 'No'
           a_hash[:patient_pregnant_enc_id] = obs.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
           a_hash[:patient_pregnant] = 'Unknown'
           a_hash[:patient_pregnant_enc_id] = obs.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
@@ -1438,15 +1438,15 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
       end
     elsif obs.concept_id.to_i == 1755 #Patient Pregnant
       if !obs.value_coded.blank?
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
           a_hash[:patient_pregnant_enc_id] = obs.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:patient_pregnant] = 'No'
           a_hash[:patient_pregnant_enc_id] = obs.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
           a_hash[:patient_pregnant] = 'Unknown'
           a_hash[:patient_pregnant_enc_id] = obs.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
@@ -1468,15 +1468,15 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
       end
     elsif obs.concept_id.to_i == 7965 #breastfeeding
       if !obs.value_coded.blank?
-        if obs.value_coded == 1065 && obs.value_coded_name_id == 1102
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_breastfeeding] = 'Yes'
           a_hash[:patient_breastfeeding_enc_id] = obs.encounter_id
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1066 && obs.value_coded_name_id == 1103
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:patient_breastfeeding] = 'No'
           a_hash[:patient_breastfeeding_enc_id] = obs.encounter_id
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
-        elsif obs.value_coded == 1067 && obs.value_coded_name_id == 1104
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
           a_hash[:patient_breastfeeding] = 'Unknown'
           a_hash[:patient_breastfeeding_enc_id] = obs.encounter_id
           a_hash[:patient_breastfeeding_v_date] = obs.obs_datetime.to_date
