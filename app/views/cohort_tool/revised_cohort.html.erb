@@ -3625,7 +3625,8 @@
    
 
     <%
-    cohort_numbers = '"@cohort[:total_registered]", 
+    cohort_numbers = <<EOF
+"@cohort[:total_registered]", 
 "@cohort[:cum_total_registered]",
 "@cohort[:initiated_on_art_first_time]",
 "@cohort[:cum_initiated_on_art_first_time]",            
@@ -3724,17 +3725,20 @@
 "@cohort[:total_patients_on_family_planning]",
 "@cohort[:total_patients_with_screened_bp]",
 "@cohort[:adults_at_art_initiation]",
-"@cohort[:cum_adults_at_art_initiation]"'
+"@cohort[:cum_adults_at_art_initiation]"
+EOF
 
-    cohort_attr = cohort_numbers.tr(" \t\r\n", '').split(',')
-    (cohort_attr || []).each do |cohort_number|
-      c_attr = cohort_number[1..-2].sub("@cohort[:",'').sub(']','') %>
-      <script>
-        print_pdf_attr["<%= c_attr %>"] = <%= @cohort.send(c_attr).count rescue @cohort.send(c_attr) %>;
-      </script><%
-    end
+  cohort_attr = cohort_numbers.tr(" \t\r\n", '').split(',')
+  print_pdf_attr_ruby = {}
 
-    %>
+  (cohort_attr || []).each do |cohort_number|
+    c_attr = cohort_number[1..-2].sub("@cohort[:",'').sub(']','') 
+      print_pdf_attr_ruby[c_attr] = @cohort.send(c_attr).count rescue @cohort.send(c_attr) 
+  end
+  
+  (print_pdf_attr_ruby || {}).each do |name, count|%>
+    print_pdf_attr["<%= name %>"] = "<%= count %>";  
+  <%end%>
 
 </script>
 
