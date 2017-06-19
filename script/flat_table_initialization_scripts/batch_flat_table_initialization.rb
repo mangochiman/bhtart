@@ -74,7 +74,7 @@ def initiate_special_script(patients_list)
     count = 0
     thread_number.times do
         threads << Thread.new(count) do |i|
-	 count += 1
+	  count += 1
           get_specific_patients(patients_list[start_element..end_element], count)
         end
 
@@ -639,21 +639,21 @@ def get_patient_demographics(patient_id)
      a_hash = {:legacy_id2 => 'NULL'}
 
      gender = pat.person.gender
+=begin
      if gender == 'M'
         gender = 'Male'
      elsif gender == 'F'
         gender = 'Female'
      end
-
+=end
      a_hash[:patient_id] = patient_id
      a_hash[:given_name] = this_patient.first.given_name rescue nil
      a_hash[:middle_name] = this_patient.first.middle_name rescue nil
      a_hash[:family_name] = this_patient.first.family_name rescue nil
-     a_hash[:gender] = gender  rescue nil #this_patient.gender  rescue nil
+     a_hash[:gender] = gender  rescue nil
      a_hash[:dob] = this_patient.first.birthdate rescue nil
      a_hash[:dob_estimated] = this_patient.first.birthdate_estimated rescue nil
      a_hash[:death_date] =  this_patient.first.death_date rescue nil
-
      a_hash[:ta] = this_patient.first.traditional_authority  rescue nil
      a_hash[:current_address] = this_patient.first.current_residence  rescue nil
      a_hash[:home_district] = this_patient.first.home_district  rescue nil
@@ -965,6 +965,9 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
         elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
           a_hash[:currently_using_family_planning_method] = 'No'
           a_hash[:currently_using_family_planning_method_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
+          a_hash[:currently_using_family_planning_method] = 'Unknown'
+          a_hash[:currently_using_family_planning_method_enc_id] = encounter.encounter_id
         end
       elsif obs.concept_id.to_i == 374 #family planning method
         if obs.value_coded.to_i == 780 && obs.value_coded_name_id == 10736
@@ -1067,46 +1070,59 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:symptom_present_blurry_vision_enc_id] = encounter.encounter_id
         end
       elsif obs.concept_id.to_i == 7755 #malawi_art_side_effects
-         if obs.value_coded.to_i == 29 && obs.value_coded_name_id == 30
-           a_hash[:side_effects_hepatitis] = 'Yes'
-           a_hash[:side_effects_hepatitis_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 219 && obs.value_coded_name_id == 231
-           a_hash[:side_effects_psychosis] = 'Yes'
-           a_hash[:side_effects_psychosis_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 512 && obs.value_coded_name_id == 524
-           a_hash[:side_effects_skin_rash] = 'Yes'
-           a_hash[:side_effects_skin_rash_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 821 && obs.value_coded_name_id == 838
-           a_hash[:side_effects_peripheral_neuropathy] = 'Yes'
-           a_hash[:side_effects_peripheral_neuropathy_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 877 && obs.value_coded_name_id == 897
-           a_hash[:side_effects_diziness] = 'Yes'
-           a_hash[:side_effects_diziness_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
-           a_hash[:side_effects_no] = 'Yes'
-           a_hash[:side_effects_no_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 2148 && obs.value_coded_name_id == 2325
-           a_hash[:side_effects_lipodystrophy] = 'Yes'
-           a_hash[:side_effects_lipodystrophy_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 2150 && obs.value_coded_name_id == 2328
-           a_hash[:side_effects_nightmares] = 'Yes'
-           a_hash[:side_effects_nightmares_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 3681 && obs.value_coded_name_id == 5037
-           a_hash[:side_effects_renal_failure] = 'Yes'
-           a_hash[:side_effects_renal_failure_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 5953 && obs.value_coded_name_id == 4325
-           a_hash[:side_effects_blurry_vision] = 'Yes'
-           a_hash[:side_effects_blurry_vision_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 6408 && obs.value_coded_name_id == 8873
-           a_hash[:side_effects_Other] = 'Yes'
-           a_hash[:side_effects_Other_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 9242 && obs.value_coded_name_id == 12434
-           a_hash[:side_effects_kidney_failure] = 'Yes'
-           a_hash[:side_effects_kidney_failure_enc_id] = encounter.encounter_id
-         elsif obs.value_coded.to_i == 9440 && obs.value_coded_name_id == 12659
-           a_hash[:side_effects_gynaecomastia] = 'Yes'
-           a_hash[:side_effects_gynaecomastia_enc_id] = encounter.encounter_id
-         end
+        if obs.value_coded.to_i == 29 && obs.value_coded_name_id == 30
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_hepatitis] = obs_value
+          a_hash[:side_effects_hepatitis_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 219 && obs.value_coded_name_id == 231
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_psychosis] = obs_value
+          a_hash[:side_effects_psychosis_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 512 && obs.value_coded_name_id == 524
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_skin_rash] = obs_value
+          a_hash[:side_effects_skin_rash_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 821 && obs.value_coded_name_id == 838
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_peripheral_neuropathy] = obs_value
+          a_hash[:side_effects_peripheral_neuropathy_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 877 && obs.value_coded_name_id == 897
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_diziness] = obs_value
+          a_hash[:side_effects_diziness_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_no] = obs_value
+          a_hash[:side_effects_no_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 2148 && obs.value_coded_name_id == 2325
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_lipodystrophy] = obs_value
+          a_hash[:side_effects_lipodystrophy_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 2150 && obs.value_coded_name_id == 2328
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_nightmares] = obs_value
+          a_hash[:side_effects_nightmares_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 3681 && obs.value_coded_name_id == 5037
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_renal_failure] = obs_value
+          a_hash[:side_effects_renal_failure_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 5953 && obs.value_coded_name_id == 4325
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_blurry_vision] = obs_value
+          a_hash[:side_effects_blurry_vision_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 6408 && obs.value_coded_name_id == 8873
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_Other] = obs_value
+          a_hash[:side_effects_Other_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 9242 && obs.value_coded_name_id == 12434
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_kidney_failure] = obs_value
+          a_hash[:side_effects_kidney_failure_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 9440 && obs.value_coded_name_id == 12659
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_gynaecomastia] = obs_value
+          a_hash[:side_effects_gynaecomastia_enc_id] = encounter.encounter_id
+        end
       elsif obs.concept_id.to_i == 8012 #allergic to sulpher
         if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:allergic_to_sulphur] = 'Yes'
@@ -1151,22 +1167,26 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
             a_hash[:prescribe_ipt] = 'Yes'
             a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
           elsif obs.value_text == 1066
-            a_hash[:prescribe_ipt] = 'No'n
+            a_hash[:prescribe_ipt] = 'No'
             a_hash[:prescribe_ipt_enc_id] = encounter.encounter_id
           end
         end
       elsif obs.concept_id.to_i == 8259 #routine tb screening
 	      if obs.value_coded.to_i == 5945 && obs.value_coded_name_id == 4315
-		      a_hash[:routine_tb_screening_fever] = 'Yes'
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+		      a_hash[:routine_tb_screening_fever] = obs_value
 		      a_hash[:routine_tb_screening_fever_enc_id] = encounter.encounter_id
 	      elsif obs.value_coded.to_i == 6029 && obs.value_coded_name_id == 4407
-		      a_hash[:routine_tb_screening_night_sweats] = 'Yes'
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+		      a_hash[:routine_tb_screening_night_sweats] = obs_value
           a_hash[:routine_tb_screening_night_sweats_enc_id] = encounter.encounter_id
 	      elsif obs.value_coded.to_i == 8261 && obs.value_coded_name_id == 11335
-		      a_hash[:routine_tb_screening_cough_of_any_duration] = 'Yes'
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+		      a_hash[:routine_tb_screening_cough_of_any_duration] = obs_value
           a_hash[:routine_tb_screening_cough_of_any_duration_enc_id] = encounter.encounter_id
 	      elsif obs.value_coded.to_i == 8260 && obs.value_coded_name_id == 11333
-		      a_hash[:routine_tb_screening_weight_loss_failure] = 'Yes'
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+		      a_hash[:routine_tb_screening_weight_loss_failure] = obs_value
           a_hash[:routine_tb_screening_weight_loss_failure_enc_id] = encounter.encounter_id
 	      end
 
@@ -1238,6 +1258,26 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
     return generate_sql_string(a_hash)
 end
 
+def get_hiv_clinic_consultation_answer(obs_person_id, obs_encounter_id, obs_concept_id, obs_value_coded, obs_obs_datetime)
+  #check if value_coded is saved as concept_id
+  patient_value = []
+
+  Encounter.find_by_sql("
+          SELECT o.obs_id, o.person_id, o.encounter_id, o.obs_datetime, o.value_coded, o.voided
+          FROM #{@source_db}.obs o
+          WHERE encounter_id = #{obs_encounter_id} AND o.concept_id = #{obs_value_coded}
+          AND DATE(obs_datetime) = '#{obs_obs_datetime.to_date.strftime'%Y-%m-%d'}' AND person_id = #{obs_person_id}
+          lIMIT 1").each{|obs| patient_value << obs.value_coded}
+
+  unless patient_value.blank?
+    answer = ConceptName.find_by_concept_id(patient_value.first).name
+  else
+    answer = 'Yes'
+  end
+
+  return answer
+end
+
 def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 normal encounter, 1 generate_template only
 
   #initialize field and values variables
@@ -1251,7 +1291,24 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
   return generate_sql_string(a_hash) if type == 1
 
   (encounter || []).each do | obs |
-    if obs.concept_id.to_i == 2552 #FOLLOW UP AGREEMENT
+    if obs.concept_id.to_i == 8011 #send_sms
+      ans_registration = ""
+      if obs.value_coded
+        ans_registration = obs.to_s.split(':')[1].strip rescue nil
+      else
+        if obs.value_text == '1065'
+          ans_registration = 'Yes'
+        elsif obs.value_text == '1066'
+          ans_registration = 'No'
+        elsif obs.value_text == '1067'
+          ans_registration = 'Unknown'
+        end
+      end
+      a_hash[:send_sms] = ans_registration rescue nil
+      a_hash[:send_sms_enc_id] = obs.encounter_id
+      a_hash[:send_sms_v_date] = obs.obs_datetime.to_date rescue nil
+
+    elsif obs.concept_id.to_i == 2552 #FOLLOW UP AGREEMENT
       ans_registration = ""
       if obs.value_coded
         ans_registration = obs.to_s.split(':')[1].strip rescue nil
@@ -1265,33 +1322,48 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         end
       end
       a_hash[:agrees_to_followup] = ans_registration rescue nil
+      a_hash[:agrees_to_followup_enc_id] = obs.encounter_id
+      a_hash[:agrees_to_followup_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 7882 #CONFIRMATORY HIV TEST DATE
       a_hash[:confirmatory_hiv_test_date] = obs.value_datetime.to_date rescue nil
-
+      a_hash[:confirmatory_hiv_test_date_enc_id] = obs.encounter_id
+      a_hash[:confirmatory_hiv_test_date_v_date] = obs.obs_datetime.to_date rescue nil
     elsif obs.concept_id.to_i == 7881 #CONFIRMATORY HIV TEST LOCATION
      if obs.value_text
        conf_loc_name = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
        if conf_loc_name
          a_hash[:confirmatory_hiv_test_location] = conf_loc_name rescue nil
+         a_hash[:confirmatory_hiv_test_location_enc_id] = obs.encounter_id
+         a_hash[:confirmatory_hiv_test_location_v_date] = obs.obs_datetime.to_date rescue nil
        else
          a_hash[:confirmatory_hiv_test_location] = obs.value_text.to_s rescue nil
+         a_hash[:confirmatory_hiv_test_location_enc_id] = obs.encounter_id
+         a_hash[:confirmatory_hiv_test_location_v_date] = obs.obs_datetime.to_date rescue nil
        end
      else
       hiv_location = Location.find_by_location_id(obs.value_numeric).name rescue nil
       a_hash[:confirmatory_hiv_test_location] = hiv_location rescue nil
+      a_hash[:confirmatory_hiv_test_location_enc_id] = obs.encounter_id
+      a_hash[:confirmatory_hiv_test_location_v_date] = obs.obs_datetime.to_date rescue nil
      end
     elsif obs.concept_id.to_i == 7750 #LOCATION OF ART INITIATION
       if obs.value_text
         loc_of_art = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
         if loc_of_art
          a_hash[:location_of_art_initialization] = loc_of_art rescue nil
+         a_hash[:location_of_art_initialization_enc_id] = obs.encounter_id
+         a_hash[:location_of_art_initialization_v_date] = obs.obs_datetime.to_date rescue nil
         else
          a_hash[:location_of_art_initialization] = obs.value_text.to_s rescue nil
+         a_hash[:location_of_art_initialization_enc_id] = obs.encounter_id
+         a_hash[:location_of_art_initialization_v_date] = obs.obs_datetime.to_date rescue nil
         end
        else
         art_location = Location.find_by_location_id(obs.value_numeric).name rescue nil
-        a_hash[:confirmatory_hiv_test_location] = art_location rescue nil
+        a_hash[:location_of_art_initialization] = art_location rescue nil
+        a_hash[:location_of_art_initialization_enc_id] = obs.encounter_id
+        a_hash[:location_of_art_initialization_v_date] = obs.obs_datetime.to_date rescue nil
       end
 
     elsif obs.concept_id.to_i == 7752 #HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS
@@ -1308,9 +1380,13 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         end
       end
       a_hash[:taken_art_in_last_two_months] = ans_registration rescue nil
+      a_hash[:taken_art_in_last_two_months_enc_id] = obs.encounter_id
+      a_hash[:taken_art_in_last_two_months_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 7880 #Confirmatory HIV Test Type
-      a_hash[:type_of_confirmatory_hiv_test] = obs.to_s.split(':')[1] rescue nil
+      a_hash[:type_of_confirmatory_hiv_test] = obs.to_s.split(':')[1].squish rescue nil
+      a_hash[:type_of_confirmatory_hiv_test_enc_id] = obs.encounter_id
+      a_hash[:type_of_confirmatory_hiv_test_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 6394 #HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS
       ans_registration = ""
@@ -1326,6 +1402,8 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         end
       end
       a_hash[:taken_art_in_last_two_weeks] = ans_registration rescue nil
+      a_hash[:taken_art_in_last_two_weeks_enc_id] = obs.encounter_id
+      a_hash[:taken_art_in_last_two_weeks_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 6393 #HAS TRANSFER LETTER
       ans_registration = ""
@@ -1341,9 +1419,13 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         end
       end
       a_hash[:has_transfer_letter] = ans_registration rescue nil
+      a_hash[:has_transfer_letter_enc_id] = obs.encounter_id
+      a_hash[:has_transfer_letter_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 2516 #DATE ANTIRETROVIRALS STARTED
       a_hash[:date_started_art] = obs.value_datetime.to_date rescue nil
+      a_hash[:date_started_art_enc_id] = obs.encounter_id
+      a_hash[:date_started_art_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 7937 #EVER REGISTERED AT ART CLINIC
       ans_registration = ""
@@ -1359,6 +1441,8 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         end
       end
       a_hash[:ever_registered_at_art_clinic] = ans_registration rescue nil
+      a_hash[:ever_registered_at_art_clinic_enc_id] = obs.encounter_id
+      a_hash[:ever_registered_at_art_clinic_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 7754 #EVER RECEIVED ART?
       ans_registration = ""
@@ -1374,6 +1458,8 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         end
       end
       a_hash[:ever_received_art] = ans_registration rescue nil
+      a_hash[:ever_received_art_enc_id] = obs.encounter_id
+      a_hash[:ever_received_art_v_date] = obs.obs_datetime.to_date rescue nil
 
     elsif obs.concept_id.to_i == 7753 #LAST ART DRUGS TAKEN
       last_drug = ""
@@ -1385,6 +1471,7 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       a_hash[:last_art_drugs_taken] = last_drug rescue nil
     elsif obs.concept_id.to_i == 7751 #DATE ART LAST TAKEN
       a_hash[:date_art_last_taken] = obs.value_datetime.to_date rescue nil
+      a_hash[:date_art_last_taken_enc_id] = obs.encounter_id
       a_hash[:date_art_last_taken_v_date] = obs.obs_datetime.to_date rescue nil
     end
   end
@@ -1501,30 +1588,50 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         cd4_count_loc = Location.find_by_location_id(obs.value_text.to_i).name rescue nil
        if cd4_count_loc
          a_hash[:cd4_count_location] = cd4_count_loc rescue nil
+         a_hash[:cd4_count_location_enc_id] = obs.encounter_id
+         a_hash[:cd4_count_location_v_date] = obs.obs_datetime.to_date
        else
          a_hash[:cd4_count_location] = obs.value_text.to_s rescue nil
+         a_hash[:cd4_count_location_enc_id] = obs.encounter_id
+         a_hash[:cd4_count_location_v_date] = obs.obs_datetime.to_date
        end
       else
         cd4_location = Location.find_by_location_id(obs.value_numeric).name rescue nil
         a_hash[:cd4_count_location] = cd4_location rescue nil
+        a_hash[:cd4_count_location_enc_id] = obs.encounter_id
+        a_hash[:cd4_count_location_v_date] = obs.obs_datetime.to_date
       end
 
     elsif obs.concept_id.to_i == 5497 #cd4_count
       a_hash[:cd4_count] = obs.value_numeric.to_i rescue nil
+      a_hash[:cd4_count_enc_id] = obs.encounter_id
+      a_hash[:cd4_count_v_date] = obs.obs_datetime.to_date
     elsif obs.concept_id.to_i == 9098 #cd4_count_modifier
       a_hash[:cd4_count_modifier] = obs.to_s.split(':')[1].strip rescue nil
+      a_hash[:cd4_count_modifier_enc_id] = obs.encounter_id
+      a_hash[:cd4_count_modifier_v_date] = obs.obs_datetime.to_date
     elsif obs.concept_id.to_i == 730 #cd4_count_percent
       a_hash[:cd4_count_percent] = obs.to_s.split(':')[1].strip rescue nil
+      a_hash[:cd4_count_percent_enc_id] = obs.encounter_id
+      a_hash[:cd4_count_percent_v_date] = obs.obs_datetime.to_date
     elsif obs.concept_id.to_i == 6831 #cd4_count_datetime
       a_hash[:cd4_count_datetime] = obs.value_datetime.to_date rescue nil
+      a_hash[:cd4_count_datetime_enc_id] = obs.encounter_id
+      a_hash[:cd4_count_datetime_v_date] = obs.obs_datetime.to_date
 
     elsif (obs.value_coded == 5006) #asymptomatic
       if (obs.value_text == '1065' || obs.value_coded == 1065)
         a_hash[:asymptomatic] = 'Yes'
+        a_hash[:asymptomatic_enc_id] = obs.encounter_id
+        a_hash[:asymptomatic_v_date] = obs.obs_datetime.to_date
       elsif (obs.value_text == '1065' || obs.value_coded == 1066)
         a_hash[:asymptomatic] = 'No'
+        a_hash[:asymptomatic_enc_id] = obs.encounter_id
+        a_hash[:asymptomatic_v_date] = obs.obs_datetime.to_date
       elsif (obs.value_text == '1067' || obs.value_coded == 1067)
         a_hash[:asymptomatic] = 'Unknown'
+        a_hash[:asymptomatic_enc_id] = obs.encounter_id
+        a_hash[:asymptomatic_v_date] = obs.obs_datetime.to_date
       end
 
     elsif obs.concept_id.to_i == 7563 #reason_for_starting_art
@@ -1535,456 +1642,733 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         reason_for_starting = ConceptName.find_by_concept_id(obs.value_text) rescue nil
       end
       a_hash[:reason_for_eligibility] = reason_for_starting rescue nil
-      a_hash[:reason_for_starting_v_date] = obs.obs_datetime.to_date rescue nil
+      a_hash[:reason_for_eligibility_v_date] = obs.obs_datetime.to_date rescue nil
       a_hash[:reason_for_eligibility_enc_id] = obs.encounter_id rescue nil
 
     elsif obs.concept_id.to_i == 7562 #who_stage
       a_hash[:who_stage] = obs.to_s.split(':')[1].strip rescue nil
+      a_hash[:who_stage_enc_id] = obs.encounter_id
+      a_hash[:who_stage_v_date] = obs.obs_datetime.to_date
 
     elsif (obs.concept_id.to_i == 5328) #persistent_generalized_lymphadenopathy
       ans_staging = ""
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:persistent_generalized_lymphadenopathy] = 'Yes'
+          a_hash[:persistent_generalized_lymphadenopathy_enc_id] = obs.encounter_id
+          a_hash[:persistent_generalized_lymphadenopathy_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:persistent_generalized_lymphadenopathy] = 'No'
+          a_hash[:persistent_generalized_lymphadenopathy_enc_id] = obs.encounter_id
+          a_hash[:persistent_generalized_lymphadenopathy_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:persistent_generalized_lymphadenopathy] = 'Unknown'
+          a_hash[:persistent_generalized_lymphadenopathy_enc_id] = obs.encounter_id
+          a_hash[:persistent_generalized_lymphadenopathy_v_date] = obs.obs_datetime.to_date
         end
 
     elsif  (obs.concept_id.to_i == 6757) #unspecified_stage_1_cond
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage_1_cond] = 'Yes'
+          a_hash[:unspecified_stage_1_cond_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_1_cond_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:unspecified_stage_1_cond] = 'No'
+          a_hash[:unspecified_stage_1_cond_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_1_cond_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage_1_cond] = 'Unknown'
+          a_hash[:unspecified_stage_1_cond_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_1_cond_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 1212) #molluscumm_contagiosum
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:molluscumm_contagiosum] = 'Yes'
+          a_hash[:molluscumm_contagiosum_enc_id] = obs.encounter_id
+          a_hash[:molluscumm_contagiosum_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:molluscumm_contagiosum] = 'No'
+          a_hash[:molluscumm_contagiosum_enc_id] = obs.encounter_id
+          a_hash[:molluscumm_contagiosum_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:molluscumm_contagiosum] = 'Unknown'
+          a_hash[:molluscumm_contagiosum_enc_id] = obs.encounter_id
+          a_hash[:molluscumm_contagiosum_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 6775) #wart_virus_infection_extensive
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:wart_virus_infection_extensive] = 'Yes'
+          a_hash[:wart_virus_infection_extensive_enc_id] = obs.encounter_id
+          a_hash[:wart_virus_infection_extensive_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:wart_virus_infection_extensive] = 'No'
+          a_hash[:wart_virus_infection_extensive_enc_id] = obs.encounter_id
+          a_hash[:wart_virus_infection_extensive_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:wart_virus_infection_extensive] = 'Unknown'
+          a_hash[:wart_virus_infection_extensive_enc_id] = obs.encounter_id
+          a_hash[:wart_virus_infection_extensive_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 2576) #oral_ulcerations_recurrent
         if (obs.value_text == '1065' || obs.value_coded == 1065)
-        elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:oral_ulcerations_recurrent] = 'Yes'
+          a_hash[:oral_ulcerations_recurrent_enc_id] = obs.encounter_id
+          a_hash[:oral_ulcerations_recurrent_v_date] = obs.obs_datetime.to_date
+        elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:oral_ulcerations_recurrent] = 'No'
+          a_hash[:oral_ulcerations_recurrent_enc_id] = obs.encounter_id
+          a_hash[:oral_ulcerations_recurrent_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:oral_ulcerations_recurrent] = 'Unknown'
+          a_hash[:oral_ulcerations_recurrent_enc_id] = obs.encounter_id
+          a_hash[:oral_ulcerations_recurrent_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 1210) #parotid_enlargement_persistent_unexplained
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:parotid_enlargement_persistent_unexplained] = 'Yes'
+          a_hash[:parotid_enlargement_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:parotid_enlargement_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:parotid_enlargement_persistent_unexplained] = 'No'
+          a_hash[:parotid_enlargement_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:parotid_enlargement_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:parotid_enlargement_persistent_unexplained] = 'Unknown'
+          a_hash[:parotid_enlargement_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:parotid_enlargement_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 2891) #lineal_gingival_erythema
          if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:lineal_gingival_erythema] = 'Yes'
+          a_hash[:lineal_gingival_erythema_enc_id] = obs.encounter_id
+          a_hash[:lineal_gingival_erythema_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:lineal_gingival_erythema] = 'No'
+          a_hash[:lineal_gingival_erythema_enc_id] = obs.encounter_id
+          a_hash[:lineal_gingival_erythema_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:lineal_gingival_erythema] = 'Unknown'
+          a_hash[:lineal_gingival_erythema_enc_id] = obs.encounter_id
+          a_hash[:lineal_gingival_erythema_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 836)  #herpes_zoster
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:herpes_zoster] = 'Yes'
+          a_hash[:herpes_zoster_enc_id] = obs.encounter_id
+          a_hash[:herpes_zoster_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:herpes_zoster] = 'No'
+          a_hash[:herpes_zoster_enc_id] = obs.encounter_id
+          a_hash[:herpes_zoster_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:herpes_zoster] = 'Unknown'
+          a_hash[:herpes_zoster_enc_id] = obs.encounter_id
+          a_hash[:herpes_zoster_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 5012) #respiratory_tract_infections_recurrent
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:respiratory_tract_infections_recurrent] = 'Yes'
+          a_hash[:respiratory_tract_infections_recurrent_enc_id] = obs.encounter_id
+          a_hash[:respiratory_tract_infections_recurrent_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:respiratory_tract_infections_recurrent] = 'No'
+          a_hash[:respiratory_tract_infections_recurrent_enc_id] = obs.encounter_id
+          a_hash[:respiratory_tract_infections_recurrent_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:respiratory_tract_infections_recurrent] = 'Unknown'
+          a_hash[:respiratory_tract_infections_recurrent_enc_id] = obs.encounter_id
+          a_hash[:respiratory_tract_infections_recurrent_v_date] = obs.obs_datetime.to_date
         end
 
     elsif  (obs.concept_id.to_i == 6758) #unspecified_stage2_condition
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage2_condition] = 'Yes'
+          a_hash[:unspecified_stage2_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage2_condition_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:unspecified_stage2_condition] = 'No'
+          a_hash[:unspecified_stage2_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage2_condition_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage2_condition] = 'Unknown'
+          a_hash[:unspecified_stage2_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage2_condition_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 2575) #angular_chelitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:angular_chelitis] = 'Yes'
+          a_hash[:angular_chelitis_enc_id] = obs.encounter_id
+          a_hash[:angular_chelitis_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:angular_chelitis] = 'No'
+          a_hash[:angular_chelitis_enc_id] = obs.encounter_id
+          a_hash[:angular_chelitis_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:angular_chelitis] = 'Unknown'
+          a_hash[:angular_chelitis_enc_id] = obs.encounter_id
+          a_hash[:angular_chelitis_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 2577) #papular_pruritic_eruptions
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:papular_pruritic_eruptions] = 'Yes'
+          a_hash[:papular_pruritic_eruptions_enc_id] = obs.encounter_id
+          a_hash[:papular_pruritic_eruptions_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:papular_pruritic_eruptions] = 'No'
+          a_hash[:papular_pruritic_eruptions_enc_id] = obs.encounter_id
+          a_hash[:papular_pruritic_eruptions_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:papular_pruritic_eruptions] = 'Unknown'
+          a_hash[:papular_pruritic_eruptions_enc_id] = obs.encounter_id
+          a_hash[:papular_pruritic_eruptions_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 7537) #hepatosplenomegaly_unexplained
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:hepatosplenomegaly_unexplained] = 'Yes'
+          a_hash[:hepatosplenomegaly_unexplained_enc_id] = obs.encounter_id
+          a_hash[:hepatosplenomegaly_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:hepatosplenomegaly_unexplained] = 'No'
+          a_hash[:hepatosplenomegaly_unexplained_enc_id] = obs.encounter_id
+          a_hash[:hepatosplenomegaly_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:hepatosplenomegaly_unexplained] = 'Unknown'
+          a_hash[:hepatosplenomegaly_unexplained_enc_id] = obs.encounter_id
+          a_hash[:hepatosplenomegaly_unexplained_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 5337) #oral_hairy_leukoplakia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:oral_hairy_leukoplakia] = 'Yes'
+          a_hash[:oral_hairy_leukoplakia_enc_id] = obs.encounter_id
+          a_hash[:oral_hairy_leukoplakia_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:oral_hairy_leukoplakia] = 'No'
+          a_hash[:oral_hairy_leukoplakia_enc_id] = obs.encounter_id
+          a_hash[:oral_hairy_leukoplakia_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:oral_hairy_leukoplakia] = 'Unknown'
+          a_hash[:oral_hairy_leukoplakia_enc_id] = obs.encounter_id
+          a_hash[:oral_hairy_leukoplakia_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 7540) #severe_weight_loss
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:severe_weight_loss] = 'Yes'
+          a_hash[:severe_weight_loss_enc_id] = obs.encounter_id
+          a_hash[:severe_weight_loss_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:severe_weight_loss] = 'No'
+          a_hash[:severe_weight_loss_enc_id] = obs.encounter_id
+          a_hash[:severe_weight_loss_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:severe_weight_loss] = 'Unknown'
+          a_hash[:severe_weight_loss_enc_id] = obs.encounter_id
+          a_hash[:severe_weight_loss_v_date] = obs.obs_datetime.to_date
         end
 
     elsif (obs.concept_id.to_i == 5027) #fever_persistent_unexplained
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:fever_persistent_unexplained] = 'Yes'
+          a_hash[:fever_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:fever_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:fever_persistent_unexplained] = 'No'
+          a_hash[:fever_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:fever_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:fever_persistent_unexplained] = 'Unknown'
+          a_hash[:fever_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:fever_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         end
 
     elsif  (obs.concept_id.to_i == 2891) #pulmonary_tuberculosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:pulmonary_tuberculosis] = 'Yes'
+          a_hash[:pulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:pulmonary_tuberculosis] = 'No'
+          a_hash[:pulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:pulmonary_tuberculosis] = 'Unknown'
+          a_hash[:pulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7539) #pulmonary_tuberculosis_last_2_years
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:pulmonary_tuberculosis_last_2_years] = 'Yes'
+          a_hash[:pulmonary_tuberculosis_last_2_years_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:pulmonary_tuberculosis_last_2_years] = 'No'
+          a_hash[:pulmonary_tuberculosis_last_2_years_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:pulmonary_tuberculosis_last_2_years] = 'Unknown'
+          a_hash[:pulmonary_tuberculosis_last_2_years_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 5333) #severe_bacterial_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:severe_bacterial_infection] = 'Yes'
+          a_hash[:severe_bacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:severe_bacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:severe_bacterial_infection] = 'No'
+          a_hash[:severe_bacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:severe_bacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:severe_bacterial_infection] = 'Unknown'
+          a_hash[:severe_bacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:severe_bacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 1215) #bacterial_pnuemonia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:bacterial_pnuemonia] = 'Yes'
+          a_hash[:bacterial_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:bacterial_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:bacterial_pnuemonia] = 'No'
+          a_hash[:bacterial_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:bacterial_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:bacterial_pnuemonia] = 'Unknown'
+          a_hash[:bacterial_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:bacterial_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 5024) #symptomatic_lymphoid_interstitial_pnuemonitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'Yes'
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'No'
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'Unknown'
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 2889) #chronic_hiv_assoc_lung_disease
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:chronic_hiv_assoc_lung_disease] = 'Yes'
+          a_hash[:chronic_hiv_assoc_lung_disease_enc_id] = obs.encounter_id
+          a_hash[:chronic_hiv_assoc_lung_disease_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:chronic_hiv_assoc_lung_disease] = 'No'
+          a_hash[:chronic_hiv_assoc_lung_disease_enc_id] = obs.encounter_id
+          a_hash[:chronic_hiv_assoc_lung_disease_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:chronic_hiv_assoc_lung_disease] = 'Unknown'
+          a_hash[:chronic_hiv_assoc_lung_disease_enc_id] = obs.encounter_id
+          a_hash[:chronic_hiv_assoc_lung_disease_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 6759) #unspecified_stage3_condition
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage3_condition] = 'Yes'
+          a_hash[:unspecified_stage3_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage3_condition_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:unspecified_stage3_condition] = 'No'
+          a_hash[:unspecified_stage3_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage3_condition_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage3_condition] = 'Unknown'
+          a_hash[:unspecified_stage3_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage3_condition_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 3) #aneamia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:aneamia] = 'Yes'
+          a_hash[:aneamia_enc_id] = obs.encounter_id
+          a_hash[:aneamia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:aneamia] = 'No'
+          a_hash[:aneamia_enc_id] = obs.encounter_id
+          a_hash[:aneamia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:aneamia] = 'Unknown'
+          a_hash[:aneamia_enc_id] = obs.encounter_id
+          a_hash[:aneamia_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7954) #neutropaenia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:neutropaenia] = 'Yes'
+          a_hash[:neutropaenia_enc_id] = obs.encounter_id
+          a_hash[:neutropaenia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:neutropaenia] = 'No'
+          a_hash[:neutropaenia_enc_id] = obs.encounter_id
+          a_hash[:neutropaenia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:neutropaenia] = 'Unknown'
+          a_hash[:neutropaenia_enc_id] = obs.encounter_id
+          a_hash[:neutropaenia_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7955) #thrombocytopaenia_chronic
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:thrombocytopaenia_chronic]  = 'Yes'
+          a_hash[:thrombocytopaenia_chronic_enc_id] = obs.encounter_id
+          a_hash[:thrombocytopaenia_chronic_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:thrombocytopaenia_chronic]  = 'No'
+          a_hash[:thrombocytopaenia_chronic_enc_id] = obs.encounter_id
+          a_hash[:thrombocytopaenia_chronic_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:thrombocytopaenia_chronic]  = 'Unknown'
+          a_hash[:thrombocytopaenia_chronic_enc_id] = obs.encounter_id
+          a_hash[:thrombocytopaenia_chronic_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 16) #diarhoea
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:diarhoea] = 'Yes'
+          a_hash[:diarhoea_enc_id] = obs.encounter_id
+          a_hash[:diarhoea_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:diarhoea] = 'No'
+          a_hash[:diarhoea_enc_id] = obs.encounter_id
+          a_hash[:diarhoea_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:diarhoea] = 'Unknown'
+          a_hash[:diarhoea_enc_id] = obs.encounter_id
+          a_hash[:diarhoea_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 5334) #oral_candidiasis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:oral_candidiasis] = 'Yes'
+          a_hash[:oral_candidiasis_enc_id] = obs.encounter_id
+          a_hash[:oral_candidiasis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:oral_candidiasis] = 'No'
+          a_hash[:oral_candidiasis_enc_id] = obs.encounter_id
+          a_hash[:oral_candidiasis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:oral_candidiasis] = 'Unknown'
+          a_hash[:oral_candidiasis_enc_id] = obs.encounter_id
+          a_hash[:oral_candidiasis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7546) #acute_necrotizing_ulcerative_gingivitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'Yes'
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_enc_id] = obs.encounter_id
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'No'
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_enc_id] = obs.encounter_id
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'Unknown'
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_enc_id] = obs.encounter_id
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7547) #lymph_node_tuberculosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:lymph_node_tuberculosis] = 'Yes'
+          a_hash[:lymph_node_tuberculosis_enc_id] = obs.encounter_id
+          a_hash[:lymph_node_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:lymph_node_tuberculosis] = 'No'
+          a_hash[:lymph_node_tuberculosis_enc_id] = obs.encounter_id
+          a_hash[:lymph_node_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:lymph_node_tuberculosis] = 'Unknown'
+          a_hash[:lymph_node_tuberculosis_enc_id] = obs.encounter_id
+          a_hash[:lymph_node_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 2583) #toxoplasmosis_of_the_brain
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:toxoplasmosis_of_the_brain] = 'Yes'
+          a_hash[:toxoplasmosis_of_the_brain_enc_id] = obs.encounter_id
+          a_hash[:toxoplasmosis_of_the_brain_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:toxoplasmosis_of_the_brain] = 'No'
+          a_hash[:toxoplasmosis_of_the_brain_enc_id] = obs.encounter_id
+          a_hash[:toxoplasmosis_of_the_brain_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:toxoplasmosis_of_the_brain] = 'Unknown'
+          a_hash[:toxoplasmosis_of_the_brain_enc_id] = obs.encounter_id
+          a_hash[:toxoplasmosis_of_the_brain_v_date] = obs.obs_datetime.to_date rescue nil
         end
-
 
     elsif (obs.concept_id.to_i == 1359) #cryptococcal_meningitis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cryptococcal_meningitis] = 'Yes'
+          a_hash[:cryptococcal_meningitis_enc_id] = obs.encounter_id
+          a_hash[:cryptococcal_meningitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:cryptococcal_meningitis] = 'No'
+          a_hash[:cryptococcal_meningitis_enc_id] = obs.encounter_id
+          a_hash[:cryptococcal_meningitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cryptococcal_meningitis] = 'Unknown'
+          a_hash[:cryptococcal_meningitis_enc_id] = obs.encounter_id
+          a_hash[:cryptococcal_meningitis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 5046) #progressive_multifocal_leukoencephalopathy
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:progressive_multifocal_leukoencephalopathy] = 'Yes'
+          a_hash[:progressive_multifocal_leukoencephalopathy_enc_id] = obs.encounter_id
+          a_hash[:progressive_multifocal_leukoencephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:progressive_multifocal_leukoencephalopathy] = 'No'
+          a_hash[:progressive_multifocal_leukoencephalopathy_enc_id] = obs.encounter_id
+          a_hash[:progressive_multifocal_leukoencephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:progressive_multifocal_leukoencephalopathy] = 'Unknown'
+          a_hash[:progressive_multifocal_leukoencephalopathy_enc_id] = obs.encounter_id
+          a_hash[:progressive_multifocal_leukoencephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7550) #disseminated_mycosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:disseminated_mycosis] = 'Yes'
+          a_hash[:disseminated_mycosis_enc_id] = obs.encounter_id
+          a_hash[:disseminated_mycosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:disseminated_mycosis] = 'No'
+          a_hash[:disseminated_mycosis_enc_id] = obs.encounter_id
+          a_hash[:disseminated_mycosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:disseminated_mycosis] = 'Unknown'
+          a_hash[:disseminated_mycosis_enc_id] = obs.encounter_id
+          a_hash[:disseminated_mycosis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7553) #candidiasis_of_oesophagus
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:candidiasis_of_oesophagus] = 'Yes'
+          a_hash[:candidiasis_of_oesophagus_enc_id] = obs.encounter_id
+          a_hash[:candidiasis_of_oesophagus_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:candidiasis_of_oesophagus] = 'No'
+          a_hash[:candidiasis_of_oesophagus_enc_id] = obs.encounter_id
+          a_hash[:candidiasis_of_oesophagus_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:candidiasis_of_oesophagus] = 'Unknown'
+          a_hash[:candidiasis_of_oesophagus_enc_id] = obs.encounter_id
+          a_hash[:candidiasis_of_oesophagus_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif  (obs.concept_id.to_i == 1547) #extrapulmonary_tuberculosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:extrapulmonary_tuberculosis] = 'Yes'
+          a_hash[:extrapulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:extrapulmonary_tuberculosis] = 'No'
+          a_hash[:extrapulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:extrapulmonary_tuberculosis] = 'Unknown'
+          a_hash[:extrapulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif  (obs.concept_id.to_i == 2587) #cerebral_non_hodgkin_lymphoma
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cerebral_non_hodgkin_lymphoma] = 'Yes'
+          a_hash[:cerebral_non_hodgkin_lymphoma_enc_id] = obs.encounter_id
+          a_hash[:cerebral_non_hodgkin_lymphoma_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:cerebral_non_hodgkin_lymphoma] = 'No'
+          a_hash[:cerebral_non_hodgkin_lymphoma_enc_id] = obs.encounter_id
+          a_hash[:cerebral_non_hodgkin_lymphoma_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cerebral_non_hodgkin_lymphoma] = 'Unknown'
+          a_hash[:cerebral_non_hodgkin_lymphoma_enc_id] = obs.encounter_id
+          a_hash[:cerebral_non_hodgkin_lymphoma_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 507) #kaposis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:kaposis_sarcoma] = 'Yes'
+          a_hash[:kaposis_sarcoma_enc_id] = obs.encounter_id
           a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:kaposis_sarcoma] = 'No'
+          a_hash[:kaposis_sarcoma_enc_id] = obs.encounter_id
           a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:kaposis_sarcoma] = 'Unknown'
+          a_hash[:kaposis_sarcoma_enc_id] = obs.encounter_id
           a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif  (obs.concept_id.to_i == 1362) #hiv_encephalopathy
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:hiv_encephalopathy] = 'Yes'
+          a_hash[:hiv_encephalopathy_enc_id] = obs.encounter_id
+          a_hash[:hiv_encephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:hiv_encephalopathy] = 'No'
+          a_hash[:hiv_encephalopathy_enc_id] = obs.encounter_id
+          a_hash[:hiv_encephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:hiv_encephalopathy] = 'Unknown'
+          a_hash[:hiv_encephalopathy_enc_id] = obs.encounter_id
+          a_hash[:hiv_encephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif  (obs.concept_id.to_i == 2894) #bacterial_infections_severe_recurrent
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:bacterial_infections_severe_recurrent] = 'Yes'
+          a_hash[:bacterial_infections_severe_recurrent_enc_id] = obs.encounter_id
+          a_hash[:bacterial_infections_severe_recurrent_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:bacterial_infections_severe_recurrent] = 'No'
+          a_hash[:bacterial_infections_severe_recurrent_enc_id] = obs.encounter_id
+          a_hash[:bacterial_infections_severe_recurrent_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:bacterial_infections_severe_recurrent] = 'Unknown'
+          a_hash[:bacterial_infections_severe_recurrent_enc_id] = obs.encounter_id
+          a_hash[:bacterial_infections_severe_recurrent_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif obs.concept_id.to_i == 6763 #unspecified_stage_4_condition
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:unspecified_stage_4_condition] = 'Yes'
+          a_hash[:unspecified_stage_4_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_4_condition_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:unspecified_stage_4_condition] = 'No'
+          a_hash[:unspecified_stage_4_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_4_condition_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:unspecified_stage_4_condition] = 'Unknown'
+          a_hash[:unspecified_stage_4_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_4_condition_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 882) #pnuemocystis_pnuemonia
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:pnuemocystis_pnuemonia] = 'Yes'
+          a_hash[:pnuemocystis_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:pnuemocystis_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:pnuemocystis_pnuemonia] = 'No'
+          a_hash[:pnuemocystis_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:pnuemocystis_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:pnuemocystis_pnuemonia] = 'Unknown'
+          a_hash[:pnuemocystis_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:pnuemocystis_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 2585) #disseminated_non_tuberculosis_mycobacterial_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'Yes'
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'No'
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'Unknown'
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 5034) #cryptosporidiosis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cryptosporidiosis] = 'Yes'
+          a_hash[:cryptosporidiosis_enc_id] = obs.encounter_id
+          a_hash[:cryptosporidiosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:cryptosporidiosis] = 'No'
+          a_hash[:cryptosporidiosis_enc_id] = obs.encounter_id
+          a_hash[:cryptosporidiosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cryptosporidiosis] = 'Unknown'
+          a_hash[:cryptosporidiosis_enc_id] = obs.encounter_id
+          a_hash[:cryptosporidiosis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 2858) #isosporiasis
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:isosporiasis] = 'Yes'
+          a_hash[:isosporiasis_enc_id] = obs.encounter_id
+          a_hash[:isosporiasis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:isosporiasis] = 'No'
+          a_hash[:isosporiasis_enc_id] = obs.encounter_id
+          a_hash[:isosporiasis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:isosporiasis] = 'Unknown'
+          a_hash[:isosporiasis_enc_id] = obs.encounter_id
+          a_hash[:isosporiasis_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7957) #symptomatic_hiv_associated_nephropathy
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:symptomatic_hiv_associated_nephropathy] = 'Yes'
+          a_hash[:symptomatic_hiv_associated_nephropathy_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_hiv_associated_nephropathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:symptomatic_hiv_associated_nephropathy] = 'No'
+          a_hash[:symptomatic_hiv_associated_nephropathy_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_hiv_associated_nephropathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:symptomatic_hiv_associated_nephropathy] = 'Unknown'
+          a_hash[:symptomatic_hiv_associated_nephropathy_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_hiv_associated_nephropathy_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 5344) #chronic_herpes_simplex_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:chronic_herpes_simplex_infection] = 'Yes'
+          a_hash[:chronic_herpes_simplex_infection_enc_id] = obs.encounter_id
+          a_hash[:chronic_herpes_simplex_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:chronic_herpes_simplex_infection] = 'No'
+          a_hash[:chronic_herpes_simplex_infection_enc_id] = obs.encounter_id
+          a_hash[:chronic_herpes_simplex_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:chronic_herpes_simplex_infection] = 'Unknown'
+          a_hash[:chronic_herpes_simplex_infection_enc_id] = obs.encounter_id
+          a_hash[:chronic_herpes_simplex_infection_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 7551) #cytomegalovirus_infection
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:cytomegalovirus_infection] = 'Yes'
+          a_hash[:cytomegalovirus_infection_enc_id] = obs.encounter_id
+          a_hash[:cytomegalovirus_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:cytomegalovirus_infection] = 'No'
+          a_hash[:cytomegalovirus_infection_enc_id] = obs.encounter_id
+          a_hash[:cytomegalovirus_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:cytomegalovirus_infection] = 'Unknown'
+          a_hash[:cytomegalovirus_infection_enc_id] = obs.encounter_id
+          a_hash[:cytomegalovirus_infection_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 5048) #toxoplasomis_of_the_brain_1month
@@ -1999,19 +2383,31 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
     elsif (obs.concept_id.to_i == 7961) #recto_vaginal_fitsula
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:recto_vaginal_fitsula] = 'Yes'
+          a_hash[:recto_vaginal_fitsula_enc_id] = obs.encounter_id
+          a_hash[:recto_vaginal_fitsula_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:recto_vaginal_fitsula] = 'No'
+          a_hash[:recto_vaginal_fitsula_enc_id] = obs.encounter_id
+          a_hash[:recto_vaginal_fitsula_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:recto_vaginal_fitsula] = 'Unknown'
+          a_hash[:recto_vaginal_fitsula_enc_id] = obs.encounter_id
+          a_hash[:recto_vaginal_fitsula_v_date] = obs.obs_datetime.to_date rescue nil
         end
 
     elsif (obs.concept_id.to_i == 823) #moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl
         if (obs.value_text == '1065' || obs.value_coded == 1065)
           a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'Yes'
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_enc_id] = obs.encounter_id
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1065' || obs.value_coded == 1066)
           a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'No'
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_enc_id] = obs.encounter_id
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_text == '1067' || obs.value_coded == 1067)
           a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'Unknown'
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_enc_id] = obs.encounter_id
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_v_date] = obs.obs_datetime.to_date rescue nil
         end
     elsif obs.concept_id.to_i == 2743 #who_stages_criteria_present
       a_hash[:who_stages_criteria_present] = obs.to_s.split(':')[1].strip rescue nil
@@ -2022,110 +2418,206 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
     	    a_hash[:persistent_generalized_lymphadenopathy] = 'Yes'
         elsif (obs.value_coded == 5006) #asymptomatic
           a_hash[:asymptomatic] = 'Yes'
+          a_hash[:asymptomatic_enc_id] = obs.encounter_id
+          a_hash[:asymptomatic_v_date] = obs.obs_datetime.to_date
         elsif  (obs.value_coded== 6757) #unspecified_stage_1_cond
           a_hash[:unspecified_stage_1_cond] = 'Yes'
+          a_hash[:unspecified_stage_1_cond_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_1_cond_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 1212) #molluscumm_contagiosum
           a_hash[:molluscumm_contagiosum] = 'Yes'
+          a_hash[:molluscumm_contagiosum_enc_id] = obs.encounter_id
+          a_hash[:molluscumm_contagiosum_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 6775) #wart_virus_infection_extensive
           a_hash[:wart_virus_infection_extensive] = 'Yes'
+          a_hash[:wart_virus_infection_extensive_enc_id] = obs.encounter_id
+          a_hash[:wart_virus_infection_extensive_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 2576) #oral_ulcerations_recurrent
           a_hash[:oral_ulcerations_recurrent] = 'Yes'
+          a_hash[:oral_ulcerations_recurrent_enc_id] = obs.encounter_id
+          a_hash[:oral_ulcerations_recurrent_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 1210) #parotid_enlargement_persistent_unexplained
           a_hash[:parotid_enlargement_persistent_unexplained] = 'Yes'
+          a_hash[:parotid_enlargement_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:parotid_enlargement_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 2891) #lineal_gingival_erythema
           a_hash[:lineal_gingival_erythema] = 'Yes'
+          a_hash[:lineal_gingival_erythema_enc_id] = obs.encounter_id
+          a_hash[:lineal_gingival_erythema_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 836)  #herpes_zoster
           a_hash[:herpes_zoster] = 'Yes'
+          a_hash[:herpes_zoster_enc_id] = obs.encounter_id
+          a_hash[:herpes_zoster_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 5012) #respiratory_tract_infections_recurrent
           a_hash[:respiratory_tract_infections_recurrent] = 'Yes'
+          a_hash[:respiratory_tract_infections_recurrent_enc_id] = obs.encounter_id
+          a_hash[:respiratory_tract_infections_recurrent_v_date] = obs.obs_datetime.to_date
         elsif  (obs.value_coded== 6758) #unspecified_stage2_condition
           a_hash[:unspecified_stage2_condition] = 'Yes'
+          a_hash[:unspecified_stage2_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage2_condition_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 2575) #angular_chelitis
           a_hash[:angular_chelitis] = 'Yes'
+          a_hash[:angular_chelitis_enc_id] = obs.encounter_id
+          a_hash[:angular_chelitis_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 2577) #papular_pruritic_eruptions
           a_hash[:papular_pruritic_eruptions] = 'Yes'
+          a_hash[:papular_pruritic_eruptions_enc_id] = obs.encounter_id
+          a_hash[:papular_pruritic_eruptions_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 7537) #hepatosplenomegaly_unexplained
           a_hash[:hepatosplenomegaly_unexplained] = 'Yes'
+          a_hash[:hepatosplenomegaly_unexplained_enc_id] = obs.encounter_id
+          a_hash[:hepatosplenomegaly_unexplained_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 5337) #oral_hairy_leukoplakia
           a_hash[:oral_hairy_leukoplakia] = 'Yes'
+          a_hash[:oral_hairy_leukoplakia_enc_id] = obs.encounter_id
+          a_hash[:oral_hairy_leukoplakia_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 7540) #severe_weight_loss
           a_hash[:severe_weight_loss] = 'Yes'
+          a_hash[:severe_weight_loss_enc_id] = obs.encounter_id
+          a_hash[:severe_weight_loss_v_date] = obs.obs_datetime.to_date
         elsif (obs.value_coded== 5027) #fever_persistent_unexplained
           a_hash[:fever_persistent_unexplained] = 'Yes'
+          a_hash[:fever_persistent_unexplained_enc_id] = obs.encounter_id
+          a_hash[:fever_persistent_unexplained_v_date] = obs.obs_datetime.to_date
         elsif  (obs.value_coded== 2891) #pulmonary_tuberculosis
           a_hash[:pulmonary_tuberculosis] = 'Yes'
+          a_hash[:pulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7539) #pulmonary_tuberculosis_last_2_years
           a_hash[:pulmonary_tuberculosis_last_2_years] = 'Yes'
+          a_hash[:pulmonary_tuberculosis_last_2_years_enc_id] = obs.encounter_id
           a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 5333) #severe_bacterial_infection
           a_hash[:severe_bacterial_infection] = 'Yes'
+          a_hash[:severe_bacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:severe_bacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 1215) #bacterial_pnuemonia
           a_hash[:bacterial_pnuemonia] = 'Yes'
+          a_hash[:bacterial_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:bacterial_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 5024) #symptomatic_lymphoid_interstitial_pnuemonitis
           a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis] = 'Yes'
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_lymphoid_interstitial_pnuemonitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 2889) #chronic_hiv_assoc_lung_disease
           a_hash[:chronic_hiv_assoc_lung_disease] = 'Yes'
+          a_hash[:chronic_hiv_assoc_lung_disease_enc_id] = obs.encounter_id
+          a_hash[:chronic_hiv_assoc_lung_disease_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 6759) #unspecified_stage3_condition
           a_hash[:unspecified_stage3_condition] = 'Yes'
+          a_hash[:unspecified_stage3_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage3_condition_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 3) #aneamia
           a_hash[:aneamia] = 'Yes'
+          a_hash[:aneamia_enc_id] = obs.encounter_id
+          a_hash[:aneamia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7954) #neutropaenia
           a_hash[:neutropaenia] = 'Yes'
+          a_hash[:neutropaenia_enc_id] = obs.encounter_id
+          a_hash[:neutropaenia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7955) #thrombocytopaenia_chronic
           a_hash[:thrombocytopaenia_chronic]  = 'Yes'
+          a_hash[:thrombocytopaenia_chronic_enc_id] = obs.encounter_id
+          a_hash[:thrombocytopaenia_chronic_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 16) #diarhoea
           a_hash[:diarhoea] = 'Yes'
+          a_hash[:diarhoea_enc_id] = obs.encounter_id
+          a_hash[:diarhoea_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 5334) #oral_candidiasis
           a_hash[:oral_candidiasis] = 'Yes'
+          a_hash[:oral_candidiasis_enc_id] = obs.encounter_id
+          a_hash[:oral_candidiasis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7546) #acute_necrotizing_ulcerative_gingivitis
           a_hash[:acute_necrotizing_ulcerative_gingivitis] = 'Yes'
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_enc_id] = obs.encounter_id
+          a_hash[:acute_necrotizing_ulcerative_gingivitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7547) #lymph_node_tuberculosis
           a_hash[:lymph_node_tuberculosis] = 'Yes'
+          a_hash[:lymph_node_tuberculosis_enc_id] = obs.encounter_id
+          a_hash[:lymph_node_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 2583) #toxoplasmosis_of_the_brain
           a_hash[:toxoplasmosis_of_the_brain] = 'Yes'
+          a_hash[:toxoplasmosis_of_the_brain_enc_id] = obs.encounter_id
+          a_hash[:toxoplasmosis_of_the_brain_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 1359) #cryptococcal_meningitis
           a_hash[:cryptococcal_meningitis] = 'Yes'
+          a_hash[:cryptococcal_meningitis_enc_id] = obs.encounter_id
+          a_hash[:cryptococcal_meningitis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 5046) #progressive_multifocal_leukoencephalopathy
           a_hash[:progressive_multifocal_leukoencephalopathy] = 'Yes'
+          a_hash[:progressive_multifocal_leukoencephalopathy_enc_id] = obs.encounter_id
+          a_hash[:progressive_multifocal_leukoencephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7550) #disseminated_mycosis
           a_hash[:disseminated_mycosis] = 'Yes'
+          a_hash[:disseminated_mycosis_enc_id] = obs.encounter_id
+          a_hash[:disseminated_mycosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7553) #candidiasis_of_oesophagus
           a_hash[:candidiasis_of_oesophagus] = 'Yes'
+          a_hash[:candidiasis_of_oesophagus_enc_id] = obs.encounter_id
+          a_hash[:candidiasis_of_oesophagus_v_date] = obs.obs_datetime.to_date rescue nil
         elsif  (obs.value_coded== 1547) #extrapulmonary_tuberculosis
           a_hash[:extrapulmonary_tuberculosis] = 'Yes'
+          a_hash[:extrapulmonary_tuberculosis_enc_id] = obs.encounter_id
           a_hash[:extrapulmonary_tuberculosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif  (obs.value_coded== 2587) #cerebral_non_hodgkin_lymphoma
           a_hash[:cerebral_non_hodgkin_lymphoma] = 'Yes'
+          a_hash[:cerebral_non_hodgkin_lymphoma_enc_id] = obs.encounter_id
+          a_hash[:cerebral_non_hodgkin_lymphoma_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 507) #kaposis
           a_hash[:kaposis_sarcoma] = 'Yes'
+          a_hash[:kaposis_sarcoma_enc_id] = obs.encounter_id
           a_hash[:kaposis_sarcoma_v_date] = obs.obs_datetime.to_date rescue nil
         elsif  (obs.value_coded== 1362) #hiv_encephalopathy
           a_hash[:hiv_encephalopathy] = 'Yes'
+          a_hash[:hiv_encephalopathy_enc_id] = obs.encounter_id
+          a_hash[:hiv_encephalopathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif  (obs.value_coded== 2894) #bacterial_infections_severe_recurrent
           a_hash[:bacterial_infections_severe_recurrent] = 'Yes'
+          a_hash[:bacterial_infections_severe_recurrent_enc_id] = obs.encounter_id
+          a_hash[:bacterial_infections_severe_recurrent_v_date] = obs.obs_datetime.to_date rescue nil
         elsif obs.value_coded== 6763 #unspecified_stage_4_condition
           a_hash[:unspecified_stage_4_condition] = 'Yes'
+          a_hash[:unspecified_stage_4_condition_enc_id] = obs.encounter_id
+          a_hash[:unspecified_stage_4_condition_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 882) #pnuemocystis_pnuemonia
           a_hash[:pnuemocystis_pnuemonia] = 'Yes'
+          a_hash[:pnuemocystis_pnuemonia_enc_id] = obs.encounter_id
+          a_hash[:pnuemocystis_pnuemonia_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 2585) #disseminated_non_tuberculosis_mycobacterial_infection
           a_hash[:disseminated_non_tuberculosis_mycobacterial_infection] = 'Yes'
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_enc_id] = obs.encounter_id
+          a_hash[:disseminated_non_tuberculosis_mycobacterial_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 5034) #cryptosporidiosis
           a_hash[:cryptosporidiosis] = 'Yes'
+          a_hash[:cryptosporidiosis_enc_id] = obs.encounter_id
+          a_hash[:cryptosporidiosis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 2858) #isosporiasis
           a_hash[:isosporiasis] = 'Yes'
+          a_hash[:isosporiasis_enc_id] = obs.encounter_id
+          a_hash[:isosporiasis_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7957) #symptomatic_hiv_associated_nephropathy
           a_hash[:symptomatic_hiv_associated_nephropathy] = 'Yes'
+          a_hash[:symptomatic_hiv_associated_nephropathy_enc_id] = obs.encounter_id
+          a_hash[:symptomatic_hiv_associated_nephropathy_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 5344) #chronic_herpes_simplex_infection
           a_hash[:chronic_herpes_simplex_infection] = 'Yes'
+          a_hash[:chronic_herpes_simplex_infection_enc_id] = obs.encounter_id
+          a_hash[:chronic_herpes_simplex_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 7551) #cytomegalovirus_infection
           a_hash[:cytomegalovirus_infection] = 'Yes'
+          a_hash[:cytomegalovirus_infection_enc_id] = obs.encounter_id
+          a_hash[:cytomegalovirus_infection_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 5048) #toxoplasomis_of_the_brain_1month
           a_hash[:toxoplasomis_of_the_brain_1month] = 'Yes'
         elsif (obs.value_coded== 7961) #recto_vaginal_fitsula
           a_hash[:recto_vaginal_fitsula] = 'Yes'
+          a_hash[:recto_vaginal_fitsula_enc_id] = obs.encounter_id
+          a_hash[:recto_vaginal_fitsula_v_date] = obs.obs_datetime.to_date rescue nil
         elsif (obs.value_coded== 823) #moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl
           a_hash[:moderate_weight_loss_less_than_or_equal_to_10_percent_unexpl] = 'Yes'
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_enc_id] = obs.encounter_id
+          a_hash[:moderate_weight_loss_less_than_or_equal_to_10_unexpl_v_date] = obs.obs_datetime.to_date rescue nil
         else
         end
     else
@@ -2282,89 +2774,18 @@ def process_patient_state(patient_id, visit)
 
   a_hash = {:current_hiv_program_start_date => 'NULL'}
 
-  program_id = PatientProgram.find_by_sql("SELECT patient_program_id FROM patient_program
-                                           WHERE patient_id = #{patient_id}
-                                           AND program_id = 1 AND voided = 0
-                                           ORDER BY patient_program_id DESC
-                                           LIMIT 1").first.patient_program_id rescue nil
-  if program_id
-    patient_outcome = PatientProgram.find_by_sql("SELECT IFNULL(current_state_for_program(#{patient_id}, 1, '#{visit} 23:59:59'), 'Unknown') AS state").first.state
+  patient_state =  PatientProgram.find_by_sql("SELECT patient_outcome(#{patient_id}, '#{visit}') AS state").first.state
 
-    if patient_outcome
-      if patient_outcome == "Unknown"
-        outcome_name = "Unknown"
-      else
-        outcome_name = PatientProgram.find_by_sql("SELECT pws.program_workflow_state_id, pws.program_workflow_id, cn.concept_id, cn.name from program_workflow_state pws
-                                                      INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.voided = 0 AND pws.retired = 0
-                                                WHERE pws.program_workflow_state_id = #{patient_outcome} AND pws.program_workflow_id = 1
-                                                LIMIT 1").first.name rescue 'Unknown'
-       end
-    else
-      outcome_name = "Unknown"
-    end
-    a_hash[:current_hiv_program_state] = "#{outcome_name}"
-    a_hash[:current_hiv_program_start_date] = visit
+  if patient_state.blank?
+    patient_outcome = "Unknown"
   else
-    a_hash[:current_hiv_program_state] = "Unknown"
-    a_hash[:current_hiv_program_start_date] = visit
+    patient_outcome = patient_state
   end
-=begin
-  program_id = PatientProgram.find_by_sql("SELECT patient_program_id
-                         		   FROM #{@source_db}.patient_program
-				           WHERE patient_id = #{patient_id}
-				           AND program_id = 1 AND voided = 0
-				           ORDER BY patient_program_id DESC LIMIT 1").first.patient_program_id rescue nil
 
-  unless program_id.blank?
-    @patient_state = ""
-    state_id = ""
-     @patient_state = PatientProgram.find_by_sql("SELECT
-  	                        IFNULL(#{@source_db}.current_state_for_program(#{patient_id},1,'#{visit} 23:59:59'), 'Unknown') AS state").first.state
+  a_hash[:current_hiv_program_state] = "#{patient_outcome}"
+  a_hash[:current_hiv_program_start_date] = visit
 
-        unless @patient_state.blank?
-  	      if @patient_state == "Unknown"
-  	        state_name = "Unknown"
-  	      else
-            @patient_died_concept_id = ConceptName.find_by_name("Patient died").concept_id
-
-            @patient_died_state_ids =  ProgramWorkflowState.find_by_sql("SELECT #{@source_db}.current_state_for_program(#{patient_id}, 1, '#{visit} 23:59:59') IN (SELECT program_workflow_state_id FROM program_workflow_state
-                                                WHERE concept_id = #{@patient_died_concept_id}
-                                                AND retired = 0) AS state").first.state
-          if @patient_died_state_ids.include?("1")
-            state_id = 3
-          else
-            state_id = @patient_state
-          end
-          if patient_id == 25
-            raise state_id.to_yaml
-         end
-              if state_id != 'Unknown'
-                state_name = ProgramWorkflowState.find_by_sql("SELECT
-                                                 c.name AS name
-                                               FROM
-                                                   #{@source_db}. program_workflow_state pws
-                                                        INNER JOIN
-                                                    #{@source_db}.concept_name c ON c.concept_id = pws.concept_id
-                                                        AND c.voided = 0
-                                                        AND pws.retired = 0
-                                               WHERE
-                                                    program_workflow_state_id = #{state_id}
-                                                        and program_workflow_id = 1
-                                                  LIMIT 1").map(&:name) #rescue nil
-           else
-             state_name = @patient_state
-           end
-        end
-      end
-
-    a_hash[:current_hiv_program_state] = state_name
-  	a_hash[:current_hiv_program_start_date] = visit
-  else
-    a_hash[:current_hiv_program_state] = "Unknown"
-    a_hash[:current_hiv_program_start_date] = visit
-  end
-=end
-  	return generate_sql_string(a_hash)
+	return generate_sql_string(a_hash)
 end
 
 def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encounter, 1 generate_template only
@@ -2490,10 +2911,10 @@ def process_all_guardians_not_on_arvs
        a_hash[:given_name] = this_patient.first.given_name rescue nil
        a_hash[:middle_name] = this_patient.first.middle_name rescue nil
        a_hash[:family_name] = this_patient.first.family_name rescue nil
-       a_hash[:gender] = gender  rescue nil #this_patient.gender  rescue nil
+       a_hash[:gender] = gender  rescue nil
        a_hash[:dob] = this_patient.first.birthdate rescue nil
        a_hash[:dob_estimated] = this_patient.first.birthdate_estimated rescue nil
-       a_hash[:death_date] =  this_patient.first.death_date.strftime('%Y-%m-%d') rescue nil
+       a_hash[:death_date] =  this_patient.first.death_date rescue nil
 
        a_hash[:ta] = this_patient.first.traditional_authority  rescue nil
        a_hash[:current_address] = this_patient.first.current_residence  rescue nil
