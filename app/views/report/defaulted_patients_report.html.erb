@@ -367,25 +367,34 @@
         <table id="table_id" width="99%">
             <thead>
             <tr>
+                <th style="padding-left: 10px; text-align: left;">ID</th>
                 <th style="padding-left: 10px; text-align: left;">ARV number</th>
-                <th>Earliest start date</th>
-                <th>Date enrolled</th>
-                <th>Gender</th>
-                <th>Birth Date</th>
+                <th>First name</th>
+                <th>Last name</th>
+                <th>Last visit date</th>
                 <th style="padding-left: 10px; text-align: left;">Outcome</th>
+                <th>Address</th>
                 <th>Phone number</th>
                 <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
-            <% (@data || []).each do |patient_id, data| %>
+            <% (@data || []).each do |patient_id, data| 
+              address = ''
+              address += "District: #{data[:district] rescue ''}"
+              address += '<br />' 
+              address += "Village: #{data[:village] rescue ''}"
+              address += '<br />' 
+              address += "Landmark: #{data[:landmark] rescue ''}"
+            %>
                 <tr>
+                    <td style="padding-left: 10px;"><%= patient_id %></td>
                     <td style="padding-left: 10px;"><%= data[:arv_number] %></td>
-                    <td style="text-align: center;"><%= data[:earliest_start_date] %></td>
-                    <td style="text-align: center;"><%= data[:date_enrolled] %></td>
-                    <td style="text-align: center;"><%= data[:gender] %></td>
-                    <td style="text-align: center;"><%= data[:birthdate] %></td>
+                    <td style="text-align: center;"><%= data[:first_name] %></td>
+                    <td style="text-align: center;"><%= data[:last_name] %></td>
+                    <td style="text-align: center;"><%= data[:last_visit_date] %></td>
                     <td style="padding-left: 10px;"><%= (data[:outcome].capitalize rescue nil) %></td>
+                    <td style="text-align: left;"><%= address %></td>
                     <td style="padding-left: 10px;"><%= data[:phone_number] %></td>
                     <td align='center' class="create_button">
                         <%= link_to_onmousedown "View",{

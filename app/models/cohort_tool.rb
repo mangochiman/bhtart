@@ -143,7 +143,29 @@ EOF
 
     patient_data = {}
 
+    #HIV encounter types: 
+    hiv_encounter_types = ['HIV RECEPTION','HIV STAGING','VITALS','PART_FOLLOWUP','HIV CLINIC REGISTRATION',
+    'DISPENSING','HIV CLINIC CONSULTATION','TREATMENT','ART ADHERENCE','APPOINTMENT']
+
+    hiv_encounter_type_ids = EncounterType.find(:all, :conditions =>["name IN(?)", 
+      hiv_encounter_types]).map(&:id)
+
     (data || []).each do |d|
+      names = PersonName.find(:first, :conditions =>["person_id = ?", 
+        d['patient_id'].to_i], :order => "date_created DESC, person_name_id DESC")
+      first_name = names.given_name rescue nil
+      last_name = names.family_name rescue nil
+
+      last_visit_date = Encounter.find(:first, :select => ("MAX(encounter_datetime) AS ldate"),
+        :conditions =>["encounter_datetime <= ? AND patient_id = ? AND encounter_type IN(?)", 
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'), 
+        d['patient_id'].to_i, hiv_encounter_type_ids])['ldate'].to_date rescue nil
+
+      person_address = PersonAddress.find(:first, :conditions =>["person_id = ?", 
+        d['patient_id'].to_i], :order => "date_created DESC, person_address_id DESC")
+      district = person_address.state_province
+      village = person_address.city_village
+
       patient_data[d['patient_id'].to_i] = {
         :arv_number => d['arv_number'],
         :earliest_start_date => (d['earliest_start_date'].to_date rescue nil),
@@ -152,7 +174,13 @@ EOF
         :gender => (d['gender']),
         :phone_number => self.get_phone(d['patient_id'].to_i),
         :death_date => (d['death_date'].to_date rescue nil),
-        :outcome => d['cum_outcome']
+        :outcome => d['cum_outcome'],
+        :last_name => last_name, 
+        :first_name => first_name,
+        :district => district,
+        :village => village,
+        :landmark => person_address.address1,
+        :last_visit_date => (last_visit_date.strftime('%d/%b/%Y') rescue nil)
       }
     end
  
