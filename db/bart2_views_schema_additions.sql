@@ -95,6 +95,23 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	WHERE (`encounter`.`encounter_type` = 9 AND `encounter`.`voided` = 0);
 
 
+DROP FUNCTION IF EXISTS patient_date_enrolled;
+
+DELIMITER $$
+CREATE  FUNCTION patient_date_enrolled(my_patient_id int) RETURNS date
+BEGIN
+
+DECLARE my_start_date DATE;
+DECLARE min_start_date DATETIME;
+DECLARE arv_concept_id INT(11);
+
+SET arv_concept_id = (SELECT concept_id FROM concept_name WHERE name ='ANTIRETROVIRAL DRUGS' LIMIT 1);
+
+SET my_start_date = (SELECT DATE(o.start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id)) AND d.quantity > 0 AND o.start_date = (SELECT min(start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE d.quantity > 0 AND o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id))) LIMIT 1);
+
+RETURN my_start_date;
+END$$
+DELIMITER ;
 
 DROP FUNCTION IF EXISTS date_antiretrovirals_started;
 
@@ -122,10 +139,10 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
       `pe`.`gender` AS `gender`,
       `pe`.`birthdate`,
       date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-      cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+      cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
       `person`.`death_date` AS `death_date`,
-      (select timestampdiff(year, `pe`.`birthdate`, date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)))) AS `age_at_initiation`,
-      (select timestampdiff(day, `pe`.`birthdate`, date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)))) AS `age_in_days`
+      (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
+      (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
   from
       ((`patient_program` `p`
       left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
@@ -1259,7 +1276,7 @@ BEGIN
 
 		IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
 
-      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN 
+      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN
         SET my_daily_dose = 1;
       END IF;
 
