@@ -102,7 +102,7 @@ def process_guardians(guardian_id, type = 0)
   a_hash[:gender] = this_guardian.first.gender  rescue nil #this_guardian.gender  rescue nil
   a_hash[:dob] = this_guardian.first.birthdate rescue nil
   a_hash[:dob_estimated] = this_guardian.first.birthdate_estimated rescue nil
-  a_hash[:death_date] =  this_guardian.first.death_date.strftime('%Y-%m-%d') rescue nil
+  a_hash[:death_date] =  this_guardian.first.death_date rescue nil
 
   a_hash[:ta] = this_guardian.first.traditional_authority  rescue nil
   a_hash[:current_address] = this_guardian.first.current_residence  rescue nil
@@ -187,7 +187,7 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
     values = ""
 
     #create flat_table1 field list hash template
-    a_hash = {  :ever_registered_at_art_v_date => 'NULL'}
+    a_hash = {  :ever_registered_at_art_clinic_v_date => 'NULL'}
 
     return generate_sql_string(a_hash) if type == 1
 
@@ -205,7 +205,7 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
       a_hash[:reason_for_starting] = patient.reason_for_eligibility
       a_hash[:who_stage] = patient.who_stage
       a_hash[:who_stages_criteria_present] = patient.who_stages_criteria_present
-      a_hash[:ever_registered_at_art] = patient.ever_registered_at_art_clinic
+      a_hash[:ever_registered_at_art_clinic] = patient.ever_registered_at_art_clinic
       a_hash[:date_art_last_taken] = patient.date_art_last_taken
       a_hash[:taken_art_in_last_two_months] = patient.taken_art_in_last_two_months
       a_hash[:extrapulmonary_tuberculosis] = patient.extrapulmonary_tuberculosis
@@ -217,8 +217,8 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
       a_hash[:pulmonary_tuberculosis_v_date] = patient.pulmonary_tuberculosis_v_date
       a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = patient.pulmonary_tuberculosis_last_2_years_v_date
       a_hash[:kaposis_sarcoma_v_date] = patient.kaposis_sarcoma_v_date
-      a_hash[:reason_for_starting_v_date] = patient.reason_for_starting_v_date
-      a_hash[:ever_registered_at_art_v_date] = patient.ever_registered_at_art_v_date
+      a_hash[:reason_for_eligibility_v_date] = patient.reason_for_eligibility_v_date
+      a_hash[:ever_registered_at_art_clinic_v_date] = patient.ever_registered_at_art_clinic_v_date
       a_hash[:date_art_last_taken_v_date] = patient.date_art_last_taken_v_date
       a_hash[:taken_art_in_last_two_months_v_date] = patient.taken_art_in_last_two_months_v_date
    end
