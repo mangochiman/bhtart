@@ -95,7 +95,6 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 	WHERE (`encounter`.`encounter_type` = 9 AND `encounter`.`voided` = 0);
 
 
-
 DROP FUNCTION IF EXISTS date_antiretrovirals_started;
 
 DELIMITER $$
@@ -122,10 +121,10 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
       `pe`.`gender` AS `gender`,
       `pe`.`birthdate`,
       date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
-      cast(patient_start_date(`p`.`patient_id`) as date) AS `date_enrolled`,
+      cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
       `person`.`death_date` AS `death_date`,
-      (select timestampdiff(year, `pe`.`birthdate`, date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)))) AS `age_at_initiation`,
-      (select timestampdiff(day, `pe`.`birthdate`, date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)))) AS `age_in_days`
+      (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
+      (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
   from
       ((`patient_program` `p`
       left join `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
@@ -1259,7 +1258,7 @@ BEGIN
 
 		IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
 
-      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN 
+      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN
         SET my_daily_dose = 1;
       END IF;
 
