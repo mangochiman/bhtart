@@ -33,6 +33,9 @@ class CohortToolController < GenericCohortToolController
     @cohort = params[:cohort_params]
     @cohort_year = params[:cohort_year]
     @cohort_quarter = params[:cohort_quarter]
+
+    raise @cohort.inspect
+    
     render :layout => false
   end
 
@@ -1971,6 +1974,7 @@ EOF
 
   def download_pdf
     quarter = params[:quarter]
+    raise quarter.inspect
     zoom = 0.8
     file_directory = params[:file_directory]
     file_name = params[:file_name]
