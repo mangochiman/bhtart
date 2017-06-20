@@ -12617,6 +12617,7 @@ def get_earliest_start_date_patients
 end
 
 def get_earliest_start_date_patients_data(patient_ids)
+  patient_ids = [0] if patient_ids.blank? 
   records = Connection.select_all("
     SELECT
       `p`.`patient_id` AS `patient_id`,
