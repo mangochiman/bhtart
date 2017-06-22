@@ -1070,10 +1070,58 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:symptom_present_blurry_vision_enc_id] = encounter.encounter_id
         end
       elsif obs.concept_id.to_i == 7755 #malawi_art_side_effects
-        if obs.value_coded.to_i == 29 && obs.value_coded_name_id == 30
+        if obs.value_coded.to_i == 215 && obs.value_coded_name_id == 226
           obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
-          a_hash[:side_effects_hepatitis] = obs_value
-          a_hash[:side_effects_hepatitis_enc_id] = encounter.encounter_id
+          a_hash[:side_effects_jaundice] = obs_value
+          a_hash[:side_effects_jaundice_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 3 && obs.value_coded_name_id == 3
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_anemia] = obs_value
+          a_hash[:side_effects_anemia_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 1458 && obs.value_coded_name_id == 1576
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_lactic_acidosis] = obs_value
+          a_hash[:side_effects_lactic_acidosis_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 5945 && obs.value_coded_name_id == 4315
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_fever] = obs_value
+          a_hash[:side_effects_fever_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 151 && obs.value_coded_name_id == 156
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_abdominal_pain] = obs_value
+          a_hash[:side_effects_abdominal_pain_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 868 && obs.value_coded_name_id == 888
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_anorexia] = obs_value
+          a_hash[:side_effects_anorexia_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 107 && obs.value_coded_name_id == 110
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_cough] = obs_value
+          a_hash[:side_effects_cough_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 16 && obs.value_coded_name_id == 17
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_diarrhea] = obs_value
+          a_hash[:side_effects_diarrhea_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 7952 && obs.value_coded_name_id == 10894
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_leg_pain_numbness] = obs_value
+          a_hash[:side_effects_leg_pain_numbness_enc_id] = encounter.encounter_id
+
+        elsif obs.value_coded.to_i == 5980 && obs.value_coded_name_id == 4355
+          obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+          a_hash[:side_effects_vomiting] = obs_value
+          a_hash[:side_effects_vomiting_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 29 && obs.value_coded_name_id == 30
+            obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
+            a_hash[:side_effects_hepatitis] = obs_value
+            a_hash[:side_effects_hepatitis_enc_id] = encounter.encounter_id
         elsif obs.value_coded.to_i == 219 && obs.value_coded_name_id == 231
           obs_value = get_hiv_clinic_consultation_answer(obs.person_id.to_i, obs.encounter_id.to_i, obs.concept_id.to_i, obs.value_coded.to_i, obs.obs_datetime)
           a_hash[:side_effects_psychosis] = obs_value
@@ -1469,6 +1517,9 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
         last_drug = Drug.find_by_concept_id(obs.value_text).name rescue nil
       end
       a_hash[:last_art_drugs_taken] = last_drug rescue nil
+      a_hash[:last_art_drugs_taken_enc_id] = obs.encounter_id
+      a_hash[:last_art_drugs_taken_v_date] = obs.obs_datetime.to_date rescue nil
+
     elsif obs.concept_id.to_i == 7751 #DATE ART LAST TAKEN
       a_hash[:date_art_last_taken] = obs.value_datetime.to_date rescue nil
       a_hash[:date_art_last_taken_enc_id] = obs.encounter_id
@@ -2795,6 +2846,7 @@ def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encou
     patient_adherence_hash  = {}
     patient_adherence_enc_ids = {}
     amount_of_drug_remaining_at_home_hash  = {}
+    amount_of_remaining_drug_order_id_hash = {}
 
     #initialize field and values variables
     fields = ""
@@ -2807,6 +2859,7 @@ def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encou
       (encounter.observations || []).each do |adh|
         if patient_adh[visit].blank?
           patient_adh[visit] = visit
+          #amount_of_remaining_drug_order_id_hash[visit] = adh.order_id rescue nil
           if adh.concept_id == 2540 #amount brought
             amount_of_drug_brought_to_clinic_hash[visit] = adh.to_s.split(':')[1].strip rescue nil
           elsif adh.concept_id == 2667 #missed hiv drug
@@ -2819,13 +2872,14 @@ def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encou
           end
         else
           patient_adh[visit] += visit
+          #amount_of_remaining_drug_order_id_hash[visit] += adh.order_id rescue nil
           if adh.concept_id == 2540 #amount brought
             amount_of_drug_brought_to_clinic_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
           elsif adh.concept_id == 2667 #missed hiv drug
             missed_hiv_drug_const_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
           elsif adh.concept_id == 6987 #patient adherence
-            patient_adherence_hash[visit] = adh.to_s.split(':')[1].strip rescue nil
-            patient_adherence_enc_ids[visit] = adh.encounter_id rescue nil
+            patient_adherence_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
+            patient_adherence_enc_ids[visit] += adh.encounter_id rescue nil
           elsif adh.concept_id == 6781 #amount remaining
             amount_of_drug_remaining_at_home_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
           end
@@ -2842,6 +2896,7 @@ end
          a_hash[:what_was_the_patient_adherence_for_this_drug1] = patient_adherence_hash[visit]
          a_hash[:what_was_the_patient_adherence_for_this_drug1_enc_id] = patient_adherence_enc_ids[visit]
          a_hash[:missed_hiv_drug_construct1] = missed_hiv_drug_const_hash[visit]
+         #a_hash[:amount_of_remaining_drug1_order_id] = amount_of_remaining_drug_order_id_hash[visit]
          count += 1
         when 2
          a_hash[:amount_of_drug2_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
@@ -2849,6 +2904,7 @@ end
          a_hash[:what_was_the_patient_adherence_for_this_drug2] = patient_adherence_hash[visit]
          a_hash[:what_was_the_patient_adherence_for_this_drug2_enc_id] = patient_adherence_enc_ids[visit]
          a_hash[:missed_hiv_drug_construct2] = missed_hiv_drug_const_hash[visit]
+         #a_hash[:amount_of_remaining_drug2_order_id] = amount_of_remaining_drug_order_id_hash[visit]
          count += 1
         when 3
          a_hash[:amount_of_drug3_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
@@ -2856,6 +2912,7 @@ end
          a_hash[:what_was_the_patient_adherence_for_this_drug3] = patient_adherence_hash[visit]
          a_hash[:what_was_the_patient_adherence_for_this_drug3_enc_id] = patient_adherence_enc_ids[visit]
          a_hash[:missed_hiv_drug_construct3] = missed_hiv_drug_const_hash[visit]
+         #a_hash[:amount_of_remaining_drug3_order_id] = amount_of_remaining_drug_order_id_hash[visit]
          count += 1
         when 4
          a_hash[:amount_of_drug4_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
@@ -2863,6 +2920,7 @@ end
          a_hash[:what_was_the_patient_adherence_for_this_drug4] = patient_adherence_hash[visit]
          a_hash[:what_was_the_patient_adherence_for_this_drug4_enc_id] = patient_adherence_enc_ids[visit]
          a_hash[:missed_hiv_drug_construct4] = missed_hiv_drug_const_hash[visit]
+         #a_hash[:amount_of_remaining_drug4_order_id] = amount_of_remaining_drug_order_id_hash[visit]
          count += 1
         when 5
          a_hash[:amount_of_drug5_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
@@ -2870,6 +2928,7 @@ end
          a_hash[:what_was_the_patient_adherence_for_this_drug5] = patient_adherence_hash[visit]
          a_hash[:what_was_the_patient_adherence_for_this_drug5_enc_id] = patient_adherence_enc_ids[visit]
          a_hash[:missed_hiv_drug_construct5] = missed_hiv_drug_const_hash[visit]
+         #a_hash[:amount_of_remaining_drug5_order_id] = amount_of_remaining_drug_order_id_hash[visit]
          count += 1
      end
     end
