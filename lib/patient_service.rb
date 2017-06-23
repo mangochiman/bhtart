@@ -5,7 +5,125 @@ module PatientService
 	require 'rest_client'
 	require 'dde_service'
 	require 'medication_service'
+  ############# new DDE API start###################################
+  def self.dde_authentication_token
+    dde_address = "#{dde_settings["dde_address"]}/v1/authenticate"
+    dde_username = dde_settings["dde_username"]
+    dde_password = dde_settings["dde_password"]
+    passed_params = {:username => dde_username, :password => dde_password}
+    received_params = RestClient.post(dde_address, passed_params)
+    dde_token = JSON.parse(received_params)["data"]["token"]
+    return dde_token
+  end
 
+  def self.add_dde_user
+    dde_address = "#{dde_settings["dde_address"]}/v1/add_user"
+    dde_username = dde_settings["dde_username"]
+    dde_password = dde_settings["dde_password"]
+    site_code = PatientIdentifier.site_prefix
+    
+    passed_params = {
+      :username => dde_username,
+      :password => dde_password,
+      :application => "ART",
+      :site_code => site_code,
+      :token => self.dde_authentication_token,
+      :description => ""
+    }
+
+    received_params = RestClient.post(dde_address, passed_params)
+    dde_token = JSON.parse(received_params)["data"]["token"]
+    return dde_token
+  end
+
+  def self.verify_dde_token_authenticity
+    dde_token = self.dde_authentication_token
+    dde_address = "#{dde_settings["dde_address"]}/v1/authenticated/#{dde_token}"
+    received_params = RestClient.get(dde_address)
+    status = JSON.parse(received_params)["status"]
+    return status
+  end
+
+  def self.search_dde_by_identifier(identifier)
+    dde_token = self.dde_authentication_token
+    dde_address = "#{dde_settings["dde_address"]}/v1/search_by_identifier/#{identifier}/#{dde_token}"
+    received_params = RestClient.get(dde_address)
+    results = JSON.parse(received_params)["data"]["hits"]
+    return results
+  end
+
+  def self.search_dde_by_name_and_gender(params)
+    passed_params = {
+      :given_name => params[:given_name],
+      :family_name => params[:family_name],
+      :gender => params[:gender],
+      :token => self.dde_authentication_token
+    }
+
+    dde_address = "#{dde_settings["dde_address"]}/v1/search_by_name_and_gender"
+    received_params = RestClient.post(dde_address, passed_params)
+    results = JSON.parse(received_params)["data"]["hits"]
+    return results
+  end
+
+  def self.dde_advanced_search(params)
+    passed_params = {
+      :given_name => params[:given_name],
+      :family_name => params[:family_name],
+      :gender => params[:gender],
+      :birthdate => params[:birthdate],
+      :home_district => params[:home_district],
+      :token => self.dde_authentication_token
+    }
+
+    dde_address = "#{dde_settings["dde_address"]}/v1/search_by_name_and_gender"
+    received_params = RestClient.post(dde_address, passed_params)
+    results = JSON.parse(received_params)["data"]["hits"]
+    return results
+  end
+
+  def self.void_dde_patient(identifier)
+    dde_token = self.dde_authentication_token
+    dde_address = "#{dde_settings["dde_address"]}/v1/void_patient/#{identifier}/#{dde_token}"
+    received_params = RestClient.get(dde_address)
+    status = JSON.parse(received_params)["status"]
+    return status
+  end
+
+  def self.add_dde_patient(params)
+    passed_params = {
+      "family_name" => params[:given_name],
+      "given_name" => params[:family_name],
+      "middle_name" => params[:given_name],
+      "gender" => params[:gender],
+      "attributes" => {
+        "occupation" => params[:occupation],
+        "cell_phone_number" => params[:cell_phone_number]
+      },
+      "birthdate" => params[:birthdate],
+      "identifiers" => {
+        "ART Number" => params[:art_number],
+        "HTN Number" => params[:htn_number]
+      },
+      "birthdate_estimated" => params[:birthdate_estimated],
+      "current_residence" => params[:current_residence],
+      "current_village" => params[:current_village],
+      "current_ta" => params[:current_ta],
+      "current_district" => params[:current_district],
+      "home_village" => params[:home_village],
+      "home_ta" => params[:home_ta],
+      "home_district" => params[:home_district],
+      "token" => self.dde_authentication_token
+    }
+
+    dde_address = "#{dde_settings["dde_address"]}/v1/add_patient"
+    received_params = RestClient.post(dde_address, passed_params)
+    results = JSON.parse(received_params)
+    return results
+  end
+
+  ############# new DDE API END###################################
+  
   def self.search_demographics_from_remote(params)
     return [] if params[:person][:names]['given_name'].blank?
     dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
@@ -27,52 +145,52 @@ module PatientService
   end
 
   def self.search_from_dde_by_identifier(identifier)
-      dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
-      dde_server_username = GlobalProperty.find_by_property("dde_server_username").property_value rescue ""
-      dde_server_password = GlobalProperty.find_by_property("dde_server_password").property_value rescue ""
-      uri = "http://#{dde_server_username}:#{dde_server_password}@#{dde_server}/people/find.json"
-      uri += "?value=#{identifier}"
-      people = JSON.parse(RestClient.get(uri)) rescue nil
-      return [] if people.blank?
+    dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
+    dde_server_username = GlobalProperty.find_by_property("dde_server_username").property_value rescue ""
+    dde_server_password = GlobalProperty.find_by_property("dde_server_password").property_value rescue ""
+    uri = "http://#{dde_server_username}:#{dde_server_password}@#{dde_server}/people/find.json"
+    uri += "?value=#{identifier}"
+    people = JSON.parse(RestClient.get(uri)) rescue nil
+    return [] if people.blank?
 
-      local_people = []
-      people.each do |person|
-        national_id = person['person']["value"] rescue nil
-        old_national_id = person["person"]["old_identification_number"] rescue nil
+    local_people = []
+    people.each do |person|
+      national_id = person['person']["value"] rescue nil
+      old_national_id = person["person"]["old_identification_number"] rescue nil
 
-        birthdate_year = person["person"]["data"]["birthdate"].to_date.year rescue "Unknown"
-        birthdate_month = person["person"]["data"]["birthdate"].to_date.month rescue nil
-        birthdate_day = person["person"]["data"]["birthdate"].to_date.day rescue nil
-        birthdate_estimated = person["person"]["data"]["birthdate_estimated"]
-        gender = person["person"]["data"]["gender"] == "F" ? "Female" : "Male"
-        passed_person = {
-         "person"=>{"occupation"=>person["person"]["data"]["attributes"]["occupation"],
-         "age_estimate"=> birthdate_estimated ,
-         "birthdate" => person["person"]["data"]["birthdate"],
-         "cell_phone_number"=>person["person"]["data"]["attributes"]["cell_phone_number"],
-         "birth_month"=> birthdate_month ,
-         "addresses"=>{"address1"=> person["person"]["data"]["addresses"]["county_district"],
-                       "address2"=> person["person"]["data"]["addresses"]["address2"],
-                       "city_village"=> person["person"]["data"]["addresses"]["city_village"],
-                       "county_district"=> person["person"]["data"]["addresses"]["county_district"],
-                       "state_province" => person["person"]["data"]["addresses"]["state_province"],
-                       "neighborhood_cell" => person["person"]["data"]["addresses"]["neighborhood_cell"]},
-         "gender"=> gender ,
-         "patient"=>{"identifiers"=>{"National id" => national_id ,"Old national id" => old_national_id}},
-         "birth_day"=>birthdate_day,
-         "home_phone_number"=>person["person"]["data"]["attributes"]["home_phone_number"],
-         "names"=>{"family_name"=>person["person"]["data"]["names"]["family_name"],
-         "given_name"=>person["person"]["data"]["names"]["given_name"],
-         "middle_name"=>""},
-         "birth_year"=>birthdate_year,
-         "id" => person["person"]["id"]},
-         "filter_district"=>"",
-         "filter"=>{"region"=>"",
-         "t_a"=>""},
-         "relation"=>""
-        }
-        local_people << passed_person
-      end
+      birthdate_year = person["person"]["data"]["birthdate"].to_date.year rescue "Unknown"
+      birthdate_month = person["person"]["data"]["birthdate"].to_date.month rescue nil
+      birthdate_day = person["person"]["data"]["birthdate"].to_date.day rescue nil
+      birthdate_estimated = person["person"]["data"]["birthdate_estimated"]
+      gender = person["person"]["data"]["gender"] == "F" ? "Female" : "Male"
+      passed_person = {
+        "person"=>{"occupation"=>person["person"]["data"]["attributes"]["occupation"],
+          "age_estimate"=> birthdate_estimated ,
+          "birthdate" => person["person"]["data"]["birthdate"],
+          "cell_phone_number"=>person["person"]["data"]["attributes"]["cell_phone_number"],
+          "birth_month"=> birthdate_month ,
+          "addresses"=>{"address1"=> person["person"]["data"]["addresses"]["county_district"],
+            "address2"=> person["person"]["data"]["addresses"]["address2"],
+            "city_village"=> person["person"]["data"]["addresses"]["city_village"],
+            "county_district"=> person["person"]["data"]["addresses"]["county_district"],
+            "state_province" => person["person"]["data"]["addresses"]["state_province"],
+            "neighborhood_cell" => person["person"]["data"]["addresses"]["neighborhood_cell"]},
+          "gender"=> gender ,
+          "patient"=>{"identifiers"=>{"National id" => national_id ,"Old national id" => old_national_id}},
+          "birth_day"=>birthdate_day,
+          "home_phone_number"=>person["person"]["data"]["attributes"]["home_phone_number"],
+          "names"=>{"family_name"=>person["person"]["data"]["names"]["family_name"],
+            "given_name"=>person["person"]["data"]["names"]["given_name"],
+            "middle_name"=>""},
+          "birth_year"=>birthdate_year,
+          "id" => person["person"]["id"]},
+        "filter_district"=>"",
+        "filter"=>{"region"=>"",
+          "t_a"=>""},
+        "relation"=>""
+      }
+      local_people << passed_person
+    end
     return local_people
   end
 
@@ -148,14 +266,14 @@ module PatientService
             "given_name"=> names_params["given_name"]
           }}}}
 
-      @dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
-      @dde_server_username = GlobalProperty.find_by_property("dde_server_username").property_value rescue ""
-      @dde_server_password = GlobalProperty.find_by_property("dde_server_password").property_value rescue ""
+    @dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
+    @dde_server_username = GlobalProperty.find_by_property("dde_server_username").property_value rescue ""
+    @dde_server_password = GlobalProperty.find_by_property("dde_server_password").property_value rescue ""
 
-      uri = "http://#{@dde_server_username}:#{@dde_server_password}@#{@dde_server}/people.json/"
-      received_params = RestClient.post(uri,passed_params)
+    uri = "http://#{@dde_server_username}:#{@dde_server_password}@#{@dde_server}/people.json/"
+    received_params = RestClient.post(uri,passed_params)
 
-      return JSON.parse(received_params)["npid"]["value"]
+    return JSON.parse(received_params)["npid"]["value"]
   end
 
   def self.get_dde_person(person, current_date = Date.today)
@@ -200,7 +318,7 @@ module PatientService
     estimate = birthdate_estimated == 1
     patient_age += (estimate && birth_date.month == 7 && birth_date.day == 1  &&
         today.month < birth_date.month && date_created.year == today.year) ? 1 : 0
-    end
+  end
 
   def self.get_birthdate_formatted(birthdate,birthdate_estimated)
     if birthdate_estimated == 1
@@ -328,12 +446,12 @@ module PatientService
           "office_phone_number" => demo['person']['attributes']['office_phone_number'] || nil
         } ,
 
-         "addresses"=>{"address1"=>demo['person']['addresses']['address1'],
-            "address2"=>demo['person']['addresses']['address2'],
-            "city_village"=>demo['person']['addresses']['city_village'],
-            "state_province"=>demo['person']['addresses']['state_province'],
-            "neighborhood_cell"=>demo['person']['addresses']['neighborhood_cell'],
-            "county_district"=>demo['person']['addresses']['county_district']},
+        "addresses"=>{"address1"=>demo['person']['addresses']['address1'],
+          "address2"=>demo['person']['addresses']['address2'],
+          "city_village"=>demo['person']['addresses']['city_village'],
+          "state_province"=>demo['person']['addresses']['state_province'],
+          "neighborhood_cell"=>demo['person']['addresses']['neighborhood_cell'],
+          "county_district"=>demo['person']['addresses']['county_district']},
 
         "age_estimate" => person_obj.birthdate_estimated ,
         "birth_month"=> person_obj.birthdate.month ,
@@ -378,12 +496,12 @@ module PatientService
           "family_name" => person_obj.names.first.family_name,
           "family_name2" => person_obj.names.first.family_name2
         },
-         "addresses"=>{"address1"=>(person_obj.addresses.first.address1 rescue ''),
-            "address2"=>(person_obj.addresses.first.address2 rescue ''),
-            "city_village"=>(person_obj.addresses.first.city_village rescue ''),
-            "state_province"=>(person_obj.addresses.first.state_province rescue ''),
-            "neighborhood_cell"=>(person_obj.addresses.first.neighborhood_cell rescue ''),
-            "county_district"=>(person_obj.addresses.first.county_district rescue '')},
+        "addresses"=>{"address1"=>(person_obj.addresses.first.address1 rescue ''),
+          "address2"=>(person_obj.addresses.first.address2 rescue ''),
+          "city_village"=>(person_obj.addresses.first.city_village rescue ''),
+          "state_province"=>(person_obj.addresses.first.state_province rescue ''),
+          "neighborhood_cell"=>(person_obj.addresses.first.neighborhood_cell rescue ''),
+          "county_district"=>(person_obj.addresses.first.county_district rescue '')},
 
         "attributes" => {"occupation" => self.get_attribute(person_obj, 'Occupation'),
           "cell_phone_number" => self.get_attribute(person_obj, 'Cell Phone Number'),
@@ -403,9 +521,9 @@ module PatientService
   def self.current_treatment_encounter(patient, date = Time.now(), provider = user_person_id)
     type = EncounterType.find_by_name("TREATMENT")
     encounter = patient.encounters.find(:first,:conditions =>["encounter_datetime BETWEEN ? AND ? AND encounter_type = ?",
-    									date.to_date.strftime('%Y-%m-%d 00:00:00'),
-    									date.to_date.strftime('%Y-%m-%d 23:59:59'),
-    									type.id])
+        date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        date.to_date.strftime('%Y-%m-%d 23:59:59'),
+        type.id])
     encounter ||= patient.encounters.create(:encounter_type => type.id,:encounter_datetime => date, :provider_id => provider)
   end
 
@@ -414,9 +532,9 @@ module PatientService
     # that some of the encounters on the specific date may have been voided
     ActiveRecord::Base.connection.select_all("SELECT count(*) as number, encounter_type FROM encounter GROUP BY encounter_type")
     todays_encounters = Encounter.find(:all, :include => "type", :conditions => ["encounter_datetime BETWEEN TIMESTAMP (?) AND TIMESTAMP (?)",
-		date.to_date.strftime('%Y-%m-%d 00:00:00'),
-		date.to_date.strftime('%Y-%m-%d 23:59:59')
-    ])
+        date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        date.to_date.strftime('%Y-%m-%d 23:59:59')
+      ])
     encounters_by_type = Hash.new(0)
     todays_encounters.each{|encounter|
       next if encounter.type.nil?
@@ -634,37 +752,37 @@ module PatientService
     services = Observation.find(:all, :conditions => ["DATE(obs_datetime) = ? AND concept_id = ? AND creator = ?", session_date.to_date, ConceptName.find_by_name("SERVICES").concept_id, current_user_id], :order => "obs_datetime desc")#.uniq.reverse.first(5) rescue []
 
     ( services || [] ).each do | service |
-				  if service.value_text.capitalize == 'Casualty'
-				    registration_services_hash['SERVICES']['Casualty'] += 1
-				  elsif service.value_text.capitalize == 'Eye'
-				    registration_services_hash['SERVICES']['Eye'] += 1
-				  elsif service.value_text.capitalize == 'Family Planing'
-				    registration_services_hash['SERVICES']['Family Planing'] += 1
-				  elsif service.value_text.capitalize == 'Dental'
-				    registration_services_hash['SERVICES']['Dental'] += 1
-				  elsif service.value_text.capitalize == 'Medical'
-				    registration_services_hash['SERVICES']['Medical'] += 1
-				  elsif service.value_text.capitalize == 'OB/Gyn'
-				    registration_services_hash['SERVICES']['OB/Gyn'] += 1
-				  elsif service.value_text.capitalize == 'Orthopedics'
-				    registration_services_hash['SERVICES']['Orthopedics'] += 1
-				  elsif service.value_text.capitalize == 'Pediatrics'
-				    registration_services_hash['SERVICES']['Pediatrics'] += 1
-				  elsif service.value_text.capitalize == ' Skin '
-				    registration_services_hash['SERVICES']['Skin'] += 1
-				  elsif service.value_text.capitalize == 'STI Clinic'
-				    registration_services_hash['SERVICES']['STI Clinic'] += 1
-				  elsif service.value_text.capitalize == 'Surgical'
-				    registration_services_hash['SERVICES']['Surgical'] += 1
-				  else
-						registration_services_hash['SERVICES']['Other'] += 1
-				  end
-				end
+      if service.value_text.capitalize == 'Casualty'
+        registration_services_hash['SERVICES']['Casualty'] += 1
+      elsif service.value_text.capitalize == 'Eye'
+        registration_services_hash['SERVICES']['Eye'] += 1
+      elsif service.value_text.capitalize == 'Family Planing'
+        registration_services_hash['SERVICES']['Family Planing'] += 1
+      elsif service.value_text.capitalize == 'Dental'
+        registration_services_hash['SERVICES']['Dental'] += 1
+      elsif service.value_text.capitalize == 'Medical'
+        registration_services_hash['SERVICES']['Medical'] += 1
+      elsif service.value_text.capitalize == 'OB/Gyn'
+        registration_services_hash['SERVICES']['OB/Gyn'] += 1
+      elsif service.value_text.capitalize == 'Orthopedics'
+        registration_services_hash['SERVICES']['Orthopedics'] += 1
+      elsif service.value_text.capitalize == 'Pediatrics'
+        registration_services_hash['SERVICES']['Pediatrics'] += 1
+      elsif service.value_text.capitalize == ' Skin '
+        registration_services_hash['SERVICES']['Skin'] += 1
+      elsif service.value_text.capitalize == 'STI Clinic'
+        registration_services_hash['SERVICES']['STI Clinic'] += 1
+      elsif service.value_text.capitalize == 'Surgical'
+        registration_services_hash['SERVICES']['Surgical'] += 1
+      else
+        registration_services_hash['SERVICES']['Other'] += 1
+      end
+    end
 
   	return services
   end
 
-    def self.all_services(session_date)
+  def self.all_services(session_date)
   	services_concept_id = ConceptName.find_by_name('SERVICES').concept_id
 
     @start_date = session_date.to_date
@@ -676,32 +794,32 @@ module PatientService
     services = Observation.find(:all, :conditions => ["DATE(date_created) = ? AND concept_id = ?", Date.today.to_date, ConceptName.find_by_name("SERVICES").concept_id], :order => "obs_datetime desc")
 
     ( services || [] ).each do | service |
-				  if service.value_text.capitalize == 'Casualty'
-				    registration_services_hash['SERVICES']['Casualty'] += 1
-				  elsif service.value_text.capitalize == 'Eye'
-				    registration_services_hash['SERVICES']['Eye'] += 1
-				  elsif service.value_text.capitalize == 'Family Planing'
-				    registration_services_hash['SERVICES']['Family Planing'] += 1
-				  elsif service.value_text.capitalize == 'Dental'
-				    registration_services_hash['SERVICES']['Dental'] += 1
-				  elsif service.value_text.capitalize == 'Medical'
-				    registration_services_hash['SERVICES']['Medical'] += 1
-				  elsif service.value_text.capitalize == 'OB/Gyn'
-				    registration_services_hash['SERVICES']['OB/Gyn'] += 1
-				  elsif service.value_text.capitalize == 'Orthopedics'
-				    registration_services_hash['SERVICES']['Orthopedics'] += 1
-				  elsif service.value_text.capitalize == 'Pediatrics'
-				    registration_services_hash['SERVICES']['Pediatrics'] += 1
-				  elsif service.value_text.capitalize == ' Skin '
-				    registration_services_hash['SERVICES']['Skin'] += 1
-				  elsif service.value_text.capitalize == 'STI Clinic'
-				    registration_services_hash['SERVICES']['STI Clinic'] += 1
-				  elsif service.value_text.capitalize == 'Surgical'
-				    registration_services_hash['SERVICES']['Surgical'] += 1
-				  else
-						registration_services_hash['SERVICES']['Other'] += 1
-				  end
-				end
+      if service.value_text.capitalize == 'Casualty'
+        registration_services_hash['SERVICES']['Casualty'] += 1
+      elsif service.value_text.capitalize == 'Eye'
+        registration_services_hash['SERVICES']['Eye'] += 1
+      elsif service.value_text.capitalize == 'Family Planing'
+        registration_services_hash['SERVICES']['Family Planing'] += 1
+      elsif service.value_text.capitalize == 'Dental'
+        registration_services_hash['SERVICES']['Dental'] += 1
+      elsif service.value_text.capitalize == 'Medical'
+        registration_services_hash['SERVICES']['Medical'] += 1
+      elsif service.value_text.capitalize == 'OB/Gyn'
+        registration_services_hash['SERVICES']['OB/Gyn'] += 1
+      elsif service.value_text.capitalize == 'Orthopedics'
+        registration_services_hash['SERVICES']['Orthopedics'] += 1
+      elsif service.value_text.capitalize == 'Pediatrics'
+        registration_services_hash['SERVICES']['Pediatrics'] += 1
+      elsif service.value_text.capitalize == ' Skin '
+        registration_services_hash['SERVICES']['Skin'] += 1
+      elsif service.value_text.capitalize == 'STI Clinic'
+        registration_services_hash['SERVICES']['STI Clinic'] += 1
+      elsif service.value_text.capitalize == 'Surgical'
+        registration_services_hash['SERVICES']['Surgical'] += 1
+      else
+        registration_services_hash['SERVICES']['Other'] += 1
+      end
+    end
 
   	return services
   end
@@ -711,42 +829,42 @@ module PatientService
   end
 
 	def self.guardian_present?(patient_id, date=Date.today)
-      encounter_type_id = EncounterType.find_by_name("HIV Reception").id
-      concept_id  = ConceptName.find_by_name("Guardian present").concept_id
-      encounter = Encounter.find_by_sql("SELECT *
+    encounter_type_id = EncounterType.find_by_name("HIV Reception").id
+    concept_id  = ConceptName.find_by_name("Guardian present").concept_id
+    encounter = Encounter.find_by_sql("SELECT *
                                         FROM encounter
                                         WHERE patient_id = #{patient_id} AND DATE(date_created) = DATE('#{date.strftime("%Y-%m-%d")}') AND encounter_type = #{encounter_type_id}
                                         AND voided = 0
                                         ORDER BY date_created DESC").first rescue nil
 
-      guardian_present=encounter.observations.find_last_by_concept_id(concept_id).to_s unless encounter.nil?
+    guardian_present=encounter.observations.find_last_by_concept_id(concept_id).to_s unless encounter.nil?
 
-      return false if guardian_present.blank?
-      return false if guardian_present.match(/No/)
-      return true
+    return false if guardian_present.blank?
+    return false if guardian_present.match(/No/)
+    return true
   end
 
 	def self.patient_and_guardian_present?(patient_id, date=Date.today)
-      patient_present = self.patient_present?(patient_id, date)
-      guardian_present = self.guardian_present?(patient_id, date)
+    patient_present = self.patient_present?(patient_id, date)
+    guardian_present = self.guardian_present?(patient_id, date)
 
-      return false if !patient_present || !guardian_present
-      return true
+    return false if !patient_present || !guardian_present
+    return true
   end
 
   def self.patient_present?(patient_id, date=Date.today)
-      encounter_type_id = EncounterType.find_by_name("HIV Reception").id
-      concept_id  = ConceptName.find_by_name("Patient present").concept_id
-      encounter = Encounter.find_by_sql("SELECT *
+    encounter_type_id = EncounterType.find_by_name("HIV Reception").id
+    concept_id  = ConceptName.find_by_name("Patient present").concept_id
+    encounter = Encounter.find_by_sql("SELECT *
                                         FROM encounter
                                         WHERE patient_id = #{patient_id} AND DATE(date_created) = DATE('#{date.strftime("%Y-%m-%d")}') AND encounter_type = #{encounter_type_id}
                                         ORDER BY date_created DESC").last rescue nil
 
-      patient_present = encounter.observations.find_last_by_concept_id(concept_id).to_s unless encounter.nil?
+    patient_present = encounter.observations.find_last_by_concept_id(concept_id).to_s unless encounter.nil?
 
-      return false if patient_present.blank?
-      return false if patient_present.match(/No/)
-      return true
+    return false if patient_present.blank?
+    return false if patient_present.match(/No/)
+    return true
   end
 
   def self.patient_national_id_label(patient)
@@ -784,15 +902,15 @@ module PatientService
                                   ORDER BY obs_datetime DESC LIMIT 3")
 
     #Observation.find(:all, :conditions => ["person_id = ? AND concept_id = ? AND (value_coded in (?)
-     #               OR value_text in (?))",patient_id,
-      #  ConceptName.find_by_name('Sputum submission').concept_id, sputum_concept_ids, sputum_concept_names],
-      #:order => "obs_datetime desc", :limit => 3) rescue []
+    #               OR value_text in (?))",patient_id,
+    #  ConceptName.find_by_name('Sputum submission').concept_id, sputum_concept_ids, sputum_concept_names],
+    #:order => "obs_datetime desc", :limit => 3) rescue []
   end
 
   def self.recent_sputum_results(patient_id)
     sputum_concept_names = ["AAFB(1st) results", "AAFB(2nd) results", "AAFB(3rd) results", "Culture(1st) Results", "Culture-2 Results"]
     sputum_concept_ids = ConceptName.find(:all,
-                          :conditions => ["name IN (?)", sputum_concept_names]).map(&:concept_id).join(",")
+      :conditions => ["name IN (?)", sputum_concept_names]).map(&:concept_id).join(",")
     obs = Observation.find_by_sql("SELECT * FROM obs WHERE person_id = #{patient_id} AND concept_id IN ('#{sputum_concept_ids}')
                                   ORDER BY obs_datetime DESC LIMIT 3")
     #obs = Observation.find_by_sql(:all,
@@ -804,7 +922,7 @@ module PatientService
   def self.sputum_results_by_date(patient_id)
     sputum_concept_names = ["AAFB(1st) results", "AAFB(2nd) results", "AAFB(3rd) results"]
     sputum_concept_ids = ConceptName.find(:all,
-                                          :conditions => ["name IN (?)", sputum_concept_names]).map(&:concept_id).join(",")
+      :conditions => ["name IN (?)", sputum_concept_names]).map(&:concept_id).join(",")
     obs = Observation.find_by_sql("SELECT * FROM obs WHERE person_id = #{patient_id} AND concept_id IN ('#{sputum_concept_ids}')
                                   ORDER BY obs_datetime DESC")
     #obs = Observation.find(:all,
@@ -817,11 +935,11 @@ module PatientService
 		list = Hash.new("")
 		while (i < sputum_list.count)
 			if ((sputum_list[i].obs_datetime.to_date >= date - 10) && (sputum_list[i].obs_datetime.to_date <= date + 10))
-					list["acc1"] = sputum_list[i].accession_number
-					list["result1"] = sputum_list[i].answer_string
-					list["acc2"] = sputum_list[i+1].accession_number
-					list["result2"] = sputum_list[i+1].answer_string
-					return list
+        list["acc1"] = sputum_list[i].accession_number
+        list["result1"] = sputum_list[i].answer_string
+        list["acc2"] = sputum_list[i+1].accession_number
+        list["result2"] = sputum_list[i+1].answer_string
+        return list
 			end rescue nil
 			i+=1
 		end
@@ -829,7 +947,7 @@ module PatientService
 
 	def self.pre_art_start_date(patient)
 
-		 start_date = Encounter.find_by_sql(" SELECT * FROM encounter e
+    start_date = Encounter.find_by_sql(" SELECT * FROM encounter e
 								INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type
 								INNER JOIN obs ON obs.encounter_id = e.encounter_id
 								WHERE obs.person_id = '#{patient.id}' AND et.name = 'HIV RECEPTION'
@@ -933,13 +1051,13 @@ module PatientService
 		state = Concept.find(Observation.find(:first,
 				:order => "obs_datetime DESC,date_created DESC",
 				:conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL", patient.id,
-				ConceptName.find_by_name("TB STATUS").concept_id]).value_coded).fullname rescue "UNKNOWN"
-			programs = patient.patient_programs.all
-			programs.each do |prog|
-				if prog.program.name.upcase == "TB PROGRAM"
-					state = ProgramWorkflowState.find_state(prog.patient_states.last.state).concept.fullname rescue state
-				end
-			end
+          ConceptName.find_by_name("TB STATUS").concept_id]).value_coded).fullname rescue "UNKNOWN"
+    programs = patient.patient_programs.all
+    programs.each do |prog|
+      if prog.program.name.upcase == "TB PROGRAM"
+        state = ProgramWorkflowState.find_state(prog.patient_states.last.state).concept.fullname rescue state
+      end
+    end
 		state
   end
 
@@ -961,12 +1079,12 @@ EOF
 
     appointment_date_concept_id = Concept.find_by_name("APPOINTMENT DATE").concept_id rescue nil
 
-     appointments = Observation.find(:all,
+    appointments = Observation.find(:all,
       :conditions => ["obs.value_datetime BETWEEN TIMESTAMP(?) AND TIMESTAMP(?) AND " +
           "obs.concept_id = ? AND obs.voided = 0 AND obs.person_id = ?",
-			start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-			end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-			appointment_date_concept_id, patient.id])
+        start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
+        appointment_date_concept_id, patient.id])
 
     appointments
   end
@@ -974,7 +1092,7 @@ EOF
 
 
   def self.get_patient_identifier(patient, identifier_type)
-      patient_identifier_type_id = PatientIdentifierType.find_by_name(identifier_type).patient_identifier_type_id rescue nil
+    patient_identifier_type_id = PatientIdentifierType.find_by_name(identifier_type).patient_identifier_type_id rescue nil
     patient_identifier = PatientIdentifier.find(:first, :select => "identifier",
       :conditions  =>["patient_id = ? and identifier_type = ?", patient.id, patient_identifier_type_id],
       :order => "date_created DESC" ).identifier rescue nil
@@ -989,9 +1107,9 @@ EOF
     new_patient_name = new_patient_bean.name
     new_filing_number = patient_printing_filing_number_label(new_patient_bean.filing_number)
     inactive_identifier = PatientIdentifier.inactive(:first,:order => 'date_created DESC',
-                           :conditions => ['identifier_type = ? AND patient_id = ?',PatientIdentifierType.
-                           find_by_name("Archived filing number").patient_identifier_type_id,
-                            archived_patient.person.id]).identifier rescue nil
+      :conditions => ['identifier_type = ? AND patient_id = ?',PatientIdentifierType.
+          find_by_name("Archived filing number").patient_identifier_type_id,
+        archived_patient.person.id]).identifier rescue nil
     old_archive_filing_number = patient_printing_filing_number_label(old_filing_number(new_patient, "Archived filing number"))
 
     unless archived_patient.blank?
@@ -1115,8 +1233,8 @@ EOF
   def self.patient_art_start_date(patient_id)
     self.date_antiretrovirals_started(Patient.find(patient_id))
     #date = ActiveRecord::Base.connection.select_value <<EOF
-#SELECT patient_start_date(#{patient_id})
-#EOF
+    #SELECT patient_start_date(#{patient_id})
+    #EOF
     #return date.to_date rescue nil
   end
 
@@ -1128,9 +1246,9 @@ EOF
       :joins => 'INNER JOIN obs USING (encounter_id)',
       :conditions => ["encounter_type = ? AND concept_id = ? AND person_id = ? AND value_coded = ? AND obs_datetime BETWEEN ? AND ?",
         encounter_type.id,refer_concept,patient.id,yes_concept,
-		date.to_date.strftime('%Y-%m-%d 00:00:00'),
-		date.to_date.strftime('%Y-%m-%d 23:59:59')
-        ],
+        date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        date.to_date.strftime('%Y-%m-%d 23:59:59')
+      ],
       :order => 'encounter_datetime DESC,date_created DESC')
     return false if refer_patient.blank?
     return true
@@ -1266,11 +1384,11 @@ EOF
           SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
           WHERE voided = 0 AND identifier_type = #{active_filing_number_identifier_type.id}
           GROUP BY identifier
-        ").map(&:patient_id)
+          ").map(&:patient_id)
 
         patient_to_be_archived = Person.find_by_sql(["
           SELECT * FROM person WHERE person_id IN(?) AND dead = 1 AND voided = 0 LIMIT 1", 
-          patient_ids]).first.patient rescue nil
+            patient_ids]).first.patient rescue nil
       else
         #assigning "patient_to_be_archived" filing number to the new patient
         filing_number = PatientIdentifier.new()
@@ -1298,7 +1416,7 @@ EOF
         #void current filing number
         current_filing_numbers =  PatientIdentifier.find(:all,
           :conditions=>["patient_id=? AND identifier_type = ?",
-          patient_to_be_archived.id,PatientIdentifierType.find_by_name("Filing Number").id])
+            patient_to_be_archived.id,PatientIdentifierType.find_by_name("Filing Number").id])
 
         current_filing_numbers.each do | f_number |
           f_number.voided = 1
@@ -1337,7 +1455,7 @@ EOF
     #void current filing number
     current_filing_numbers =  PatientIdentifier.find(:all,
       :conditions=>["patient_id=? AND identifier_type = ?",
-      secondary.id,PatientIdentifierType.find_by_name("Filing Number").id])
+        secondary.id,PatientIdentifierType.find_by_name("Filing Number").id])
 
     current_filing_numbers.each do | f_number |
       f_number.voided = 1
@@ -1387,14 +1505,14 @@ EOF
       SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
       WHERE voided = 0 AND identifier_type = #{active_filing_number_identifier_type.id}
       GROUP BY identifier
-    ").map(&:patient_id)
+      ").map(&:patient_id)
     
     #here we remove all ids that have any encounter today.
     patient_ids_with_todays_encounters = Encounter.find_by_sql("
       SELECT DISTINCT(patient_id) patient_id FROM encounter
         WHERE voided = 0 AND encounter_datetime BETWEEN '#{Date.today.strftime('%Y-%m-%d 00:00:00')}'
               AND '#{Date.today.strftime('%Y-%m-%d 23:59:59')}'
-    ").map(&:patient_id)
+      ").map(&:patient_id)
 
     patient_ids_with_todays_active_filing_numbers = PatientIdentifier.find_by_sql("
       SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
@@ -1436,7 +1554,7 @@ EOF
       FROM  encounter WHERE patient_id IN(#{patient_ids.join(',')}) 
       AND voided = 0 GROUP BY patient_id 
       HAVING max_encounter_datetime <= '#{(Date.today - 150.day).to_date.strftime('%Y-%m-%d 23:59:59')}';
-      ").map{ |e| e.patient_id }.uniq rescue nil
+        ").map{ |e| e.patient_id }.uniq rescue nil
 
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
 
@@ -1464,7 +1582,7 @@ EOF
     return nil if patient_ids.blank?
 
     encounter_type_name = ['HIV CLINIC REGISTRATION','VITALS','HIV CLINIC CONSULTATION',
-                           'TREATMENT','HIV RECEPTION','HIV STAGING','DISPENSING','APPOINTMENT']
+      'TREATMENT','HIV RECEPTION','HIV STAGING','DISPENSING','APPOINTMENT']
     encounter_type_ids = EncounterType.find(:all,:conditions => ["name IN (?)",encounter_type_name]).map{|n|n.id}
 
     #Patients with an appointment in the past month and the next 6 weeks from
@@ -1479,7 +1597,7 @@ EOF
       INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.concept_id = #{appointment_concept_id}
       WHERE encounter.voided = 0 AND obs.value_datetime BETWEEN (?) AND (?)
       AND encounter_type = ? AND obs.voided = 0 GROUP BY patient_id",start_date,end_date,
-                                                        appointment_encounter_type]).map(&:patient_id)
+        appointment_encounter_type]).map(&:patient_id)
     patient_not_to_be_archived = [0] if patient_not_to_be_archived.blank?
 
     #Patients with at least an encounter of type: encounter_type_name in the past 7 months
@@ -1500,8 +1618,8 @@ EOF
       WHERE encounter.voided = 0 AND patient_id IN (?) AND patient_id NOT IN (?)
         AND encounter_type IN (?)
       ORDER BY encounter_datetime ASC LIMIT 1
-    ",patient_ids, patient_not_to_be_archived, encounter_type_ids,
-                                 ]).first.patient rescue nil
+        ",patient_ids, patient_not_to_be_archived, encounter_type_ids,
+      ]).first.patient rescue nil
   end
 
 	def self.patient_printing_filing_number_label(number=nil)
@@ -1534,7 +1652,7 @@ EOF
 		end
 
     unless person_params['birthdate_estimated'].blank?
-       person.birthdate_estimated = person_params['birthdate_estimated'].to_i
+      person.birthdate_estimated = person_params['birthdate_estimated'].to_i
     end
 
 		person.save
@@ -1562,7 +1680,7 @@ EOF
 
 		if (!patient_params.nil?)
 		  patient = person.create_patient
-       params["identifiers"].each{|identifier_type_name, identifier|
+      params["identifiers"].each{|identifier_type_name, identifier|
         next if identifier.blank?
         identifier_type = PatientIdentifierType.find_by_name(identifier_type_name) || PatientIdentifierType.find_by_name("Unknown id")
         patient.patient_identifiers.create("identifier" => identifier, "identifier_type" => identifier_type.patient_identifier_type_id)
@@ -1674,7 +1792,7 @@ EOF
 
     people = Person.find(:all, :limit => 15, :joins =>"INNER JOIN person_name USING(person_id)
      INNER JOIN patient_identifier i ON i.patient_id = person.person_id AND i.voided = 0", :conditions => [
-     "identifier = ? AND \
+        "identifier = ? AND \
      person_name.given_name LIKE (?) AND \
      person_name.family_name LIKE (?)",
         identifier,
@@ -1684,15 +1802,15 @@ EOF
 
     if people.length < 15
       people_like = Person.find(:all, :limit => 15,
-      :joins =>"INNER JOIN person_name_code ON person_name_code.person_name_id = person.person_id
+        :joins =>"INNER JOIN person_name_code ON person_name_code.person_name_id = person.person_id
       INNER JOIN patient_identifier i ON i.patient_id = person.person_id AND i.voided = 0",
-      :conditions => ["identifier = ? AND \
+        :conditions => ["identifier = ? AND \
      ((person_name_code.given_name_code LIKE ? AND \
      person_name_code.family_name_code LIKE ?))",
-        identifier,
-        (given_name || '').soundex,
-        (family_name || '').soundex
-      ], :order => "birthdate DESC")
+          identifier,
+          (given_name || '').soundex,
+          (family_name || '').soundex
+        ], :order => "birthdate DESC")
       people = (people + people_like).uniq rescue people
     end
 
@@ -1727,13 +1845,13 @@ EOF
 =end
 
       people_like = Person.find(:all, :limit => 15, :include => [{:names => [:person_name_code]}, :patient], :conditions => [
-        "gender = ? AND \
+          "gender = ? AND \
      ((person_name_code.given_name_code LIKE ? AND \
      person_name_code.family_name_code LIKE ?))",
-        gender,
-        (given_name || '').soundex,
-        (family_name || '').soundex
-      ], :order => "person_name.given_name ASC, person_name_code.family_name_code ASC,birthdate DESC")
+          gender,
+          (given_name || '').soundex,
+          (family_name || '').soundex
+        ], :order => "person_name.given_name ASC, person_name_code.family_name_code ASC,birthdate DESC")
       people = (people + people_like).uniq rescue people
     end
 =begin
@@ -1771,12 +1889,12 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
 		if identifier.match(/-TB/i)
 			people = PatientIdentifier.find_by_sql("SELECT * FROM patient_identifier
                 WHERE REPLACE(identifier, ' ', '') = REPLACE('#{identifier}', ' ', '') AND voided =0 ").map{|id|
-                id.patient.person
-              }
+        id.patient.person
+      }
 		else
 			people = PatientIdentifier.find_all_by_identifier(identifier).map{|id|
-               id.patient.person
-              } unless identifier.blank? rescue nil
+        id.patient.person
+      } unless identifier.blank? rescue nil
 		end
 
     return people unless people.blank?
@@ -1794,7 +1912,7 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
       passed_national_id = (p["person"]["patient"]["identifiers"]["National id"]) rescue nil
       passed_national_id = (p["person"]["value"]) if passed_national_id.blank? rescue nil
       if passed_national_id.blank?
-       return [DDEService.get_remote_person(p["person"]["id"])]
+        return [DDEService.get_remote_person(p["person"]["id"])]
       end
 
       birthdate_year = p["person"]["birthdate"].to_date.year rescue "Unknown"
@@ -1804,28 +1922,28 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
       gender = p["person"]["gender"] == "F" ? "Female" : "Male"
 
       passed = {
-       "person"=>{"occupation"=>p["person"]["data"]["attributes"]["occupation"],
-       "age_estimate"=> birthdate_estimated,
-       "cell_phone_number"=>p["person"]["data"]["attributes"]["cell_phone_number"],
-       "birth_month"=> birthdate_month ,
-       "addresses"=>{"address1"=>p["person"]["data"]["addresses"]["address1"],
+        "person"=>{"occupation"=>p["person"]["data"]["attributes"]["occupation"],
+          "age_estimate"=> birthdate_estimated,
+          "cell_phone_number"=>p["person"]["data"]["attributes"]["cell_phone_number"],
+          "birth_month"=> birthdate_month ,
+          "addresses"=>{"address1"=>p["person"]["data"]["addresses"]["address1"],
             "address2"=>p["person"]["data"]["addresses"]["address2"],
             "city_village"=>p["person"]["data"]["addresses"]["city_village"],
             "state_province"=>p["person"]["data"]["addresses"]["state_province"],
             "neighborhood_cell"=>p["person"]["data"]["addresses"]["neighborhood_cell"],
             "county_district"=>p["person"]["data"]["addresses"]["county_district"]},
-       "gender"=> gender ,
-       "patient"=>{"identifiers"=>{"National id" => p["person"]["value"]}},
-       "birth_day"=>birthdate_day,
-       "home_phone_number"=>p["person"]["data"]["attributes"]["home_phone_number"],
-       "names"=>{"family_name"=>p["person"]["data"]["names"]["family_name"],
-       "given_name"=>p["person"]["data"]["names"]["given_name"],
-       "middle_name"=>""},
-       "birth_year"=>birthdate_year},
-       "filter_district"=>"",
-       "filter"=>{"region"=>"",
-       "t_a"=>""},
-       "relation"=>""
+          "gender"=> gender ,
+          "patient"=>{"identifiers"=>{"National id" => p["person"]["value"]}},
+          "birth_day"=>birthdate_day,
+          "home_phone_number"=>p["person"]["data"]["attributes"]["home_phone_number"],
+          "names"=>{"family_name"=>p["person"]["data"]["names"]["family_name"],
+            "given_name"=>p["person"]["data"]["names"]["given_name"],
+            "middle_name"=>""},
+          "birth_year"=>birthdate_year},
+        "filter_district"=>"",
+        "filter"=>{"region"=>"",
+          "t_a"=>""},
+        "relation"=>""
       }
 
       unless passed_national_id.blank?
@@ -1987,11 +2105,11 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     if self.current_program_location == 'TB program'
       reception = Encounter.find(:first,:conditions =>["patient_id = ? AND
         DATE(encounter_datetime) = ? AND encounter_type = ?",patient.id,session_date,
-        EncounterType.find_by_name('TB RECEPTION').id]).observations.collect{| r | r.to_s}.join(',') rescue ''
+          EncounterType.find_by_name('TB RECEPTION').id]).observations.collect{| r | r.to_s}.join(',') rescue ''
     else
       reception = Encounter.find(:first,:conditions =>["patient_id = ? AND
         DATE(encounter_datetime) = ? AND encounter_type = ?",patient.id,session_date,
-        EncounterType.find_by_name('HIV RECEPTION').id]).observations.collect{| r | r.to_s}.join(',') rescue ''
+          EncounterType.find_by_name('HIV RECEPTION').id]).observations.collect{| r | r.to_s}.join(',') rescue ''
     end
 
     if reception.match(/PATIENT PRESENT FOR CONSULTATION:  NO/i)
@@ -2008,7 +2126,7 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     if first_vitals.blank?
       encounter = Encounter.find(:first,:order => "encounter_datetime DESC",
         :conditions =>["patient_id = ? AND encounter_type = ?",patient.id,
-        EncounterType.find_by_name('LAB ORDERS').id])
+          EncounterType.find_by_name('LAB ORDERS').id])
 
       sup_result = self.next_lab_encounter(patient , encounter, session_date)
 
@@ -2046,8 +2164,8 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
 
     vitals = Encounter.find(:first,:order => "encounter_datetime DESC",
       :conditions =>["encounter_datetime BETWEEN ? AND ? AND patient_id = ? AND encounter_type = ?",
-		session_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-		session_date.to_date.strftime('%Y-%m-%d 23:59:59'),
+        session_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+        session_date.to_date.strftime('%Y-%m-%d 23:59:59'),
         patient.id,
         EncounterType.find_by_name('VITALS').id])
 
@@ -2173,14 +2291,14 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
     id = self.get_national_id(patient, force)
     length = id.length
     case length
-      when 13
-        id[0..4] + "-" + id[5..8] + "-" + id[9..-1] rescue id
-      when 9
-        id[0..2] + "-" + id[3..6] + "-" + id[7..-1] rescue id
-      when 6
-        id[0..2] + "-" + id[3..-1] rescue id
-      else
-        id
+    when 13
+      id[0..4] + "-" + id[5..8] + "-" + id[9..-1] rescue id
+    when 9
+      id[0..2] + "-" + id[3..6] + "-" + id[7..-1] rescue id
+    when 6
+      id[0..2] + "-" + id[3..-1] rescue id
+    else
+      id
     end
   end
 
@@ -2307,17 +2425,17 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
 
   def self.occupations
     ['','Driver','Housewife','Messenger','Business','Farmer','Salesperson','Teacher',
-     'Student','Security guard','Domestic worker', 'Police','Office worker',
-     'Preschool child','Mechanic','Prisoner','Craftsman','Healthcare Worker','Soldier'].sort.concat(["Other","Unknown"])
+      'Student','Security guard','Domestic worker', 'Police','Office worker',
+      'Preschool child','Mechanic','Prisoner','Craftsman','Healthcare Worker','Soldier'].sort.concat(["Other","Unknown"])
   end
 
   def self.tb_drug_given_before(patient, date = Date.today)
     clinic_encounters =  [
-                      'SOURCE OF REFERRAL','UPDATE HIV STATUS','LAB ORDERS',
-                      'SPUTUM SUBMISSION','LAB RESULTS','TB_INITIAL',
-                      'TB RECEPTION','TB REGISTRATION','TB VISIT',
-                      'TB ADHERENCE','TB CLINIC VISIT','DISPENSING'
-                     ]
+      'SOURCE OF REFERRAL','UPDATE HIV STATUS','LAB ORDERS',
+      'SPUTUM SUBMISSION','LAB RESULTS','TB_INITIAL',
+      'TB RECEPTION','TB REGISTRATION','TB VISIT',
+      'TB ADHERENCE','TB CLINIC VISIT','DISPENSING'
+    ]
 
     clinic_encounters  =  ['DISPENSING']
 
@@ -2334,10 +2452,10 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
 
     concept_id = Concept.find_by_name('AMOUNT DISPENSED').id
     orders = Order.find(:all,:joins =>"INNER JOIN obs ON obs.order_id = orders.order_id",
-        :conditions =>["obs.person_id = ? AND obs.concept_id = ?
+      :conditions =>["obs.person_id = ? AND obs.concept_id = ?
         AND obs_datetime >=? AND obs_datetime <=?",
         patient.id,concept_id,start_date,end_date],
-        :order =>"obs_datetime")
+      :order =>"obs_datetime")
 
     (orders || []).reject do |order|
       !MedicationService.tb_medication(order.drug_order.drug)
@@ -2366,14 +2484,14 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
           and `p`.`patient_id` = #{patient_id}
         )
     group by `p`.`patient_id`").collect do |p|
-    {
-      :birthdate => (p['birthdate'].to_date rescue nil),
-      :date_enrolled => (p['date_enrolled'].to_date rescue nil),
-      :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
-      :death_date => (p['death_date'].to_date rescue nil),
-      :age_at_initiation => (p['age_at_initiation'].to_i rescue nil),
-      :age_in_days => (p['age_in_days'].to_i rescue nil)
-    }
+      {
+        :birthdate => (p['birthdate'].to_date rescue nil),
+        :date_enrolled => (p['date_enrolled'].to_date rescue nil),
+        :earliest_start_date => (p['earliest_start_date'].to_date rescue nil),
+        :death_date => (p['death_date'].to_date rescue nil),
+        :age_at_initiation => (p['age_at_initiation'].to_i rescue nil),
+        :age_in_days => (p['age_in_days'].to_i rescue nil)
+      }
     end
 
     return record.first rescue nil
@@ -2384,8 +2502,8 @@ people = Person.find(:all, :include => [{:names => [:person_name_code]}, :patien
 
     Observation.find(:first, :conditions => ["concept_id = ? AND person_id = ?
       AND obs_datetime BETWEEN ? AND ?", appointment_type_id, patient.id,
-      session_date.strftime('%Y-%m-%d 00:00:00'), 
-      session_date.strftime('%Y-%m-%d 23:59:59')])
+        session_date.strftime('%Y-%m-%d 00:00:00'),
+        session_date.strftime('%Y-%m-%d 23:59:59')])
   end
 
   def self.patient_initiated(patient_id, session_date)
@@ -2401,8 +2519,8 @@ EOF
 
     hiv_clinic_registration = Encounter.find(:last,:conditions =>["encounter_type = ? AND 
       patient_id = ? AND (encounter_datetime BETWEEN ? AND ?)",
-      EncounterType.find_by_name("HIV CLINIC REGISTRATION").id, patient_id,
-      end_date.to_date.strftime('%Y-%m-%d 00:00:00'), end_date])
+        EncounterType.find_by_name("HIV CLINIC REGISTRATION").id, patient_id,
+        end_date.to_date.strftime('%Y-%m-%d 00:00:00'), end_date])
 
     (hiv_clinic_registration.observations || []).map do | obs |
       concept_name = obs.to_s.split(':')[0].strip rescue nil
@@ -2443,12 +2561,12 @@ EOF
     if Location.current_location.name.downcase == 'outpatient'
       return "OPD"
     elsif current_user_activities.include?('Manage Lab Orders') or current_user_activities.include?('Manage Lab Results') or
-       current_user_activities.include?('Manage Sputum Submissions') or current_user_activities.include?('Manage TB Clinic Visits') or
-       current_user_activities.include?('Manage TB Reception Visits') or current_user_activities.include?('Manage TB Registration Visits') or
-       current_user_activities.include?('Manage HIV Status Visits')
-       return 'TB program'
+        current_user_activities.include?('Manage Sputum Submissions') or current_user_activities.include?('Manage TB Clinic Visits') or
+        current_user_activities.include?('Manage TB Reception Visits') or current_user_activities.include?('Manage TB Registration Visits') or
+        current_user_activities.include?('Manage HIV Status Visits')
+      return 'TB program'
     else #if current_user_activities
-       return 'HIV program'
+      return 'HIV program'
     end
   end
 
