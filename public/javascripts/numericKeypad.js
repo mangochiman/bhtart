@@ -181,3 +181,5 @@ function updateNumericInput(){
     //selectedDrugsHash
     hideLibPopup();
 }
+
+String.prototype.contains = function(it) { return this.indexOf(it) != -1; }; //JS doesn't have a contains function

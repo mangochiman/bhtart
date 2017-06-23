@@ -148,6 +148,22 @@ class GenericApplicationController < ActionController::Base
     CoreService.get_global_property_value('create.from.dde.server').to_s == "true" rescue false
   end
 
+  def dde_settings
+    data = {}
+    dde_ip = GlobalProperty.find_by_property('dde.address').property_value rescue ""
+    dde_port = GlobalProperty.find_by_property('dde.port').property_value rescue ""
+    dde_username = GlobalProperty.find_by_property('dde.username').property_value rescue ""
+    dde_password = GlobalProperty.find_by_property('dde.password').property_value rescue ""
+
+    data["dde_ip"] = dde_ip
+    data["dde_port"] = dde_port
+    data["dde_username"] = dde_username
+    data["dde_password"] = dde_password
+    data["dde_address"] = "http://#{dde_ip}:#{}dde_port"
+
+    return data 
+  end
+
   def concept_set(concept_name)
     concept_id = ConceptName.find_by_name(concept_name).concept_id
     set = ConceptSet.find_all_by_concept_set(concept_id, :order => 'sort_weight')
