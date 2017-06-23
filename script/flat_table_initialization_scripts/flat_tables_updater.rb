@@ -482,19 +482,29 @@ def updating_flat_cohort_table(patient_ids)
     drug_auto_expire_date3_v_date         = flat_table_2_data['visit_date']
     drug_auto_expire_date4_v_date         = flat_table_2_data['visit_date']
     drug_auto_expire_date5_v_date         = flat_table_2_data['visit_date']
-    side_effects_peripheral_neuropathy    = flat_table_2_data['side_effects_peripheral_neuropathy']
-    side_effects_hepatitis                = flat_table_2_data['side_effects_hepatitis']
-    side_effects_skin_rash                = flat_table_2_data['side_effects_skin_rash']
-    side_effects_lipodystrophy            = flat_table_2_data['side_effects_lipodystrophy']
-    side_effects_other                    = flat_table_2_data['side_effects_other']
-    side_effects_no                       = flat_table_2_data['side_effects_no']
-    side_effects_kidney_failure           = flat_table_2_data['side_effects_kidney_failure']
-    side_effects_nightmares               = flat_table_2_data['side_effects_nightmares']
+    side_effects_abdominal_pain           = flat_table_2_data['side_effects_peripheral_neuropathy']
+    side_effects_anemia                   = flat_table_2_data['side_effects_anemia']
+    side_effects_anorexia                 = flat_table_2_data['side_effects_anorexia']
+    side_effects_blurry_vision            = flat_table_2_data['side_effects_blurry_vision']
+    side_effects_cough                    = flat_table_2_data['side_effects_cough']
+    side_effects_diarrhea                 = flat_table_2_data['side_effects_diarrhea']
     side_effects_diziness                 = flat_table_2_data['side_effects_diziness']
+    side_effects_fever                    = flat_table_2_data['side_effects_fever']
+    side_effects_hepatitis                = flat_table_2_data['side_effects_hepatitis']
+    side_effects_jaundice                 = flat_table_2_data['side_effects_jaundice']
+    side_effects_kidney_failure           = flat_table_2_data['side_effects_kidney_failure']
+    side_effects_lactic_acidosis          = flat_table_2_data['side_effects_lactic_acidosis']
+    side_effects_leg_pain_numbness        = flat_table_2_data['side_effects_leg_pain_numbness']
+    side_effects_lipodystrophy            = flat_table_2_data['side_effects_lipodystrophy']
+    side_effects_no                       = flat_table_2_data['side_effects_no']
+    side_effects_other                    = flat_table_2_data['side_effects_Other']
+    side_effects_peripheral_neuropathy    = flat_table_2_data['side_effects_peripheral_neuropathy']
     side_effects_psychosis                = flat_table_2_data['side_effects_psychosis']
     side_effects_renal_failure            = flat_table_2_data['side_effects_renal_failure']
-    side_effects_blurry_vision            = flat_table_2_data['side_effects_blurry_vision']
+    side_effects_skin_rash                = flat_table_2_data['side_effects_skin_rash']
+    side_effects_vomiting                 = flat_table_2_data['side_effects_vomiting']
     side_effects_gynaecomastia            = flat_table_2_data['side_effects_gynaecomastia']
+    side_effects_nightmares               = flat_table_2_data['side_effects_nightmares']
     drug_induced_kidney_failure           = flat_table_2_data['drug_induced_kidney_failure']
     drug_induced_nightmares               = flat_table_2_data['drug_induced_nightmares']
     drug_induced_diziness                 = flat_table_2_data['drug_induced_diziness']
@@ -540,9 +550,9 @@ def updating_flat_cohort_table(patient_ids)
         puts "............ Inserting new record into flat_cohort_table (patient_id: #{row[:patient_id]})"
         Connection.execute <<EOF
 INSERT INTO flat_cohort_table
- (patient_id, gender, birthdate, earliest_start_date, date_enrolled, age_at_initiation, age_in_days, death_date, reason_for_starting, ever_registered_at_art_clinic, date_art_last_taken, taken_art_in_last_two_months, extrapulmonary_tuberculosis, pulmonary_tuberculosis, pulmonary_tuberculosis_last_2_years, kaposis_sarcoma,extrapulmonary_tuberculosis_v_date, pulmonary_tuberculosis_v_date, pulmonary_tuberculosis_last_2_years_v_date, kaposis_sarcoma_v_date, reason_for_eligibility_V_date, ever_registered_at_art_clinic_v_date, date_art_last_taken_v_date, taken_art_in_last_two_months_v_date, hiv_program_state, hiv_program_start_date, patient_pregnant, drug_induced_abdominal_pain, drug_induced_anorexia, drug_induced_diarrhea, drug_induced_jaundice, drug_induced_leg_pain_numbness, drug_induced_vomiting, drug_induced_peripheral_neuropathy, drug_induced_hepatitis, drug_induced_anemia, drug_induced_lactic_acidosis, drug_induced_lipodystrophy, drug_induced_skin_rash, drug_induced_other, drug_induced_fever, drug_induced_cough, tb_not_suspected, tb_suspected, confirmed_tb_not_on_treatment, confirmed_tb_on_treatment, unknown_tb_status, regimen_category_treatment, regimen_category_dispensed, what_was_the_patient_adherence_for_this_drug1, what_was_the_patient_adherence_for_this_drug2,  what_was_the_patient_adherence_for_this_drug3, what_was_the_patient_adherence_for_this_drug4, what_was_the_patient_adherence_for_this_drug5, drug_name1, drug_name2, drug_name3, drug_name4, drug_name5, drug_inventory_id1, drug_inventory_id2, drug_inventory_id3, drug_inventory_id4, drug_inventory_id5, drug_auto_expire_date1, drug_auto_expire_date2, drug_auto_expire_date3, drug_auto_expire_date4, drug_auto_expire_date5, hiv_program_state_v_date, hiv_program_start_date_v_date, current_tb_status_v_date, patient_pregnant_v_date, drug_induced_abdominal_pain_v_date, drug_induced_anorexia_v_date, drug_induced_diarrhea_v_date, drug_induced_jaundice_v_date, drug_induced_leg_pain_numbness_v_date, drug_induced_vomiting_v_date, drug_induced_peripheral_neuropathy_v_date, drug_induced_hepatitis_v_date, drug_induced_anemia_v_date, drug_induced_lactic_acidosis_v_date, drug_induced_lipodystrophy_v_date, drug_induced_skin_rash_v_date, drug_induced_other_v_date, drug_induced_fever_v_date, drug_induced_cough_v_date, tb_not_suspected_v_date, tb_suspected_v_date, confirmed_tb_not_on_treatment_v_date, confirmed_tb_on_treatment_v_date, unknown_tb_status_v_date, what_was_the_patient_adherence_for_this_drug1_v_date, what_was_the_patient_adherence_for_this_drug2_v_date, what_was_the_patient_adherence_for_this_drug3_v_date, what_was_the_patient_adherence_for_this_drug4_v_date, what_was_the_patient_adherence_for_this_drug5_v_date, drug_name1_v_date, drug_name2_v_date, drug_name3_v_date, drug_name4_v_date, drug_name5_v_date, drug_inventory_id1_v_date, drug_inventory_id2_v_date, drug_inventory_id3_v_date, drug_inventory_id4_v_date, drug_inventory_id5_v_date, drug_auto_expire_date1_v_date, drug_auto_expire_date2_v_date, drug_auto_expire_date3_v_date, drug_auto_expire_date4_v_date, drug_auto_expire_date5_v_date, side_effects_peripheral_neuropathy, side_effects_hepatitis, side_effects_skin_rash, side_effects_lipodystrophy, side_effects_other, side_effects_no, side_effects_kidney_failure, side_effects_nightmares, side_effects_diziness, side_effects_psychosis, side_effects_renal_failure, side_effects_blurry_vision, side_effects_gynaecomastia, drug_induced_kidney_failure, drug_induced_nightmares, drug_induced_diziness, drug_induced_psychosis, drug_induced_blurry_vision)
- VALUES (#{row[:patient_id]}, '#{gender}', '#{dob}', '#{eligible}', '#{date_enrolled}', #{age_at_initiation}, #{age_in_days}, '#{death_date}', '#{reason_for_eligibility}', '#{ever_registered_at_art_clinic}', '#{date_art_last_taken}', '#{taken_art_in_last_two_months}', '#{extrapulmonary_tuberculosis}', '#{pulmonary_tuberculosis}', '#{pulmonary_tuberculosis_last_2_years}', '#{kaposis_sarcoma}', '#{extrapulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_last_2_years_v_date}', '#{kaposis_sarcoma_v_date}', '#{reason_for_eligibility_V_date}', '#{ever_registered_at_art_clinic_v_date}', '#{date_art_last_taken_v_date}', '#{taken_art_in_last_two_months_v_date}',
-  "#{hiv_program_state}", "#{hiv_program_start_date}", "#{patient_pregnant}", "#{drug_induced_abdominal_pain}", "#{drug_induced_anorexia}", "#{drug_induced_diarrhea}", "#{drug_induced_jaundice}", "#{drug_induced_leg_pain_numbness}", "#{drug_induced_vomiting}", "#{drug_induced_peripheral_neuropathy}", "#{drug_induced_hepatitis}", "#{drug_induced_anemia}", "#{drug_induced_lactic_acidosis}", "#{drug_induced_lipodystrophy}", "#{drug_induced_skin_rash}", "#{drug_induced_other}", "#{drug_induced_fever}", "#{drug_induced_cough}", "#{tb_not_suspected}", "#{tb_suspected}", "#{confirmed_tb_not_on_treatment}", "#{confirmed_tb_on_treatment}", "#{unknown_tb_status}", "#{regimen_category_treatment}", "#{regimen_category_dispensed}", "#{what_was_the_patient_adherence_for_this_drug1}", "#{what_was_the_patient_adherence_for_this_drug2}",  "#{what_was_the_patient_adherence_for_this_drug3}", "#{what_was_the_patient_adherence_for_this_drug4}", "#{what_was_the_patient_adherence_for_this_drug5}", "#{drug_name1}", "#{drug_name2}", "#{drug_name3}", "#{drug_name4}", "#{drug_name5}", "#{drug_inventory_id1}", "#{drug_inventory_id2}", "#{drug_inventory_id3}", "#{drug_inventory_id4}", "#{drug_inventory_id5}", '#{drug_auto_expire_date1}', '#{drug_auto_expire_date2}', '#{drug_auto_expire_date3}', '#{drug_auto_expire_date4}', '#{drug_auto_expire_date5}', '#{hiv_program_state_v_date}', '#{hiv_program_start_date_v_date}', '#{current_tb_status_v_date}', "#{patient_pregnant_v_date}", "#{drug_induced_abdominal_pain_v_date}", "#{drug_induced_anorexia_v_date}", "#{drug_induced_diarrhea_v_date}", "#{drug_induced_jaundice_v_date}", "#{drug_induced_leg_pain_numbness_v_date}", "#{drug_induced_vomiting_v_date}", "#{drug_induced_peripheral_neuropathy_v_date}", "#{drug_induced_hepatitis_v_date}", "#{drug_induced_anemia_v_date}", "#{drug_induced_lactic_acidosis_v_date}", "#{drug_induced_lipodystrophy_v_date}", "#{drug_induced_skin_rash_v_date}", "#{drug_induced_other_v_date}", "#{drug_induced_fever_v_date}", "#{drug_induced_cough_v_date}", "#{tb_not_suspected_v_date}", "#{tb_suspected_v_date}", "#{confirmed_tb_not_on_treatment_v_date}", "#{confirmed_tb_on_treatment_v_date}", "#{unknown_tb_status_v_date}", "#{what_was_the_patient_adherence_for_this_drug1_v_date}", "#{what_was_the_patient_adherence_for_this_drug2_v_date}", "#{what_was_the_patient_adherence_for_this_drug3_v_date}", "#{what_was_the_patient_adherence_for_this_drug4_v_date}", "#{what_was_the_patient_adherence_for_this_drug5_v_date}", "#{drug_name1_v_date}", "#{drug_name2_v_date}", "#{drug_name3_v_date}", "#{drug_name4_v_date}", "#{drug_name5_v_date}", "#{drug_inventory_id1_v_date}", "#{drug_inventory_id2_v_date}", "#{drug_inventory_id3_v_date}", "#{drug_inventory_id4_v_date}", "#{drug_inventory_id5_v_date}", "#{drug_auto_expire_date1_v_date}", "#{drug_auto_expire_date2_v_date}", "#{drug_auto_expire_date3_v_date}", "#{drug_auto_expire_date4_v_date}", "#{drug_auto_expire_date5_v_date}", "#{side_effects_peripheral_neuropathy}", "#{side_effects_hepatitis}", "#{side_effects_skin_rash}", "#{side_effects_lipodystrophy}", "#{side_effects_other}", "#{side_effects_no}", "#{side_effects_kidney_failure}", "#{side_effects_nightmares}", "#{side_effects_diziness}", "#{side_effects_psychosis}", "#{side_effects_renal_failure}", "#{side_effects_blurry_vision}", "#{side_effects_gynaecomastia}", "#{drug_induced_kidney_failure}", "#{drug_induced_nightmares}", "#{drug_induced_diziness}", "#{drug_induced_psychosis}", "#{drug_induced_blurry_vision}");
+ (patient_id, gender, birthdate, earliest_start_date, date_enrolled, age_at_initiation, age_in_days, death_date, reason_for_starting, ever_registered_at_art_clinic, date_art_last_taken, taken_art_in_last_two_months, extrapulmonary_tuberculosis, pulmonary_tuberculosis, pulmonary_tuberculosis_last_2_years, kaposis_sarcoma,extrapulmonary_tuberculosis_v_date, pulmonary_tuberculosis_v_date, pulmonary_tuberculosis_last_2_years_v_date, kaposis_sarcoma_v_date, reason_for_eligibility_V_date, ever_registered_at_art_clinic_v_date, date_art_last_taken_v_date, taken_art_in_last_two_months_v_date, hiv_program_state, hiv_program_start_date, patient_pregnant, drug_induced_abdominal_pain, drug_induced_anorexia, drug_induced_diarrhea, drug_induced_jaundice, drug_induced_leg_pain_numbness, drug_induced_vomiting, drug_induced_peripheral_neuropathy, drug_induced_hepatitis, drug_induced_anemia, drug_induced_lactic_acidosis, drug_induced_lipodystrophy, drug_induced_skin_rash, drug_induced_other, drug_induced_fever, drug_induced_cough, tb_not_suspected, tb_suspected, confirmed_tb_not_on_treatment, confirmed_tb_on_treatment, unknown_tb_status, regimen_category_treatment, regimen_category_dispensed, what_was_the_patient_adherence_for_this_drug1, what_was_the_patient_adherence_for_this_drug2,  what_was_the_patient_adherence_for_this_drug3, what_was_the_patient_adherence_for_this_drug4, what_was_the_patient_adherence_for_this_drug5, drug_name1, drug_name2, drug_name3, drug_name4, drug_name5, drug_inventory_id1, drug_inventory_id2, drug_inventory_id3, drug_inventory_id4, drug_inventory_id5, drug_auto_expire_date1, drug_auto_expire_date2, drug_auto_expire_date3, drug_auto_expire_date4, drug_auto_expire_date5, hiv_program_state_v_date, hiv_program_start_date_v_date, current_tb_status_v_date, patient_pregnant_v_date, drug_induced_abdominal_pain_v_date, drug_induced_anorexia_v_date, drug_induced_diarrhea_v_date, drug_induced_jaundice_v_date, drug_induced_leg_pain_numbness_v_date, drug_induced_vomiting_v_date, drug_induced_peripheral_neuropathy_v_date, drug_induced_hepatitis_v_date, drug_induced_anemia_v_date, drug_induced_lactic_acidosis_v_date, drug_induced_lipodystrophy_v_date, drug_induced_skin_rash_v_date, drug_induced_other_v_date, drug_induced_fever_v_date, drug_induced_cough_v_date, tb_not_suspected_v_date, tb_suspected_v_date, confirmed_tb_not_on_treatment_v_date, confirmed_tb_on_treatment_v_date, unknown_tb_status_v_date, what_was_the_patient_adherence_for_this_drug1_v_date, what_was_the_patient_adherence_for_this_drug2_v_date, what_was_the_patient_adherence_for_this_drug3_v_date, what_was_the_patient_adherence_for_this_drug4_v_date, what_was_the_patient_adherence_for_this_drug5_v_date, drug_name1_v_date, drug_name2_v_date, drug_name3_v_date, drug_name4_v_date, drug_name5_v_date, drug_inventory_id1_v_date, drug_inventory_id2_v_date, drug_inventory_id3_v_date, drug_inventory_id4_v_date, drug_inventory_id5_v_date, drug_auto_expire_date1_v_date, drug_auto_expire_date2_v_date, drug_auto_expire_date3_v_date, drug_auto_expire_date4_v_date, drug_auto_expire_date5_v_date, side_effects_abdominal_pain, side_effects_anemia, side_effects_anorexia, side_effects_blurry_vision, side_effects_cough, side_effects_diarrhea, side_effects_diziness, side_effects_fever, side_effects_hepatitis, side_effects_jaundice, side_effects_kidney_failure, side_effects_lactic_acidosis, side_effects_leg_pain_numbness, side_effects_lipodystrophy, side_effects_no, side_effects_other, side_effects_peripheral_neuropathy, side_effects_psychosis, side_effects_renal_failure, side_effects_skin_rash, side_effects_vomiting, side_effects_gynaecomastia, side_effects_nightmares, drug_induced_kidney_failure, drug_induced_nightmares, drug_induced_diziness, drug_induced_psychosis, drug_induced_blurry_vision)
+  VALUES (#{row[:patient_id]}, '#{gender}', '#{dob}', '#{eligible}', '#{date_enrolled}', #{age_at_initiation}, #{age_in_days}, '#{death_date}', '#{reason_for_eligibility}', '#{ever_registered_at_art_clinic}', '#{date_art_last_taken}', '#{taken_art_in_last_two_months}', '#{extrapulmonary_tuberculosis}', '#{pulmonary_tuberculosis}', '#{pulmonary_tuberculosis_last_2_years}', '#{kaposis_sarcoma}', '#{extrapulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_last_2_years_v_date}', '#{kaposis_sarcoma_v_date}', '#{reason_for_eligibility_V_date}', '#{ever_registered_at_art_clinic_v_date}', '#{date_art_last_taken_v_date}', '#{taken_art_in_last_two_months_v_date}',
+  "#{hiv_program_state}", "#{hiv_program_start_date}", "#{patient_pregnant}", "#{drug_induced_abdominal_pain}", "#{drug_induced_anorexia}", "#{drug_induced_diarrhea}", "#{drug_induced_jaundice}", "#{drug_induced_leg_pain_numbness}", "#{drug_induced_vomiting}", "#{drug_induced_peripheral_neuropathy}", "#{drug_induced_hepatitis}", "#{drug_induced_anemia}", "#{drug_induced_lactic_acidosis}", "#{drug_induced_lipodystrophy}", "#{drug_induced_skin_rash}", "#{drug_induced_other}", "#{drug_induced_fever}", "#{drug_induced_cough}", "#{tb_not_suspected}", "#{tb_suspected}", "#{confirmed_tb_not_on_treatment}", "#{confirmed_tb_on_treatment}", "#{unknown_tb_status}", "#{regimen_category_treatment}", "#{regimen_category_dispensed}", "#{what_was_the_patient_adherence_for_this_drug1}", "#{what_was_the_patient_adherence_for_this_drug2}",  "#{what_was_the_patient_adherence_for_this_drug3}", "#{what_was_the_patient_adherence_for_this_drug4}", "#{what_was_the_patient_adherence_for_this_drug5}", "#{drug_name1}", "#{drug_name2}", "#{drug_name3}", "#{drug_name4}", "#{drug_name5}", "#{drug_inventory_id1}", "#{drug_inventory_id2}", "#{drug_inventory_id3}", "#{drug_inventory_id4}", "#{drug_inventory_id5}", '#{drug_auto_expire_date1}', '#{drug_auto_expire_date2}', '#{drug_auto_expire_date3}', '#{drug_auto_expire_date4}', '#{drug_auto_expire_date5}', '#{hiv_program_state_v_date}', '#{hiv_program_start_date_v_date}', '#{current_tb_status_v_date}', "#{patient_pregnant_v_date}", "#{drug_induced_abdominal_pain_v_date}", "#{drug_induced_anorexia_v_date}", "#{drug_induced_diarrhea_v_date}", "#{drug_induced_jaundice_v_date}", "#{drug_induced_leg_pain_numbness_v_date}", "#{drug_induced_vomiting_v_date}", "#{drug_induced_peripheral_neuropathy_v_date}", "#{drug_induced_hepatitis_v_date}", "#{drug_induced_anemia_v_date}", "#{drug_induced_lactic_acidosis_v_date}", "#{drug_induced_lipodystrophy_v_date}", "#{drug_induced_skin_rash_v_date}", "#{drug_induced_other_v_date}", "#{drug_induced_fever_v_date}", "#{drug_induced_cough_v_date}", "#{tb_not_suspected_v_date}", "#{tb_suspected_v_date}", "#{confirmed_tb_not_on_treatment_v_date}", "#{confirmed_tb_on_treatment_v_date}", "#{unknown_tb_status_v_date}", "#{what_was_the_patient_adherence_for_this_drug1_v_date}", "#{what_was_the_patient_adherence_for_this_drug2_v_date}", "#{what_was_the_patient_adherence_for_this_drug3_v_date}", "#{what_was_the_patient_adherence_for_this_drug4_v_date}", "#{what_was_the_patient_adherence_for_this_drug5_v_date}", "#{drug_name1_v_date}", "#{drug_name2_v_date}", "#{drug_name3_v_date}", "#{drug_name4_v_date}", "#{drug_name5_v_date}", "#{drug_inventory_id1_v_date}", "#{drug_inventory_id2_v_date}", "#{drug_inventory_id3_v_date}", "#{drug_inventory_id4_v_date}", "#{drug_inventory_id5_v_date}", "#{drug_auto_expire_date1_v_date}", "#{drug_auto_expire_date2_v_date}", "#{drug_auto_expire_date3_v_date}", "#{drug_auto_expire_date4_v_date}", "#{drug_auto_expire_date5_v_date}""#{side_effects_abdominal_pain}",  "#{side_effects_anemia}",  "#{side_effects_anorexia}",  "#{side_effects_blurry_vision}",  "#{side_effects_cough}",  "#{side_effects_diarrhea}",  "#{side_effects_diziness}",  "#{side_effects_fever}",  "#{side_effects_hepatitis}",  "#{side_effects_jaundice}",  "#{side_effects_kidney_failure}",  "#{side_effects_lactic_acidosis}",  "#{side_effects_leg_pain_numbness}",  "#{side_effects_lipodystrophy}",  "#{side_effects_no}",  "#{side_effects_other}",  "#{side_effects_peripheral_neuropathy}",  "#{side_effects_psychosis}",  "#{side_effects_renal_failure}",  "#{side_effects_skin_rash}",  "#{side_effects_vomiting}",  "#{side_effects_gynaecomastia}",  "#{side_effects_nightmares}", "#{drug_induced_kidney_failure}", "#{drug_induced_nightmares}", "#{drug_induced_diziness}", "#{drug_induced_psychosis}", "#{drug_induced_blurry_vision}");
 EOF
 
       else
@@ -576,19 +586,31 @@ UPDATE flat_cohort_table
   drug_induced_diziness = "#{drug_induced_diziness}",
   drug_induced_psychosis = "#{drug_induced_psychosis}",
   drug_induced_blurry_vision = "#{drug_induced_blurry_vision}",
-  side_effects_peripheral_neuropathy = "#{side_effects_peripheral_neuropathy}",
-  side_effects_hepatitis = "#{side_effects_hepatitis}",
-  side_effects_skin_rash = "#{side_effects_skin_rash}",
-  side_effects_lipodystrophy = "#{side_effects_lipodystrophy}",
-  side_effects_other = "#{side_effects_other}",
-  side_effects_gynaecomastia = "#{side_effects_gynaecomastia}",
-  side_effects_no = "#{side_effects_no}",
-  side_effects_kidney_failure = "#{side_effects_kidney_failure}",
-  side_effects_nightmares = "#{side_effects_nightmares}",
-  side_effects_diziness = "#{side_effects_diziness}",
-  side_effects_psychosis = "#{side_effects_psychosis}",
+
+  side_effects_abdominal_pain = "#{side_effects_abdominal_pain}",
+  side_effects_anemia = "#{side_effects_anemia}",
+  side_effects_anorexia = "#{side_effects_anorexia}",
   side_effects_blurry_vision = "#{side_effects_blurry_vision}",
+  side_effects_cough = "#{side_effects_cough}",
+  side_effects_diarrhea = "#{side_effects_diarrhea}",
+  side_effects_diziness = "#{side_effects_diziness}",
+  side_effects_fever = "#{side_effects_fever}",
+  side_effects_hepatitis = "#{side_effects_hepatitis}",
+  side_effects_jaundice = "#{side_effects_jaundice}",
+  side_effects_kidney_failure = "#{side_effects_kidney_failure}",
+  side_effects_lactic_acidosis = "#{side_effects_lactic_acidosis}",
+  side_effects_leg_pain_numbness = "#{side_effects_leg_pain_numbness}",
+  side_effects_lipodystrophy = "#{side_effects_lipodystrophy}",
+  side_effects_no = "#{side_effects_no}",
+  side_effects_other = "#{side_effects_other}",
+  side_effects_peripheral_neuropathy = "#{side_effects_peripheral_neuropathy}",
+  side_effects_psychosis = "#{side_effects_psychosis}",
   side_effects_renal_failure = "#{side_effects_renal_failure}",
+  side_effects_skin_rash = "#{side_effects_skin_rash}",
+  side_effects_vomiting = "#{side_effects_vomiting}",
+  side_effects_gynaecomastia = "#{side_effects_gynaecomastia}",
+  side_effects_nightmares = "#{side_effects_nightmares}",
+
   tb_not_suspected_v_date = "#{tb_not_suspected_v_date}",
   tb_not_suspected = "#{tb_not_suspected}",
   confirmed_tb_not_on_treatment = "#{confirmed_tb_not_on_treatment}",
@@ -868,19 +890,32 @@ def process_patient_state(patient, visit_date, visit)
     patient_outcome = patient_state['state']
   end
 
+  terminal_states = ["Patient transferred out", "Patient died", "Treatment stopped"]
+
+  if terminal_states.include?("#{patient_outcome}")
+    current_program_date_completed = Connection.select_one("SELECT date_completed AS date_completed FROM patient_program WHERE patient_id = #{patient} AND program_id = 1 AND voided = 0 LIMIT 1")
+    if current_program_date_completed.blank?
+      program_date_completed = "NULL"
+    else
+      program_date_completed = current_program_date_completed['date_completed']
+    end
+  else
+    program_date_completed = "NULL"
+  end
+
   patient_record = Connection.select_one("SELECT ID from flat_table2 WHERE patient_id = #{patient} AND DATE(visit_date) = '#{visit_date}'")
 
   unless patient_record.blank?
       Connection.execute <<EOF
 UPDATE flat_table2
-SET  current_hiv_program_state = "#{patient_outcome}", current_hiv_program_start_date = '#{visit_date}'
+SET  current_hiv_program_state = "#{patient_outcome}", current_hiv_program_start_date = '#{visit_date}', current_hiv_program_end_date = '#{program_date_completed}'
 WHERE flat_table2.id = '#{patient_record['ID']}';
 EOF
  else #else update current_state_for_program---update
         #update current_hiv_program_start_date
         Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, current_hiv_program_state, current_hiv_program_start_date)
-VALUES ("#{patient}", '#{visit_date}', "#{patient_outcome}", '#{visit_date}');
+INSERT INTO flat_table2 (patient_id, visit_date, current_hiv_program_state, current_hiv_program_start_date, current_hiv_program_end_date)
+VALUES ("#{patient}", '#{visit_date}', "#{patient_outcome}", '#{visit_date}', '#{program_date_completed}');
 EOF
   end #end if visit blank?
 end
@@ -2552,7 +2587,7 @@ EOF
           if patient['voided'].to_i == 0
             Connection.execute <<EOF
 UPDATE flat_table2
-SET  patient_breastfeeding = "#{value}", patient_breastfeeding_enc_id = '#{patient['encounter_id']}', patient_breastfeeding_v_date = DATE('#{patient_visit_date}'
+SET  patient_breastfeeding = "#{value}", patient_breastfeeding_enc_id = '#{patient['encounter_id']}', patient_breastfeeding_v_date = DATE('#{patient_visit_date}')
 WHERE flat_table2.id = #{visit};
 EOF
           else
@@ -2621,7 +2656,7 @@ EOF
           if patient['voided'].to_i == 0
             Connection.execute <<EOF
 UPDATE flat_table2
-SET  patient_breastfeeding = "#{value}", patient_breastfeeding_enc_id = '#{patient['encounter_id']}', patient_breastfeeding_v_date = DATE('#{patient_visit_date}'
+SET  patient_breastfeeding = "#{value}", patient_breastfeeding_enc_id = '#{patient['encounter_id']}', patient_breastfeeding_v_date = DATE('#{patient_visit_date}')
 WHERE flat_table2.id = #{visit};
 EOF
           else
@@ -2691,7 +2726,7 @@ EOF
           if patient['voided'].to_i == 0
             Connection.execute <<EOF
 UPDATE flat_table2
-SET  patient_breastfeeding = "#{value}", patient_breastfeeding_enc_id = '#{patient['encounter_id']}', patient_breastfeeding_v_date = DATE('#{patient_visit_date}'
+SET  patient_breastfeeding = "#{value}", patient_breastfeeding_enc_id = '#{patient['encounter_id']}', patient_breastfeeding_v_date = DATE('#{patient_visit_date}')
 WHERE flat_table2.id = #{visit};
 EOF
           else
@@ -2742,13 +2777,13 @@ EOF
         puts "........... Updating record into flat_table1 (cd4_count = #{value_numeric}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count = "#{value_numeric}", cd4_count_enc_id = '#{patient['encounter_id']}', cd4_count_v_date = DATE('#{patient_visit_date}'
+ SET  cd4_count = "#{value_numeric}", cd4_count_enc_id = '#{patient['encounter_id']}', cd4_count_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
         puts "........... Updating record into flat_table1 (cd4_count_modifier = #{value_modifier}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count_modifier = "#{value_modifier}", cd4_count_modifier_enc_id = '#{patient['encounter_id']}', cd4_count_modifier_v_date = DATE('#{patient_visit_date}'
+ SET  cd4_count_modifier = "#{value_modifier}", cd4_count_modifier_enc_id = '#{patient['encounter_id']}', cd4_count_modifier_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2771,7 +2806,7 @@ EOF
       puts ".......... Updating record into flat_table1 (cd4_count_percent = #{value_numeric}): #{patient['person_id']}"
       Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count_percent = "#{value_numeric}",  cd4_count_percent_enc_id = '#{patient['encounter_id']}', cd4_count_percent_v_date = DATE('#{patient_visit_date}'
+ SET  cd4_count_percent = "#{value_numeric}",  cd4_count_percent_enc_id = '#{patient['encounter_id']}', cd4_count_percent_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
 
@@ -2781,7 +2816,7 @@ EOF
         puts ".......... Updating record into flat_table1 (cd4_count_datetime = #{value_datetime}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count_datetime = '#{value_datetime}',  cd4_count_datetime_enc_id = '#{patient['encounter_id']}', cd4_count_datetime_v_date = DATE('#{patient_visit_date}'
+ SET  cd4_count_datetime = '#{value_datetime}',  cd4_count_datetime_enc_id = '#{patient['encounter_id']}', cd4_count_datetime_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2803,7 +2838,7 @@ EOF
         puts ".......... Updating record into flat_table1 (cd4_percent_less_than_25 = #{answer}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_percent_less_than_25 = "#{answer}", cd4_percent_less_than_25_enc_id = '#{patient['encounter_id']}', cd4_percent_less_than_25_v_date = DATE('#{patient_visit_date}'
+ SET  cd4_percent_less_than_25 = "#{answer}", cd4_percent_less_than_25_enc_id = '#{patient['encounter_id']}', cd4_percent_less_than_25_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2821,7 +2856,7 @@ EOF
         puts ".......... Updating record into flat_table1 (cd4_count_location = #{value_text}): patient_id: #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
-  SET cd4_count_location = "#{value_text}", cd4_count_location_enc_id = '#{patient['encounter_id']}', cd4_count_location_v_date = DATE('#{patient_visit_date}'
+  SET cd4_count_location = "#{value_text}", cd4_count_location_enc_id = '#{patient['encounter_id']}', cd4_count_location_v_date = DATE('#{patient_visit_date}')
   WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2843,7 +2878,7 @@ EOF
         puts ".......... Updating record into flat_table1 (cd4_count_less_than_250 = #{answer}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count_less_than_250 = "#{answer}", cd4_count_less_than_250_enc_id = '#{patient['encounter_id']}', cd4_count_less_than_250_v_date = DATE('#{patient_visit_date}'
+ SET  cd4_count_less_than_250 = "#{answer}", cd4_count_less_than_250_enc_id = '#{patient['encounter_id']}', cd4_count_less_than_250_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2864,7 +2899,7 @@ EOF
         puts ".......... Updating record into flat_table1 (cd4_count_less_than_350 = #{answer}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count_less_than_350 = "#{answer}", cd4_count_less_than_350_enc_id = '#{patient['encounter_id']}', cd4_count_less_than_350_v_date = DATE('#{patient_visit_date}'
+ SET  cd4_count_less_than_350 = "#{answer}", cd4_count_less_than_350_enc_id = '#{patient['encounter_id']}', cd4_count_less_than_350_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2882,7 +2917,7 @@ EOF
         puts ".......... Updating record into flat_table1 (lymphocyte_count_date = #{value_datetime}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  lymphocyte_count_date = '#{value_datetime}', lymphocyte_count_date_enc_id = '#{patient['encounter_id']}', lymphocyte_count_date_v_date = DATE('#{patient_visit_date}'
+ SET  lymphocyte_count_date = '#{value_datetime}', lymphocyte_count_date_enc_id = '#{patient['encounter_id']}', lymphocyte_count_date_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2900,7 +2935,7 @@ EOF
         puts ".......... Updating record into flat_table1 (lymphocyte_count = #{value_numeric}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  lymphocyte_count = "#{value_numeric}", lymphocyte_count_enc_id = '#{patient['encounter_id']}', lymphocyte_count_v_date = DATE('#{patient_visit_date}'
+ SET  lymphocyte_count = "#{value_numeric}", lymphocyte_count_enc_id = '#{patient['encounter_id']}', lymphocyte_count_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2921,7 +2956,7 @@ EOF
         puts ".......... Updating record into flat_table1 (asymptomatic = #{answer}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
- SET  asymptomatic = "#{answer}", asymptomatic_enc_id = '#{patient['encounter_id']}', asymptomatic_v_date = DATE('#{patient_visit_date}'
+ SET  asymptomatic = "#{answer}", asymptomatic_enc_id = '#{patient['encounter_id']}', asymptomatic_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2943,7 +2978,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  persistent_generalized_lymphadenopathy= "#{answer}", persistent_generalized_lymphadenopathy_enc_id = '#{patient['encounter_id']}',
-     persistent_generalized_lymphadenopathy_v_date = DATE('#{patient_visit_date}'
+     persistent_generalized_lymphadenopathy_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2966,7 +3001,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  unspecified_stage_1_cond = "#{answer}", unspecified_stage_1_cond_enc_id = '#{patient['encounter_id']}',
-     unspecified_stage_1_cond_v_date = DATE('#{patient_visit_date}'
+     unspecified_stage_1_cond_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -2988,7 +3023,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  molluscumm_contagiosum = "#{answer}", molluscumm_contagiosum_enc_id = '#{patient['encounter_id']}',
-     molluscumm_contagiosum_v_date = DATE('#{patient_visit_date}'
+     molluscumm_contagiosum_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3011,7 +3046,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  wart_virus_infection_extensive = "#{answer}", wart_virus_infection_extensive_enc_id = '#{patient['encounter_id']}',
-     wart_virus_infection_extensive_v_date = DATE('#{patient_visit_date}'
+     wart_virus_infection_extensive_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3034,7 +3069,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  oral_ulcerations_recurrent = "#{answer}", oral_ulcerations_recurrent_enc_id = '#{patient['encounter_id']}',
-     oral_ulcerations_recurrent_v_date = DATE('#{patient_visit_date}'
+     oral_ulcerations_recurrent_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3057,7 +3092,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  parotid_enlargement_persistent_unexplained = "#{answer}", parotid_enlargement_persistent_unexplained_enc_id = '#{patient['encounter_id']}',
-     parotid_enlargement_persistent_unexplained_v_date = DATE('#{patient_visit_date}'
+     parotid_enlargement_persistent_unexplained_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3081,7 +3116,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  lineal_gingival_erythema = "#{answer}", lineal_gingival_erythema_enc_id = '#{patient['encounter_id']}',
-     lineal_gingival_erythema_v_date = DATE('#{patient_visit_date}'
+     lineal_gingival_erythema_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3104,7 +3139,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  herpes_zoster = "#{answer}", herpes_zoster_enc_id = '#{patient['encounter_id']}',
-     herpes_zoster_v_date = DATE('#{patient_visit_date}'
+     herpes_zoster_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3127,7 +3162,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  respiratory_tract_infections_recurrent = "#{answer}", respiratory_tract_infections_recurrent_enc_id = '#{patient['encounter_id']}',
-     respiratory_tract_infections_recurrent_v_date = DATE('#{patient_visit_date}'
+     respiratory_tract_infections_recurrent_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3150,7 +3185,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  unspecified_stage2_condition = "#{answer}", unspecified_stage2_condition_enc_id = '#{patient['encounter_id']}',
-     unspecified_stage2_condition_v_date = DATE('#{patient_visit_date}'
+     unspecified_stage2_condition_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3173,7 +3208,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  angular_chelitis = "#{answer}", angular_chelitis_enc_id = '#{patient['encounter_id']}',
-     angular_chelitis_v_date = DATE('#{patient_visit_date}'
+     angular_chelitis_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3196,7 +3231,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  papular_pruritic_eruptions = "#{answer}", papular_pruritic_eruptions_enc_id = '#{patient['encounter_id']}',
-     papular_pruritic_eruptions_v_date = DATE('#{patient_visit_date}'
+     papular_pruritic_eruptions_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3220,7 +3255,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  hepatosplenomegaly_unexplained = "#{answer}", hepatosplenomegaly_unexplained_enc_id = '#{patient['encounter_id']}',
-     hepatosplenomegaly_unexplained_v_date = DATE('#{patient_visit_date}'
+     hepatosplenomegaly_unexplained_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3243,7 +3278,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  oral_hairy_leukoplakia = "#{answer}", oral_hairy_leukoplakia_enc_id = '#{patient['encounter_id']}',
-     oral_hairy_leukoplakia_v_date = DATE('#{patient_visit_date}'
+     oral_hairy_leukoplakia_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3265,7 +3300,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  severe_weight_loss = "#{answer}", severe_weight_loss_enc_id = '#{patient['encounter_id']}',
-     severe_weight_loss_v_date = DATE('#{patient_visit_date}'
+     severe_weight_loss_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -3288,7 +3323,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
  SET  fever_persistent_unexplained = "#{answer}", fever_persistent_unexplained_enc_id = '#{patient['encounter_id']}',
-     fever_persistent_unexplained_v_date = DATE('#{patient_visit_date}'
+     fever_persistent_unexplained_v_date = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -5043,7 +5078,7 @@ EOF
         puts "........... Updating record into flat_table1 reason_for_eligibility = #{answer}): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
-SET reason_for_eligibility = "#{answer}", reason_for_eligibility_V_date = DATE('#{patient_visit_date}'), reason_for_eligibility_enc_id = "#{patient['encounter_id']}"
+SET reason_for_eligibility = "#{answer}", reason_for_eligibility_v_date = DATE('#{patient_visit_date}'), reason_for_eligibility_enc_id = "#{patient['encounter_id']}"
 WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -5107,7 +5142,7 @@ when who_stages_criteria_present
         puts ".......... Updating record into flat_table1 (asymptomatic): #{patient['person_id']}"
         Connection.execute <<EOF
 UPDATE flat_table1
-SET  asymptomatic = "Yes", asymptomatic_enc_id = '#{patient['encounter_id']}', asymptomatic_v_date = DATE('#{patient_visit_date}'
+SET  asymptomatic = "Yes", asymptomatic_enc_id = '#{patient['encounter_id']}', asymptomatic_v_date = DATE('#{patient_visit_date}')
 WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
       else
@@ -5397,7 +5432,7 @@ EOF
         Connection.execute <<EOF
 UPDATE flat_table1
 SET  severe_weight_loss = NULL, severe_weight_loss_enc_id = '#{patient['encounter_id']}',
-     severe_weight_loss_v_date = DATE('#{patient_visit_date}', severe_weight_loss_enc_id = NULL,
+     severe_weight_loss_v_date = DATE('#{patient_visit_date}'), severe_weight_loss_enc_id = NULL,
 severe_weight_loss_v_date = NULL
 WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
@@ -9739,10 +9774,134 @@ EOF
   end #end appointment_date obs
 end
 
+def process_exit_from_care_obs(encounter, visit)
+  reason_for_exiting_from_care_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+                WHERE  name = 'Reason for exiting care' AND voided = 0 AND retired = 0 LIMIT 1")
+  reason_for_exiting_from_care = reason_for_exiting_from_care_record['concept_id']
+
+  transfer_out_to_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+                WHERE  name = 'Transfer out to' AND voided = 0 AND retired = 0 LIMIT 1")
+  transfer_out_to = transfer_out_to_record['concept_id']
+
+  date_of_exiting_care_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+                WHERE  name = 'Date of exiting care' AND voided = 0 AND retired = 0 LIMIT 1")
+  date_of_exiting_care = date_of_exiting_care_record['concept_id']
+
+  exit_from_care_obs = Connection.select_all("SELECT * FROM obs WHERE encounter_id = #{encounter['encounter_id']}")
+
+  (exit_from_care_obs || []).each do |patient|
+    case patient['concept_id']
+    when reason_for_exiting_from_care
+      patient_visit_date =  patient['obs_datetime'].to_date.strftime("%Y-%m-%d")
+
+      value_record = Connection.select_one("SELECT concept_name.name AS name FROM concept_name
+                    LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+                    WHERE concept_name.concept_id = #{patient['value_coded'].to_i} AND voided = 0 AND retired = 0 LIMIT 1")
+
+      flat_table_2_data = []
+      flat_table_2_data = Connection.select_one("SELECT * FROM flat_table2
+                                          WHERE patient_id = #{encounter['patient_id']}
+                                          AND visit_date = '#{patient_visit_date}'")
+
+     if flat_table_2_data.blank?
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, reason_for_exiting_from_care, reason_for_exiting_from_care_enc_id)
+VALUES('#{patient['person_id']}', '#{value_record['name']}', #{patient['encounter_id']}') ;
+EOF
+      else #else visit blank
+        #update
+        if patient['voided'] == "0"
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  reason_for_exiting_from_care =  '#{value_record['name']}', reason_for_exiting_from_care_enc_id = '#{patient['encounter_id']}'
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+        else #else voided
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  reason_for_exiting_from_care = NULL, reason_for_exiting_from_care_enc_id = NULL
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+        end #end voided
+      end #end visit blank
+#-----------------------------------------------------------------------------------------------------------------end reason exit_from_care_obs
+when transfer_out_to
+  patient_visit_date =  patient['obs_datetime'].to_date.strftime("%Y-%m-%d")
+
+  value_record = Connection.select_one("SELECT name FROM location WHERE location_id = #{patient['value_numeric'].to_i}")
+  value_record = patient['value_text'] if value_record.blank?
+
+  flat_table_2_data = []
+  flat_table_2_data = Connection.select_one("SELECT * FROM flat_table2
+                                      WHERE patient_id = #{encounter['patient_id']}
+                                      AND visit_date = '#{patient_visit_date}'")
+
+  if flat_table_2_data.blank?
+    #insert
+    Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, transfer_out_location, transfer_out_location_enc_id)
+VALUES('#{patient['person_id']}', '#{value_record['name']}', #{patient['encounter_id']}') ;
+EOF
+  else #else visit blank
+    #update
+    if patient['voided'] == "0"
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET  transfer_out_location =  '#{value_record['name']}', transfer_out_location_enc_id = '#{patient['encounter_id']}'
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+    else #else voided
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET  transfer_out_location = NULL, transfer_out_location_enc_id = NULL
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+    end #end voided
+  end #end visit blank
+#-----------------------------------------------------------------------------------------------------------------end transfer out
+  when date_of_exiting_care
+    patient_visit_date =  patient['obs_datetime'].to_date.strftime("%Y-%m-%d")
+
+    flat_table_2_data = []
+    flat_table_2_data = Connection.select_one("SELECT * FROM flat_table2
+                                        WHERE patient_id = #{encounter['patient_id']}
+                                        AND visit_date = '#{patient_visit_date}'")
+
+   if flat_table_2_data.blank?
+      #insert
+    Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, date_exiting_from_care, date_of_exiting_care_enc_id)
+VALUES('#{patient['person_id']}', '#{patient['value_datetime']}', #{patient['encounter_id']}') ;
+EOF
+    else #else visit blank
+      #update
+      if patient['voided'] == "0"
+        Connection.execute <<EOF
+UPDATE flat_table2
+SET  date_exiting_from_care =  '#{patient['value_datetime']}', date_exiting_from_care_enc_id = '#{patient['encounter_id']}'
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+      else #else voided
+        Connection.execute <<EOF
+UPDATE flat_table2
+SET  date_exiting_from_care = NULL, date_exiting_from_care_enc_id = NULL
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+      end #end voided
+    end #end visit blank
+#-----------------------------------------------------------------------------------------------------------------end date exit from care
+    end #end appointment_date case statement
+  end #end appointment_date obs
+end
+
 def process_art_adherence_obs(encounter, visit)
   amount_of_drug_brought_to_clinic_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
-            LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
-            WHERE name = 'Amount of drug brought to clinic' AND voided = 0 AND retired = 0 LIMIT 1")
+          LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+          WHERE name = 'Amount of drug brought to clinic' AND voided = 0 AND retired = 0 LIMIT 1")
   amount_of_drug_brought_to_clinic = amount_of_drug_brought_to_clinic_record['concept_id'].to_i
 
   amount_of_drug_remaining_at_home_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
@@ -9760,864 +9919,387 @@ def process_art_adherence_obs(encounter, visit)
             WHERE name = 'Missed HIV drug construct' AND voided = 0 AND retired = 0 LIMIT 1")
   missed_hiv_drug_construct = missed_hiv_drug_construct_record['concept_id'].to_i
 
-  patient_obs = Connection.select_all("SELECT * FROM obs
-    WHERE encounter_id = #{encounter['encounter_id'].to_i}")
+  patient_adh = {}; amount_of_drug_brought_to_clinic_hash  = {}
+  missed_hiv_drug_const_hash  = {}; patient_adherence_hash  = {}
+  patient_adherence_enc_ids = {}; amount_of_drug_remaining_at_home_hash  = {}
+  amount_of_remaining_drug_order_id_hash = {}; amount_voided = {}
 
-  (patient_obs || []).each do |patient|
-    #puts "concept_id = #{patient['concept_id'].to_i}"
-    patient_visit_date =  patient['obs_datetime'].to_date.strftime("%Y-%m-%d")
+  patient_obs = Connection.select_all("select person_id, order_id, concept_id, value_coded, ifnull(value_numeric, value_text) as value, obs_datetime, encounter_id, voided
+                                       from obs where encounter_id = #{encounter['encounter_id'].to_i}")
+    (patient_obs || []).each do |adh|
+    unless adh['order_id'].to_i <= 0
+      if patient_adh.blank?
+        patient_adh[adh['order_id'].to_i] = adh['order_id'].to_i
+        amount_voided[adh['order_id'].to_i] = adh['voided'].to_i
+        amount_of_remaining_drug_order_id_hash[adh['order_id'].to_i] = adh['order_id'].to_i rescue nil
 
-    flat_table_1_data = []
-    flat_table1_record = Connection.select_one("SELECT * FROM flat_table1 WHERE flat_table1.patient_id = #{patient['person_id']}") rescue nil
-    case patient['concept_id'].to_i
-    when amount_of_drug_brought_to_clinic
-
-      flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 WHERE ID = #{visit['ID']} ") rescue nil
-
-      amount_of_drug1_brought_to_clinic = flat_table2_record['amount_of_drug1_brought_to_clinic'] rescue nil
-      amount_of_drug2_brought_to_clinic = flat_table2_record['amount_of_drug2_brought_to_clinic'] rescue nil
-      amount_of_drug3_brought_to_clinic = flat_table2_record['amount_of_drug3_brought_to_clinic'] rescue nil
-      amount_of_drug4_brought_to_clinic = flat_table2_record['amount_of_drug4_brought_to_clinic'] rescue nil
-      amount_of_drug5_brought_to_clinic = flat_table2_record['amount_of_drug5_brought_to_clinic'] rescue nil
-
-      if flat_table2_record.blank?
-        answer = patient['value_text'] if patient['value_numeric'].blank?
-        #raise answer.inspect
-        case
-        when amount_of_drug1_brought_to_clinic.blank?
-          puts ".......... Inserting record into flat_table2 (amount_of_drug1_brought_to_clinic): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug1_brought_to_clinic, amount_of_drug1_brought_to_clinic_enc_id), amount_of_remaining_drug1_order_id
-  VALUES (#{patient['person_id']}, '#{patient_visit_date}', "#{answer}", #{patient['encounter_id']}), patient['order_id'];
-EOF
-        when amount_of_drug2_brought_to_clinic.blank?
-          value_numeric = "Unknown" if patient['value_numeric'].blank?
-          puts ".......... Inserting record into flat_table2 (amount_of_drug2_brought_to_clinic): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug2_brought_to_clinic, amount_of_drug2_brought_to_clinic_enc_id, amount_of_remaining_drug2_order_id)
-  VALUES (#{patient['person_id']}, DATE('#{patient_visit_date}'), "#{answer}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-        when amount_of_drug3_brought_to_clinic.blank?
-          #value_numeric = "Unknown" if patient['value_numeric'].blank?
-          puts ".......... Inserting record into flat_table2 (amount_of_drug3_brought_to_clinic): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug3_brought_to_clinic, amount_of_drug3_brought_to_clinic_enc_id, amount_of_remaining_drug3_order_id)
-  VALUES (#{patient['person_id']}, DATE('#{patient_visit_date}'), "#{answer}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-        when amount_of_drug4_brought_to_clinic.blank?
-          value_numeric = "Unknown" if patient['value_numeric'].blank?
-          puts ".......... Inserting record into flat_table2 (amount_of_drug4_brought_to_clinic): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug4_brought_to_clinic, amount_of_drug4_brought_to_clinic_enc_id, amount_of_remaining_drug4_order_id)
-  VALUES (#{patient['person_id']}, DATE('#{patient_visit_date}'), "#{answer}", #{patient['encounter_id']}, patient['order_id']);
-EOF
-        when amount_of_drug5_brought_to_clinic.blank?
-          value_numeric = "Unknown" if patient['value_numeric'].blank?
-          puts ".......... Inserting record into flat_table2 (amount_of_drug5_brought_to_clinic): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug5_brought_to_clinic, amount_of_drug5_brought_to_clinic_enc_id, amount_of_remaining_drug5_order_id)
-  VALUES (#{patient['person_id']}, DATE('#{patient_visit_date}'), "#{answer}", #{patient['encounter_id']}, patient['order_id']);
-EOF
-        end #case
-
-      else
-        case patient['concept_id'].to_i
-        when amount_of_drug1_brought_to_clinic.blank?
-          if patient['voided'].to_i == 0
-
-            value_numeric = patient['value_text'] if patient['value_numeric'].blank?
-            #raise value_numeric.yaml
-            puts ".......... Updating record in flat_table2 (amount_of_drug1_brought_to_clinic = #{answer}): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug1_brought_to_clinic = "#{answer}", amount_of_drug1_brought_to_clinic_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug1_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            else
-              puts ".......... Updating record into flat_table2 (amount_of_drug1_brought_to_clinic = NULL): patient_id: #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug1_brought_to_clinic = NULL, amount_of_drug1_brought_to_clinic_enc_id = NULL,
-      amount_of_remaining_drug1_order_id = NULL
-  WHERE flat_table2.id = "#{visit}";
-EOF
-            end #voided
-
-          when amount_of_drug2_brought_to_clinic.blank?
-            if patient['voided'].to_i == 0
-              value_numeric = "Unknown" if patient['value_numeric'].blank?
-              puts ".......... Updating record into flat_table2 (amount_of_drug2_brought_to_clinic = #{answer}): patient_id: #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug2_brought_to_clinic = "#{answer}", amount_of_drug2_brought_to_clinic_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug2_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = "#{visit}";
-EOF
-            else
-              puts ".......... Updating record into flat_table2 (amount_of_drug2_brought_to_clinic = NULL): patient_id: #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug2_brought_to_clinic = NULL, amount_of_drug2_brought_to_clinic_enc_id = NULL,
-      amount_of_remaining_drug2_order_id = NULL
-  WHERE flat_table2.id = "#{visit}";
-EOF
-            end #voided
-
-            when amount_of_drug3_brought_to_clinic.blank?
-              if patient['voided'].to_i == 0
-                value_numeric = "Unknown" if patient['value_numeric'].blank?
-                puts ".......... Updating record into flat_table2 (amount_of_drug3_brought_to_clinic =  #{answer}): patient_id: #{patient['person_id']}"
-                Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug3_brought_to_clinic = "#{answer}", amount_of_drug3_brought_to_clinic_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug3_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = "#{visit}";
-EOF
-              else
-                puts ".......... Updating record into flat_table2 (amount_of_drug3_brought_to_clinic = NULL): patient_id: #{patient['person_id']}"
-                Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug3_brought_to_clinic = NULL, amount_of_drug3_brought_to_clinic_enc_id = NULL, amount_of_remaining_drug3_order_id = NULL
-  WHERE flat_table2.id = "#{visit}";
-EOF
-              end #voided
-
-            when amount_of_drug4_brought_to_clinic.blank?
-              if patient['voided'].to_i == 0
-                value_numeric = "Unknown" if patient['value_numeric'].blank?
-                puts ".......... Updating record into flat_table2 (amount_of_drug4_brought_to_clinic = #{answer}): patient_id: #{patient['person_id']}"
-                Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug4_brought_to_clinic = "#{answer}", amount_of_drug4_brought_to_clinic_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug4_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = "#{visit}";
-EOF
-              else
-                puts ".......... Updating record into flat_table2 (amount_of_drug4_brought_to_clinic = NULL): patient_id: #{patient['person_id']}"
-                Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug4_brought_to_clinic = NULL, amount_of_drug4_brought_to_clinic_enc_id = NULL,
-      amount_of_remaining_drug4_order_id = NULL
-  WHERE flat_table2.id = "#{visit}";
-EOF
-              end #voided
-
-            when amount_of_drug5_brought_to_clinic.blank?
-              if patient['voided'].to_i == 0
-                value_numeric = "Unknown" if patient['value_numeric'].blank?
-                puts ".......... Updating record into flat_table2 (amount_of_drug5_brought_to_clinic = #{answer}): patient_id: #{patient['person_id']}"
-                Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug5_brought_to_clinic = "#{answer}", amount_of_drug5_brought_to_clinic_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug5_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = "#{visit}";
-EOF
-              else
-                puts ".......... Updating record into flat_table2 (amount_of_drug5_brought_to_clinic = NULL): patient_id: #{patient['person_id']}"
-                Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug5_brought_to_clinic = NULL, amount_of_drug5_brought_to_clinic_enc_id = NULL,
-      amount_of_remaining_drug5_order_id = NULL
-  WHERE flat_table2.id = "#{visit}";
-EOF
-              end #voided
-            end #case
-          end #visit
-
-#------------------------------------------------------------------------------------------------end
-
-    when amount_of_drug_remaining_at_home
-
-      flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 WHERE ID = #{visit['ID']}") rescue nil
-
-      amount_of_drug1_remaining_at_home = flat_table2_record['amount_of_drug1_remaining_at_home'] rescue nil
-      amount_of_drug2_remaining_at_home = flat_table2_record['amount_of_drug2_remaining_at_home'] rescue nil
-      amount_of_drug3_remaining_at_home = flat_table2_record['amount_of_drug3_remaining_at_home'] rescue nil
-      amount_of_drug4_remaining_at_home = flat_table2_record['amount_of_drug4_remaining_at_home'] rescue nil
-      amount_of_drug5_remaining_at_home = flat_table2_record['amount_of_drug5_remaining_at_home'] rescue nil
-
-      if visit.blank?
-        answer = patient['value_text'] if patient['value_numeric'].blank?
-        case
-        when amount_of_drug1_remaining_at_home.blank?
-          puts ".......... Inserting record into flat_table2 (amount_of_drug1_remaining_at_home): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug1_remaining_at_home, amount_of_drug1_remaining_at_home_enc_id)
-  VALUES (#{patient['person_id']}, '#{patient_visit_date}', "#{answer}", #{patient['encounter_id']});
-EOF
-        when amount_of_drug2_remaining_at_home.blank?
-          value_numeric = patient['value_numeric'] rescue patient['value_text']
-          puts ".......... Inserting record into flat_table2 (amount_of_drug2_remaining_at_home): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug2_remaining_at_home, amount_of_drug2_remaining_at_home_enc_id)
-  VALUES (#{patient['person_id']}, '#{patient_visit_date}', "#{answer}", #{patient['encounter_id']});
-EOF
-        when amount_of_drug3_remaining_at_home.blank?
-          value_numeric = patient['value_numeric'] rescue patient['value_text']
-          puts ".......... Inserting record into flat_table2 (amount_of_drug3_remaining_at_home): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug3_remaining_at_home, amount_of_drug3_remaining_at_home_enc_id)
-  VALUES (#{patient['person_id']}, '#{patient_visit_date}', "#{answer}", #{patient['encounter_id']});
-EOF
-        when amount_of_drug4_remaining_at_home.blank?
-          value_numeric = patient['value_numeric'] rescue patient['value_text']
-          puts ".......... Inserting record into flat_table2 (amount_of_drug4_remaining_at_home): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug4_remaining_at_home, amount_of_drug4_remaining_at_home_enc_id)
-  VALUES (#{patient['person_id']}, '#{patient_visit_date}', "#{answer}", #{patient['encounter_id']});
-EOF
-        when amount_of_drug5_remaining_at_home.blank?
-          puts ".......... Inserting record into flat_table2 (amount_of_drug5_remaining_at_home): patient_id: #{patient['person_id']}"
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, amount_of_drug5_remaining_at_home, amount_of_drug5_remaining_at_home_enc_id)
-  VALUES (#{patient['person_id']}, '#{patient_visit_date}', "#{answer}", #{patient['encounter_id']});
-EOF
-        end #case
-
-      else
-        case
-        when amount_of_drug1_remaining_at_home.blank?
-          if patient['voided'].to_i == 0
-            value_numeric = patient['value_numeric'] rescue patient['value_text']
-            puts ".......... Updating record into flat_table2 (amount_of_drug1_remaining_at_home = #{value_numeric}): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug1_remaining_at_home = "#{value_numeric}", amount_of_drug1_remaining_at_home_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug1_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
+        if adh['concept_id'].to_i == 2540 #amount brought
+          if adh['value'].blank?
+            amount_of_drug_brought_to_clinic_hash[adh['order_id'].to_i] = "NULL"
           else
-            puts ".......... Updating record into flat_table2 (amount_of_drug1_remaining_at_home = NULL): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug1_remaining_at_home = NULL, amount_of_drug1_remaining_at_home_enc_id = NULL,
-      amount_of_remaining_drug1_order_id = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        when amount_of_drug2_remaining_at_home.blank?
-          if patient['voided'].to_i == 0
-            value_numeric = patient['value_numeric'] rescue patient['value_text']
-            puts ".......... Updating record into flat_table2 (amount_of_drug2_remaining_at_home = #{value_numeric}): patient_id: #{patient['person_id']}"
-            value_numeric = patient['value_numeric']
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug2_remaining_at_home = "#{value_numeric}", amount_of_drug2_remaining_at_home_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug2_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          else
-            puts ".......... Updating record into flat_table2 (amount_of_drug2_remaining_at_home = NULL): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug2_remaining_at_home = NULL, amount_of_drug2_remaining_at_home_enc_id = NULL,
-      amount_of_remaining_drug2_order_id = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        when amount_of_drug3_remaining_at_home.blank?
-          value_numeric = patient['value_numeric'] rescue patient['value_text']
-          puts ".......... Updating record into flat_table2 (amount_of_drug3_remaining_at_home = #{value_numeric}): patient_id: #{patient['person_id']}"
-          if patient['voided'].to_i == 0
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug3_remaining_at_home = "#{value_numeric}", amount_of_drug3_remaining_at_home_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug3_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          else
-            puts ".......... Updating record into flat_table2 (amount_of_drug3_remaining_at_home = NULL): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug3_remaining_at_home = NULL, amount_of_drug3_remaining_at_home_enc_id = NULL,
-      amount_of_remaining_drug3_order_id = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        when amount_of_drug4_remaining_at_home.blank?
-          if patient['voided'].to_i
-            value_numeric = patient['value_numeric'] rescue patient['value_text']
-            puts ".......... Updating record into flat_table2 (amount_of_drug4_remaining_at_home = #{value_numeric}): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug4_remaining_at_home = "#{value_numeric}", amount_of_drug4_remaining_at_home_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug4_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          else
-            puts ".......... Updating record into flat_table2 (amount_of_drug4_remaining_at_home = NULL): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug4_remaining_at_home = NULL, amount_of_drug4_remaining_at_home_enc_id = NULL,
-      amount_of_remaining_drug4_order_id = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        when amount_of_drug5_remaining_at_home.blank?
-          if patient['voided'].to_i == 0
-            value_numeric = patient['value_numeric'] rescue patient['value_text']
-            puts ".......... Updating record into flat_table2 (amount_of_drug5_remaining_at_home = #{value_numeric}): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug5_remaining_at_home = "#{value_numeric}", amount_of_drug5_remaining_at_home_enc_id = #{patient['encounter_id']},
-      amount_of_remaining_drug5_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          else
-            puts ".......... Updating record into flat_table2 (amount_of_drug5_remaining_at_home =NULL): patient_id: #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET amount_of_drug5_remaining_at_home = NULL, amount_of_drug5_remaining_at_home_enc_id = NULL
-     ,amount_of_remaining_drug5_order_id = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        end #case
-      end #visit
-
-#------------------------------------------------------------------------------------------------end
-
-    when what_was_the_patient_adherence_for_this_drug
-      flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 WHERE ID = #{visit['ID']} ") rescue nil
-      what_was_the_patient_adherence_for_this_drug1 = flat_table2_record['what_was_the_patient_adherence_for_this_drug1'] rescue nil
-      what_was_the_patient_adherence_for_this_drug2 = flat_table2_record['what_was_the_patient_adherence_for_this_drug2'] rescue nil
-      what_was_the_patient_adherence_for_this_drug3 = flat_table2_record['what_was_the_patient_adherence_for_this_drug3'] rescue nil
-      what_was_the_patient_adherence_for_this_drug4 = flat_table2_record['what_was_the_patient_adherence_for_this_drug4'] rescue nil
-      what_was_the_patient_adherence_for_this_drug5 = flat_table2_record['what_was_the_patient_adherence_for_this_drug5'] rescue nil
-      value_numeric = patient['value_numeric']
-      if visit.blank?
-        case
-        when what_was_the_patient_adherence_for_this_drug1.blank?
-          value_text = patient['value_text']
-          if patient['value_numeric'].blank?
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug1): patient_id #{patient['person_id']}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug1, what_was_the_patient_adherence_for_this_drug1_enc_id, amount_of_remaining_drug1_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_text}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          else
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug1): patient_id #{patient['person_id']}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug1, what_was_the_patient_adherence_for_this_drug1_enc_id, amount_of_remaining_drug1_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_numeric}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          end #value_numeric
-
-        when what_was_the_patient_adherence_for_this_drug2.blank?
-          value_text = patient['value_text']
-          if patient['value_numeric'].blank?
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug2): patient_id #{patient['person_id']}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug2, what_was_the_patient_adherence_for_this_drug2_enc_id, amount_of_remaining_drug2_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_text}", #{patient['encounter_id']},  #{patient['order_id']});
-EOF
-          else
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug2): #{patient['person_id']}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug2, what_was_the_patient_adherence_for_this_drug2_enc_id, amount_of_remaining_drug2_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_numeric}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          end #value_numeric
-
-        when what_was_the_patient_adherence_for_this_drug3.blank?
-          value_text = patient['value_text']
-          if patient['value_numeric'].blank?
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug3): #{patient_id}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug3, what_was_the_patient_adherence_for_this_drug3_enc_id, amount_of_remaining_drug3_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_text}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          else
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug3): #{patient_id}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug3, what_was_the_patient_adherence_for_this_drug3_enc_id, amount_of_remaining_drug3_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_numeric}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          end #value_numeric
-        when what_was_the_patient_adherence_for_this_drug4.blank?
-          value_text = patient['value_text']
-          if patient['value_numeric'].blank?
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug4): #{patient_id}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug4, what_was_the_patient_adherence_for_this_drug4_enc_id, amount_of_remaining_drug4_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_text}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          else
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug4): #{patient_id}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug4, what_was_the_patient_adherence_for_this_drug4_enc_id, amount_of_remaining_drug4_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_numeric}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          end #value_numeric
-        when what_was_the_patient_adherence_for_this_drug5.blank?
-          value_text = patient['value_text']
-          if patient['value_numeric'].blank?
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug5): #{patient_id}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug5, what_was_the_patient_adherence_for_this_drug5_enc_id, amount_of_remaining_drug5_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_text}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          else
-            puts "........... Inserting record into flat_table2 (what_was_the_patient_adherence_for_this_drug5): #{patient_id}"
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, what_was_the_patient_adherence_for_this_drug5, what_was_the_patient_adherence_for_this_drug5_enc_id, amount_of_remaining_drug5_order_id)
-  VALUES (#{patient['person_id']}, 'patient_visit_date', "#{value_numeric}", #{patient['encounter_id']}, #{patient['order_id']});
-EOF
-          end #value_numeric
-        end #case
-      else
-        case
-        when what_was_the_patient_adherence_for_this_drug1.blank?
-          value_text = patient['value_text'] rescue nil
-          value_numeric = patient['value_numeric'] rescue nil
-          if patient['voided'].to_i == 0
-            if patient['value_numeric'].blank?
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug1): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug1 = "#{value_text}",
-    what_was_the_patient_adherence_for_this_drug1_enc_id = #{patient['encounter_id']},
-    amount_of_remaining_drug5_order_id = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            else
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug1): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug1 = "#{value_numeric}",
-  what_was_the_patient_adherence_for_this_drug1_enc_id = #{patient['encounter_id']},
-  what_was_the_patient_adherence_for_this_drug1 = patient['order_id']
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            end #value_numeric
-          else
-            puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug1): #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug1 = NULL, what_was_the_patient_adherence_for_this_drug1_enc_id = NULL, what_was_the_patient_adherence_for_this_drug1 = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        when what_was_the_patient_adherence_for_this_drug2
-          value_text = patient['value_text'] rescue nil
-          value_numeric = patient['value_numeric'] rescue nil
-          if patient['voided'].to_i == 0
-            if value_numeric.blank?
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug2): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug2 = "#{value_text}",
-    what_was_the_patient_adherence_for_this_drug2_enc_id = #{patient['encounter_id']},
-    what_was_the_patient_adherence_for_this_drug2 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            else
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug2): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug2 = "#{value_numeric}",
-    what_was_the_patient_adherence_for_this_drug2_enc_id = "#{patient['encounter_id']}",
-    what_was_the_patient_adherence_for_this_drug2 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            end #value_numeric
-          else
-            puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug2): #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug2 = NULL, what_was_the_patient_adherence_for_this_drug2_enc_id = NULL, what_was_the_patient_adherence_for_this_drug2 = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-
-        when what_was_the_patient_adherence_for_this_drug3.blank?
-          value_numeric = patient['value_numeric'] rescue nil
-          value_text = patient['value_text'] rescue nil
-          encounter_id = patient['encounter_id']
-          if patient['voided'].to_i == 0
-            if patient['value_numeric'].blank?
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug3): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug3 = "#{value_text}",
-    what_was_the_patient_adherence_for_this_drug3_enc_id = #{encounter_id},
-    what_was_the_patient_adherence_for_this_drug3 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            else
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug3): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug3 = "#{value_numeric}",
-    what_was_the_patient_adherence_for_this_drug3_enc_id = #{encounter_id},
-    what_was_the_patient_adherence_for_this_drug3 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            end #value_numeric
-          else
-            puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug3): #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug3 = NULL, what_was_the_patient_adherence_for_this_drug3_enc_id = NULL, what_was_the_patient_adherence_for_this_drug3 = NULL
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        when what_was_the_patient_adherence_for_this_drug4.blank?
-          value_numeric = patient['value_numeric'] rescue nil
-          value_text = patient['value_text'] rescue nil
-          encounter_id = patient['encounter_id']
-          if patient['voided'].to_i == 0
-            if value_numeric.blank?
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug4): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug4 = "#{value_text}",
-    what_was_the_patient_adherence_for_this_drug4_enc_id = #{encounter_id},
-    what_was_the_patient_adherence_for_this_drug4 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            else
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug4): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug4 = "#{value_numeric}",
-    what_was_the_patient_adherence_for_this_drug4_enc_id = #{encounter_id},
-    what_was_the_patient_adherence_for_this_drug4 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            end #value_numeric
-          else
-            puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug4): #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug4 = NULL, what_was_the_patient_adherence_for_this_drug4_enc_id = NULL,
-      what_was_the_patient_adherence_for_this_drug4 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-          end #voided
-        when what_was_the_patient_adherence_for_this_drug5.blank?
-          value_numeric = patient['value_numeric'] rescue nil
-          value_text = patient['value_text'] rescue nil
-          encounter_id = patient['encounter_id']
-          if patient['voided'].to_i == 0
-            if value_numeric.blank?
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug5): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug5 = "#{value_text}",
-    what_was_the_patient_adherence_for_this_drug5_enc_id = "#{encounter_id}",
-    what_was_the_patient_adherence_for_this_drug5 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            else
-              puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug5): #{patient['person_id']}"
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug5 = "#{value_numeric}",
-    what_was_the_patient_adherence_for_this_drug5_enc_id = "#{encounter_id}",
-    what_was_the_patient_adherence_for_this_drug5 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-            end #value_numeric
-          else
-            puts ".......... Updating record into flat_table2 (what_was_the_patient_adherence_for_this_drug5): #{patient['person_id']}"
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET what_was_the_patient_adherence_for_this_drug5 = NULL, what_was_the_patient_adherence_for_this_drug5_enc_id = NULL,
-      what_was_the_patient_adherence_for_this_drug5 = #{patient['order_id']}
-  WHERE flat_table2.id = #{visit['ID']};
-EOF
-
-          end #voided
-        end #case
-      end #visit
-
-#--------------------------------------------------------------------------------------------end
-
-    when missed_hiv_drug_construct
-
-      flat_table2_record = Connection.select_one("SELECT * FROM flat_table2 WHERE ID = #{visit['ID']}") rescue nil
-      missed_hiv_drug_construct1 = flat_table2_record['missed_hiv_drug_construct1'] rescue nil
-      missed_hiv_drug_construct2 = flat_table2_record['missed_hiv_drug_construct2'] rescue nil
-      missed_hiv_drug_construct3 = flat_table2_record['missed_hiv_drug_construct3'] rescue nil
-      missed_hiv_drug_construct4 = flat_table2_record['missed_hiv_drug_construct4'] rescue nil
-      missed_hiv_drug_construct5 = flat_table2_record['missed_hiv_drug_construct5'] rescue nil
-      encounter_id = patient['encounter_id']
-      patient_id = patient['person_id']
-
-      if visit.blank?
-        case
-        when missed_hiv_drug_construct1.blank?
-          value_text = patient['value_text']
-          if value_text.blank?
-            Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, missed_hiv_drug_construct1, missed_hiv_drug_construct1_enc_id)
-  VALUES ("#{patient_id}", '#{patient_visit_date}', #{patient['value_numeric']}, "#{encounter_id}");
-EOF
-            puts "........... Inserting record into flat_table2 (missed_hiv_drug_construct1 = #{patient['value_numeric']}): #{patient_id}"
-          else
-
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, missed_hiv_drug_construct1, missed_hiv_drug_construct1_enc_id)
-  VALUES ("#{patient_id}", '#{patient_visit_date}', "#{value_text}", "#{encounter_id}");
-EOF
-                  puts "........... Inserting record into flat_table2 (missed_hiv_drug_construct1 = #{value_text}): #{patient_id}"
+            amount_of_drug_brought_to_clinic_hash[adh['order_id'].to_i] = adh['value']
           end
+        #else
+         # amount_of_drug_brought_to_clinic_hash[adh['order_id'].to_i] = "NULL"
+        end
 
-        when missed_hiv_drug_construct2.blank?
-          value_text = patient['value_text']
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, missed_hiv_drug_construct2, missed_hiv_drug_construct2_enc_id)
-  VALUES ("#{patient_id}", '#{patient_visit_date}', "#{value_text}", "#{encounter_id}");
-EOF
-                  puts "........... Inserting record into flat_table2 (missed_hiv_drug_construct2): #{patient_id}"
+        if adh['concept_id'].to_i == 2667 #missed hiv drug
+          missed_hiv_drug_const_hash[adh['order_id'].to_i] = adh['value'] rescue nil
+        #else
+         # missed_hiv_drug_const_hash[adh['order_id'].to_i] = "NULL"
+        end
 
-        when missed_hiv_drug_construct3.blank?
-          value_text = patient['value_text']
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, missed_hiv_drug_construct3, missed_hiv_drug_construct3_enc_id)
-  VALUES ("#{patient_id}", '#{patient_visit_date}', "#{value_text}", "#{encounter_id}");
-EOF
-                  puts "........... Inserting record into flat_table2 (missed_hiv_drug_construct3): #{patient_id}"
+        if adh['concept_id'].to_i == 6987 #patient adherence
+          patient_adherence_hash[adh['order_id'].to_i] = adh['value'] rescue nil
+          patient_adherence_enc_ids[adh['order_id'].to_i] = adh['encounter_id'] rescue nil
+        #else
+         # patient_adherence_hash[adh['order_id'].to_i] = "NULL"
+         # patient_adherence_enc_ids[adh['order_id'].to_i] = "NULL"
+        end
 
-        when missed_hiv_drug_construct4.blank?
-          value_text = patient['value_text']
-          Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, missed_hiv_drug_construct4, missed_hiv_drug_construct4_enc_id)
-  VALUES ("#{patient_id}", '#{patient_visit_date}', "#{value_text}", "#{encounter_id}");
-EOF
-                  puts "........... Inserting record into flat_table2 (missed_hiv_drug_construct4): #{patient_id}"
-
-        when missed_hiv_drug_construct5.blank?
-          value_text = patient['value_text']
-                  Connection.execute <<EOF
-INSERT INTO flat_table2
-  (patient_id, visit_date, missed_hiv_drug_construct5, missed_hiv_drug_construct5_enc_id)
-  VALUES ("#{patient_id}", '#{patient_visit_date}', "#{value_text}", "#{encounter_id}");
-EOF
-                  puts "........... Inserting record into flat_table2 (missed_hiv_drug_construct5): #{patient_id}"
-
-        end #case
-
+        if adh['concept_id'].to_i == 6781 #amount remaining
+          amount_of_drug_remaining_at_home_hash[adh['order_id'].to_i] = adh['value'] rescue nil
+        #else
+        #  amount_of_drug_remaining_at_home_hash[adh['order_id'].to_i] = "NULL"
+        end
       else
-        case
-        when missed_hiv_drug_construct1.blank?
-          if patient['voided'].to_i == 0
-            if value_text.blank?
-              Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct1 = "#{patient['value_numeric']}", missed_hiv_drug_construct1_enc_id = "#{encounter_id}"
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-              puts "........... Updating record into flat_table2 (missed_hiv_drug_construct1 = #{patient['value_numeric']}): #{patient_id}"
+        patient_adh.store(adh['order_id'].to_i, adh['order_id'].to_i)
+        amount_voided.store(adh['order_id'].to_i, adh['voided'].to_i)
+        amount_of_remaining_drug_order_id_hash.store(adh['order_id'].to_i, adh['order_id'])
+        if adh['concept_id'].to_i == 2540 #amount brought
+          amount_of_drug_brought_to_clinic_hash.store(adh['order_id'].to_i, adh['value'])
+        #else
+        #  amount_of_drug_brought_to_clinic_hash.store(adh['order_id'].to_i, "NULL")
+        end
 
-            else
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct1 = "#{value_text}", missed_hiv_drug_construct1_enc_id = "#{encounter_id}"
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct1 = #{value_text}): #{patient_id}"
-            end
-          else
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct1 = NULL, missed_hiv_drug_construct1_enc_id = NULL
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct1): #{patient_id}"
+        if adh['concept_id'].to_i == 2667 #missed hiv drug
+          missed_hiv_drug_const_hash.store(adh['order_id'].to_i, adh['value'])
+        #else
+        #  missed_hiv_drug_const_hash.store(adh['order_id'].to_i, "NULL")
+        end
 
-          end #voided
+        if adh['concept_id'].to_i == 6987 #patient adherence
+          patient_adherence_hash.store(adh['order_id'].to_i, adh['value'])
+          patient_adherence_enc_ids.store(adh['order_id'].to_i, adh['encounter_id'])
+        #else
+         # patient_adherence_hash.store(adh['order_id'].to_i, "NULL")
+         # patient_adherence_enc_ids.store(adh['order_id'].to_i, "NULL")
+        end
 
-        when missed_hiv_drug_construct2.blank?
-          if patient['voided'].to_i == 0
-            value_text = patient['value_text']
-            Connection.execute <<EOF
-UPDATE flat_table2 SET missed_hiv_drug_construct2 = "#{value_text}", missed_hiv_drug_construct2_enc_id = "#{encounter_id}" WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct2): #{patient_id}"
-
-          else
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct2 = NULL, missed_hiv_drug_construct2_enc_id = NULL
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct2): #{patient_id}"
-
-          end #voided
-
-        when missed_hiv_drug_construct3.blank?
-          if patient['voided'].to_i == 0
-            value_text = patient['value_text']
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct3 = "#{value_text}", missed_hiv_drug_construct3_enc_id = "#{encounter_id}"
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct3): #{patient_id}"
-
-          else
-            Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct3 = NULL, missed_hiv_drug_construct3_enc_id = NULL
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct3): #{patient_id}"
-
-          end #voided
-
-        when missed_hiv_drug_construct4.blank?
-          if patient['voided'].to_i == 0
-            value_text = patient['value_text']
-                    Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct4 = "#{value_text}", missed_hiv_drug_construct4_enc_id = "#{encounter_id}"
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct4): #{patient_id}"
-
-          else
-                    Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct4 = NULL, missed_hiv_drug_construct4_enc_id = NULL
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct4): #{patient_id}"
-
-          end #voided
-
-        when missed_hiv_drug_construct5.blank?
-          if patient['voided'].to_i == 0
-            value_text = patient['value_text']
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct5): #{patient_id}"
-                    Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct5 = "#{value_text}", missed_hiv_drug_construct5_enc_id = "#{encounter_id}"
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-          else
-                    puts "........... Updating record into flat_table2 (missed_hiv_drug_construct5): #{patient_id}"
-                    Connection.execute <<EOF
-UPDATE flat_table2
-  SET missed_hiv_drug_construct5 = NULL, missed_hiv_drug_construct5_enc_id = NULL
-  WHERE flat_table2.id = "#{visit['ID']}";
-EOF
-          end #voided
-        end #case
-      end #visit
-
+        if adh['concept_id'].to_i == 6781 #amount remaining
+          amount_of_drug_remaining_at_home_hash.store(adh['order_id'].to_i, adh['value'])
+        #else
+        #  amount_of_drug_remaining_at_home_hash.store(adh['order_id'].to_i, "NULL")
+        end
+      end
+    end
     end
 
-  end #patient_obs
-end
+  count = 1
+  (patient_adh || []).each do |order_id, data|
+    case count
+      when 1
+        if amount_of_drug_brought_to_clinic_hash[order_id].blank?
+          @amount_of_drug1_brought_to_clinic = "NULL"
+          @amount_of_remaining_drug1_order_id = "NULL"
+          @amount_voided1 = "NULL"
+        else
+          @amount_of_drug1_brought_to_clinic = amount_of_drug_brought_to_clinic_hash[order_id]
+          @amount_of_remaining_drug1_order_id = amount_of_remaining_drug_order_id_hash[order_id]
+          @amount_voided1 = amount_voided[order_id]
+        end
 
-def process_exit_from_care_obs(encounter, visit)
-  reason_for_exiting_from_care_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
-        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
-    WHERE  name = 'Reason for exiting care' AND voided = 0 AND retired = 0 LIMIT 1")
-  reason_for_exiting_from_care = reason_for_exiting_from_care_record['concept_id']
+        if amount_of_drug_remaining_at_home_hash[order_id].blank?
+          @amount_of_drug1_remaining_at_home = "NULL"
+        else
+          @amount_of_drug1_remaining_at_home = amount_of_drug_remaining_at_home_hash[order_id]
+        end
 
-  date_exiting_from_care_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
-        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
-    WHERE  name = 'Date of exiting care' AND voided = 0 AND retired = 0 LIMIT 1")
-  date_exiting_from_care = date_exiting_from_care_record['concept_id']
+        if patient_adherence_hash[order_id].blank?
+          @what_was_the_patient_adherence_for_this_drug1 = "NULL"
+          @what_was_the_patient_adherence_for_this_drug1_enc_id = "NULL"
+        else
+          @what_was_the_patient_adherence_for_this_drug1 = patient_adherence_hash[order_id]
+          @what_was_the_patient_adherence_for_this_drug1_enc_id = patient_adherence_enc_ids[order_id]
+        end
 
-  exit_from_care_obs = Connection.select_all("SELECT * FROM obs WHERE encounter_id = #{encounter['encounter_id']}")
+        if missed_hiv_drug_const_hash[order_id].blank?
+          @missed_hiv_drug_construct1 = "NULL"
+        else
+          @missed_hiv_drug_construct1 = missed_hiv_drug_const_hash[order_id]
+        end
 
-  (exit_from_care_obs || []).each do |patient|
-    patient_visit_date =  patient['obs_datetime'].to_date.strftime("%Y-%m-%d")
-    case patient['concept_id']
-    when reason_for_exiting_from_care
-      answer_record = Connection.select_one("SELECT concept_name.name FROM concept_name
-            LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
-        WHERE  concept_name.concept_id = '#{patient['value_coded']}' AND voided = 0 AND retired = 0
-            LIMIT 1")
-      flat_table_2_data = []
-      flat_table_2_data = Connection.select_one("SELECT * FROM flat_table2
-                                                WHERE patient_id = #{encounter['patient_id']}
-                                                AND visit_date = '#{patient_visit_date}'")
+      count << 1
+    when 2
+      if amount_of_drug_brought_to_clinic_hash[order_id].blank?
+        @amount_of_drug2_brought_to_clinic = "NULL"
+        @amount_of_remaining_drug2_order_id = "NULL"
+        @amount_voided2 = "NULL"
+      else
+        @amount_of_drug2_brought_to_clinic = amount_of_drug_brought_to_clinic_hash[order_id]
+        @amount_of_remaining_drug2_order_id = amount_of_remaining_drug_order_id_hash[order_id]
+        @amount_voided2 = amount_voided[order_id]
+      end
 
-      if flat_table_2_data.blank?
-        #insert
-        Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, reason_for_exiting_from_care, reason_for_exiting_from_care_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), '#{answer_record['name']}', '#{patient['encounter_id']}') ;
-EOF
-      else #else visit blank
-        #update
-        if patient['voided'] == "0"
-          Connection.execute <<EOF
-UPDATE flat_table2
-SET  reason_for_exiting_from_care = '#{answer_record['name']}', reason_for_exiting_from_care_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
-EOF
-        else #else voided
-          Connection.execute <<EOF
-UPDATE flat_table2
-SET  reason_for_exiting_from_care = NULL,reason_for_exiting_from_care_enc_id = NULL
-WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
-EOF
-        end #end voided
-      end #end visit blank
-#---------------------------------------------------------------end reason_for_exiting_from_care
-    when date_exiting_from_care
-      patient_check = []
-      patient_check = Connection.select_one("SELECT ID FROM flat_table2
-                              WHERE patient_id = #{patient['person_id']}
-                              and visit_date = '#{patient_visit_date}'")
-     if patient_check.blank?
-        #insert
-        Connection.execute <<EOF
-INSERT INTO flat_table2 (patient_id, visit_date, date_exiting_from_care, date_exiting_from_care_enc_id)
-VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), DATE('#{patient['value_datetime']}'), '#{patient['encounter_id']}') ;
-EOF
-      else #else visit blank
-        #update
-        if patient['voided'] == "0"
-          Connection.execute <<EOF
-UPDATE flat_table2
-SET  date_exiting_from_care = DATE('#{patient['value_datetime']}'), date_exiting_from_care_enc_id = '#{patient['encounter_id']}'
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-        else #else voided
-          Connection.execute <<EOF
-UPDATE flat_table2
-SET  date_exiting_from_care = NULL, date_exiting_from_care_enc_id = NULL
-WHERE flat_table2.id = '#{patient_check['ID']}';
-EOF
-        end #end voided
-      end #end visit blank
-#---------------------------------------------date exit_from_care
+      if amount_of_drug_remaining_at_home_hash[order_id].blank?
+        @amount_of_drug2_remaining_at_home = "NULL"
+      else
+        @amount_of_drug2_remaining_at_home = amount_of_drug_remaining_at_home_hash[order_id]
+      end
+
+      if patient_adherence_hash[order_id].blank?
+        @what_was_the_patient_adherence_for_this_drug2 = "NULL"
+        @what_was_the_patient_adherence_for_this_drug2_enc_id = "NULL"
+      else
+        @what_was_the_patient_adherence_for_this_drug2 = patient_adherence_hash[order_id]
+        @what_was_the_patient_adherence_for_this_drug2_enc_id = patient_adherence_enc_ids[order_id]
+      end
+
+      if missed_hiv_drug_const_hash[order_id].blank?
+        @missed_hiv_drug_construct2 = "NULL"
+      else
+        @missed_hiv_drug_construct2 = missed_hiv_drug_const_hash[order_id]
+      end
+
+      count << 1
+    when 3
+      if amount_of_drug_brought_to_clinic_hash[order_id].blank?
+        @amount_of_drug3_brought_to_clinic = "NULL"
+        @amount_of_remaining_drug3_order_id = "NULL"
+        @amount_voided3 = "NULL"
+      else
+        @amount_of_drug3_brought_to_clinic = amount_of_drug_brought_to_clinic_hash[order_id]
+        @amount_of_remaining_drug3_order_id = amount_of_remaining_drug_order_id_hash[order_id]
+        @amount_voided3 = amount_voided[order_id]
+      end
+
+      if amount_of_drug_remaining_at_home_hash[order_id].blank?
+        @amount_of_drug3_remaining_at_home = "NULL"
+      else
+        @amount_of_drug3_remaining_at_home = amount_of_drug_remaining_at_home_hash[order_id]
+      end
+
+      if patient_adherence_hash[order_id].blank?
+        @what_was_the_patient_adherence_for_this_drug3 = "NULL"
+        @what_was_the_patient_adherence_for_this_drug3_enc_id = "NULL"
+      else
+        @what_was_the_patient_adherence_for_this_drug3 = patient_adherence_hash[order_id]
+        @what_was_the_patient_adherence_for_this_drug3_enc_id = patient_adherence_enc_ids[order_id]
+      end
+
+      if missed_hiv_drug_const_hash[order_id].blank?
+        @missed_hiv_drug_construct3 = "NULL"
+      else
+        @missed_hiv_drug_construct3 = missed_hiv_drug_const_hash[order_id]
+      end
+
+      count << 1
+    when 4
+      if amount_of_drug_brought_to_clinic_hash[order_id].blank?
+        @amount_of_drug4_brought_to_clinic = "NULL"
+        @amount_of_remaining_drug4_order_id = "NULL"
+        @amount_voided4 = "NULL"
+      else
+        @amount_of_drug4_brought_to_clinic = amount_of_drug_brought_to_clinic_hash[order_id]
+        @amount_of_remaining_drug4_order_id = amount_of_remaining_drug_order_id_hash[order_id]
+        @amount_voided4 = amount_voided[order_id]
+      end
+
+      if amount_of_drug_remaining_at_home_hash[order_id].blank?
+        @amount_of_drug4_remaining_at_home = "NULL"
+      else
+        @amount_of_drug4_remaining_at_home = amount_of_drug_remaining_at_home_hash[order_id]
+      end
+
+      if patient_adherence_hash[order_id].blank?
+        @what_was_the_patient_adherence_for_this_drug4 = "NULL"
+        @what_was_the_patient_adherence_for_this_drug4_enc_id = "NULL"
+      else
+        @what_was_the_patient_adherence_for_this_drug4 = patient_adherence_hash[order_id]
+        @what_was_the_patient_adherence_for_this_drug4_enc_id = patient_adherence_enc_ids[order_id]
+      end
+
+      if missed_hiv_drug_const_hash[order_id].blank?
+        @missed_hiv_drug_construct4 = "NULL"
+      else
+        @missed_hiv_drug_construct4 = missed_hiv_drug_const_hash[order_id]
+      end
+
+      count << 1
+    when 5
+      if amount_of_drug_brought_to_clinic_hash[order_id].blank?
+        @amount_of_drug5_brought_to_clinic = "NULL"
+        @amount_of_remaining_drug5_order_id = "NULL"
+        @amount_voided5 = "NULL"
+      else
+        @amount_of_drug5_brought_to_clinic = amount_of_drug_brought_to_clinic_hash[order_id]
+        @amount_of_remaining_drug5_order_id = amount_of_remaining_drug_order_id_hash[order_id]
+        @amount_voided5 = amount_voided[order_id]
+      end
+
+      if amount_of_drug_remaining_at_home_hash[order_id].blank?
+        @amount_of_drug5_remaining_at_home = "NULL"
+      else
+        @amount_of_drug5_remaining_at_home = amount_of_drug_remaining_at_home_hash[order_id]
+      end
+
+      if patient_adherence_hash[order_id].blank?
+        @what_was_the_patient_adherence_for_this_drug5 = "NULL"
+        @what_was_the_patient_adherence_for_this_drug5_enc_id = "NULL"
+      else
+        @what_was_the_patient_adherence_for_this_drug5 = patient_adherence_hash[order_id]
+        @what_was_the_patient_adherence_for_this_drug5_enc_id = patient_adherence_enc_ids[order_id]
+      end
+
+      if missed_hiv_drug_const_hash[order_id].blank?
+        @missed_hiv_drug_construct5 = "NULL"
+      else
+        @missed_hiv_drug_construct5 = missed_hiv_drug_const_hash[order_id]
+      end
+
+      count << 1
     end #end case statement
-  end #end exit_from_care_obs
+  end #end patient_orders
 
+  unless @amount_of_drug1_brought_to_clinic.blank?
+    if @amount_voided1 == 0
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+  amount_of_drug1_brought_to_clinic = #{@amount_of_drug1_brought_to_clinic},
+  amount_of_drug1_remaining_at_home = #{@amount_of_drug1_remaining_at_home},
+  what_was_the_patient_adherence_for_this_drug1 = #{@what_was_the_patient_adherence_for_this_drug1},
+  what_was_the_patient_adherence_for_this_drug1_enc_id = #{@what_was_the_patient_adherence_for_this_drug1_enc_id},
+  missed_hiv_drug_construct1 = #{@missed_hiv_drug_construct1},
+  amount_of_remaining_drug1_order_id = #{@amount_of_remaining_drug1_order_id}
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    else #else voided
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+amount_of_drug1_brought_to_clinic = NULL,
+amount_of_drug1_remaining_at_home = NULL,
+what_was_the_patient_adherence_for_this_drug1 = NULL,
+what_was_the_patient_adherence_for_this_drug1_enc_id = NULL,
+missed_hiv_drug_construct1 = NULL,
+amount_of_remaining_drug1_order_id = NULL
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    end #end voided
+  end #end unless amount_of_remaining_drug1_order_id
+
+  unless @amount_of_drug2_brought_to_clinic.blank?
+    if @amount_voided2 == 0
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+  amount_of_drug2_brought_to_clinic = #{@amount_of_drug2_brought_to_clinic},
+  amount_of_drug2_remaining_at_home = #{@amount_of_drug2_remaining_at_home},
+  what_was_the_patient_adherence_for_this_drug2 = #{@what_was_the_patient_adherence_for_this_drug2},
+  what_was_the_patient_adherence_for_this_drug2_enc_id = #{@what_was_the_patient_adherence_for_this_drug2_enc_id},
+  missed_hiv_drug_construct2 = #{@missed_hiv_drug_construct2},
+  amount_of_remaining_drug2_order_id = #{@amount_of_remaining_drug2_order_id}
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    else #else voided
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+amount_of_drug2_brought_to_clinic = NULL,
+amount_of_drug2_remaining_at_home = NULL,
+what_was_the_patient_adherence_for_this_drug2 = NULL,
+what_was_the_patient_adherence_for_this_drug2_enc_id = NULL,
+missed_hiv_drug_construct2 = NULL,
+amount_of_remaining_drug2_order_id = NULL
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    end #end voided
+  end #end unless amount_of_remaining_drug2_order_id
+
+  unless @amount_of_drug3_brought_to_clinic.blank?
+    if @amount_voided3 == 0
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+  amount_of_drug3_brought_to_clinic = #{@amount_of_drug3_brought_to_clinic},
+  amount_of_drug3_remaining_at_home = #{@amount_of_drug3_remaining_at_home},
+  what_was_the_patient_adherence_for_this_drug3 = #{@what_was_the_patient_adherence_for_this_drug3},
+  what_was_the_patient_adherence_for_this_drug3_enc_id = #{@what_was_the_patient_adherence_for_this_drug3_enc_id},
+  missed_hiv_drug_construct3 = #{@missed_hiv_drug_construct3},
+  amount_of_remaining_drug3_order_id = #{@amount_of_remaining_drug3_order_id}
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    else #else voided
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+amount_of_drug3_brought_to_clinic = NULL,
+amount_of_drug3_remaining_at_home = NULL,
+what_was_the_patient_adherence_for_this_drug3 = NULL,
+what_was_the_patient_adherence_for_this_drug3_enc_id = NULL,
+missed_hiv_drug_construct3 = NULL,
+amount_of_remaining_drug3_order_id = NULL
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    end #end voided
+  end #end unless amount_of_remaining_drug3_order_id
+
+  unless @amount_of_drug4_brought_to_clinic.blank?
+    if @amount_voided4 == 0
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+  amount_of_drug4_brought_to_clinic = #{@amount_of_drug4_brought_to_clinic},
+  amount_of_drug4_remaining_at_home = #{@amount_of_drug4_remaining_at_home},
+  what_was_the_patient_adherence_for_this_drug4 = #{@what_was_the_patient_adherence_for_this_drug4},
+  what_was_the_patient_adherence_for_this_drug4_enc_id = #{@what_was_the_patient_adherence_for_this_drug4_enc_id},
+  missed_hiv_drug_construct4 = #{@missed_hiv_drug_construct4},
+  amount_of_remaining_drug4_order_id = #{@amount_of_remaining_drug4_order_id}
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    else #else voided
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+amount_of_drug4_brought_to_clinic = NULL,
+amount_of_drug4_remaining_at_home = NULL,
+what_was_the_patient_adherence_for_this_drug4 = NULL,
+what_was_the_patient_adherence_for_this_drug4_enc_id = NULL,
+missed_hiv_drug_construct4 = NULL,
+amount_of_remaining_drug4_order_id = NULL
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    end #end voided
+  end #end unless amount_of_remaining_drug4_order_id
+
+  unless @amount_of_drug5_brought_to_clinic.blank?
+    if @amount_voided5 == 0
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET
+amount_of_drug5_brought_to_clinic = #{@amount_of_drug5_brought_to_clinic},
+amount_of_drug5_remaining_at_home = #{@amount_of_drug5_remaining_at_home},
+what_was_the_patient_adherence_for_this_drug5 = #{@what_was_the_patient_adherence_for_this_drug5},
+what_was_the_patient_adherence_for_this_drug5_enc_id = #{@what_was_the_patient_adherence_for_this_drug5_enc_id},
+missed_hiv_drug_construct5 = #{@missed_hiv_drug_construct5},
+amount_of_remaining_drug5_order_id = #{@amount_of_remaining_drug5_order_id}
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    else #else voided
+    Connection.execute <<EOF
+UPDATE flat_table5
+SET
+amount_of_drug5_brought_to_clinic = NULL,
+amount_of_drug5_remaining_at_home = NULL,
+what_was_the_patient_adherence_for_this_drug5 = NULL,
+what_was_the_patient_adherence_for_this_drug5_enc_id = NULL,
+missed_hiv_drug_construct5 = NULL,
+amount_of_remaining_drug5_order_id = NULL
+WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
+EOF
+    end #end voided
+  end #end unless amount_of_remaining_drug5_order_id
 end
 
 def updating_drug_orders_table(patient_ids)
@@ -10703,7 +10385,7 @@ def updating_drug_orders_table(patient_ids)
         @drug_encounter_id1 = drug_enc_ids_hash[drug_name]
         @drug_inventory_id1 = drug_inventory_ids_hash[drug_name]
         @voided1 = record_voided[drug_name]
-        count += 1
+        count << 1
       when 2
         @drug_name2 = drug_name
         @drug_order_id2 = drug_order_ids_hash[drug_name]
@@ -10716,7 +10398,7 @@ def updating_drug_orders_table(patient_ids)
         @drug_encounter_id2 = drug_enc_ids_hash[drug_name]
         @drug_inventory_id2 = drug_inventory_ids_hash[drug_name]
         @voided2 = record_voided[drug_name]
-        count += 1
+        count << 1
       when 3
         @drug_name3 = drug_name
         @drug_order_id3 = drug_order_ids_hash[drug_name]
@@ -10729,7 +10411,7 @@ def updating_drug_orders_table(patient_ids)
         @drug_encounter_id3 = drug_enc_ids_hash[drug_name]
         @drug_inventory_id3 = drug_inventory_ids_hash[drug_name]
         @voided3 = record_voided[drug_name]
-        count += 1
+        count << 1
       when 4
         @drug_name4 = drug_name
         @drug_order_id4 = drug_order_ids_hash[drug_name]
@@ -10742,7 +10424,7 @@ def updating_drug_orders_table(patient_ids)
         @drug_encounter_id4 = drug_enc_ids_hash[drug_name]
         @drug_inventory_id4 = drug_inventory_ids_hash[drug_name]
         @voided4 = record_voided[drug_name]
-        count += 1
+        count << 1
       when 5
         @drug_name5 = drug_name
         @drug_order_id5 = drug_order_ids_hash[drug_name]
@@ -10755,7 +10437,7 @@ def updating_drug_orders_table(patient_ids)
         @drug_encounter_id5 = drug_enc_ids_hash[drug_name]
         @drug_inventory_id5 = drug_inventory_ids_hash[drug_name]
         @voided5 = record_voided[drug_name]
-        count += 1
+        count << 1
       end #end case statement
     end #end patient_orders
 
@@ -12617,7 +12299,7 @@ def get_earliest_start_date_patients
 end
 
 def get_earliest_start_date_patients_data(patient_ids)
-  patient_ids = [0] if patient_ids.blank? 
+  patient_ids = [0] if patient_ids.blank?
   records = Connection.select_all("
     SELECT
       `p`.`patient_id` AS `patient_id`,
