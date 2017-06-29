@@ -1948,11 +1948,15 @@ EOF
         RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
         Where e.patient_id = #{patient_id.to_i};
 EOF
+			
+      fuchia_id = PatientService.get_patient_identifier(patient, 'FUCHIA ID') rescue ''
+
 			arv_number = PatientService.get_patient_identifier(patient, 'ARV Number')
 		  arv_number = "" if arv_number.blank?
 
 			@people[patient_id.to_i] = {
         :arv_number => arv_number,
+        :fuchia_id => fuchia_id,
         :name => "#{names.given_name rescue 'N/A'} #{names.family_name rescue 'N/A'}",
         :gender => (temp_earliest['gender'] rescue 'Unknown'),
         :birthdate => temp_earliest['birthdate'],
