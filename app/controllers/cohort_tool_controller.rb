@@ -1938,7 +1938,10 @@ EOF
 
     @people = {}
     (@patient_ids.split(',') || []).each do |patient_id|
-      names =  PersonName.find_last_by_person_id(patient_id.to_i)
+      names =  PersonName.find(:first, 
+        :conditions =>["person_id = ?", patient_id.to_i],
+        :order => "date_created DESC")
+
       patient = Patient.find(patient_id.to_i)
       temp_earliest = ActiveRecord::Base.connection.select_one <<EOF
         Select e.*, o.cum_outcome From temp_earliest_start_date e
@@ -1950,7 +1953,7 @@ EOF
 
 			@people[patient_id.to_i] = {
         :arv_number => arv_number,
-        :name => "#{names.given_name} #{names.family_name}",
+        :name => "#{names.given_name rescue 'N/A'} #{names.family_name rescue 'N/A'}",
         :gender => (temp_earliest['gender'] rescue 'Unknown'),
         :birthdate => temp_earliest['birthdate'],
         :date_enrolled => temp_earliest['date_enrolled'],

@@ -2204,27 +2204,27 @@ EOF
       #ks
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[3])
         visits.ks = 'Yes'
-      end
+      end rescue nil
 
       #tb_within_last_two_yrs
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[1])
         visits.tb_within_last_two_yrs = 'Yes'
-      end
+      end rescue nil
 
       #eptb
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[0])
         visits.eptb = 'Yes'
-      end
+      end rescue nil
 
       #pulmonary_tb
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[2])
         visits.pulmonary_tb = 'Yes'
-      end
+      end rescue nil
 
       #pulmonary_tb
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[4])
         visits.pulmonary_tb = 'Yes'
-      end
+      end rescue nil
     else
       if !hiv_staging_obs.blank?
         tb_within_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
