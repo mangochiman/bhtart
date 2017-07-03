@@ -2108,9 +2108,6 @@ EOF
 =end
     reason_concept_ids = []
     reason_concept_ids << ConceptName.find_by_name('Unknown').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
     reason_concept_ids << ConceptName.find_by_name('None').concept_id
 
     registered = []
@@ -2123,6 +2120,9 @@ EOF
 
     revised_art_guidelines_date = '2016-04-01'.to_date
     who_stage_1_and_2_concept_ids = []
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
     who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
     who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage I peds').concept_id
     who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
