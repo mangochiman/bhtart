@@ -76,8 +76,12 @@ class CohortDisaggregated
       related PERSON entry as F for female and no entries of 'IS PATIENT PREGNANT?' observation answered 'YES'
       in related HIV CLINIC CONSULTATION encounters not within 28 days from earliest registration date
 =end
-      cohort.non_pregnant_females = CohortRevise.non_pregnant_females(start_date, end_date, cohort.total_pregnant_women)
-      cohort.cum_non_pregnant_females = CohortRevise.non_pregnant_females(cum_start_date, end_date, cohort.total_pregnant_women)
+      pregnant_females = []
+      (cohort.total_pregnant_women || []).each do |patient|
+        pregnant_females << patient['person_id'].to_i
+      end
+      cohort.non_pregnant_females = CohortRevise.non_pregnant_females(start_date, end_date, pregnant_females)
+      cohort.cum_non_pregnant_females = CohortRevise.non_pregnant_females(cum_start_date, end_date, pregnant_females)
 
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
