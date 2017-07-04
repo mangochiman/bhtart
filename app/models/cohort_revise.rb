@@ -2414,6 +2414,10 @@ EOF
       pregnant_at_initiation_ids << patient['patient_id'].to_i
     end
 
+    if pregnant_at_initiation_ids.blank?
+      pregnant_at_initiation_ids = [0]
+    end
+
     transfer_ins_women = ActiveRecord::Base.connection.select_all <<EOF
               SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated
               FROM temp_earliest_start_date
