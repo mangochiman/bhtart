@@ -783,6 +783,11 @@ EOF
 #=end
       #Get earliest date enrolled
       cum_start_date = self.get_cum_start_date
+
+      if cum_start_date.blank?
+        cum_start_date = start_date
+      end
+
       cohort = CohortService.new(cum_start_date)
 
       #Total registered
@@ -2094,7 +2099,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_id == r[:reason_for_starting_concept_id]
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2114,7 +2119,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2130,7 +2135,7 @@ EOF
     who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage II peds').concept_id
 
 
-    if start_date < revised_art_guidelines_date
+    if start_date.to_date < revised_art_guidelines_date.to_date
     end_date = revised_art_guidelines_date
 
       (@@reason_for_starting || []).each do |r|
@@ -2152,7 +2157,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2169,7 +2174,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2187,7 +2192,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2201,7 +2206,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_id == r[:reason_for_starting_concept_id]
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2228,11 +2233,11 @@ EOF
     (@@reason_for_starting || []).each do |r|
       next unless asymptomatic_concept_ids.include?(r[:reason_for_starting_concept_id])
 
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
-    if start_date >= revised_art_guidelines_date
+    if start_date.to_date >= revised_art_guidelines_date.to_date
       start_date = start_date
     else
       start_date = revised_art_guidelines_date
@@ -2241,7 +2246,7 @@ EOF
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
 
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2259,7 +2264,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2273,7 +2278,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless (r[:reason_for_starting_concept_id] == reason_concept_id)
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2289,7 +2294,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
