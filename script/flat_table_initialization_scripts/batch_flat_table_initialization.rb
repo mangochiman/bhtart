@@ -541,6 +541,7 @@ def get_patients_data(patient_id)
       patient_reg_category = []
       treatment_obs = []
       dispensing_obs = []
+      exit_from_care_obs = []
 
       # we will exclude the orders having drug_inventory_id null
       orders = Order.find_by_sql("SELECT o.patient_id, IFNULL(o.order_id, 0) AS order_id, IFNULL(o.encounter_id, 0) AS encounter_id,
@@ -590,8 +591,8 @@ def get_patients_data(patient_id)
             appointment = process_appointment_encounter(enc)
           elsif enc.encounter_type == 54 #dispensing
             dispensing_obs = process_dispensing_obs(enc)
-          #elsif enc.encounter_type == 119 #exit_from_care
-          #  exit_from_care_obs = process_exit_from_care_obs(enc)
+          elsif enc.encounter_type == 119 #exit_from_care
+            exit_from_care_obs = process_exit_from_care_obs(enc)
       		end
       	end
 
@@ -605,9 +606,10 @@ def get_patients_data(patient_id)
          treatment_obs = process_treatment_obs(1, 1) if treatment_obs.empty?
          appointment = process_appointment_encounter(1, 1) if appointment.empty?
          dispensing_obs = process_dispensing_obs(1, 1) if dispensing_obs.empty?
+         exit_from_care_obs = process_exit_from_care_obs(1, 1) if exit_from_care_obs.empty?
 
-         table_2_sql_statement = initial_string + "(" + patient_details[0] + "," + patient_state[0] + "," + appointment[0] + "," + vitals[0] + "," + hcc[0] + "," + hiv_reception[0] + "," + patient_orders[0] + "," + patient_adh[0] + "," + patient_reg_category[0] + "," + dispensing_obs[0] + "," + treatment_obs[0] + ")" + \
-           " VALUES (" + patient_details[1] + "," + patient_state[1]  + "," + appointment[1] + "," + vitals[1] + "," + hcc[1] + "," + hiv_reception[1] + "," + patient_orders[1] + "," + patient_adh[1] + "," + patient_reg_category[1] + "," + dispensing_obs[1] + "," + treatment_obs[1] + ");"
+         table_2_sql_statement = initial_string + "(" + patient_details[0] + "," + exit_from_care_obs[0] + "," + patient_state[0] + "," + appointment[0] + "," + vitals[0] + "," + hcc[0] + "," + hiv_reception[0] + "," + patient_orders[0] + "," + patient_adh[0] + "," + patient_reg_category[0] + "," + dispensing_obs[0] + "," + treatment_obs[0] + ")" + \
+           " VALUES (" + patient_details[1] + "," + exit_from_care_obs[1] + "," + patient_state[1]  + "," + appointment[1] + "," + vitals[1] + "," + hcc[1] + "," + hiv_reception[1] + "," + patient_orders[1] + "," + patient_adh[1] + "," + patient_reg_category[1] + "," + dispensing_obs[1] + "," + treatment_obs[1] + ");"
 
       table2_sql_batch += table_2_sql_statement
 
@@ -650,10 +652,12 @@ def get_patient_demographics(patient_id)
      a_hash[:given_name] = this_patient.first.given_name rescue nil
      a_hash[:middle_name] = this_patient.first.middle_name rescue nil
      a_hash[:family_name] = this_patient.first.family_name rescue nil
-     a_hash[:gender] = gender  rescue nil
+     a_hash[:gender] = gender rescue nil
      a_hash[:dob] = this_patient.first.birthdate rescue nil
      a_hash[:dob_estimated] = this_patient.first.birthdate_estimated rescue nil
-     a_hash[:death_date] =  this_patient.first.death_date rescue nil
+     unless this_patient.first.death_date.blank?
+       a_hash[:death_date] = this_patient.first.death_date
+     end
      a_hash[:ta] = this_patient.first.traditional_authority  rescue nil
      a_hash[:current_address] = this_patient.first.current_residence  rescue nil
      a_hash[:home_district] = this_patient.first.home_district  rescue nil
@@ -673,7 +677,9 @@ def get_patient_demographics(patient_id)
      a_hash[:archived_filing_number]  = the_identifiers.first.archived_filing_number rescue nil
 
      a_hash[:earliest_start_date]  = this_patient.first.earliest_start_date  rescue nil
-     a_hash[:date_enrolled]  = this_patient.first.date_enrolled  rescue nil
+     unless this_patient.first.date_enrolled.blank?
+       a_hash[:date_enrolled] = this_patient.first.date_enrolled
+     end
      a_hash[:age_at_initiation] = this_patient.first.age_at_initiation rescue nil
      a_hash[:age_in_days] = this_patient.first.age_in_days rescue nil
      a_hash[:current_location] = current_location rescue nil
@@ -696,6 +702,7 @@ def get_patient_demographics(patient_id)
 
      @initialized_patients << patient_id
   end
+
   return generate_sql_string(a_hash)
 end
 
@@ -840,6 +847,35 @@ def process_dispensing_obs(encounter, type = 0) #type 0 normal encounter, 1 gene
     return generate_sql_string(a_hash)
 end
 
+def process_exit_from_care_obs(encounter, type = 0) #type 0 normal encounter, 1 generate_template only
+
+    #initialize field and values variables
+    fields = ""
+    values = ""
+
+    #create vitals field list hash template
+    a_hash =	  {:arv_regimen_type_triomune => 'NULL'}
+
+    return generate_sql_string(a_hash) if type == 1
+
+    encounter.observations.each do |obs|
+      if obs.concept_id.to_i == 1811 #reason_for_exiting_from_care
+        a_hash[:reason_for_exiting_from_care] = obs.to_s.split(':')[1].strip rescue nil
+        a_hash[:reason_for_exiting_from_care_enc_id] = encounter.encounter_id
+
+      elsif obs.concept_id.to_i == 3003 #transfer_out_location
+        value_record = Location.find_by_sql("SELECT name FROM location WHERE location_id = #{obs.value_numeric.to_i}").first.name rescue nil
+        value_record = obs.value_text if value_record.blank?
+
+        a_hash[:transfer_out_location] = value_record rescue nil
+        a_hash[:transfer_out_location_enc_id] = encounter.encounter_id
+      elsif obs.concept_id.to_i == 8519 #date_of_exiting_care
+        a_hash[:date_exiting_from_care] = obs.value_datetime.to_date rescue nil
+        a_hash[:date_exiting_from_care_enc_id] = encounter.encounter_id
+      end
+    end
+    return generate_sql_string(a_hash)
+end
 
 def process_treatment_obs(encounter, type = 0) #type 0 normal encounter, 1 generate_template only
 
@@ -2679,7 +2715,7 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
 end
 
 def process_pat_regimen_category(reg_category, visit, type = 0)
-  a_hash = {:transfer_within_responsibility_no => 'NULL'}
+  a_hash = {:transfer_within_responsibility => 'NULL'}
 
   if reg_category
     (reg_category || []).each do |patient|
@@ -2824,8 +2860,11 @@ def process_patient_state(patient_id, visit)
   values = ""
 
   a_hash = {:current_hiv_program_start_date => 'NULL'}
+  a_hash = {:current_hiv_program_end_date => 'NULL'}
 
   patient_state =  PatientProgram.find_by_sql("SELECT patient_outcome(#{patient_id}, '#{visit}') AS state").first.state
+  end_date = PatientProgram.find_by_sql("SELECT p.date_completed from patient_state s inner join patient_program p on s.patient_program_id = p.patient_program_id where p.patient_id = #{patient_id} and p.program_id = 1").first.date_completed
+  current_hiv_program_end_date = end_date.to_date.strftime('%Y-%m-%d') rescue nil
 
   if patient_state.blank?
     patient_outcome = "Unknown"
@@ -2835,8 +2874,9 @@ def process_patient_state(patient_id, visit)
 
   a_hash[:current_hiv_program_state] = "#{patient_outcome}"
   a_hash[:current_hiv_program_start_date] = visit
+  a_hash[:current_hiv_program_end_date] = current_hiv_program_end_date
 
-	return generate_sql_string(a_hash)
+  return generate_sql_string(a_hash)
 end
 
 def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encounter, 1 generate_template only
@@ -2857,81 +2897,93 @@ def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encou
     return generate_sql_string(a_hash) if type == 1
     if encounter != 1
       (encounter.observations || []).each do |adh|
-        if patient_adh[visit].blank?
-          patient_adh[visit] = visit
-          #amount_of_remaining_drug_order_id_hash[visit] = adh.order_id rescue nil
+
+        if adh.order_id.to_i > 0
+        if patient_adh[adh.order_id.to_i].blank?
+          if adh.value_text
+            answer_value = adh.value_text
+          elsif adh.value_numeric
+            answer_value = adh.value_numeric
+          elsif adh.value_coded
+            answer_value = ConceptName.find_by_sql("Select name FROM concept_name
+                                                    WHERE concept_id = #{adh.value_coded.to_i}
+                                                    AND concept_name_type = 'FULLY_SPECIFIED'").first.name
+          end
+          patient_adh[adh.order_id.to_i] = adh.order_id.to_i
+          amount_of_remaining_drug_order_id_hash[adh.order_id.to_i] = adh.order_id rescue nil
           if adh.concept_id == 2540 #amount brought
-            amount_of_drug_brought_to_clinic_hash[visit] = adh.to_s.split(':')[1].strip rescue nil
+            amount_of_drug_brought_to_clinic_hash[adh.order_id.to_i] = adh.to_s.split(':')[1].strip rescue nil
           elsif adh.concept_id == 2667 #missed hiv drug
-            missed_hiv_drug_const_hash[visit] = adh.to_s.split(':')[1].strip rescue nil
+            missed_hiv_drug_const_hash[adh.order_id.to_i] = adh.to_s.split(':')[1].strip rescue nil
           elsif adh.concept_id == 6987 #patient adherence
-            patient_adherence_hash[visit] = adh.to_s.split(':')[1].strip rescue nil
-            patient_adherence_enc_ids[visit] = adh.encounter_id rescue nil
+            patient_adherence_hash[adh.order_id.to_i] = adh.to_s.split(':')[1].strip rescue nil
+            patient_adherence_enc_ids[adh.order_id.to_i] = adh.encounter_id rescue nil
           elsif adh.concept_id == 6781 #amount remaining
-            amount_of_drug_remaining_at_home_hash[visit] = adh.to_s.split(':')[1].strip rescue nil
+            amount_of_drug_remaining_at_home_hash[adh.order_id.to_i] = adh.to_s.split(':')[1].strip rescue nil
           end
         else
-          patient_adh[visit] += visit
-          #amount_of_remaining_drug_order_id_hash[visit] += adh.order_id rescue nil
+          patient_adh.store(adh.order_id.to_i, adh.order_id.to_i)
+          amount_of_remaining_drug_order_id_hash.store(adh.order_id.to_i, adh.order_id)
           if adh.concept_id == 2540 #amount brought
-            amount_of_drug_brought_to_clinic_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
+            amount_of_drug_brought_to_clinic_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
           elsif adh.concept_id == 2667 #missed hiv drug
-            missed_hiv_drug_const_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
+            missed_hiv_drug_const_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
           elsif adh.concept_id == 6987 #patient adherence
-            patient_adherence_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
-            patient_adherence_enc_ids[visit] += adh.encounter_id rescue nil
+            patient_adherence_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
+            patient_adherence_enc_ids.store(adh.order_id.to_i, adh.encounter_id)rescue nil
           elsif adh.concept_id == 6781 #amount remaining
-            amount_of_drug_remaining_at_home_hash[visit] += adh.to_s.split(':')[1].strip rescue nil
+            amount_of_drug_remaining_at_home_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
           end
         end
+      end
     end
 end
     count = 1
-    (patient_adh || []).each do |visit, data|
-
+    (patient_adh || []).each do |order_id, data|
       case count
         when 1
-         a_hash[:amount_of_drug1_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
-         a_hash[:amount_of_drug1_remaining_at_home] = amount_of_drug_remaining_at_home_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug1] = patient_adherence_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug1_enc_id] = patient_adherence_enc_ids[visit]
-         a_hash[:missed_hiv_drug_construct1] = missed_hiv_drug_const_hash[visit]
-         #a_hash[:amount_of_remaining_drug1_order_id] = amount_of_remaining_drug_order_id_hash[visit]
+         a_hash[:amount_of_drug1_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[order_id]
+         a_hash[:amount_of_drug1_remaining_at_home] = amount_of_drug_remaining_at_home_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug1] = patient_adherence_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug1_enc_id] = patient_adherence_enc_ids[order_id]
+         a_hash[:missed_hiv_drug_construct1] = missed_hiv_drug_const_hash[order_id]
+         a_hash[:amount_of_remaining_drug1_order_id] = amount_of_remaining_drug_order_id_hash[order_id]
          count += 1
         when 2
-         a_hash[:amount_of_drug2_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
-         a_hash[:amount_of_drug2_remaining_at_home] = amount_of_drug_remaining_at_home_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug2] = patient_adherence_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug2_enc_id] = patient_adherence_enc_ids[visit]
-         a_hash[:missed_hiv_drug_construct2] = missed_hiv_drug_const_hash[visit]
-         #a_hash[:amount_of_remaining_drug2_order_id] = amount_of_remaining_drug_order_id_hash[visit]
+         a_hash[:amount_of_drug2_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[order_id]
+         a_hash[:amount_of_drug2_remaining_at_home] = amount_of_drug_remaining_at_home_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug2] = patient_adherence_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug2_enc_id] = patient_adherence_enc_ids[order_id]
+         a_hash[:missed_hiv_drug_construct2] = missed_hiv_drug_const_hash[order_id]
+         a_hash[:amount_of_remaining_drug2_order_id] = amount_of_remaining_drug_order_id_hash[order_id]
          count += 1
         when 3
-         a_hash[:amount_of_drug3_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
-         a_hash[:amount_of_drug3_remaining_at_home] = amount_of_drug_remaining_at_home_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug3] = patient_adherence_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug3_enc_id] = patient_adherence_enc_ids[visit]
-         a_hash[:missed_hiv_drug_construct3] = missed_hiv_drug_const_hash[visit]
-         #a_hash[:amount_of_remaining_drug3_order_id] = amount_of_remaining_drug_order_id_hash[visit]
+         a_hash[:amount_of_drug3_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[order_id]
+         a_hash[:amount_of_drug3_remaining_at_home] = amount_of_drug_remaining_at_home_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug3] = patient_adherence_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug3_enc_id] = patient_adherence_enc_ids[order_id]
+         a_hash[:missed_hiv_drug_construct3] = missed_hiv_drug_const_hash[order_id]
+         a_hash[:amount_of_remaining_drug3_order_id] = amount_of_remaining_drug_order_id_hash[order_id]
          count += 1
         when 4
-         a_hash[:amount_of_drug4_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
-         a_hash[:amount_of_drug4_remaining_at_home] = amount_of_drug_remaining_at_home_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug4] = patient_adherence_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug4_enc_id] = patient_adherence_enc_ids[visit]
-         a_hash[:missed_hiv_drug_construct4] = missed_hiv_drug_const_hash[visit]
-         #a_hash[:amount_of_remaining_drug4_order_id] = amount_of_remaining_drug_order_id_hash[visit]
+         a_hash[:amount_of_drug4_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[order_id]
+         a_hash[:amount_of_drug4_remaining_at_home] = amount_of_drug_remaining_at_home_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug4] = patient_adherence_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug4_enc_id] = patient_adherence_enc_ids[order_id]
+         a_hash[:missed_hiv_drug_construct4] = missed_hiv_drug_const_hash[order_id]
+         a_hash[:amount_of_remaining_drug4_order_id] = amount_of_remaining_drug_order_id_hash[order_id]
          count += 1
         when 5
-         a_hash[:amount_of_drug5_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[visit]
-         a_hash[:amount_of_drug5_remaining_at_home] = amount_of_drug_remaining_at_home_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug5] = patient_adherence_hash[visit]
-         a_hash[:what_was_the_patient_adherence_for_this_drug5_enc_id] = patient_adherence_enc_ids[visit]
-         a_hash[:missed_hiv_drug_construct5] = missed_hiv_drug_const_hash[visit]
-         #a_hash[:amount_of_remaining_drug5_order_id] = amount_of_remaining_drug_order_id_hash[visit]
+         a_hash[:amount_of_drug5_brought_to_clinic] = amount_of_drug_brought_to_clinic_hash[order_id]
+         a_hash[:amount_of_drug5_remaining_at_home] = amount_of_drug_remaining_at_home_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug5] = patient_adherence_hash[order_id]
+         a_hash[:what_was_the_patient_adherence_for_this_drug5_enc_id] = patient_adherence_enc_ids[order_id]
+         a_hash[:missed_hiv_drug_construct5] = missed_hiv_drug_const_hash[order_id]
+         a_hash[:amount_of_remaining_drug5_order_id] = amount_of_remaining_drug_order_id_hash[order_id]
          count += 1
      end
     end
+
 
   return generate_sql_string(a_hash)
 end
