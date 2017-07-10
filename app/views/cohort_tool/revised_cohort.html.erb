@@ -267,32 +267,32 @@
                break;
             case 'children_below_24_months_at_art_initiation':
             <% (@cohort.children_below_24_months_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'cum_children_below_24_months_at_art_initiation':
             <% (@cohort.cum_children_below_24_months_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'children_24_months_14_years_at_art_initiation':
             <% (@cohort.children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'cum_children_24_months_14_years_at_art_initiation':
             <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'adults_at_art_initiation':
-            <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+            <% (@cohort.adults_at_art_initiation || []).each do |patient_id| %>
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'cum_adults_at_art_initiation':
-            <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+            <% (@cohort.cum_adults_at_art_initiation || []).each do |patient_id| %>
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'presumed_severe_hiv_disease_in_infants':
