@@ -230,6 +230,8 @@ class GenericPeopleController < ApplicationController
           uri += "?value=#{params[:identifier].to_s.strip}"
           output = RestClient.get(uri) rescue []
           p = JSON.parse(output) rescue []
+
+
           if p.count > 1
             redirect_to :action => 'duplicates' ,:search_params => params
             return
@@ -416,7 +418,7 @@ class GenericPeopleController < ApplicationController
 
     @patient_identifiers = LabController.new.id_identifiers(patient)
 
-    if vl_routine_check_activated && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
+    if vl_routine_check_activated# && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
       @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
       @latest_date = @results[0].split('::')[0].to_date rescue nil
       @latest_result = @results[1]["TestValue"] rescue nil
@@ -599,6 +601,7 @@ class GenericPeopleController < ApplicationController
 
   def create
     #raise params.inspect
+    #raise session[:dde_token].inspect
     if confirm_before_creating and not params[:force_create] == 'true' and params[:relation].blank?
       @parameters = params
       birthday_params = params.reject{|key,value| key.match(/gender/) }
@@ -711,7 +714,8 @@ class GenericPeopleController < ApplicationController
           national_id_replaced = patient.check_old_national_id(identifier)
         end
       else
-        person = PatientService.create_patient_from_dde(params)
+       # person = PatientService.create_patient_from_dde(params)
+        PatientService.add_dde_patient(params, session[:dde_token])
         success = true
       end
 

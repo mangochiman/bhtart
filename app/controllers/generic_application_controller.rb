@@ -145,23 +145,13 @@ class GenericApplicationController < ActionController::Base
   end
 
   def create_from_dde_server                                                    
-    CoreService.get_global_property_value('create.from.dde.server').to_s == "true" rescue false
-  end
-
-  def dde_settings
-    data = {}
-    dde_ip = GlobalProperty.find_by_property('dde.address').property_value rescue ""
-    dde_port = GlobalProperty.find_by_property('dde.port').property_value rescue ""
-    dde_username = GlobalProperty.find_by_property('dde.username').property_value rescue ""
-    dde_password = GlobalProperty.find_by_property('dde.password').property_value rescue ""
-
-    data["dde_ip"] = dde_ip
-    data["dde_port"] = dde_port
-    data["dde_username"] = dde_username
-    data["dde_password"] = dde_password
-    data["dde_address"] = "http://#{dde_ip}:#{}dde_port"
-
-    return data 
+    #CoreService.get_global_property_value('create.from.dde.server').to_s == "true" rescue false
+    dde_status = CoreService.get_global_property_value('dde.status').to_s.squish #New DDE API
+    if (dde_status == 'ON')
+      return true
+    else
+      return false
+    end
   end
 
   def concept_set(concept_name)

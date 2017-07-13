@@ -6,40 +6,52 @@ module PatientService
 	require 'dde_service'
 	require 'medication_service'
   ############# new DDE API start###################################
+  def self.dde_settings
+    data = {}
+    dde_ip = GlobalProperty.find_by_property('dde.address').property_value rescue "localhost"
+    dde_port = GlobalProperty.find_by_property('dde.port').property_value rescue "3009"
+    dde_username = GlobalProperty.find_by_property('dde.username').property_value rescue "admin"
+    dde_password = GlobalProperty.find_by_property('dde.password').property_value rescue "admin"
+
+    data["dde_ip"] = dde_ip
+    data["dde_port"] = dde_port
+    data["dde_username"] = dde_username
+    data["dde_password"] = dde_password
+    data["dde_address"] = "http://#{dde_ip}:#{dde_port}"
+
+    return data
+  end
+
   def self.dde_authentication_token
     dde_address = "#{dde_settings["dde_address"]}/v1/authenticate"
     dde_username = dde_settings["dde_username"]
     dde_password = dde_settings["dde_password"]
     passed_params = {:username => dde_username, :password => dde_password}
-    received_params = RestClient.post(dde_address, passed_params)
-    dde_token = JSON.parse(received_params)["data"]["token"]
+    headers = {:content_type => "json" }
+    received_params = RestClient.post(dde_address, passed_params.to_json, headers)
+    dde_token = JSON.parse(received_params)#["data"]["token"]
     return dde_token
   end
 
-  def self.add_dde_user
+  def self.add_dde_user(data)
     dde_address = "#{dde_settings["dde_address"]}/v1/add_user"
-    dde_username = dde_settings["dde_username"]
-    dde_password = dde_settings["dde_password"]
-    site_code = PatientIdentifier.site_prefix
-    
     passed_params = {
-      :username => dde_username,
-      :password => dde_password,
+      :username => data["username"],
+      :password => data["password"],
       :application => "ART",
-      :site_code => site_code,
-      :token => self.dde_authentication_token,
-      :description => ""
+      :site_code => data["site_code"],
+      :token => data["dde_token"],
+      :description => data["description"]
     }
-
-    received_params = RestClient.post(dde_address, passed_params)
+    headers = {:content_type => "json" }
+    received_params = RestClient.put(dde_address, passed_params.to_json, headers)
     dde_token = JSON.parse(received_params)["data"]["token"]
     return dde_token
   end
 
-  def self.verify_dde_token_authenticity
-    dde_token = self.dde_authentication_token
+  def self.verify_dde_token_authenticity(dde_token)
     dde_address = "#{dde_settings["dde_address"]}/v1/authenticated/#{dde_token}"
-    received_params = RestClient.get(dde_address)
+    received_params = RestClient.get(dde_address) {|request, response, result| request}
     status = JSON.parse(received_params)["status"]
     return status
   end
@@ -90,34 +102,51 @@ module PatientService
     return status
   end
 
-  def self.add_dde_patient(params)
+  def self.add_dde_patient(params, dde_token)
+    dde_address = "#{dde_settings["dde_address"]}/v1/add_patient"
+    gender = {'M' => 'Male', 'F' => 'Female'}
+    person = Person.new
+    birthdate = "#{params["person"]['birth_year']}-#{params["person"]['birth_month']}-#{params["person"]['birth_day']}"
+    birthdate = birthdate.to_date.strftime("%Y-%m-%d") rescue birthdate
+
+    if params["person"]["birth_year"] == "Unknown"
+      self.set_birthdate_by_age(person, params["person"]['age_estimate'], Date.today)
+    else
+      self.set_birthdate(person, params["person"]["birth_year"], params["person"]["birth_month"], params["person"]["birth_day"])
+    end
+
+    unless params["person"]['birthdate_estimated'].blank?
+      person.birthdate_estimated = params["person"]['birthdate_estimated'].to_i
+    end
+
     passed_params = {
-      "family_name" => params[:given_name],
-      "given_name" => params[:family_name],
-      "middle_name" => params[:given_name],
-      "gender" => params[:gender],
+      "family_name" => params["person"]["names"]["family_name"],
+      "given_name" => params["person"]["names"]["given_name"],
+      "middle_name" => params["person"]["names"]["middle_name"],
+      "gender" => gender[params["person"]["gender"]],
       "attributes" => {
-        "occupation" => params[:occupation],
-        "cell_phone_number" => params[:cell_phone_number]
+        "occupation" => "House Wife",
+        "cell_phone_number" => "09999999999"
       },
-      "birthdate" => params[:birthdate],
+      "birthdate" => person.birthdate,
       "identifiers" => {
-        "ART Number" => params[:art_number],
-        "HTN Number" => params[:htn_number]
+        "ART" => "090909292929"
       },
-      "birthdate_estimated" => params[:birthdate_estimated],
-      "current_residence" => params[:current_residence],
-      "current_village" => params[:current_village],
-      "current_ta" => params[:current_ta],
-      "current_district" => params[:current_district],
-      "home_village" => params[:home_village],
-      "home_ta" => params[:home_ta],
-      "home_district" => params[:home_district],
-      "token" => self.dde_authentication_token
+      "birthdate_estimated" => person.birthdate_estimated,
+      "current_residence" => params["person"]["addresses"]["city_village"],
+      "current_village" => params["person"]["addresses"]["city_village"],
+      "current_ta" => params["filter"]["t_a"],
+      "current_district" => params["person"]["addresses"]["state_province"],
+
+      "home_village" => params["person"]["addresses"]["neighborhood_cell"],
+      "home_ta" => params["person"]["addresses"]["county_district"],
+      "home_district" => params["person"]["addresses"]["address2"],
+      "token" => dde_token
     }
 
-    dde_address = "#{dde_settings["dde_address"]}/v1/add_patient"
-    received_params = RestClient.post(dde_address, passed_params)
+    headers = {:content_type => "json" }
+    received_params = RestClient.put(dde_address, passed_params.to_json, headers)
+    raise received_params.inspect
     results = JSON.parse(received_params)
     return results
   end
