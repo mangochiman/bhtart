@@ -247,6 +247,7 @@ table tr:hover td {
 
   <%
   FasterCSV.open( file, 'w' ) do |csv|
+    csv << ["", "", "", "", "", "", Location.current_health_center.name]
     csv << ["", "Age group", "Gender", "A", "B", "C", "D"]
     rows.each_with_index do |r, i|
       if (i+1) > 24
