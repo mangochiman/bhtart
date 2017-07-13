@@ -327,7 +327,7 @@ EOF
     WHERE gender = '#{gender}' AND date_enrolled BETWEEN
     '#{start_date.to_date}' AND '#{end_date.to_date}' AND
     (DATE(date_enrolled) = DATE(earliest_start_date))
-    AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}'))
+    AND timestampdiff(#{yrs_months}, birthdate, DATE(earliest_start_date))
     BETWEEN #{age_from} AND #{age_to}
 EOF
 
