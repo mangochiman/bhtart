@@ -194,7 +194,7 @@ table tr:hover td {
   <tbody>
 
   <%
-  file = "#{Rails.root.to_s}/public/data/disaggregated_cohort/disaggregated_cohort" + "_#{Location.current_health_center.name}" + ".csv"
+  file = "#{Rails.root.to_s}/public/data/disaggregated_cohort/disaggregated_cohort" + "_#{Location.current_health_center.name.gsub(' ','_')}" + ".csv"
   rows = []
 
   hr_sep = 'Male'
@@ -247,11 +247,11 @@ table tr:hover td {
 
   <%
   FasterCSV.open( file, 'w' ) do |csv|
-    csv << ["#{Location.current_health_center.name}"]
-    csv << ["", "Age group", "Gender", "A", "B", "C", "D"]
+    csv << ["#{Location.current_health_center.name.gsub(' ','_')}"]
+    csv << ["", "Age group", "Gender", "TX_new_(New_on_ART)", "TX_curr_(Receiving_ART)", "TX_curr_received_IPT", "TX_curr_screened_for_TB"]
     rows.each_with_index do |r, i|
       if (i+1) > 24
-        csv << [ r[0], r[1], r[2], r[3], r[4], r[5], r[6] ]
+        csv << [ r[0], r[1], '', r[2], r[3], r[4], r[5], r[6] ]
       else
         csv << [ r[0], r[1], r[2], r[3], r[4], r[5], r[6] ]
       end
