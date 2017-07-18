@@ -128,11 +128,10 @@ module PatientService
         "occupation" => "House Wife",
         "cell_phone_number" => "09999999999"
       },
-      "birthdate" => person.birthdate,
+      "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
       "identifiers" => {
-        "ART" => "090909292929"
       },
-      "birthdate_estimated" => person.birthdate_estimated,
+      "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
       "current_residence" => params["person"]["addresses"]["city_village"],
       "current_village" => params["person"]["addresses"]["city_village"],
       "current_ta" => params["filter"]["t_a"],
@@ -145,12 +144,57 @@ module PatientService
     }
 
     headers = {:content_type => "json" }
-    received_params = RestClient.put(dde_address, passed_params.to_json, headers)
-    raise received_params.inspect
+    received_params = RestClient.put(dde_address, passed_params.to_json, headers){|response, request, result|response}
     results = JSON.parse(received_params)
     return results
   end
 
+  def self.add_dde_conflict_patient(dde_return_path, params, dde_token)
+    dde_address = "#{dde_settings["dde_address"]}#{dde_return_path}"
+    gender = {'M' => 'Male', 'F' => 'Female'}
+    person = Person.new
+    birthdate = "#{params["person"]['birth_year']}-#{params["person"]['birth_month']}-#{params["person"]['birth_day']}"
+    birthdate = birthdate.to_date.strftime("%Y-%m-%d") rescue birthdate
+
+    if params["person"]["birth_year"] == "Unknown"
+      self.set_birthdate_by_age(person, params["person"]['age_estimate'], Date.today)
+    else
+      self.set_birthdate(person, params["person"]["birth_year"], params["person"]["birth_month"], params["person"]["birth_day"])
+    end
+
+    unless params["person"]['birthdate_estimated'].blank?
+      person.birthdate_estimated = params["person"]['birthdate_estimated'].to_i
+    end
+
+    passed_params = {
+      "family_name" => params["person"]["names"]["family_name"],
+      "given_name" => params["person"]["names"]["given_name"],
+      "middle_name" => params["person"]["names"]["middle_name"],
+      "gender" => gender[params["person"]["gender"]],
+      "attributes" => {
+        "occupation" => "House Wife",
+        "cell_phone_number" => "09999999999"
+      },
+      "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
+      "identifiers" => {
+      },
+      "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
+      "current_residence" => params["person"]["addresses"]["city_village"],
+      "current_village" => params["person"]["addresses"]["city_village"],
+      "current_ta" => params["filter"]["t_a"],
+      "current_district" => params["person"]["addresses"]["state_province"],
+
+      "home_village" => params["person"]["addresses"]["neighborhood_cell"],
+      "home_ta" => params["person"]["addresses"]["county_district"],
+      "home_district" => params["person"]["addresses"]["address2"],
+      "token" => dde_token
+    }
+
+    headers = {:content_type => "json" }
+    received_params = RestClient.put(dde_address, passed_params.to_json, headers){|response, request, result|response}
+    results = JSON.parse(received_params)
+    return results
+  end
   ############# new DDE API END###################################
   
   def self.search_demographics_from_remote(params)

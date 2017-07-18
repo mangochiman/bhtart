@@ -714,8 +714,19 @@ class GenericPeopleController < ApplicationController
           national_id_replaced = patient.check_old_national_id(identifier)
         end
       else
-       # person = PatientService.create_patient_from_dde(params)
-        PatientService.add_dde_patient(params, session[:dde_token])
+        # person = PatientService.create_patient_from_dde(params)
+        dde_response = PatientService.add_dde_patient(params, session[:dde_token])
+        dde_status = dde_response["status"]
+        if dde_status.to_s == '409' #conflict
+          dde_return_path = dde_response["return_path"]
+          data = {}
+          data["return_path"] = dde_return_path
+          data["data"] = dde_response["data"]
+          data["params"] = params
+          session[:dde_conflicts] = data
+          redirect_to("/people/display_dde_conflicts") and return
+          #PatientService.add_dde_conflict_patient(dde_return_path, params, session[:dde_token])
+        end
         success = true
       end
 
@@ -787,6 +798,27 @@ class GenericPeopleController < ApplicationController
     end
   end
 
+  def display_dde_conflicts
+    @dde_conflicts = session[:dde_conflicts]["data"]
+    @demographics = session[:dde_conflicts]["params"]
+    render :layout => "menu"
+  end
+
+  def create_new_dde_conflict_patient
+    dde_return_path = session[:dde_conflicts]["return_path"]
+    dde_params = session[:dde_conflicts]["params"]
+    dde_token = session[:dde_token]
+    dde_response = PatientService.add_dde_conflict_patient(dde_return_path, dde_params, dde_token)
+    npid = dde_response["data"]["npid"]
+    dde_params["person"].merge!({"identifiers" => {"National id" => npid}})
+    person = PatientService.create_from_form(dde_params["person"])
+    redirect_to (next_task(person.patient)) and return
+  end
+
+  def create_dde_existing_patient_locally
+
+  end
+  
   def display_duplicate_filing_numbers
     duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(params[:patient_id])
     @active = duplicate_filing_numbers.first
