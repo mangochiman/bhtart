@@ -73,9 +73,17 @@ class GenericApplicationController < ActionController::Base
 
   def set_dde_token
     if create_from_dde_server
-      dde_authentication_token_result = PatientService.dde_authentication_token
-      session[:dde_token] = dde_authentication_token_result["data"]["token"]
-    end if session[:dde_token].blank?
+      if session[:dde_token].blank?
+        dde_authentication_token_result = PatientService.dde_authentication_token
+        session[:dde_token] = dde_authentication_token_result["data"]["token"]
+      else
+        token_status = PatientService.verify_dde_token_authenticity(session[:dde_token])
+        if token_status.to_s == '401'
+          dde_authentication_token_result = PatientService.dde_authentication_token
+          session[:dde_token] = dde_authentication_token_result["data"]["token"]
+        end
+      end
+    end 
   end
 
 	def rescue_action_in_public(exception)
