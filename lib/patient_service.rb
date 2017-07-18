@@ -56,11 +56,11 @@ module PatientService
     return status
   end
 
-  def self.search_dde_by_identifier(identifier)
-    dde_token = self.dde_authentication_token
+  def self.search_dde_by_identifier(identifier, dde_token)
     dde_address = "#{dde_settings["dde_address"]}/v1/search_by_identifier/#{identifier}/#{dde_token}"
-    received_params = RestClient.get(dde_address)
-    results = JSON.parse(received_params)["data"]["hits"]
+    received_params = RestClient.get(dde_address){|response, request, result|response}
+    received_params = "{}" if received_params.blank?
+    results = JSON.parse(received_params){|response, request, result|response}
     return results
   end
 
@@ -194,6 +194,133 @@ module PatientService
     received_params = RestClient.put(dde_address, passed_params.to_json, headers){|response, request, result|response}
     results = JSON.parse(received_params)
     return results
+  end
+
+  def self.create_local_patient_from_dde(data)
+    address_map = self.dde_openmrs_address_map
+    city_village = address_map["city_village"]
+    state_province = address_map["state_province"]
+    neighborhood_cell = address_map["neighborhood_cell"]
+    county_district = address_map["county_district"]
+    address1 = address_map["address1"]
+    address2 = address_map["address2"]
+
+    demographics = {
+      "person" =>
+        {
+        "occupation" => data['attributes']['occupation'],
+        "cell_phone_number" => data['attributes']['cell_phone_number'],
+        "home_phone_number" => data['attributes']['home_phone_number'],
+        "identifiers" => {"National id" => data["npid"]},
+        "addresses"=>{
+          "address1"=>data['addresses']["#{address1}"],
+          "address2"=>data['addresses']["#{address2}"],
+          "city_village"=>data['addresses']["#{city_village}"],
+          "state_province"=>data['addresses']["#{state_province}"],
+          "neighborhood_cell"=>data['addresses']["#{neighborhood_cell}"],
+          "county_district"=>data['addresses']["#{county_district}"]},
+
+        "age_estimate" => data["birthdate_estimated"] ,
+        "birth_month"=> data["birthdate"].to_date.month ,
+        "patient" =>{"identifiers"=>
+            {"National id"=> data["npid"] }
+        },
+        "gender" => data["gender"] ,
+        "birth_day" => data["birthdate"].to_date.day ,
+        "names"=>
+          {
+          "family_name2" => data['names']['family_name2'],
+          "family_name" => data['names']['family_name'] ,
+          "given_name" => data['names']['given_name']
+        },
+        "birth_year" => data["birthdate"].to_date.year }
+    }
+
+    person = PatientService.create_from_form(demographics["person"])
+    return person
+  end
+
+  def self.generate_dde_demographics(data, dde_token)
+    old_npid = data["person"]["patient"]["identifiers"]["National id"]
+    gender = {'M' => 'Male', 'F' => 'Female'}
+    cell_phone_number = data["person"]["attributes"]["cell_phone_number"]
+    cell_phone_number = "Unknown" if cell_phone_number.blank?
+
+    occupation = data["person"]["attributes"]["occupation"]
+    occupation = "Unknown" if occupation.blank?
+
+    person = Person.new
+    if data["person"]["birth_year"] == "Unknown"
+      self.set_birthdate_by_age(person, data["person"]['age_estimate'], Date.today)
+    else
+      self.set_birthdate(person, data["person"]["birth_year"], data["person"]["birth_month"], data["person"]["birth_day"])
+    end
+
+    unless data["person"]['birthdate_estimated'].blank?
+      person.birthdate_estimated = data["person"]['birthdate_estimated'].to_i
+    end
+    
+    demographics = {
+      "family_name" => data["person"]["names"]["family_name"],
+      "given_name" => data["person"]["names"]["given_name"],
+      "middle_name" => data["person"]["names"]["middle_name"],
+      "gender" => gender[data["person"]["gender"]],
+      "attributes" => {
+        "occupation" => occupation,
+        "cell_phone_number" => cell_phone_number
+      },
+      "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
+      "identifiers" => {
+        "Old Identification Number" => old_npid
+      },
+      "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
+      "current_residence" => data["person"]["addresses"]["city_village"],
+      "current_village" => data["person"]["addresses"]["city_village"],
+      "current_ta" => "N/A",
+      "current_district" => data["person"]["addresses"]["state_province"],
+
+      "home_village" => data["person"]["addresses"]["neighborhood_cell"],
+      "home_ta" => data["person"]["addresses"]["county_district"],
+      "home_district" => data["person"]["addresses"]["address2"],
+      "token" => dde_token
+    }
+
+    return demographics
+  end
+
+  def self.assign_new_dde_npid(person, old_npid, new_npid)
+    national_patient_identifier_type_id = PatientIdentifierType.find_by_name("National id").patient_identifier_type_id
+    old_patient_identifier_type_id = PatientIdentifierType.find_by_name("Old Identification Number").patient_identifier_type_id
+
+    patient_national_identifier = person.patient.patient_identifiers.find(:last, :conditions => ["identifier_type =?",
+        national_patient_identifier_type_id])
+
+    ActiveRecord::Base.transaction do
+      new_old_identification_identifier = person.patient.patient_identifiers.new
+      new_old_identification_identifier.identifier_type = old_patient_identifier_type_id
+      new_old_identification_identifier.identifier = old_npid
+      new_old_identification_identifier.save
+
+      new_national_identification_identifier = person.patient.patient_identifiers.new
+      new_national_identification_identifier.identifier_type = national_patient_identifier_type_id
+      new_national_identification_identifier.identifier = new_npid
+      new_national_identification_identifier.save
+
+      patient_national_identifier.void
+    end
+    
+  end
+
+  def self.dde_openmrs_address_map
+    data = { 
+      "city_village" => "current_residence",
+      "state_province" => "current_district",
+      "neighborhood_cell" => "home_village",
+      "county_district" => "home_ta",
+      "address2" => "home_district",
+      "address1" => "current_residence"
+    }
+    return data
   end
   ############# new DDE API END###################################
   
@@ -566,6 +693,7 @@ module PatientService
         "birth_day" => birth_day,
         "names" => {
           "given_name" => person_obj.names.first.given_name,
+          "middle_name" => person_obj.names.first.middle_name,
           "family_name" => person_obj.names.first.family_name,
           "family_name2" => person_obj.names.first.family_name2
         },
