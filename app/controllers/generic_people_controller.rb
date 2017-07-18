@@ -237,7 +237,8 @@ class GenericPeopleController < ApplicationController
             person = Person.find(local_results.first[:person_id].to_i)
             dde_demographics = PatientService.generate_dde_demographics(person_to_be_chcked, session[:dde_token])
 
-            dde_response = PatientService.add_dde_patient(dde_demographics, session[:dde_token])
+            #dde_demographics = {"person" => dde_demographics}
+            dde_response = PatientService.add_dde_patient_after_search_by_identifier(dde_demographics)
             dde_status = dde_response["status"]
 
             if dde_status.to_s == '201'
@@ -251,7 +252,7 @@ class GenericPeopleController < ApplicationController
             end
 
             PatientService.assign_new_dde_npid(person, old_npid, new_npid)
-            
+            national_id_replaced = true
           end
         end
         found_person = local_results.first
@@ -280,15 +281,12 @@ class GenericPeopleController < ApplicationController
       end
 
       if found_person
-        if params[:identifier] and create_from_dde_server
-          national_id_replaced = false
-        end
 
         if params[:relation]
           redirect_to search_complete_url(found_person.id, params[:relation]) and return
         elsif national_id_replaced.to_s == "true"
           #creating patient's footprint so that we can track them later when they visit other sites
-          DDEService.create_footprint(PatientService.get_patient(found_person).national_id, "ART - #{ART_VERSION}")
+          #DDEService.create_footprint(PatientService.get_patient(found_person).national_id, "ART - #{ART_VERSION}")
           print_and_redirect("/patients/national_id_label?patient_id=#{found_person.id}", next_task(found_person.patient)) and return
           redirect_to :action => 'confirm', :found_person_id => found_person.id, :relation => params[:relation] and return
         else
