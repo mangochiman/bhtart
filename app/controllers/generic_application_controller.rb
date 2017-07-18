@@ -68,7 +68,16 @@ class GenericApplicationController < ActionController::Base
 
 	before_filter :set_return_uri, :except => ['create_person_from_anc', 'create_person_from_dmht',
 	                                           'find_person_from_dmht', 'reassign_remote_identifier', 'create', 'render_date_enrolled_in_art']
-  
+
+  before_filter :set_dde_token
+
+  def set_dde_token
+    if create_from_dde_server
+      dde_authentication_token_result = PatientService.dde_authentication_token
+      session[:dde_token] = dde_authentication_token_result["data"]["token"]
+    end if session[:dde_token].blank?
+  end
+
 	def rescue_action_in_public(exception)
 		@message = exception.message
 		@backtrace = exception.backtrace.join("\n") unless exception.nil?
