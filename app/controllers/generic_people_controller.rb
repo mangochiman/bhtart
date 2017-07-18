@@ -706,17 +706,24 @@ class GenericPeopleController < ApplicationController
 
     if create_from_dde_server
       unless identifier.blank?
-        params[:person].merge!({"identifiers" => {"National id" => identifier}})
+        #params[:person].merge!({"identifiers" => {"National id" => identifier}})
         success = true
-        person = PatientService.create_from_form(params[:person])
+        #person = PatientService.create_from_form(params[:person])
         if identifier.length != 6
-          patient = DDEService::Patient.new(person.patient)
-          national_id_replaced = patient.check_old_national_id(identifier)
+          #patient = DDEService::Patient.new(person.patient)
+          #national_id_replaced = patient.check_old_national_id(identifier)
         end
       else
         # person = PatientService.create_patient_from_dde(params)
         dde_response = PatientService.add_dde_patient(params, session[:dde_token])
         dde_status = dde_response["status"]
+
+        if dde_status.to_s == '201'
+          npid = dde_response["data"]["npid"]
+          params["person"].merge!({"identifiers" => {"National id" => npid}})
+          person = PatientService.create_from_form(params["person"])
+        end
+
         if dde_status.to_s == '409' #conflict
           dde_return_path = dde_response["return_path"]
           data = {}
@@ -812,11 +819,15 @@ class GenericPeopleController < ApplicationController
     npid = dde_response["data"]["npid"]
     dde_params["person"].merge!({"identifiers" => {"National id" => npid}})
     person = PatientService.create_from_form(dde_params["person"])
-    redirect_to (next_task(person.patient)) and return
+    print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
   end
 
   def create_dde_existing_patient_locally
-
+    npid = params[:npid]
+    dde_params = session[:dde_conflicts]["params"]
+    dde_params["person"].merge!({"identifiers" => {"National id" => npid}})
+    person = PatientService.create_from_form(dde_params["person"])
+    print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
   end
   
   def display_duplicate_filing_numbers

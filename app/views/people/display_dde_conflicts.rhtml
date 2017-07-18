@@ -59,7 +59,13 @@
       .green{
         color: green;
         font-weight: bold;
-}
+      }
+
+      .data-div{
+        position: relative;
+        overflow: auto;
+        height: 360px !important;
+      }
     </style>
 
   </head>
@@ -85,7 +91,7 @@
         <b><i>Birth Month: <span class="green"><%= @demographics["person"]["birth_month"] %></span></i></b>,
         <b><i>Birth Day: <span class="green"><%= @demographics["person"]["birth_day"] %></span></i></b>
       </p>
-      
+
       <p>Home Of origin Addresses:
         <b><i>Region Of origin: <span class="green"><%= @demographics["region"]["region_name"] %></span></i></b>,
         <b><i>Home District: <span class="green"><%= @demographics["person"]["addresses"]["address2"] %></span></i></b>,
@@ -104,55 +110,56 @@
     <div>&nbsp;</div>
     <div><hr /></div>
 
-
-    <table style="width: 99%;">
-      <thead>
-        <tr>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Birth Date</th>
-          <th>Cell Phone Number</th>
-          <th>Current Residence</th>
-          <th>Current Village</th>
-          <th>&nbsp;</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @dde_conflicts.each do |data| %>
+    <div class="data-div">
+      <table style="width: 99%;">
+        <thead>
           <tr>
-            <td style="background-color: #fff68f;"><%= data["names"]["given_name"] %></td>
-            <td style="background-color: #fff68f; text-align: center;"><%= data["names"]["family_name"] %></td>
-            <td style="background-color: #fff68f; text-align: center;"><%= data["birthdate"].to_date.strftime("%d/%b/%Y") rescue data["birthdate"]%></td>
-            <td style="background-color: #fff68f; text-align: center;"><%= data["attributes"]["cell_phone_number"] %></td>
-            <td style="background-color: #fff68f; text-align: center;"><%= data["addresses"]["current_residence"] %></td>
-            <td style="background-color: #fff68f; text-align: center;"><%= data["addresses"]["current_village"] %></td>
-            <td id="update-button" style="text-align: center; width: 300px;" onclick="showPopup('');">Select Patient</td>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Birth Date</th>
+            <th>Cell Phone Number</th>
+            <th>Current Residence</th>
+            <th>Current Village</th>
+            <th>National ID</th>
+            <th>&nbsp;</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
-    <div><hr /></div>
+        </thead>
+        <tbody>
+          <% @dde_conflicts.each do |data| %>
+            <tr>
+              <td style="background-color: #fff68f;"><%= data["names"]["given_name"] %></td>
+              <td style="background-color: #fff68f; text-align: center;"><%= data["names"]["family_name"] %></td>
+              <td style="background-color: #fff68f; text-align: center;"><%= data["birthdate"].to_date.strftime("%d/%b/%Y") rescue data["birthdate"]%></td>
+              <td style="background-color: #fff68f; text-align: center;"><%= data["attributes"]["cell_phone_number"] %></td>
+              <td style="background-color: #fff68f; text-align: center;"><%= data["addresses"]["current_residence"] %></td>
+              <td style="background-color: #fff68f; text-align: center;"><%= data["addresses"]["current_village"] %></td>
+              <td style="background-color: #fff68f; text-align: center;"><%= data["npid"] %></td>
+              <td id="update-button" style="text-align: center; width: 300px;" onclick="showPopup('<%= data["npid"] %>');">Select Patient</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
 
-    <!--<div style="margin-left:-4px;" class="reassign_btn">
-      <a href="#">Fix Inconsistency Now</a>
-    </div>-->
+      <!--<div style="margin-left:-4px;" class="reassign_btn">
+        <a href="#">Fix Inconsistency Now</a>
+      </div>-->
+    </div>
   </div>
 
   <script type="text/javascript">
-    var tt_cancel_destination = '<%= @next_task %>';
-    var current_patient_state_id = '';
+    var current_npid = '';
     jQuery('#popup-div').click(function(event){
       event.stopPropagation();
     });
     window.onload = function(){
       __$('finishButton').innerHTML = '<span>Create New Patient</span>';
       __$('finishButton').onmousedown = function(){
-          createNewPatient();
+        createNewPatient();
       }
     }
 
-    function showPopup(stateID){
-      current_patient_state_id = stateID;
+    function showPopup(npid){
+      current_npid = npid;
       jQuery('#popup-div').show();
       jQuery('#cover').show();
       jQuery('#popup-div').center();
@@ -179,6 +186,10 @@
       window.location = "/people/create_new_dde_conflict_patient"
     }
 
+    function getSelectedPatient(){
+      window.location = "/people/create_dde_existing_patient_locally?npid=" + current_npid;
+    }
+    
   </script>
 
 </html>
@@ -195,7 +206,7 @@
       </center>
     </span>
     <div style="padding-top: 65px;">
-      <span id="yes" onclick="getSeectedPatient();" class="popup_button" style="position: relative;">Yes</span>
+      <span id="yes" onclick="getSelectedPatient();" class="popup_button" style="position: relative;">Yes</span>
       <span id="no" onclick="hidePopup();" class="popup_button" style=" position: relative; right: 20px;">Cancel</span>
     </div>
   </div>
