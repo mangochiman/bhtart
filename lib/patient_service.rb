@@ -288,6 +288,14 @@ module PatientService
     return demographics
   end
 
+  def self.add_dde_patient_after_search_by_identifier(data)
+    dde_address = "#{dde_settings["dde_address"]}/v1/add_patient"
+    headers = {:content_type => "json" }
+    received_params = RestClient.put(dde_address, data.to_json, headers){|response, request, result|response}
+    results = JSON.parse(received_params)
+    return results
+  end
+
   def self.assign_new_dde_npid(person, old_npid, new_npid)
     national_patient_identifier_type_id = PatientIdentifierType.find_by_name("National id").patient_identifier_type_id
     old_patient_identifier_type_id = PatientIdentifierType.find_by_name("Old Identification Number").patient_identifier_type_id
