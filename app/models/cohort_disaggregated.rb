@@ -104,12 +104,12 @@ class CohortDisaggregated
         yrs_months = 'month'
       end
 
-      gender = gender.first
+      g = gender.first
 
-      started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
-      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
-      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
-      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, gender, @@cohort_cum_start_date, end_date)
+      started_on_art = self.get_started_on_art(yrs_months, age_from, age_to, g, start_date, end_date)
+      alive_on_art = self.get_alive_on_art(yrs_months, age_from, age_to, g, @@cohort_cum_start_date, end_date)
+      started_on_ipt = self.get_started_on_ipt(yrs_months, age_from, age_to, g, @@cohort_cum_start_date, end_date)
+      screened_for_tb = self.get_screened_for_tb(yrs_months, age_from, age_to, g, @@cohort_cum_start_date, end_date)
 
       return [(started_on_art.length rescue 0),
         (alive_on_art.length rescue 0),
@@ -310,7 +310,7 @@ EOF
 
     data = ActiveRecord::Base.connection.select_all <<EOF
     SELECT patient_id FROM temp_earliest_start_date
-    WHERE gender = '#{gender}' AND earliest_start_date <= '#{end_date.to_date}' AND
+    WHERE gender = '#{gender}' AND date_enrolled <= '#{end_date.to_date}' AND
     patient_id IN(#{alive_on_art_patient_ids.join(',')})
     AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}'))
     BETWEEN #{age_from} AND #{age_to};
