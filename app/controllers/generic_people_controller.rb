@@ -223,47 +223,75 @@ class GenericPeopleController < ApplicationController
         #################################################### end of: hack to handle duplicates ########################################################
 
         if create_from_dde_server
-          dde_server = GlobalProperty.find_by_property("dde_server_ip").property_value rescue ""
-          dde_server_username = GlobalProperty.find_by_property("dde_server_username").property_value rescue ""
-          dde_server_password = GlobalProperty.find_by_property("dde_server_password").property_value rescue ""
-          uri = "http://#{dde_server_username}:#{dde_server_password}@#{dde_server}/people/find.json"
-          uri += "?value=#{params[:identifier].to_s.strip}"
-          output = RestClient.get(uri) rescue []
-          p = JSON.parse(output) rescue []
-          if p.count > 1
-            redirect_to :action => 'duplicates' ,:search_params => params
-            return
+          dde_search_results = PatientService.search_dde_by_identifier(params[:identifier], session[:dde_token])
+          dde_hits = dde_search_results["data"]["hits"] rescue []
+
+          if dde_hits.length > 1
+            #Locally available and remotely available + duplicates
+            redirect_to("/people/dde_duplicates?npid=#{params[:identifier]}")
+          end
+
+          if dde_hits.length == 0
+            #Locally available and remotely NOT available
+            old_npid = params[:identifier]
+            person = Person.find(local_results.first[:person_id].to_i)
+            dde_demographics = PatientService.generate_dde_demographics(person_to_be_chcked, session[:dde_token])
+
+            #dde_demographics = {"person" => dde_demographics}
+            dde_response = PatientService.add_dde_patient_after_search_by_identifier(dde_demographics)
+            dde_status = dde_response["status"]
+
+            if dde_status.to_s == '201'
+              new_npid = dde_response["data"]["npid"]
+            end
+
+            if dde_status.to_s == '409' #conflict
+              dde_return_path = dde_response["return_path"]
+              dde_response = PatientService.add_dde_conflict_patient(dde_return_path, dde_demographics, session[:dde_token])
+              new_npid = dde_response["data"]["npid"]
+            end
+
+            PatientService.assign_new_dde_npid(person, old_npid, new_npid)
+            national_id_replaced = true
           end
         end
         found_person = local_results.first
       else
         # TODO - figure out how to write a test for this
         # This is sloppy - creating something as the result of a GET
+        
+        if create_from_dde_server
+          #Results not found locally
+          dde_search_results = PatientService.search_dde_by_identifier(params[:identifier], session[:dde_token])
+          dde_hits = dde_search_results["data"]["hits"]
+          if dde_hits.length == 1
+            found_person = PatientService.create_local_patient_from_dde(dde_hits[0])
+          end
+
+          if dde_hits.length > 1
+            redirect_to("/people/dde_duplicates")
+          end
+
+        end
+        
         if create_from_remote
           found_person_data = PatientService.find_remote_person_by_identifier(params[:identifier])
           found_person = PatientService.create_from_form(found_person_data['person']) unless found_person_data.blank?
         end
       end
+
       if found_person
-        if params[:identifier].to_s.strip.length != 6 and create_from_dde_server
-          patient = DDEService::Patient.new(found_person.patient)
-          national_id_replaced = patient.check_old_national_id(params[:identifier])
-          if national_id_replaced.to_s != "true" and national_id_replaced.to_s !="false"
-            redirect_to :action => 'remote_duplicates' ,:search_params => params
-            return
-          end
-        end
 
         if params[:relation]
           redirect_to search_complete_url(found_person.id, params[:relation]) and return
         elsif national_id_replaced.to_s == "true"
           #creating patient's footprint so that we can track them later when they visit other sites
-          DDEService.create_footprint(PatientService.get_patient(found_person).national_id, "ART - #{ART_VERSION}")
+          #DDEService.create_footprint(PatientService.get_patient(found_person).national_id, "ART - #{ART_VERSION}")
           print_and_redirect("/patients/national_id_label?patient_id=#{found_person.id}", next_task(found_person.patient)) and return
           redirect_to :action => 'confirm', :found_person_id => found_person.id, :relation => params[:relation] and return
         else
           #creating patient's footprint so that we can track them later when they visit other sites
-          DDEService.create_footprint(PatientService.get_patient(found_person).national_id, "ART - #{ART_VERSION}")
+          #DDEService.create_footprint(PatientService.get_patient(found_person).national_id, "ART - #{ART_VERSION}")
           redirect_to :action => 'confirm',:found_person_id => found_person.id, :relation => params[:relation] and return
         end
       end
@@ -416,7 +444,7 @@ class GenericPeopleController < ApplicationController
 
     @patient_identifiers = LabController.new.id_identifiers(patient)
 
-    if vl_routine_check_activated && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
+    if vl_routine_check_activated# && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
       @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
       @latest_date = @results[0].split('::')[0].to_date rescue nil
       @latest_result = @results[1]["TestValue"] rescue nil
@@ -599,6 +627,7 @@ class GenericPeopleController < ApplicationController
 
   def create
     #raise params.inspect
+    #raise session[:dde_token].inspect
     if confirm_before_creating and not params[:force_create] == 'true' and params[:relation].blank?
       @parameters = params
       birthday_params = params.reject{|key,value| key.match(/gender/) }
@@ -703,15 +732,34 @@ class GenericPeopleController < ApplicationController
 
     if create_from_dde_server
       unless identifier.blank?
-        params[:person].merge!({"identifiers" => {"National id" => identifier}})
+        #params[:person].merge!({"identifiers" => {"National id" => identifier}})
         success = true
-        person = PatientService.create_from_form(params[:person])
+        #person = PatientService.create_from_form(params[:person])
         if identifier.length != 6
-          patient = DDEService::Patient.new(person.patient)
-          national_id_replaced = patient.check_old_national_id(identifier)
+          #patient = DDEService::Patient.new(person.patient)
+          #national_id_replaced = patient.check_old_national_id(identifier)
         end
       else
-        person = PatientService.create_patient_from_dde(params)
+        # person = PatientService.create_patient_from_dde(params)
+        dde_response = PatientService.add_dde_patient(params, session[:dde_token])
+        dde_status = dde_response["status"]
+
+        if dde_status.to_s == '201'
+          npid = dde_response["data"]["npid"]
+          params["person"].merge!({"identifiers" => {"National id" => npid}})
+          person = PatientService.create_from_form(params["person"])
+        end
+
+        if dde_status.to_s == '409' #conflict
+          dde_return_path = dde_response["return_path"]
+          data = {}
+          data["return_path"] = dde_return_path
+          data["data"] = dde_response["data"]
+          data["params"] = params
+          session[:dde_conflicts] = data
+          redirect_to("/people/display_dde_conflicts") and return
+          #PatientService.add_dde_conflict_patient(dde_return_path, params, session[:dde_token])
+        end
         success = true
       end
 
@@ -783,6 +831,31 @@ class GenericPeopleController < ApplicationController
     end
   end
 
+  def display_dde_conflicts
+    @dde_conflicts = session[:dde_conflicts]["data"]
+    @demographics = session[:dde_conflicts]["params"]
+    render :layout => "menu"
+  end
+
+  def create_new_dde_conflict_patient
+    dde_return_path = session[:dde_conflicts]["return_path"]
+    dde_params = session[:dde_conflicts]["params"]
+    dde_token = session[:dde_token]
+    dde_response = PatientService.add_dde_conflict_patient(dde_return_path, dde_params, dde_token)
+    npid = dde_response["data"]["npid"]
+    dde_params["person"].merge!({"identifiers" => {"National id" => npid}})
+    person = PatientService.create_from_form(dde_params["person"])
+    print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
+  end
+
+  def create_dde_existing_patient_locally
+    npid = params[:npid]
+    dde_params = session[:dde_conflicts]["params"]
+    dde_params["person"].merge!({"identifiers" => {"National id" => npid}})
+    person = PatientService.create_from_form(dde_params["person"])
+    print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
+  end
+  
   def display_duplicate_filing_numbers
     duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(params[:patient_id])
     @active = duplicate_filing_numbers.first
