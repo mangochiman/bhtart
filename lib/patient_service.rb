@@ -64,16 +64,19 @@ module PatientService
     return results
   end
 
-  def self.search_dde_by_name_and_gender(params)
+  def self.search_dde_by_name_and_gender(params, token)
+    return [] if params[:given_name].blank?
+    gender = {'M' => 'Male', 'F' => 'Female'}
     passed_params = {
       :given_name => params[:given_name],
       :family_name => params[:family_name],
-      :gender => params[:gender],
-      :token => self.dde_authentication_token
+      :gender => gender[params[:gender].upcase],
+      :token => token
     }
 
     dde_address = "#{dde_settings["dde_address"]}/v1/search_by_name_and_gender"
-    received_params = RestClient.post(dde_address, passed_params)
+    headers = {:content_type => "json" }
+    received_params = RestClient.post(dde_address, passed_params.to_json, headers)
     results = JSON.parse(received_params)["data"]["hits"]
     return results
   end
@@ -330,6 +333,7 @@ module PatientService
     }
     return data
   end
+
   ############# new DDE API END###################################
   
   def self.search_demographics_from_remote(params)

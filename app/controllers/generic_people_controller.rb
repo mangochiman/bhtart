@@ -302,42 +302,39 @@ class GenericPeopleController < ApplicationController
     @search_results = {}
     @patients = []
 
-    (PatientService.search_from_remote(params) || []).each do |data|
-      national_id = data["person"]["data"]["patient"]["identifiers"]["National id"] rescue nil
-      national_id = data["person"]["value"] if national_id.blank? rescue nil
-      national_id = data["npid"]["value"] if national_id.blank? rescue nil
-      national_id = data["person"]["data"]["patient"]["identifiers"]["old_identification_number"] if national_id.blank? rescue nil
-
+    (PatientService.search_dde_by_name_and_gender(params, session[:dde_token]) || []).each do |data|
+      national_id = data["npid"]
       next if national_id.blank?
       results = PersonSearch.new(national_id)
       results.national_id = national_id
 
-      unless data["person"]["data"]["addresses"]["city_village"].match(/hashwithindifferentaccess/i)
-        results.current_residence = data["person"]["data"]["addresses"]["city_village"]
-      else
-        results.current_residence = nil
-      end rescue results.current_residence = nil
-
-      unless data["person"]["data"]["addresses"]["address2"].match(/hashwithindifferentaccess/i)
-        results.home_district = data["person"]["data"]["addresses"]["address2"]
-      else
-        results.home_district = nil
-      end rescue results.home_district = nil
-
-      unless data["person"]["data"]["addresses"]["county_district"].match(/hashwithindifferentaccess/i)
-        results.traditional_authority =  data["person"]["data"]["addresses"]["county_district"]
+      unless data["addresses"]["home_ta"].blank?
+        results.traditional_authority = data["addresses"]["home_ta"]
       else
         results.traditional_authority = nil
-      end rescue results.traditional_authority = nil
+      end 
+
+      unless data["addresses"]["home_district"].blank?
+        results.home_district = data["addresses"]["home_district"]
+      else
+        results.home_district = nil
+      end 
+
+      unless data["addresses"]["current_residence"].blank?
+        results.current_residence =  data["addresses"]["current_residence"]
+      else
+        results.current_residence = nil
+      end
+
 
       results.person_id = 0
-      results.name = data["person"]["data"]["names"]["given_name"] + " " + data["person"]["data"]["names"]["family_name"]
-      gender = data["person"]["data"]["gender"]
-      results.occupation = data["person"]["data"]["occupation"]
+      results.name = data["names"]["given_name"] + " " + data["names"]["family_name"]
+      gender = data["gender"]
+      results.occupation = data["attributes"]["occupation"]
       results.sex = (gender == 'M' ? 'Male' : 'Female')
-      results.birthdate_estimated = (data["person"]["data"]["birthdate_estimated"]).to_i
-      results.birth_date = birthdate_formatted((data["person"]["data"]["birthdate"]).to_date , results.birthdate_estimated)
-      results.birthdate = (data["person"]["data"]["birthdate"]).to_date
+      results.birthdate_estimated = (data["birthdate_estimated"]).to_i
+      results.birth_date = birthdate_formatted((data["birthdate"]).to_date , results.birthdate_estimated)
+      results.birthdate = (data["birthdate"]).to_date
       results.age = cul_age(results.birthdate.to_date , results.birthdate_estimated)
       @search_results[results.national_id] = results
     end if create_from_dde_server
