@@ -2904,12 +2904,14 @@ def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encou
             answer_value = adh.value_text
           elsif adh.value_numeric
             answer_value = adh.value_numeric
+            puts "i am numeric"
           elsif adh.value_coded
             answer_value = ConceptName.find_by_sql("Select name FROM concept_name
                                                     WHERE concept_id = #{adh.value_coded.to_i}
                                                     AND concept_name_type = 'FULLY_SPECIFIED'").first.name
+            puts "I am coded"
           end
-          patient_adh[adh.order_id.to_i] = adh.order_id.to_i
+          patient_adh[adh.order_id.to_i] = visit
           amount_of_remaining_drug_order_id_hash[adh.order_id.to_i] = adh.order_id rescue nil
           if adh.concept_id == 2540 #amount brought
             amount_of_drug_brought_to_clinic_hash[adh.order_id.to_i] = adh.to_s.split(':')[1].strip rescue nil
@@ -2922,17 +2924,17 @@ def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encou
             amount_of_drug_remaining_at_home_hash[adh.order_id.to_i] = adh.to_s.split(':')[1].strip rescue nil
           end
         else
-          patient_adh.store(adh.order_id.to_i, adh.order_id.to_i)
-          amount_of_remaining_drug_order_id_hash.store(adh.order_id.to_i, adh.order_id)
+          patient_adh[adh.order_id.to_i] += visit
+          amount_of_remaining_drug_order_id_hash[adh.order_id.to_i] += adh.order_id rescue nil
           if adh.concept_id == 2540 #amount brought
-            amount_of_drug_brought_to_clinic_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
+            amount_of_drug_brought_to_clinic_hash[adh.order_id.to_i] += adh.to_s.split(':')[1].strip rescue nil
           elsif adh.concept_id == 2667 #missed hiv drug
-            missed_hiv_drug_const_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
+            missed_hiv_drug_const_hash[adh.order_id.to_i] += adh.to_s.split(':')[1].strip rescue nil
           elsif adh.concept_id == 6987 #patient adherence
-            patient_adherence_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
-            patient_adherence_enc_ids.store(adh.order_id.to_i, adh.encounter_id)rescue nil
+            patient_adherence_hash[adh.order_id.to_i] = adh.to_s.split(':')[1].strip rescue nil
+            patient_adherence_enc_ids[adh.order_id.to_i] += adh.encounter_id rescue nil
           elsif adh.concept_id == 6781 #amount remaining
-            amount_of_drug_remaining_at_home_hash.store(adh.order_id.to_i, adh.to_s.split(':')[1].strip) rescue nil
+            amount_of_drug_remaining_at_home_hash[adh.order_id.to_i] += adh.to_s.split(':')[1].strip rescue nil
           end
         end
       end
