@@ -595,23 +595,55 @@ class GenericPeopleController < ApplicationController
     elsif params[:person][:id] != '0' && Person.find(params[:person][:id]).dead == 1
       redirect_to :controller => :patients, :action => :show, :id => params[:person][:id]
     else
-			#raise params.to_yaml
       if params[:person][:id] != '0'
+
         person = Person.find(params[:person][:id])
-        patient = DDEService::Patient.new(person.patient)
+        #patient = DDEService::Patient.new(person.patient)
         patient_id = PatientService.get_patient_identifier(person.patient, "National id")
-        if patient_id.length != 6 and create_from_dde_server
-          patient.check_old_national_id(patient_id)
-					unless params[:patient_guardian].blank?
+        old_npid = patient_id
+        
+        if create_from_dde_server
+          unless params[:patient_guardian].blank?
             print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", "/patients/guardians_dashboard/#{person.id}") and return
 					end
+          demographics = PatientService.demographics(person)
+          dde_demographics = PatientService.generate_dde_demographics(demographics, session[:dde_token])
+          #check if patient is not in DDE first
+          dde_search_results = PatientService.search_dde_by_identifier(old_npid, session[:dde_token])
+          dde_hits = dde_search_results["data"]["hits"] rescue []
+          patient_exists_in_dde = dde_hits.length > 0
 
+          if !patient_exists_in_dde
+            dde_response = PatientService.add_dde_patient_after_search_by_name(dde_demographics)
+
+            dde_status = dde_response["status"]
+
+            if dde_status.to_s == '201' #created
+              new_npid = dde_response["data"]["npid"]
+              #new National ID assignment
+              #There is a need to check the validity of the patient national ID before being marked as old ID
+
+              if (old_npid != new_npid)
+                PatientService.assign_new_dde_npid(person, old_npid, new_npid)
+              end
+              print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient)) and return
+            end
+
+            if dde_status.to_s == '409' #conflict
+              dde_return_path = dde_response["return_path"]
+              data = {}
+              data["return_path"] = dde_return_path
+              data["data"] = dde_response["data"]
+              data["params"] = demographics
+              session[:dde_conflicts] = data
+              redirect_to("/people/display_dde_conflicts") and return
+              #PatientService.add_dde_conflict_patient(dde_return_path, params, session[:dde_token])
+            end
+          end
           #creating patient's footprint so that we can track them later when they visit other sites
-          DDEService.create_footprint(PatientService.get_patient(person).national_id, "ART - #{ART_VERSION}")
-          print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient)) and return
+          #DDEService.create_footprint(PatientService.get_patient(person).national_id, "ART - #{ART_VERSION}")
         end
-        #creating patient's footprint so that we can track them later when they visit other sites
-        DDEService.create_footprint(PatientService.get_patient(person).national_id, "ART - #{ART_VERSION}")
+
       end
       redirect_to search_complete_url(params[:person][:id], params[:relation]) and return unless params[:person][:id].blank? || params[:person][:id] == '0'
 
