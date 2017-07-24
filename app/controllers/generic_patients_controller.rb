@@ -4260,9 +4260,17 @@ EOF
   end
 
   def dde_merge_patients_menu
-
+    
   end
-  
+
+  def dde_duplicates
+    identifier = params[:identifier]
+    @local_results = PatientService.search_by_identifier(identifier)
+    dde_search_results = PatientService.search_dde_by_identifier(identifier, session[:dde_token])
+    @remote_results = dde_search_results["data"]["hits"] rescue []
+    render :layout => "menu"
+  end
+
   def search_all
     search_str = params[:search_str]
     side = params[:side]
