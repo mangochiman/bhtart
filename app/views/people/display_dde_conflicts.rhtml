@@ -70,7 +70,6 @@
 
   </head>
 
-
   <div id='primary_patient_div'>
     <div>
       <h4>
@@ -93,16 +92,16 @@
       </p>
 
       <p>Home Of origin Addresses:
-        <b><i>Region Of origin: <span class="green"><%= @demographics["region"]["region_name"] %></span></i></b>,
+        <b><i>Region Of origin: <span class="green"><%= @demographics["region"]["region_name"] rescue '' %></span></i></b>,
         <b><i>Home District: <span class="green"><%= @demographics["person"]["addresses"]["address2"] %></span></i></b>,
         <b><i>Ancestrol T/A or Area Of residence: <span class="green"><%= @demographics["person"]["addresses"]["county_district"] %></span></i></b>,
         <b><i>Home Village: <span class="green"><%= @demographics["person"]["addresses"]["neighborhood_cell"] %></span></i></b>
       </p>
 
       <p>Current residence Addresses:
-        <b><i>Region Of origin: <span class="green"><%= @demographics["filter"]["region"] %></span></i></b>,
+        <b><i>Region Of origin: <span class="green"><%= @demographics["filter"]["region"] rescue ''%></span></i></b>,
         <b><i>Current District: <span class="green"><%= @demographics["person"]["addresses"]["state_province"] %></span></i></b>,
-        <b><i>T/A or Area Of residence: <span class="green"><%= @demographics["filter"]["t_a"] %></span></i></b>,
+        <b><i>T/A or Area Of residence: <span class="green"><%= @demographics["filter"]["t_a"] rescue '' %></span></i></b>,
         <b><i>Location Village: <span class="green"><%= @demographics["person"]["addresses"]["city_village"] %></span></i></b>
       </p>
     </div>
