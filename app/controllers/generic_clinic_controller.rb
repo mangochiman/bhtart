@@ -260,7 +260,8 @@ class GenericClinicController < ApplicationController
         ['/clinic/location_management_tab','Location Management'],
         ['/people/tranfer_patient_in','Transfer Patient in'],
         #['/patients/patient_merge','Merge Patients'],
-        ['/patients/merge_menu','Merge Patients'],
+        ['/patients/merge_menu','Merge Patients (Local)'],
+        ['/patients/dde_merge_patients_menu','Merge Patients (DDE)'],
         ['/patients/duplicate_menu','Possible patient duplicates']
 
       ]

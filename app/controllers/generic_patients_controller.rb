@@ -4259,6 +4259,10 @@ EOF
     render :layout => "report"
   end
 
+  def dde_merge_patients_menu
+
+  end
+  
   def search_all
     search_str = params[:search_str]
     side = params[:side]
