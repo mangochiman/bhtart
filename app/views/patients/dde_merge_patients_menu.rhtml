@@ -116,6 +116,8 @@
     barcode.style.height = "80px";
 
     helptext.style.marginLeft = "32.5%";
+
+    __$("nextButton").innerHTML = "<span>Continue</span>"
   }
 
   function focusForBarcodeInput() {
@@ -140,7 +142,7 @@
 
 </script>
 
-<form id="create_stoke" name="/patients/dde_duplicates" action="set_receipts">
+<form  action="/patients/dde_duplicates" method="GET">
   <%= text_field_tag :identifier, '', {
     :tt_onLoad => "returning = false; $('keyboard').style.display = 'none'; formatBarcodeSpace()",
     :id => 'barcode',
