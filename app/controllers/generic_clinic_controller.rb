@@ -261,7 +261,7 @@ class GenericClinicController < ApplicationController
         ['/people/tranfer_patient_in','Transfer Patient in'],
         #['/patients/patient_merge','Merge Patients'],
         ['/patients/merge_menu','Merge Patients (Local)'],
-        ['/patients/dde_merge_patients_menu','Merge Patients (DDE)'],
+        ['/patients/dde_duplicates','Merge Patients (DDE)'],
         ['/patients/duplicate_menu','Possible patient duplicates']
 
       ]
