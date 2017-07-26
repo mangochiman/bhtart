@@ -196,8 +196,8 @@
     <form id="form1" method="post" action="">
       <fieldset>
         <legend>Remote primary patient</legend>
-        <input  type="text" placeholder="First Name" id="pfname" style="width: 45%;" onmousedown="showKeyPad('pfname')"/>
-        <input  type="text" style="width: 47%;" id="plname" placeholder="Last Name" onmousedown="showKeyPad('plname')"/><br /><br />
+        <input  type="text" placeholder="First Name" id="pfname" style="width: 45%;" onmousedown="showKeyPad('pfname', 'left')"/>
+        <input  type="text" style="width: 47%;" id="plname" placeholder="Last Name" onmousedown="showKeyPad('plname', 'left')"/><br /><br />
         <select name="gender" class="gender" id="pgender">
           <option value="">Gender</option>
           <option value="Male">Male</option>
@@ -217,8 +217,8 @@
     <form id="form1" method="post" action="">
       <fieldset>
         <legend>Remote secondary patient</legend>
-        <input  type="text" placeholder="First Name" id="sfname" style="width: 47%;" />
-        <input  type="text" style="width: 44%;" id="slname"placeholder="Last Name" /><br /><br />
+        <input  type="text" placeholder="First Name" id="sfname" style="width: 47%;" onmousedown="showKeyPad('sfname', 'right')" />
+        <input  type="text" style="width: 44%;" id="slname" placeholder="Last Name" onmousedown="showKeyPad('slname', 'right')" /><br /><br />
         <select name="gender" class="gender" id="sgender">
           <option value="">Gender</option>
           <option value="Male">Male</option>
@@ -325,13 +325,19 @@
     }
 
     var currentInput = "";
-    function showKeyPad(inputID) {
+    function showKeyPad(inputID, side) {
       currentInput = document.getElementById(inputID);
       console.log(currentInput)
       key = document.getElementById("keypad")
-      current_div='left'
+      current_div = side
+      if (side == 'left') {
+        document.getElementById('keypad').style.left = '20px'
+        document.getElementById('keypad').style.right =  null;
+      } else {
+        document.getElementById('keypad').style.right =  '20px'
+        document.getElementById('keypad').style.left = null;
+      }
       search = currentInput;
-      console.log("Here")
       showKeyboard();
     }
 
@@ -365,7 +371,7 @@
           return
       }
       search.value+= pressedChar
-      searchPatient(search.value)
+      //searchPatient(search.value)
     }
 
     function searchPatient(value){
