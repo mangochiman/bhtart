@@ -4271,6 +4271,93 @@ EOF
     render :layout => "report"
   end
 
+  def search_dde_by_name_and_gender
+    passed_params = {
+      :given_name => params[:fname],
+      :family_name => params[:lname],
+      :gender => params[:gender].first.upcase,
+    }
+    side = params[:side]
+    remote_results = PatientService.search_dde_by_name_and_gender(passed_params, session[:dde_token])
+    raise remote_results.first.inspect
+
+
+    @html = <<EOF
+<html>
+<body>
+<br/>
+<table class="data_table" width="100%">
+EOF
+
+    color = 'blue'
+    remote_results.each do |result|
+      names = result["names"]
+      addresses = result["addresses"]
+      attributes = result["attributes"]
+      npid = result["npid"]
+      birthdate = result["birthdate"]
+      age = cul_age(birthdate.to_date , result["birthdate_estimated"].to_i)
+
+      if color == 'blue'
+        color = 'white'
+      else
+        color='blue'
+      end
+
+      @html+= <<EOF
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Name:&nbsp;#{(names['given_name'].to_s + names['family_name'].to_s) || '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Age:&nbsp;#{age || '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Guardian:&nbsp;#{bean.guardian rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">ARV number:&nbsp;#{bean.arv_number rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">National ID:&nbsp;#{npid rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">TA:&nbsp;#{bean.home_district rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Total Encounters:&nbsp;#{total_encounters rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Latest Visit:&nbsp;#{latest_visit rescue '&nbsp;'}</td>
+</tr>
+EOF
+    end
+
+    @html+="</table></body></html>"
+    render :text => @html ; return
+
+
+
+
+
+
+
+
+
+
+    remote_results.each do |result|
+      names = result["names"]
+      addresses = result["addresses"]
+      attributes = result["attributes"]
+      npid = result["npid"]
+    end
+
+    raise remote_results.first.inspect
+  end
+  def cul_age(birthdate , birthdate_estimated , date_created = Date.today, today = Date.today)
+
+    # This code which better accounts for leap years
+    patient_age = (today.year - birthdate.year) + ((today.month - birthdate.month) + ((today.day - birthdate.day) < 0 ? -1 : 0) < 0 ? -1 : 0)
+
+    # If the birthdate was estimated this year, we round up the age, that way if
+    # it is March and the patient says they are 25, they stay 25 (not become 24)
+    birth_date = birthdate
+    estimate = birthdate_estimated == 1
+    patient_age += (estimate && birth_date.month == 7 && birth_date.day == 1  &&
+        today.month < birth_date.month && date_created.year == today.year) ? 1 : 0
+  end
+
   def search_all
     search_str = params[:search_str]
     side = params[:side]
