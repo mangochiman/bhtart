@@ -2033,7 +2033,7 @@ EOF
   end
 
   def patient_filing_number_label(patient, num = 1)
-    file = PatientService.get_patient_identifier(patient, 'Filing Number')[0..9]
+    file = PatientService.get_patient_identifier(patient, 'Filing Number')[0..-1]
     file_type = file.strip[3..4]
     version_number=file.strip[2..2]
     number = file
@@ -2048,7 +2048,7 @@ EOF
   end
 
   def patient_archive_filing_number_label(patient, num = 1)
-    file = PatientService.get_patient_identifier(patient, 'Archived filing number')[0..9]
+    file = PatientService.get_patient_identifier(patient, 'Archived filing number')[0..-1]
     file_type = file.strip[3..4]
     version_number=file.strip[2..2]
     number = file[5..-1]
