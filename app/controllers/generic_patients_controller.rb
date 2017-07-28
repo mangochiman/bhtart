@@ -4279,8 +4279,6 @@ EOF
     }
     side = params[:side]
     remote_results = PatientService.search_dde_by_name_and_gender(passed_params, session[:dde_token])
-    raise remote_results.first.inspect
-
 
     @html = <<EOF
 <html>
@@ -4327,23 +4325,6 @@ EOF
     @html+="</table></body></html>"
     render :text => @html ; return
 
-
-
-
-
-
-
-
-
-
-    remote_results.each do |result|
-      names = result["names"]
-      addresses = result["addresses"]
-      attributes = result["attributes"]
-      npid = result["npid"]
-    end
-
-    raise remote_results.first.inspect
   end
   def cul_age(birthdate , birthdate_estimated , date_created = Date.today, today = Date.today)
 

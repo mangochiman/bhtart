@@ -413,8 +413,8 @@
       }
       var url = "/patients/search_dde_by_name_and_gender/?fname=" + fname +  " &lname=" + lname + "&gender=" + gender + "&side=left";
       response = new Ajax.Request(url,{method:'get',onSuccess: function(transport){
-          //text = transport.responseText || "";
-          //updateDiv(text);
+          text = transport.responseText || "";
+          updateDiv(text);
         }});
     }
 
