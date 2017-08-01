@@ -105,6 +105,15 @@ module PatientService
     return status
   end
 
+  def self.update_dde_patient(person, dde_token)
+    passed_params = self.generate_dde_data_to_be_updated(person, dde_token)
+    dde_address = "#{dde_settings["dde_address"]}/v1/update_patient"
+    headers = {:content_type => "json" }
+    received_params = RestClient.post(dde_address, passed_params.to_json, headers)
+    results = JSON.parse(received_params)
+    return results
+  end
+
   def self.add_dde_patient(params, dde_token)
     dde_address = "#{dde_settings["dde_address"]}/v1/add_patient"
     gender = {'M' => 'Male', 'F' => 'Female'}
@@ -279,6 +288,57 @@ module PatientService
       "identifiers" => {
         "Old Identification Number" => old_npid
       },
+      "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
+      "current_residence" => data["person"]["addresses"]["city_village"],
+      "current_village" => data["person"]["addresses"]["city_village"],
+      "current_ta" => "N/A",
+      "current_district" => data["person"]["addresses"]["state_province"],
+
+      "home_village" => data["person"]["addresses"]["neighborhood_cell"],
+      "home_ta" => data["person"]["addresses"]["county_district"],
+      "home_district" => data["person"]["addresses"]["address2"],
+      "token" => dde_token
+    }
+
+    return demographics
+  end
+
+  def self.generate_dde_data_to_be_updated(person, dde_token)
+    data = PatientService.demographics(person)
+    gender = {'M' => 'Male', 'F' => 'Female'}
+
+    occupation = data["person"]["attributes"]["occupation"]
+    occupation = "Unknown" if occupation.blank?
+
+    middle_name = data["person"]["names"]["middle_name"]
+    middle_name = "N/A" if middle_name.blank?
+
+    npid = data["person"]["patient"]["identifiers"]["National id"]
+    old_npid = data["person"]["patient"]["identifiers"]["Old Identification Number"]
+    cell_phone_number = data["person"]["attributes"]["cell_phone_number"]
+    occupation = data["person"]["attributes"]["occupation"]
+    home_phone_number = data["person"]["attributes"]["home_phone_number"]
+    office_phone_number = data["person"]["attributes"]["office_phone_number"]
+
+    attributes = {}
+    attributes["cell_phone_number"] = cell_phone_number unless cell_phone_number.blank?
+    attributes["occupation"] = occupation unless occupation.blank?
+    attributes["home_phone_number"] = home_phone_number unless home_phone_number.blank?
+    attributes["office_phone_number"] = office_phone_number unless office_phone_number.blank?
+
+    identifiers = {}
+    identifiers["Old Identification Number"] = old_npid unless old_npid.blank?
+    identifiers["National id"] = old_npid unless npid.blank?
+
+    demographics = {
+      "npid" => npid,
+      "family_name" => data["person"]["names"]["family_name"],
+      "given_name" => data["person"]["names"]["given_name"],
+      "middle_name" => middle_name,
+      "gender" => gender[data["person"]["gender"]],
+      "attributes" => attributes,
+      "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
+      "identifiers" => identifiers,
       "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
       "current_residence" => data["person"]["addresses"]["city_village"],
       "current_village" => data["person"]["addresses"]["city_village"],
