@@ -3035,6 +3035,10 @@ EOF
         person_attribute.update_attributes({'value' => params[:person]["home_phone_number"]})
       end
     end
+    if create_from_dde_server
+      #Updating the demographics to dde
+      PatientService.update_dde_patient(patient.person, session[:dde_token])
+    end
   end
 
   def edit_mastercard_attribute(attribute_name)
