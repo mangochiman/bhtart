@@ -225,6 +225,21 @@ class GenericPeopleController < ApplicationController
         if create_from_dde_server
           dde_search_results = PatientService.search_dde_by_identifier(params[:identifier], session[:dde_token])
           dde_hits = dde_search_results["data"]["hits"] rescue []
+          old_npid = person_to_be_chcked["person"]["patient"]["identifiers"]["National id"] #No need for rescue here. Let it crash so that we know the problem
+
+          ####################### REPLACING DDE TEMP ID ########################
+          if (dde_hits.length  == 1)
+            new_npid = dde_hits[0]["npid"]
+            #new National ID assignment
+            #There is a need to check the validity of the patient national ID before being marked as old ID
+
+            if (old_npid != new_npid) #if DDE has returned a new ID, Let's assume it is right
+              p = Person.find(local_results.first[:person_id].to_i)
+              PatientService.assign_new_dde_npid(p, old_npid, new_npid)
+              national_id_replaced = true
+            end
+          end
+          ######################## REPLACING DDE TEMP ID END####################
 
           if dde_hits.length > 1
             #Locally available and remotely available + duplicates

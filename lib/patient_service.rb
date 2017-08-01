@@ -252,6 +252,9 @@ module PatientService
     occupation = data["person"]["attributes"]["occupation"]
     occupation = "Unknown" if occupation.blank?
 
+    middle_name = data["person"]["names"]["middle_name"]
+    middle_name = "N/A" if middle_name.blank?
+
     person = Person.new
     if data["person"]["birth_year"] == "Unknown"
       self.set_birthdate_by_age(person, data["person"]['age_estimate'], Date.today)
@@ -266,7 +269,7 @@ module PatientService
     demographics = {
       "family_name" => data["person"]["names"]["family_name"],
       "given_name" => data["person"]["names"]["given_name"],
-      "middle_name" => data["person"]["names"]["middle_name"],
+      "middle_name" => middle_name,
       "gender" => gender[data["person"]["gender"]],
       "attributes" => {
         "occupation" => occupation,
