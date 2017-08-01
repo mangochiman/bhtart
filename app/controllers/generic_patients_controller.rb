@@ -4330,6 +4330,11 @@ EOF
     render :text => @html ; return
 
   end
+
+  def dde_merge_similar_patients
+    raise params.inspect
+  end
+
   def cul_age(birthdate , birthdate_estimated , date_created = Date.today, today = Date.today)
 
     # This code which better accounts for leap years
