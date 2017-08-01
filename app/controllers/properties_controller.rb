@@ -224,52 +224,58 @@ class PropertiesController < GenericPropertiesController
       global_property_dde_status.property_value = dde_status
       global_property_dde_status.save
 
-      global_property_dde_address = GlobalProperty.find_by_property('dde.address') || GlobalProperty.new()
-      global_property_dde_address.property = 'dde.address'
-      global_property_dde_address.property_value = params[:dde_address]
-      global_property_dde_address.save
+      if (dde_status == 'ON') #Do this part only when DDE is activated
+        global_property_dde_address = GlobalProperty.find_by_property('dde.address') || GlobalProperty.new()
+        global_property_dde_address.property = 'dde.address'
+        global_property_dde_address.property_value = params[:dde_address]
+        global_property_dde_address.save
 
-      global_property_dde_port = GlobalProperty.find_by_property('dde.port') || GlobalProperty.new()
-      global_property_dde_port.property = 'dde.port'
-      global_property_dde_port.property_value = params[:dde_port]
-      global_property_dde_port.save
+        global_property_dde_port = GlobalProperty.find_by_property('dde.port') || GlobalProperty.new()
+        global_property_dde_port.property = 'dde.port'
+        global_property_dde_port.property_value = params[:dde_port]
+        global_property_dde_port.save
 
-      global_property_dde_username = GlobalProperty.find_by_property('dde.username') || GlobalProperty.new()
-      global_property_dde_username.property = 'dde.username'
-      global_property_dde_username.property_value = params[:dde_username]
-      global_property_dde_username.save
+        global_property_dde_username = GlobalProperty.find_by_property('dde.username') || GlobalProperty.new()
+        global_property_dde_username.property = 'dde.username'
+        global_property_dde_username.property_value = params[:dde_username]
+        global_property_dde_username.save
 
-      global_property_dde_password = GlobalProperty.find_by_property('dde.password') || GlobalProperty.new()
-      global_property_dde_password.property = 'dde.password'
-      global_property_dde_password.property_value = params[:dde_password]
-      global_property_dde_password.save
-    end
-    token_authenticity = PatientService.verify_dde_token_authenticity(session[:dde_token])
-    site_code = PatientIdentifier.site_prefix
-
-    if (token_authenticity.to_s == "200")
-      data = {
-        "username" => "#{params[:dde_username]}",
-        "password"  => "#{params[:dde_password]}",
-        "site_code" => site_code,
-        "dde_token" => session[:dde_token],
-        "application" =>"ART",
-        "description" => "DDE user in an ART app"
-      }
-      dde_token = PatientService.add_dde_user(data)
-      session[:dde_token] = dde_token
-    else
-      dde_authentication_token_result = PatientService.dde_authentication_token
-      session[:dde_token] = dde_authentication_token_result["data"]["token"]
-      data = {
-        "site_code" => site_code,
-        "dde_token" => session[:dde_token],
-        "application" =>"ART",
-        "description" => "DDE user in an ART app"
-      }
-      dde_token = PatientService.add_dde_user(data)
+        global_property_dde_password = GlobalProperty.find_by_property('dde.password') || GlobalProperty.new()
+        global_property_dde_password.property = 'dde.password'
+        global_property_dde_password.property_value = params[:dde_password]
+        global_property_dde_password.save
+      end
+      
     end
 
+    if (dde_status == 'ON')
+      token_authenticity = PatientService.verify_dde_token_authenticity(session[:dde_token])
+      site_code = PatientIdentifier.site_prefix
+
+      if (token_authenticity.to_s == "200")
+        data = {
+          "username" => "#{params[:dde_username]}",
+          "password"  => "#{params[:dde_password]}",
+          "site_code" => site_code,
+          "dde_token" => session[:dde_token],
+          "application" =>"ART",
+          "description" => "DDE user in an ART app"
+        }
+        dde_token = PatientService.add_dde_user(data)
+        session[:dde_token] = dde_token
+      else
+        dde_authentication_token_result = PatientService.dde_authentication_token
+        session[:dde_token] = dde_authentication_token_result["data"]["token"]
+        data = {
+          "site_code" => site_code,
+          "dde_token" => session[:dde_token],
+          "application" =>"ART",
+          "description" => "DDE user in an ART app"
+        }
+        dde_token = PatientService.add_dde_user(data)
+      end
+    end
+    
     redirect_to("/clinic") and return
   end
 
