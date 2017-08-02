@@ -22,6 +22,15 @@ module PatientService
     return data
   end
 
+  def self.initial_dde_authentication_token
+    dde_address = "#{dde_settings["dde_address"]}/v1/authenticate"
+    passed_params = {:username => "admin", :password => "admin"}
+    headers = {:content_type => "json" }
+    received_params = RestClient.post(dde_address, passed_params.to_json, headers)
+    dde_token = JSON.parse(received_params)#["data"]["token"]
+    return dde_token
+  end
+
   def self.dde_authentication_token
     dde_address = "#{dde_settings["dde_address"]}/v1/authenticate"
     dde_username = dde_settings["dde_username"]
@@ -34,19 +43,19 @@ module PatientService
   end
 
   def self.add_dde_user(data)
-    dde_address = "#{dde_settings["dde_address"]}/v1/add_user"
+    dde_address = "http://admin:admin@#{dde_settings["dde_ip"]}:#{dde_settings["dde_port"]}/v1/add_user"
     passed_params = {
       :username => data["username"],
       :password => data["password"],
       :application => "ART",
       :site_code => data["site_code"],
-      :token => data["dde_token"],
       :description => data["description"]
     }
+
     headers = {:content_type => "json" }
-    received_params = RestClient.put(dde_address, passed_params.to_json, headers)
+    received_params = RestClient.put(dde_address, passed_params.to_json, headers){|response, request, result|response}
     dde_token = JSON.parse(received_params)["data"]["token"]
-    return dde_token
+    #return dde_token
   end
 
   def self.verify_dde_token_authenticity(dde_token)
@@ -218,17 +227,18 @@ module PatientService
     demographics = {
       "person" =>
         {
-        "occupation" => data['attributes']['occupation'],
-        "cell_phone_number" => data['attributes']['cell_phone_number'],
-        "home_phone_number" => data['attributes']['home_phone_number'],
+        "occupation" => (data['attributes']['occupation'] rescue nil) ,
+        "cell_phone_number" => (data['attributes']['cell_phone_number'] rescue nil),
+        "home_phone_number" => (data['attributes']['home_phone_number'] rescue nil),
         "identifiers" => {"National id" => data["npid"]},
         "addresses"=>{
-          "address1"=>data['addresses']["#{address1}"],
-          "address2"=>data['addresses']["#{address2}"],
-          "city_village"=>data['addresses']["#{city_village}"],
-          "state_province"=>data['addresses']["#{state_province}"],
-          "neighborhood_cell"=>data['addresses']["#{neighborhood_cell}"],
-          "county_district"=>data['addresses']["#{county_district}"]},
+          "address1"=>(data['addresses']["#{address1}"] rescue nil),
+          "address2"=>(data['addresses']["#{address2}"] rescue nil),
+          "city_village"=>(data['addresses']["#{city_village}"] rescue nil),
+          "state_province"=>(data['addresses']["#{state_province}"] rescue nil),
+          "neighborhood_cell"=>(data['addresses']["#{neighborhood_cell}"] rescue nil),
+          "county_district"=>(data['addresses']["#{county_district}"] rescue nil)
+        },
 
         "age_estimate" => data["birthdate_estimated"] ,
         "birth_month"=> data["birthdate"].to_date.month ,
@@ -239,9 +249,9 @@ module PatientService
         "birth_day" => data["birthdate"].to_date.day ,
         "names"=>
           {
-          "family_name2" => data['names']['family_name2'],
-          "family_name" => data['names']['family_name'] ,
-          "given_name" => data['names']['given_name']
+          "family_name2" => (data['names']['family_name2'] rescue nil),
+          "family_name" => (data['names']['family_name'] rescue nil) ,
+          "given_name" => (data['names']['given_name'] rescue nil)
         },
         "birth_year" => data["birthdate"].to_date.year }
     }
@@ -453,6 +463,34 @@ module PatientService
       identifier_map[key] = value
     end
     return identifier_map
+  end
+
+  def self.get_remote_dde_person(data)
+    patient = PatientBean.new('')
+    patient.person_id = data["_id"]
+    patient.patient_id = 0
+    patient.address = data["addresses"]["current_residence"]
+    patient.national_id = data["npid"]
+    patient.name = data["names"]["given_name"] + ' ' + data["names"]["family_name"]
+    patient.first_name = data["names"]["given_name"]
+    patient.last_name = data["names"]["family_name"]
+    patient.sex = data["gender"]
+    patient.birthdate = data["birthdate"].to_date
+    patient.birthdate_estimated =  data["age_estimate"].to_i
+    date_created =  data["created_at"].to_date rescue Date.today
+    patient.age = self.cul_age(patient.birthdate , patient.birthdate_estimated , date_created, Date.today)
+    patient.birth_date = self.get_birthdate_formatted(patient.birthdate,patient.birthdate_estimated)
+    patient.home_district = data["addresses"]["home_district"]
+    patient.current_district = data["addresses"]["current_district"]
+    patient.traditional_authority = data["addresses"]["home_ta"]
+    patient.current_residence = data["addresses"]["current_residence"]
+    patient.landmark = ""
+    patient.home_village = data["addresses"]["home_village"]
+    patient.occupation = data["attributes"]["occupation"]
+    patient.cell_phone_number = data["attributes"]["cell_phone_number"]
+    patient.home_phone_number = data["attributes"]["home_phone_number"]
+    patient.old_identification_number = data["patient"]["identifiers"]["National id"]
+    patient
   end
   ############# new DDE API END###################################
   

@@ -249,31 +249,20 @@ class PropertiesController < GenericPropertiesController
     end
 
     if (dde_status == 'ON')
-      token_authenticity = PatientService.verify_dde_token_authenticity(session[:dde_token])
       site_code = PatientIdentifier.site_prefix
-
-      if (token_authenticity.to_s == "200")
-        data = {
-          "username" => "#{params[:dde_username]}",
-          "password"  => "#{params[:dde_password]}",
-          "site_code" => site_code,
-          "dde_token" => session[:dde_token],
-          "application" =>"ART",
-          "description" => "DDE user in an ART app"
-        }
-        dde_token = PatientService.add_dde_user(data)
-        session[:dde_token] = dde_token
-      else
-        dde_authentication_token_result = PatientService.dde_authentication_token
-        session[:dde_token] = dde_authentication_token_result["data"]["token"]
-        data = {
-          "site_code" => site_code,
-          "dde_token" => session[:dde_token],
-          "application" =>"ART",
-          "description" => "DDE user in an ART app"
-        }
-        dde_token = PatientService.add_dde_user(data)
+      data = {
+        "username" => "#{params[:dde_username]}",
+        "password"  => "#{params[:dde_password]}",
+        "site_code" => site_code,
+        "application" =>"ART",
+        "description" => "DDE user in an ART app"
+      }
+      dde_token = PatientService.add_dde_user(data)
+      if dde_token.blank?
+        flash[:notice] = "Failed to save your user."
+        redirect_to("/properties/dde_properties_menu") and return
       end
+      session[:dde_token] = dde_token unless dde_token.blank?
     end
     
     redirect_to("/clinic") and return

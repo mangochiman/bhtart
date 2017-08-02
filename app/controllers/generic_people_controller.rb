@@ -1421,8 +1421,8 @@ EOF
 
     if create_from_dde_server
       @remote_duplicates = []
-      PatientService.search_from_dde_by_identifier(params[:search_params][:identifier]).each do |person|
-        @remote_duplicates << PatientService.get_dde_person(person)
+      PatientService.search_dde_by_identifier(params[:search_params][:identifier], session[:dde_token])["data"]["hits"].each do |search_result|
+        @remote_duplicates << PatientService.get_remote_dde_person(search_result)
       end
     end
 
