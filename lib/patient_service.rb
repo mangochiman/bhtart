@@ -141,8 +141,7 @@ module PatientService
         "cell_phone_number" => "09999999999"
       },
       "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
-      "identifiers" => {
-      },
+      "identifiers" => {},
       "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
       "current_residence" => params["person"]["addresses"]["city_village"],
       "current_village" => params["person"]["addresses"]["city_village"],
@@ -188,8 +187,7 @@ module PatientService
         "cell_phone_number" => "09999999999"
       },
       "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
-      "identifiers" => {
-      },
+      "identifiers" => {},
       "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
       "current_residence" => params["person"]["addresses"]["city_village"],
       "current_village" => params["person"]["addresses"]["city_village"],
@@ -263,6 +261,7 @@ module PatientService
 
     middle_name = data["person"]["names"]["middle_name"]
     middle_name = "N/A" if middle_name.blank?
+    identifiers = data["person"]["patient"]["identifiers"]
 
     person = Person.new
     if data["person"]["birth_year"] == "Unknown"
@@ -285,9 +284,7 @@ module PatientService
         "cell_phone_number" => cell_phone_number
       },
       "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
-      "identifiers" => {
-        "Old Identification Number" => old_npid
-      },
+      "identifiers" => identifiers,
       "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
       "current_residence" => data["person"]["addresses"]["city_village"],
       "current_village" => data["person"]["addresses"]["city_village"],
@@ -298,6 +295,33 @@ module PatientService
       "home_ta" => data["person"]["addresses"]["county_district"],
       "home_district" => data["person"]["addresses"]["address2"],
       "token" => dde_token
+    }
+
+    return demographics
+  end
+
+  def self.generate_dde_demographics_for_merge(data)
+    data =  data["data"]["hits"][0]
+    gender = {'M' => 'Male', 'F' => 'Female'}
+
+    demographics = {
+      "npid" => data["npid"],
+      "family_name" => data["names"]["family_name"],
+      "given_name" => data["names"]["given_name"],
+      "middle_name" => data["names"]["middle_name"],
+      "gender" => gender[data["gender"]],
+      "attributes" => data["attributes"],
+      "birthdate" => data["birthdate"].to_date.strftime("%Y-%m-%d"),
+      "identifiers" => data["patient"]["identifiers"],
+      "birthdate_estimated" => (data["birthdate_estimated"].to_i == 1),
+      "current_residence" => data["addresses"]["current_residence"],
+      "current_village" => data["addresses"]["current_village"],
+      "current_ta" => data["addresses"]["current_ta"],
+      "current_district" => data["addresses"]["current_district"],
+
+      "home_village" => data["addresses"]["home_village"],
+      "home_ta" => data["addresses"]["home_ta"],
+      "home_district" => data["addresses"]["home_district"]
     }
 
     return demographics
@@ -370,6 +394,20 @@ module PatientService
     return results
   end
 
+  def self.merge_dde_patients(primary_pt_demographics, secondary_pt_demographics, dde_token)
+    data = {
+      "primary_record" => primary_pt_demographics,
+      "secondary_record" => secondary_pt_demographics,
+      "token" => dde_token
+    }
+
+    dde_address = "#{dde_settings["dde_address"]}/v1/merge_records"
+    headers = {:content_type => "json" }
+    received_params = RestClient.post(dde_address, data.to_json, headers)
+    results = JSON.parse(received_params)
+    return results
+  end
+
   def self.assign_new_dde_npid(person, old_npid, new_npid)
     national_patient_identifier_type_id = PatientIdentifierType.find_by_name("National id").patient_identifier_type_id
     old_patient_identifier_type_id = PatientIdentifierType.find_by_name("Old Identification Number").patient_identifier_type_id
@@ -406,6 +444,16 @@ module PatientService
     return data
   end
 
+  def self.patient_identifier_map(person)
+    identifier_map = {}
+    patient_identifiers = person.patient.patient_identifiers
+    patient_identifiers.each do |pt|
+      key = pt.type.name
+      value = pt.identifier
+      identifier_map[key] = value
+    end
+    return identifier_map
+  end
   ############# new DDE API END###################################
   
   def self.search_demographics_from_remote(params)
