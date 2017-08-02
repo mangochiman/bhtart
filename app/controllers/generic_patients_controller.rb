@@ -4332,7 +4332,24 @@ EOF
   end
 
   def dde_merge_similar_patients
-    raise params.inspect
+    splitted_ids = params[:patient_ids].split(",")
+    primary_npid = splitted_ids[0]
+    secondary_npid = splitted_ids[1]
+
+    primary_patient_dde_search_results = PatientService.search_dde_by_identifier(primary_npid, session[:dde_token])
+    primary_pt_demographics = PatientService.generate_dde_demographics_for_merge(primary_patient_dde_search_results)
+
+    secondary_patient_dde_search_results = PatientService.search_dde_by_identifier(secondary_npid, session[:dde_token])
+    secondary_pt_demographics = PatientService.generate_dde_demographics_for_merge(secondary_patient_dde_search_results)
+
+    dde_results = PatientService.merge_dde_patients(primary_pt_demographics, secondary_pt_demographics, session[:dde_token])
+    if (dde_results["status"].to_i == 200)
+      flash[:notice] = "Merge is successful"
+    else
+      flash[:error] = "Failed to merge"
+    end
+
+    redirect_to("/patients/dde_duplicates") and return
   end
 
   def cul_age(birthdate , birthdate_estimated , date_created = Date.today, today = Date.today)

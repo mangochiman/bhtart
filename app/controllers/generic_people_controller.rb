@@ -243,7 +243,7 @@ class GenericPeopleController < ApplicationController
 
           if dde_hits.length > 1
             #Locally available and remotely available + duplicates
-            redirect_to("/people/dde_duplicates?npid=#{params[:identifier]}")
+            redirect_to("/people/dde_duplicates?npid=#{params[:identifier]}") and return
           end
 
           if dde_hits.length == 0
@@ -251,7 +251,6 @@ class GenericPeopleController < ApplicationController
             old_npid = params[:identifier]
             person = Person.find(local_results.first[:person_id].to_i)
             dde_demographics = PatientService.generate_dde_demographics(person_to_be_chcked, session[:dde_token])
-
             #dde_demographics = {"person" => dde_demographics}
             dde_response = PatientService.add_dde_patient_after_search_by_identifier(dde_demographics)
             dde_status = dde_response["status"]
@@ -284,7 +283,7 @@ class GenericPeopleController < ApplicationController
           end
 
           if dde_hits.length > 1
-            redirect_to("/people/dde_duplicates")
+            redirect_to("/people/dde_duplicates") and return
           end
 
         end
