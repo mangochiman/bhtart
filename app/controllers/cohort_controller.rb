@@ -40,6 +40,7 @@ class CohortController < ActionController::Base
     end
 
   end
+  
 
   def mastercard
   end

@@ -34,8 +34,7 @@ class CohortToolController < GenericCohortToolController
     @cohort_year = params[:cohort_year]
     @cohort_quarter = params[:cohort_quarter]
 
-    raise @cohort.inspect
-    
+    ReportingReportDesignResource.save_cohort_attributes(@cohort_year,@cohort_quarter.gsub(":",""),@cohort)
     render :layout => false
   end
 
