@@ -7,10 +7,15 @@ class ReportingReportDesignResource < ActiveRecord::Base
 	def self.save_cohort_attributes(cohort_year,cohort_quarter,cohort_attributes)
 		report_design = ReportingReportDesign.find_by_name("Q#{cohort_quarter} #{cohort_year}")
 		if report_design.blank?
+      report_def = SerializedObject.find_by_name('Cohort report trail')
+      report_def = SerializedObject.create(:name => 'Cohort report trail', :type => 'Report',
+        :subtype => 'Quartery', :serialization_class => 'Quartery Report',
+        :serialized_data => "Cohort indicators") if report_def.blank?
+
 		  report_design = ReportingReportDesign.create(:name => "Q#{cohort_quarter} #{cohort_year}",
 		  	:description => "MOH report, done every quarter",
 		  	:renderer_type => 'PDF',
-		  	:report_definition_id => 1)
+		  	:report_definition_id => report_def.id)
 		end  
 
 		@cohort_indicators = {
