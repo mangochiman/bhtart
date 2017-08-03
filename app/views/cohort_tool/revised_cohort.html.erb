@@ -3074,6 +3074,7 @@
   <div class="buttons">
     <button class="button button-finish" onmousedown="javascript:location='/'">Finish</button>
     <button class="button button-print" onmousedown="javascript:printPDF();">Print</button>
+    
   </div>
 </div>
 
@@ -3746,6 +3747,19 @@ EOF
 </form>
 
 <script>
+function getTotal(app){
+        jQuery.ajax({
+            url: '/concepts/' + app,
+            success: function(result){
+                console.log(result)
+                document.getElementById('total_app_concepts').innerHTML = result;
+            },
+            error: function(error){
+                console.log(error)
+            }
+        })
+    }
+
 
 function printPDF() { 
   var pdfForm = document.getElementById('pdf')

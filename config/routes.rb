@@ -21,9 +21,12 @@ ActionController::Routing::Routes.draw do |map|
 	map.connect ':controller/:action/:id'
 	map.connect ':controller/:action/'
 	
-	map.connect ':controller/:action/:id'
-  	map.connect ':controller/:action/:id.:format'
+	
 	map.cohort  '/', :controller => 'cohort', :action => 'select_date'
 	map.cohort  '/cohort', :controller => 'cohort', :action => 'select_date'
-	map.cohort  '/field', :controller => 'cohort', :action => 'cohort_field'
+	map.cohort  '/field', :controller => 'cohort', :action => 'cohort_field'	
+	
+	map.connect ':controller/:action/:id'
+  	map.connect ':controller/:action/:id.:format'
+  	map.brief_report '/bfrief_report/', :controller => 'brief_report', :action => 'display'
 end

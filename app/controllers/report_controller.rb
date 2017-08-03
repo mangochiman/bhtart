@@ -247,5 +247,12 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
     return results={ 'missed_dosses' => dosses_missed, 'expected_remaining' => expected_remaining }
   end
 
+  def summarised_report
+    render :template => "/report/summarised_report"
+  end
+
+  def summarize_cohort_report
+    render :layout => "application"
+  end
 
 end
