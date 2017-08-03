@@ -15,10 +15,7 @@ class BriefReportController < ApplicationController
 			:conditions => ["description = ? or description = ?", @quarter,@quart])
 		@results = @display_result.to_json
 
-	 	render :layout => "/report/summarised_report"
-
-
-
+	 	render :layout => "report"
 	end
 
 	def bfrief_report
