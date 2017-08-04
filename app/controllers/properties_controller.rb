@@ -259,7 +259,7 @@ class PropertiesController < GenericPropertiesController
       }
       dde_token = PatientService.add_dde_user(data)
       if dde_token.blank?
-        flash[:notice] = "Failed to save your user."
+        flash[:notice] = "DDE user already exists."
         redirect_to("/properties/dde_properties_menu") and return
       end
       session[:dde_token] = dde_token unless dde_token.blank?
