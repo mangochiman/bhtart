@@ -8,9 +8,16 @@ class ReportingReportDesignResource < ActiveRecord::Base
 		report_design = ReportingReportDesign.find_by_name("Q#{cohort_quarter} #{cohort_year}")
 		if report_design.blank?
       report_def = SerializedObject.find_by_name('Cohort report trail')
-      report_def = SerializedObject.create(:name => 'Cohort report trail', :type => 'Report',
-        :subtype => 'Quartery', :serialization_class => 'Quartery Report',
-        :serialized_data => "Cohort indicators") if report_def.blank?
+
+      if report_def.blank?
+        report_def = SerializedObject.new()
+        report_def.name =                 'Cohort report trail'
+        report_def.type =                 'Report'
+        report_def.subtype =              'Quartery'
+        report_def.serialization_class =  'Quartery Report'
+        report_def.serialized_data =      'Cohort indicators'
+        report_def.save
+      end
 
 		  report_design = ReportingReportDesign.create(:name => "Q#{cohort_quarter} #{cohort_year}",
 		  	:description => "MOH report, done every quarter",
