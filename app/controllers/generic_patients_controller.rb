@@ -2033,7 +2033,7 @@ EOF
   end
 
   def patient_filing_number_label(patient, num = 1)
-    file = PatientService.get_patient_identifier(patient, 'Filing Number')[0..9]
+    file = PatientService.get_patient_identifier(patient, 'Filing Number')[0..-1]
     file_type = file.strip[3..4]
     version_number=file.strip[2..2]
     number = file
@@ -2048,7 +2048,7 @@ EOF
   end
 
   def patient_archive_filing_number_label(patient, num = 1)
-    file = PatientService.get_patient_identifier(patient, 'Archived filing number')[0..9]
+    file = PatientService.get_patient_identifier(patient, 'Archived filing number')[0..-1]
     file_type = file.strip[3..4]
     version_number=file.strip[2..2]
     number = file[5..-1]
@@ -2204,27 +2204,27 @@ EOF
       #ks
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[3])
         visits.ks = 'Yes'
-      end
+      end rescue nil
 
       #tb_within_last_two_yrs
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[1])
         visits.tb_within_last_two_yrs = 'Yes'
-      end
+      end rescue nil
 
       #eptb
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[0])
         visits.eptb = 'Yes'
-      end
+      end rescue nil
 
       #pulmonary_tb
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[2])
         visits.pulmonary_tb = 'Yes'
-      end
+      end rescue nil
 
       #pulmonary_tb
       if staging_ans.map{|obs|ConceptName.find(obs.value_coded_name_id).name}.include?(ans[4])
         visits.pulmonary_tb = 'Yes'
-      end
+      end rescue nil
     else
       if !hiv_staging_obs.blank?
         tb_within_2yrs_concept_id = ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
