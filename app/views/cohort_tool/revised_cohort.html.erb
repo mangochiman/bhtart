@@ -247,12 +247,12 @@
                 break;
             case 'pregnant_females_all_ages':
             <% (@cohort.pregnant_females_all_ages || []).each do |patient_id|%>
-                patient_ids.push(<%= patient_id["patient_id"] %>);
+                patient_ids.push(<%= patient_id %>);
             <% end %>
                 break;
             case 'cum_pregnant_females_all_ages':
             <% (@cohort.cum_pregnant_females_all_ages || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id["patient_id"] %>);
+                patient_ids.push(<%= patient_id %>);
             <% end %>
                 break;
             case 'unknown_age':
@@ -267,32 +267,32 @@
                break;
             case 'children_below_24_months_at_art_initiation':
             <% (@cohort.children_below_24_months_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'cum_children_below_24_months_at_art_initiation':
             <% (@cohort.cum_children_below_24_months_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'children_24_months_14_years_at_art_initiation':
             <% (@cohort.children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'cum_children_24_months_14_years_at_art_initiation':
             <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'adults_at_art_initiation':
-            <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+            <% (@cohort.adults_at_art_initiation || []).each do |patient_id| %>
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'cum_adults_at_art_initiation':
-            <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id[:patient_id] %>);
+            <% (@cohort.cum_adults_at_art_initiation || []).each do |patient_id| %>
+                patient_ids.push(<%= patient_id['patient_id'] %>);
             <% end %>
                 break;
             case 'presumed_severe_hiv_disease_in_infants':
@@ -3622,14 +3622,14 @@
   }
 
 
-   
+
 
     <%
     cohort_numbers = <<EOF
-"@cohort[:total_registered]", 
+"@cohort[:total_registered]",
 "@cohort[:cum_total_registered]",
 "@cohort[:initiated_on_art_first_time]",
-"@cohort[:cum_initiated_on_art_first_time]",            
+"@cohort[:cum_initiated_on_art_first_time]",
 "@cohort[:re_initiated_on_art]",
 "@cohort[:cum_re_initiated_on_art]",
 "@cohort[:transfer_in]",
@@ -3640,74 +3640,74 @@
 "@cohort[:cum_non_pregnant_females]",
 "@cohort[:pregnant_females_all_ages]",
 "@cohort[:cum_pregnant_females_all_ages]",
-"@cohort[:unknown_age]", 
-"@cohort[:cum_unknown_age]",              
+"@cohort[:unknown_age]",
+"@cohort[:cum_unknown_age]",
 "@cohort[:children_below_24_months_at_art_initiation]",
 "@cohort[:cum_children_below_24_months_at_art_initiation]",
 "@cohort[:children_24_months_14_years_at_art_initiation]",
 "@cohort[:cum_children_24_months_14_years_at_art_initiation]",
 "@cohort[:cum_children_24_months_14_years_at_art_initiation]",
-"@cohort[:cum_children_24_months_14_years_at_art_initiation]", 
+"@cohort[:cum_children_24_months_14_years_at_art_initiation]",
 "@cohort[:presumed_severe_hiv_disease_in_infants]",
-"@cohort[:cum_presumed_severe_hiv_disease_in_infants]", 
+"@cohort[:cum_presumed_severe_hiv_disease_in_infants]",
 "@cohort[:confirmed_hiv_infection_in_infants_pcr]",
 "@cohort[:cum_confirmed_hiv_infection_in_infants_pcr]",
 "@cohort[:children_12_23_months]",
-"@cohort[:cum_children_12_23_months]", 
-"@cohort[:pregnant_women]", 
-"@cohort[:cum_pregnant_women]", 
-"@cohort[:breastfeeding_mothers]", 
-"@cohort[:cum_breastfeeding_mothers]", 
+"@cohort[:cum_children_12_23_months]",
+"@cohort[:pregnant_women]",
+"@cohort[:cum_pregnant_women]",
+"@cohort[:breastfeeding_mothers]",
+"@cohort[:cum_breastfeeding_mothers]",
 "@cohort[:who_stage_two]",
 "@cohort[:cum_who_stage_two]",
-"@cohort[:asymptomatic]", 
+"@cohort[:asymptomatic]",
 "@cohort[:cum_asymptomatic]",
-"@cohort[:who_stage_three]", 
+"@cohort[:who_stage_three]",
 "@cohort[:cum_who_stage_three]",
-"@cohort[:who_stage_four]", 
+"@cohort[:who_stage_four]",
 "@cohort[:cum_who_stage_four]",
 "@cohort[:unknown_other_reason_outside_guidelines]",
 "@cohort[:cum_unknown_other_reason_outside_guidelines]",
 "@cohort[:no_tb]",
 "@cohort[:cum_no_tb]",
-"@cohort[:tb_within_the_last_two_years]", 
-"@cohort[:cum_tb_within_the_last_two_years]", 
-"@cohort[:current_episode_of_tb]", 
-"@cohort[:cum_current_episode_of_tb]", 
-"@cohort[:kaposis_sarcoma]", 
+"@cohort[:tb_within_the_last_two_years]",
+"@cohort[:cum_tb_within_the_last_two_years]",
+"@cohort[:current_episode_of_tb]",
+"@cohort[:cum_current_episode_of_tb]",
+"@cohort[:kaposis_sarcoma]",
 "@cohort[:cum_kaposis_sarcoma]",
 "@cohort[:total_alive_and_on_art]",
-"@cohort[:died_within_the_1st_month_of_art_initiation]", 
-"@cohort[:died_within_the_2nd_month_of_art_initiation]", 
+"@cohort[:died_within_the_1st_month_of_art_initiation]",
+"@cohort[:died_within_the_2nd_month_of_art_initiation]",
 "@cohort[:died_within_the_3rd_month_of_art_initiation]",
 "@cohort[:died_after_the_3rd_month_of_art_initiation]",
 "@cohort[:died_total]",
 "@cohort[:defaulted]",
 "@cohort[:stopped_art]",
-"@cohort[:transfered_out]", 
+"@cohort[:transfered_out]",
 "@cohort[:zero_p]",
-"@cohort[:one_p]", 
+"@cohort[:one_p]",
 "@cohort[:two_p]",
-"@cohort[:three_p]", 
+"@cohort[:three_p]",
 "@cohort[:four_p]",
 "@cohort[:nine_p]",
 "@cohort[:elleven_p]",
-"@cohort[:zero_a]",              
-"@cohort[:one_a]",              
+"@cohort[:zero_a]",
+"@cohort[:one_a]",
 "@cohort[:two_a]",
 "@cohort[:three_a]",
 "@cohort[:four_a]",
-"@cohort[:five_a]", 
-"@cohort[:six_a]", 
+"@cohort[:five_a]",
+"@cohort[:six_a]",
 "@cohort[:seven_a]",
 "@cohort[:eight_a]",
 "@cohort[:nine_a]",
 "@cohort[:ten_a]",
-"@cohort[:elleven_a]", 
-"@cohort[:twelve_a]", 
-"@cohort[:unknown_regimen]", 
+"@cohort[:elleven_a]",
+"@cohort[:twelve_a]",
+"@cohort[:unknown_regimen]",
 "@cohort[:total_patients_without_side_effects]",
-"@cohort[:total_patients_with_side_effects]", 
+"@cohort[:total_patients_with_side_effects]",
 "@cohort[:unknown_side_effects]",
 "@cohort[:patients_with_0_6_doses_missed_at_their_last_visit]",
 "@cohort[:patients_with_7_plus_doses_missed_at_their_last_visit]",
@@ -3716,7 +3716,7 @@
 "@cohort[:tb_suspected]",
 "@cohort[:tb_confirmed_currently_not_yet_on_tb_treatment]",
 "@cohort[:tb_confirmed_on_tb_treatment]",
-"@cohort[:unknown_tb_status]", 
+"@cohort[:unknown_tb_status]",
 "@cohort[:total_other_patients]",
 "@cohort[:total_breastfeeding_women]",
 "@cohort[:total_pregnant_women]",
@@ -3732,12 +3732,12 @@ EOF
   print_pdf_attr_ruby = {}
 
   (cohort_attr || []).each do |cohort_number|
-    c_attr = cohort_number[1..-2].sub("@cohort[:",'').sub(']','') 
-      print_pdf_attr_ruby[c_attr] = @cohort.send(c_attr).count rescue @cohort.send(c_attr) 
+    c_attr = cohort_number[1..-2].sub("@cohort[:",'').sub(']','')
+      print_pdf_attr_ruby[c_attr] = @cohort.send(c_attr).count rescue @cohort.send(c_attr)
   end
-  
+
   (print_pdf_attr_ruby || {}).each do |name, count|%>
-    print_pdf_attr["<%= name %>"] = "<%= count %>";  
+    print_pdf_attr["<%= name %>"] = "<%= count %>";
   <%end%>
 
 </script>
@@ -3747,7 +3747,7 @@ EOF
 
 <script>
 
-function printPDF() { 
+function printPDF() {
   var pdfForm = document.getElementById('pdf')
   for (name in print_pdf_attr){
     var input = document.createElement('input');

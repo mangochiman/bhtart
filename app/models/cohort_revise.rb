@@ -3,7 +3,7 @@ class CohortRevise
   @@reason_for_starting = []
 
   def self.create_temp_earliest_start_date_table(end_date)
-        
+
     ##########################################################
     ActiveRecord::Base.connection.execute <<EOF
       DROP FUNCTION IF EXISTS patient_date_enrolled;
@@ -128,12 +128,9 @@ BEGIN
   SET coded_concept_id = (SELECT value_coded FROM obs WHERE person_id = my_patient_id AND concept_id = reason_concept_id AND voided = 0 AND obs_datetime = max_obs_datetime  LIMIT 1);
   SET reason_for_art_eligibility = (SELECT name FROM concept_name WHERE concept_id = coded_concept_id AND LENGTH(name) > 0 LIMIT 1);
 
-
   RETURN reason_for_art_eligibility;
 END;
 EOF
-
-
 
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `patient_current_regimen`;
@@ -527,7 +524,7 @@ BEGIN
     END IF;
 
     IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
-    
+
       IF my_daily_dose = 0 OR LENGTH(my_daily_dose) < 1 OR my_daily_dose IS NULL THEN
         SET my_daily_dose = 1;
       END IF;
@@ -600,7 +597,7 @@ DECLARE done INT DEFAULT FALSE;
 
     IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
 
-      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN 
+      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN
         SET my_daily_dose = 1;
       END IF;
 
@@ -646,9 +643,14 @@ SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" L
 
 SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
 
-
 IF set_patient_state = 1 THEN
-  SET set_outcome = 'Pre-ART (Continue)';
+  SET set_patient_state = current_defaulter(patient_id, visit_date);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  ELSE
+    SET set_outcome = 'Pre-ART (Continue)';
+  END IF;
 END IF;
 
 IF set_patient_state = 2   THEN
@@ -660,7 +662,6 @@ IF set_patient_state = 3 OR set_patient_state = 127 THEN
 END IF;
 
 /* ............... This block of code checks if the patient has any state that is "died" */
-
 IF set_patient_state != 3 AND set_patient_state != 127 THEN
   SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
 
@@ -707,7 +708,6 @@ RETURN set_outcome;
 END;
 EOF
 
-
     ActiveRecord::Base.connection.execute <<EOF
       DROP FUNCTION IF EXISTS `re_initiated_check`;
 EOF
@@ -729,7 +729,6 @@ set yes_concept = (SELECT concept_id FROM concept_name WHERE name ='YES' LIMIT 1
 set no_concept = (SELECT concept_id FROM concept_name WHERE name ='NO' LIMIT 1);
 set date_art_last_taken_concept = (SELECT concept_id FROM concept_name WHERE name ='DATE ART LAST TAKEN' LIMIT 1);
 set taken_arvs_concept = (SELECT concept_id FROM concept_name WHERE name ='HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' LIMIT 1);
-
 
 set check_one = (SELECT e.patient_id FROM clinic_registration_encounter e INNER JOIN ever_registered_obs AS ero ON e.encounter_id = ero.encounter_id INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.concept_id = date_art_last_taken_concept AND o.voided = 0 WHERE ((o.concept_id = date_art_last_taken_concept AND (DATEDIFF(o.obs_datetime,o.value_datetime)) > 14)) AND patient_date_enrolled(e.patient_id) = set_date_enrolled AND e.patient_id = set_patient_id GROUP BY e.patient_id);
 
@@ -784,6 +783,11 @@ EOF
 #=end
       #Get earliest date enrolled
       cum_start_date = self.get_cum_start_date
+
+      if cum_start_date.blank?
+        cum_start_date = start_date
+      end
+
       cohort = CohortService.new(cum_start_date)
 
       #Total registered
@@ -937,6 +941,10 @@ EOF
   one state ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
   and having a REASON FOR ELIGIBILITY observation with an answer as Lymphocytes
   or LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2
+
+  For all those patients with WHO stage 1 and 2, only those that were enrolled
+  after or on 2016-04-01 revised_guidelines_start_date = "2016-04-01"
+
 =end
   cohort.asymptomatic = self.asymptomatic(start_date, end_date)
   cohort.cum_asymptomatic = self.asymptomatic(cum_start_date, end_date)
@@ -2091,7 +2099,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_id == r[:reason_for_starting_concept_id]
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2099,23 +2107,43 @@ EOF
   end
 
   def self.unknown_other_reason_outside_guidelines(start_date, end_date)
+=begin
+    All WHO stage 1 and 2 patients that were enrolled before '2016-04-01'
+    should be included in this group.
+=end
     reason_concept_ids = []
     reason_concept_ids << ConceptName.find_by_name('Unknown').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
-    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
-    #reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
-    #reason_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
     reason_concept_ids << ConceptName.find_by_name('None').concept_id
 
     registered = []
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
+    revised_art_guidelines_date = '2016-04-01'.to_date
+    who_stage_1_and_2_concept_ids = []
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage I peds').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage II adult').concept_id
+    who_stage_1_and_2_concept_ids << ConceptName.find_by_name('WHO stage II peds').concept_id
+
+
+    if start_date.to_date < revised_art_guidelines_date.to_date
+    end_date = revised_art_guidelines_date
+
+      (@@reason_for_starting || []).each do |r|
+        next unless who_stage_1_and_2_concept_ids.include?(r[:reason_for_starting_concept_id])
+        next unless r[:date_enrolled] < end_date
+        registered << r
+      end
+    end
     return registered
   end
 
@@ -2129,7 +2157,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2146,7 +2174,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2164,7 +2192,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2178,7 +2206,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_id == r[:reason_for_starting_concept_id]
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2186,19 +2214,39 @@ EOF
   end
 
   def self.asymptomatic(start_date, end_date)
-    reason_concept_ids = []
-    reason_concept_ids << ConceptName.find_by_name('ASYMPTOMATIC').concept_id
+    #for WHO stage 1 and 2 to be included in asymptomatic, the patients are supposed to
+    #be enrolled on HIV program after 2016-04-01
+
+    revised_art_guidelines_date = '2016-04-01'.to_date
+    reason_concept_ids = []; asymptomatic_concept_ids = []
+    asymptomatic_concept_ids << ConceptName.find_by_name('ASYMPTOMATIC').concept_id
     reason_concept_ids << ConceptName.find_by_name('WHO stage I adult').concept_id
     reason_concept_ids << ConceptName.find_by_name('WHO stage I peds').concept_id
     reason_concept_ids << ConceptName.find_by_name('WHO stage 1').concept_id
     reason_concept_ids << ConceptName.find_by_name('WHO stage II adult').concept_id
     reason_concept_ids << ConceptName.find_by_name('WHO stage II peds').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTES').concept_id
+    reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
     registered = []
+    (@@reason_for_starting || []).each do |r|
+      next unless asymptomatic_concept_ids.include?(r[:reason_for_starting_concept_id])
+
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
+      registered << r
+    end
+
+    if start_date.to_date >= revised_art_guidelines_date.to_date
+      start_date = start_date
+    else
+      start_date = revised_art_guidelines_date
+    end
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2211,13 +2259,12 @@ EOF
     reason_concept_ids << ConceptName.find_by_name('CD4 count less than or equal to 500').concept_id
     reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 350').concept_id
     reason_concept_ids << ConceptName.find_by_name('CD4 COUNT LESS THAN OR EQUAL TO 250').concept_id
-    #reason_concept_ids << ConceptName.find_by_name('LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2').concept_id
 
     registered = []
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2231,7 +2278,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless (r[:reason_for_starting_concept_id] == reason_concept_id)
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2247,7 +2294,7 @@ EOF
 
     (@@reason_for_starting || []).each do |r|
       next unless reason_concept_ids.include?(r[:reason_for_starting_concept_id])
-      next unless r[:date_enrolled] >= start_date and r[:date_enrolled] <= end_date
+      next unless r[:date_enrolled] >= start_date.to_date and r[:date_enrolled] <= end_date.to_date
       registered << r
     end
 
@@ -2318,7 +2365,7 @@ EOF
   def self.non_pregnant_females(start_date, end_date, pregnant_women = [])
     registered = [] ; pregnant_women_ids = []
     (pregnant_women || []).each do |patient|
-      pregnant_women_ids << patient['patient_id'].to_i
+      pregnant_women_ids << patient
     end
     pregnant_women_ids = [0] if pregnant_women_ids.blank?
 
@@ -2338,17 +2385,7 @@ EOF
 
   def self.pregnant_females_all_ages(start_date, end_date)
     registered = [] ; patient_id_plus_date_enrolled = []
-=begin
-    data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
-EOF
 
-    (data || []).each do |patient|
-      patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
-    end
-=end
     yes_concept_id = ConceptName.find_by_name('Yes').concept_id
     preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
     patient_preg_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
@@ -2362,17 +2399,56 @@ EOF
               AND (gender = 'F' OR gender = 'Female')
               AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
               AND (gender = 'F' OR gender = 'Female')
-              AND o.obs_datetime = (SELECT MAX(obs.obs_datetime) FROM obs obs
+              AND o.obs_datetime = (SELECT MIN(obs.obs_datetime) FROM obs obs
                                     WHERE obs.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
                                     AND obs.person_id = o.person_id
                                     AND DATE(obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}')
               GROUP BY patient_id
               HAVING value_coded = #{yes_concept_id};
 EOF
+    pregnant_at_initiation = ActiveRecord::Base.connection.select_all <<EOF
+              SELECT patient_id, patient_reason_for_starting_art(patient_id) reason_concept_id
+              FROM temp_earliest_start_date
+              WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+              AND (gender = 'F' OR gender = 'Female')
+              GROUP BY patient_id
+              HAVING reason_concept_id IN (1755, 7972, 6131);
+EOF
+    pregnant_at_initiation_ids = []
+    (pregnant_at_initiation || []).each do |patient|
+      pregnant_at_initiation_ids << patient['patient_id'].to_i
+    end
 
-      #registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
-  #  end
-    return registered
+    if pregnant_at_initiation_ids.blank?
+      pregnant_at_initiation_ids = [0]
+    end
+
+    transfer_ins_women = ActiveRecord::Base.connection.select_all <<EOF
+              SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated
+              FROM temp_earliest_start_date
+              WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+              AND DATE(date_enrolled) != DATE(earliest_start_date)
+              AND (gender = 'F' OR gender = 'Female')
+              AND patient_id IN (#{pregnant_at_initiation_ids.join(',')})
+              GROUP BY patient_id
+              HAVING re_initiated != 'Re-initiated';
+EOF
+
+    transfer_ins_preg_women = []; all_pregnant_females = []
+    (transfer_ins_women || []).each do |patient|
+      if patient['patient_id'].to_i != 0
+        transfer_ins_preg_women << patient['patient_id'].to_i
+      end
+    end
+
+    (registered || []).each do |patient|
+      if patient['patient_id'].to_i != 0
+        all_pregnant_females << patient['patient_id'].to_i
+      end
+    end
+
+    all_pregnant_females = (all_pregnant_females + transfer_ins_preg_women).uniq
+    return all_pregnant_females
   end
 
   def self.males(start_date, end_date)
