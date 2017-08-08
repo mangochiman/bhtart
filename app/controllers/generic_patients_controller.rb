@@ -4331,6 +4331,76 @@ EOF
 
   end
 
+
+  def search_local_by_name_and_gender
+    passed_params = {
+      :given_name => params[:fname],
+      :family_name => params[:lname],
+      :gender => params[:gender].first.upcase,
+    }
+    side = params[:side]
+
+    people = PatientService.person_search(passed_params)
+
+    @html = <<EOF
+<html>
+<head>
+<style>
+  .color_blue{
+    border-style:solid;
+  }
+  .color_white{
+    border-style:solid;
+  }
+
+  th{
+    border-style:solid;
+  }
+</style>
+</head>
+<body>
+<br/>
+<table class="data_table" width="100%">
+EOF
+
+    color = 'blue'
+    people.each do |person|
+      patient = person.patient
+      next if patient.blank?
+      next if person.addresses.blank?
+      if color == 'blue'
+        color = 'white'
+      else
+        color='blue'
+      end
+      bean = PatientService.get_patient(patient.person)
+      total_encounters = patient.encounters.count rescue nil
+      latest_visit = patient.encounters.last.encounter_datetime.strftime("%a, %d-%b-%y") rescue nil
+      @html+= <<EOF
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Name:&nbsp;#{bean.name || '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Age:&nbsp;#{bean.age || '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Guardian:&nbsp;#{bean.guardian rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">ARV number:&nbsp;#{bean.arv_number rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">National ID:&nbsp;#{bean.national_id rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">TA:&nbsp;#{bean.home_district rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Total Encounters:&nbsp;#{total_encounters rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Latest Visit:&nbsp;#{latest_visit rescue '&nbsp;'}</td>
+</tr>
+EOF
+    end
+
+    @html+="</table></body></html>"
+    render :text => @html ; return
+  end
+
+
   def dde_merge_similar_patients
     splitted_ids = params[:patient_ids].split(",")
     primary_npid = splitted_ids[0]
