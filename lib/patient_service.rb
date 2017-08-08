@@ -335,28 +335,31 @@ module PatientService
     data = PatientService.demographics(person)
     gender = {'M' => 'Male', 'F' => 'Female'}
 
-    occupation = data["person"]["attributes"]["occupation"]
-    occupation = "Unknown" if occupation.blank?
+    #occupation = data["person"]["attributes"]["occupation"]
+    #occupation = "Unknown" if occupation.blank?
 
     middle_name = data["person"]["names"]["middle_name"]
     middle_name = "N/A" if middle_name.blank?
 
     npid = data["person"]["patient"]["identifiers"]["National id"]
-    old_npid = data["person"]["patient"]["identifiers"]["Old Identification Number"]
-    cell_phone_number = data["person"]["attributes"]["cell_phone_number"]
-    occupation = data["person"]["attributes"]["occupation"]
-    home_phone_number = data["person"]["attributes"]["home_phone_number"]
-    office_phone_number = data["person"]["attributes"]["office_phone_number"]
+    #old_npid = data["person"]["patient"]["identifiers"]["Old Identification Number"]
+    #cell_phone_number = data["person"]["attributes"]["cell_phone_number"]
+    #occupation = data["person"]["attributes"]["occupation"]
+    #home_phone_number = data["person"]["attributes"]["home_phone_number"]
+    #office_phone_number = data["person"]["attributes"]["office_phone_number"]
 
-    attributes = {}
-    attributes["cell_phone_number"] = cell_phone_number unless cell_phone_number.blank?
-    attributes["occupation"] = occupation unless occupation.blank?
-    attributes["home_phone_number"] = home_phone_number unless home_phone_number.blank?
-    attributes["office_phone_number"] = office_phone_number unless office_phone_number.blank?
+    #attributes = {}
+    #attributes["cell_phone_number"] = cell_phone_number unless cell_phone_number.blank?
+    #attributes["occupation"] = occupation unless occupation.blank?
+    #attributes["home_phone_number"] = home_phone_number unless home_phone_number.blank?
+    #attributes["office_phone_number"] = office_phone_number unless office_phone_number.blank?
 
-    identifiers = {}
-    identifiers["Old Identification Number"] = old_npid unless old_npid.blank?
-    identifiers["National id"] = old_npid unless npid.blank?
+    #identifiers = {}
+    #identifiers["Old Identification Number"] = old_npid unless old_npid.blank?
+    #identifiers["National id"] = old_npid unless npid.blank?
+
+    identifiers =  self.patient_identifier_map(person)
+    attributes =  self.person_attributes_map(person)
 
     demographics = {
       "npid" => npid,
@@ -454,9 +457,22 @@ module PatientService
     patient_identifiers.each do |pt|
       key = pt.type.name
       value = pt.identifier
+      next if value.blank?
       identifier_map[key] = value
     end
     return identifier_map
+  end
+
+  def self.person_attributes_map(person)
+    attributes_map = {}
+    person_attributes = person.person_attributes
+    person_attributes.each do |pa|
+      key = pa.type.name.downcase.gsub(/\s/,'_') #From Home Phone Number to home_phone_number
+      value = pa.value
+      next if value.blank?
+      attributes_map[key] = value
+    end
+    return attributes_map
   end
 
   def self.get_remote_dde_person(data)

@@ -90,21 +90,21 @@ class GenericEncountersController < ApplicationController
           art_start_date_estimation = params[:art_start_date_estimation]
           if date_art_started.blank? and not art_start_date_estimation.blank?
             case art_start_date_estimation
-              when '6 months ago'
-                obs[:value_datetime] = session_date - 6.months
-                obs[:value_modifier] = '='
-              when '12 months ago'
-                obs[:value_datetime] = session_date - 12.months
-                obs[:value_modifier] = '='
-              when '18 months ago'
-                obs[:value_datetime] = session_date - 18.months
-                obs[:value_modifier] = '='
-              when '24 months'
-                obs[:value_datetime] = session_date - 24.months
-                obs[:value_modifier] = '='
-              when 'Over 2 years ago'
-                obs[:value_datetime] = session_date - 24.months
-                obs[:value_modifier] = '>'
+            when '6 months ago'
+              obs[:value_datetime] = session_date - 6.months
+              obs[:value_modifier] = '='
+            when '12 months ago'
+              obs[:value_datetime] = session_date - 12.months
+              obs[:value_modifier] = '='
+            when '18 months ago'
+              obs[:value_datetime] = session_date - 18.months
+              obs[:value_modifier] = '='
+            when '24 months'
+              obs[:value_datetime] = session_date - 24.months
+              obs[:value_modifier] = '='
+            when 'Over 2 years ago'
+              obs[:value_datetime] = session_date - 24.months
+              obs[:value_modifier] = '>'
             end
             obs[:value_text] = art_start_date_estimation
           end
@@ -126,7 +126,7 @@ class GenericEncountersController < ApplicationController
             observations << observation
           end unless date_art_last_taken.blank?
           
-            if date_art_last_taken.blank?
+          if date_art_last_taken.blank?
             last_month = false ; last_week = false
             (params[:observations] || []).each do |observation|
               if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS' and  observation['value_coded_or_text'].upcase == 'YES'
@@ -533,7 +533,7 @@ class GenericEncountersController < ApplicationController
     date_enrolled = session[:datetime] || Time.now() if date_enrolled.blank?
     (params[:programs] || []).each do |program|
       if params['encounter']['encounter_type_name'] == 'HIV CLINIC REGISTRATION'
-         next if not @patient.patient_programs.in_programs("HIV PROGRAM").blank?
+        next if not @patient.patient_programs.in_programs("HIV PROGRAM").blank?
       end
       # Look up the program if the program id is set      
       @patient_program = PatientProgram.find(program[:patient_program_id]) unless program[:patient_program_id].blank?
@@ -602,7 +602,7 @@ class GenericEncountersController < ApplicationController
 				#raise @patient_identifier.to_yaml
       end
     end
-
+    
     # person attribute handling
     (params[:person] || []).each do | type , attribute |
       # Look up the attribute if the person_attribute_id is set  
@@ -624,6 +624,13 @@ class GenericEncountersController < ApplicationController
             :person_attribute_type_id => PersonAttributeType.find_by_name("Agrees to phone text for TB therapy").person_attribute_type_id,
             :value => attribute)
         end
+      end
+    end
+
+    if params[:identifiers]
+      if create_from_dde_server
+        #Updating the demographics to dde
+        PatientService.update_dde_patient(@patient.person, session[:dde_token]) rescue nil
       end
     end
 =begin
@@ -662,7 +669,7 @@ class GenericEncountersController < ApplicationController
     # only redirect to next task if location parameter has not been provided
    
 		#if xpertassay == true
-     # redirect_to"/encounters/new/expertassy/?patient_id=#{@patient.id}" and return
+    # redirect_to"/encounters/new/expertassy/?patient_id=#{@patient.id}" and return
     #end
     if params[:location].blank?
 			#find a way of printing the lab_orders labels
@@ -873,35 +880,35 @@ class GenericEncountersController < ApplicationController
     end
 
     if tb_reg == @encounter.encounter_type.to_i
-          void_prog = PatientProgram.find(:last, :conditions => ['DATE(date_enrolled) = ? AND patient_id = ? AND program_id = ?',
-                                          @encounter.encounter_datetime.to_date, @encounter.patient_id, tb_prog])
+      void_prog = PatientProgram.find(:last, :conditions => ['DATE(date_enrolled) = ? AND patient_id = ? AND program_id = ?',
+          @encounter.encounter_datetime.to_date, @encounter.patient_id, tb_prog])
           
-          if ! void_prog.blank?
-             void_prog.void
-          end
-          current_identifier = PatientIdentifier.find(:first, :conditions => ['patient_id = ? AND identifier_type = ?',
-                                           @encounter.patient_id, patient_identifier_type_id], :order => "date_created DESC")
-          if ! current_identifier.blank?
-            current_identifier.void
-          end
+      if ! void_prog.blank?
+        void_prog.void
+      end
+      current_identifier = PatientIdentifier.find(:first, :conditions => ['patient_id = ? AND identifier_type = ?',
+          @encounter.patient_id, patient_identifier_type_id], :order => "date_created DESC")
+      if ! current_identifier.blank?
+        current_identifier.void
+      end
 
     end
-      state = Encounter.find_by_sql("
+    state = Encounter.find_by_sql("
         SELECT * FROM obs WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = 'PATIENT TRACKING STATE')
         AND encounter_id = #{params[:id]}").first rescue []
-        if not state.blank?
-          voided_state  = PatientState.find_by_sql(
-                            "SELECT * FROM patient_state WHERE patient_state_id = #{state.value_numeric}").first
-          voided_state.void
-        end
+    if not state.blank?
+      voided_state  = PatientState.find_by_sql(
+        "SELECT * FROM patient_state WHERE patient_state_id = #{state.value_numeric}").first
+      voided_state.void
+    end
     if @encounter.name.upcase == 'ART ADHERENCE'
       art_adherence = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
       hiv_clinic_consultation = Encounter.find(:first,
         :conditions => ["patient_id = ? AND encounter_datetime >= ? AND 
         encounter_datetime <= ? AND encounter_type = ?",@encounter.patient_id,
-        @encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00"),
-        @encounter.encounter_datetime.strftime("%Y-%m-%d 23:59:59"),
-        art_adherence],:order => "encounter_datetime DESC")
+          @encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00"),
+          @encounter.encounter_datetime.strftime("%Y-%m-%d 23:59:59"),
+          art_adherence],:order => "encounter_datetime DESC")
 
       (hiv_clinic_consultation.observations || []).each do |ob|
         ob.void_reason = 'Voided ART Adherence'
@@ -1362,7 +1369,7 @@ class GenericEncountersController < ApplicationController
   end
 
   def sputum_submissons_with_no_results(patient_id)
-   # sputum_concept_names = ["AAFB(1st)", "AAFB(2nd)", "AAFB(3rd)", "Culture(1st)", "Culture(2nd)"]
+    # sputum_concept_names = ["AAFB(1st)", "AAFB(2nd)", "AAFB(3rd)", "Culture(1st)", "Culture(2nd)"]
 	  sputum_concept_names = ["AAFB(1st)", "AAFB(2nd)",  "Culture(1st)", "Culture(2nd)"]
     sputum_concept_ids = ConceptName.find(:all, :conditions => ["name IN (?)", sputum_concept_names]).map(&:concept_id)
     sputums_array = Observation.find(:all, :conditions => ["person_id = ? AND concept_id = ? AND (value_coded in (?) OR value_text in (?))", patient_id, ConceptName.find_by_name('Tests ordered').concept_id, sputum_concept_ids, sputum_concept_names], :order => "obs_datetime desc", :limit => 3)
@@ -1680,28 +1687,28 @@ class GenericEncountersController < ApplicationController
 		session_date = "#{prefix} #{Date.today.year.to_s}%"
 		current_date = Date.today.to_s
 		current_date = session[:datetime] if !session[:datetime].blank?
-		 session_date = "#{prefix} #{session[:datetime].to_date.year.to_s}%" if !session[:datetime].blank?
-		 patient_exists = PatientIdentifier.find(:all, :conditions => ['identifier_type = ? AND identifier like ? AND patient_id = ?', type_id, session_date, @patient.id]).first
-		 type = patient_exists
-		 state = ""
-		 @patient.patient_programs.each do |prog|
-			 state = prog.patient_states.last.to_s if prog.program.name.humanize == "Tb program"
-		 end
+    session_date = "#{prefix} #{session[:datetime].to_date.year.to_s}%" if !session[:datetime].blank?
+    patient_exists = PatientIdentifier.find(:all, :conditions => ['identifier_type = ? AND identifier like ? AND patient_id = ?', type_id, session_date, @patient.id]).first
+    type = patient_exists
+    state = ""
+    @patient.patient_programs.each do |prog|
+      state = prog.patient_states.last.to_s if prog.program.name.humanize == "Tb program"
+    end
 		if ! patient_exists.blank? and state.downcase.match(/treatment complete/i)
 			patient_exists.voided = 1
 			patient_exists.save
 		end
 		#if patient_exists.blank?
-			type = PatientIdentifier.find_by_sql("SELECT * FROM patient_identifier
+    type = PatientIdentifier.find_by_sql("SELECT * FROM patient_identifier
 																						WHERE identifier_type = #{type_id} and identifier LIKE '%#{session_date}%'
 																						AND voided = 0 ORDER BY patient_identifier_id DESC")
-			#type = PatientIdentifier.find(:all, :conditions => ['identifier_type = ? AND identifier like ?', type_id, session_date],:order => 'patient_identifier_id DESC')
+    #type = PatientIdentifier.find(:all, :conditions => ['identifier_type = ? AND identifier like ?', type_id, session_date],:order => 'patient_identifier_id DESC')
 		#end
-		 type = type.first.identifier.split(" ") rescue ""
-		 if type.include?(current_date.to_date.year.to_s)
+    type = type.first.identifier.split(" ") rescue ""
+    if type.include?(current_date.to_date.year.to_s)
 			return (type.last.to_i + 1) 
-		 else
+    else
 			return 1
-		 end
+    end
 	end
 end
