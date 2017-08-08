@@ -145,10 +145,7 @@ module PatientService
       "given_name" => params["person"]["names"]["given_name"],
       "middle_name" => params["person"]["names"]["middle_name"],
       "gender" => gender[params["person"]["gender"]],
-      "attributes" => {
-        "occupation" => "House Wife",
-        "cell_phone_number" => "09999999999"
-      },
+      "attributes" => {},
       "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
       "identifiers" => {},
       "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
@@ -191,21 +188,18 @@ module PatientService
       "given_name" => params["person"]["names"]["given_name"],
       "middle_name" => params["person"]["names"]["middle_name"],
       "gender" => gender[params["person"]["gender"]],
-      "attributes" => {
-        "occupation" => "House Wife",
-        "cell_phone_number" => "09999999999"
-      },
+      "attributes" => {},
       "birthdate" => person.birthdate.to_date.strftime("%Y-%m-%d"),
       "identifiers" => {},
       "birthdate_estimated" => (person.birthdate_estimated.to_i == 1),
-      "current_residence" => params["person"]["addresses"]["city_village"],
-      "current_village" => params["person"]["addresses"]["city_village"],
-      "current_ta" => params["filter"]["t_a"],
-      "current_district" => params["person"]["addresses"]["state_province"],
+      "current_residence" => (params["person"]["addresses"]["city_village"] rescue 'Other'),
+      "current_village" => (params["person"]["addresses"]["city_village"] rescue 'Other'),
+      "current_ta" => (params["filter"]["t_a"] rescue 'N/A'),
+      "current_district" => (params["person"]["addresses"]["state_province"] rescue 'Other'),
 
-      "home_village" => params["person"]["addresses"]["neighborhood_cell"],
-      "home_ta" => params["person"]["addresses"]["county_district"],
-      "home_district" => params["person"]["addresses"]["address2"],
+      "home_village" => (params["person"]["addresses"]["neighborhood_cell"] rescue 'Other'),
+      "home_ta" => (params["person"]["addresses"]["county_district"] rescue 'Other'),
+      "home_district" => (params["person"]["addresses"]["address2"] rescue 'Other'),
       "token" => dde_token
     }
 
