@@ -221,7 +221,7 @@
 
     <form id="form1" method="post" action="">
       <fieldset>
-        <legend><b>Remote primary patient</b></legend>
+        <legend><b>Primary patient</b></legend>
         <input  type="text" placeholder="First Name" id="pfname" style="width: 45%;" onmousedown="showKeyPad('pfname', 'left')"/>
         <input  type="text" style="width: 47%;" id="plname" placeholder="Last Name" onmousedown="showKeyPad('plname', 'left')"/><br /><br />
         <select name="gender" class="gender" id="pgender">
@@ -243,7 +243,7 @@
 
     <form id="form1" method="post" action="">
       <fieldset>
-        <legend><b>Remote secondary patient</b></legend>
+        <legend><b>Secondary patient</b></legend>
         <input  type="text" placeholder="First Name" id="sfname" style="width: 47%;" onmousedown="showKeyPad('sfname', 'right')" />
         <input  type="text" style="width: 44%;" id="slname" placeholder="Last Name" onmousedown="showKeyPad('slname', 'right')" /><br /><br />
         <select name="gender" class="gender" id="sgender">
@@ -412,7 +412,7 @@
         lname = document.getElementById('slname').value;
         gender = document.getElementById('sgender').value;
       }
-      var url = "/patients/search_dde_by_name_and_gender/?fname=" + fname +  " &lname=" + lname + "&gender=" + gender + "&side=" + side;
+      var url = "/patients/search_local_by_name_and_gender?fname=" + fname +  " &lname=" + lname + "&gender=" + gender + "&side=" + side;
       response = new Ajax.Request(url,{method:'get',onSuccess: function(transport){
           text = transport.responseText || "";
           updateDiv(text);
