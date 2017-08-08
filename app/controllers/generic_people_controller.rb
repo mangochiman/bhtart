@@ -267,7 +267,7 @@ class GenericPeopleController < ApplicationController
             PatientService.assign_new_dde_npid(person, old_npid, new_npid)
             national_id_replaced = true
           end
-        end
+        end unless params[:identifier].match(/ARV|TB|HCC/i)
         found_person = local_results.first
       else
         # TODO - figure out how to write a test for this
@@ -285,7 +285,7 @@ class GenericPeopleController < ApplicationController
             redirect_to("/people/dde_duplicates") and return
           end
 
-        end
+        end unless params[:identifier].match(/ARV|TB|HCC/i)
         
         if create_from_remote
           found_person_data = PatientService.find_remote_person_by_identifier(params[:identifier])
