@@ -255,7 +255,6 @@ class GenericPeopleController < ApplicationController
             #dde_demographics = {"person" => dde_demographics}
             dde_response = PatientService.add_dde_patient_after_search_by_identifier(dde_demographics)
             dde_status = dde_response["status"]
-
             if dde_status.to_s == '201'
               new_npid = dde_response["data"]["npid"]
             end
