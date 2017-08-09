@@ -583,9 +583,15 @@
       cancelBtn.onmousedown = function(){
         window.location = "/";
       }
+<% if flash[:merge_notice] %>
+      showMessage('<%=  flash[:merge_notice] %>');
+<%end%>
 
+<% if flash[:merge_error] %>
+      showMessage('<%=  flash[:merge_error] %>');
+<% end %>
 
-    });
+  });
 
   </script>
 
