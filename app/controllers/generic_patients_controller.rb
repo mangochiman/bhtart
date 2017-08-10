@@ -3035,6 +3035,10 @@ EOF
         person_attribute.update_attributes({'value' => params[:person]["home_phone_number"]})
       end
     end
+    if create_from_dde_server
+      #Updating the demographics to dde
+      PatientService.update_dde_patient(patient.person, session[:dde_token])
+    end
   end
 
   def edit_mastercard_attribute(attribute_name)
@@ -4257,6 +4261,193 @@ EOF
 
   def merge_menu
     render :layout => "report"
+  end
+
+  def dde_merge_patients_menu
+    
+  end
+
+  def dde_duplicates
+    #identifier = params[:identifier]
+    #@local_results = PatientService.search_by_identifier(identifier)
+    #dde_search_results = PatientService.search_dde_by_identifier(identifier, session[:dde_token])
+    #@remote_results = dde_search_results["data"]["hits"] rescue []
+    render :layout => "report"
+  end
+
+  def search_dde_by_name_and_gender
+    passed_params = {
+      :given_name => params[:fname],
+      :family_name => params[:lname],
+      :gender => params[:gender].first.upcase,
+    }
+    side = params[:side]
+    remote_results = PatientService.search_dde_by_name_and_gender(passed_params, session[:dde_token])
+
+    @html = <<EOF
+<html>
+<body>
+<br/>
+<table class="data_table" width="100%">
+EOF
+
+    color = 'blue'
+    remote_results.each do |result|
+      names = result["names"]
+      addresses = result["addresses"]
+      attributes = result["attributes"]
+      npid = result["npid"]
+      birthdate = result["birthdate"]
+      age = cul_age(birthdate.to_date , result["birthdate_estimated"].to_i)
+
+      if color == 'blue'
+        color = 'white'
+      else
+        color='blue'
+      end
+
+      @html+= <<EOF
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Name:&nbsp;#{(names['given_name'].to_s + names['family_name'].to_s) || '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Age:&nbsp;#{age || '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Guardian:&nbsp;#{bean.guardian rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">ARV number:&nbsp;#{bean.arv_number rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">National ID:&nbsp;#{npid rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">TA:&nbsp;#{bean.home_district rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Total Encounters:&nbsp;#{total_encounters rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{npid}' style="text-align:left;" onclick="setPatient('#{npid}','#{color}','#{side}')">Latest Visit:&nbsp;#{latest_visit rescue '&nbsp;'}</td>
+</tr>
+EOF
+    end
+
+    @html+="</table></body></html>"
+    render :text => @html ; return
+
+  end
+
+
+  def search_local_by_name_and_gender
+    passed_params = {
+      :given_name => params[:fname],
+      :family_name => params[:lname],
+      :gender => params[:gender].first.upcase,
+    }
+    side = params[:side]
+
+    people = PatientService.person_search(passed_params)
+
+    @html = <<EOF
+<html>
+<head>
+<style>
+  .color_blue{
+    border-style:solid;
+  }
+  .color_white{
+    border-style:solid;
+  }
+
+  th{
+    border-style:solid;
+  }
+</style>
+</head>
+<body>
+<br/>
+<table class="data_table" width="100%">
+EOF
+
+    color = 'blue'
+    people.each do |person|
+      patient = person.patient
+      next if patient.blank?
+      next if person.addresses.blank?
+      if color == 'blue'
+        color = 'white'
+      else
+        color='blue'
+      end
+      bean = PatientService.get_patient(patient.person)
+      total_encounters = patient.encounters.count rescue nil
+      latest_visit = patient.encounters.last.encounter_datetime.strftime("%a, %d-%b-%y") rescue nil
+      @html+= <<EOF
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Name:&nbsp;#{bean.name || '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Age:&nbsp;#{bean.age || '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Guardian:&nbsp;#{bean.guardian rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">ARV number:&nbsp;#{bean.arv_number rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">National ID:&nbsp;#{bean.national_id rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">TA:&nbsp;#{bean.home_district rescue '&nbsp;'}</td>
+</tr>
+<tr>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Total Encounters:&nbsp;#{total_encounters rescue '&nbsp;'}</td>
+  <td class='color_#{color} patient_#{patient.id}' style="text-align:left;" onclick="setPatient('#{patient.id}','#{color}','#{side}')">Latest Visit:&nbsp;#{latest_visit rescue '&nbsp;'}</td>
+</tr>
+EOF
+    end
+
+    @html+="</table></body></html>"
+    render :text => @html ; return
+  end
+
+
+  def dde_merge_similar_patients
+    splitted_ids = params[:patient_ids].split(",")
+    primary_id = splitted_ids[0]
+    secondary_id = splitted_ids[1]
+
+    if (primary_id.to_i != secondary_id.to_i)
+      primary_person = Person.find(primary_id)
+      secondary_person = Person.find(Person.find(secondary_id))
+
+      primary_npid = PatientService.get_patient(primary_person).national_id
+      secondary_npid = PatientService.get_patient(secondary_person).national_id
+
+      dde_primary_search_results = PatientService.search_dde_by_identifier(primary_npid, session[:dde_token])
+      dde_primary_hits = dde_primary_search_results["data"]["hits"] rescue []
+
+      dde_secondary_search_results = PatientService.search_dde_by_identifier(secondary_npid, session[:dde_token])
+      dde_secondary_hits = dde_secondary_search_results["data"]["hits"] rescue []
+
+      unless dde_primary_hits.blank?
+        unless dde_secondary_hits.blank?
+          primary_pt_demographics = PatientService.generate_dde_demographics_for_merge(dde_primary_search_results)
+          secondary_pt_demographics = PatientService.generate_dde_demographics_for_merge(dde_secondary_search_results)
+          PatientService.merge_dde_patients(primary_pt_demographics, secondary_pt_demographics, session[:dde_token])
+        end
+      end
+
+      Patient.merge(primary_id, secondary_id)
+
+      flash[:merge_notice] = "Merge is successful"
+    else
+      flash[:merge_error] = "Failed to merge. You selected the same patient"
+    end
+    
+    redirect_to("/patients/dde_duplicates") and return
+  end
+
+  def cul_age(birthdate , birthdate_estimated , date_created = Date.today, today = Date.today)
+
+    # This code which better accounts for leap years
+    patient_age = (today.year - birthdate.year) + ((today.month - birthdate.month) + ((today.day - birthdate.day) < 0 ? -1 : 0) < 0 ? -1 : 0)
+
+    # If the birthdate was estimated this year, we round up the age, that way if
+    # it is March and the patient says they are 25, they stay 25 (not become 24)
+    birth_date = birthdate
+    estimate = birthdate_estimated == 1
+    patient_age += (estimate && birth_date.month == 7 && birth_date.day == 1  &&
+        today.month < birth_date.month && date_created.year == today.year) ? 1 : 0
   end
 
   def search_all

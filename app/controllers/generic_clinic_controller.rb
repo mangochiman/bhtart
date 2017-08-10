@@ -263,10 +263,15 @@ class GenericClinicController < ApplicationController
         ['/clinic/location_management_tab','Location Management'],
         ['/people/tranfer_patient_in','Transfer Patient in'],
         #['/patients/patient_merge','Merge Patients'],
-        ['/patients/merge_menu','Merge Patients'],
-        ['/patients/duplicate_menu','Possible patient duplicates']
+        #['/patients/merge_menu','Merge Patients (Local)'],
+        ['/patients/duplicate_menu','Possible patient duplicates'],
+        ['/patients/dde_duplicates','Merge Patients']
 
       ]
+      #if create_from_dde_server
+        #@reports << ['/patients/dde_duplicates','Merge Patients']
+      #end
+
       if current_user.admin?
         @reports << ['/clinic/management_tab','Drug Management']
         @reports << ['/clinic/pharmacy_error_correction_menu','Pharmacy Error Correction']

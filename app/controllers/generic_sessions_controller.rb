@@ -19,15 +19,15 @@ class GenericSessionsController < ApplicationController
 			#my_token = current_user.authentication_token
 			#User.find_for_authentication_token()
 			#self.current_user = user
-      if create_from_dde_server
-        dde_authentication_token_result = PatientService.dde_authentication_token
-        dde_token_status = dde_authentication_token_result["status"]
-        if (dde_token_status.to_s == "200")
-          session[:dde_token] = dde_authentication_token_result["data"]["token"]
-        else
-          session[:dde_token] = nil
-        end
-      end
+      #if create_from_dde_server
+        #dde_authentication_token_result = PatientService.dde_authentication_token
+        #dde_token_status = dde_authentication_token_result["status"]
+        #if (dde_token_status.to_s == "200")
+          #session[:dde_token] = dde_authentication_token_result["data"]["token"]
+        #else
+          #session[:dde_token] = nil
+        #end
+      #end
 
 			redirect_to '/clinic'
 		else
