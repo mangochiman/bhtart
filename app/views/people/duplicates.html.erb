@@ -315,7 +315,7 @@
         row_number+=1
       %>
         <tr>
-          <td class="color_<%=color%> row_number_<%=row_number%>"><%= patient.national_id || '&nbsp;' %></td>
+          <td class="color_<%=color%> row_number_<%=row_number%>"><%= patient.national_id || '&nbsp;' %> <span style="color: red; font-size: 10pt; font-weight: bold;">(DDE)</span></td>
           <td class="color_<%=color%> row_number_<%=row_number%>"><%= patient.name || '&nbsp;' %></td>
           <td class="color_<%=color%> row_number_<%=row_number%>" style="text-align:center;"><%= patient.birth_date || '&nbsp;' %> </td>
           <td class="color_<%=color%> row_number_<%=row_number%>" style="text-align:center;"><%= patient.sex || '&nbsp;' %></td>
