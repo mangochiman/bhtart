@@ -126,6 +126,12 @@
     });
     window.onload = function(){
       __$('finishButton').innerHTML = '<span>Continue</span>'
+      __$('finishButton').setAttribute('onmousedown',"confirmPatient();");
+      __$('finishButton').setAttribute('onclick',"confirmPatient();");
+    }
+
+    function confirmPatient() {
+      window.location = '/people/confirm?found_person_id=' + <%= params[:patient_id] %> +  "&skip_has_inconsistency_outcome_dates=true";
     }
 
     function updatePatientState(stateID){
