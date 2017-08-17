@@ -30,7 +30,6 @@ class GenericClinicController < ApplicationController
 
   def reports
     @reports = [
-      ["Cohort","/cohort_tool/cohort_menu"],
       ["Supervision","/clinic/supervision"],
       ["Data Cleaning Tools", "/report/data_cleaning"],
       ["Stock report","/drug/date_select"]
@@ -177,13 +176,13 @@ class GenericClinicController < ApplicationController
 
   def reports_tab
     @reports = [
-      ["Cohort","/cohort_tool/cohort_menu"],
-      ["ART disaggregated cohort","/cohort_tool/disaggregated_cohort_menu"],
-      ["Revised Cohort","/cohort_tool/revised_cohort_menu"],
-      ["Revised Cohort Survival Analysis","/cohort_tool/revised_cohort_survival_analysis_menu"],
+      ["Cohort disaggregated","/cohort_tool/disaggregated_cohort_menu"],
+      ["Cohort","/cohort_tool/revised_cohort_menu"],
+      ["Cohort analyzer","/report/summarize_cohort_report?type=summary"],
+      ["Cohort Survival Analysis","/cohort_tool/revised_cohort_survival_analysis_menu"],
       ["Supervision","/clinic/supervision_tab"],
       ["Data Cleaning Tools", "/clinic/data_cleaning_tab"],
-      #["View appointments","/report/select_date"],
+      
       ["Drug dispensation","/report/drug_menu"],
       ["Pre-ART","/cohort_tool/cohort_menu?type=pre_art"],
       ["View appointments","/properties/select_date"],
@@ -214,6 +213,10 @@ class GenericClinicController < ApplicationController
       ["Diagnosis + demographics","/drug/date_select?goto=/report/age_group_select?type=diagnosis_by_demographics"]
     ] if Location.current_location.name.match(/Outpatient/i)
     render :layout => false
+  end
+
+  def summarised_report
+    puts "We are here"
   end
 
   def data_cleaning_tab
