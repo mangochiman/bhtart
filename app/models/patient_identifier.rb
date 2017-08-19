@@ -31,6 +31,11 @@ class PatientIdentifier < ActiveRecord::Base
     return site_prefix
   end
 
+  def self.dde_code
+    dde_code = GlobalProperty.find_by_property("dde.code").property_value rescue ''
+    return dde_code
+  end
+
   def self.next_available_arv_number
     current_arv_code = self.site_prefix
     type = PatientIdentifierType.find_by_name('ARV Number').id
@@ -85,14 +90,14 @@ class PatientIdentifier < ActiveRecord::Base
   
   def self.identifier(patient_id, patient_identifier_type_id)
     patient_identifier = self.find(:first, :select => "identifier",
-                                   :conditions  =>["patient_id = ? and identifier_type = ?", patient_id, patient_identifier_type_id])
+      :conditions  =>["patient_id = ? and identifier_type = ?", patient_id, patient_identifier_type_id])
     return patient_identifier
   end
 
   def self.next_filing_number(type = 'Filing Number')
     available_numbers = PatientIdentifier.find(:all,
-                                  :conditions => ['identifier_type = ?',
-                                  PatientIdentifierType.find_by_name(type).id]).map{ | i | i.identifier }
+      :conditions => ['identifier_type = ?',
+        PatientIdentifierType.find_by_name(type).id]).map{ | i | i.identifier }
     
     filing_number_prefix = CoreService.get_global_property_value("filing.number.prefix") rescue "FN101,FN102" 
 
