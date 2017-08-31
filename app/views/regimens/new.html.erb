@@ -2486,18 +2486,29 @@ end
     //var regularBtn = document.getElementById('normal_visit');
 
     sex = "<%=@patient.person.gender.first.upcase%>";
-    var fast_track_attr = [
+    /*var fast_track_attr = [
       [['Adult', '9533'],['Any side effects / HIV-related diseases', '9539']],
       [['On ART >12m', '9534'],['Needs BP / diabetes treatment', '9540']],
       [['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538']],
       [['Last VL <1000','9536'], ['Any sign for TB', '2186']],
       [['Good adherence','9537'], ['Started IPT <12m ago', '9527']]
+    ];*/
+
+
+    var fast_track_attr = [
+      ['Adult', '9533'], ['Started IPT <12m ago', '9527'],
+      ['On 1st line ART','9535'],['Good Adherence', '9537'], 
+      ['Last VL <1000', '9536'],['On ART <12', '9534'],
+      ["Needs BP / diabetes treatment", '9540'],["Any side effects / HIV-related diseases", '9539'],
+      ["Any sign for TB",'2186'],['Pregnant / Breastfeeding', '9538']
     ];
+
 
     for(var i = 0; i < fast_track_attr.length; i++){
       if(sex == 'M' && fast_track_attr[i][1] == '9538')
         continue;
 
+      alert(fast_track_attr[i][1]);
       var inputbox = document.getElementById("fast_track_concept_" + fast_track_attr[i][1]);
       if(inputbox.value.length < 1) {
         var msg = inputbox.name;
@@ -2579,27 +2590,29 @@ end
 
 <%if @patient.person.gender.first.upcase == 'M'%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['On 1st line ART',9535],
+        ['Adult', 9533], ['Started IPT <12m ago', 9527],
+        ['On 1st line ART',9535],
         ['Good Adherence', 9537], ['Last VL <1000', 9536],
-        ["Any sign for TB",2186]
       ];
 
       var exclusion_list_arr = [
-        ['On ART >12', 9534],  ['Started IPT <12m ago', 9527],
+        ['On ART <12', 9534],
         ["Needs BP / diabetes treatment", 9540],
-        ["Any side effects / HIV-related diseases", 9539]
+        ["Any side effects / HIV-related diseases", 9539],
+        ["Any sign for TB",2186]
       ];
 <%else%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['On 1st line ART',9535],
+        ['Adult', 9533], ['Started IPT <12m ago', 9527],
+        ['On 1st line ART',9535],
         ['Good Adherence', 9537], ['Last VL <1000', 9536],
-        ["Any sign for TB",2186]
       ];
 
       var exclusion_list_arr = [
-        ['On ART >12', 9534],  ['Started IPT <12m ago', 9527],
+        ['On ART <12', 9534],
         ["Needs BP / diabetes treatment", 9540],
         ["Any side effects / HIV-related diseases", 9539],
+        ["Any sign for TB",2186],
         ['Pregnant / Breastfeeding', 9538]
       ];
 <%end%>
@@ -2803,7 +2816,7 @@ end
      */
     attr = [
       [['Adult', '9533'],['Any side effects / HIV-related diseases', '9539']],
-      [['On ART >12m', '9534'],['Needs BP / diabetes treatment', '9540']],
+      [['On ART <12m', '9534'],['Needs BP / diabetes treatment', '9540']],
       [['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538']],
       [['Last VL <1000','9536'], ['Any sign for TB', '2186']],
       [['Good adherence','9537'], ['Started IPT <12m ago', '9527']]
@@ -2812,7 +2825,7 @@ end
 <%if @patient.person.gender.first.upcase == 'M'%>
       attr = [
         [['Adult', '9533'],['Any side effects / HIV-related diseases', '9539']],
-        [['On ART >12m', '9534'],['Needs BP / diabetes treatment', '9540']],
+        [['On ART <12m', '9534'],['Needs BP / diabetes treatment', '9540']],
         [['On 1st Line ART','9535'], ['Any sign for TB', '2186']],
         [['Last VL <1000','9536'], ['Good adherence','9537']], 
         [['Started IPT <12m ago', '9527']]
@@ -3268,6 +3281,15 @@ pyridoxine_options = ["","25", "50"]
         ['Last VL <1000','9536'], ['Any sign for TB', '2186'],
         ['Good adherence','9537'], ['Started IPT <12m ago', '9527']
       ]
+      
+      fast_track_attr = [
+        ['Adult', '9533'], ['Started IPT <12m ago', '9527'],
+        ['On 1st line ART','9535'],['Good Adherence', '9537'], 
+        ['Last VL <1000', '9536'],['On ART <12', '9534'],
+        ["Needs BP / diabetes treatment", '9540'],["Any side effects / HIV-related diseases", '9539'],
+        ["Any sign for TB",'2186'],['Pregnant / Breastfeeding', '9538']
+      ]
+
       (fast_track_attr).each do |name, concept_id|
         next if @patient.person.gender.first.upcase == 'M' and concept_id == '9538'
       %>
