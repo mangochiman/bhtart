@@ -150,8 +150,9 @@ class DrugController < GenericDrugController
     unless supervision_verification_in_details.blank?
       drug_summary["supervision_verification_in_details"] = supervision_verification_in_details
     end
-
+    site_code = PatientIdentifier.site_prefix
     data = {
+      :site_code => site_code,
       :date => date,
       :dispensations => drug_summary["dispensations"],
       :prescriptions => drug_summary["prescriptions"],
@@ -164,7 +165,7 @@ class DrugController < GenericDrugController
       :location => location_name
     }
     
-    SendResultsToCouchdb.add_record(data) rescue ''
+    SendResultsToCouchdb.add_record(data) #rescue ''
     render :text => drug_summary.to_json and return    
   end
 
