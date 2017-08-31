@@ -108,7 +108,7 @@ class PatientIdentifier < ActiveRecord::Base
     len_of_identifier = (filing_number_prefix.split(",")[1][-1..-1] + "00000").to_i if type.match(/Archived/i)
     
     
-    possible_identifiers_limit = GlobalProperty.find_by_property("filing.number.limit").property_value.to_i rescue 30000
+    possible_identifiers_limit = GlobalProperty.find_by_property("possible.filing.numbers").property_value.to_i rescue 30000
     
     possible_identifiers = []
     1.upto(possible_identifiers_limit).each do |num|
