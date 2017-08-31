@@ -281,6 +281,9 @@ module PatientService
     home_ta = data["person"]["addresses"]["county_district"]
     home_ta = "Other" if home_ta.blank?
 
+    home_district = data["person"]["addresses"]["address2"]
+    home_district = "Other" if home_district.blank?
+
     demographics = {
       "family_name" => data["person"]["names"]["family_name"],
       "given_name" => data["person"]["names"]["given_name"],
@@ -300,7 +303,7 @@ module PatientService
 
       "home_village" => data["person"]["addresses"]["neighborhood_cell"],
       "home_ta" => home_ta,
-      "home_district" => data["person"]["addresses"]["address2"],
+      "home_district" => home_district,
       "token" => dde_token
     }.delete_if{|k, v|v.to_s.blank?}
 

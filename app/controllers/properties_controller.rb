@@ -200,6 +200,19 @@ class PropertiesController < GenericPropertiesController
     end
   end
 
+  def dde_code_map
+    @site_code = PatientIdentifier.site_prefix
+    @dde_code = PatientIdentifier.dde_code
+  end
+
+  def create_dde_code_map
+    global_property_dde_status = GlobalProperty.find_by_property('dde.code') || GlobalProperty.new()
+    global_property_dde_status.property = 'dde.code'
+    global_property_dde_status.property_value = params[:dde_code]
+    global_property_dde_status.save
+    redirect_to("/clinic") and return
+  end
+  
   def dde_properties_menu
     @dde_status = GlobalProperty.find_by_property('dde.status').property_value rescue ""
     @dde_status = 'Yes' if @dde_status.match(/ON/i)
@@ -249,7 +262,7 @@ class PropertiesController < GenericPropertiesController
     end
 
     if (dde_status == 'ON')
-      site_code = PatientIdentifier.site_prefix
+      site_code = PatientIdentifier.dde_code#PatientIdentifier.site_prefix
       data = {
         "username" => "#{params[:dde_username]}",
         "password"  => "#{params[:dde_password]}",
