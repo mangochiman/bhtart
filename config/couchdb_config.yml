@@ -6,8 +6,8 @@ username : pach
 password : pachccc123
 port : 5984
 
-dashboard_host : 192.168.12.209
+dashboard_host : 127.0.0.1
 dashboard_port : 5984
-dashboard_username : admin
-dashboard_password : Samson1991
-dashboard_database : data_quality_dashboard_development
+dashboard_username : pach
+dashboard_password : pachccc123
+dashboard_database : validation_result
