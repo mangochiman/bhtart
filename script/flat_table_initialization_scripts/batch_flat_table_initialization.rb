@@ -1677,6 +1677,36 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
         end
       end
+    elsif obs.concept_id.to_i == 7972 #Patient Pregnant at initiation
+      if !obs.value_coded.blank?
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
+          a_hash[:pregnant_at_initiation] = 'Yes'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
+          a_hash[:pregnant_at_initiation] = 'No'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
+          a_hash[:pregnant_at_initiation] = 'Unknown'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        end
+      else
+        if obs.value_text == '1065'
+          a_hash[:pregnant_at_initiation] = 'Yes'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1066'
+          a_hash[:pregnant_at_initiation] = 'No'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1067'
+          a_hash[:pregnant_at_initiation] = 'Unknown'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        end
+      end
     elsif obs.concept_id.to_i == 1755 #Patient Pregnant
       if !obs.value_coded.blank?
         if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
