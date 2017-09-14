@@ -59,7 +59,15 @@
   }
 
   function editViralLoadResults(){
-    window.location = "/lab/edit_lab_results/?patient_id=<%= params[:id] %>"
+
+    var lims_activated = <%= YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['enable_lims'] %>
+
+        if (lims_activated)
+            url = "/lab/edit_lims_lab_results/?patient_id=<%= params[:id] %>"
+        else
+            url = "/lab/edit_lab_results/?patient_id=<%= params[:id] %>"
+
+    window.location = url;
   }
 </script>
 
