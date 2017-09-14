@@ -305,7 +305,7 @@ EOF
 
       accession_number = result[0]
       vl_result = result[2]
-      date_of_sample = result[3].to_date
+      date_of_sample = result[3].to_date rescue 'Unknown'
 
       vl_hash[accession_number] = {} if vl_hash[accession_number].blank?
       vl_hash[accession_number]["result"] = {} if vl_hash[accession_number]["result"].blank?
@@ -345,7 +345,7 @@ EOF
 
     end
 
-    return vl_hash.sort_by{|key, value|value["date_of_sample"].to_date}.reverse rescue {}
+    return vl_hash.sort_by{|key, value| (value["date_of_sample"].to_date rescue 'Unknown') }.reverse rescue {}
   end
 
   def self.allergic_to_sulpher(patient, date = Date.today)
