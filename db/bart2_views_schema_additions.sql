@@ -97,9 +97,9 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 DROP FUNCTION IF EXISTS patient_date_enrolled;
 
 DELIMITER $$
-CREATE  FUNCTION patient_date_enrolled(my_patient_id int) RETURNS date
+CREATE FUNCTION patient_date_enrolled(my_patient_id int) RETURNS DATE
+DETERMINISTIC
 BEGIN
-
 DECLARE my_start_date DATE;
 DECLARE min_start_date DATETIME;
 DECLARE arv_concept_id INT(11);
@@ -107,6 +107,7 @@ DECLARE arv_concept_id INT(11);
 SET arv_concept_id = (SELECT concept_id FROM concept_name WHERE name ='ANTIRETROVIRAL DRUGS' LIMIT 1);
 
 SET my_start_date = (SELECT DATE(o.start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id)) AND d.quantity > 0 AND o.start_date = (SELECT min(start_date) FROM drug_order d INNER JOIN orders o ON d.order_id = o.order_id AND o.voided = 0 WHERE d.quantity > 0 AND o.patient_id = my_patient_id AND drug_inventory_id IN(SELECT drug_id FROM drug WHERE concept_id IN(SELECT concept_id FROM concept_set WHERE concept_set = arv_concept_id))) LIMIT 1);
+
 
 RETURN my_start_date;
 END$$
@@ -611,9 +612,14 @@ SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" L
 
 SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
 
-
 IF set_patient_state = 1 THEN
-  SET set_outcome = 'Pre-ART (Continue)';
+  SET set_patient_state = current_defaulter(patient_id, visit_date);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  ELSE
+    SET set_outcome = 'Pre-ART (Continue)';
+  END IF;
 END IF;
 
 IF set_patient_state = 2   THEN
@@ -625,7 +631,6 @@ IF set_patient_state = 3 OR set_patient_state = 127 THEN
 END IF;
 
 /* ............... This block of code checks if the patient has any state that is "died" */
-/*
 IF set_patient_state != 3 AND set_patient_state != 127 THEN
   SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
 
@@ -635,7 +640,7 @@ IF set_patient_state != 3 AND set_patient_state != 127 THEN
     SET set_outcome = 'Patient died';
     SET set_patient_state = 3;
   END IF;
-END IF;*/
+END IF;
 /* ....................  ends here .................... */
 
 
