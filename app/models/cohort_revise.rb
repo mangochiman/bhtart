@@ -629,7 +629,7 @@ EOF
 EOF
 
     ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION patient_outcome(patient_id INT, visit_date date) RETURNS varchar(25)
+CREATE FUNCTION patient_outcome(patient_id INT, visit_date DATETIME) RETURNS varchar(25)
 DETERMINISTIC
 BEGIN
 DECLARE set_program_id INT;
@@ -1515,14 +1515,14 @@ EOF
     hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
     method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
     family_planning_action_to_take_concept_id = ConceptName.find_by_name("Family planning, action to take").concept_id
-    none_concept_id = ConceptName.find_by_name("None").concept_id
+    none_concept_id = [ConceptName.find_by_name("None").concept_id, ConceptName.find_by_name("No").concept_id]
 
     results = ActiveRecord::Base.connection.select_all <<EOF
       SELECT o.person_id
       FROM obs o
        inner join encounter e on e.encounter_id = o.encounter_id AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       WHERE o.voided = 0 AND e.voided = 0
-      AND (o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}) AND o.value_coded != #{none_concept_id})
+      AND (o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}) AND o.value_coded NOT IN (#{none_concept_id.join(',')}))
       AND o.person_id IN (#{patient_ids.join(',')})
       AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
@@ -1922,7 +1922,7 @@ EOF
   def self.died_in(month_str)
     registered = []
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+      SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
       INNER JOIN temp_earliest_start_date t USING(patient_id)
       WHERE cum_outcome = 'Patient died' GROUP BY patient_id
       HAVING died_in = '#{month_str}';
@@ -1964,7 +1964,7 @@ EOF
 
       ActiveRecord::Base.connection.execute <<EOF
         CREATE TABLE temp_patient_outcomes
-          SELECT patient_id, patient_outcome(e.patient_id, '#{end_date}') cum_outcome
+          SELECT patient_id, patient_outcome(e.patient_id, '#{end_date} 23:59:59') cum_outcome
         FROM temp_earliest_start_date e WHERE e.date_enrolled <= '#{end_date}';
 EOF
 #=end

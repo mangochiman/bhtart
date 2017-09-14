@@ -22,7 +22,7 @@ ART tables in OpenMRS
 UniqPatientIds = []
 Connection = ActiveRecord::Base.connection
 
-Current_date = Date.today
+Current_date = "2017-02-24".to_date #Date.today
 
 def start
   start_time = DateTime.now
@@ -510,6 +510,7 @@ def updating_flat_cohort_table(patient_ids)
     drug_induced_diziness                 = flat_table_2_data['drug_induced_diziness']
     drug_induced_psychosis                = flat_table_2_data['drug_induced_psychosis']
     drug_induced_blurry_vision            = flat_table_2_data['drug_induced_blurry_vision']
+
 
     eligible    = flat_table1_record['earliest_start_date'] rescue nil
 
@@ -1712,7 +1713,7 @@ EOF
         value_coded = patient['value_coded']
         answer_record = Connection.select_one("SELECT name from concept_name LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
               WHERE  concept.concept_id = '#{value_coded}' AND voided = 0 AND retired = 0 LIMIT 1")
-        answer = answer_record['name']
+        answer = answer_record['name'] rescue nil
 
         puts ".......... Updating record into flat_table1 (last_art_drugs_taken = #{answer}): #{patient['person_id']}"
         Connection.execute <<EOF
@@ -2749,14 +2750,14 @@ EOF
           puts ".......... Updating record into flat_table1 (cd4_count_location = Unknown): #{patient['person_id']}"
           Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count_location = "Unknown", cd4_count_location_enc_id = '#{patient['encounter_id']}', cd4_count_location_v_date  = DATE('#{patient_visit_date}'
+ SET  cd4_count_location = "Unknown", cd4_count_location_enc_id = '#{patient['encounter_id']}', cd4_count_location_v_date  = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
         else
           puts ".......... Updating record into flat_table1 (cd4_count_location = #{answer}): #{patient['person_id']}"
           Connection.execute <<EOF
 UPDATE flat_table1
- SET  cd4_count_location = "#{answer}", cd4_count_location_enc_id = '#{patient['encounter_id']}', cd4_count_location_v_date  = DATE('#{patient_visit_date}'
+ SET  cd4_count_location = "#{answer}", cd4_count_location_enc_id = '#{patient['encounter_id']}', cd4_count_location_v_date  = DATE('#{patient_visit_date}')
  WHERE flat_table1.patient_id = #{patient['person_id']};
 EOF
         end #answer
@@ -10166,12 +10167,12 @@ def process_art_adherence_obs(encounter, visit)
       Connection.execute <<EOF
 UPDATE flat_table2
 SET
-  amount_of_drug1_brought_to_clinic = #{@amount_of_drug1_brought_to_clinic},
-  amount_of_drug1_remaining_at_home = #{@amount_of_drug1_remaining_at_home},
-  what_was_the_patient_adherence_for_this_drug1 = #{@what_was_the_patient_adherence_for_this_drug1},
-  what_was_the_patient_adherence_for_this_drug1_enc_id = #{@what_was_the_patient_adherence_for_this_drug1_enc_id},
-  missed_hiv_drug_construct1 = #{@missed_hiv_drug_construct1},
-  amount_of_remaining_drug1_order_id = #{@amount_of_remaining_drug1_order_id}
+  amount_of_drug1_brought_to_clinic = '#{@amount_of_drug1_brought_to_clinic}',
+  amount_of_drug1_remaining_at_home = '#{@amount_of_drug1_remaining_at_home}',
+  what_was_the_patient_adherence_for_this_drug1 = '#{@what_was_the_patient_adherence_for_this_drug1}',
+  what_was_the_patient_adherence_for_this_drug1_enc_id = '#{@what_was_the_patient_adherence_for_this_drug1_enc_id}',
+  missed_hiv_drug_construct1 = '#{@missed_hiv_drug_construct1}',
+  amount_of_remaining_drug1_order_id = '#{@amount_of_remaining_drug1_order_id}'
 WHERE flat_table2.patient_id = #{encounter['patient_id']} and flat_table2.visit_date = DATE('#{Current_date}');
 EOF
     else #else voided

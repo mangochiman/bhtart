@@ -192,6 +192,9 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
     return generate_sql_string(a_hash) if type == 1
 
     (flat_table_1_data || []).each do |patient|
+      unless patient.date_enrolled.blank?
+        re_initiated = Connection.select_one("SELECT #{@source_db}.re_initiated_check(#{patient.patient_id}, '#{patient.date_enrolled}') AS re_initiated")
+      end
 
       pat = Patient.find_by_patient_id(patient.patient_id)
       a_hash[:patient_id] = patient.patient_id
@@ -202,6 +205,7 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
       a_hash[:date_enrolled] = patient.date_enrolled
       a_hash[:age_at_initiation] = patient.age_at_initiation
       a_hash[:age_in_days] = patient.age_in_days
+      a_hash[:patient_re_initiated] = re_initiated['re_initiated'] rescue nil
       a_hash[:reason_for_starting] = patient.reason_for_eligibility
       a_hash[:who_stage] = patient.who_stage
       a_hash[:who_stages_criteria_present] = patient.who_stages_criteria_present
@@ -286,6 +290,7 @@ def process_flat_table_2(flat_table_2_data, type = 0) #type 0 normal encounter, 
       a_hash[:side_effects_gynaecomastia] = patient['side_effects_gynaecomastia']
       a_hash[:side_effects_nightmares] = patient['side_effects_nightmares']
 
+      a_hash[:tb_status] = patient['tb_status']
       a_hash[:tb_not_suspected] = patient['tb_status_tb_not_suspected']
       a_hash[:tb_suspected] = patient['tb_status_tb_suspected']
       a_hash[:confirmed_tb_not_on_treatment] = patient['tb_status_confirmed_tb_not_on_treatment']
