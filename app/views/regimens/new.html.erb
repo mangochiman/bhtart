@@ -2498,7 +2498,7 @@ end
     var fast_track_attr = [
       ['Adult', '9533'], ['Started IPT <12m ago', '9527'],
       ['On 1st line ART','9535'],['Good Adherence', '9537'], 
-      ['Last VL <1000', '9536'],['On ART <12', '9534'],
+      ['Last VL <1000', '9536'],['On ART <12m', '9534'],
       ["Needs BP / diabetes treatment", '9540'],["Any side effects / HIV-related diseases", '9539'],
       ["Any sign for TB",'2186'],['Pregnant / Breastfeeding', '9538']
     ];
@@ -2596,7 +2596,7 @@ end
       ];
 
       var exclusion_list_arr = [
-        ['On ART <12', 9534],
+        ['On ART <12m', 9534],
         ["Needs BP / diabetes treatment", 9540],
         ["Any side effects / HIV-related diseases", 9539],
         ["Any sign for TB",2186]
@@ -2609,7 +2609,7 @@ end
       ];
 
       var exclusion_list_arr = [
-        ['On ART <12', 9534],
+        ['On ART <12m', 9534],
         ["Needs BP / diabetes treatment", 9540],
         ["Any side effects / HIV-related diseases", 9539],
         ["Any sign for TB",2186],
@@ -3275,17 +3275,9 @@ pyridoxine_options = ["","25", "50"]
     %>
 
       <%fast_track_attr = [
-        ['Adult', '9533'],['Any side effects / HIV-related diseases', '9539'],
-        ['On ART >12m', '9534'],['Needs BP / diabetes treatment', '9540'],
-        ['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538'],
-        ['Last VL <1000','9536'], ['Any sign for TB', '2186'],
-        ['Good adherence','9537'], ['Started IPT <12m ago', '9527']
-      ]
-      
-      fast_track_attr = [
         ['Adult', '9533'], ['Started IPT <12m ago', '9527'],
         ['On 1st line ART','9535'],['Good Adherence', '9537'], 
-        ['Last VL <1000', '9536'],['On ART <12', '9534'],
+        ['Last VL <1000', '9536'],['On ART <12m', '9534'],
         ["Needs BP / diabetes treatment", '9540'],["Any side effects / HIV-related diseases", '9539'],
         ["Any sign for TB",'2186'],['Pregnant / Breastfeeding', '9538']
       ]
