@@ -438,7 +438,6 @@ end
 def get_patients_data(patient_id)
  #flat_table1 will contain hiv_staging, hiv clinic regitsrtaion observations
  #and patient demographics
-
  hiv_clinic_registration = []; hiv_staging = []; demographics = []
  initial_flat_table1_string = "INSERT INTO flat_table1 "
 
@@ -454,19 +453,20 @@ def get_patients_data(patient_id)
   hiv_staging_obs = []
   hiv_staging_and_reg_enc.each do |enc|
     if enc.encounter_type == 9
-
       obs_concepts_ids = enc.observations.map(&:concept_id)
       intersect = obs_concepts_ids & hiv_staging_obs_concept_ids
-
       if intersect.length != 0
         hiv_staging_obs = enc.observations
         hiv_staging = process_hiv_staging_encounter(hiv_staging_obs)
-        break
+        #break
       end
-    elsif enc.encounter_type == 52
+    end
+
+    if enc.encounter_type == 52
+
       hiv_staging_obs = enc.observations
       hiv_staging = process_hiv_staging_encounter(hiv_staging_obs)
-      break
+      #break
     end
   end
 
@@ -494,7 +494,7 @@ def get_patients_data(patient_id)
   patient_obj = Patient.find_by_patient_id(patient_id)
 
   visits = Encounter.find_by_sql("SELECT date(encounter_datetime) AS visit_date FROM #{@source_db}.encounter
-			WHERE patient_id = #{patient_id} AND voided = 0
+			WHERE patient_id = #{patient_id}
 			AND encounter_type IN (6, 7, 9, 25, 51, 52, 53, 54, 68, 119)
 			AND voided = 0
 			group by date(encounter_datetime)").map(&:visit_date)
@@ -741,31 +741,31 @@ def process_vitals_encounter(encounter, type = 0) #type 0 normal encounter, 1 ge
 
     encounter.observations.each do |obs|
       if obs.concept_id.to_i == 5089 #weight
-        a_hash[:weight] = obs.value_numeric
+        a_hash[:weight] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:weight_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 5090 #height
-        a_hash[:height] = obs.value_numeric
+        a_hash[:height] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:height_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 5088 #temperature
-        a_hash[:temperature] = obs.value_numeric
+        a_hash[:temperature] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:temperature_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 2137 #bmi
-        a_hash[:bmi] = obs.value_numeric
+        a_hash[:bmi] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:bmi_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 5085 #systolic blood pressure
-        a_hash[:systolic_blood_pressure] = obs.value_numeric
+        a_hash[:systolic_blood_pressure] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:systolic_blood_pressure_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 5086 #diastolic blood pressure
-        a_hash[:diastolic_blood_pressure] = obs.value_numeric
+        a_hash[:diastolic_blood_pressure] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:diastolic_blood_pressure_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 1822 #weight for height
-        a_hash[:weight_for_height] = obs.value_numeric
+        a_hash[:weight_for_height]  = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:weight_for_height_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 6396 #weight for age
-        a_hash[:weight_for_age] = obs.value_numeric
+        a_hash[:weight_for_age] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:weight_for_age_enc_id] = encounter.encounter_id
       elsif obs.concept_id.to_i == 6397 #height_for_age
-        a_hash[:height_for_age] = obs.value_numeric
+        a_hash[:height_for_age] = obs.to_s.split(':')[1].strip rescue nil
 		    a_hash[:height_for_age_enc_id] = encounter.encounter_id
       end
     end
@@ -979,18 +979,28 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
         end
     	elsif obs.concept_id.to_i == 7459 #tb status
     		if obs.value_coded.to_i == 7454 && obs.value_coded_name_id == 10270
+          a_hash[:tb_status] = 'TB NOT Suspected'
+          a_hash[:tb_status_enc_id] = encounter.encounter_id
     			a_hash[:tb_status_tb_not_suspected] = 'Yes'
     			a_hash[:tb_status_tb_not_suspected_enc_id] = encounter.encounter_id
     		elsif obs.value_coded.to_i == 7455 && obs.value_coded_name_id == 10273
+          a_hash[:tb_status] = 'TB Suspected'
+          a_hash[:tb_status_enc_id] = encounter.encounter_id
     			a_hash[:tb_status_tb_suspected] = 'Yes'
           a_hash[:tb_status_tb_suspected_enc_id] = encounter.encounter_id
     		elsif obs.value_coded.to_i == 7456 && obs.value_coded_name_id == 10274
+          a_hash[:tb_status] = 'Confirmed TB NOT on treatment'
+          a_hash[:tb_status_enc_id] = encounter.encounter_id
     			a_hash[:tb_status_confirmed_tb_not_on_treatment] = 'Yes'
           a_hash[:tb_status_confirmed_tb_not_on_treatment_enc_id] = encounter.encounter_id
     		elsif obs.value_coded.to_i == 7458 && obs.value_coded_name_id == 10279
+          a_hash[:tb_status] = 'Confirmed TB on treatment'
+          a_hash[:tb_status_enc_id] = encounter.encounter_id
     			a_hash[:tb_status_confirmed_tb_on_treatment] = 'Yes'
           a_hash[:tb_status_confirmed_tb_on_treatment_enc_id] = encounter.encounter_id
     		elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
+          a_hash[:tb_status] = 'Unknown'
+          a_hash[:tb_status_enc_id] = encounter.encounter_id
     			a_hash[:tb_status_unknown] = 'Yes'
           a_hash[:tb_status_unknown_enc_id] = encounter.encounter_id
     		end
@@ -1006,6 +1016,54 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
           a_hash[:currently_using_family_planning_method_enc_id] = encounter.encounter_id
         end
       elsif obs.concept_id.to_i == 374 #family planning method
+        if obs.value_coded.to_i == 780 && obs.value_coded_name_id == 10736
+          a_hash[:family_planning_method_oral_contraceptive_pills] = 'Yes'
+          a_hash[:family_planning_method_oral_contraceptive_pills_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 907 && obs.value_coded_name_id == 931
+          a_hash[:family_planning_method_depo_provera] = 'Yes'
+          a_hash[:family_planning_method_depo_provera_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 5275 && obs.value_coded_name_id == 10737
+          a_hash[:family_planning_method_intrauterine_contraception] = 'Yes'
+          a_hash[:family_planning_method_intrauterine_contraception_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 7857 && obs.value_coded_name_id == 10738
+          a_hash[:family_planning_method_contraceptive_implant] = 'Yes'
+          a_hash[:family_planning_method_contraceptive_implant_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 7858 && obs.value_coded_name_id == 10739
+          a_hash[:family_planning_method_male_condoms] = 'Yes'
+          a_hash[:family_planning_method_male_condoms_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 7859 && obs.value_coded_name_id == 10740
+          a_hash[:family_planning_method_female_condoms] = 'Yes'
+          a_hash[:family_planning_method_female_condoms_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 7860 && obs.value_coded_name_id == 10741
+          a_hash[:family_planning_method_rythm_method] = 'Yes'
+          a_hash[:family_planning_method_rythm_method_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 7861 && obs.value_coded_name_id == 10743
+          a_hash[:family_planning_method_withdrawal] = 'Yes'
+          a_hash[:family_planning_method_withdrawal_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 1720 && obs.value_coded_name_id == 1876
+          a_hash[:family_planning_method_abstinence] = 'Yes'
+          a_hash[:family_planning_method_abstinence_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 1719 && obs.value_coded_name_id == 1874
+          a_hash[:family_planning_method_tubal_ligation] = 'Yes'
+          a_hash[:family_planning_method_tubal_ligation_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 1721 && obs.value_coded_name_id == 1877
+          a_hash[:family_planning_method_vasectomy] = 'Yes'
+          a_hash[:family_planning_method_vasectomy_enc_id] = encounter.encounter_id
+        elsif obs.value_coded.to_i == 7862 && obs.value_coded_name_id == 10744
+          a_hash[:family_planning_method_emergency_contraception] = 'Yes'
+          a_hash[:family_planning_method_emergency_contraception_enc_id] = encounter.encounter_id
+        end
+      elsif obs.concept_id.to_i == 1618 #family planning method
+        if obs.value_coded.to_i == 1107
+          a_hash[:family_planning_method] = 'None'
+        elsif obs.value_coded.to_i == 1066
+          a_hash[:family_planning_method] = 'No'
+        elsif obs.value_coded.to_i == 1067
+          a_hash[:family_planning_method] = 'Unknown'
+        else
+          a_hash[:family_planning_method] = 'Yes'
+        end
+
         if obs.value_coded.to_i == 780 && obs.value_coded_name_id == 10736
           a_hash[:family_planning_method_oral_contraceptive_pills] = 'Yes'
           a_hash[:family_planning_method_oral_contraceptive_pills_enc_id] = encounter.encounter_id
@@ -1567,11 +1625,9 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
 end
 
 def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter, 1 generate_template only
-
   #initialize field and values variables
   fields = ""
   values = ""
-
   #create hiv_staging field list hash template
   a_hash = {
             :creator => 'NULL'
@@ -1580,6 +1636,17 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
   return generate_sql_string(a_hash) if type == 1
 
   (encounter || []).each do | obs |
+    reason_for_starting = ""
+
+    reason_for_starting_concept_id = Encounter.find_by_sql("SELECT patient_reason_for_starting_art(#{obs.person_id.to_i}) AS reason_for_starting_art").map(&:reason_for_starting_art).first
+    unless reason_for_starting_concept_id.blank?
+      reason_for_starting = ConceptName.find_by_concept_id(reason_for_starting_concept_id.to_i).name
+    end
+
+    a_hash[:reason_for_eligibility] = reason_for_starting rescue nil
+    a_hash[:reason_for_eligibility_v_date] = obs.obs_datetime.to_date rescue nil
+    a_hash[:reason_for_eligibility_enc_id] = obs.encounter_id rescue nil
+
     if obs.concept_id.to_i == 6131 #Patient Pregnant
       if !obs.value_coded.blank?
         if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
@@ -1608,6 +1675,36 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
           a_hash[:patient_pregnant] = 'Unknown'
           a_hash[:patient_pregnant_enc_id] = obs.encounter_id
           a_hash[:patient_pregnant_v_date] = obs.obs_datetime.to_date
+        end
+      end
+    elsif obs.concept_id.to_i == 7972 #Patient Pregnant at initiation
+      if !obs.value_coded.blank?
+        if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
+          a_hash[:pregnant_at_initiation] = 'Yes'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_coded.to_i == 1066 && obs.value_coded_name_id == 1103
+          a_hash[:pregnant_at_initiation] = 'No'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_coded.to_i == 1067 && obs.value_coded_name_id == 1104
+          a_hash[:pregnant_at_initiation] = 'Unknown'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        end
+      else
+        if obs.value_text == '1065'
+          a_hash[:pregnant_at_initiation] = 'Yes'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1066'
+          a_hash[:pregnant_at_initiation] = 'No'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
+        elsif obs.value_text == '1067'
+          a_hash[:pregnant_at_initiation] = 'Unknown'
+          a_hash[:pregnant_at_initiation_enc_id] = obs.encounter_id
+          a_hash[:pregnant_at_initiation_v_date] = obs.obs_datetime.to_date
         end
       end
     elsif obs.concept_id.to_i == 1755 #Patient Pregnant
@@ -1720,18 +1817,32 @@ def process_hiv_staging_encounter(encounter, type = 0) #type 0 normal encounter,
         a_hash[:asymptomatic_enc_id] = obs.encounter_id
         a_hash[:asymptomatic_v_date] = obs.obs_datetime.to_date
       end
-
+=begin
     elsif obs.concept_id.to_i == 7563 #reason_for_starting_art
       reason_for_starting = ""
+
+      reason_for_starting_concept_id = Encounter.find_by_sql("SELECT patient_reason_for_starting_art(#{obs.person_id.to_i}) AS reason_for_starting_art").map(&:reason_for_starting_art).first
+      puts "am the reason #{reason_for_starting_concept_id}"
+      unless reason_for_starting_concept_id.blank?
+        reason_for_starting = ConceptName.find_by_concept_id(reason_for_starting_concept_id.to_i).name
+      end
+
+
       if obs.value_coded
-        reason_for_starting = ConceptName.find_by_concept_name_id(obs.value_coded_name_id).name rescue nil
+        reason_for_starting = obs.to_s.split(':')[1].strip rescue nil
+        if reason_for_starting.blank?
+          reason_for_starting = ConceptName.find_by_concept_id(obs.value_coded_name_id.to_i).name rescue nil
+        else
+          reason_for_starting = ConceptName.find_by_concept_id(obs.value_coded.to_i).name rescue nil
+        end
       elsif obs.value_text
         reason_for_starting = ConceptName.find_by_concept_id(obs.value_text) rescue nil
       end
+
       a_hash[:reason_for_eligibility] = reason_for_starting rescue nil
       a_hash[:reason_for_eligibility_v_date] = obs.obs_datetime.to_date rescue nil
       a_hash[:reason_for_eligibility_enc_id] = obs.encounter_id rescue nil
-
+=end
     elsif obs.concept_id.to_i == 7562 #who_stage
       a_hash[:who_stage] = obs.to_s.split(':')[1].strip rescue nil
       a_hash[:who_stage_enc_id] = obs.encounter_id
@@ -2862,7 +2973,7 @@ def process_patient_state(patient_id, visit)
   a_hash = {:current_hiv_program_start_date => 'NULL'}
   a_hash = {:current_hiv_program_end_date => 'NULL'}
 
-  patient_state =  PatientProgram.find_by_sql("SELECT patient_outcome(#{patient_id}, '#{visit}') AS state").first.state
+  patient_state =  PatientProgram.find_by_sql("SELECT patient_outcome(#{patient_id}, '#{visit} 23:59:59') AS state").first.state
   end_date = PatientProgram.find_by_sql("SELECT p.date_completed from patient_state s inner join patient_program p on s.patient_program_id = p.patient_program_id where p.patient_id = #{patient_id} and p.program_id = 1").first.date_completed
   current_hiv_program_end_date = end_date.to_date.strftime('%Y-%m-%d') rescue nil
 
@@ -2904,12 +3015,10 @@ def process_adherence_encounter(encounter, visit, type = 0) #type 0 normal encou
             answer_value = adh.value_text
           elsif adh.value_numeric
             answer_value = adh.value_numeric
-            puts "i am numeric"
           elsif adh.value_coded
             answer_value = ConceptName.find_by_sql("Select name FROM concept_name
                                                     WHERE concept_id = #{adh.value_coded.to_i}
                                                     AND concept_name_type = 'FULLY_SPECIFIED'").first.name
-            puts "I am coded"
           end
           patient_adh[adh.order_id.to_i] = visit
           amount_of_remaining_drug_order_id_hash[adh.order_id.to_i] = adh.order_id rescue nil
@@ -2985,7 +3094,6 @@ end
          count += 1
      end
     end
-
 
   return generate_sql_string(a_hash)
 end
@@ -3081,7 +3189,11 @@ def start
 
  patients_list = []
 
- patients_list = $patient_demographics.collect{|p| p.patient_id} if !specify_patients_list.blank?
+ if !specify_patients_list.blank?
+   patients_list = specify_patients_list
+ else
+   patients_list = $patient_demographics.collect{|p| p.patient_id}
+ end
 
  patients_list = []
  if (!specify_patients_list.blank?) && (patients_list.blank?)
