@@ -273,15 +273,23 @@ The following block of code should be replaced by a more cleaner function
     render :template => 'dashboards/problems', :layout => 'dashboard'
   end
 
+  def hit_lab_order
+
+  end
+
   def personal
     @links = []
+    username = current_user.username
+    auth_token = current_user.authentication_token
     patient = Patient.find(params[:id])
-
+    con = YAML.load_file("#{Rails.root}/config/application.yml")
+    lims_ip = "http://localhost:3005"
     @links << ["Demographics (Print)","/patients/print_demographics/#{patient.id}"]
     @links << ["Visit Summary (Print)","/patients/dashboard_print_visit/#{patient.id}"]
     @links << ["National ID (Print)","/patients/dashboard_print_national_id/#{patient.id}"]
     @links << ["Demographics (Edit)","/people/demographics/#{patient.id}"]
     @links << ["Lab Results","/encounters/lab_results_print/#{patient.id}"]
+    @links << ["Order Test","#{lims_ip}/user/login"]
 
     if use_filing_number and not PatientService.get_patient_identifier(patient, 'Filing Number').blank?
       @links << ["Filing Number (Print)","/patients/print_filing_number/#{patient.id}"]
@@ -310,6 +318,7 @@ The following block of code should be replaced by a more cleaner function
     @links << ["Recent Lab Orders Label","/patients/recent_lab_orders?patient_id=#{patient.id}"]
     @links << ["Transfer out label (Print)","/patients/print_transfer_out_label/#{patient.id}"]
     @links << ["TB Transfer out label (Print)","/patients/print_transfer_out_tb/#{patient.id}"]
+
 
     render :template => 'dashboards/personal_tab', :layout => false
   end

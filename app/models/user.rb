@@ -55,6 +55,11 @@ class User < ActiveRecord::Base
 		end
 	end
 
+	def self.check(pas,salt)
+		is_valid = Digest::SHA1.hexdigest("#{pas}#{salt}")
+		return is_valid
+	end
+
 	def valid_password?(password)
 		return false if encrypted_password.blank?
 	  	is_valid = Digest::SHA1.hexdigest("#{password}#{salt}") == encrypted_password	|| encrypt(password, salt) == encrypted_password || Digest::SHA512.hexdigest("#{password}#{salt}") == encrypted_password
