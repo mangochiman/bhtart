@@ -93,28 +93,7 @@
 
       <span class="stat" onclick="view('available')" style="color: darkslategray; cursor: pointer"> <%= @data["available"].length %> <span style="font-size: 1em">Available &nbsp;&nbsp;| </span></span>
 
-     <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected &nbsp;&nbsp;|</span></span>
-    <table id="stats" cellpadding="14">
-
-        <tr style="color: #fff; background-color: #666;">
-            <th style="text-align:left;">Result</th>
-            <th>Given to patients</th>
-            <th>Not given to patients</th>
-        </tr>
-
-        <tr class="even">
-            <td style="float: left; font-weight: bold;color: darkslategray"> VL <1000</td>
-            <td onclick="view('less_than_1000_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["less_than_1000_given"].length %></td>
-            <td onclick="view('less_than_1000_not_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["less_than_1000_not_given"].length %></td>
-        </tr>
-
-        <tr class="odd">
-            <td style="float: left; font-weight: bold;color: darkslategray"> VL  >=1000</td>
-            <td onclick="view('more_than_1000_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["more_than_1000_given"].length %></td>
-            <td onclick="view('more_than_1000_not_given')" style="color: darkslategray; cursor: pointer; font-weight: bold;"><%= @data["more_than_1000_not_given"].length %></td>
-        </tr>
-
-      </table>
+     <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected &nbsp;&nbsp;|</span></span>   
   </div>
 </div>
 
