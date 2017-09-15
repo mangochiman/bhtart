@@ -507,6 +507,47 @@ class GenericLabController < ApplicationController
     redirect_to :action => "results" , :id => patient_bean.patient_id
   end
 
+  def edit_lims_lab_results
+    @patient = Patient.find(params[:patient_id])
+    npid = id_identifiers(@patient)
+    @patient_bean = PatientService.get_patient(@patient.person)
+
+    if national_lims_activated
+      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+      url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
+    end
+    data = JSON.parse(RestClient.get(url)) rescue {}
+
+    @lims_lab_results = {}
+    count = 0
+
+    (data || []).each do |results|
+      @lims_lab_results[count] = {}
+
+      track_number = results['_id']
+      test_name = results['sample_type']
+      test_result = []
+      test_dates = []
+      results['results']['Viral Load'].keys.each do |key|
+        t_result = results['results']['Viral Load'][key]['results']['Viral Load'] rescue nil
+        test_result << t_result unless t_result.blank?
+        test_dates << key.to_date.strftime('%d %B %Y') unless t_result.blank?
+      end
+      @lims_lab_results[count] = {
+          'test_date' => test_dates.last,
+          'test_type' => results['test_types'][0],
+          'test_name' => test_name,
+          'test_value' => test_result.last,
+          'lab_sample_id' => track_number,
+          'range' => ''
+      }
+
+      count = count + 1
+    end
+
+    render :layout => 'menu'
+  end
+
   def edit_lab_results
     @patient = Patient.find(params[:patient_id])
     patient_ids = id_identifiers(@patient)
@@ -548,13 +589,27 @@ class GenericLabController < ApplicationController
   end
 
   def edit_specific_result
+
     @patient = Patient.find(params[:patient_id])
-    lab_sample_id = params[:lab_sample_id]
-    test_type = params[:test_type]
-    lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
-    @test_result = lab_parameter.Range.to_s + '' + lab_parameter.TESTVALUE.to_s
-    lab_sample = LabSample.find(lab_sample_id)
-    @test_date = lab_sample.TESTDATE.to_date
+    npid = id_identifiers(@patient)
+
+    if national_lims_activated
+      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+      url = "#{settings['lims_national_dashboard_ip']}/api/pull_vl_by_id?id=#{params['lab_sample_id']}"
+
+      data = JSON.parse(RestClient.get(url))
+
+      raise data.inspect
+
+    else
+      @patient = Patient.find(params[:patient_id])
+      lab_sample_id = params[:lab_sample_id]
+      test_type = params[:test_type]
+      lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
+      @test_result = lab_parameter.Range.to_s + '' + lab_parameter.TESTVALUE.to_s
+      lab_sample = LabSample.find(lab_sample_id)
+      @test_date = lab_sample.TESTDATE.to_date
+    end
   end
 
   def update_specific_result

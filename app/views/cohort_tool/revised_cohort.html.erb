@@ -596,8 +596,8 @@
             <% end %>
                 break;
             case 'unknown_side_effects':
-            <% (@cohort.unknown_side_effects || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id %>);
+            <% (@cohort.unknown_side_effects || []).each do |data| %>
+                patient_ids.push(<%= data['patient_id'] %>);
             <% end %>
                 break;
             case 'patients_with_0_6_doses_missed_at_their_last_visit':
