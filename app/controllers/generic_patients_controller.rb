@@ -4125,6 +4125,7 @@ EOF
       npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
       url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}&test_status=verified__reviewed"
       trail_url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
+
       data = JSON.parse(RestClient.get(url)) rescue []
       @latest_date = data.last[0].to_date rescue nil
       @latest_result = data.last[1]["Viral Load"] rescue nil
@@ -4144,7 +4145,8 @@ EOF
 
       #[["97426", {"result_given"=>"no", "result"=>"253522", "date_result_given"=>"", "date_of_sample"=>Sun, 17 Aug 2014, "second_line_switch"=>"no"}]]
       trail = JSON.parse(RestClient.get(trail_url)) rescue []
-      @vl_result_hash = []
+      
+			@vl_result_hash = []
       (trail || []).each do |order|
         results = order['results']['Viral Load']
         if order['status'].match(/rejected|voided/i)

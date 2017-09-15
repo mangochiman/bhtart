@@ -127,7 +127,8 @@ class GenericLabController < ApplicationController
   end
 
   def create_viral_load_result
-    patient_bean = PatientService.get_patient(Person.find(params[:patient_id]))
+    person = Person.find(params[:patient_id])
+    patient_bean = PatientService.get_patient(person)
 
     test_date_or_year = params[:test_year]
     test_month = params[:test_month]
@@ -181,7 +182,7 @@ class GenericLabController < ApplicationController
 
     settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
     create_url = "#{settings['national-repo-node']}/create_hl7_order"
-
+    
     if national_lims_activated
       json = { :return_path => "http://#{request.host}:#{request.port}",
                :district => settings['district'],
@@ -189,7 +190,7 @@ class GenericLabController < ApplicationController
                :first_name=> patient_bean.name.split(/\s+/).first,
                :last_name=>  patient_bean.name.split(/\s+/).last,
                :middle_name=>"",
-               :date_of_birth=> (patient_bean.birth_date.to_date rescue nil),
+               :date_of_birth=> (person.birthdate rescue nil),
                :gender=> ((patient_bean.sex == "Female") ? "F" : "M"),
                :national_patient_id=> patient_bean.national_id,
                :phone_number=> (patient_bean.cell_phone_number ||
@@ -213,7 +214,7 @@ class GenericLabController < ApplicationController
                :return_json => 'true'
       }
 
-      test_date = "#{params[:test_day]}/#{params[:test_month]}/#{params[:test_year]}".to_datetime.strftime("%Y%m%d%H%M%S")
+      test_date = "#{params[:test_year]}/#{params[:test_month]}/#{params[:test_day]}".to_datetime.strftime("%Y%m%d%H%M%S")
       #Post to NLIMS
       data = JSON.parse(RestClient::Request.execute(:method => 'post',  :url => create_url, :payload => json.to_json, :headers => {"Content-Type" => "application/json"})) #rescue nil
 
