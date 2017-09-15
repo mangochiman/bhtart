@@ -528,13 +528,14 @@ class GenericLabController < ApplicationController
       test_name = results['sample_type']
       test_result = []
       test_dates = []
-      results['results']['Viral Load'].keys.each do |key|
+      results['results']['Viral Load'].keys.sort.each do |key|
         t_result = results['results']['Viral Load'][key]['results']['Viral Load'] rescue nil
         test_result << t_result unless t_result.blank?
-        test_dates << key.to_date.strftime('%d %B %Y') unless t_result.blank?
+        test_dates << key.to_date.strftime('%d/%b/%Y') unless t_result.blank?
       end
+
       @lims_lab_results[count] = {
-          'test_date' => test_dates.last,
+          'test_date' => test_dates[test_dates.length - 1],
           'test_type' => results['test_types'][0],
           'test_name' => test_name,
           'test_value' => test_result.last,
@@ -591,18 +592,11 @@ class GenericLabController < ApplicationController
   def edit_specific_result
 
     @patient = Patient.find(params[:patient_id])
-    npid = id_identifiers(@patient)
 
-    if national_lims_activated
-      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
-      url = "#{settings['lims_national_dashboard_ip']}/api/pull_vl_by_id?id=#{params['lab_sample_id']}"
-
-      data = JSON.parse(RestClient.get(url))
-
-      raise data.inspect
-
-    else
-      @patient = Patient.find(params[:patient_id])
+    if !national_lims_activated
+    #
+    # else
+    #   @patient = Patient.find(params[:patient_id])
       lab_sample_id = params[:lab_sample_id]
       test_type = params[:test_type]
       lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
@@ -613,24 +607,78 @@ class GenericLabController < ApplicationController
   end
 
   def update_specific_result
-    lab_sample_id = params[:lab_sample_id]
-    test_type = params[:test_type]
-    test_modifier = params[:test_value].to_s.match(/=|>|</)[0]
-    test_value = params[:test_value].to_s.gsub('>','').gsub('<','').gsub('=','')
-    test_date = params[:test_date].to_date
-    
-    ActiveRecord::Base.transaction do
-      lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
-      lab_parameter.Range = test_modifier
-      lab_parameter.TESTVALUE = test_value
-      lab_parameter.save
 
-      lab_sample = LabSample.find(lab_sample_id)
-      lab_sample.TESTDATE = test_date
-      lab_sample.save
+    @patient = Patient.find(params[:patient_id])
+
+    if national_lims_activated
+
+      npid = id_identifiers(@patient)
+      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+      get_url = "#{settings['lims_national_dashboard_ip']}/api/pull_vl_by_id?id=#{params['lab_sample_id']}"
+
+      lab_sample_id = params[:lab_sample_id]
+      test_type = params[:test_type]
+      test_value = params[:test_value]
+      test_date = params[:test_date]
+
+      @lims_data = {'test_type'=>test_type,
+                    'patient_id'=>npid,
+                    'lab_sample_id'=>lab_sample_id,
+                    'test_value' => test_value,
+                    'test_date' => test_date}
+
+        data = JSON.parse(RestClient.get(get_url)) rescue []
+
+        if !data.blank?
+          result        = data['results']['Viral Load']
+          timestamp     = @lims_data['test_date'].to_time
+          result        = result[timestamp]
+
+          order                          = {"_id"           => @lims_data['lab_sample_id'],
+                                            "sample_status" => data["status"]}
+
+          h                              = {}
+          h['test_status']               = "reviewed"
+          h['remarks']                   = result['remarks'] rescue nil
+          h['datetime_started']          = @lims_data['test_date']
+          h['datetime_completed']        = result['datetime_completed'] rescue nil
+          h['who_updated']               = {}
+          who                            = current_user
+          h['who_updated']['first_name'] = who.name.strip.scan(/^\w+/).first
+          h['who_updated']['last_name']  = who.name.strip.scan(/\w+$/).last
+          h['who_updated']['ID_number']  = who.username
+
+          h['results'] = {'Viral Load' => @lims_data['test_value'][0]}
+          order['results']               = {}
+          order['results']["Viral Load"] = h
+
+          remote_post_url = "#{settings['central_repo']}/pass_json/"
+          RestClient::Request.execute(:method => 'post',  :url => remote_post_url, :payload => order.to_json, :headers => {"Content-Type" => "application/json"})
+        end
+
+      redirect_to :action => "edit_lims_lab_results", :patient_id => params[:patient_id] and return
+
+    else
+
+      lab_sample_id = params[:lab_sample_id]
+      test_type = params[:test_type]
+      test_modifier = params[:test_value].to_s.match(/=|>|</)[0]
+      test_value = params[:test_value].to_s.gsub('>','').gsub('<','').gsub('=','')
+      test_date = params[:test_date].to_date
+
+      ActiveRecord::Base.transaction do
+        lab_parameter = LabParameter.find(:last, :conditions => ["Sample_ID =? AND TESTTYPE=?", lab_sample_id, test_type ])
+        lab_parameter.Range = test_modifier
+        lab_parameter.TESTVALUE = test_value
+        lab_parameter.save
+
+        lab_sample = LabSample.find(lab_sample_id)
+        lab_sample.TESTDATE = test_date
+        lab_sample.save
+      end
+      redirect_to :action => "edit_lab_results", :patient_id => params[:patient_id] and return
     end
-    
-    redirect_to :action => "edit_lab_results", :patient_id => params[:patient_id] and return
+
   end
 
   def delete_lab_results
