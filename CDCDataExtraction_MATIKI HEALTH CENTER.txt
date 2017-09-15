@@ -1,0 +1,96 @@
+Newly patients regigestered...........................................................
+total_new_on_art: 33
+ new_on_art_less_1: 2
+ new_on_art_between_1_and_9: 1
+ new_on_art_btwn_10_14_female: 1
+ new_on_art_btwn_10_14_male: 1
+ new_on_art_less_15_19_female: 1
+ new_on_art_less_15_19_male: 0
+ new_on_art_less_20_24_female: 1
+ new_on_art_less_20_24_male: 0
+ new_on_art_less_25_49_female: 15
+ new_on_art_less_25_49_male: 10
+ new_on_art_less_more_than_50_female: 0
+ new_on_art_less_more_than_50_male: 1
+ new_on_art_less_15_female: 3
+ new_on_art_less_15_male: 2
+ new_on_art_more_15_female: 17
+ new_on_art_more_15_male: 11
+
+ Ever received ARVS (cumulative) regigestered...........................................................
+total_receiving_art_cumulative: 1495
+ receiving_art_cumulative_less_1: 20
+ receiving_art_cumulative_between_1_and_9: 52
+ receiving_art_cumulative_btwn_10_14_female: 17
+ receiving_art_cumulative_btwn_10_14_male: 14
+ receiving_art_cumulative_less_15_19_female: 17
+ receiving_art_cumulative_less_15_19_male: 5
+ receiving_art_cumulative_less_20_24_female: 75
+ receiving_art_cumulative_less_20_24_male: 13
+ receiving_art_cumulative_less_25_49_female: 599
+ receiving_art_cumulative_less_25_49_male: 541
+ receiving_art_cumulative_less_more_than_50_female: 36
+ receiving_art_cumulative_less_more_than_50_male: 106
+ receiving_art_cumulative_less_15_female: 55
+ receiving_art_cumulative_less_15_male: 48
+ receiving_art_cumulative_more_15_female: 727
+ receiving_art_cumulative_more_15_male: 665
+
+Newly PLHIV total Registered screened TB status...........................................................
+total_plhiv_screened_tb_status: 35
+ plhiv_screened_tb_status_less_15_female: 2
+ plhiv_screened_tb_status_less_15_male: 2
+ plhiv_screened_tb_status_more_15_female: 10
+ plhiv_screened_tb_status_more_15_male: 21
+
+Total alive and on ARVs after 12 months of initiation...........................................................
+total_alive_and_on_ARVS_at_12_months_after_initiation: 231
+ alive_and_on_ARVS_at_12_months_after_initiation_less_1: 7
+ alive_and_on_ARVS_at_12_months_after_initiation_between_1_and_9: 10
+ alive_and_on_ARVS_at_12_months_after_initiation_btwn_10_14_female: 5
+ alive_and_on_ARVS_at_12_months_after_initiation_btwn_10_14_male: 5
+ alive_and_on_ARVS_at_12_months_after_initiation_less_15_19_female: 5
+ alive_and_on_ARVS_at_12_months_after_initiation_less_15_19_male: 1
+ alive_and_on_ARVS_at_12_months_after_initiation_less_20_24_female: 14
+ alive_and_on_ARVS_at_12_months_after_initiation_less_20_24_male: 4
+ alive_and_on_ARVS_at_12_months_after_initiation_less_25_49_female: 87
+ alive_and_on_ARVS_at_12_months_after_initiation_less_25_49_male: 79
+ alive_and_on_ARVS_at_12_months_after_initiation_less_more_than_50_female: 1
+ alive_and_on_ARVS_at_12_months_after_initiation_less_more_than_50_male: 13
+ alive_and_on_ARVS_at_12_months_after_initiation_less_15_female: 15
+ alive_and_on_ARVS_at_12_months_after_initiation_less_15_male: 12
+ alive_and_on_ARVS_at_12_months_after_initiation_more_15_female: 107
+ alive_and_on_ARVS_at_12_months_after_initiation_more_15_male: 97
+
+Total inititiated in 12 months...........................................................
+total_initiated_in_12_months: 305
+ total_initiated_in_12_months_less_1: 12
+ total_initiated_in_12_months_between_1_and_9: 13
+ total_initiated_in_12_months_btwn_10_14_female: 7
+ total_initiated_in_12_months_btwn_10_14_male: 6
+ total_initiated_in_12_months_less_15_19_female: 6
+ total_initiated_in_12_months_less_15_19_male: 3
+ total_initiated_in_12_months_less_20_24_female: 17
+ total_initiated_in_12_months_less_20_24_male: 6
+ total_initiated_in_12_months_less_25_49_female: 116
+ total_initiated_in_12_months_less_25_49_male: 100
+ total_initiated_in_12_months_less_more_than_50_female: 2
+ total_initiated_in_12_months_less_more_than_50_male: 17
+ total_initiated_in_12_months_less_15_female: 22
+ total_initiated_in_12_months_less_15_male: 16
+ total_initiated_in_12_months_more_15_female: 141
+ total_initiated_in_12_months_more_15_male: 126
+
+Children with outcomes...........................................................
+patients_alive_and_on_arvs_all_ages: 1495
+  cumulative_children_less_15_years : 323
+  patients_alive_and_on_arvs_less_15_years: 103
+  patients_alive_and_on_arvs_less_bwtn_10_14_years: 31
+  patients_alive_and_on_arvs_only_14_years: 6
+  patients_alive_and_on_arvs_between_15_and_19_years: 22
+  patients_alive_and_on_arvs_more_than_20_years: 1370
+  treatment_outcome_for_children_less_15yrs_died: 15
+  treatment_outcome_for_children_less_15yrs_defaulted: 104
+  treatment_outcome_for_children_less_15yrs_stopped: 0
+  treatment_outcome_for_children_less_15yrs_transferred_out: 107
+ 
