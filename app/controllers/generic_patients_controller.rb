@@ -283,13 +283,22 @@ The following block of code should be replaced by a more cleaner function
     auth_token = current_user.authentication_token
     patient = Patient.find(params[:id])
     con = YAML.load_file("#{Rails.root}/config/application.yml")
-    lims_ip = "http://localhost:3005"
+		lims_link = nil
+		if national_lims_activated
+			lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip'] + "/user/ext"
+			npid = patient.patient_identifiers.find_by_identifier_type(3).identifier
+			lims_link += "?intent=new_order&username=#{User.current.username}&return_path=#{request.referrer}&name=#{User.current.name}&location=#{Location.current_location.name}&identifier=#{npid}&tk=#{User.current.authentication_token}".gsub(/\s+/, '%20')
+		else 
+		  lims_ip = "http://localhost:3005"
+			lims_link = "#{lims_ip}/user/login"
+		end
+
     @links << ["Demographics (Print)","/patients/print_demographics/#{patient.id}"]
     @links << ["Visit Summary (Print)","/patients/dashboard_print_visit/#{patient.id}"]
     @links << ["National ID (Print)","/patients/dashboard_print_national_id/#{patient.id}"]
     @links << ["Demographics (Edit)","/people/demographics/#{patient.id}"]
     @links << ["Lab Results","/encounters/lab_results_print/#{patient.id}"]
-    @links << ["Order Test","#{lims_ip}/user/login"]
+    @links << ["Order Test", lims_link]
 
     if use_filing_number and not PatientService.get_patient_identifier(patient, 'Filing Number').blank?
       @links << ["Filing Number (Print)","/patients/print_filing_number/#{patient.id}"]
@@ -311,7 +320,14 @@ The following block of code should be replaced by a more cleaner function
     end
 
     if show_lab_results
-      @links << ["Lab trail", "/lab/results/#{patient.id}"]
+			if national_lims_activated
+				lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip'] + "/user/ext"
+				npid = patient.patient_identifiers.find_by_identifier_type(3).identifier
+				lims_link += "?intent=lab_trail&username=#{User.current.username}&return_path=#{request.referrer}&name=#{User.current.name}&location=#{Location.current_location.name}&identifier=#{npid}&tk=#{User.current.authentication_token}".gsub(/\s+/, '%20')
+				@links << ["Lab trail", lims_link]
+			else
+      	@links << ["Lab trail", "/lab/results/#{patient.id}"]
+			end
       #@links << ["Edit Lab Results","/lab/edit_lab_results/?patient_id=#{patient.id}"]
     end
     
