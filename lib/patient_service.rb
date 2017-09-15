@@ -1848,6 +1848,10 @@ EOF
       patient_to_be_archived = []
 
       if (next_filing_number[5..-1].to_i > global_property_value.to_i)
+        return current_patient
+=begin 
+        #we have a new way of archiving files
+                    
         patient_ids = PatientIdentifier.find_by_sql("
           SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
           WHERE voided = 0 AND identifier_type = #{active_filing_number_identifier_type.id}
@@ -1895,6 +1899,7 @@ EOF
         end
 
         return patient_to_be_archived
+=end
       else
         return current_patient
       end
