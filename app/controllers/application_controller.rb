@@ -22,8 +22,8 @@ class ApplicationController < GenericApplicationController
     trail_url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
     data = JSON.parse(RestClient.get(url)) rescue []
     latest_date = data.last[0].to_date rescue nil
-    latest_result = data.last[1]["Viral Load"].strip.scan(/\d+/).first rescue nil
-    modifier = data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue nil
+    latest_result = data.last[1]["Viral Load"]
+    modifier = ''
     [modifier, latest_result, latest_date] rescue []
   end
 
