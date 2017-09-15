@@ -4127,11 +4127,11 @@ EOF
       trail_url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
       data = JSON.parse(RestClient.get(url)) rescue []
       @latest_date = data.last[0].to_date rescue nil
-      @latest_result = data.last[1]["Viral Load"].strip.scan(/\d+/).first rescue nil
+      @latest_result = data.last[1]["Viral Load"]
 
       @latest_result = "Rejected" if (data.last[1]["Viral Load"] rescue nil) == "Rejected"
 
-      @modifier = data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue nil
+      @modifier = '' #data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue 
 
       @date_vl_result_given = nil
       if ((data.last[2] == "reviewed") rescue false)
@@ -4205,11 +4205,11 @@ EOF
 
     @high_vl = true
 
-    if (@latest_result.to_i < 1000)
+    if ((!national_lims_activated && @latest_result.to_i < 1000) || (national_lims_activated && ((@latest_result.scan(/\d+/).first.to_i rescue 0) < 1000)))
       @high_vl = false
     end
 
-    if (@latest_result.to_i == 1000)
+    if (!national_lims_activated && @latest_result.to_i == 1000)
       if (@modifier == '<')
         @high_vl = false
       end
