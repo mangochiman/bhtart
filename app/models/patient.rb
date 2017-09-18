@@ -267,20 +267,8 @@ EOF
   def self.vl_result_hash(patient)
     encounter_type = EncounterType.find_by_name("REQUEST").id
     viral_load = Concept.find_by_name("Hiv viral load").concept_id
-=begin
->>>>>>> fcda4e9a2f5d1d0230c2ca75629cf77c1c6ac8b1
-    identifier_type = ["Legacy Pediatric id","National id","Legacy National id","Old Identification Number"]
-    identifier_types = PatientIdentifierType.find(:all,
-      :conditions=>["name IN (?)",identifier_type]
-    ).collect{| type |type.id }
-
-    identifiers = []
-    PatientIdentifier.find(:all, :conditions=>["patient_id=? AND identifier_type IN (?)",
-        patient.id,identifier_types]).each{| i | identifiers << i.identifier }
-<<<<<<< HEAD
-=======
-=end
     identifiers = LabController.new.id_identifiers(patient)
+    second_line_regimens = patient.second_line_regimens
     national_ids = identifiers
     vl_hash = {}
     results = Lab.find_by_sql(["
@@ -304,12 +292,14 @@ EOF
     results.each do |result|
 
       accession_number = result[0]
+      range = result[1]
       vl_result = result[2]
       date_of_sample = result[3].to_date rescue 'Unknown'
 
       vl_hash[accession_number] = {} if vl_hash[accession_number].blank?
       vl_hash[accession_number]["result"] = {} if vl_hash[accession_number]["result"].blank?
       vl_hash[accession_number]["result"] = vl_result
+      vl_hash[accession_number]["range"] = range
       vl_hash[accession_number]["date_of_sample"] = {} if vl_hash[accession_number]["date_of_sample"].blank?
       vl_hash[accession_number]["date_of_sample"] = date_of_sample
 
@@ -317,6 +307,7 @@ EOF
         person_id =? AND encounter_type =? AND concept_id =? AND accession_number =?
         AND value_text LIKE (?)",
           patient.id, encounter_type, viral_load, accession_number.to_i, '%Result given to patient%']) rescue nil
+
 
       unless vl_lab_sample_obs.blank?
         vl_hash[accession_number]["result_given"] = {} if vl_hash[accession_number]["result_given"].blank?
@@ -335,14 +326,21 @@ EOF
         AND value_text LIKE (?)",
           patient.id, encounter_type, viral_load, accession_number.to_i, '%Patient switched to second line%']) rescue nil
 
-      unless switched_to_second_line_obs.blank?
-        vl_hash[accession_number]["second_line_switch"] = {} if vl_hash[accession_number]["second_line_switch"].blank?
-        vl_hash[accession_number]["second_line_switch"] = "yes"
-      else
-        vl_hash[accession_number]["second_line_switch"] = {} if vl_hash[accession_number]["second_line_switch"].blank?
-        vl_hash[accession_number]["second_line_switch"] = "no"
-      end
+      unless second_line_regimens.blank?
+        date_switched = second_line_regimens.first[1]
+        date_switched = date_switched.to_date.strftime("%d-%b-%Y") rescue date_switched
 
+        vl_hash[accession_number]["second_line_switch"] = {} if vl_hash[accession_number]["second_line_switch"].blank?
+        vl_hash[accession_number]["second_line_switch"] = "yes (#{date_switched})"
+      else
+        unless switched_to_second_line_obs.blank?
+          vl_hash[accession_number]["second_line_switch"] = {} if vl_hash[accession_number]["second_line_switch"].blank?
+          vl_hash[accession_number]["second_line_switch"] = "yes"
+        else
+          vl_hash[accession_number]["second_line_switch"] = {} if vl_hash[accession_number]["second_line_switch"].blank?
+          vl_hash[accession_number]["second_line_switch"] = "no"
+        end
+      end
     end
 
     return vl_hash.sort_by{|key, value| (value["date_of_sample"].to_date rescue 'Unknown') }.reverse rescue {}
@@ -623,6 +621,29 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     end
 
     return inconsistency_outcome
+  end
+
+  def second_line_regimens
+	  regimen_category = Concept.find_by_name("Regimen Category")
+
+    regimen_observations = Observation.find(:all, :conditions => ["concept_id = ? AND
+        person_id = ?", regimen_category.id, self.patient_id])
+
+    second_line_regimen_indices = ["7A","8A","9P", "9A"]
+    data = {}
+    regimen_observations.each do |obs|
+      regimen = obs.answer_string.squish.upcase rescue nil
+      obs_datetime = obs.obs_datetime
+      next if regimen.blank?
+      if second_line_regimen_indices.include?(regimen.to_s)
+        if data[regimen].blank?
+          data[regimen] = {}
+          data[regimen] = obs_datetime.to_date.strftime("%d/%b/%Y")
+        end
+      end
+    end
+    
+    return data
   end
 
 end

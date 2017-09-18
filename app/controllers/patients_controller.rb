@@ -179,7 +179,6 @@ class PatientsController < GenericPatientsController
 
   def patient_visit_label(patient, date = Date.today)
     result = Location.find(session[:location_id]).name.match(/outpatient/i)
-
     unless result
       return mastercard_visit_label(patient,date)
     else
@@ -226,6 +225,14 @@ class PatientsController < GenericPatientsController
     arv_number = patient_bean.arv_number || patient_bean.national_id
     pill_count = visit.pills.collect{|c|c.join(",")}.join(' ') rescue nil
 
+    vl_result = ""
+    if vl_routine_check_activated
+      latest_vl_result = Lab.latest_viral_load_result(@patient)
+      unless latest_vl_result.blank?
+        vl_result = "VL: " +latest_vl_result[:modifier].to_s + latest_vl_result[:latest_result].to_s
+      end
+    end
+
     label = ZebraPrinter::StandardLabel.new
     #label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
     label.draw_text("#{seen_by(patient,date)}",597,250,0,1,1,1,false)
@@ -233,7 +240,7 @@ class PatientsController < GenericPatientsController
     label.draw_text("#{arv_number}",565,30,0,3,1,1,true)
     label.draw_text("#{patient_bean.name}(#{patient_bean.sex}) #{owner}",25,60,0,3,1,1,false)
     label.draw_text("#{'(' + visit.visit_by + ')' unless visit.visit_by.blank?}",255,30,0,2,1,1,false)
-    label.draw_text("#{visit.height.to_s + 'cm' if !visit.height.blank?}  #{visit.weight.to_s + 'kg' if !visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s if !visit.bmi.blank?} #{'(PC:' + pill_count[0..24] + ')' unless pill_count.blank?}",25,95,0,2,1,1,false)
+    label.draw_text("#{visit.height.to_s + 'cm' if !visit.height.blank?}  #{visit.weight.to_s + 'kg' if !visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s if !visit.bmi.blank?} #{vl_result} #{'(PC:' + pill_count[0..24] + ')' unless pill_count.blank?}",25,95,0,2,1,1,false)
     label.draw_text("SE",25,130,0,3,1,1,false)
     label.draw_text("TB",110,130,0,3,1,1,false)
     label.draw_text("Adh",185,130,0,3,1,1,false)
