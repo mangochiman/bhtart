@@ -39,7 +39,8 @@
 <script>
 
   //var tt_cancel_destination = "/patients/show/<%=@patient.id%>"
-  var tt_cancel_destination = "<%= next_task(@patient) %>"
+  var tt_cancel_destination = "<%= next_task(@patient) %>";
+  var lims_activated = eval('<%= @lims_activated %>');
 	 
   function setInnerHtmlData(id,result,path) {
     td = document.getElementById(id);
@@ -59,9 +60,6 @@
   }
 
   function editViralLoadResults(){
-
-    var lims_activated = <%= YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['enable_lims'] %>
-
         if (lims_activated)
             url = "/lab/edit_lims_lab_results/?patient_id=<%= params[:id] %>"
         else
