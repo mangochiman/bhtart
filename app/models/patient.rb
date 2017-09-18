@@ -629,7 +629,7 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     regimen_observations = Observation.find(:all, :conditions => ["concept_id = ? AND
         person_id = ?", regimen_category.id, self.patient_id])
 
-    second_line_regimen_indices = ["7A","8A","9P"]
+    second_line_regimen_indices = ["7A","8A","9P", "9A"]
     data = {}
     regimen_observations.each do |obs|
       regimen = obs.answer_string.squish.upcase rescue nil
