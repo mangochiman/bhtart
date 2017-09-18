@@ -34,6 +34,7 @@ class EncountersController < GenericEncountersController
 			@suggested_appointment_date = suggest_appointment_date(@max_date)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 
+      @appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
       render :action => params[:encounter_type] and return
 		end
 
@@ -2388,5 +2389,5 @@ EOF
     return 0 if amount.blank?
     return amount.value_numeric
   end
-    
+
 end
