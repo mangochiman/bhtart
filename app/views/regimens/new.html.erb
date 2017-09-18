@@ -2496,11 +2496,11 @@ end
 
 
     var fast_track_attr = [
-      ['Adult', '9533'], ['Started IPT <12m ago', '9527'],
-      ['On 1st line ART','9535'],['Good Adherence', '9537'], 
-      ['Last VL <1000', '9536'],['On ART <12m', '9534'],
-      ["Needs BP / diabetes treatment", '9540'],["Any side effects / HIV-related diseases", '9539'],
-      ["Any sign for TB",'2186'],['Pregnant / Breastfeeding', '9538']
+      ['Adult  18 years +', '9533'], ['Started IPT<12m ago', '9527'],
+      ['On 1<sup>st</sup> line ART','9535'],['Good current adherence', '9537'], 
+      ['Last VL <1000', '9536'],['On ART for 12 months +', '9534'],
+      ["Needs BP / diabetes treatment", '9540'],["Side effects / HIV-rel. diseases", '9539'],
+      ["Any sign for TB",'2186'],['Pregnant / breastfeeding', '9538']
     ];
 
 
@@ -2589,30 +2589,32 @@ end
 
 <%if @patient.person.gender.first.upcase == 'M'%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['Started IPT <12m ago', 9527],
-        ['On 1st line ART',9535],
-        ['Good Adherence', 9537], ['Last VL <1000', 9536],
+        ['Adult  18 years +', 9533], 
+        ['On ART for 12 months +', 9534],
+        ['On 1<sup>st</sup> line ART',9535],
+        ['Good current adherence', 9537], ['Last VL <1000', 9536]
       ];
 
       var exclusion_list_arr = [
-        ['On ART <12m', 9534],
+        ["Side effects / HIV-rel. diseases", 9539],
         ["Needs BP / diabetes treatment", 9540],
-        ["Any side effects / HIV-related diseases", 9539],
+        ['Started IPT <12m ago', 9527],
         ["Any sign for TB",2186]
       ];
 <%else%>
       var inclusion_list_arr = [
-        ['Adult', 9533], ['Started IPT <12m ago', 9527],
-        ['On 1st line ART',9535],
-        ['Good Adherence', 9537], ['Last VL <1000', 9536],
+        ['Adult  18 years +', 9533], 
+        ['On ART for 12 months +', 9534],
+        ['On 1<sup>st</sup> line ART',9535],
+        ['Good current adherence', 9537], ['Last VL <1000', 9536]
       ];
 
       var exclusion_list_arr = [
-        ['On ART <12m', 9534],
+        ['Pregnant / Breastfeeding', 9538],
+        ["Side effects / HIV-rel. diseases", 9539],
         ["Needs BP / diabetes treatment", 9540],
-        ["Any side effects / HIV-related diseases", 9539],
-        ["Any sign for TB",2186],
-        ['Pregnant / Breastfeeding', 9538]
+        ['Started IPT <12m ago', 9527],
+        ["Any sign for TB",2186]
       ];
 <%end%>
 
@@ -2813,23 +2815,22 @@ end
     table.setAttribute('id', 'fast-track-table');
     /* 
      */
-    attr = [
-      [['Adult', '9533'],['Any side effects / HIV-related diseases', '9539']],
-      [['On ART <12m', '9534'],['Needs BP / diabetes treatment', '9540']],
-      [['On 1st Line ART','9535'], ['Not pregnant / Breastfeeding', '9538']],
-      [['Last VL <1000','9536'], ['Any sign for TB', '2186']],
-      [['Good adherence','9537'], ['Started IPT <12m ago', '9527']]
-    ];
-
-<%if @patient.person.gender.first.upcase == 'M'%>
-      attr = [
-        [['Adult', '9533'],['Any side effects / HIV-related diseases', '9539']],
-        [['On ART <12m', '9534'],['Needs BP / diabetes treatment', '9540']],
-        [['On 1st Line ART','9535'], ['Any sign for TB', '2186']],
-        [['Last VL <1000','9536'], ['Good adherence','9537']], 
-        [['Started IPT <12m ago', '9527']]
+    arr = [
+        [['Adult  18 years +', 9533],['On ART for 12 months +', 9534]],
+        [['On 1<sup>st</sup> line ART',9535],['Good current adherence', 9537]]
+        [['Last VL <1000', 9536], ['Pregnant / Breastfeeding', 9538]],
+        [["Side effects / HIV-rel. diseases", 9539],["Needs BP / diabetes treatment", 9540]],
+        [['Started IPT <12m ago', 9527],["Any sign for TB",2186]]
       ];
 
+<%if @patient.person.gender.first.upcase == 'M'%>
+    arr = [
+        [['Adult  18 years +', 9533],['On ART for 12 months +', 9534]],
+        [['On 1<sup>st</sup> line ART',9535],['Good current adherence', 9537]]
+        [['Last VL <1000', 9536],["Side effects / HIV-rel. diseases", 9539]],
+        [["Needs BP / diabetes treatment", 9540],['Started IPT <12m ago', 9527]],
+        [["Any sign for TB",2186]]
+      ];
 <%end%>
 
     counter = 1;
@@ -3274,11 +3275,11 @@ pyridoxine_options = ["","25", "50"]
     %>
 
       <%fast_track_attr = [
-        ['Adult', '9533'], ['Started IPT <12m ago', '9527'],
-        ['On 1st line ART','9535'],['Good Adherence', '9537'], 
-        ['Last VL <1000', '9536'],['On ART <12m', '9534'],
-        ["Needs BP / diabetes treatment", '9540'],["Any side effects / HIV-related diseases", '9539'],
-        ["Any sign for TB",'2186'],['Pregnant / Breastfeeding', '9538']
+        ['Adult  18 years +', '9533'], ['Started IPT<12m ago', '9527'],
+        ['On 1<sup>st</sup> line ART','9535'],['Good current adherence', '9537'], 
+        ['Last VL <1000', '9536'],['On ART for 12 months +', '9534'],
+        ["Needs BP / diabetes treatment", '9540'],["Side effects / HIV-rel. diseases", '9539'],
+        ["Any sign for TB",'2186'],['Pregnant / breastfeeding', '9538']
       ]
 
       (fast_track_attr).each do |name, concept_id|
