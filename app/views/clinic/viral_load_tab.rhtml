@@ -89,11 +89,11 @@
 <div id="tab" style="">
   <h3>LIMS - Viral Load Statistics</h3>
     <div id="table_div">
-      <span class="stat" onclick="view('pending')" style="color: darkslategray; cursor: pointer"> <%= @data["pending"].length %> <span style="font-size: 1em">Pending</span></span>
+      <span class="stat" onclick="view('pending')" style="color: darkslategray; cursor: pointer"> <%= @data["pending"].length %> <span style="font-size: 1em">Pending Results</span></span>
 
-      <span class="stat" onclick="view('available')" style="color: darkslategray; cursor: pointer"> <%= @data["available"].length %> <span style="font-size: 1em">Available &nbsp;&nbsp;| </span></span>
+      <span class="stat" onclick="view('available')" style="color: darkslategray; cursor: pointer"> <%= @data["available"].length %> <span style="font-size: 1em">Available Results &nbsp;&nbsp;| </span></span>
 
-     <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected &nbsp;&nbsp;|</span></span>   
+     <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected Samples&nbsp;&nbsp;|</span></span>   
   </div>
 </div>
 
@@ -104,8 +104,8 @@
         <thead>
             <tr>
                 <th class="p-header">Tracking Number</th>
-                <th class="p-header">Patient Name</th>
                 <th class="p-header">National ID</th>
+                <th class="p-header">Date Ordered</th>
                 <th class="p-header">Ordered By</th>
             </tr>
         </thead>
@@ -137,8 +137,8 @@
 
             var sources = [
                 "o['_id']",
-                "o['patient']['first_name'] + ' ' + o['patient']['last_name'] + '  (' + o['patient']['gender'] + ')' ",
                 "o['patient']['national_patient_id']",
+                "o['date_time']",
                 "o['who_order_test']['first_name'] + ' ' + o['who_order_test']['last_name']"
             ];
 

@@ -146,6 +146,7 @@ class GenericClinicController < ApplicationController
     @data['more_than_1000_given'] = []
 
     (data['completed'] || []).each do |order|
+			order['date_time'] = order['date_time'].to_date.strftime("%d-%b-%Y")
       results = (order['results']['Viral Load'] || order['results']['Viral load'] || order['results']['VL'])
       timestamp = results.keys.sort.last
       result = results[timestamp]['results']
@@ -158,6 +159,7 @@ class GenericClinicController < ApplicationController
     end
 
     (data['reviewed'] || []).each do |order|
+			order['date_time'] = order['date_time'].to_date.strftime("%d-%b-%Y")
       results = (order['results']['Viral load'] || order['results']['Viral Load'] || order['results']['VL'])
       timestamp = results.keys.sort.last
       result = results[timestamp]['results']
