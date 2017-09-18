@@ -178,7 +178,7 @@ class GenericClinicController < ApplicationController
     @reports = [
       #Cohort disaggregated button was moved to main cohort report
       #["Cohort disaggregated","/cohort_tool/disaggregated_cohort_menu"],
-      ["Cohort","/cohort_tool/revised_cohort_menu"],
+      ["Cohort / Disaggregated","/cohort_tool/revised_cohort_menu"],
       ["Cohort analyzer","/report/summarize_cohort_report?type=summary"],
       ["Cohort Survival Analysis","/cohort_tool/revised_cohort_survival_analysis_menu"],
       ["Supervision","/clinic/supervision_tab"],
