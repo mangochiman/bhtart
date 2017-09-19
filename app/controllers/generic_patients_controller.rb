@@ -4151,7 +4151,7 @@ EOF
       @modifier = '' #data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue 
 
       @date_vl_result_given = nil
-      if ((data.last[2] == "reviewed") rescue false)
+      if ((data.last[2].downcase == "reviewed") rescue false)
         @date_vl_result_given = Observation.find(:last, :conditions => ["
           person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
             Concept.find_by_name("Viral load").concept_id, 'Result given to patient', data.last[3].to_date]).value_datetime rescue nil
