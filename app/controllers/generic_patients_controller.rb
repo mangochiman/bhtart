@@ -4165,9 +4165,9 @@ EOF
 			@vl_result_hash = []
       (trail || []).each do |order|
         results = order['results']['Viral Load']
-        if order['status'].match(/rejected|voided/i)
+        if (order['sample_status'] || order['status']).match(/rejected|voided/i)
           @vl_result_hash << [order['_id'], {"result_given" =>  'no',
-              "result" => order['status'].humanize,
+              "result" => (order['sample_status'] || order['status']).humanize,
               "date_of_sample" => order['date_time'].to_date,
               "date_result_given" => "",
               "second_line_switch" => '?'
@@ -4178,7 +4178,7 @@ EOF
 
         next if results.blank?
         timestamp = results.keys.sort.last rescue nil
-        next if (!order['status'].match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
+        next if (!(order['sample_status'] || order['status']).match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
         result = results[timestamp]['results']
 
         date_given = nil
