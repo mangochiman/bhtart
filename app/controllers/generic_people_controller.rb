@@ -176,7 +176,7 @@ class GenericPeopleController < ApplicationController
 	def remote_demographics
 		# Search by the demographics that were passed in and then return demographics
 		people = PatientService.find_person_by_demographics(params)
-		result = people.empty? ? {} : PatientService.demographics(people.first)
+		result = people.empty? ? {} : PatientService.demographics(people.last)
 
 		render :text => result.to_json
 	end
