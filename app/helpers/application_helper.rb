@@ -817,6 +817,20 @@ module ApplicationHelper
     end
   end
 
+ def latest_lims_vl(patient)
+    settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+    national_id_type = PatientIdentifierType.find_by_name("National id").id
+    npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
+    url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}&test_status=verified__reviewed"
+
+    data = JSON.parse(RestClient.get(url)) rescue []
+    latest_date = data.last[0].to_date rescue nil
+		status = data.last[2]
+    latest_result = data.last[1]["Viral Load"] rescue nil
+    modifier = ''
+    [modifier, latest_result, latest_date, status] rescue []
+  end
+
   def vl_available_and_result_given(patient)
 =begin
 >>>>>>> fcda4e9a2f5d1d0230c2ca75629cf77c1c6ac8b1
@@ -833,6 +847,12 @@ module ApplicationHelper
 
 =======
 =end
+		if national_lims_activated 
+			nlims_data = latest_lims_vl(patient)
+			return false if nlims_data.blank? || nlims_data[3].to_s.downcase != 'reviewed'
+			return true if nlims_data[3].downcase == 'reviewed'
+		end 
+
     identifiers = LabController.new.id_identifiers(patient)
     encounter_type = EncounterType.find_by_name("REQUEST").id
     viral_load = Concept.find_by_name("Hiv viral load").concept_id
