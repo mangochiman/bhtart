@@ -165,7 +165,6 @@ div, table{
 </style>
 
 <div id="vl_data">
-
 <% if @second_line_treatment_start_date.blank? %>
       <% unless @latest_result.blank?%>
           <% if @high_vl == true %>
@@ -369,11 +368,12 @@ div, table{
               <td><span><center>Switched to second line?</center></span></td>
             </tr>
           <% (@vl_result_hash || {}).each do |sample_id, result| %>
+            <% value_modifier = result["range"] %>
             <tr style="line-height: 3em;" class="vl_tbody">
               <td style="border-left: 1px solid black;">
                   <span><center>  <%= result["date_of_sample"].strftime("%d-%b-%Y") %></center></span>
               </td>
-              <td><span><center><%= result["result"] %></center></span></td>
+              <td><span><center><%= value_modifier.to_s + " " +  result["result"] %></center></span></td>
               <td><span><center><%= result["result_given"].capitalize %></center></span></td>
               <td><span><center><%= result["date_result_given"].strftime("%d-%b-%Y") rescue "------" %></center></span></td>
               <td><span><center><%= result["second_line_switch"].capitalize %></center></span></td>
