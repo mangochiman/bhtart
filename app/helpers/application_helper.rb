@@ -849,8 +849,8 @@ module ApplicationHelper
 =end
 		if national_lims_activated 
 			nlims_data = latest_lims_vl(patient)
-			return false if nlims_data.blank? || nlims_data[3].to_s.downcase != 'reviewed'
-			return true if nlims_data[3].downcase == 'reviewed'
+			return false if ((nlims_data.blank? || nlims_data[3].to_s.downcase != 'reviewed') rescue false)
+			return true if ((nlims_data[3].downcase == 'reviewed') rescue false)
 		end 
 
     identifiers = LabController.new.id_identifiers(patient)
