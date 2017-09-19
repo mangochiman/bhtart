@@ -825,7 +825,7 @@ module ApplicationHelper
 
     data = JSON.parse(RestClient.get(url)) rescue []
     latest_date = data.last[0].to_date rescue nil
-		status = data.last[2]
+		status = data.last[2] rescue nil
     latest_result = data.last[1]["Viral Load"] rescue nil
     modifier = ''
     [modifier, latest_result, latest_date, status] rescue []
