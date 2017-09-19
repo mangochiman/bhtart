@@ -208,7 +208,7 @@ end
   function validateSelectedDate(result, selectedDate) {
     var clinicLimit = parseInt("<%= @appointment_limit %>");
     try{
-      var booked_patients = parseInt(JSON.parse(result)["2017-10-13"]);
+      var booked_patients = parseInt(JSON.parse(result)[selectedDate]);
       document.getElementById('number_of_booked_patients').innerHTML = booked_patients;
     }catch(e){
       var booked_patients = 0;
