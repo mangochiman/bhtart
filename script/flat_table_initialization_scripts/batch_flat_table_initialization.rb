@@ -1618,6 +1618,8 @@ def process_hiv_clinic_registration_encounter(encounter, type = 0) #type 0 norma
       a_hash[:date_art_last_taken] = obs.value_datetime.to_date rescue nil
       a_hash[:date_art_last_taken_enc_id] = obs.encounter_id
       a_hash[:date_art_last_taken_v_date] = obs.obs_datetime.to_date rescue nil
+    else
+      process_hiv_staging_encounter(encounter, type = 0)
     end
   end
 

@@ -367,6 +367,12 @@ module PatientService
     identifiers =  self.patient_identifier_map(person)
     attributes =  self.person_attributes_map(person)
 
+    home_ta = data["person"]["addresses"]["county_district"]
+    home_ta = "Other" if home_ta.blank?
+
+    home_district = data["person"]["addresses"]["address2"]
+    home_district = "Other" if home_district.blank?
+    
     demographics = {
       "npid" => npid,
       "family_name" => data["person"]["names"]["family_name"],
@@ -383,10 +389,10 @@ module PatientService
       "current_district" => data["person"]["addresses"]["state_province"],
 
       "home_village" => data["person"]["addresses"]["neighborhood_cell"],
-      "home_ta" => data["person"]["addresses"]["county_district"],
-      "home_district" => data["person"]["addresses"]["address2"],
+      "home_ta" => home_ta,
+      "home_district" => home_district,
       "token" => dde_token
-    }
+    }.delete_if{|k, v|v.to_s.blank?}
 
     return demographics
   end

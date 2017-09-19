@@ -1097,7 +1097,6 @@ EOF
     (total_registered || []).each do |patient|
       registered << patient
     end
-
   end
 
   def self.total_patients_with_side_effects(patients_alive_and_on_art, start_date, end_date)
@@ -1703,25 +1702,60 @@ EOF
   def self.pregnant_females_all_ages(start_date, end_date)
     registered = [] ; patient_id_plus_date_enrolled = []
 
-    yes_concept_id = ConceptName.find_by_name('Yes').concept_id
-    preg_concept_id = ConceptName.find_by_name('IS PATIENT PREGNANT?').concept_id
-    patient_preg_concept_id = ConceptName.find_by_name('PATIENT PREGNANT').concept_id
-    preg_at_initiation_concept_id = ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id
-
-    (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-      result = ActiveRecord::Base.connection.select_all <<EOF
-        SELECT * FROM obs
-        WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
-        AND '#{(date_enrolled + 30.days).strftime('%Y-%m-%d 23:59:59')}'
-        AND person_id = #{patient_id}
-        AND value_coded = #{yes_concept_id}
-        AND concept_id IN (#{preg_concept_id}, #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
-        AND voided = 0 GROUP BY person_id;
+    #(patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
+    registered = ActiveRecord::Base.connection.select_all <<EOF
+                    SELECT ft2.patient_id, fct.date_enrolled, ft2.visit_date, ft2.patient_pregnant
+                    FROM flat_cohort_table fct
+                      INNER JOIN flat_table2 ft2 ON ft2.patient_id = fct.patient_id
+                    WHERE ft2.patient_pregnant = 'Yes' AND fct.gender = 'F'
+                    AND fct.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+                    AND ft2.visit_date = (SELECT min(f2.visit_date) FROM flat_table2 f2
+                                 WHERE  f2.patient_id = ft2.patient_id
+                                 AND f2.patient_pregnant IS NOT NULL
+                                 AND f2.visit_date BETWEEN '#{start_date}' AND '#{end_date}');
 EOF
-      registered << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
+    pregnant_at_initiation = ActiveRecord::Base.connection.select_all <<EOF
+                    SELECT patient_id, date_enrolled, earliest_start_date, reason_for_starting
+                    FROM flat_cohort_table
+                    WHERE reason_for_starting = 'Patient pregnant'
+                    AND gender = 'F'
+                    AND (date_enrolled BETWEEN '#{start_date}' AND '#{end_date}');
+EOF
+    pregnant_at_initiation_ids = []
+    (pregnant_at_initiation || []).each do |patient|
+      pregnant_at_initiation_ids << patient['patient_id'].to_i
     end
 
-    return registered
+    if pregnant_at_initiation_ids.blank?
+      pregnant_at_initiation_ids = [0]
+    end
+
+    transfer_ins_women = ActiveRecord::Base.connection.select_all <<EOF
+          SELECT patient_id FROM flat_cohort_table
+          WHERE date_enrolled  BETWEEN '#{start_date}' AND '#{end_date}'
+          AND (gender = 'F' OR gender = 'Female')
+          AND DATE(date_enrolled) != DATE(earliest_start_date)
+          AND date_enrolled <> '0000-00-00'
+          AND patient_id IN (#{pregnant_at_initiation_ids.join(',')})
+          AND patient_re_initiated != 'Re-initiated'
+          GROUP BY patient_id
+EOF
+
+    transfer_ins_preg_women = []; all_pregnant_females = []
+    (transfer_ins_women || []).each do |patient|
+      if patient['patient_id'].to_i != 0
+        transfer_ins_preg_women << patient['patient_id'].to_i
+      end
+    end
+
+    (registered || []).each do |patient|
+      if patient['patient_id'].to_i != 0
+        all_pregnant_females << patient['patient_id'].to_i
+      end
+    end
+
+    all_pregnant_females = (all_pregnant_females + transfer_ins_preg_women).uniq
+    return all_pregnant_females
   end
 
   def self.males(start_date, end_date)

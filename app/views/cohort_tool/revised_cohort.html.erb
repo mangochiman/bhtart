@@ -107,6 +107,13 @@
         background-color: #4ba614;
         float: right;
     }
+
+    .button-disaggregated{
+      border: #7eb9d0;
+        background-color: #5ca6c4;
+        float: right;
+}
+
     .row-button-print {
         position: fixed;
         left: 0px;
@@ -669,6 +676,26 @@
 
     }
 
+    var quarter = '<%= params[:quarter] %> ';
+    function showDisaggregatedReport(){
+      body = document.getElementsByTagName("body")[0];
+
+      form = document.createElement("form");
+      form.method = "POST"
+      form.action = "/cohort_tool/disaggregated_cohort";
+      body.appendChild(form);
+
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.value = quarter;
+      input.name = "quarter";
+      form.appendChild(input);
+
+      form.submit();
+
+    }
+
+    
 </script>
 
 
@@ -3074,6 +3101,7 @@
   <div class="buttons">
     <button class="button button-finish" onmousedown="javascript:location='/'">Finish</button>
     <button class="button button-print" onmousedown="javascript:printPDF();">Print</button>
+    <button class="button button-disaggregated" onmousedown="showDisaggregatedReport();">Cohort disaggregated report</button>
     
   </div>
 </div>
