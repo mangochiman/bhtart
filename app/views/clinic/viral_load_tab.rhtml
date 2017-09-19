@@ -89,11 +89,11 @@
 <div id="tab" style="">
   <h3>LIMS - Viral Load Statistics</h3>
     <div id="table_div">
-      <span class="stat" onclick="view('pending')" style="color: darkslategray; cursor: pointer"> <%= @data["pending"].length %> <span style="font-size: 1em">Pending Results</span></span>
+      <span class="stat" onclick="view('pending')" style="color: darkslategray; cursor: pointer;text-decoration: underline;"> <%= @data["pending"].length %> <span style="font-size: 1em">Pending Results</span></span>
 
-      <span class="stat" onclick="view('available')" style="color: darkslategray; cursor: pointer"> <%= @data["available"].length %> <span style="font-size: 1em">Available Results &nbsp;&nbsp;| </span></span>
+      <span class="stat" onclick="view('available')" style="color: darkslategray; cursor: pointer"> <%= @data["available"].length %> <span style="font-size: 1em;text-decoration: underline;">Available Results &nbsp;&nbsp;| </span></span>
 
-     <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected Samples&nbsp;&nbsp;|</span></span>   
+     <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;text-decoration: underline;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected Samples&nbsp;&nbsp;|</span></span>   
   </div>
 </div>
 
