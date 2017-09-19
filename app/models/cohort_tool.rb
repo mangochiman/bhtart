@@ -151,15 +151,21 @@ EOF
       hiv_encounter_types]).map(&:id)
 
     (data || []).each do |d|
-      names = PersonName.find(:first, :conditions =>["person_id = ?", 
-        d['patient_id'].to_i], :order => "date_created DESC, person_name_id DESC")
-      first_name = names.given_name rescue nil
-      last_name = names.family_name rescue nil
-
+      defaulted_date = PatientDefaultedDate.get_latest_defaulted_date(d['patient_id'].to_i, end_date.to_date)
+      next if defaulted_date.to_date > end_date.to_date 
+      
       last_visit_date = Encounter.find(:first, :select => ("MAX(encounter_datetime) AS ldate"),
         :conditions =>["encounter_datetime <= ? AND patient_id = ? AND encounter_type IN(?)", 
         end_date.to_date.strftime('%Y-%m-%d 23:59:59'), 
         d['patient_id'].to_i, hiv_encounter_type_ids])['ldate'].to_date rescue nil
+
+      next if last_visit_date > end_date.to_date
+      next if defaulted_date.to_date < last_visit_date
+
+      names = PersonName.find(:first, :conditions =>["person_id = ?", 
+        d['patient_id'].to_i], :order => "date_created DESC, person_name_id DESC")
+      first_name = names.given_name rescue nil
+      last_name = names.family_name rescue nil
 
       person_address = PersonAddress.find(:first, :conditions =>["person_id = ?", 
         d['patient_id'].to_i], :order => "date_created DESC, person_address_id DESC")
@@ -180,6 +186,7 @@ EOF
         :district => district,
         :village => village,
         :landmark => person_address.address1,
+        :latest_defaulted_date => defaulted_date,
         :last_visit_date => (last_visit_date.strftime('%d/%b/%Y') rescue nil)
       }
     end

@@ -372,7 +372,7 @@
                 <th>First name</th>
                 <th>Last name</th>
                 <th>Last visit date</th>
-                <th style="padding-left: 10px; text-align: left;">Outcome</th>
+                <th>Defaulted date</th>
                 <th>Address</th>
                 <th>Phone number</th>
                 <th>&nbsp;</th>
@@ -393,7 +393,7 @@
                     <td style="text-align: center;"><%= data[:first_name] %></td>
                     <td style="text-align: center;"><%= data[:last_name] %></td>
                     <td style="text-align: center;"><%= data[:last_visit_date] %></td>
-                    <td style="padding-left: 10px;"><%= (data[:outcome].capitalize rescue nil) %></td>
+                    <td style="padding-left: 10px;"><%= (data[:latest_defaulted_date].to_date.strftime('%d/%b/%Y') rescue nil) %></td>
                     <td style="text-align: left;"><%= address %></td>
                     <td style="padding-left: 10px;"><%= data[:phone_number] %></td>
                     <td align='center' class="create_button">

@@ -136,6 +136,11 @@ class GenericClinicController < ApplicationController
       url = settings['lims_national_dashboard_ip'] + "/api/viral_load_stats"
     end
     data = JSON.parse(RestClient.get(url)) rescue {}
+		data.keys.each do |category|
+			data[category].each do |order|
+					order['date_time'] = order['date_time'].to_date.strftime("%d-%b-%Y") if (order['date_time'] rescue false)
+			end
+		end 
 
     @data = {}
     @data['pending'] = data['pending'] || []
