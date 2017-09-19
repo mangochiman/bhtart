@@ -136,6 +136,11 @@ class GenericClinicController < ApplicationController
       url = settings['lims_national_dashboard_ip'] + "/api/viral_load_stats"
     end
     data = JSON.parse(RestClient.get(url)) rescue {}
+		data.keys.each do |category|
+			data[category].each do |order|
+					order['date_time'] = order['date_time'].to_date.strftime("%d-%b-%Y") if (order['date_time'] rescue false)
+			end
+		end 
 
     @data = {}
     @data['pending'] = data['pending'] || []
@@ -146,7 +151,6 @@ class GenericClinicController < ApplicationController
     @data['more_than_1000_given'] = []
 
     (data['completed'] || []).each do |order|
-			order['date_time'] = order['date_time'].to_date.strftime("%d-%b-%Y")
       results = (order['results']['Viral Load'] || order['results']['Viral load'] || order['results']['VL'])
       timestamp = results.keys.sort.last
       result = results[timestamp]['results']
@@ -159,7 +163,6 @@ class GenericClinicController < ApplicationController
     end
 
     (data['reviewed'] || []).each do |order|
-			order['date_time'] = order['date_time'].to_date.strftime("%d-%b-%Y")
       results = (order['results']['Viral load'] || order['results']['Viral Load'] || order['results']['VL'])
       timestamp = results.keys.sort.last
       result = results[timestamp]['results']
