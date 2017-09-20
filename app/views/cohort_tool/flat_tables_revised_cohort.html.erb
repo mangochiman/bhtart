@@ -1516,8 +1516,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('cum_no_tb');">
+        <td class="number cum_condition_class">
+            <a href="javascript:drillDown('cum_no_tb');" id="cum_no_tb" class="cum-condition">
                 <%= @cohort.cum_no_tb.count %>
             </a>
         </td>
@@ -1535,8 +1535,8 @@
         <td class="border-null-bottom border-null-top border-null-left">
             TB within the last 2 years
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('tb_within_the_last_two_years');">
+        <td class="number condition_class">
+            <a href="javascript:drillDown('tb_within_the_last_two_years');" id="tb_within_the_last_two_years" class="condition">
                 <%= @cohort.tb_within_the_last_two_years.count %>
             </a>
         </td>
@@ -1546,8 +1546,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('cum_tb_within_the_last_two_years');">
+        <td class="number cum_condition_class">
+            <a href="javascript:drillDown('cum_tb_within_the_last_two_years');" id="cum_tb_within_the_last_two_years" class="cum-condition">
                 <%= @cohort.cum_tb_within_the_last_two_years.count %>
             </a>
         </td>
@@ -1565,8 +1565,8 @@
         <td class="border-bottom-dotted border-null-top border-null-left">
             Current episode of TB
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('current_episode_of_tb');">
+        <td class="number condition_class">
+            <a href="javascript:drillDown('current_episode_of_tb');" id="current_episode_of_tb" class="condition">
                 <%= @cohort.current_episode_of_tb.count %>
             </a>
         </td>
@@ -1576,8 +1576,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('cum_current_episode_of_tb');">
+        <td class="number cum_condition_class">
+            <a href="javascript:drillDown('cum_current_episode_of_tb');" id="cum_current_episode_of_tb" class="cum-condition">
                 <%= @cohort.cum_current_episode_of_tb.count %>
             </a>
         </td>
@@ -1601,7 +1601,7 @@
             Kaposi's Sarcoma
         </td>
         <td class="number">
-            <a href="javascript:drillDown('kaposis_sarcoma');">
+            <a href="javascript:drillDown('kaposis_sarcoma');" id="kaposis_sarcoma">
                 <%= @cohort.kaposis_sarcoma.count %>
             </a>
         </td>
@@ -1655,8 +1655,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('total_alive_and_on_art');">
+        <td class="number reg_on_art_class">
+            <a href="javascript:drillDown('total_alive_and_on_art');" class="registered-on-art">
                 <%= @cohort.total_alive_and_on_art.count %>
             </a>
         </td>
@@ -1767,8 +1767,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('died_total');">
+        <td class="number reg_on_art_class">
+            <a href="javascript:drillDown('died_total');" class="registered-on-art">
                 <%= @cohort.died_total.count %>
             </a>
         </td>
@@ -1786,8 +1786,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('defaulted');">
+        <td class="number reg_on_art_class">
+            <a href="javascript:drillDown('defaulted');" class="registered-on-art">
                 <%= @cohort.defaulted.count %>
             </a>
         </td>
@@ -1805,8 +1805,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('stopped_art');">
+        <td class="number reg_on_art_class">
+            <a href="javascript:drillDown('stopped_art');" class="registered-on-art">
                 <%= @cohort.stopped_art.count %>
             </a>
         </td>
@@ -1824,8 +1824,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('transfered_out');">
+        <td class="number reg_on_art_class">
+            <a href="javascript:drillDown('transfered_out');" class="registered-on-art">
                 <%= @cohort.transfered_out.count %>
             </a>
         </td>
