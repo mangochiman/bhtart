@@ -129,7 +129,7 @@ class DrugController < GenericDrugController
   end
 
   def art_stock_info
-    date = params[:date].to_date rescue "2016-01-13".to_date
+    date = Date.today
     moh_products = DrugCms.find(:all)
     drug_order_type = OrderType.find_by_name('Drug Order') 
     dispensing_encounter_type = EncounterType.find_by_name("DISPENSING")
@@ -165,8 +165,8 @@ class DrugController < GenericDrugController
       :location => location_name
     }
     
-    SendResultsToCouchdb.add_record(data) #rescue ''
-    render :text => drug_summary.to_json and return    
+    SendResultsToCouchdb.add_record(data) rescue ''
+    #render :text => drug_summary.to_json and return we are no longer using this method for posting.
   end
 
   def new_drug_sets
