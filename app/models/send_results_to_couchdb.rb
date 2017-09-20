@@ -8,6 +8,13 @@ class SendResultsToCouchdb < ActiveRecord::Base
     password = couchdb_details["source_password"]
     port = couchdb_details["source_port"]
     ip_address = couchdb_details["source_address"]
+
+    target_database = couchdb_details["sync_database"]
+    target_username = couchdb_details["sync_username"]
+    target_password = couchdb_details["sync_password"]
+    target_port = couchdb_details["sync_port"]
+    target_address = couchdb_details["sync_address"]
+    
     doc_type = "StockLevelCouchdb"
 
     `curl -X PUT http://#{username}:#{password}@#{ip_address}:#{port}/#{database}`
@@ -36,5 +43,8 @@ class SendResultsToCouchdb < ActiveRecord::Base
       RestClient.post(url, data.to_json, :content_type => "application/json")
     end
 
+    `curl -X POST  http://#{ip_address}:#{port}/_replicate -d '{"source":"http://#{username}:#{password}@#{ip_address}:#{port}/#{database}","target":"http://#{target_username}:#{target_password}@#{target_address}:#{target_port}/#{target_database}", "continuous":true}' -H "Content-Type: application/json"`
+
   end
+  
 end
