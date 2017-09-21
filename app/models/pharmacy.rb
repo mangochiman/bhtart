@@ -491,6 +491,7 @@ EOF
     pharmacy_obs.value_numeric = current_drug_stock.to_i
     pharmacy_obs.save
     
+    DrugController.new.art_stock_info #sending results to couch db
   end
 
   def self.update_average_drug_consumption(drug_id)
