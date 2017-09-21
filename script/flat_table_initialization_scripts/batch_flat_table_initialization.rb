@@ -933,8 +933,39 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
                 }
 
     return generate_sql_string(a_hash) if type == 1
-
     encounter.observations.each do |obs|
+      #determining if the patient have side effects that visit
+      new_malawi_side_effects_saved =  Encounter.find_by_sql("SELECT person_id, concept_id, value_coded from obs
+                                          WHERE encounter_id = #{obs.encounter_id}
+                                          AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 1066, 2148, 2150, 3681, 5953, 6408, 9242, 9440)")
+
+      if new_malawi_side_effects_saved.blank?
+        old_malawi_side_effects_saved = Encounter.find_by_sql("SELECT person_id, concept_id, value_coded from obs
+                                            WHERE encounter_id = #{obs.encounter_id}
+                                            AND concept_id = 7755 AND value_coded NOT IN (1066, 1107)")
+
+        unless old_malawi_side_effects_saved.blank?
+          a_hash[:side_effects_present] = 'Yes'
+          a_hash[:side_effects_present_enc_id] = encounter.encounter_id
+        else
+          a_hash[:side_effects_present] = 'No'
+          a_hash[:side_effects_present_enc_id] = encounter.encounter_id
+        end
+
+      else
+        new_malawi_side_effects_saved =  Encounter.find_by_sql("SELECT person_id, concept_id, value_coded from obs
+                                            WHERE encounter_id = #{obs.encounter_id}
+                                            AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 1066, 2148, 2150, 3681, 5953, 6408, 9242, 9440)
+                                            AND value_coded NOT IN (1066, 1107)")
+        unless new_malawi_side_effects_saved.blank?
+          a_hash[:side_effects_present] = 'Yes'
+          a_hash[:side_effects_present_enc_id] = encounter.encounter_id
+        else
+          a_hash[:side_effects_present] = 'No'
+          a_hash[:side_effects_present_enc_id] = encounter.encounter_id
+        end
+      end
+
       if obs.concept_id.to_i == 6131 #Patient Pregnant
         if obs.value_coded.to_i == 1065 && obs.value_coded_name_id == 1102
           a_hash[:patient_pregnant] = 'Yes'
@@ -1333,6 +1364,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
 	      end
 
       elsif obs.concept_id.to_i == 7567 #drug induced symptoms
+        a_hash[:side_effects_present] = 'Yes'
+        a_hash[:side_effects_present_enc_id] = encounter.encounter_id
         if obs.value_coded.to_i == 2148 && obs.value_coded_name_id == 2325
           a_hash[:drug_induced_lipodystrophy] = 'Yes'
           a_hash[:drug_induced_lipodystrophy_enc_id] = encounter.encounter_id
