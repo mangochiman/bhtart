@@ -295,8 +295,8 @@ class GenericDrugController < ApplicationController
     if request.method == :post
       disposal_date = params[:disposal_date].to_date
       params[:obs].each { |ob_variations|
-        drug_id = Drug.find_by_name(ob_variations[0]).id rescue (raise "Missing drug #{ob_variations[0]}".to_s)
-
+        #drug_id = Drug.find_by_name(ob_variations[0]).id rescue (raise "Missing drug #{ob_variations[0]}".to_s)
+        drug = Drug.find_by_name(ob_variations[0])
         ob_variations[1].each { |ob|
           reason = ob[:reason]
           authorisation_code = ob[:authcode]
@@ -313,7 +313,7 @@ class GenericDrugController < ApplicationController
 
           number_of_pills = (number_of_tins * number_of_pills_per_tin)
           next if number_of_pills == 0
-          Pharmacy.alter(drug_id, number_of_pills, disposal_date, reason, authorisation_code)
+          Pharmacy.alter(drug, number_of_pills, disposal_date, reason, authorisation_code)
         }
       }
       redirect_to "/clinic" # /management"
