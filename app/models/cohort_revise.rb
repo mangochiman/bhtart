@@ -770,6 +770,7 @@ IF set_status = 'Patient died' THEN
   ELSEIF num_of_days <= 60 THEN set set_outcome ="2nd month";
   ELSEIF num_of_days <= 91 THEN set set_outcome ="3rd month";
   ELSEIF num_of_days > 91 THEN set set_outcome ="4+ months";
+  ELSEIF num_of_days IS NULL THEN set set_outcome = "Unknown";
   END IF;
 
 
@@ -1921,12 +1922,21 @@ EOF
 
   def self.died_in(month_str)
     registered = []
-    data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
-      INNER JOIN temp_earliest_start_date t USING(patient_id)
-      WHERE cum_outcome = 'Patient died' GROUP BY patient_id
-      HAVING died_in = '#{month_str}';
+    if month_str == "4+ months"
+      data = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+        INNER JOIN temp_earliest_start_date t USING(patient_id)
+        WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+        HAVING died_in IN ('4+ months', 'Unknown');
 EOF
+    else
+      data = ActiveRecord::Base.connection.select_all <<EOF
+        SELECT patient_id, died_in(t.patient_id, cum_outcome, date_enrolled) died_in FROM temp_patient_outcomes o
+        INNER JOIN temp_earliest_start_date t USING(patient_id)
+        WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+        HAVING died_in = '#{month_str}';
+EOF
+    end
 
 
     (data || []).each do |patient|
