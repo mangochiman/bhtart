@@ -1113,22 +1113,16 @@ EOF
 
     return [] if patient_ids.blank?
 
-  	drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
-    malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
-    no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
-
     malawi_art_side_effects =  ActiveRecord::Base.connection.select_all <<EOF
-            SELECT * FROM temp_earliest_start_date t
-             INNER JOIN obs o ON o.person_id = t.patient_id
-            WHERE o.voided = 0 AND o.concept_id IN (#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id} ) AND o.value_coded != #{no_side_effects_concept_id}
-            AND (o.person_id IN (#{patient_ids.join(',')}) AND o.person_id NOT IN (#{patients_with_unknown_side_effects.join(',')}))
-            AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND t.date_enrolled != (
-              SELECT max(DATE(obs_datetime)) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-              AND voided = 0 AND person_id = o.person_id
-              AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-              AND value_coded != #{no_side_effects_concept_id}
-            ) GROUP BY person_id
+          SELECT ft2.patient_id, ft2.visit_date, ft2.side_effects_present, ft2.side_effects_present_enc_id
+          FROM flat_table2 ft2
+          WHERE ft2.side_effects_present = 'Yes'
+          AND (ft2.patient_id IN (#{patient_ids.join(',')}) AND ft2.patient_id NOT IN (#{patients_with_unknown_side_effects.join(',')}))
+          AND ft2.visit_date <= '#{end_date}'
+          AND ft2.visit_date = (SELECT max(f2.visit_date) FROM flat_table2 f2
+                            WHERE f2.side_effects_present IS NOT NULL
+                            AND f2.patient_id = ft2.patient_id
+                            AND f2.visit_date <= '#{end_date}');
 EOF
 
     (malawi_art_side_effects || []).each do |row|
