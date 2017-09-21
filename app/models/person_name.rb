@@ -18,7 +18,7 @@ class PersonName < ActiveRecord::Base
 
   def self.search(field_name, search_string)
     return self.find(:all, :conditions =>["#{field_name} LIKE (?)", 
-      "#{search_string}%"], :limit => 10)
+      "#{search_string}%"], :limit => 10, :group => "#{field_name}")
   end
 
   # Looks for the most commonly used element in the database and sorts the results based on the first part of the string
