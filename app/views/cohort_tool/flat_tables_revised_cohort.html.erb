@@ -2631,7 +2631,7 @@
                 break;
             case 'pregnant_females_all_ages':
             <% (@cohort.pregnant_females_all_ages || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id['patient_id'] %>);
+                patient_ids.push(<%= patient_id %>);
             <% end %>
                 break;
             case 'cum_pregnant_females_all_ages':
