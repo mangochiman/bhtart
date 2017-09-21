@@ -1,3 +1,14 @@
+<%= javascript_include_tag 'jquery' %>
+<%= javascript_include_tag 'jquery_data_table.js' %>
+<%= stylesheet_link_tag 'jquery.dataTables' %>
+<%=javascript_include_tag "jquery.table2CSV.min" %>
+<script type="text/javascript" charset="utf8" src="/javascripts/jquery.dataTables.min.js"></script>
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
+
+<!--<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.16/css/jquery.dataTables.css">-->
+
+<!--<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.js"></script>-->
+
 <style type="text/css">
   body {
     -moz-user-select:none;
@@ -85,13 +96,20 @@
         background: white;
         width: 25%;
     }
+  #keypad{
+    background-color: #FFFFFF;
+    border: 2px solid #9999FF;
+    border-radius: 15px 15px 15px 15px;
+    display: none;
+    height: 304px;
+    padding: 5px;
+    position: absolute;
+    right: 13px;
+    top: 90px;
+    width: 672px;
+    z-index: 1;
+  }
 </style>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
-<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.16/css/jquery.dataTables.css">
-
-<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.js"></script>
 
 <div id="tab" style="">
     <div id="table_div" style="height: 50px">
@@ -102,6 +120,12 @@
 
      <span class="stat" onclick="view('rejected')" style="color: red; cursor: pointer;text-decoration: underline;"> <%= @data["rejected"].length %> <span style="font-size: 1em">Rejected Samples&nbsp;&nbsp;|</span></span>
   </div>
+</div>
+
+<div id="keypad">
+          <span class="keypad">
+          </span>
+
 </div>
 
 <div id="popup">
@@ -125,9 +149,47 @@
   <!--</div>-->
 </div>
 
+
 <script>
 
-    all_data = JSON.parse('<%= @data.to_json%>');
+  function press(pressedChar){
+    switch (pressedChar) {
+      case 'backspace':
+        search.value = search.value.substring(0,search.value.length-1);
+        search_box.fnFilter(search.value)
+        return;
+      case 'Space':
+        search.value+= " "
+        search_box.fnFilter(search.value)
+        return
+      case 'clear':
+        search.value = ""
+        search_box.fnFilter(search.value)
+        return
+      case 'num':
+        showNumericKeypad();
+        return
+      case 'slash':
+        search.value+= "/"
+        search_box.fnFilter(search.value)
+        return
+      case 'dash':
+        search.value+= "-"
+        search_box.fnFilter(search.value)
+        return
+      case 'abc':
+        showAlphaKeypad();
+        return
+    }
+    search.value+= pressedChar
+    search_box.fnFilter(search.value)
+  }
+
+    $('input[type=search]').click(function () {
+      alert('here');
+    });
+
+    all_data = <%= @data.to_json%>;
 
     function cancelPopup(){
         document.getElementById("popup").style.display = "none";
@@ -204,16 +266,80 @@
       table.appendChild(tbody);
       table.setAttribute("id", "ph-table");
       div.appendChild(table);
-      $(document).ready(function(){
-        $('#ph-table').DataTable({
-          'pageLength' : 5
-        });
-      });
-        // var original_width = document.getElementById("ph-table").offsetWidth
-        // var diff = (document.getElementById("ph-table").offsetWidth -
-                // document.getElementById("p-table").offsetWidth)
 
-        // document.getElementById("ph-table").style.width = (original_width - diff ) + "px";
+          $(document).ready(function(){
+            var datatable = $('#ph-table').dataTable({
+              "pageLength" : "5",
+              "bAutoWidth": false,
+              "bPaginate": true,
+              "bProcessing": true,
+              "sScrollY": "250px",
+              "bInfo": true
+            });
+
+
+            var filter = document.getElementById('ph-table_filter');
+            var search = filter.getElementsByTagName('input')[0];
+            search.setAttribute('id', 'search_box');
+            document.getElementById('search_box').onclick = function showKeyboard(){
+              key = document.getElementById("keypad")
+              if(key.style.display == 'none' || key.style.display == ""){
+                key.style.display = "inline";
+                return
+              }
+
+              key.style.display = "none";
+            };
+
+            keyboard = document.getElementsByClassName("keypad")[0]
+            function getCharButtonSetID(character,id){
+              return "<button onMouseDown='press("+character+");' class='keyboardButton' id='"+id+"'>" +"<span style='width:32px'>"+character+"</span>"+ "</button>";
+            }
+            function getButtonString(id,string){
+              return "<button \
+                            onMouseDown='press(this.id);' \
+                            class='keyboardButton' \
+                            id='"+id+"'>"+
+                  string +
+                  "</button>";
+            }
+
+            function getButtons(chars){
+              var buttonLine = "";
+              for(var i=0; i<chars.length; i++){
+                character = chars.substring(i,i+1)
+                buttonLine += getCharButtonSetID(character,character)
+              }
+              return buttonLine;
+            }
+
+            showAlphaKeypad();
+
+            function showAlphaKeypad(){
+              document.getElementById("keypad").style.height = "280";
+              keyboard.innerHTML= getButtons("0123456789") + "</br>"
+              keyboard.innerHTML+= getButtons("QWERTYUIOP") + "</br>"
+              keyboard.innerHTML+= getButtons("ASDFGHJKL:") + "</br>"
+              keyboard.innerHTML+= getButtons("ZXCVBNM,.?")
+              keyboard.innerHTML+= getButtonString('backspace','<span>Bksp</span>')
+              keyboard.innerHTML+= getButtonString('Space','<span>Space</span>')
+              keyboard.innerHTML+= getButtonString('clear','<span>Clear</span>')
+            }
+
+            function showNumericKeypad(){
+              document.getElementById("keypad").style.height = "145";
+              keyboard.innerHTML = getButtons("123")
+              keyboard.innerHTML+= getButtons("456")
+              keyboard.innerHTML+= getButtons("7890")
+              keyboard.innerHTML+= getButtonString('space','<span>Space</span>')
+              keyboard.innerHTML+= getButtonString('clear','<span>Clear</span>')
+              keyboard.innerHTML+= getButtonString('backspace','<span>Bksp</span>')
+              keyboard.innerHTML+= getButtonString('abc','<span>abc</span>')
+              keyboard.innerHTML+= getButtonString('dash','<span>-</span>')
+              keyboard.innerHTML+= getButtonString('slash','<span>/</span>')
+            }
+
+          });
 
     }
 
