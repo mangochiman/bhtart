@@ -407,6 +407,21 @@ class GenericPeopleController < ApplicationController
 		@relation = params[:relation]
 		@person = Person.find(@found_person_id) rescue nil
 		patient = @person.patient
+  
+    hiv_session = false
+    if current_program_location == "HIV program"
+      hiv_session = true
+    end
+  
+    if use_filing_number and hiv_session
+
+      duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(@person.id)
+      if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
+        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{@person.id}"
+        return
+      end
+  
+    end 
     
     unless params[:skip_has_inconsistency_outcome_dates] == 'true'
       if (Patient.has_inconsistency_outcome_dates?(patient))
