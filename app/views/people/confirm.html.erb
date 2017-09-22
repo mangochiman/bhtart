@@ -454,11 +454,11 @@ function cancelOperation(action){
       <input type='submit' value='Finish' />
     </form>
 
-    <% if improved_viral_load_check(@person.patient) == true &&
-        (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") &&
-        show_lab_results &&
-        (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))%>
-
+    <% 
+    
+   if (@task.encounter_type.upcase == "HIV CLINIC CONSULTATION" || @task.encounter_type.upcase == "HIV STAGING") && show_lab_results 
+    if (current_user_roles.include?("Nurse") || current_user_roles.include?("Clinician") || current_user_roles.include?("Doctor"))
+      if improved_viral_load_check(@person.patient) == true %>
         <!-------------------------------------------->
    <% if @vl_request == "YES" %>
       <div id="popup" style="display:none; border:0px; width: 0px; height: 0px; padding: 0px;">
@@ -557,7 +557,10 @@ function cancelOperation(action){
       <% end %>
       <div id="cover">
       </div>
-    <% end %>
+    <% end 
+      end
+    end
+    %>
     <script>
       function removePopup(){
         popup = document.getElementById('popup')
