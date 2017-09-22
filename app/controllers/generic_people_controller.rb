@@ -458,43 +458,46 @@ class GenericPeopleController < ApplicationController
 
     @patient_identifiers = LabController.new.id_identifiers(patient)
 
-    if vl_routine_check_activated# && (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
-      @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
-      @latest_date = @results[0].split('::')[0].to_date rescue nil
-      @latest_result = @results[1]["TestValue"] rescue nil
-      @modifier = @results[1]["Range"] rescue nil
+    if (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
+      if vl_routine_check_activated 
+        @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
+        @latest_date = @results[0].split('::')[0].to_date rescue nil
+        @latest_result = @results[1]["TestValue"] rescue nil
+        @modifier = @results[1]["Range"] rescue nil
 
-      @high_vl = true
-      if (@latest_result.to_i < 1000)
-        @high_vl = false
-      end
-
-      if (@latest_result.to_i == 1000)
-        if (@modifier == '<')
+        @high_vl = true
+        if (@latest_result.to_i < 1000)
           @high_vl = false
         end
+
+        if (@latest_result.to_i == 1000)
+          if (@modifier == '<')
+            @high_vl = false
+          end
+        end
+
+        @reason_for_art = PatientService.reason_for_art_eligibility(patient)
+        vl_concept = Concept.find_by_name("Viral load")
+
+        @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
+            patient.patient_id, vl_concept.concept_id]
+        ).answer_string.squish.upcase rescue nil
+
+        @repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
+                  AND value_text =?", patient.patient_id, vl_concept.concept_id,
+            "Repeat"]).answer_string.squish.upcase rescue nil
+
+        @repeat_vl_obs_date = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
+                AND value_text =?", patient.patient_id, vl_concept.concept_id,
+            "Repeat"]).obs_datetime.to_date rescue nil
+
+        @date_vl_result_given = Observation.find(:last, :conditions => ["
+            person_id =? AND concept_id =? AND value_text REGEXP ?", @person.id,
+            vl_concept.concept_id, 'Result given to patient']).value_datetime rescue nil
+
+        @enter_lab_results = GlobalProperty.find_by_property('enter.lab.results').property_value == 'true' rescue false
+        @vl_result_hash = Patient.vl_result_hash(patient)
       end
-
-      @reason_for_art = PatientService.reason_for_art_eligibility(patient)
-      @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-          patient.patient_id, Concept.find_by_name("Viral load").concept_id]
-      ).answer_string.squish.upcase rescue nil
-
-      @repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
-                AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
-          "Repeat"]).answer_string.squish.upcase rescue nil
-
-      @repeat_vl_obs_date = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
-              AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
-          "Repeat"]).obs_datetime.to_date rescue nil
-
-      @date_vl_result_given = Observation.find(:last, :conditions => ["
-          person_id =? AND concept_id =? AND value_text REGEXP ?", @person.id,
-          Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime rescue nil
-      @enter_lab_results = GlobalProperty.find_by_property('enter.lab.results').property_value == 'true' rescue false
-
-      @vl_result_hash = Patient.vl_result_hash(patient)
-
     end
 
     regimen_category = Concept.find_by_name("Regimen Category")
