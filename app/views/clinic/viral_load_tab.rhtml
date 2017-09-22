@@ -54,19 +54,19 @@
       padding: 14px;
   }
 
-    /*#popup{*/
-        /*position: absolute;*/
-        /*top: 0%;*/
-        /*left: 10%;*/
-        /*z-index: 1005;*/
-        /*background: ghostwhite;*/
-        /*width: 85%;*/
-        /*height: 98%;*/
-        /*border: 1px solid darkolivegreen;*/
-        /*border-radius: 2px;*/
-        /*overflow-Y: auto;*/
-        /*display: none;*/
-    /*}*/
+    #search_popup{
+        position: absolute;
+        top: 0%;
+        left: 10%;
+        z-index: 1005;
+        background: ghostwhite;
+        width: 85%;
+        height: 98%;
+        border: 1px solid darkolivegreen;
+        border-radius: 2px;
+        overflow-Y: auto;
+        display: none;
+    }
     #cancel{
         position: fixed;
         z-index: 1010;
@@ -114,6 +114,24 @@
     width: 660px;
     z-index: 1;
   }
+  #backspace{
+    position:absolute;
+    left:100px;
+    bottom:-5px;
+  }
+
+  #whitespace{
+    position:absolute;
+    left:220px;
+    bottom:-5px;
+    width:200px;
+  }
+
+  #clear{
+    position:absolute;
+    left:470px;
+    bottom:-5px;
+  }
 </style>
 
 <div id="tab" style="">
@@ -132,9 +150,11 @@
           </span>
 
 </div>
+<div id="search_popup">
+  <div id="cancel" onmousedown="cancelPopup()">X</div>
+</div>
 
 <div id="popup">
-    <!-- div id="cancel" onmousedown="cancelPopup()">X</div -->
     <!--<table id="ph-table" style="width: 97%; color: darkslategray;  margin-left: 5px;">-->
         <!--<caption id="caption">Patients Samples</caption>-->
         <!--<thead>-->
@@ -215,13 +235,14 @@
                 "o['_id']",
                 "o['patient']['national_patient_id']",
                 "o['date_time']",
-                "o['who_order_test']['first_name'] + ' ' + o['who_order_test']['last_name']"
+                "o['who_order_test']['first_name'] + ' ' + o['who_order_test']['last_name']",
+                "o['patient']['national_patient_id']"
             ];
 
-            for(var k = 0; k < sources.length + 1; k++){
+            for(var k = 0; k < sources.length; k++){
                 var td = document.createElement("td");
-                if (k == sources.length){
-                  td.innerHTML = "<button onclick='alert(\"here\")'>Search</button>";
+                if (k == sources.length -1){
+                  td.innerHTML = '<button>search</button>';
                 }else {
                   td.innerHTML = eval(sources[k]);
                 }
@@ -294,32 +315,32 @@
     switch (pressedChar) {
       case 'backspace':
         search.value = search.value.substring(0,search.value.length-1);
-        datatable.fnFilter(search.value)
+        datatable.fnFilter(search.value);
         return;
       case 'Whitespace':
-        search.value+= " "
-        datatable.fnFilter(search.value)
-        return
+        search.value+= " ";
+        datatable.fnFilter(search.value);
+        return;
       case 'clear':
-        search.value = ""
-        datatable.fnFilter(search.value)
-        return
+        search.value = "";
+        datatable.fnFilter(search.value);
+        return;
       case 'num':
         showNumericKeypad();
-        return
+        return;
       case 'slash':
-        search.value+= "/"
-        datatable.fnFilter(search.value)
-        return
+        search.value+= "/";
+        datatable.fnFilter(search.value);
+        return;
       case 'dash':
-        search.value+= "-"
-        datatable.fnFilter(search.value)
-        return
+        search.value+= "-";
+        datatable.fnFilter(search.value);
+        return;
       case 'abc':
         showAlphaKeypad();
         return
     }
-    search.value+= pressedChar
+    search.value+= pressedChar;
     datatable.fnFilter(search.value)
   }
   function showNumericKeypad(){
@@ -344,4 +365,9 @@
     keyboard.innerHTML+= getButtonString('Space','<span>Space</span>');
     keyboard.innerHTML+= getButtonString('clear','<span>Clear</span>');
   }
+
+    function searchPatient(id){
+      document.getElementById("search_popup").style.display = "block";
+      document.getElementById('search_popup').innerHTML = id;
+    }
 </script>
