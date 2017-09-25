@@ -268,6 +268,11 @@ class GenericPeopleController < ApplicationController
             PatientService.assign_new_dde_npid(person, old_npid, new_npid)
             national_id_replaced = true
           end
+          
+          if (params[:identifier].to_s.squish != new_npid.to_s.squish) #if DDE has returned a new ID, Let's assume it is right
+            national_id_replaced = true #when the scanned ID is not equal to the one returned by dde, get ready for print
+          end rescue nil
+
         end unless params[:identifier].match(/ARV|TB|HCC/i)
         found_person = local_results.first
       else
@@ -283,7 +288,7 @@ class GenericPeopleController < ApplicationController
           end
 
           if dde_hits.length > 1
-            redirect_to("/people/dde_duplicates") and return
+            redirect_to("/people/dde_duplicates?npid=#{params[:identifier]}") and return
           end
 
         end unless params[:identifier].match(/ARV|TB|HCC/i)
