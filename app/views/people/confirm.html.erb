@@ -7,7 +7,7 @@
   position: absolute;
   top: 30px;
   width: 96%;
-  height: 20%;
+  height: 16%;
 
   border: 2px solid;
   border-radius: 25px;
@@ -67,6 +67,18 @@
   width: 20%;
 }
 
+.chart {
+  position: absolute;
+  top: 106%;
+}
+
+.next_task {
+  position: absolute;
+  top: 103%;
+  z-index: 1;
+  font-weight: bold;
+}
+
 </style>
 
 <%
@@ -124,14 +136,28 @@
 
   
   </div>
+  
+  <div class="dtable next_task">
+    <div class="drow">
+      <div class="dcell">Next task:&nbsp;<span id="next_task"></span></div>
+    </div>
+  </div>
 
+  <div class="dtable chart">
+    <div class="drow">
+      <div class="dcell" id="summary"></div>
+    </div>
+  </div>
 
 
 </div>
 
 
-<script>
+<%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
 
+<%= javascript_include_tag "Highcharts/js/highcharts" %>
+<%= javascript_include_tag "Highcharts/js/modules/exporting" %>
+<script>
 
 function initData() {
 
@@ -149,7 +175,6 @@ function initData() {
 
 function printName(result) {
   var data = JSON.parse(result);
-  alert(data['name']);
 
   if(data['gender'] == 'M' || data['gender'] == 'Male') {
     var sex = 'male';
@@ -239,7 +264,149 @@ function printCurentOutcome() {
  });    
 }
 
+function printNextTask() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_next_task",
+    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    success: function(result){
+      document.getElementById('next_task').innerHTML = JSON.parse(result)['task']
+    }
+ });    
+}
+
+
+
+
+
+
+
+
+
+/* ..................... chart ......................... */
+
+function getWeight() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_weight_trail",
+    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    success: function(result){
+     formatData(JSON.parse(result)); 
+    }
+ });    
+}
+
+function plotChart(weights) {
+    jQuery('#summary').highcharts({
+            chart: {
+                zoomType: 'x'
+            },
+            title: {
+                text: 'Weight history'
+            },
+            subtitle: {
+                text: document.ontouchstart === undefined ?
+                        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+            },
+            xAxis: {
+                type: 'datetime'
+            },
+            yAxis: {
+              min: 0,
+                title: {
+                    text: 'Weight (kg)'
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            credits: {
+                enabled: false
+            },
+            exporting: {
+              enabled: false
+            },
+            plotOptions: {
+                area: {
+                    fillColor: {
+                        linearGradient: {
+                            x1: 0,
+                            y1: 0,
+                            x2: 0,
+                            y2: 1
+                        },
+                        stops: [
+                            [0, Highcharts.getOptions().colors[0]],
+                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                        ]
+                    },
+                    marker: {
+                      enabled: true,
+                      symbol: 'circle',
+                      radius: 10
+                    },
+                    lineWidth: 1,
+                    states: {
+                        hover: {
+                            lineWidth: 1
+                        }
+                    },
+                    threshold: null
+                }
+            },
+            series: [{
+                type: 'area',
+                name: 'Weight',
+                data: weights
+            }]
+        });
+    //});
+  }
+
+  function formatData(obs) {
+    data = [];
+    for(var i = 0; i < obs.length; i++) {
+      data.push([ getDateWithFormat(obs[i][0]), obs[i][1] ]);
+    }
+    plotChart(data);
+  }
+ 
+ function getDateWithFormat(d) {
+    newDate = new Date(d);
+    var day = newDate.getDate();
+    var monthIndex = newDate.getMonth();
+    var year = newDate.getFullYear();
+
+    return Date.UTC(year,monthIndex,day);
+ 
+    months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return day + "/" + months[monthIndex] + '/' + year;
+    return day + "/" + months[monthIndex] + '/' + year;
+  }
+ 
+ function dataG() {
+      var correctedWeights = [];
+      
+      for(var i = 0; i < weights.length; i++) {
+        correctedWeights.push(weights[i][1]);
+      }
+      return [{name: 'Weight', data: correctedWeights}];
+    }
+
+  function getDates() {
+    dates = [];
+    for(var i = 0; i < weights.length; i++) {
+      dates.push(weights[i][0]);
+    }
+    return dates;
+  }
+
+
+
+
+
+printNextTask();
 initData();
 printCurentOutcome();
-
+getWeight();
 </script>

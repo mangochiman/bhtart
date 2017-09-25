@@ -1537,6 +1537,39 @@ EOF
     }.to_json
   end
 
+  def get_patient_weight_trail
+    patient_id = params[:patient_id]
+
+    weight_obs = Observation.find(:all,:joins =>"INNER JOIN encounter USING(encounter_id)",
+      :conditions =>["patient_id=? AND encounter_type=?
+      AND concept_id=?",patient_id, EncounterType.find_by_name('Vitals').id,
+        ConceptName.find_by_name('WEIGHT (KG)').concept_id],
+      :group =>"Date(encounter_datetime)",
+      :order =>"encounter_datetime DESC")
+
+    @start_date = weight_obs.last.obs_datetime.to_date rescue Date.today
+    @weights = [] ; weights = {} ; count = 1
+    (weight_obs || []).each do |weight|
+      next if weight.value_numeric.blank?
+      weights[weight.obs_datetime] = weight.value_numeric
+      break if count > 12
+      count+=1
+    end
+
+    (weights || {}).sort{|a,b|a[0].to_date <=> b[0].to_date}.each do |date,weight|
+      @weights << [date.to_date , weight]
+    end
+
+    render :text => @weights.to_json
+  end
+
+  def get_patient_next_task
+    patient_id = params[:patient_id]
+    render :text => {
+      :task => (main_next_task(Location.current_location, Patient.find(patient_id)).encounter_type)
+    }.to_json
+  end
+
 	private
 
 	def search_complete_url(found_person_id, primary_person_id)
