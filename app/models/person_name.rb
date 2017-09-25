@@ -16,6 +16,11 @@ class PersonName < ActiveRecord::Base
       :family_name_suffix_code => (self.family_name_suffix || '').soundex)
   end
 
+  def self.search(field_name, search_string)
+    return self.find(:all, :conditions =>["#{field_name} LIKE (?)", 
+      "#{search_string}%"], :limit => 10)
+  end
+
   # Looks for the most commonly used element in the database and sorts the results based on the first part of the string
   def self.find_most_common(field_name, search_string)
     return self.find_by_sql([
