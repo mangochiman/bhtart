@@ -5,7 +5,7 @@
   margin: 0 10px;
   padding: 80px 10px 5px;
   position: absolute;
-  top: 30px;
+  top: 5px;
   width: 96%;
   height: 16%;
 
@@ -106,8 +106,10 @@
     </div>
 
     <div class="drow">
-      <div class="dcell table-head">Filing number:</div>
-      <div class="dcell table-data" id="filing_number">&nbsp;</div>
+      <%if use_filing_number %>
+        <div class="dcell table-head">Filing number<span id="filing_number_type"></span>:</div>
+        <div class="dcell table-data" id="filing_number">&nbsp;</div> 
+      <%end%>
       <div class="dcell table-head">Current regimen:</div>
       <div class="dcell table-data" id="current_regimen">&nbsp;</div>
     </div>
@@ -185,6 +187,10 @@ function printName(result) {
   }
 
   document.getElementById('patient_name').innerHTML = data['name'];  
+  try {
+    document.getElementById('patient_name').innerHTML += " (" + data['birthdate'] + ")";  
+  }catch(e){};
+
   var src_path = document.getElementById('fetched_sex');
   var current_path = src_path.src;
   src_path.src = src_path.src.replace('male', sex);  
@@ -206,6 +212,19 @@ function printIdentifiers(result) {
   document.getElementById('nid').innerHTML = data['national_id'];  
   document.getElementById('filing_number').innerHTML = data['filing_number'];  
   document.getElementById('arv_number').innerHTML = data['arv_number'];  
+
+  var filingNumber = document.getElementById('filing_number');
+  if(filingNumber.innerHTML != '&nbsp;') {
+    active_number   = filing_number_prefix.split(',')[0];
+    dormant_number  = filing_number_prefix.split(',')[1];
+
+    if(active_number == filingNumber.innerHTML.substring(0, 5)){
+      document.getElementById('filing_number_type').innerHTML = " (active)";
+    }else{
+      document.getElementById('filing_number_type').innerHTML = " (dormant)";
+    }
+  }
+
 
  jQuery.ajax({
     type: "POST",
@@ -272,7 +291,8 @@ function printNextTask() {
     url: "/people/get_patient_next_task",
     data: "patient_id=" + "<%=params[:found_person_id]%>",
     success: function(result){
-      document.getElementById('next_task').innerHTML = JSON.parse(result)['task']
+      document.getElementById('next_task').innerHTML = JSON.parse(result)['task'];
+      next_url = JSON.parse(result)['url'];
     }
  });    
 }
@@ -410,7 +430,6 @@ function showDormantNumberAlert(){
 
 function checkAttributes() {
   if(use_filing_number) {
-    var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
     var filingNumber = document.getElementById('filing_number');
 
     /*if(filingNumber.innerHTML == '&nbsp;')
@@ -427,7 +446,17 @@ function checkAttributes() {
     }
   }
 
-  
+  if(document.getElementById('patient_name').innerHTML.length < 1)
+    return;
+    
+  if(next_url.length < 1)
+    return;
+    
+  document.location = next_url; 
+}
+
+function goToNextPage() {
+  document.location = next_url; 
 }
 
 function setAttributes() {
@@ -452,13 +481,15 @@ function setAttributes() {
 }
 
 var use_filing_number = <%= use_filing_number %>;
+if(use_filing_number)
+  var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
 
 printNextTask();
 initData();
 printCurentOutcome();
 getWeight();
 
-
+var next_url = null;
 
 
 
@@ -490,13 +521,13 @@ function activeFile() {
 
 
   <div style="padding-top: 65px;">
-    <span id="NoBtn" onclick="hideAlertPopup();"
+    <span id="NoBtn" onclick="hideAlertPopup();goToNextPage();"
           class="popupBtn"
-          style="position: relative;">Cancel</span>
+          style="position: relative;">No</span>
 
     <span id="YesBtn" onclick="activeFile();" 
           class="popupBtn"
-          style="position: relative;">Yes (Continue)</span>
+          style="position: relative;">Yes (activate file)</span>
 
   </div>
 
@@ -544,7 +575,6 @@ function activeFile() {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   bottom: 0px;
-  background-color: #ff0000;
 }
 
 .popupBtn {
