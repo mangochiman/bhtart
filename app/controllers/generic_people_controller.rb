@@ -1465,24 +1465,24 @@ EOF
 
     nid = PatientIdentifier.find(:first,
       :conditions => ["identifier_type = ? AND patient_id = ?",
-      identifier_type.id, patient_id]).identifier rescue 'N/A'
+        identifier_type.id, patient_id]).identifier rescue 'N/A'
 
     identifier_type = PatientIdentifierType.find_by_name('Filing number')
     filing_number = PatientIdentifier.find(:first,
       :conditions => ["identifier_type = ? AND patient_id = ?",
-      identifier_type.id, patient_id]).identifier rescue nil
+        identifier_type.id, patient_id]).identifier rescue nil
 
     if filing_number.blank?
       identifier_type = PatientIdentifierType.find_by_name('Archived filing number')
       filing_number = PatientIdentifier.find(:first,
         :conditions => ["identifier_type = ? AND patient_id = ?",
-        identifier_type.id, patient_id]).identifier rescue nil
+          identifier_type.id, patient_id]).identifier rescue nil
     end
 
     identifier_type = PatientIdentifierType.find_by_name('ARV Number')
     arv_number = PatientIdentifier.find(:first,
       :conditions => ["identifier_type = ? AND patient_id = ?",
-      identifier_type.id, patient_id]).identifier rescue nil
+        identifier_type.id, patient_id]).identifier rescue nil
 
 
     render :text => {
@@ -1588,6 +1588,56 @@ EOF
     }.to_json
   end
 
+  def get_latest_vl_result
+    patient_id = params[:patient_id]
+    patient = Patient.find(patient_id)
+    patient_identifiers = LabController.new.id_identifiers(patient)
+    results = Lab.latest_result_by_test_type(patient, 'HIV_viral_load', patient_identifiers) rescue nil
+    vl_latest_date = results[0].split('::')[0].to_date.strftime("%d-%b-%Y") rescue nil
+    vl_latest_result = results[1]["TestValue"] rescue nil
+    vl_modifier = results[1]["Range"] rescue nil
+
+    vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
+        patient.patient_id, Concept.find_by_name("Viral load").concept_id]).answer_string.squish.upcase rescue nil
+
+    repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
+                AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
+        "Repeat"]).answer_string.squish.upcase rescue nil
+
+    date_vl_result_given = Observation.find(:last, :conditions => ["
+          person_id =? AND concept_id =? AND value_text REGEXP ?", patient.patient_id,
+        Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime.strftime("%d-%b-%Y") rescue nil
+
+    data = {}
+    if vl_latest_result.blank?
+      if vl_request == "YES" || repeat_vl_request == "REPEAT"
+        vl_result = "<span style='font-weight: bold; color: red;'>(Requested)</span>"
+      else
+        vl_result = "<span style='font-weight: bold; color: red;'>(Not requested)</span>"
+      end
+    else
+      high_vl = true
+      if (vl_latest_result.to_i < 1000)
+        high_vl = false
+      end
+
+      if (vl_latest_result.to_i == 1000)
+        if (vl_modifier == '<')
+          high_vl = false
+        end
+      end
+      vl_result =  vl_modifier.to_s + vl_latest_result.to_s
+      if high_vl
+        vl_result = "<span style='color: red; font-weight: bolder;'>#{vl_result}</span>"
+      end
+    end
+    
+    data["vl_result"] = vl_result
+    data["vl_date"] = vl_latest_date
+    data["vl_date_given"] = date_vl_result_given
+    render :text => data.to_json and return
+  end
+  
 	private
 
 	def search_complete_url(found_person_id, primary_person_id)
