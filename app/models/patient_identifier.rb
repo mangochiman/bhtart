@@ -145,7 +145,37 @@ EOF
   end
 
   def self.fetch_duplicate_filing_numbers(patient_id)
+    active  = PatientIdentifierType.find_by_name("Filing number").id
 
+    active_file = ActiveRecord::Base.connection.select_one <<EOF                             
+        SELECT identifier FROM patient_identifier
+        WHERE identifier_type = #{active} AND voided = 0
+        AND patient_id = #{patient_id};
+EOF
+
+    begin
+      identifier = active_file['identifier']
+    rescue
+      return nil
+    end
+      
+    active_files = ActiveRecord::Base.connection.select_one <<EOF                             
+        SELECT identifier, count(identifier) num FROM patient_identifier
+        WHERE identifier_type = #{active} AND voided = 0
+        AND identifier = '#{identifier}' GROUP BY identifier HAVING num > 1;
+EOF
+
+
+    begin
+      if active_files['num'].to_i > 1
+        return "#{active_files['num']}, #{active_files['identifier']}"
+      end
+    rescue
+      return nil
+    end    
+  end
+
+  def self.inconsistent_patient_filing_numbers(patient_id)
     active  = PatientIdentifierType.find_by_name("Filing number").id
     dormant = PatientIdentifierType.find_by_name("Archived filing number").id
 

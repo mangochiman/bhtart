@@ -409,7 +409,30 @@ class GenericPeopleController < ApplicationController
 		@relation = params[:relation]
 		@person = Person.find(@found_person_id) rescue nil
 		patient = @person.patient
-  
+    
+    hiv_session = false
+    if current_program_location == "HIV program"
+      hiv_session = true
+    end
+
+    if use_filing_number and hiv_session
+
+      duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(patient.patient_id)
+      if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
+        redirect_to "/people/inconsistent_patient_filing_numbers?patient_id=#{patient.patient_id}"
+        return
+      end
+
+      ##### checks for duplicate filing_number
+      duplicate_filing_number = PatientIdentifier.fetch_duplicate_filing_numbers(patient.patient_id)
+      if not duplicate_filing_number.blank?
+        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{patient.patient_id}&data=#{duplicate_filing_number}"
+        return
+      end
+
+
+    end
+ 
     render :layout => 'report'
 	end
 
@@ -804,7 +827,7 @@ class GenericPeopleController < ApplicationController
 
     identifiers = []
     (params[:filing_numbers].split(',') || []).each do |f|
-      identifiers << "'#{f}'"
+      identifiers << "'#{f.squish}'"
     end
 
     ActiveRecord::Base.connection.execute <<EOF
