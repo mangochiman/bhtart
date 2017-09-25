@@ -82,25 +82,26 @@
   #update_span {
     background-color: #5f9ea0;
     border-radius: 10px;
-    bottom: -1.5px;
+    bottom: -30px;
     color: white !important;
     cursor: pointer;
     font-size: 14pt;
-    padding: 7px 37px 7px;
-    position: absolute;
+    padding: 7px 15%;
     font-weight: bolder;
+    position: relative;
   }
 
   #lab_trail_span {
     background-color: #5f9ea0;
     border-radius: 10px;
-    bottom: -1.5px;
+    bottom: -30px;
     color: white !important;
     cursor: pointer;
     font-size: 14pt;
-    padding: 7px 70px;
+    padding: 7px 20%;
     font-weight: bolder;
-    position: absolute;
+
+    position: relative;
   }
 </style>
 
@@ -154,6 +155,8 @@
       <div class="dcell table-data" id="outcome">&nbsp;</div>
       <div class="dcell table-head">Residence:</div>
       <div class="dcell table-data" id="residence">&nbsp;</div>
+      <div class="dcell table-head"><span id="update_span">Update VL</span></div>
+      <div class="dcell table-data"><span id="lab_trail_span"><span>VL Trail</span></span></div>
       
     </div>
 
