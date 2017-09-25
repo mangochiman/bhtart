@@ -1,11 +1,24 @@
 class EncountersController < GenericEncountersController
 	def new
 		#raise params.to_yaml
+		session_date = session[:datetime].to_date rescue Date.today
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
 		@patient_bean = PatientService.get_patient(@patient.person)
+    
+    if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
+			@todays_date = session_date
+			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
+      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_dispensed_medication(@patient, session_date.to_date)
+      @max_date = earliest_auto_expire_medication.to_date 
+			@suggested_appointment_date = suggest_appointment_date(@max_date)
+			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
+
+      @appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
+      render :action => params[:encounter_type] and return
+		end
+
     @gender = @patient.person.gender.upcase
     @birth_date = @patient.person.birthdate.to_date
-		session_date = session[:datetime].to_date rescue Date.today
     @previous_weight = Patient.previous_weight(@patient, session_date)
 
     fast_track_concepts_names = ["Age > 18 years and on ART > 1 year", "Not On Second Line Treatment OR on IPT",
@@ -26,18 +39,6 @@ class EncountersController < GenericEncountersController
       count = count + 1
     end
       
-		if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
-			@todays_date = session_date
-			logger.info('========================== Suggesting appointment date =================================== @ '  + Time.now.to_s)
-      earliest_auto_expire_medication = MedicationService.earliest_auto_expire_dispensed_medication(@patient, session_date.to_date)
-      @max_date = earliest_auto_expire_medication.to_date 
-			@suggested_appointment_date = suggest_appointment_date(@max_date)
-			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
-
-      @appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
-      render :action => params[:encounter_type] and return
-		end
-
     art_start_date = PatientService.date_antiretrovirals_started(@patient)
     @new_guide_lines_start_date = GlobalProperty.find_by_property('new.art.start.date').property_value.to_date rescue session_date
     @session_date = session_date

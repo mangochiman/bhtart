@@ -400,151 +400,12 @@ class GenericPeopleController < ApplicationController
 	def confirm
 		session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
 
-		if request.post?
-			#redirect_to search_complete_url(params[:found_person_id], params[:relation]) and return
-		end
 		@found_person_id = params[:found_person_id]
 		@relation = params[:relation]
 		@person = Person.find(@found_person_id) rescue nil
 		patient = @person.patient
   
-    hiv_session = false
-    if current_program_location == "HIV program"
-      hiv_session = true
-    end
-  
-    if use_filing_number and hiv_session
-
-      duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(@person.id)
-      if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
-        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{@person.id}"
-        return
-      end
-  
-    end 
-    
-    unless params[:skip_has_inconsistency_outcome_dates] == 'true'
-      if (Patient.has_inconsistency_outcome_dates?(patient))
-        #Data cleaning tool - managing inconsistency outcome dates
-        #mangochiman 14/June/2017
-        redirect_to("/people/inconsistency_outcomes?patient_id=#{patient.patient_id}") and return
-      end 
-    end 
-   
-    session[:active_patient_id] = @found_person_id
-		@outcome = patient.patient_programs.last.patient_states.last.program_workflow_state.concept.fullname rescue nil
-
-		@pp = PatientProgram.find(:first, :joins => :location, :conditions => ["program_id = ? AND patient_id = ?", Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,@person.id]).patient_states.last.program_workflow_state.concept.fullname	rescue ""
-
-		@current_hiv_program_state = PatientProgram.find(:first, :joins => :location, :conditions => ["program_id = ? AND patient_id = ? AND location.location_id = ?", Program.find_by_concept_id(Concept.find_by_name('HIV PROGRAM').id).id,@person.id, Location.current_health_center.location_id]).patient_states.last.program_workflow_state.concept.fullname rescue ''
-		@transferred_out = @current_hiv_program_state.upcase == "PATIENT TRANSFERRED OUT"? true : nil
-
-    arv_drugs_given = false
-    MedicationService.art_drug_given_before(patient,session_date).each do |order|
-      arv_drugs_given = true
-      break
-    end
-
-    #this should be done for patients with at least one ARV dispensation
-    defaulter = Patient.find_by_sql("SELECT current_defaulter(#{@person.patient.patient_id}, '#{session_date}')
-                                     AS defaulter
-                                     FROM patient_program LIMIT 1")[0].defaulter rescue 0
-
-    @defaulted = "#{defaulter}" == "0" ? nil : true if ! @pp.match(/patient\sdied/i) && arv_drugs_given == true
-
-    @task = main_next_task(Location.current_location, @person.patient, session_date)
-		@arv_number = PatientService.get_patient_identifier(@person, 'ARV Number')
-    @tb_number = PatientService.get_patient_identifier(@person, 'District TB Number')
-		@patient_bean = PatientService.get_patient(@person, session_date)
-
-
-		@art_start_date = PatientService.date_antiretrovirals_started(@person.patient)
-    @second_line_treatment_start_date = PatientService.date_started_second_line_regimen(@person.patient) rescue nil
-    @duration_in_months = PatientService.period_on_treatment(@art_start_date) rescue nil
-		#@duration_in_months = ((Time.now.to_date - @art_start_date.to_date).to_i/28) unless @art_start_date.blank?
-
-
-
-		@second_line_duration_in_months = PatientService.period_on_treatment(@second_line_treatment_start_date) rescue nil
-    @identifier_types = ["Legacy Pediatric id","National id","Legacy National id","Old Identification Number"]
-    identifier_types = PatientIdentifierType.find(:all,
-      :conditions=>["name IN (?)",@identifier_types]
-    ).collect{| type |type.id }
-
-    @patient_identifiers = LabController.new.id_identifiers(patient)
-
-    if (@task.encounter_type == 'HIV CLINIC CONSULTATION' || @task.encounter_type == 'HIV STAGING')
-      if vl_routine_check_activated 
-        @results = Lab.latest_result_by_test_type(@person.patient, 'HIV_viral_load', @patient_identifiers) rescue nil
-        @latest_date = @results[0].split('::')[0].to_date rescue nil
-        @latest_result = @results[1]["TestValue"] rescue nil
-        @modifier = @results[1]["Range"] rescue nil
-
-        @high_vl = true
-        if (@latest_result.to_i < 1000)
-          @high_vl = false
-        end
-
-        if (@latest_result.to_i == 1000)
-          if (@modifier == '<')
-            @high_vl = false
-          end
-        end
-
-        @reason_for_art = PatientService.reason_for_art_eligibility(patient)
-        vl_concept = Concept.find_by_name("Viral load")
-
-        @vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-            patient.patient_id, vl_concept.concept_id]
-        ).answer_string.squish.upcase rescue nil
-
-        @repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
-                  AND value_text =?", patient.patient_id, vl_concept.concept_id,
-            "Repeat"]).answer_string.squish.upcase rescue nil
-
-        @repeat_vl_obs_date = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
-                AND value_text =?", patient.patient_id, vl_concept.concept_id,
-            "Repeat"]).obs_datetime.to_date rescue nil
-
-        @date_vl_result_given = Observation.find(:last, :conditions => ["
-            person_id =? AND concept_id =? AND value_text REGEXP ?", @person.id,
-            vl_concept.concept_id, 'Result given to patient']).value_datetime rescue nil
-
-        @enter_lab_results = GlobalProperty.find_by_property('enter.lab.results').property_value == 'true' rescue false
-        @vl_result_hash = Patient.vl_result_hash(patient)
-      end
-    end
-
-    regimen_category = Concept.find_by_name("Regimen Category")
-
-    @current_regimen = Observation.find(:first, :conditions => ["concept_id = ? AND
-        person_id = ? AND obs_datetime = (SELECT MAX(obs_datetime) FROM obs o
-        WHERE o.person_id = #{patient.id} AND o.concept_id =#{regimen_category.id}
-        AND o.voided = 0)",regimen_category.id, patient.id]).value_text rescue nil
-
-    patient_is_htn_client = htn_client?(patient)
-    #raise patient_is_htn_client.inspect
-    if patient_is_htn_client
-      task = main_next_task(Location.current_location, patient, session_date)
-      task_url =  task.url.match(/VITALS/i) rescue nil
-      if task_url
-        @htn_alert = "Screen this patient for High Blood Pressure"
-      end
-    end
-
-    data = []
-    if national_lims_activated
-      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
-      national_id_type = PatientIdentifierType.find_by_name("National id").id
-      npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
-      url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}"
-
-      data = JSON.parse(RestClient.get(url)) rescue []
-    end
-
-    @vl_results_ready = data.length > 0
-
-    render :layout => false
+    render :layout => 'report'
 	end
 
   def inconsistency_outcomes
@@ -1579,6 +1440,103 @@ EOF
     #render :layout => "application"
   end
   
+  ##############################################
+  def get_patient_name
+    patient_id = params[:patient_id]
+
+    person = Person.find(patient_id)
+    names = PersonName.find_last_by_person_id(patient_id)
+    middle_name = names.middle_name unless names.middle_name.match(/N\/A|Unknown/i)
+    render :text => {
+      :gender => person.gender, 
+      :name => "#{names.given_name} #{middle_name} #{names.family_name}".squish,
+      :birthdate => PatientService.birthdate_formatted(person)}.to_json
+  end
+
+  def get_patient_identifiers
+    patient_id = params[:patient_id]
+    identifier_type = PatientIdentifierType.find_by_name('National ID')
+
+    nid = PatientIdentifier.find(:first,
+      :conditions => ["identifier_type = ? AND patient_id = ?",
+      identifier_type.id, patient_id]).identifier rescue 'N/A'
+
+    identifier_type = PatientIdentifierType.find_by_name('Filing number')
+    filing_number = PatientIdentifier.find(:first,
+      :conditions => ["identifier_type = ? AND patient_id = ?",
+      identifier_type.id, patient_id]).identifier rescue nil
+
+    if filing_number.blank?
+      identifier_type = PatientIdentifierType.find_by_name('Archive filing number')
+      filing_number = PatientIdentifier.find(:first,
+        :conditions => ["identifier_type = ? AND patient_id = ?",
+        identifier_type.id, patient_id]).identifier rescue nil
+    end
+
+    identifier_type = PatientIdentifierType.find_by_name('ARV Number')
+    arv_number = PatientIdentifier.find(:first,
+      :conditions => ["identifier_type = ? AND patient_id = ?",
+      identifier_type.id, patient_id]).identifier rescue nil
+
+
+    render :text => {
+      :national_id => nid,
+      :filing_number => filing_number,
+      :arv_number => arv_number
+    }.to_json
+     
+  end
+
+  def get_patient_art_start_date
+    patient_id = params[:patient_id]
+    program_id = Program.find_by_name('HIV program').id
+
+    date = Patient.find_by_sql <<EOF
+SELECT
+  date_antiretrovirals_started(#{patient_id}, min(`s`.`start_date`)) AS `earliest_start_date`
+FROM patient_state s
+INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
+WHERE s.voided = 0 AND (`p`.`program_id` = #{program_id}) 
+AND p.voided = 0 AND (s.state = 7)
+AND p.patient_id = #{patient_id}
+GROUP BY p.patient_id;
+EOF
+
+    render :text => {
+      :start_date => (date.first['earliest_start_date'].to_date.strftime('%d/%b/%Y') rescue nil)
+    }.to_json
+  end
+
+  def get_patient_duration_on_art
+    start_date = params[:start_date].to_date
+    months = Patient.find_by_sql("SELECT timestampdiff(month, DATE('#{start_date}'), current_date()) AS months;")
+    render :text => {
+      :duration => ("#{months.first['months'].to_i rescue nil} month(s)")
+    }.to_json
+  end
+
+  def get_patient_current_regimen
+    patient_id = params[:patient_id]
+    current_reg = Patient.find_by_sql("SELECT patient_current_regimen(#{patient_id}, current_date()) AS regimen;")
+    render :text => {
+      :regimen => (current_reg.first['regimen'] rescue nil)
+    }.to_json
+  end
+
+  def get_current_address
+    patient_id = params[:patient_id]
+    address = PersonAddress.find_last_by_person_id(patient_id)
+    render :text => {:current_residence => address.city_village}.to_json 
+  end
+
+  def get_current_outcome
+    patient_id = params[:patient_id]
+    current_outcome = Patient.find_by_sql("SELECT patient_outcome(#{patient_id}, current_date()) AS outcome;")
+    render :text => {
+      :outcome => (current_outcome.first['outcome'] rescue nil)
+    }.to_json
+  end
+
 	private
 
 	def search_complete_url(found_person_id, primary_person_id)
@@ -1688,4 +1646,6 @@ EOF
     render :text => "true" and return
   end
 =end
+
+
 end
