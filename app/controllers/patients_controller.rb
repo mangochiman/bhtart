@@ -498,9 +498,9 @@ EOF
     vl_result_hash.each do |accession_num, values|
       vl_data[accession_num] = {}
       range = values["range"]
-      date_of_sample = values["date_of_sample"]
+      date_of_sample = values["date_of_sample"].strftime("%d-%b-%Y") rescue values["date_of_sample"]
       result = range.to_s + " " + values["result"]
-      result_given = values["date_result_given"]
+      result_given = values["date_result_given"].strftime("%d-%b-%Y") rescue values["date_result_given"]
       date_result_given = values["date_result_given"]
       switched_to_second_line = values["second_line_switch"]
 
