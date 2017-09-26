@@ -1845,7 +1845,7 @@ WHERE t2.voided = 0 AND t2.person_id = t1.person_id
 AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id}) 
 AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
 ) GROUP BY t1.person_id, t1.value_coded
-#HAVING DATE(obs_datetime) != DATE(earliest_start_date);
+HAVING DATE(obs_datetime) != DATE(earliest_start_date);
 EOF
 
     patient_id_of_those_with_side_effects = []
