@@ -823,6 +823,12 @@ class GenericPeopleController < ApplicationController
     @dormant = duplicate_filing_numbers.last
   end
   
+  def inconsistent_patient_filing_numbers
+    duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(params[:patient_id])
+    @active = duplicate_filing_numbers.first
+    @dormant = duplicate_filing_numbers.last
+  end
+  
   def void_filing_numbers 
 
     identifiers = []
