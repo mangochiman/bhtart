@@ -2004,7 +2004,21 @@ EOF
       WHERE voided = 0 AND identifier_type = #{active_filing_number_identifier_type.id}
       GROUP BY identifier
       ").map(&:patient_id)
+   
+   
+    duplicate_identifiers = []
+    data = PatientIdentifier.find_by_sql("
+      SELECT identifier, count(identifier) AS c 
+      FROM patient_identifier WHERE voided = 0 
+      AND identifier_type = #{active_filing_number_identifier_type.id}
+      GROUP BY identifier HAVING c > 1")
     
+    (data || []).map do |i|
+      duplicate_identifiers << "'#{i['identifier']}'"
+    end
+  
+    duplicate_identifiers = ['F'] if duplicate_identifiers.blank?
+   
     #here we remove all ids that have any encounter today.
     patient_ids_with_todays_encounters = Encounter.find_by_sql("
       SELECT DISTINCT(patient_id) patient_id FROM encounter
@@ -2012,11 +2026,13 @@ EOF
               AND '#{Date.today.strftime('%Y-%m-%d 23:59:59')}'
       ").map(&:patient_id)
 
+    filing_number_identifier_type = PatientIdentifierType.find_by_name('Filing number').id
+
     patient_ids_with_todays_active_filing_numbers = PatientIdentifier.find_by_sql("
       SELECT DISTINCT(patient_id) patient_id FROM patient_identifier
       WHERE voided = 0 AND date_created BETWEEN '#{Date.today.strftime('%Y-%m-%d 00:00:00')}'
       AND '#{Date.today.strftime('%Y-%m-%d 23:59:59')}'
-      AND identifier_type = #{PatientIdentifierType.find_by_name('Filing number').id}").map(&:patient_id)
+      AND identifier_type = #{filing_number_identifier_type}").map(&:patient_id)
 
     patient_ids = (patient_ids - patient_ids_with_todays_encounters)
     patient_ids = (patient_ids - patient_ids_with_todays_active_filing_numbers)
@@ -2032,12 +2048,16 @@ EOF
     no_patient_ids = patient_ids_with_future_app.map{|ad| ad['person_id'].to_i }
     no_patient_ids = [0] if patient_ids_with_future_app.blank?
 
+
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
-SELECT patient_id,state,start_date,end_date FROM patient_state s
+SELECT p.patient_id,state,start_date,end_date FROM patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
-AND p.patient_id IN(#{patient_ids.join(',')}) 
+INNER JOIN patient_identifier i ON p.patient_id = i.patient_id
+AND i.identifier_type = #{filing_number_identifier_type} AND i.voided = 0
+WHERE p.patient_id IN(#{patient_ids.join(',')}) 
 AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
-WHERE state IN (2, 3, 4, 5, 6, 8)
+AND i.identifier NOT IN (#{duplicate_identifiers.join(',')})
+AND state IN (2, 3, 4, 5, 6, 8)
   AND state != 7
   AND start_date = (SELECT max(start_date) FROM patient_state t
   WHERE t.patient_program_id = s.patient_program_id)
@@ -2057,11 +2077,13 @@ EOF
       encounter_patient_ids = [0] if encounter_patient_ids.blank?
 
       outcomes = ActiveRecord::Base.connection.select_all <<EOF
-SELECT patient_id,state,start_date,end_date  FROM patient_state s
+SELECT p.patient_id,state,start_date,end_date  FROM patient_state s
 INNER JOIN patient_program p ON p.patient_program_id = s.patient_program_id
-AND p.patient_id IN(#{patient_ids.join(',')}) 
+INNER JOIN patient_identifier i ON p.patient_id = i.patient_id
+AND i.identifier_type = #{filing_number_identifier_type} AND i.voided = 0
+WHERE p.patient_id IN(#{patient_ids.join(',')}) 
 AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
-WHERE start_date = (SELECT max(start_date) FROM patient_state t
+AND start_date = (SELECT max(start_date) FROM patient_state t
     WHERE t.patient_program_id = s.patient_program_id)
 AND p.patient_id IN (#{encounter_patient_ids.join(',')})
 GROUP BY p.patient_id 

@@ -415,24 +415,23 @@ class GenericPeopleController < ApplicationController
       hiv_session = true
     end
 
-    if use_filing_number and hiv_session
+    if Location.current_location.name.match(/HIV Reception/i)
+      if use_filing_number and hiv_session
+        duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(patient.patient_id)
+        if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
+          redirect_to "/people/inconsistent_patient_filing_numbers?patient_id=#{patient.patient_id}"
+          return
+        end
 
-      duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(patient.patient_id)
-      if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
-        redirect_to "/people/inconsistent_patient_filing_numbers?patient_id=#{patient.patient_id}"
-        return
+        ##### checks for duplicate filing_number
+        duplicate_filing_number = PatientIdentifier.fetch_duplicate_filing_numbers(patient.patient_id)
+        if not duplicate_filing_number.blank?
+          redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{patient.patient_id}&data=#{duplicate_filing_number}"
+          return
+        end
       end
-
-      ##### checks for duplicate filing_number
-      duplicate_filing_number = PatientIdentifier.fetch_duplicate_filing_numbers(patient.patient_id)
-      if not duplicate_filing_number.blank?
-        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{patient.patient_id}&data=#{duplicate_filing_number}"
-        return
-      end
-
-
     end
- 
+     
     render :layout => 'report'
 	end
 
@@ -912,6 +911,20 @@ EOF
 
     (patients || []).each do |p|
       patient_id = p['patient_id']
+     
+      filing_number = PatientIdentifier.find_by_sql("SELECT identifier 
+      number FROM patient_identifier WHERE voided = 0 AND patient_id = #{patient_id}
+      AND identifier_type = #{filing_number_identifier_type}")
+      
+      number = filing_number.first['number'] rescue 'N/A'
+    
+      next if number.blank? || number == 'N/A'   
+      count = PatientIdentifier.find(:all, 
+        :conditions =>["identifier = ? AND identifier_type = ?", 
+        number, filing_number_identifier_type]) 
+      
+      next if count.length > 1
+     
       visit = Encounter.find_by_sql("SELECT MAX(encounter_datetime) 
       visit_date FROM encounter WHERE voided = 0 AND patient_id = #{patient_id}")
       
@@ -927,15 +940,10 @@ EOF
       state = ProgramWorkflowState.find(p['state']) rescue nil
       outcome = ConceptName.find_by_concept_id(state.concept_id).name unless state.blank?
 
-      filing_number = PatientIdentifier.find_by_sql("SELECT identifier 
-      number FROM patient_identifier WHERE voided = 0 AND patient_id = #{patient_id}
-      AND identifier_type = #{filing_number_identifier_type}")
-      
       nat_number = PatientIdentifier.find_by_sql("SELECT identifier 
       number FROM patient_identifier WHERE voided = 0 AND patient_id = #{patient_id}
       AND identifier_type = #{nat_identifier_type}")
       
-      number = filing_number.first['number'] rescue 'N/A'
       nat_number = nat_number.first['number'] rescue 'N/A'
 
       data << {
