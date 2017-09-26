@@ -138,8 +138,10 @@
       <div class="dcell table-data" id="nid"></div>
       <div class="dcell table-head">Duration on ART:</div>
       <div class="dcell table-data" id="duration_on_art">&nbsp;</div>
-      <div class="dcell table-head">Latest VL:</div>
-      <div class="dcell table-data" style="width: 2000px !important;" >&nbsp; <span id="vl_result"></span></div>
+      <%if vl_routine_check_activated %>
+        <div class="dcell table-head">Latest VL:</div>
+        <div class="dcell table-data" style="width: 2000px !important;" >&nbsp; <span id="vl_result"></span></div>
+      <%end%>
     </div>
 
     <div class="drow">
@@ -147,8 +149,10 @@
       <div class="dcell table-data" id="filing_number">&nbsp;</div>
       <div class="dcell table-head">Current regimen:</div>
       <div class="dcell table-data" id="current_regimen">&nbsp;</div>
-      <div class="dcell table-head">Date of Sample:</div>
-      <div class="dcell table-data">&nbsp; <span id="vl_date_of_sample"></span></div>
+      <%if vl_routine_check_activated %>
+        <div class="dcell table-head">Date of Sample:</div>
+        <div class="dcell table-data">&nbsp; <span id="vl_date_of_sample"></span></div>
+      <%end%>
     </div>
 
 
@@ -157,8 +161,10 @@
       <div class="dcell table-data" id="arv_number">&nbsp;</div>
       <div class="dcell table-head">ART start date:</div>
       <div class="dcell table-data" id="art_start_date">&nbsp;</div>
-      <div class="dcell table-head">Date given to patient:</div>
-      <div class="dcell table-data">&nbsp; <span id="vl_date_given"></span></div>
+      <%if vl_routine_check_activated %>
+        <div class="dcell table-head">Date given to patient:</div>
+        <div class="dcell table-data">&nbsp; <span id="vl_date_given"></span></div>
+      <%end%>
     </div>
 
     <div class="drow">
@@ -166,8 +172,10 @@
       <div class="dcell table-data" id="outcome">&nbsp;</div>
       <div class="dcell table-head">Residence:</div>
       <div class="dcell table-data" id="residence">&nbsp;</div>
-      <div class="dcell table-head"><span id="update_span"  style="display: none;" onclick="updateVl();">Update VL</span></div>
-      <div class="dcell table-data"><span id="lab_trail_span" style="display: none;" onclick="showVlLabTrail();">VL Trail</span></div>
+      <%if vl_routine_check_activated %>
+        <div class="dcell table-head"><span id="update_span"  style="display: none;" onclick="updateVl();">Update VL</span></div>
+        <div class="dcell table-data"><span id="lab_trail_span" style="display: none;" onclick="showVlLabTrail();">VL Trail</span></div>
+      <%end%>
 
     </div>
 
@@ -773,11 +781,13 @@ function setAttributes() {
 }
 
 var use_filing_number = <%= use_filing_number %>;
-  printNextTask();
-  initData();
-  printCurentOutcome();
-  getWeight();
+printNextTask();
+initData();
+printCurentOutcome();
+getWeight();
+<%if vl_routine_check_activated %>
   printLatestVLResult();
+<%end%>
 
 if(use_filing_number)
   var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
