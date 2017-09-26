@@ -27,57 +27,92 @@
   width: 24px;
 }
 
-/* ............. div tabble ............. */
 
-.dtable {
-  top: 20px;
-  position: absolute;
-  width: 98%;
-  display: table;
-}
+  /* ............. div tabble ............. */
 
-.drow {
-  display: table-row;
-}
+  .dtable {
+    top: 20px;
+    position: absolute;
+    width: 98%;
+    display: table;
+  }
 
-.dcell {
-  width: 100%;
-  display: table-cell;
-}
+  .drow {
+    display: table-row;
+  }
 
-.name {
-  border-style: solid;
-  border-width: 0px 0px 1px 0px;
-}
+  .dcell {
+    width: 100%;
+    display: table-cell;
+  }
 
-/* ........................... div table end ..... */
+  .name {
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+  }
 
-.table-head {
-  font-weight: bold;
-  width: 20%;
-}
+  /* ........................... div table end ..... */
 
-.data {
-  position: absolute;
-  top: 35%;
-  width: 99%;
-}
+  .table-head {
+    font-weight: bold;
+    width: 15%;
+  }
 
-.table-data {
-  width: 20%;
-}
+  .data {
+    position: absolute;
+    top: 35%;
+    width: 99%;
+  }
 
-.chart {
-  position: absolute;
-  top: 106%;
-}
+  .table-data {
+    width: 20%;
+  }
 
-.next_task {
-  position: absolute;
-  top: 103%;
-  z-index: 1;
-  font-weight: bold;
-}
+  .chart {
+    position: absolute;
+    top: 106%;
+  }
+
+  .next_task {
+    position: absolute;
+    top: 103%;
+    z-index: 1;
+    font-weight: bold;
+  }
+
+  #update_span {
+    background-color: #5f9ea0;
+    border-radius: 10px;
+    bottom: -12px;
+    color: white !important;
+    cursor: pointer;
+    font-size: 14pt;
+    padding: 7px 15%;
+    font-weight: bolder;
+    position: relative;
+  }
+
+  #lab_trail_span {
+    background-color: #5f9ea0;
+    border-radius: 10px;
+    bottom: -12px;
+    color: white !important;
+    cursor: pointer;
+    font-size: 14pt;
+    padding: 7px 20%;
+    font-weight: bolder;
+    position: relative;
+  }
+
+  .vl_tbody td{
+    border-bottom: 1px solid black;
+    border-right: 1px solid black;
+  }
+
+  .vl_table_header td{
+    border-bottom: 1px solid black;
+    border-top: 1px solid black;
+  }
 
 </style>
 
@@ -103,40 +138,47 @@
       <div class="dcell table-data" id="nid"></div>
       <div class="dcell table-head">Duration on ART:</div>
       <div class="dcell table-data" id="duration_on_art">&nbsp;</div>
+      <div class="dcell table-head">Latest VL:</div>
+      <div class="dcell table-data" style="width: 2000px !important;" >&nbsp; <span id="vl_result"></span></div>
     </div>
 
     <div class="drow">
-      <%if use_filing_number %>
-        <div class="dcell table-head">Filing number<span id="filing_number_type"></span>:</div>
-        <div class="dcell table-data" id="filing_number">&nbsp;</div> 
-      <%end%>
+      <div class="dcell table-head">Filing number:</div>
+      <div class="dcell table-data" id="filing_number">&nbsp;</div>
       <div class="dcell table-head">Current regimen:</div>
       <div class="dcell table-data" id="current_regimen">&nbsp;</div>
+      <div class="dcell table-head">Date of Sample:</div>
+      <div class="dcell table-data">&nbsp; <span id="vl_date_of_sample"></span></div>
     </div>
 
 
     <div class="drow">
       <div class="dcell table-head">ARV number:</div>
       <div class="dcell table-data" id="arv_number">&nbsp;</div>
-      <div class="dcell table-head">Residence:</div>
-      <div class="dcell table-data" id="residence">&nbsp;</div>
-    </div>
-
-    <div class="drow">
       <div class="dcell table-head">ART start date:</div>
       <div class="dcell table-data" id="art_start_date">&nbsp;</div>
-      <div class="dcell table-head">Latest VL:</div>
-      <div class="dcell table-data">&nbsp;</div>
+      <div class="dcell table-head">Date given to patient:</div>
+      <div class="dcell table-data">&nbsp; <span id="vl_date_given"></span></div>
     </div>
 
     <div class="drow">
       <div class="dcell table-head">Current outcome:</div>
       <div class="dcell table-data" id="outcome">&nbsp;</div>
-      <div class="dcell table-head">&nbsp;</div>
-      <div class="dcell table-data">&nbsp;</div>
+      <div class="dcell table-head">Residence:</div>
+      <div class="dcell table-data" id="residence">&nbsp;</div>
+      <div class="dcell table-head"><span id="update_span"  style="display: none;" onclick="updateVl();">Update VL</span></div>
+      <div class="dcell table-data"><span id="lab_trail_span" style="display: none;" onclick="showVlLabTrail();">VL Trail</span></div>
+
     </div>
 
-  
+    <div class="drow">
+      <div class="dcell table-head">&nbsp;</div>
+      <div class="dcell table-data">&nbsp;</div>
+      <!--<div class="dcell table-head"><span id="update_span">Update VL</span></div>
+      <div class="dcell table-data"><span id="lab_trail_span"><span>VL Trail</span></span></div>-->
+    </div>
+
+
   </div>
   
   <div class="dtable next_task">
@@ -154,6 +196,57 @@
 
 </div>
 
+<div id="vl_lab_trail_cover" style="display:none;">
+
+</div>
+
+<div id="vl_lab_trail" style="display:none;">
+  <div id="vl_lab_trail_header">
+    <span style="font-size: 16pt; margin-left: 4.5%;">Viral load lab trail</span>
+  </div>
+
+  <div id="vl_lab_trail_content">
+    <div style="overflow:auto; height: 365px; position: relative;">
+      <table cellspacing='0' style="position:absolute; width:94%; top:10%; left: 3%;">
+        <tr class="vl_table_header" style="background-color: #A2CD5A; line-height: 2em; font-size: 18px;">
+          <td style="min-width: 130px;"><span><center>Date of Sample</center></span></td>
+          <td style="min-width: 120px;"><span><center>Result</center></span></td>
+          <td><span><center>Result given?</center></span></td>
+          <td><span><center>Date result given</center></span></td>
+          <td><span><center>Switched to second line?</center></span></td>
+        </tr>
+        <tbody id="vl_tbody">
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="vl_lab_trail_footer">
+    <span onclick="hideVlLabTrail();">Done</span>
+  </div>
+</div>
+
+<div id="new_vl_menu" style="display: none; width:40%; height: 56%; left:30%;">
+  <div id="new_vl_menu_header">
+    <span style="font-size: 15pt;">Select action</span>
+  </div>
+  <div id="new_vl_menu_content">
+    <table style="position:absolute; width: 100%; height:75%;" cellspacing="0">
+
+      <tbody><tr id="give_result_button" onclick="giveResultPath();" style="line-height: 3em;"><td><span>Result given to patient</span></td></tr>
+
+        <tr onclick="newVlResultPath();" style="line-height: 3em;"><td><span>Enter new VL result</span></td></tr>
+        <!--<tr onclick="secondlineSwitchPath();" style="line-height: 3em;"><td><span>Patient switched to second line</span></td></tr>
+        <tr onclick="removeUpdateVlMenu();" style="line-height: 3em;"><td><span>Back to milestone screening</span></td></tr>-->
+        <tr onclick="repeat_vl_requested();" style="line-height: 3em;"><td><span>Request VL today</span></td></tr>
+      </tbody></table>
+  </div>
+  <div id="new_vl_menu_footer">
+    <span onclick="removeUpdateVlMenu();"><b style="margin-left: 45%;">Cancel</b></span>
+  </div>
+</div>
+
 
 </body>
 
@@ -161,14 +254,15 @@
 
 <%= javascript_include_tag "Highcharts/js/highcharts" %>
 <%= javascript_include_tag "Highcharts/js/modules/exporting" %>
-<script>
+<script type="text/javascript">
+var patientID = "<%=params[:found_person_id]%>";
 
 function initData() {
 
  jQuery.ajax({
     type: "POST",
     url: "/people/get_patient_name",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
       printName(result);
     }
@@ -198,7 +292,7 @@ function printName(result) {
  jQuery.ajax({
     type: "POST",
     url: "/people/get_patient_identifiers",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
       printIdentifiers(result);
     }
@@ -229,7 +323,7 @@ function printIdentifiers(result) {
  jQuery.ajax({
     type: "POST",
     url: "/people/get_patient_art_start_date",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
       document.getElementById('art_start_date').innerHTML = JSON.parse(result)['start_date']
       printDurationOnART(JSON.parse(result)['start_date']);
@@ -255,7 +349,7 @@ function printCurentRegimen() {
  jQuery.ajax({
     type: "POST",
     url: "/people/get_patient_current_regimen",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
       document.getElementById('current_regimen').innerHTML = JSON.parse(result)['regimen']
       printCurentResidence(); 
@@ -267,7 +361,7 @@ function printCurentResidence() {
  jQuery.ajax({
     type: "POST",
     url: "/people/get_current_address",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
       document.getElementById('residence').innerHTML = JSON.parse(result)['current_residence']
     }
@@ -278,7 +372,7 @@ function printCurentOutcome() {
  jQuery.ajax({
     type: "POST",
     url: "/people/get_current_outcome",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
       document.getElementById('outcome').innerHTML = JSON.parse(result)['outcome']
     }
@@ -289,7 +383,7 @@ function printNextTask() {
  jQuery.ajax({
     type: "POST",
     url: "/people/get_patient_next_task",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
       document.getElementById('next_task').innerHTML = JSON.parse(result)['task'];
       next_url = JSON.parse(result)['url'];
@@ -297,13 +391,196 @@ function printNextTask() {
  });    
 }
 
+  function printLatestVLResult(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/people/get_latest_vl_result",
+      data: "patient_id=" + patientID,
+      success: function(result){
+        vl_data = JSON.parse(result)
+        vl_result = vl_data["vl_result"];
+        vl_date = vl_data["vl_date"];
+        vl_date_given = vl_data["vl_date_given"]; //results_available
+        results_available = vl_data["results_available"];
 
+        give_result_button = document.getElementById("give_result_button");
+        if (results_available == "false"){
+          if (give_result_button){
+            //give_result_button.style.backgroundColor = "#FEE0C6";
+            //give_result_button.setAttribute("onclick", "");
+            //give_result_button.style.color = 'gray';
+          }
+        }
+        document.getElementById('vl_result').innerHTML = vl_result;
+        document.getElementById('vl_date_of_sample').innerHTML = vl_date;
+        document.getElementById('vl_date_given').innerHTML = vl_date_given;
+        document.getElementById('update_span').style.display = "inline";
+        document.getElementById('lab_trail_span').style.display = "inline"
+      }
+    });
+  }
 
+  function showPopup(){
+    popup = document.getElementById('popup')
+    content = document.getElementById('content')
+    content.appendChild(popup)
+    if (typeof popup != 'undefined'){
+      document.getElementById('popup').style.display='inline'
+      document.getElementById('cover').style.display='inline'
+    }
+  }
 
+  function showVlRepeatPopup(){
+    popup = document.getElementById('vl_repeat_popup')
+    content = document.getElementById('content')
+    content.appendChild(popup)
+    if (typeof popup != 'undefined'){
+      document.getElementById('vl_repeat_popup').style.display='inline'
+      document.getElementById('cover').style.display='inline'
+    }
+  }
 
+  function updateVl(){
+    //content = document.getElementById('content');
+    vl_menu = document.getElementById('new_vl_menu');
+    //content.appendChild(vl_menu);
+    vl_menu.style.display = 'inline';
+    document.getElementById('vl_lab_trail_cover').style.display='inline';
+    //document.getElementById('cover').style.display='inline'
+  }
 
+  function removeUpdateVlMenu(){
+    vl_menu = document.getElementById('new_vl_menu');
+    vl_menu.style.display='none';
+    cover = document.getElementById('vl_lab_trail_cover');
+    cover.style.display='none'
+  }
 
+  function newVlResultPath(){
+    window.location = "/lab/viral_load_result?patient_id=" + patientID;
+  }
 
+  function giveResultPath(){
+    window.location = "/lab/give_result?patient_id=" + patientID;
+  }
+
+  function newVlResultPathWithParam(){
+    window.location = "/lab/viral_load_result?patient_id=" + patientID + "&go_to_next_task=true"
+  }
+
+  function secondlineSwitchPath(){
+    window.location = "/lab/second_line_switch?patient_id=" + patientID;
+  }
+
+  function viral_load_requested_today(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/viral_load_request",
+      data: "patient_id=" + patientID + "&requested_today=true",
+      success: function(next_task){
+        window.location = next_task;
+      }
+
+    });
+  }
+
+  function viral_load_not_requested_today(){
+
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/viral_load_request",
+      data: "patient_id=" + patientID,
+      success: function(next_task){
+        window.location = next_task;
+      }
+
+    });
+  }
+
+  function repeat_vl_requested(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/repeat_viral_load_request",
+      data: "patient_id=" + patientID,
+      success: function(){
+        window.location="/people/confirm?found_person_id=" + patientID;
+      }
+    });
+  }
+
+  function vl_already_done(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/viral_load_already_done",
+      data: "patient_id=" + patientID,
+      success: function(next_task){
+        window.location = next_task;
+      }
+    });
+  }
+
+  function vl_adherence_issue(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/vl_not_done_due_to_adherence",
+      data: "patient_id=" + patientID,
+      success: function(next_task){
+        window.location = next_task;
+      }
+
+    });
+  }
+
+  function hidePopup(){
+    //document.getElementById('popup').style.display = 'none'
+    //window.location = next_task;
+  }
+
+  function captureVl(){
+    window.location="/lab/new?patient_id=" + patientID +  "&viral_load=true"
+  }
+
+  function showVlLabTrail(){
+    document.getElementById('vl_lab_trail_cover').style.display='inline';
+    document.getElementById('vl_lab_trail').style.display='inline';
+    getPatientVLTrail();
+  }
+
+  function hideVlLabTrail(){
+    document.getElementById('vl_lab_trail_cover').style.display='none';
+    document.getElementById('vl_lab_trail').style.display='none';
+  }
+
+  function getPatientVLTrail(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/patients/get_patient_vl_trail",
+      data: "patient_id=" + patientID,
+      success: function(results){
+        vl_data = JSON.parse(results);
+        vl_tbody = document.getElementById('vl_tbody');
+        vl_tbody.innerHTML = "";
+        for (var i in vl_data){
+          date_of_sample = vl_data[i]["date_of_sample"];
+          result = vl_data[i]["result"];
+          result_given = vl_data[i]["result_given"];
+          date_result_given = vl_data[i]["date_result_given"];
+          switched_to_second_line = vl_data[i]["switched_to_second_line"];
+
+          tr = '<tr style="line-height: 3em;" class="vl_tbody">';
+          tr += '<td style="border-left: 1px solid black;"><span><center>' + date_of_sample + '</center></span></td>';
+          tr += '<td style="border-left: 1px solid black;"><span><center>' + result + '</center></span></td>';
+          tr += '<td style="border-left: 1px solid black;"><span><center>' + result_given + '</center></span></td>';
+          tr += '<td style="border-left: 1px solid black;"><span><center>' + date_result_given + '</center></span></td>';
+          tr += '<td style="border-left: 1px solid black;"><span><center>' + switched_to_second_line + '</center></span></td>';
+          tr += '</tr>';
+          vl_tbody.innerHTML += tr;
+        }
+        
+      }
+
+    });
+  }
 
 /* ..................... chart ......................... */
 
@@ -311,7 +588,7 @@ function getWeight() {
  jQuery.ajax({
     type: "POST",
     url: "/people/get_patient_weight_trail",
-    data: "patient_id=" + "<%=params[:found_person_id]%>",
+    data: "patient_id=" + patientID,
     success: function(result){
      formatData(JSON.parse(result)); 
     }
@@ -406,14 +683,27 @@ function getDateWithFormat(d) {
   return day + "/" + months[monthIndex] + '/' + year;
 }
 
-function dataG() {
-  var correctedWeights = [];
+  function getDateWithFormat(d) {
+    newDate = new Date(d);
+    var day = newDate.getDate();
+    var monthIndex = newDate.getMonth();
+    var year = newDate.getFullYear();
 
-  for(var i = 0; i < weights.length; i++) {
-    correctedWeights.push(weights[i][1]);
+    return Date.UTC(year,monthIndex,day);
+ 
+    months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return day + "/" + months[monthIndex] + '/' + year;
+    return day + "/" + months[monthIndex] + '/' + year;
   }
-  return [{name: 'Weight', data: correctedWeights}];
-}
+ 
+  function dataG() {
+    var correctedWeights = [];
+      
+    for(var i = 0; i < weights.length; i++) {
+      correctedWeights.push(weights[i][1]);
+    }
+    return [{name: 'Weight', data: correctedWeights}];
+  }
 
 function getDates() {
   dates = [];
@@ -483,18 +773,17 @@ function setAttributes() {
 }
 
 var use_filing_number = <%= use_filing_number %>;
+  printNextTask();
+  initData();
+  printCurentOutcome();
+  getWeight();
+  printLatestVLResult();
+
 if(use_filing_number)
   var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
 
-printNextTask();
-initData();
-printCurentOutcome();
-getWeight();
 
 var next_url = null;
-
-
-
 
 function hideAlertPopup(){
   document.getElementById("alert-cover").style.display = 'none';
@@ -508,7 +797,395 @@ function activeFile() {
 }
 </script>
 
+<style type="text/css">
+  #vl_lab_trail_cover{
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.25;
+  }
 
+  #popup{
+    -moz-user-select: none;
+    background-color: white;
+    border: 4px solid #C6C6C6;
+    border-radius: 15px 15px 15px 15px;
+    color: black;
+    font-size: 28px;
+    height: 579px;
+    left: 2%;
+    padding: 5px;
+    position: absolute;
+    text-align: center;
+    top: 5%;
+    width: 94%;
+    z-index: 991;
+  }
+  #cover{
+    display:none;
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.5;
+  }
+
+  #viral_load_done {
+    position: absolute;
+    border-radius: 7px;
+    background-color:	#2E8B57;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 1px outset black;
+    color: white;
+    padding: 9px 16px 16px 19px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    bottom: 0px;
+    left: 54px;
+    font-weight: bold;
+    font-size: 18pt;
+  }
+
+  #lab_trail {
+    position: absolute;
+    border-radius: 7px;
+    background-color: #2E8B57;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 1px outset black;
+    color: white;
+    padding: 9px 16px 16px 19px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    bottom: 0px;
+    left: 372px;
+    font-weight: bold;
+    font-size: 18pt;
+  }
+
+
+  #reminder {
+    position: absolute;
+    border-radius: 7px;
+    background-color: #2E8B57;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 1px outset black;
+    color: white;
+    padding: 9px 16px 16px 19px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    bottom: 0px;
+    left: 572px;
+    font-weight: bold;
+    font-size: 18pt;
+  }
+
+  .popup_hr{
+    position: absolute;
+    background-color: #669999;
+    height: 5px;
+    width: 99%;
+    bottom: 55px;
+
+  }
+
+  .popup_hr_without_lab{
+    position: absolute;
+    background-color: #669999;
+    height: 5px;
+    width: 99%;
+    bottom: 68px;
+
+  }
+
+  #viral_header{
+    font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+    font-weight: bold;
+    font-size: 18pt;
+    color: #1874CD;
+  }
+
+  #more_details{
+    font-family: Georgia, Times, "Times New Roman", serif;
+
+  }
+
+  #viral_load_requested_today {
+    position: absolute;
+    border-radius: 7px;
+    background-color:	#2E8B57;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 1px outset black;
+    color: white;
+    padding: 9px 16px 16px 19px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    bottom: 0px;
+    left: 4%;
+    font-weight: bold;
+    font-size: 14pt;
+  }
+
+  #viral_load_already_done {
+    position: absolute;
+    border-radius: 7px;
+    background-color:	#2E8B57;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 1px outset black;
+    color: white;
+    padding: 9px 16px 16px 19px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    bottom: 0px;
+    right: 4%;
+    font-weight: bold;
+    font-size: 14pt;
+  }
+
+  #viral_load_adherence_issues {
+    position: absolute;
+    border-radius: 7px;
+    background-color:	#2E8B57;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 1px outset black;
+    color: white;
+    padding: 9px 16px 16px 19px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    bottom: 0px;
+    left: 644px;
+    font-weight: bold;
+    font-size: 14pt;
+  }
+
+
+  #vl_lab_trail, #new_vl_menu, .new_vl_menu{
+    position: absolute;
+    width: 95%;
+    height: 70%;
+    top: 10%;
+    z-index: 991;
+    left: 3%;
+    border: 1px solid black;
+    background-color: #FEE0C6;
+    border-radius: 15px;
+  }
+  #vl_lab_trail_header, #new_vl_menu_header, .new_vl_menu_header{
+    padding: 10px;
+    background-color: gray;
+    color: white;
+    border-radius: 15px 15px 0px 0px;
+
+  }
+  #vl_lab_trail_footer, #new_vl_menu_footer, .new_vl_menu_footer{
+    background-color: gray;
+    height: 60px;
+    width: 100%;
+    position: absolute;
+    width: 100%;
+    position: absolute;
+    bottom: 0px;
+    border-radius: 0px 0px 15px 15px;
+  }
+  #vl_lab_trail_footer span{
+    border-radius: 13px;
+    background-color: #C1CDCD;
+    position: absolute;
+    padding: 12px 20%;
+    left: 27%;
+    bottom: 8px;
+    cursor: pointer;
+  }
+  #new_vl_menu_footer span, .new_vl_menu_footer span{
+    border-radius: 8px;
+    background-color: #C1CDCD;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    position: absolute;
+    width: 98%;
+    left: 1%;
+    bottom: 5px;
+    cursor: pointer;
+  }
+  .vl_tbody td{
+    border-bottom: 1px solid black;
+    border-right: 1px solid black;
+  }
+  .vl_table_header td{
+    border-bottom: 1px solid black;
+    border-top: 1px solid black;
+  }
+
+  #vl_lab_trail_cover{
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.25;
+  }
+  #new_vl_menu_content table td, .new_vl_menu_content table td{
+    border-bottom: 1px solid black;
+  }
+  #new_vl_menu_content span, .new_vl_menu_content span{
+    font-size: 14pt;
+    margin-left: 32% !important;
+  }
+  #new_vl_menu_content tr:hover, .new_vl_menu_content tr:hover{
+    background-color: white;
+  }
+  #new_vl_menu_content tr, .new_vl_menu_content tr{
+    cursor: pointer;
+  }
+  #vl_data_footer{
+    background-color: #FEFEF2;
+    height: 60px;
+    width: 100%;
+    position: absolute;
+    width: 99.5%;
+    position: absolute;
+    bottom: 2px;
+    border-radius: 0px 0px 15px 15px;
+    left: 1px;
+    border-top: 2px solid black;
+  }
+
+  #vl_data{
+    position: absolute;
+    -moz-user-select: none;
+    background-color: #FFFFFF;
+    border: 1px solid #999999;
+    border-radius: 20px 20px 20px 20px;
+    display: table;
+    margin: 5px;
+    overflow: hidden;
+    padding: 10px;
+    width: 36%;
+    z-index: 800;
+    right: 10px;
+    top: 0%;
+    height: 26%;
+  }
+
+  #vl_update {
+    position: absolute;
+    border-radius: 17px;
+    background-color: #CD853F;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 5px outset #0000CD;
+    color: white;
+    padding: 4px 8px 8px 4px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14pt;
+    width: 32%;
+    left: 0%;
+    top: 117%;
+    letter-spacing: 7px;
+  }
+  #view_vl_results{
+    position: absolute;
+    border-radius: 17px;
+    background-color: #CD853F;
+    border-bottom: 1px outset black;
+    border-style: outset;
+    border-top: 5px outset #0000CD;
+    color: white;
+    padding: 4px 8px 8px 4px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14pt;
+    width: 38%;
+    right: 6%;
+    top: 117%;
+    letter-spacing: 7px;
+  }
+
+  #update_vl_menu{
+    border-radius: 10px;
+    position: absolute;
+    background-color: #DCDCDC;
+    border: 3px solid black;
+    height: 55%;
+    z-index: 991;
+    left: 40%;
+    top:20%;
+    width: 45%;
+    left: 20%;
+  }
+
+  #update_vl_button{
+    display: block;
+    border-radius: 17px;
+    background-color: #6E7B8B;
+    border-style: outset;
+    padding: 19px 21px 18px 45px;
+    cursor: pointer;
+    width: 40%;
+    margin-left: 20%;
+    text-align: center;
+    color: white;
+    font-size: 14pt;
+  }
+
+  #gray_button{
+    background-color: gray;
+    border-radius: 10px;
+    width: 50%;
+  }
+
+  #update_vl_button_gray{
+    display: block;
+    border-radius: 17px;
+    background-color: #C5C1AA;
+    border-style: outset;
+    padding: 19px 21px 18px 45px;
+    cursor: not-allowed;
+    width: 40%;
+    margin-left: 20%;
+    text-align: center;
+    color: gray;
+    font-size: 14pt;
+  }
+
+  .popup_vl{
+    border-radius: 10px !important;
+    position: absolute;
+    background-color: #DCDCDC;
+    border: 3px solid black !important;
+    height: 45% !important;
+    left: 40% !important;
+    top:20% !important;
+    width: 45% !important;
+    left: 20% !important;
+  }
+
+</style>
 
 <div id="alert-cover"></div>
 

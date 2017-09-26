@@ -1633,7 +1633,9 @@ EOF
     patient_id = params[:patient_id]
     patient = Patient.find(patient_id)
     patient_identifiers = LabController.new.id_identifiers(patient)
+    results_available = "true"
     results = Lab.latest_result_by_test_type(patient, 'HIV_viral_load', patient_identifiers) rescue nil
+    results_available = "false" if results.blank?
     vl_latest_date = results[0].split('::')[0].to_date.strftime("%d-%b-%Y") rescue nil
     vl_latest_result = results[1]["TestValue"] rescue nil
     vl_modifier = results[1]["Range"] rescue nil
@@ -1676,6 +1678,7 @@ EOF
     data["vl_result"] = vl_result
     data["vl_date"] = vl_latest_date
     data["vl_date_given"] = date_vl_result_given
+    data["results_available"] = results_available
     render :text => data.to_json and return
   end
   
