@@ -1582,8 +1582,9 @@ EOF
 
   def get_patient_next_task
     patient_id = params[:patient_id]
+    task = main_next_task(Location.current_location, Patient.find(patient_id))
     render :text => {
-      :task => (main_next_task(Location.current_location, Patient.find(patient_id)).encounter_type)
+      :task => task.encounter_type, :url => task.url
     }.to_json
   end
 
