@@ -117,7 +117,7 @@
 <%
 #raise @patient_obj.inspect
 %>
-
+<body onload="setAttributes();">
 
 <div class="demographics">
 
@@ -245,6 +245,8 @@
   </div>
 </div>
 
+
+</body>
 
 <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
 
@@ -574,79 +576,100 @@
     });
   }
 
-  function plotChart(weights) {
-    jQuery('#summary').highcharts({
-      chart: {
-        zoomType: 'x'
-      },
-      title: {
-        text: 'Weight history'
-      },
-      subtitle: {
-        text: document.ontouchstart === undefined ?
-          'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-      },
-      xAxis: {
-        type: 'datetime'
-      },
-      yAxis: {
-        min: 0,
-        title: {
-          text: 'Weight (kg)'
-        }
-      },
-      legend: {
-        enabled: false
-      },
-      credits: {
-        enabled: false
-      },
-      exporting: {
-        enabled: false
-      },
-      plotOptions: {
-        area: {
-          fillColor: {
-            linearGradient: {
-              x1: 0,
-              y1: 0,
-              x2: 0,
-              y2: 1
-            },
-            stops: [
-              [0, Highcharts.getOptions().colors[0]],
-              [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-            ]
-          },
-          marker: {
-            enabled: true,
-            symbol: 'circle',
-            radius: 10
-          },
-          lineWidth: 1,
-          states: {
-            hover: {
-              lineWidth: 1
-            }
-          },
-          threshold: null
-        }
-      },
-      series: [{
-          type: 'area',
-          name: 'Weight',
-          data: weights
-        }]
-    });
-    //});
-  }
 
-  function formatData(obs) {
-    data = [];
-    for(var i = 0; i < obs.length; i++) {
-      data.push([ getDateWithFormat(obs[i][0]), obs[i][1] ]);
+function plotChart(weights) {
+  jQuery('#summary').highcharts({
+    chart: {
+        zoomType: 'x'
+    },
+    title: {
+        text: 'Weight history'
+    },
+    subtitle: {
+        text: document.ontouchstart === undefined ?
+                'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+    },
+    xAxis: {
+        type: 'datetime'
+    },
+    yAxis: {
+      min: 0,
+        title: {
+            text: 'Weight (kg)'
+        }
+    },
+    legend: {
+        enabled: false
+    },
+    credits: {
+        enabled: false
+    },
+    exporting: {
+      enabled: false
+    },
+    plotOptions: {
+      area: {
+        fillColor: {
+          linearGradient: {
+            x1: 0,
+            y1: 0,
+            x2: 0,
+            y2: 1
+        },
+        stops: [
+          [0, Highcharts.getOptions().colors[0]],
+          [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+        ]
+      },
+      marker: {
+        enabled: true,
+        symbol: 'circle',
+        radius: 10
+      },
+      lineWidth: 1,
+      states: {
+        hover: {
+          lineWidth: 1
+        }
+      },
+      threshold: null
     }
-    plotChart(data);
+  },
+  series: [{
+    type: 'area',
+    name: 'Weight',
+    data: weights
+  }]
+});
+
+}
+
+function formatData(obs) {
+  data = [];
+  for(var i = 0; i < obs.length; i++) {
+    data.push([ getDateWithFormat(obs[i][0]), obs[i][1] ]);
+  }
+  plotChart(data);
+}
+
+function getDateWithFormat(d) {
+  newDate = new Date(d);
+  var day = newDate.getDate();
+  var monthIndex = newDate.getMonth();
+  var year = newDate.getFullYear();
+
+  return Date.UTC(year,monthIndex,day);
+
+  months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return day + "/" + months[monthIndex] + '/' + year;
+  return day + "/" + months[monthIndex] + '/' + year;
+}
+
+function dataG() {
+  var correctedWeights = [];
+
+  for(var i = 0; i < weights.length; i++) {
+    correctedWeights.push(weights[i][1]);
   }
  
   function getDateWithFormat(d) {
@@ -670,27 +693,83 @@
     }
     return [{name: 'Weight', data: correctedWeights}];
   }
+  
+}
 
-  function getDates() {
-    dates = [];
-    for(var i = 0; i < weights.length; i++) {
-      dates.push(weights[i][0]);
+function getDates() {
+  dates = [];
+  for(var i = 0; i < weights.length; i++) {
+    dates.push(weights[i][0]);
+  }
+  return dates;
+}
+
+function showDormantNumberAlert(){
+  document.getElementById("alert-cover").style.display = 'inline';
+  document.getElementById("alert-popup-div").style.display = 'inline';
+}
+
+function checkAttributes() {
+  if(use_filing_number) {
+    var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
+    var filingNumber = document.getElementById('filing_number');
+
+    /*if(filingNumber.innerHTML == '&nbsp;')
+      return; */
+    
+    active_number   = filing_number_prefix.split(',')[0];
+    dormant_number  = filing_number_prefix.split(',')[1];
+
+    if(active_number.substring(0, 5) == filingNumber.innerHTML.substring(0, 5)){
+      //alert('Active filing number');
+    }else{
+      showDormantNumberAlert();
+      return
     }
-    return dates;
   }
 
+  
+}
 
+function setAttributes() {
+  try {
+    var nextBtn = document.getElementById('logout');
+    nextBtn.innerHTML = '<span>Continue</span>';
+    nextBtn.setAttribute('onmousedown', 'checkAttributes();');
 
+    var buttons = document.getElementById('buttons');
+    var newBtn = document.createElement('button');
+    newBtn.setAttribute('class','red left');
+    newBtn.setAttribute('onmousedown',"document.location='/'");
+    newBtn.setAttribute("style","position :relative; float: left;");
+    newBtn.innerHTML = '<span>Cancel</span>';
 
+    var span = document.createElement('span');
+    span.appendChild(newBtn);
+    buttons.innerHTML += span.innerHTML;
 
+  }catch(e) {
+  }
+}
+
+var use_filing_number = <%= use_filing_number %>;
   printNextTask();
   initData();
   printCurentOutcome();
   getWeight();
   printLatestVLResult();
+
+function hideAlertPopup(){
+  document.getElementById("alert-cover").style.display = 'none';
+  document.getElementById("alert-popup-div").style.display = 'none';
+}
+
+function activeFile() {
+  document.getElementById("alert-popup-div").style.display = 'none';
+  var nextBtn = document.getElementById('nextButton');
+  document.location = "/people/redirections?person_id=<%=params[:found_person_id]%>"
+}
 </script>
-
-
 
 <style type="text/css">
   #vl_lab_trail_cover{
@@ -1080,4 +1159,97 @@
     left: 20% !important;
   }
 
+</style>
+
+<div id="alert-cover"></div>
+
+<div id="alert-popup-div">
+  <div style="text-align: center; border-style: solid; border-width: 0px 0px 1px;">
+    <span style="color: tomato; font-weight: bold; font-size: 25px;">Dormant file</span>
+  </div>
+
+  <div>
+    <p>Patient file is in archive cabinets. Move file to active cabinets?</p>
+  </div>
+
+
+  <div style="padding-top: 65px;">
+    <span id="NoBtn" onclick="hideAlertPopup();"
+          class="popupBtn"
+          style="position: relative;">Cancel</span>
+
+    <span id="YesBtn" onclick="activeFile();" 
+          class="popupBtn"
+          style="position: relative;">Yes (Continue)</span>
+
+  </div>
+
+</div>
+
+
+<style>
+#alert-cover{
+  display: none;
+  position: absolute;
+  background-color: black;
+  width: 100%;
+  height: 102%;
+  left: 0%;
+  top: 0%;
+  z-index: 990;
+  opacity: 0.65;
+}
+
+#alert-popup-div {
+  display: none;
+  background-color: #F4F4F4;
+  border: 2px solid #E0E0E0;
+  border-radius: 15px;
+  height: 220px;
+  padding: 5px;
+  position: absolute;
+  margin-top: 100px;
+  width: 530px;
+  /*margin-left: 430px;*/
+  left: 20%;
+  z-index: 991;
+}
+
+#YesBtn {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  bottom: 0px;
+  margin-right: 40px;
+}
+
+#NoBtn {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  bottom: 0px;
+  background-color: #ff0000;
+}
+
+.popupBtn {
+  -moz-user-select: none;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 16px;
+  font-weight: bolder;
+  line-height: 2.29;
+  margin-bottom: 0;
+  padding: 6px 56px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  background-color: #337ab7;
+  border-color: #2e6da4;
+  color: #fff;
+  float: right;
+  margin-top: -5px;
+}
 </style>
