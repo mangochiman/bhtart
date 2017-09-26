@@ -848,9 +848,16 @@ EOF
     
     if use_filing_number and hiv_session
 
-      duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(person.id)
+      duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(person.person_id)
       if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
-        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{person.id}"
+        redirect_to "/people/inconsistent_patient_filing_numbers?patient_id=#{person.person_id}"
+        return
+      end
+
+      ##### checks for duplicate filing_number
+      duplicate_filing_number = PatientIdentifier.fetch_duplicate_filing_numbers(person.person_id)
+      if not duplicate_filing_number.blank?
+        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{person.person_id}&data=#{duplicate_filing_number}"
         return
       end
 
