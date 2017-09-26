@@ -817,6 +817,7 @@ EOF
     if current_program_location == "HIV program"
       hiv_session = true
     end
+    
     if use_filing_number and hiv_session
 
       duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(person.id)
@@ -1446,7 +1447,12 @@ EOF
 
     person = Person.find(patient_id)
     names = PersonName.find_last_by_person_id(patient_id)
-    middle_name = names.middle_name unless names.middle_name.match(/N\/A|Unknown/i)
+    begin
+      middle_name = names.middle_name unless names.middle_name.match(/N\/A|Unknown/i)
+    rescue
+      middle_name = nil
+    end
+
     render :text => {
       :gender => person.gender, 
       :name => "#{names.given_name} #{middle_name} #{names.family_name}".squish,
@@ -1467,7 +1473,7 @@ EOF
         identifier_type.id, patient_id]).identifier rescue nil
 
     if filing_number.blank?
-      identifier_type = PatientIdentifierType.find_by_name('Archive filing number')
+      identifier_type = PatientIdentifierType.find_by_name('Archived filing number')
       filing_number = PatientIdentifier.find(:first,
         :conditions => ["identifier_type = ? AND patient_id = ?",
           identifier_type.id, patient_id]).identifier rescue nil
@@ -1508,10 +1514,16 @@ EOF
   end
 
   def get_patient_duration_on_art
-    start_date = params[:start_date].to_date
-    months = Patient.find_by_sql("SELECT timestampdiff(month, DATE('#{start_date}'), current_date()) AS months;")
+    begin
+      start_date = params[:start_date].to_date
+      months = Patient.find_by_sql("SELECT timestampdiff(month, DATE('#{start_date}'), current_date()) AS months;")
+      months = ("#{months.first['months'].to_i rescue nil} month(s)")
+    rescue
+      months = 'N/A'
+    end
+
     render :text => {
-      :duration => ("#{months.first['months'].to_i rescue nil} month(s)")
+      :duration => months
     }.to_json
   end
 
@@ -1525,8 +1537,13 @@ EOF
 
   def get_current_address
     patient_id = params[:patient_id]
-    address = PersonAddress.find_last_by_person_id(patient_id)
-    render :text => {:current_residence => address.city_village}.to_json 
+    begin
+      address = PersonAddress.find_last_by_person_id(patient_id).city_village
+    rescue
+      address = 'Unknown'
+    end
+
+    render :text => {:current_residence => address}.to_json 
   end
 
   def get_current_outcome
