@@ -28,7 +28,7 @@
 
 function changeFinishBtn() {
   var btn = document.getElementById('nextButton');
-  btn.innerHTML = "<span>Void duplicate numbers</span>";
+  btn.innerHTML = "<span>Void inconsistent numbers</span>";
 }
 
 function loadDuplicates() {
@@ -89,7 +89,7 @@ function loadDuplicates() {
 <form id='appointment' action="/people/void_filing_numbers" method='post'>
     <%= text_field_tag :summary, nil, { 
       :tt_onLoad => "changeFinishBtn();loadDuplicates();__$('keyboard').style.display = 'none';", 
-      :helpText => "Duplicate filing numbers",
+      :helpText => "Inconsistent filing numbers",
       :optional => true,
       :tt_pageStyleClass => "NoControls" } 
     %>
