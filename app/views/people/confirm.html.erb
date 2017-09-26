@@ -1,31 +1,32 @@
 <style>
-  .demographics {
-    border-style: solid;
-    border-width: 1px;
-    margin: 0 10px;
-    padding: 80px 10px 5px;
-    position: absolute;
-    top: 30px;
-    width: 96%;
-    height: 16%;
+.demographics {
+  border-style: solid;
+  border-width: 1px;
+  margin: 0 10px;
+  padding: 80px 10px 5px;
+  position: absolute;
+  top: 5px;
+  width: 96%;
+  height: 16%;
 
-    border: 2px solid;
-    border-radius: 25px;
-  }
+  border: 2px solid;
+  border-radius: 25px;
+}
 
-  #patient_name {
-    font-weight: bold;
-    font-size: 20px;
-    top: 4px;
-    margin-left: 35px;
-    position: absolute;
-  }
+#patient_name {
+  font-weight: bold;
+  font-size: 20px;
+  top: 4px;
+  margin-left: 35px;
+  position: absolute;
+}
 
-  .gender {
-    border-radius: 50%;
-    border: 2px solid;
-    width: 24px;
-  }
+.gender {
+  border-radius: 50%;
+  border: 2px solid;
+  width: 24px;
+}
+
 
   /* ............. div tabble ............. */
 
@@ -112,6 +113,7 @@
     border-bottom: 1px solid black;
     border-top: 1px solid black;
   }
+
 </style>
 
 <%
@@ -120,7 +122,7 @@
 <body onload="setAttributes();">
 
 <div class="demographics">
-
+  
   <div class="dtable">
     <div class="drow">
       <div class="dcell name">
@@ -129,7 +131,7 @@
       </div>
     </div>
   </div>
-
+  
   <div class="dtable data">
     <div class="drow">
       <div class="dcell table-head">Patient ID:</div>
@@ -178,7 +180,7 @@
 
 
   </div>
-
+  
   <div class="dtable next_task">
     <div class="drow">
       <div class="dcell">Next task:&nbsp;<span id="next_task"></span></div>
@@ -253,124 +255,141 @@
 <%= javascript_include_tag "Highcharts/js/highcharts" %>
 <%= javascript_include_tag "Highcharts/js/modules/exporting" %>
 <script type="text/javascript">
+var patientID = "<%=params[:found_person_id]%>";
 
-  var patientID = "<%=params[:found_person_id]%>";
+function initData() {
 
-  function initData() {
-
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_patient_name",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        printName(result);
-      }
-        
-    });
-
-  }
-
-  function printName(result) {
-    var data = JSON.parse(result);
-
-    if(data['gender'] == 'M' || data['gender'] == 'Male') {
-      var sex = 'male';
-    }else{
-      var sex = 'female';
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_name",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      printName(result);
     }
-
-    document.getElementById('patient_name').innerHTML = data['name'];
-    var src_path = document.getElementById('fetched_sex');
-    var current_path = src_path.src;
-    src_path.src = src_path.src.replace('male', sex);
-
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_patient_identifiers",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        printIdentifiers(result);
-      }
         
-    });
+  });
+
+}
+
+function printName(result) {
+  var data = JSON.parse(result);
+
+  if(data['gender'] == 'M' || data['gender'] == 'Male') {
+    var sex = 'male';
+  }else{
+    var sex = 'female';
+  }
+
+  document.getElementById('patient_name').innerHTML = data['name'];  
+  try {
+    document.getElementById('patient_name').innerHTML += " (" + data['birthdate'] + ")";  
+  }catch(e){};
+
+  var src_path = document.getElementById('fetched_sex');
+  var current_path = src_path.src;
+  src_path.src = src_path.src.replace('male', sex);  
+
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_identifiers",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      printIdentifiers(result);
+    }
+        
+  });
   
+}
+
+function printIdentifiers(result) {
+  var data = JSON.parse(result);
+  document.getElementById('nid').innerHTML = data['national_id'];  
+  document.getElementById('filing_number').innerHTML = data['filing_number'];  
+  document.getElementById('arv_number').innerHTML = data['arv_number'];  
+
+  var filingNumber = document.getElementById('filing_number');
+  if(filingNumber.innerHTML != '&nbsp;' && filingNumber.innerHTML.length > 0) {
+    active_number   = filing_number_prefix.split(',')[0];
+    dormant_number  = filing_number_prefix.split(',')[1];
+
+    if(active_number == filingNumber.innerHTML.substring(0, 5)){
+      document.getElementById('filing_number_type').innerHTML = " (active)";
+    }else{
+      document.getElementById('filing_number_type').innerHTML = " (dormant)";
+    }
   }
 
-  function printIdentifiers(result) {
-    var data = JSON.parse(result);
-    document.getElementById('nid').innerHTML = data['national_id'];
-    document.getElementById('filing_number').innerHTML = data['filing_number'];
-    document.getElementById('arv_number').innerHTML = data['arv_number'];
 
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_patient_art_start_date",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        document.getElementById('art_start_date').innerHTML = JSON.parse(result)['start_date']
-        printDurationOnART(JSON.parse(result)['start_date']);
-      }
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_art_start_date",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      document.getElementById('art_start_date').innerHTML = JSON.parse(result)['start_date']
+      printDurationOnART(JSON.parse(result)['start_date']);
+    }
         
-    });
-  }
+  });
+}
 
-  function printDurationOnART(start_date) {
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_patient_duration_on_art",
-      data: "start_date=" + start_date,
-      success: function(result){
-        document.getElementById('duration_on_art').innerHTML = JSON.parse(result)['duration']
-        printCurentRegimen();
-      }
+function printDurationOnART(start_date) {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_duration_on_art",
+    data: "start_date=" + start_date,
+    success: function(result){
+      document.getElementById('duration_on_art').innerHTML = JSON.parse(result)['duration']
+      printCurentRegimen(); 
+    }
         
-    });
-  }
+  });
+}
 
-  function printCurentRegimen() {
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_patient_current_regimen",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        document.getElementById('current_regimen').innerHTML = JSON.parse(result)['regimen']
-        printCurentResidence();
-      }
-    });
-  }
+function printCurentRegimen() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_current_regimen",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      document.getElementById('current_regimen').innerHTML = JSON.parse(result)['regimen']
+      printCurentResidence(); 
+    }
+ });    
+}
 
-  function printCurentResidence() {
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_current_address",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        document.getElementById('residence').innerHTML = JSON.parse(result)['current_residence']
-      }
-    });
-  }
+function printCurentResidence() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_current_address",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      document.getElementById('residence').innerHTML = JSON.parse(result)['current_residence']
+    }
+ });    
+}
 
-  function printCurentOutcome() {
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_current_outcome",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        document.getElementById('outcome').innerHTML = JSON.parse(result)['outcome']
-      }
-    });
-  }
+function printCurentOutcome() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_current_outcome",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      document.getElementById('outcome').innerHTML = JSON.parse(result)['outcome']
+    }
+ });    
+}
 
-  function printNextTask() {
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_patient_next_task",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        document.getElementById('next_task').innerHTML = JSON.parse(result)['task']
-      }
-    });
-  }
+function printNextTask() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_next_task",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      document.getElementById('next_task').innerHTML = JSON.parse(result)['task'];
+      next_url = JSON.parse(result)['url'];
+    }
+ });    
+}
 
   function printLatestVLResult(){
     jQuery.ajax({
@@ -387,9 +406,9 @@
         give_result_button = document.getElementById("give_result_button");
         if (results_available == "false"){
           if (give_result_button){
-            give_result_button.style.backgroundColor = "#FEE0C6";
-            give_result_button.setAttribute("onclick", "");
-            give_result_button.style.color = 'gray';
+            //give_result_button.style.backgroundColor = "#FEE0C6";
+            //give_result_button.setAttribute("onclick", "");
+            //give_result_button.style.color = 'gray';
           }
         }
         document.getElementById('vl_result').innerHTML = vl_result;
@@ -400,7 +419,6 @@
       }
     });
   }
-
 
   function showPopup(){
     popup = document.getElementById('popup')
@@ -563,19 +581,19 @@
 
     });
   }
-  /* ..................... chart ......................... */
 
-  function getWeight() {
-    jQuery.ajax({
-      type: "POST",
-      url: "/people/get_patient_weight_trail",
-      data: "patient_id=" + "<%=params[:found_person_id]%>",
-      success: function(result){
-        formatData(JSON.parse(result));
-      }
-    });
-  }
+/* ..................... chart ......................... */
 
+function getWeight() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_patient_weight_trail",
+    data: "patient_id=" + patientID,
+    success: function(result){
+     formatData(JSON.parse(result)); 
+    }
+ });    
+}
 
 function plotChart(weights) {
   jQuery('#summary').highcharts({
@@ -665,13 +683,6 @@ function getDateWithFormat(d) {
   return day + "/" + months[monthIndex] + '/' + year;
 }
 
-function dataG() {
-  var correctedWeights = [];
-
-  for(var i = 0; i < weights.length; i++) {
-    correctedWeights.push(weights[i][1]);
-  }
- 
   function getDateWithFormat(d) {
     newDate = new Date(d);
     var day = newDate.getDate();
@@ -693,8 +704,6 @@ function dataG() {
     }
     return [{name: 'Weight', data: correctedWeights}];
   }
-  
-}
 
 function getDates() {
   dates = [];
@@ -711,7 +720,6 @@ function showDormantNumberAlert(){
 
 function checkAttributes() {
   if(use_filing_number) {
-    var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
     var filingNumber = document.getElementById('filing_number');
 
     /*if(filingNumber.innerHTML == '&nbsp;')
@@ -723,12 +731,24 @@ function checkAttributes() {
     if(active_number.substring(0, 5) == filingNumber.innerHTML.substring(0, 5)){
       //alert('Active filing number');
     }else{
-      showDormantNumberAlert();
-      return
+      if(filingNumber.innerHTML != '&nbsp;' && filingNumber.innerHTML.length > 0) {
+        showDormantNumberAlert();
+        return
+      }
     }
   }
 
-  
+  if(document.getElementById('patient_name').innerHTML.length < 1)
+    return;
+    
+  if(next_url.length < 1)
+    return;
+    
+  document.location = next_url; 
+}
+
+function goToNextPage() {
+  document.location = next_url; 
 }
 
 function setAttributes() {
@@ -758,6 +778,12 @@ var use_filing_number = <%= use_filing_number %>;
   printCurentOutcome();
   getWeight();
   printLatestVLResult();
+
+if(use_filing_number)
+  var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
+
+
+var next_url = null;
 
 function hideAlertPopup(){
   document.getElementById("alert-cover").style.display = 'none';
@@ -1174,13 +1200,13 @@ function activeFile() {
 
 
   <div style="padding-top: 65px;">
-    <span id="NoBtn" onclick="hideAlertPopup();"
+    <span id="NoBtn" onclick="hideAlertPopup();goToNextPage();"
           class="popupBtn"
-          style="position: relative;">Cancel</span>
+          style="position: relative;">No</span>
 
     <span id="YesBtn" onclick="activeFile();" 
           class="popupBtn"
-          style="position: relative;">Yes (Continue)</span>
+          style="position: relative;">Yes (activate file)</span>
 
   </div>
 
@@ -1228,7 +1254,6 @@ function activeFile() {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   bottom: 0px;
-  background-color: #ff0000;
 }
 
 .popupBtn {

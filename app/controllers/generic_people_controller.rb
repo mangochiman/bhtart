@@ -268,6 +268,11 @@ class GenericPeopleController < ApplicationController
             PatientService.assign_new_dde_npid(person, old_npid, new_npid)
             national_id_replaced = true
           end
+          
+          if (params[:identifier].to_s.squish != new_npid.to_s.squish) #if DDE has returned a new ID, Let's assume it is right
+            national_id_replaced = true #when the scanned ID is not equal to the one returned by dde, get ready for print
+          end rescue nil
+
         end unless params[:identifier].match(/ARV|TB|HCC/i)
         found_person = local_results.first
       else
@@ -283,7 +288,7 @@ class GenericPeopleController < ApplicationController
           end
 
           if dde_hits.length > 1
-            redirect_to("/people/dde_duplicates") and return
+            redirect_to("/people/dde_duplicates?npid=#{params[:identifier]}") and return
           end
 
         end unless params[:identifier].match(/ARV|TB|HCC/i)
@@ -404,7 +409,30 @@ class GenericPeopleController < ApplicationController
 		@relation = params[:relation]
 		@person = Person.find(@found_person_id) rescue nil
 		patient = @person.patient
-  
+    
+    hiv_session = false
+    if current_program_location == "HIV program"
+      hiv_session = true
+    end
+
+    if use_filing_number and hiv_session
+
+      duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(patient.patient_id)
+      if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
+        redirect_to "/people/inconsistent_patient_filing_numbers?patient_id=#{patient.patient_id}"
+        return
+      end
+
+      ##### checks for duplicate filing_number
+      duplicate_filing_number = PatientIdentifier.fetch_duplicate_filing_numbers(patient.patient_id)
+      if not duplicate_filing_number.blank?
+        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{patient.patient_id}&data=#{duplicate_filing_number}"
+        return
+      end
+
+
+    end
+ 
     render :layout => 'report'
 	end
 
@@ -795,11 +823,17 @@ class GenericPeopleController < ApplicationController
     @dormant = duplicate_filing_numbers.last
   end
   
+  def inconsistent_patient_filing_numbers
+    duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(params[:patient_id])
+    @active = duplicate_filing_numbers.first
+    @dormant = duplicate_filing_numbers.last
+  end
+  
   def void_filing_numbers 
 
     identifiers = []
     (params[:filing_numbers].split(',') || []).each do |f|
-      identifiers << "'#{f}'"
+      identifiers << "'#{f.squish}'"
     end
 
     ActiveRecord::Base.connection.execute <<EOF
@@ -820,9 +854,16 @@ EOF
     
     if use_filing_number and hiv_session
 
-      duplicate_filing_numbers = PatientIdentifier.fetch_duplicate_filing_numbers(person.id)
+      duplicate_filing_numbers = PatientIdentifier.inconsistent_patient_filing_numbers(person.person_id)
       if not duplicate_filing_numbers.first.blank? or not duplicate_filing_numbers.last.blank?
-        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{person.id}"
+        redirect_to "/people/inconsistent_patient_filing_numbers?patient_id=#{person.person_id}"
+        return
+      end
+
+      ##### checks for duplicate filing_number
+      duplicate_filing_number = PatientIdentifier.fetch_duplicate_filing_numbers(person.person_id)
+      if not duplicate_filing_number.blank?
+        redirect_to "/people/display_duplicate_filing_numbers?patient_id=#{person.person_id}&data=#{duplicate_filing_number}"
         return
       end
 
@@ -1582,8 +1623,9 @@ EOF
 
   def get_patient_next_task
     patient_id = params[:patient_id]
+    task = main_next_task(Location.current_location, Patient.find(patient_id))
     render :text => {
-      :task => (main_next_task(Location.current_location, Patient.find(patient_id)).encounter_type)
+      :task => task.encounter_type, :url => task.url
     }.to_json
   end
 
