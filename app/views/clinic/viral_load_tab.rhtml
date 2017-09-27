@@ -61,7 +61,7 @@
         z-index: 1005;
         background: ghostwhite;
         width: 85%;
-        height: 98%;
+        height: 99%;
         border: 1px solid darkolivegreen;
         border-radius: 2px;
         overflow-Y: auto;
@@ -132,6 +132,59 @@
     left:470px;
     bottom:-5px;
   }
+
+    #list_panel{
+      width: 40%;
+      float: left;
+      padding: 8px;
+    }
+    #view_panel{
+      height: 100px;
+      padding: 8px;
+      position: relative;
+      float: left;
+    }
+    #view_panel table {
+      width: 700px;
+    }
+    #view_panel table tr td {
+      padding: 10px;
+      font-size: 18px;
+    }
+    #view_panel table tr:nth-child(even){
+      background: #eee;
+    }
+    #view_panel table tr:nth-child(odd){
+      background-color: rgb(204, 204, 255);
+    }
+    #list_panel li {
+      padding: 10px;
+      list-style: none;
+      font-size: 18px;
+      cursor: hand;
+    }
+    #list_panel li:nth-child(odd){
+      background-color: rgb(238, 238, 238);
+      border-bottom: 1px solid #fff;
+    }
+    #list_panel li:nth-child(even) {
+      background-color: rgb(221, 221, 221);
+    }
+    #no_results {
+      color: #0000cc;
+      font-size: 22px;
+      font-style: italic;
+      text-align: center;
+    }
+    #footer {
+      padding: 4px 4px 10px 1px;
+      height: 70px;
+      bottom: 5px;
+      position: fixed;
+      width: 700px;
+      background-color: rgb(51, 51, 51);
+      z-index: 1000;
+    }
 </style>
 
 <div id="tab" style="">
@@ -146,41 +199,25 @@
 </div>
 
 <div id="keypad">
-          <span class="keypad">
-          </span>
-
+  <span class="keypad">
+  </span>
 </div>
 <div id="search_popup">
   <div id="cancel" onmousedown="cancelPopup()">X</div>
+  <div id="list_panel"></div>
+  <div id="view_panel"></div>
 </div>
 
 <div id="popup">
-    <!--<table id="ph-table" style="width: 97%; color: darkslategray;  margin-left: 5px;">-->
-        <!--<caption id="caption">Patients Samples</caption>-->
-        <!--<thead>-->
-            <!--<tr>-->
-                <!--<th class="p-header">Tracking Number</th>-->
-                <!--<th class="p-header">National ID</th>-->
-                <!--<th class="p-header">Date Ordered</th>-->
-                <!--<th class="p-header">Ordered By</th>-->
-            <!--</tr>-->
-        <!--</thead>-->
-        <!--<tbody>-->
-        <!--<div id="p-table" style="width: 97%; color: darkslategray;  margin-left: 5px;"></div>-->
-        <!--</tbody>-->
-    <!--</table>-->
-  <!--<div style="padding: 0px;height: 80%;overflow: auto;width: 100%;border-top: 2px solid darkred;">-->
-    <!--<table id="p-table" style="width: 97%; color: darkslategray;  margin-left: 5px;"></table>-->
-  <!--</div>-->
 </div>
-
 
 <script>
   
     all_data = <%= @data.to_json%>;
 
     function cancelPopup(){
-        document.getElementById("popup").style.display = "none";
+        document.getElementById('view_panel').innerHTML = "";
+        document.getElementById("search_popup").style.display = "none";
     }
 
     function view(category){
@@ -230,19 +267,36 @@
             var row = document.createElement("tr");
 
             var o = data[i];
+            hash = {identifier:eval("data[i]['patient']['national_patient_id']"),
+              family_name:eval("data[i]['patient']['first_name']"),
+              given_name:eval("data[i]['patient']['last_name']"),
+              gender:eval("data[i]['patient']['gender']"),
+              birthdate:eval("data[i]['patient']['date_of_birth']")};
 
             var sources = [
                 "o['_id']",
                 "o['patient']['national_patient_id']",
                 "o['date_time']",
                 "o['who_order_test']['first_name'] + ' ' + o['who_order_test']['last_name']",
-                "o['patient']['national_patient_id']"
+                hash
             ];
 
             for(var k = 0; k < sources.length; k++){
                 var td = document.createElement("td");
+
                 if (k == sources.length -1){
-                  td.innerHTML = '<button>search</button>';
+                  var button = document.createElement('button');
+                  var span = document.createElement('span');
+                  span.innerHTML = "Search";
+                  id = JSON.stringify(hash);
+                  button.setAttribute('id', id);
+                  button.onmousedown = (function () {
+                    params = this.id;
+                    searchPatient(params);
+                  });
+                  button.appendChild(span);
+                  td.appendChild(button);
+
                 }else {
                   td.innerHTML = eval(sources[k]);
                 }
@@ -366,8 +420,54 @@
     keyboard.innerHTML+= getButtonString('clear','<span>Clear</span>');
   }
 
-    function searchPatient(id){
-      document.getElementById("search_popup").style.display = "block";
-      document.getElementById('search_popup').innerHTML = id;
+    function searchPatient(data){
+      jQuery.ajax({
+        url: "/people/search_person",
+        data: JSON.parse(data),
+        success: function(res){
+          document.getElementById("search_popup").style.display = 'block';
+          document.getElementById("list_panel").innerHTML = res;
+        },
+        error: function(e){
+          console.log(e)
+        }
+      });
+    }
+
+    function viewPatient(data) {
+      console.log(data);
+      view_panel = document.getElementById("view_panel");
+      view_panel.innerHTML = '';
+      gender = ((data.gender == "M") ? "Male" : "Female");
+
+      table = "<table> \
+      \ <tr> <td>Name</td> \
+      \ <td>"+data.name+ "</td> \
+      \ </tr> <tr><td>Gender</td> \
+      \ <td>"+gender+"</td> \
+      \ </tr><tr><td>Birthdate</td> \
+      \ <td>"+data.birthdate+"</td> \
+      \ </tr><tr><td>Age</td> \
+      \ <td>"+data.age+"</td> \
+      \ </tr><tr><td>Home District</td> \
+      \ <td>"+data.home_district+"</td> \
+      \ </tr><tr><td>Acenstral Traditional Authority (T/A)</td> \
+      \ <td>"+data.home_address+"</td> \
+      \ </tr><tr><td>Current Residence</td> \
+      \ <td>"+data.residence+"</td> \
+      \ </tr><tr><td>Patient National ID</td> \
+      \ <td>"+data.national_id+"</td> \
+      \ </tr></table>";
+
+      view_panel.innerHTML = table;
+      if (data.national_id !== data.lims_npid){
+        footer = document.createElement('div');
+        footer.setAttribute('id','footer');
+        select_button = "<button id='nextButton' class='button green navButton'\ " +
+            "onmousedown='gotoNextPage()'>\<" +
+            "span>UPDATE NATIONAL ID</span></button>";
+        footer.innerHTML = select_button;
+        view_panel.appendChild(footer);
+      }
     }
 </script>
