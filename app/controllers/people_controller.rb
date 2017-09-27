@@ -158,6 +158,7 @@ class PeopleController < GenericPeopleController
     people = PatientService.person_search(params)
     @html = ''
     @lims_npid = params['identifier'];
+    @tracking_number = params['tracking_number'];
     people.each do |person|
       patient = person.patient
       next if patient.blank?
@@ -172,7 +173,8 @@ class PeopleController < GenericPeopleController
                 :home_district => bean.home_district,
                 :residence => bean.current_residence,
                 :national_id => bean.national_id,
-                :lims_npid => @lims_npid}
+                :lims_npid => @lims_npid,
+                :tracking_number => @tracking_number}
       @html+= <<EOF
         <li onclick='viewPatient(#{person.to_json})'>#{bean.name.upcase || '&nbsp;'}</li>
 EOF
