@@ -1690,6 +1690,14 @@ EOF
     render :text => data.to_json and return
   end
   
+  def get_reason_for_starting_art
+    patient_id = params[:patient_id]
+    reason_for_art_eligibility = Patient.find_by_sql("SELECT patient_reason_for_starting_art_text(#{patient_id}) AS reason;")
+    render :text => {
+      :reason_for_starting_art => (reason_for_art_eligibility.first['reason'] rescue nil)
+    }.to_json
+  end
+
 	private
 
 	def search_complete_url(found_person_id, primary_person_id)
