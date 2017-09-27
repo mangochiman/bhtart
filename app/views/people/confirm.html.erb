@@ -170,8 +170,8 @@
     <div class="drow">
       <div class="dcell table-head">Current outcome:</div>
       <div class="dcell table-data" id="outcome">&nbsp;</div>
-      <div class="dcell table-head">Residence:</div>
-      <div class="dcell table-data" id="residence">&nbsp;</div>
+      <div class="dcell table-head">Reason for ART:</div>
+      <div class="dcell table-data" id="reason_for_starting_art">&nbsp;</div>
       <%if vl_routine_check_activated %>
         <div class="dcell table-head"><span id="update_span"  style="display: none;" onclick="updateVl();">Update VL</span></div>
         <div class="dcell table-data"><span id="lab_trail_span" style="display: none;" onclick="showVlLabTrail();">VL Trail</span></div>
@@ -184,6 +184,8 @@
       <div class="dcell table-data">&nbsp;</div>
       <!--<div class="dcell table-head"><span id="update_span">Update VL</span></div>
       <div class="dcell table-data"><span id="lab_trail_span"><span>VL Trail</span></span></div>-->
+      <div class="dcell table-head">Residence:</div>
+      <div class="dcell table-data" id="residence">&nbsp;</div>
     </div>
 
 
@@ -335,6 +337,19 @@ function printIdentifiers(result) {
     success: function(result){
       document.getElementById('art_start_date').innerHTML = JSON.parse(result)['start_date']
       printDurationOnART(JSON.parse(result)['start_date']);
+      printReasonForStartingART();
+    }
+        
+  });
+}
+
+function printReasonForStartingART() {
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_reason_for_starting_art",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      document.getElementById('reason_for_starting_art').innerHTML = JSON.parse(result)['reason_for_starting_art']
     }
         
   });
