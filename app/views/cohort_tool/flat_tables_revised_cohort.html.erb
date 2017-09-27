@@ -161,7 +161,507 @@
     .number {
         text-align: right;
     }
+    #consistency_check {
+      padding-top: 15px;
+      padding-bottom: 15px;
+      margin-left: 25px;
+      margin-right: 15px;
+      color: #ea091a;
+      font-size: 18px;
+      font-family: Arial, Helvetica, sans-serif;
+      letter-spacing: 2px;
+      line-height: 32px
+    }
 </style>
+
+<script type="text/javascript">
+  function drillDown(indicator) {
+    var patient_ids = [];
+    switch(indicator) {
+      case 'total_registered':
+      <% (@cohort.total_registered || []).each do |data| %>
+        patient_ids.push(<%= data['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_total_registered':
+      <% (@cohort.cum_total_registered || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'initiated_on_art_first_time':
+      <% (@cohort.initiated_on_art_first_time || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_initiated_on_art_first_time':
+      <% (@cohort.cum_initiated_on_art_first_time || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 're_initiated_on_art':
+      <% (@cohort.re_initiated_on_art || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_re_initiated_on_art':
+      <% (@cohort.cum_re_initiated_on_art || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'transfer_in':
+      <% (@cohort.transfer_in || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_transfer_in':
+      <% (@cohort.cum_transfer_in || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'all_males':
+      <% (@cohort.all_males || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_all_males':
+      <% (@cohort.cum_all_males || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'non_pregnant_females':
+      <% (@cohort.non_pregnant_females || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_non_pregnant_females':
+      <% (@cohort.cum_non_pregnant_females || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'pregnant_females_all_ages':
+      <% (@cohort.pregnant_females_all_ages || []).each do |patient_id|%>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'cum_pregnant_females_all_ages':
+      <% (@cohort.cum_pregnant_females_all_ages || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'unknown_age':
+      <% (@cohort.unknown_age || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_unknown_age':
+      <% (@cohort.cum_unknown_age || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'children_below_24_months_at_art_initiation':
+      <% (@cohort.children_below_24_months_at_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_children_below_24_months_at_art_initiation':
+      <% (@cohort.cum_children_below_24_months_at_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'children_24_months_14_years_at_art_initiation':
+      <% (@cohort.children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_children_24_months_14_years_at_art_initiation':
+      <% (@cohort.cum_children_24_months_14_years_at_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'adults_at_art_initiation':
+      <% (@cohort.adults_at_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_adults_at_art_initiation':
+      <% (@cohort.cum_adults_at_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'presumed_severe_hiv_disease_in_infants':
+      <% (@cohort.presumed_severe_hiv_disease_in_infants || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_presumed_severe_hiv_disease_in_infants':
+      <% (@cohort.cum_presumed_severe_hiv_disease_in_infants || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'confirmed_hiv_infection_in_infants_pcr':
+      <% (@cohort.confirmed_hiv_infection_in_infants_pcr || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_confirmed_hiv_infection_in_infants_pcr':
+      <% (@cohort.cum_confirmed_hiv_infection_in_infants_pcr || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'children_12_23_months':
+      <% (@cohort.children_12_23_months || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_children_12_23_months':
+      <% (@cohort.cum_children_12_23_months || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'pregnant_women':
+      <% (@cohort.pregnant_women || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_pregnant_women':
+      <% (@cohort.cum_pregnant_women || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'breastfeeding_mothers':
+      <% (@cohort.breastfeeding_mothers || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_breastfeeding_mothers':
+      <% (@cohort.cum_breastfeeding_mothers || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'who_stage_two':
+      <% (@cohort.who_stage_two || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_who_stage_two':
+      <% (@cohort.cum_who_stage_two || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'asymptomatic':
+      <% (@cohort.asymptomatic || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_asymptomatic':
+      <% (@cohort.cum_asymptomatic || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'who_stage_three':
+      <% (@cohort.who_stage_three || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_who_stage_three':
+      <% (@cohort.cum_who_stage_three || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'who_stage_four':
+      <% (@cohort.who_stage_four || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_who_stage_four':
+      <% (@cohort.cum_who_stage_four || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'unknown_other_reason_outside_guidelines':
+      <% (@cohort.unknown_other_reason_outside_guidelines || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'cum_unknown_other_reason_outside_guidelines':
+      <% (@cohort.cum_unknown_other_reason_outside_guidelines || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id[:patient_id] %>);
+      <% end %>
+        break;
+      case 'no_tb':
+      <% (@cohort.no_tb || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'cum_no_tb':
+      <% (@cohort.cum_no_tb || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'tb_within_the_last_two_years':
+      <% (@cohort.tb_within_the_last_two_years || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_tb_within_the_last_two_years':
+      <% (@cohort.cum_tb_within_the_last_two_years || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'current_episode_of_tb':
+      <% (@cohort.current_episode_of_tb || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_current_episode_of_tb':
+      <% (@cohort.cum_current_episode_of_tb || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'kaposis_sarcoma':
+      <% (@cohort.kaposis_sarcoma || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'cum_kaposis_sarcoma':
+      <% (@cohort.cum_kaposis_sarcoma || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'total_alive_and_on_art':
+      <% (@cohort.total_alive_and_on_art || []).each do |data| %>
+        patient_ids.push(<%= data['patient_id'].to_i %>);
+      <% end %>
+        break;
+      case 'died_within_the_1st_month_of_art_initiation':
+      <% (@cohort.died_within_the_1st_month_of_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'died_within_the_2nd_month_of_art_initiation':
+      <% (@cohort.died_within_the_2nd_month_of_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'died_within_the_3rd_month_of_art_initiation':
+      <% (@cohort.died_within_the_3rd_month_of_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'died_after_the_3rd_month_of_art_initiation':
+      <% (@cohort.died_after_the_3rd_month_of_art_initiation || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'died_total':
+      <% (@cohort.died_total || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'defaulted':
+      <% (@cohort.defaulted || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'stopped_art':
+      <% (@cohort.stopped_art || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'transfered_out':
+      <% (@cohort.transfered_out || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id['patient_id'] %>);
+      <% end %>
+        break;
+      case 'zero_p':
+      <% (@cohort.zero_p || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'one_p':
+      <% (@cohort.one_p || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'two_p':
+      <% (@cohort.two_p || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'three_p':
+      <% (@cohort.three_p || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'four_p':
+      <% (@cohort.four_p || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'nine_p':
+      <% (@cohort.nine_p || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'elleven_p':
+      <% (@cohort.elleven_p || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'zero_a':
+      <% (@cohort.zero_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'one_a':
+      <% (@cohort.one_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'two_a':
+      <% (@cohort.two_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'three_a':
+      <% (@cohort.three_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'four_a':
+      <% (@cohort.four_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'five_a':
+      <% (@cohort.five_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'six_a':
+      <% (@cohort.six_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'seven_a':
+      <% (@cohort.seven_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'eight_a':
+      <% (@cohort.eight_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'nine_a':
+      <% (@cohort.nine_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'ten_a':
+      <% (@cohort.ten_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'elleven_a':
+      <% (@cohort.elleven_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'twelve_a':
+      <% (@cohort.twelve_a || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'unknown_regimen':
+      <% (@cohort.unknown_regimen || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'total_patients_without_side_effects':
+      <% (@cohort.total_patients_without_side_effects || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'total_patients_with_side_effects':
+      <% (@cohort.total_patients_with_side_effects || []).each do |data| %>
+        patient_ids.push(<%= data['person_id'] %>);
+      <% end %>
+        break;
+      case 'unknown_side_effects':
+      <% (@cohort.unknown_side_effects || []).each do |data| %>
+        patient_ids.push(<%= data['patient_id'] %>);
+      <% end %>
+        break;
+      case 'patients_with_0_6_doses_missed_at_their_last_visit':
+      <% (@cohort.patients_with_0_6_doses_missed_at_their_last_visit || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'patients_with_7_plus_doses_missed_at_their_last_visit':
+      <% (@cohort.patients_with_7_plus_doses_missed_at_their_last_visit || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'patients_with_unknown_adhrence':
+      <% (@cohort.patients_with_unknown_adhrence || []).each do |patient_id| %>
+        patient_ids.push(<%= patient_id %>);
+      <% end %>
+        break;
+      case 'tb_not_suspected':
+      <% (@cohort.tb_not_suspected || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'tb_suspected':
+      <% (@cohort.tb_suspected || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'tb_confirmed_currently_not_yet_on_tb_treatment':
+      <% (@cohort.tb_confirmed_currently_not_yet_on_tb_treatment || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'tb_confirmed_on_tb_treatment':
+      <% (@cohort.tb_confirmed_on_tb_treatment || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'unknown_tb_status':
+      <% (@cohort.unknown_tb_status || []).each do |data| %>
+        patient_ids.push(<%= data[:patient_id] %>);
+      <% end %>
+        break;
+      case 'all_other_patients':
+      <% (@cohort.total_other_patients || []).each do |data| %>
+        patient_ids.push(<%= data %>);
+      <% end %>
+        break;
+      case 'total_breastfeeding':
+      <% (@cohort.total_breastfeeding_women || []).each do |data| %>
+        patient_ids.push(<%= data['person_id'] %>);
+      <% end %>
+        break;
+      case 'total_pregnant':
+      <% (@cohort.total_pregnant_women || []).each do |data| %>
+        patient_ids.push(<%= data['person_id'] %>);
+      <% end %>
+        break;
+      default:
+
+    }
+
+    document.getElementById('patient_ids').value = patient_ids.join(',');
+    document.getElementById('indicator').value = indicator;
+
+    document.pat_drilldown.target = "myList";
+    var w = (window.innerWidth - 80) ; var h = (window.innerHeight - 8);
+    window.open("","myList","width=" + w + ",height=" + h + ",toolbar=0");
+    document.pat_drilldown.submit();
+
+  }
+</script>
 
 <table class="table-top" border="2px;">
     <tr>
@@ -1656,7 +2156,7 @@
             &nbsp;
         </td>
         <td class="number reg_on_art_class">
-            <a href="javascript:drillDown('total_alive_and_on_art');" class="registered-on-art">
+            <a href="javascript:drillDown('total_alive_and_on_art');" id="total_alive_and_on_art" class="registered-on-art">
                 <%= @cohort.total_alive_and_on_art.count %>
             </a>
         </td>
@@ -1768,7 +2268,7 @@
             &nbsp;
         </td>
         <td class="number reg_on_art_class">
-            <a href="javascript:drillDown('died_total');" class="registered-on-art">
+            <a href="javascript:drillDown('died_total');" id="died_total" class="registered-on-art">
                 <%= @cohort.died_total.count %>
             </a>
         </td>
@@ -2579,9 +3079,9 @@
     </div>
 </div>
 
-<form id="patients" method="post" action="/cohort_tool/list_more_details">
-    <input id='patient_ids' type='hidden' name = 'patient_ids' />
-    <input id='indicator' type='hidden' name = 'indicator' />
+<form id="patients" method="post" action="/cohort_tool/list_more_details" name="pat_drilldown">
+  <input id='patient_ids' type='hidden' name = 'patient_ids' />
+  <input id='indicator' type='hidden' name = 'indicator' />
 </form>
 
 <script type="text/javascript">
@@ -2635,6 +3135,8 @@
   /** Compare the sum of patients  initiated, re-initiated and   */
   /** transfer in against total registered                       */
   /***************************************************************/
+
+  console.log("here");
 
   for(var i = 0; i < on_art.length; i++){
 

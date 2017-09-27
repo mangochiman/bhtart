@@ -701,5 +701,31 @@ class GenericLabController < ApplicationController
     
     redirect_to :action => "edit_lab_results", :patient_id => params[:patient_id] and return
   end
-  
+
+  def update_national_id
+    settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+
+    if national_lims_activated
+      tracking_number = params['track_num']
+      national_id = params['national_id']
+      get_url = "#{settings['lims_national_dashboard_ip']}/api/pull_vl_by_id?id=#{tracking_number}"
+
+      data = JSON.parse(RestClient.get(get_url)) rescue []
+
+      if !data.blank?
+
+        data['patient']['national_id'] = "11MKDKDjkkncxkonncjjHJH J onxzoicnzxo"
+        who                            = current_user
+        data['who_updated']['first_name'] = who.name.strip.scan(/^\w+/).first
+        data['who_updated']['last_name']  = who.name.strip.scan(/\w+$/).last
+        data['who_updated']['ID_number']  = who.username
+
+        remote_post_url = "#{settings['central_repo']}/pass_json/"
+        RestClient::Request.execute(:method => 'post',  :url => remote_post_url, :payload => order.to_json, :headers => {"Content-Type" => "application/json"})
+
+        # render :json => data
+      end
+    end
+  end
+
 end

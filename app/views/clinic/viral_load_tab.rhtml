@@ -271,7 +271,8 @@
               family_name:eval("data[i]['patient']['first_name']"),
               given_name:eval("data[i]['patient']['last_name']"),
               gender:eval("data[i]['patient']['gender']"),
-              birthdate:eval("data[i]['patient']['date_of_birth']")};
+              birthdate:eval("data[i]['patient']['date_of_birth']"),
+              tracking_number: eval("data[i]['_id']")};
 
             var sources = [
                 "o['_id']",
@@ -464,10 +465,24 @@
         footer = document.createElement('div');
         footer.setAttribute('id','footer');
         select_button = "<button id='nextButton' class='button green navButton'\ " +
-            "onmousedown='gotoNextPage()'>\<" +
+            "onmousedown='updateNationalId(\""+data.tracking_number+"\",\""+data.national_id+"\")'>\<" +
             "span>UPDATE NATIONAL ID</span></button>";
         footer.innerHTML = select_button;
         view_panel.appendChild(footer);
       }
+    }
+
+    function updateNationalId(track_num, national_id){
+      data = {track_num:track_num, national_id:national_id}
+      jQuery.ajax({
+        url: "/lab/update_national_id",
+        data: data,
+        success: function(res){
+          console.log(res);
+        },
+        error: function(e){
+          console.log(e)
+        }
+      });
     }
 </script>
