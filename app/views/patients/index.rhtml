@@ -328,7 +328,7 @@
               <% end %>
 
               <% unless @vl_results.blank?  %>
-                <span value="<%= "#{@vl_modifier.to_s + @vl_latest_result.to_s + '(' + @vl_latest_date.strftime("%a, %d-%b-%Y") +')'}" %>"> Last VL result </span>
+                <span value="<%= "#{@vl_modifier.to_s + @vl_latest_result.to_s + '(' + (@vl_latest_date.strftime("%a, %d-%b-%Y") rescue '') +')'}" %>"> Last VL result </span>
               <% end %>
 
               <% if @current_hiv_program_status == "Pre-ART (Continue)" %>
