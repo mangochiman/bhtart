@@ -1838,9 +1838,12 @@ SELECT patient_id, date_enrolled, t1.obs_id, value_coded,
 e.earliest_start_date, t1.obs_datetime 
 FROM temp_earliest_start_date e
 INNER JOIN obs t1 ON e.patient_id = t1.person_id
-where person_id IN(#{patient_ids.join(',')}) 
+where t1.person_id IN(#{patient_ids.join(',')}) 
+AND DATE(t1.obs_datetime) = (SELECT DATE(MAX(encounter_datetime)) FROM encounter e WHERE
+e.encounter_type = #{encounter_type} AND e.patient_id = t1.person_id AND e.voided = 0 
+AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
 AND t1.voided = 0 AND concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-AND obs_datetime = (SELECT max(obs_datetime) FROM obs t2
+AND t1.obs_datetime = (SELECT max(obs_datetime) FROM obs t2
 WHERE t2.voided = 0 AND t2.person_id = t1.person_id
 AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id}) 
 AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
