@@ -12,7 +12,7 @@ class ReportingReportDesignResource < ActiveRecord::Base
       if report_def.blank?
         report_def = SerializedObject.new()
         report_def.name =                 'Cohort report trail'
-        report_def.type =                 'Report'
+        report_def.typ =  	      	      'Report'
         report_def.subtype =              'Quartery'
         report_def.serialization_class =  'Quartery Report'
         report_def.serialized_data =      'Cohort indicators'

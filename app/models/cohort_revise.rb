@@ -1832,32 +1832,33 @@ EOF
     malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
     no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
     yes_side_effects_concept_id = ConceptName.find_by_name('Yes').concept_id
+    encounter_type = EncounterType.find_by_name("HIV clinic consultation").encounter_type_id
 
     malawi_side_effects_ids =  ActiveRecord::Base.connection.select_all <<EOF
-SELECT patient_id, date_enrolled, t1.obs_id, value_coded, 
-e.earliest_start_date, t1.obs_datetime 
-FROM temp_earliest_start_date e
-INNER JOIN obs t1 ON e.patient_id = t1.person_id
-where t1.person_id IN(#{patient_ids.join(',')}) 
-AND DATE(t1.obs_datetime) = (SELECT DATE(MAX(encounter_datetime)) FROM encounter e WHERE
-e.encounter_type = #{encounter_type} AND e.patient_id = t1.person_id AND e.voided = 0 
-AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
-AND t1.voided = 0 AND concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-AND t1.obs_datetime = (SELECT max(obs_datetime) FROM obs t2
-WHERE t2.voided = 0 AND t2.person_id = t1.person_id
-AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id}) 
-AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-) GROUP BY t1.person_id, t1.value_coded
-HAVING DATE(obs_datetime) != DATE(earliest_start_date);
+    SELECT patient_id, date_enrolled, t1.obs_id, value_coded,
+    e.earliest_start_date, t1.obs_datetime
+    FROM temp_earliest_start_date e
+    INNER JOIN obs t1 ON e.patient_id = t1.person_id
+    where t1.person_id IN(#{patient_ids.join(',')})
+    AND DATE(t1.obs_datetime) = (SELECT DATE(MAX(encounter_datetime)) FROM encounter e WHERE
+    e.encounter_type = #{encounter_type} AND e.patient_id = t1.person_id AND e.voided = 0
+    AND e.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+    AND t1.voided = 0 AND concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
+    AND t1.obs_datetime = (SELECT max(obs_datetime) FROM obs t2
+    WHERE t2.voided = 0 AND t2.person_id = t1.person_id
+    AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
+    AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+    ) GROUP BY t1.person_id, t1.value_coded
+    HAVING DATE(obs_datetime) != DATE(earliest_start_date);
 EOF
 
     patient_id_of_those_with_side_effects = []
     patient_id_of_those_without_side_effects = []
 
     (malawi_side_effects_ids || []).each do |row|
-      obs_group = Observation.find(:first, 
+      obs_group = Observation.find(:first,
         :conditions =>["concept_id = ? AND obs_group_id = ?",
-          row['value_coded'].to_i, row['obs_id'].to_i]) rescue nil 
+          row['value_coded'].to_i, row['obs_id'].to_i]) rescue nil
 
       if obs_group.blank?
         unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
