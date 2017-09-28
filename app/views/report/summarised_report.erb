@@ -1,6 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <title><%= @title = "#{controller.controller_name.humanize} #{controller.action_name.humanize}" rescue ""  %></title>
@@ -20,7 +21,7 @@
     <%= stylesheet_link_tag 'jquery.dataTables' %>
     <%=javascript_include_tag "jquery.table2CSV.min" %>
     <script type="text/javascript" charset="utf8" src="/javascripts/jquery.dataTables.min.js"></script>
-
+   
     <script type="text/javascript">
         jQuery(document).ready(function($) {
             $('#logout').click(function() {
@@ -302,6 +303,11 @@
             border-style: solid;
             width: 5%;
         }
+
+        #table1{
+            border-style: solid;
+            border-width: 5px;
+        }
         
         .button1 {
             background-color: blue; /* Green */
@@ -326,10 +332,10 @@
 
 <body id="mateme">
 <div id="container">
-    <div id="content" style = "position : relative; width : 96%; margin-left : -48%">
+    <div id="content" style = "position : relative; width : 0%; margin-left : -70%">
        
         <table id="table_id" width="99%">
-            <table style="width:100%">
+            <table style="width:70%">
                 <h2>Brief Report</h2>
                  
                 <%= image_tag("mw.gif", :class => "logo")%>
@@ -344,18 +350,23 @@
 
           </span>
         </div>
-        <td style="width: 100%;">
-        <div id="list" style="overflow-x:auto; text-transform:capitalize; width: 100%;height: 400px;">
+       
+        <td style="width: 80%;">
+        <div id="list" style="overflow-x:auto; text-transform:capitalize; width: 80%;height: 400px;">
             &nbsp;
-            <table style="width: 100%; border: thick solid black">
+            
+            <table  style="border: 1px solid black; padding-right: 80px;">
             
                 <thead class="thead" >
                     
                     <tr style="border: thick solid black;">
                          <td style="font-weight: bold; font-size: 20px; r ">Indicator</td>
                          
-                         <td style="font-weight: bold; font-size: 20px;  ">
+                         <td style="font-weight: bold; font-size: 80px; padding-right: 80px; ">
                          <%= @quarter %>
+                        </td>
+                        <td>
+                          Quarterly
                         </td>
                         <td rowspan="3">
                         &nbsp;
@@ -372,13 +383,9 @@
                         </td>
                          
                         
-                        <tr sty><td colspan="9"><hr style="size:1; width:60%; border: thin solid black; float: right" /></td></tr>
+                        <tr><td colspan="9"><hr style="size:1; width:60%; border: thin solid black; float: right" /></td></tr>
                         <td >
                           
-                        </td>
-                        <td colspan="1">
-                          Quarterly
-                        </td>
                         <td>
                         Cumulative
                         </td>
@@ -389,8 +396,10 @@
                         <td >
                             Cumulative
                         </td>
+                        </td>
+                        
                     </tr>
-                    <tr sty><td colspan="9"><hr style="size:1; width:100%; border: thin solid black;" /></td></tr>
+                    <tr sty><td colspan="5"><hr style="size:1; width:80%; border: thin solid grey;" /></td></tr>
                                                             
                 </thead>
 
@@ -440,7 +449,7 @@
                             
                             <td><span id="curcum_patients_transferred_in_on_ART"></span></td>
                         </tr>
-                        <tr><td colspan="9"><hr size="1" width="100%" /></td></tr>
+                        <tr><td colspan="6"><hr size="1" width="80%" /></td></tr>
                         <tr>
                             <td style="width: 50%">
                                 Males (all ages)
@@ -642,6 +651,7 @@
                         
                 </tbody>
             </table>
+           
                 <!--
                 table.style.width = "100%";
                 
@@ -679,8 +689,7 @@
                 
             </div>
         </div>
-    </div>
-</div>
+    
 
 <script type="text/javascript">
    // alert("hello")
