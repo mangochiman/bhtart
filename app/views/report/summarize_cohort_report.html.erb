@@ -18,7 +18,7 @@
 
 </style>
 <form action="/brief_report/display" method="post">
-  <select id="year_one" name="report_year" tt_requireNextClick ='true' helpText="Select Year">
+  <select id="year_one" name="report_year" tt_requireNextClick ='true' helpText="Select Year" tt_pageStyleClass ="NoKeyboard">
     <option></option>
 
     <% ((Time.now.year - 10)..(Time.now.year)).map.reverse.each do |year| %>
@@ -31,26 +31,23 @@
 
   <select id="prev_quarter" name="quarter_from" tt_requireNextClick ='true' helpText="Select first Quarter">
 
-     <% ((Time.now.year )..(Time.now.year)).map.reverse.each do |year| %>
-
+     
     <option>Q 1</option>
     <option>Q 2</option>
     <option>Q 3</option>
     <option>Q 4</option>
 
-            <% end %>
-
+           
           </select>
 
   <select id="cur_quarter" name="quarter_to" tt_requireNextClick ='true' helpText="Select second Quarter">
-    <% ((Time.now.year )..(Time.now.year)).map.reverse.each do |year| %>
-
+    
     <option>Q 1</option>
     <option>Q 2</option>
     <option>Q 3</option>
     <option>Q 4</option>
 
-            <% end %>
+          
     
 
           </select>
