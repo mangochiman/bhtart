@@ -296,7 +296,7 @@ class PatientsController < GenericPatientsController
 EOF
 
 
-     (weight_trail_data || []).each do |weight|
+    (weight_trail_data || []).each do |weight|
       current_date = weight['obs_datetime'].to_date
       year = current_date.year
 
@@ -489,6 +489,30 @@ EOF
       date_enrolled = patient_temp_earliest_start_date.last["date_enrolled"] rescue nil
     end
     render :text => date_enrolled and return
+  end
+
+  def get_patient_vl_trail
+    vl_result_hash = Patient.vl_result_hash(Patient.find(params[:patient_id]))
+    vl_data = {}
+
+    vl_result_hash.each do |accession_num, values|
+      vl_data[accession_num] = {}
+      range = values["range"]
+      date_of_sample = values["date_of_sample"].strftime("%d-%b-%Y") rescue values["date_of_sample"]
+      result = range.to_s + " " + values["result"]
+      result_given = values["date_result_given"].strftime("%d-%b-%Y") rescue values["date_result_given"]
+      date_result_given = values["date_result_given"]
+      switched_to_second_line = values["second_line_switch"]
+
+      vl_data[accession_num]["date_of_sample"] = date_of_sample
+      vl_data[accession_num]["result"] = result
+      vl_data[accession_num]["result_given"] = result_given
+      vl_data[accession_num]["date_result_given"] = date_result_given
+      vl_data[accession_num]["switched_to_second_line"] = switched_to_second_line
+
+    end
+    
+    render :text => vl_data.to_json and return
   end
 
 end

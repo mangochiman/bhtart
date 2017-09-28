@@ -1064,9 +1064,11 @@ EOF
     Total patients with side effects:
     Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
 =end
-    cohort.unknown_side_effects = self.unknown_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
-    cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
-    cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, cohort.total_patients_with_side_effects)
+    cohort.total_patients_with_side_effects = self.total_patients_with_side_effects(cohort, cohort.total_alive_and_on_art, start_date, end_date)
+    #cohort.total_patients_without_side_effects = self.total_patients_without_side_effects(cohort.total_alive_and_on_art, cohort.total_patients_with_side_effects)
+    #cohort.unknown_side_effects = self.unknown_side_effects(cohort.total_alive_and_on_art, start_date, end_date)
+
+
 =begin
     TB Status
     Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
@@ -1810,14 +1812,15 @@ EOF
       return registered
   end
 
-  def self.total_patients_with_side_effects(patients_alive_and_on_art, start_date, end_date)
+  def self.total_patients_with_side_effects(cohort, patients_alive_and_on_art, start_date, end_date)
     patient_ids = []; results = []; patients_with_unknown_side_effects = []
-    first_results = []; second_results = []
-
+    results = []
+=begin
     (self.unknown_side_effects(patients_alive_and_on_art, start_date, end_date) || []).each do |aPatient|
       patients_with_unknown_side_effects << aPatient['person_id'].to_i
     end
     patients_with_unknown_side_effects = [0] if patients_with_unknown_side_effects.blank?
+=end
 
     (patients_alive_and_on_art || []).each do |row|
       patient_ids << row['patient_id'].to_i
@@ -1828,45 +1831,54 @@ EOF
   	drug_induced_concept_id = ConceptName.find_by_name('Drug induced').concept_id
     malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
     no_side_effects_concept_id = ConceptName.find_by_name('No').concept_id
-
-    drug_induced_and_mw_side_effects_ids =  ActiveRecord::Base.connection.select_all <<EOF
-            SELECT patient_id, date_enrolled FROM temp_earliest_start_date t
-             INNER JOIN obs o ON o.person_id = t.patient_id
-            WHERE o.voided = 0 AND o.concept_id IN (#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id} ) AND o.value_coded != #{no_side_effects_concept_id}
-            AND (o.person_id IN (#{patient_ids.join(',')}) AND o.person_id NOT IN (#{patients_with_unknown_side_effects.join(',')}))
-            AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND t.date_enrolled != (
-              SELECT min(DATE(obs_datetime)) FROM obs WHERE concept_id IN (#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
-              AND voided = 0 AND person_id = o.person_id
-              AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            ) GROUP BY person_id
-EOF
-
-    (drug_induced_and_mw_side_effects_ids || []).each do |row|
-      first_results << row
-    end
+    yes_side_effects_concept_id = ConceptName.find_by_name('Yes').concept_id
 
     malawi_side_effects_ids =  ActiveRecord::Base.connection.select_all <<EOF
-            SELECT patient_id, date_enrolled FROM temp_earliest_start_date t
-             INNER JOIN obs o ON o.person_id = t.patient_id
-            WHERE o.voided = 0
-            AND (o.concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 2148, 2150, 3681, 5953, 6408, 9242, 9440) AND o.value_coded != #{no_side_effects_concept_id})
-            AND (o.person_id IN (#{patient_ids.join(',')}) AND o.person_id NOT IN (#{patients_with_unknown_side_effects.join(',')}))
-            AND o.obs_group_id IS NOT NULL
-            AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND t.date_enrolled != (
-              SELECT min(DATE(obs_datetime)) FROM obs WHERE concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 2148, 2150, 3681, 5953, 6408, 9242, 9440)
-              AND voided = 0 AND person_id = o.person_id
-              AND obs_group_id IS NOT NULL
-              AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            ) GROUP BY person_id
+SELECT patient_id, date_enrolled, t1.obs_id, value_coded, 
+e.earliest_start_date, t1.obs_datetime 
+FROM temp_earliest_start_date e
+INNER JOIN obs t1 ON e.patient_id = t1.person_id
+where person_id IN(#{patient_ids.join(',')}) 
+AND t1.voided = 0 AND concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id})
+AND obs_datetime = (SELECT max(obs_datetime) FROM obs t2
+WHERE t2.voided = 0 AND t2.person_id = t1.person_id
+AND t2.concept_id IN(#{malawi_art_side_effects_concept_id}, #{drug_induced_concept_id}) 
+AND t2.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+) GROUP BY t1.person_id, t1.value_coded
+HAVING DATE(obs_datetime) != DATE(earliest_start_date);
 EOF
 
+    patient_id_of_those_with_side_effects = []
+    patient_id_of_those_without_side_effects = []
+
     (malawi_side_effects_ids || []).each do |row|
-      second_results << row
+      obs_group = Observation.find(:first, 
+        :conditions =>["concept_id = ? AND obs_group_id = ?",
+          row['value_coded'].to_i, row['obs_id'].to_i]) rescue nil 
+
+      if obs_group.blank?
+        unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
+          results << row
+          patient_id_of_those_with_side_effects << row['patient_id'].to_i
+        end
+      elsif obs_group.value_coded == yes_side_effects_concept_id
+        unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
+          results << row
+          patient_id_of_those_with_side_effects << row['patient_id'].to_i
+        end
+      end
     end
 
-    results = first_results - second_results
+    (patient_ids || []).each do |id|
+      next if patient_id_of_those_with_side_effects.include?(id)
+      patient_id_of_those_without_side_effects << id
+    end
+
+    patient_id_of_those_with_unknown_side_effects = (patient_ids) -\
+     (patient_id_of_those_with_side_effects + patient_id_of_those_without_side_effects)
+
+    cohort.total_patients_without_side_effects = patient_id_of_those_without_side_effects
+    cohort.unknown_side_effects = patient_id_of_those_with_unknown_side_effects
     return results
   end
 

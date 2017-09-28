@@ -1855,7 +1855,7 @@ EOF
       patient_to_be_archived = []
 
       if (next_filing_number[5..-1].to_i > global_property_value.to_i)
-        return current_patient
+        return []
 =begin 
         #we have a new way of archiving files
                     
@@ -1908,6 +1908,25 @@ EOF
         return patient_to_be_archived
 =end
       else
+        #void current dormant filing number
+        current_filing_numbers =  PatientIdentifier.find(:all,
+          :conditions=>["patient_id=? AND identifier_type = ?",
+            current_patient.patient_id,
+            PatientIdentifierType.find_by_name("Archived filing Number").id])
+
+        (current_filing_numbers || []).each do | f_number |
+          f_number.voided = 1
+          f_number.voided_by = User.current.id
+          f_number.void_reason = "Given active filing number: #{next_filing_number}"
+          f_number.date_voided = Time.now()
+          f_number.save
+        end
+
+        filing_number = PatientIdentifier.new()
+        filing_number.patient_id = current_patient.patient_id
+        filing_number.identifier_type = active_filing_number_identifier_type.id
+        filing_number.identifier = next_filing_number
+        filing_number.save
         return current_patient
       end
     end
@@ -2011,8 +2030,8 @@ EOF
     GROUP BY person_id;
 EOF
 
-    no_patient_ids = [0] if patient_ids_with_future_app.blank?
     no_patient_ids = patient_ids_with_future_app.map{|ad| ad['person_id'].to_i }
+    no_patient_ids = [0] if patient_ids_with_future_app.blank?
 
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
 SELECT patient_id,state,start_date,end_date FROM patient_state s
