@@ -283,13 +283,22 @@ The following block of code should be replaced by a more cleaner function
     auth_token = current_user.authentication_token
     patient = Patient.find(params[:id])
     con = YAML.load_file("#{Rails.root}/config/application.yml")
-    lims_ip = "http://localhost:3005"
+		lims_link = nil
+		if national_lims_activated
+			lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip'] + "/user/ext"
+			npid = patient.patient_identifiers.find_by_identifier_type(3).identifier
+			lims_link += "?intent=new_order&username=#{User.current.username}&return_path=#{request.referrer}&name=#{User.current.name}&location=#{Location.current_location.name}&identifier=#{npid}&tk=#{User.current.authentication_token}".gsub(/\s+/, '%20')
+		else 
+		  lims_ip = "http://localhost:3005"
+			lims_link = "#{lims_ip}/user/login"
+		end
+
     @links << ["Demographics (Print)","/patients/print_demographics/#{patient.id}"]
     @links << ["Visit Summary (Print)","/patients/dashboard_print_visit/#{patient.id}"]
     @links << ["National ID (Print)","/patients/dashboard_print_national_id/#{patient.id}"]
     @links << ["Demographics (Edit)","/people/demographics/#{patient.id}"]
     @links << ["Lab Results","/encounters/lab_results_print/#{patient.id}"]
-    @links << ["Order Test","#{lims_ip}/user/login"]
+    @links << ["Order Test", lims_link]
 
     if use_filing_number and not PatientService.get_patient_identifier(patient, 'Filing Number').blank?
       @links << ["Filing Number (Print)","/patients/print_filing_number/#{patient.id}"]
@@ -311,7 +320,14 @@ The following block of code should be replaced by a more cleaner function
     end
 
     if show_lab_results
-      @links << ["Lab trail", "/lab/results/#{patient.id}"]
+			if national_lims_activated
+				lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip'] + "/user/ext"
+				npid = patient.patient_identifiers.find_by_identifier_type(3).identifier
+				lims_link += "?intent=lab_trail&username=#{User.current.username}&return_path=#{request.referrer}&name=#{User.current.name}&location=#{Location.current_location.name}&identifier=#{npid}&tk=#{User.current.authentication_token}".gsub(/\s+/, '%20')
+				@links << ["Lab trail", lims_link]
+			else
+      	@links << ["Lab trail", "/lab/results/#{patient.id}"]
+			end
       #@links << ["Edit Lab Results","/lab/edit_lab_results/?patient_id=#{patient.id}"]
     end
     
@@ -4125,16 +4141,17 @@ EOF
       npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
       url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}&test_status=verified__reviewed"
       trail_url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
+
       data = JSON.parse(RestClient.get(url)) rescue []
       @latest_date = data.last[0].to_date rescue nil
-      @latest_result = data.last[1]["Viral Load"]
+      @latest_result = data.last[1]["Viral Load"] rescue nil
 
       @latest_result = "Rejected" if (data.last[1]["Viral Load"] rescue nil) == "Rejected"
 
       @modifier = '' #data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue 
 
       @date_vl_result_given = nil
-      if ((data.last[2] == "reviewed") rescue false)
+      if ((data.last[2].downcase == "reviewed") rescue false)
         @date_vl_result_given = Observation.find(:last, :conditions => ["
           person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
             Concept.find_by_name("Viral load").concept_id, 'Result given to patient', data.last[3].to_date]).value_datetime rescue nil
@@ -4144,12 +4161,13 @@ EOF
 
       #[["97426", {"result_given"=>"no", "result"=>"253522", "date_result_given"=>"", "date_of_sample"=>Sun, 17 Aug 2014, "second_line_switch"=>"no"}]]
       trail = JSON.parse(RestClient.get(trail_url)) rescue []
-      @vl_result_hash = []
+      
+			@vl_result_hash = []
       (trail || []).each do |order|
         results = order['results']['Viral Load']
-        if order['status'].match(/rejected|voided/i)
+        if (order['sample_status'] || order['status']).match(/rejected|voided/i)
           @vl_result_hash << [order['_id'], {"result_given" =>  'no',
-              "result" => order['status'].humanize,
+              "result" => (order['sample_status'] || order['status']).humanize,
               "date_of_sample" => order['date_time'].to_date,
               "date_result_given" => "",
               "second_line_switch" => '?'
@@ -4160,7 +4178,7 @@ EOF
 
         next if results.blank?
         timestamp = results.keys.sort.last rescue nil
-        next if (!order['status'].match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
+        next if (!(order['sample_status'] || order['status']).match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
         result = results[timestamp]['results']
 
         date_given = nil

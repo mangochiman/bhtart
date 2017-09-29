@@ -11,7 +11,7 @@ development:
   central_repo: http://localhost:3004
   national-repo-node: http://localhost:3014
   receiving_facility: Kamuzu Central Hospital
-
+  new_order_ip: http://localhost:4000
 test:
   <<: *development
 
