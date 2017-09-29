@@ -22,7 +22,7 @@ ART tables in OpenMRS
 UniqPatientIds = []
 Connection = ActiveRecord::Base.connection
 
-Current_date = "2017-02-24".to_date #Date.today
+Current_date = Date.today
 
 def start
   start_time = DateTime.now
@@ -519,6 +519,7 @@ def updating_flat_cohort_table(patient_ids)
     dob                                         = flat_table1_record['dob']
     age_in_days                                 = flat_table1_record['age_in_days']
     death_date                                  = flat_table1_record['death_date']
+    pregnant_at_initiation                      = flat_table1_record['pregnant_at_initiation']
     reason_for_eligibility                      = flat_table1_record['reason_for_eligibility']
     who_stage                                   = flat_table1_record['who_stage']
     who_stages_criteria_present                 = flat_table1_record['who_stages_criteria_present']
@@ -534,14 +535,19 @@ def updating_flat_cohort_table(patient_ids)
     pulmonary_tuberculosis_last_2_years_v_date  = flat_table1_record['pulmonary_tuberculosis_last_2_years_v_date']#.to_date rescue nil
     kaposis_sarcoma_v_date                      = flat_table1_record['kaposis_sarcoma_v_date']#.to_date rescue nil
     reason_for_eligibility_V_date               = flat_table1_record['reason_for_eligibility_V_date']#.to_date rescue nil
+    pregnant_at_initiation_v_date               = flat_table1_record['pregnant_at_initiation_v_date']
     who_stages_criteria_present_v_date          = flat_table1_record['who_stages_criteria_present_v_date']#.to_date rescue nil
-    ever_registered_at_art_clinic_v_date               = flat_table1_record['ever_registered_at_art_clinic_v_date']
+    ever_registered_at_art_clinic_v_date        = flat_table1_record['ever_registered_at_art_clinic_v_date']
     date_art_last_taken_v_date                  = flat_table1_record['date_art_last_taken_v_date']
     taken_art_in_last_two_months_v_date         = flat_table1_record['taken_art_in_last_two_months_v_date']
     taken_art_in_last_two_months                = flat_table1_record['taken_art_in_last_two_months']
     date_enrolled                               = flat_table1_record['date_enrolled']
     patient_breastfeeding_v_date                = flat_table1_record['patient_breastfeeding_v_date']
 
+    unless date_enrolled.blank?
+      re_initiated = Connection.select_one("SELECT re_initiated_check(#{row[:patient_id]}, '#{date_enrolled}') AS re_initiated")
+    end
+      patient_re_initiated = re_initiated['re_initiated']
     unless eligible.blank?
       record = Connection.select_one("SELECT id FROM flat_cohort_table WHERE patient_id = #{row[:patient_id]}") rescue nil
       age_at_initiation = flat_table1_record['age_at_initiation']
@@ -551,9 +557,8 @@ def updating_flat_cohort_table(patient_ids)
         puts "............ Inserting new record into flat_cohort_table (patient_id: #{row[:patient_id]})"
         Connection.execute <<EOF
 INSERT INTO flat_cohort_table
- (patient_id, gender, birthdate, earliest_start_date, date_enrolled, age_at_initiation, age_in_days, death_date, reason_for_starting, ever_registered_at_art_clinic, date_art_last_taken, taken_art_in_last_two_months, extrapulmonary_tuberculosis, pulmonary_tuberculosis, pulmonary_tuberculosis_last_2_years, kaposis_sarcoma,extrapulmonary_tuberculosis_v_date, pulmonary_tuberculosis_v_date, pulmonary_tuberculosis_last_2_years_v_date, kaposis_sarcoma_v_date, reason_for_eligibility_V_date, ever_registered_at_art_clinic_v_date, date_art_last_taken_v_date, taken_art_in_last_two_months_v_date, hiv_program_state, hiv_program_start_date, patient_pregnant, drug_induced_abdominal_pain, drug_induced_anorexia, drug_induced_diarrhea, drug_induced_jaundice, drug_induced_leg_pain_numbness, drug_induced_vomiting, drug_induced_peripheral_neuropathy, drug_induced_hepatitis, drug_induced_anemia, drug_induced_lactic_acidosis, drug_induced_lipodystrophy, drug_induced_skin_rash, drug_induced_other, drug_induced_fever, drug_induced_cough, tb_not_suspected, tb_suspected, confirmed_tb_not_on_treatment, confirmed_tb_on_treatment, unknown_tb_status, regimen_category_treatment, regimen_category_dispensed, what_was_the_patient_adherence_for_this_drug1, what_was_the_patient_adherence_for_this_drug2,  what_was_the_patient_adherence_for_this_drug3, what_was_the_patient_adherence_for_this_drug4, what_was_the_patient_adherence_for_this_drug5, drug_name1, drug_name2, drug_name3, drug_name4, drug_name5, drug_inventory_id1, drug_inventory_id2, drug_inventory_id3, drug_inventory_id4, drug_inventory_id5, drug_auto_expire_date1, drug_auto_expire_date2, drug_auto_expire_date3, drug_auto_expire_date4, drug_auto_expire_date5, hiv_program_state_v_date, hiv_program_start_date_v_date, current_tb_status_v_date, patient_pregnant_v_date, drug_induced_abdominal_pain_v_date, drug_induced_anorexia_v_date, drug_induced_diarrhea_v_date, drug_induced_jaundice_v_date, drug_induced_leg_pain_numbness_v_date, drug_induced_vomiting_v_date, drug_induced_peripheral_neuropathy_v_date, drug_induced_hepatitis_v_date, drug_induced_anemia_v_date, drug_induced_lactic_acidosis_v_date, drug_induced_lipodystrophy_v_date, drug_induced_skin_rash_v_date, drug_induced_other_v_date, drug_induced_fever_v_date, drug_induced_cough_v_date, tb_not_suspected_v_date, tb_suspected_v_date, confirmed_tb_not_on_treatment_v_date, confirmed_tb_on_treatment_v_date, unknown_tb_status_v_date, what_was_the_patient_adherence_for_this_drug1_v_date, what_was_the_patient_adherence_for_this_drug2_v_date, what_was_the_patient_adherence_for_this_drug3_v_date, what_was_the_patient_adherence_for_this_drug4_v_date, what_was_the_patient_adherence_for_this_drug5_v_date, drug_name1_v_date, drug_name2_v_date, drug_name3_v_date, drug_name4_v_date, drug_name5_v_date, drug_inventory_id1_v_date, drug_inventory_id2_v_date, drug_inventory_id3_v_date, drug_inventory_id4_v_date, drug_inventory_id5_v_date, drug_auto_expire_date1_v_date, drug_auto_expire_date2_v_date, drug_auto_expire_date3_v_date, drug_auto_expire_date4_v_date, drug_auto_expire_date5_v_date, side_effects_abdominal_pain, side_effects_anemia, side_effects_anorexia, side_effects_blurry_vision, side_effects_cough, side_effects_diarrhea, side_effects_diziness, side_effects_fever, side_effects_hepatitis, side_effects_jaundice, side_effects_kidney_failure, side_effects_lactic_acidosis, side_effects_leg_pain_numbness, side_effects_lipodystrophy, side_effects_no, side_effects_other, side_effects_peripheral_neuropathy, side_effects_psychosis, side_effects_renal_failure, side_effects_skin_rash, side_effects_vomiting, side_effects_gynaecomastia, side_effects_nightmares, drug_induced_kidney_failure, drug_induced_nightmares, drug_induced_diziness, drug_induced_psychosis, drug_induced_blurry_vision)
-  VALUES (#{row[:patient_id]}, '#{gender}', '#{dob}', '#{eligible}', '#{date_enrolled}', #{age_at_initiation}, #{age_in_days}, '#{death_date}', '#{reason_for_eligibility}', '#{ever_registered_at_art_clinic}', '#{date_art_last_taken}', '#{taken_art_in_last_two_months}', '#{extrapulmonary_tuberculosis}', '#{pulmonary_tuberculosis}', '#{pulmonary_tuberculosis_last_2_years}', '#{kaposis_sarcoma}', '#{extrapulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_last_2_years_v_date}', '#{kaposis_sarcoma_v_date}', '#{reason_for_eligibility_V_date}', '#{ever_registered_at_art_clinic_v_date}', '#{date_art_last_taken_v_date}', '#{taken_art_in_last_two_months_v_date}',
-  "#{hiv_program_state}", "#{hiv_program_start_date}", "#{patient_pregnant}", "#{drug_induced_abdominal_pain}", "#{drug_induced_anorexia}", "#{drug_induced_diarrhea}", "#{drug_induced_jaundice}", "#{drug_induced_leg_pain_numbness}", "#{drug_induced_vomiting}", "#{drug_induced_peripheral_neuropathy}", "#{drug_induced_hepatitis}", "#{drug_induced_anemia}", "#{drug_induced_lactic_acidosis}", "#{drug_induced_lipodystrophy}", "#{drug_induced_skin_rash}", "#{drug_induced_other}", "#{drug_induced_fever}", "#{drug_induced_cough}", "#{tb_not_suspected}", "#{tb_suspected}", "#{confirmed_tb_not_on_treatment}", "#{confirmed_tb_on_treatment}", "#{unknown_tb_status}", "#{regimen_category_treatment}", "#{regimen_category_dispensed}", "#{what_was_the_patient_adherence_for_this_drug1}", "#{what_was_the_patient_adherence_for_this_drug2}",  "#{what_was_the_patient_adherence_for_this_drug3}", "#{what_was_the_patient_adherence_for_this_drug4}", "#{what_was_the_patient_adherence_for_this_drug5}", "#{drug_name1}", "#{drug_name2}", "#{drug_name3}", "#{drug_name4}", "#{drug_name5}", "#{drug_inventory_id1}", "#{drug_inventory_id2}", "#{drug_inventory_id3}", "#{drug_inventory_id4}", "#{drug_inventory_id5}", '#{drug_auto_expire_date1}', '#{drug_auto_expire_date2}', '#{drug_auto_expire_date3}', '#{drug_auto_expire_date4}', '#{drug_auto_expire_date5}', '#{hiv_program_state_v_date}', '#{hiv_program_start_date_v_date}', '#{current_tb_status_v_date}', "#{patient_pregnant_v_date}", "#{drug_induced_abdominal_pain_v_date}", "#{drug_induced_anorexia_v_date}", "#{drug_induced_diarrhea_v_date}", "#{drug_induced_jaundice_v_date}", "#{drug_induced_leg_pain_numbness_v_date}", "#{drug_induced_vomiting_v_date}", "#{drug_induced_peripheral_neuropathy_v_date}", "#{drug_induced_hepatitis_v_date}", "#{drug_induced_anemia_v_date}", "#{drug_induced_lactic_acidosis_v_date}", "#{drug_induced_lipodystrophy_v_date}", "#{drug_induced_skin_rash_v_date}", "#{drug_induced_other_v_date}", "#{drug_induced_fever_v_date}", "#{drug_induced_cough_v_date}", "#{tb_not_suspected_v_date}", "#{tb_suspected_v_date}", "#{confirmed_tb_not_on_treatment_v_date}", "#{confirmed_tb_on_treatment_v_date}", "#{unknown_tb_status_v_date}", "#{what_was_the_patient_adherence_for_this_drug1_v_date}", "#{what_was_the_patient_adherence_for_this_drug2_v_date}", "#{what_was_the_patient_adherence_for_this_drug3_v_date}", "#{what_was_the_patient_adherence_for_this_drug4_v_date}", "#{what_was_the_patient_adherence_for_this_drug5_v_date}", "#{drug_name1_v_date}", "#{drug_name2_v_date}", "#{drug_name3_v_date}", "#{drug_name4_v_date}", "#{drug_name5_v_date}", "#{drug_inventory_id1_v_date}", "#{drug_inventory_id2_v_date}", "#{drug_inventory_id3_v_date}", "#{drug_inventory_id4_v_date}", "#{drug_inventory_id5_v_date}", "#{drug_auto_expire_date1_v_date}", "#{drug_auto_expire_date2_v_date}", "#{drug_auto_expire_date3_v_date}", "#{drug_auto_expire_date4_v_date}", "#{drug_auto_expire_date5_v_date}""#{side_effects_abdominal_pain}",  "#{side_effects_anemia}",  "#{side_effects_anorexia}",  "#{side_effects_blurry_vision}",  "#{side_effects_cough}",  "#{side_effects_diarrhea}",  "#{side_effects_diziness}",  "#{side_effects_fever}",  "#{side_effects_hepatitis}",  "#{side_effects_jaundice}",  "#{side_effects_kidney_failure}",  "#{side_effects_lactic_acidosis}",  "#{side_effects_leg_pain_numbness}",  "#{side_effects_lipodystrophy}",  "#{side_effects_no}",  "#{side_effects_other}",  "#{side_effects_peripheral_neuropathy}",  "#{side_effects_psychosis}",  "#{side_effects_renal_failure}",  "#{side_effects_skin_rash}",  "#{side_effects_vomiting}",  "#{side_effects_gynaecomastia}",  "#{side_effects_nightmares}", "#{drug_induced_kidney_failure}", "#{drug_induced_nightmares}", "#{drug_induced_diziness}", "#{drug_induced_psychosis}", "#{drug_induced_blurry_vision}");
+ (patient_id, gender, birthdate, earliest_start_date, date_enrolled, age_at_initiation, age_in_days, death_date, pregnant_at_initiation, patient_re_initiated, reason_for_starting, ever_registered_at_art_clinic, date_art_last_taken, taken_art_in_last_two_months, extrapulmonary_tuberculosis, pulmonary_tuberculosis, pulmonary_tuberculosis_last_2_years, kaposis_sarcoma,extrapulmonary_tuberculosis_v_date, pulmonary_tuberculosis_v_date, pulmonary_tuberculosis_last_2_years_v_date, kaposis_sarcoma_v_date, reason_for_eligibility_V_date, pregnant_at_initiation_v_date, ever_registered_at_art_clinic_v_date, date_art_last_taken_v_date, taken_art_in_last_two_months_v_date, hiv_program_state, hiv_program_start_date, patient_pregnant, drug_induced_abdominal_pain, drug_induced_anorexia, drug_induced_diarrhea, drug_induced_jaundice, drug_induced_leg_pain_numbness, drug_induced_vomiting, drug_induced_peripheral_neuropathy, drug_induced_hepatitis, drug_induced_anemia, drug_induced_lactic_acidosis, drug_induced_lipodystrophy, drug_induced_skin_rash, drug_induced_other, drug_induced_fever, drug_induced_cough, tb_not_suspected, tb_suspected, confirmed_tb_not_on_treatment, confirmed_tb_on_treatment, unknown_tb_status, regimen_category_treatment, regimen_category_dispensed, what_was_the_patient_adherence_for_this_drug1, what_was_the_patient_adherence_for_this_drug2,  what_was_the_patient_adherence_for_this_drug3, what_was_the_patient_adherence_for_this_drug4, what_was_the_patient_adherence_for_this_drug5, drug_name1, drug_name2, drug_name3, drug_name4, drug_name5, drug_inventory_id1, drug_inventory_id2, drug_inventory_id3, drug_inventory_id4, drug_inventory_id5, drug_auto_expire_date1, drug_auto_expire_date2, drug_auto_expire_date3, drug_auto_expire_date4, drug_auto_expire_date5, hiv_program_state_v_date, hiv_program_start_date_v_date, current_tb_status_v_date, patient_pregnant_v_date, drug_induced_abdominal_pain_v_date, drug_induced_anorexia_v_date, drug_induced_diarrhea_v_date, drug_induced_jaundice_v_date, drug_induced_leg_pain_numbness_v_date, drug_induced_vomiting_v_date, drug_induced_peripheral_neuropathy_v_date, drug_induced_hepatitis_v_date, drug_induced_anemia_v_date, drug_induced_lactic_acidosis_v_date, drug_induced_lipodystrophy_v_date, drug_induced_skin_rash_v_date, drug_induced_other_v_date, drug_induced_fever_v_date, drug_induced_cough_v_date, tb_not_suspected_v_date, tb_suspected_v_date, confirmed_tb_not_on_treatment_v_date, confirmed_tb_on_treatment_v_date, unknown_tb_status_v_date, what_was_the_patient_adherence_for_this_drug1_v_date, what_was_the_patient_adherence_for_this_drug2_v_date, what_was_the_patient_adherence_for_this_drug3_v_date, what_was_the_patient_adherence_for_this_drug4_v_date, what_was_the_patient_adherence_for_this_drug5_v_date, drug_name1_v_date, drug_name2_v_date, drug_name3_v_date, drug_name4_v_date, drug_name5_v_date, drug_inventory_id1_v_date, drug_inventory_id2_v_date, drug_inventory_id3_v_date, drug_inventory_id4_v_date, drug_inventory_id5_v_date, drug_auto_expire_date1_v_date, drug_auto_expire_date2_v_date, drug_auto_expire_date3_v_date, drug_auto_expire_date4_v_date, drug_auto_expire_date5_v_date, side_effects_abdominal_pain, side_effects_anemia, side_effects_anorexia, side_effects_blurry_vision, side_effects_cough, side_effects_diarrhea, side_effects_diziness, side_effects_fever, side_effects_hepatitis, side_effects_jaundice, side_effects_kidney_failure, side_effects_lactic_acidosis, side_effects_leg_pain_numbness, side_effects_lipodystrophy, side_effects_no, side_effects_other, side_effects_peripheral_neuropathy, side_effects_psychosis, side_effects_renal_failure, side_effects_skin_rash, side_effects_vomiting, side_effects_gynaecomastia, side_effects_nightmares, drug_induced_kidney_failure, drug_induced_nightmares, drug_induced_diziness, drug_induced_psychosis, drug_induced_blurry_vision)
+  VALUES (#{row[:patient_id]}, '#{gender}', '#{dob}', '#{eligible}', '#{date_enrolled}', #{age_at_initiation}, #{age_in_days}, '#{death_date}', '#{pregnant_at_initiation}', '#{patient_re_initiated}','#{reason_for_eligibility}', '#{ever_registered_at_art_clinic}', '#{date_art_last_taken}', '#{taken_art_in_last_two_months}', '#{extrapulmonary_tuberculosis}', '#{pulmonary_tuberculosis}', '#{pulmonary_tuberculosis_last_2_years}', '#{kaposis_sarcoma}', '#{extrapulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_v_date}', '#{pulmonary_tuberculosis_last_2_years_v_date}', '#{kaposis_sarcoma_v_date}', '#{reason_for_eligibility_V_date}', '#{pregnant_at_initiation_v_date}', '#{ever_registered_at_art_clinic_v_date}', '#{date_art_last_taken_v_date}', '#{taken_art_in_last_two_months_v_date}',"#{hiv_program_state}", "#{hiv_program_start_date}", "#{patient_pregnant}", "#{drug_induced_abdominal_pain}", "#{drug_induced_anorexia}", "#{drug_induced_diarrhea}", "#{drug_induced_jaundice}", "#{drug_induced_leg_pain_numbness}", "#{drug_induced_vomiting}", "#{drug_induced_peripheral_neuropathy}", "#{drug_induced_hepatitis}", "#{drug_induced_anemia}", "#{drug_induced_lactic_acidosis}", "#{drug_induced_lipodystrophy}", "#{drug_induced_skin_rash}", "#{drug_induced_other}", "#{drug_induced_fever}", "#{drug_induced_cough}", "#{tb_not_suspected}", "#{tb_suspected}", "#{confirmed_tb_not_on_treatment}", "#{confirmed_tb_on_treatment}", "#{unknown_tb_status}", "#{regimen_category_treatment}", "#{regimen_category_dispensed}", "#{what_was_the_patient_adherence_for_this_drug1}", "#{what_was_the_patient_adherence_for_this_drug2}",  "#{what_was_the_patient_adherence_for_this_drug3}", "#{what_was_the_patient_adherence_for_this_drug4}", "#{what_was_the_patient_adherence_for_this_drug5}", "#{drug_name1}", "#{drug_name2}", "#{drug_name3}", "#{drug_name4}", "#{drug_name5}", "#{drug_inventory_id1}", "#{drug_inventory_id2}", "#{drug_inventory_id3}", "#{drug_inventory_id4}", "#{drug_inventory_id5}", '#{drug_auto_expire_date1}', '#{drug_auto_expire_date2}', '#{drug_auto_expire_date3}', '#{drug_auto_expire_date4}', '#{drug_auto_expire_date5}', '#{hiv_program_state_v_date}', '#{hiv_program_start_date_v_date}', '#{current_tb_status_v_date}', "#{patient_pregnant_v_date}", "#{drug_induced_abdominal_pain_v_date}", "#{drug_induced_anorexia_v_date}", "#{drug_induced_diarrhea_v_date}", "#{drug_induced_jaundice_v_date}", "#{drug_induced_leg_pain_numbness_v_date}", "#{drug_induced_vomiting_v_date}", "#{drug_induced_peripheral_neuropathy_v_date}", "#{drug_induced_hepatitis_v_date}", "#{drug_induced_anemia_v_date}", "#{drug_induced_lactic_acidosis_v_date}", "#{drug_induced_lipodystrophy_v_date}", "#{drug_induced_skin_rash_v_date}", "#{drug_induced_other_v_date}", "#{drug_induced_fever_v_date}", "#{drug_induced_cough_v_date}", "#{tb_not_suspected_v_date}", "#{tb_suspected_v_date}", "#{confirmed_tb_not_on_treatment_v_date}", "#{confirmed_tb_on_treatment_v_date}", "#{unknown_tb_status_v_date}", "#{what_was_the_patient_adherence_for_this_drug1_v_date}", "#{what_was_the_patient_adherence_for_this_drug2_v_date}", "#{what_was_the_patient_adherence_for_this_drug3_v_date}", "#{what_was_the_patient_adherence_for_this_drug4_v_date}", "#{what_was_the_patient_adherence_for_this_drug5_v_date}", "#{drug_name1_v_date}", "#{drug_name2_v_date}", "#{drug_name3_v_date}", "#{drug_name4_v_date}", "#{drug_name5_v_date}", "#{drug_inventory_id1_v_date}", "#{drug_inventory_id2_v_date}", "#{drug_inventory_id3_v_date}", "#{drug_inventory_id4_v_date}", "#{drug_inventory_id5_v_date}", "#{drug_auto_expire_date1_v_date}", "#{drug_auto_expire_date2_v_date}", "#{drug_auto_expire_date3_v_date}", "#{drug_auto_expire_date4_v_date}", "#{drug_auto_expire_date5_v_date}","#{side_effects_abdominal_pain}",  "#{side_effects_anemia}",  "#{side_effects_anorexia}",  "#{side_effects_blurry_vision}",  "#{side_effects_cough}",  "#{side_effects_diarrhea}",  "#{side_effects_diziness}",  "#{side_effects_fever}",  "#{side_effects_hepatitis}",  "#{side_effects_jaundice}",  "#{side_effects_kidney_failure}",  "#{side_effects_lactic_acidosis}",  "#{side_effects_leg_pain_numbness}",  "#{side_effects_lipodystrophy}",  "#{side_effects_no}",  "#{side_effects_other}",  "#{side_effects_peripheral_neuropathy}",  "#{side_effects_psychosis}",  "#{side_effects_renal_failure}",  "#{side_effects_skin_rash}",  "#{side_effects_vomiting}",  "#{side_effects_gynaecomastia}",  "#{side_effects_nightmares}", "#{drug_induced_kidney_failure}", "#{drug_induced_nightmares}", "#{drug_induced_diziness}", "#{drug_induced_psychosis}", "#{drug_induced_blurry_vision}");
 EOF
 
       else
@@ -563,6 +568,8 @@ UPDATE flat_cohort_table
   age_at_initiation = #{age_at_initiation}, age_in_days = #{age_in_days},
   hiv_program_state = "#{hiv_program_state}",
   hiv_program_start_date = '#{hiv_program_start_date}',
+  patient_re_initiated = "#{patient_re_initiated}",
+  pregnant_at_initiation = "#{pregnant_at_initiation}",
   reason_for_starting = "#{reason_for_eligibility}",
   ever_registered_at_art_clinic = "#{ever_registered_at_art_clinic}",
   patient_pregnant = "#{patient_pregnant}",
@@ -648,6 +655,7 @@ UPDATE flat_cohort_table
   hiv_program_start_date_v_date = '#{hiv_program_start_date_v_date}',
   current_tb_status_v_date = '#{current_tb_status_v_date}',
   reason_for_eligibility_V_date = '#{reason_for_eligibility_V_date}',
+  pregnant_at_initiation_v_date = '#{pregnant_at_initiation_v_date}',
   drug_induced_abdominal_pain_v_date = '#{drug_induced_abdominal_pain_v_date}',
   drug_induced_anorexia_v_date = '#{drug_induced_anorexia_v_date}',
   drug_induced_diarrhea_v_date = '#{drug_induced_diarrhea_v_date}',
@@ -701,6 +709,7 @@ EOF
   old_pulmonary_tuberculosis_last_2_years_v_date  = flat_cohort_record['pulmonary_tuberculosis_last_2_years_v_date'].to_date rescue nil
   old_kaposis_sarcoma_v_date                      = flat_cohort_record['kaposis_sarcoma_v_date'].to_date rescue nil
   old_reason_for_eligibility_V_date                  = flat_cohort_record['reason_for_eligibility_V_date'].to_date rescue nil
+  old_pregnant_at_initiation_v_date               = flat_cohort_record['pregnant_at_initiation_v_date'].to_date rescue nil
   old_who_stages_criteria_present_v_date          = flat_cohort_record['who_stages_criteria_present_v_date'].to_date rescue nil
   old_ever_registered_at_art_clinic_v_date               = flat_cohort_record['ever_registered_at_art_clinic_v_date'].to_date rescue nil
   old_date_art_last_taken_v_date                  = flat_cohort_record['date_art_last_taken_v_date'].to_date rescue nil
@@ -758,6 +767,17 @@ EOF
 UPDATE flat_cohort_table
   SET reason_for_starting = "#{reason_for_eligibility}",
     reason_for_eligibility_V_date = '#{reason_for_eligibility_V_date}'
+  WHERE patient_id = #{row[:patient_id]};
+EOF
+          #end
+        end
+
+        unless pregnant_at_initiation_v_date.blank?
+          #if pregnant_at_initiation_v_date.to_date > old_pregnant_at_initiation_v_date.to_date
+          Connection.execute <<EOF
+UPDATE flat_cohort_table
+  SET pregnant_at_initiation = "#{pregnant_at_initiation}",
+    pregnant_at_initiation_v_date = '#{pregnant_at_initiation_v_date}'
   WHERE patient_id = #{row[:patient_id]};
 EOF
           #end
@@ -1815,6 +1835,11 @@ def process_hiv_staging_obs(encounter, visit)
                     WHERE name = 'patient pregnant' AND voided = 0 AND retired = 0")
   pregnant2 = pregnant2_record['concept_id'].to_i
 
+  pregnant_at_initiation_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+                        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+                    WHERE name = 'Is patient pregnant at initiation?' AND voided = 0 AND retired = 0")
+  pregnant_at_initiation = pregnant_at_initiation_record['concept_id'].to_i
+
   breastfeeding_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
                         LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
                     WHERE name = 'Breastfeeding' AND voided = 0 AND retired = 0 LIMIT 1")
@@ -2739,6 +2764,42 @@ EOF
           end #voided
         end #encounter_type
       end #visit
+
+    when pregnant_at_initiation
+      if patient['voided'].to_i == 0
+        value_coded = patient['value_coded'].to_i
+        answer_record = Connection.select_one("SELECT name FROM location WHERE location_id = '#{value_text}' ")
+
+		answer_value = Connection.select_one("SELECT concept_name.name FROM concept_name
+				LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+			WHERE  concept_id = #{value_coded} AND voided = 0 AND retired = 0 LIMIT 1")
+
+        answer = answer_value['name'] rescue nil
+
+        if answer.blank?
+          puts ".......... Updating record into flat_table1 (pregnant_at_initiationation = Unknown): #{patient['person_id']}"
+          Connection.execute <<EOF
+UPDATE flat_table1
+ SET  pregnant_at_initiationation = "Unknown", pregnant_at_initiationation_enc_id = '#{patient['encounter_id']}', pregnant_at_initiationation_v_date  = DATE('#{patient_visit_date}')
+ WHERE flat_table1.patient_id = #{patient['person_id']};
+EOF
+        else
+          puts ".......... Updating record into flat_table1 (pregnant_at_initiationation = #{answer}): #{patient['person_id']}"
+          Connection.execute <<EOF
+UPDATE flat_table1
+ SET  pregnant_at_initiationation = "#{answer}", pregnant_at_initiationation_enc_id = '#{patient['encounter_id']}', pregnant_at_initiationation_v_date  = DATE('#{patient_visit_date}')
+ WHERE flat_table1.patient_id = #{patient['person_id']};
+EOF
+        end #answer
+
+      else
+        puts ".......... Updating record into flat_table1 (pregnant_at_initiationation = NULL): #{patient['person_id']}"
+        Connection.execute <<EOF
+UPDATE flat_table1
+ SET  pregnant_at_initiationation = NULL, pregnant_at_initiationation_enc_id = NULL, pregnant_at_initiationation_v_date = NULL
+WHERE flat_table1.patient_id = #{patient['person_id']};
+EOF
+      end #voided
 
     when cd4_count_loc
       if patient['voided'].to_i == 0
@@ -6947,6 +7008,11 @@ WHERE  name = 'Patient pregnant' AND voided = 0 AND retired = 0 LIMIT 1")
   patient_breastfeeding2 = breastfeeding_record2['concept_id']
 
   #family planning concepts
+  family_planning_method_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
+      LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+WHERE  name = 'Family planning, action to take' AND voided = 0 AND retired = 0 LIMIT 1")
+  family_planning_method = family_planning_method_record['concept_id']
+
   currently_using_family_planning_method_record = Connection.select_one("SELECT concept_name.concept_id FROM concept_name
       LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
 WHERE  name = 'Currently using family planning method' AND voided = 0 AND retired = 0 LIMIT 1")
@@ -7221,18 +7287,112 @@ WHERE  name = 'Isoniazid' AND voided = 0 AND retired = 0 LIMIT 1")
   prescribe_ipt = prescribe_ipt_record['concept_id']
 
   patient_hiv_consultation_obs = Connection.select_all("SELECT * FROM obs WHERE encounter_id = #{encounter['encounter_id']}")
+  encounter_visit_date =  encounter['encounter_datetime'].to_date.strftime("%Y-%m-%d")
+
+  flat_table_2_data = []
+  flat_table_2_data = Connection.select_one("SELECT * FROM flat_table2
+                                    WHERE patient_id = #{encounter['patient_id']}
+                                    AND visit_date = '#{encounter_visit_date}'")
 
   malawi_art_side_effects_concept_ids =  []
-  Connection.select_all("SELECT * FROM obs WHERE concept_id = #{malawi_art_side_effects.to_i}").each{|obs| malawi_art_side_effects_concept_ids << obs['value_coded'].to_i}
+  new_malawi_side_effects_saved =  Connection.select_all("SELECT person_id, concept_id, value_coded from obs
+                                      WHERE encounter_id = #{encounter['encounter_id']}
+                                      AND obs_group_id IS NOT NULL
+                                      AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 1066, 2148, 2150, 3681, 5953, 6408, 9242, 9440)")
 
-  side_effects_concept_details = Connection.select_all("SELECT * FROM obs o INNER JOIN encounter e ON e.encounter_id = o.encounter_id and e.encounter_type = 53 WHERE concept_id IN (#{malawi_art_side_effects_concept_ids.join(',')})")
+  unless flat_table_2_data.blank?
+    #update
+    if encounter['voided'].to_i == 0
+
+      if new_malawi_side_effects_saved.blank?
+        old_malawi_side_effects_saved = Connection.select_all("SELECT person_id, concept_id, value_coded from obs
+                                            WHERE encounter_id = #{encounter['encounter_id']}
+                                            AND concept_id = 7755 AND value_coded NOT IN (1066, 1107)")
+
+        unless old_malawi_side_effects_saved.blank?
+            Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_present = 'Yes', side_effects_present_enc_id = #{patient['encounter_id']}
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+        else
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_present = 'No', side_effects_present_enc_id = #{patient['encounter_id']}
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+        end
+      else
+        new_malawi_side_effects_saved =  Connection.select_all("SELECT person_id, concept_id, value_coded from obs
+                                          WHERE encounter_id = #{encounter['encounter_id']}
+                                          AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 2148, 2150, 3681, 5953, 6408, 9242, 9440)
+                                          AND obs_group_id IS NOT NULL
+                                          AND value_coded NOT IN (1066, 1107)")
+
+        unless new_malawi_side_effects_saved.blank?
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_present = 'Yes', side_effects_present_enc_id = #{encounter['encounter_id']}
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+        else
+        Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_present = 'No', side_effects_present_enc_id = #{encounter['encounter_id']}
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+        end
+     end
+    else
+      Connection.execute <<EOF
+UPDATE flat_table2
+SET  side_effects_present = NULL, side_effects_present_enc_id = NULL
+WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
+EOF
+    end
+  else #else unless
+    if new_malawi_side_effects_saved.blank?
+      old_malawi_side_effects_saved = Connection.select_all("SELECT person_id, concept_id, value_coded from obs
+                                          WHERE encounter_id = #{encounter['encounter_id']}
+                                          AND concept_id = 7755 AND value_coded NOT IN (1066, 1107)")
+
+      unless old_malawi_side_effects_saved.blank?
+          Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_present, side_effects_present_enc_id)
+VALUES('#{encounter['patient_id']}', DATE('#{encounter_visit_date}'), 'Yes', '#{encounter['encounter_id']}') ;
+EOF
+      else
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_present, side_effects_present_enc_id)
+VALUES('#{encounter['patient_id']}', DATE('#{encounter_visit_date}'), 'Yes', '#{encounter['encounter_id']}') ;
+EOF
+      end
+    else
+      new_malawi_side_effects_saved =  Connection.select_all("SELECT person_id, concept_id, value_coded from obs
+                                        WHERE encounter_id = #{encounter['encounter_id']}
+                                        AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 2148, 2150, 3681, 5953, 6408, 9242, 9440)
+                                        AND obs_group_id IS NOT NULL
+                                        AND value_coded NOT IN (1066, 1107)")
+
+      unless new_malawi_side_effects_saved.blank?
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_present, side_effects_present_enc_id)
+VALUES('#{encounter['patient_id']}', DATE('#{encounter_visit_date}'), 'Yes', '#{encounter['encounter_id']}') ;
+EOF
+      else
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, side_effects_present, side_effects_present_enc_id)
+VALUES('#{encounter['patient_id']}', DATE('#{encounter_visit_date}'), 'Yes', '#{encounter['encounter_id']}') ;
+EOF
+      end
+    end
+  end
+
+
 
   (patient_hiv_consultation_obs || []).each do |patient|
     patient_visit_date =  patient['obs_datetime'].to_date.strftime("%Y-%m-%d")
-      flat_table_2_data = []
-      flat_table_2_data = Connection.select_one("SELECT * FROM flat_table2
-                                        WHERE patient_id = #{encounter['patient_id']}
-                                        AND visit_date = '#{patient_visit_date}'")
+
 
     case patient['concept_id']
       when patient_pregnant1
@@ -7264,10 +7424,9 @@ EOF
                 answer_value = 'Unknown'
               end #end answer_value
 
-Connection.execute <<EOF
+              Connection.execute <<EOF
 UPDATE flat_table2
-SET  patient_pregnant = '#{answer_value}', patient_pregnant_enc_id = #{patient['encounter_id']},
-patient_pregnant_v_date = DATE('#{patient_visit_date}')
+SET  patient_pregnant = '#{answer_value}', patient_pregnant_enc_id = #{patient['encounter_id']}, patient_pregnant_v_date = DATE('#{patient_visit_date}')
 WHERE flat_table2.id = '#{flat_table_2_data['ID']}';
 EOF
           else #else voided
@@ -7424,6 +7583,57 @@ EOF
           end #end if voided
         end# end if visit blank
 #---------------------------------------------------------------------------------------------------------------------end patient_breastfeeding2
+    when family_planning_method
+      patient_check = []
+      patient_check = Connection.select_one("SELECT ID FROM flat_table2
+                                    WHERE patient_id = #{patient['person_id']}
+                                    and visit_date = '#{patient_visit_date}'")
+      if patient_check.blank?
+        #insert
+        answer_value = ""
+        if (patient['value_coded'] == "#{yes_record['concept_id']}" || patient['value_text'] == "Yes")
+          answer_value = 'Yes'
+        elsif (patient['value_coded'] == "#{no_record['concept_id']}" || patient['value_text'] == "No")
+          answer_value = 'No'
+        elsif (patient['value_coded'] == "#{unknown_record['concept_id']}" || patient['value_text'] == "Unknown")
+          answer_value = 'Unknown'
+        else
+          answer_value = 'Yes'
+        end #end answer_value
+
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, family_planning_method, family_planning_method_enc_id)
+VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), '#{answer_value}', '#{patient['encounter_id']}') ;
+EOF
+      else #else visit blank?
+        if patient['voided'] == "0"
+          #update to value
+          answer_value = ""
+          if (patient['value_coded'] == "#{yes_record['concept_id']}" || patient['value_text'] == "Yes")
+            answer_value = 'Yes'
+          elsif (patient['value_coded'] == "#{no_record['concept_id']}" || patient['value_text'] == "No")
+            answer_value = 'No'
+          elsif (patient['value_coded'] == "#{unknown_record['concept_id']}" || patient['value_text'] == "Unknown")
+            answer_value = 'Unknown'
+          else
+            answer_value = 'Yes'
+          end #end answer_value
+    Connection.execute <<EOF
+UPDATE flat_table2
+SET  family_planning_method = '#{answer_value}', family_planning_method_enc_id = #{patient['encounter_id']}
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        else #else voided
+          #update to null
+          Connection.execute <<EOF
+UPDATE flat_table2
+SET  family_planning_method = NULL, family_planning_method_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end if voided
+      end# end if visit blank
+#---------------------------------------------------------------------------------------------------------------------end family planning
+
       when currently_using_family_planning_method
         patient_check = []
         patient_check = Connection.select_one("SELECT ID FROM flat_table2
@@ -7469,7 +7679,7 @@ WHERE flat_table2.id = '#{patient_check['ID']}';
 EOF
           end #end if voided
         end# end if visit blank
-#---------------------------------------------------------------------------------------------------------------------end breastfeeding
+#---------------------------------------------------------------------------------------------------------------------end currently_using_family_planning_method
       when method_of_family_planning
         case patient['value_coded']
           when family_planning_method_oral_contraceptive_pills
@@ -7814,6 +8024,41 @@ EOF
       updating_routine_tb_screening(patient['person_id'].to_i, patient['encounter_id'].to_i, patient['value_coded'].to_i, patient['obs_datetime'], patient['voided'].to_i)
 #------------------------------------------------------------------------------------------------------------------------close TB routine screening
     when tb_status
+#--------------------------------------------------------------------------------------------------------------
+      tb_status_record = Connection.select_one("SELECT concept_name.name FROM concept_name
+        LEFT OUTER JOIN concept ON concept.concept_id = concept_name.concept_id
+      WHERE  concept_name.concept_id = '#{patient['value_coded']}' AND voided = 0 AND retired = 0 LIMIT 1")
+      puts "........... tb_status: #{tb_status_record}"
+
+      tb_status_value = tb_status_record['name']
+
+      patient_check = []
+      patient_check = Connection.select_one("SELECT ID FROM flat_table2
+                                    WHERE patient_id = #{patient['person_id']}
+                                    and visit_date = '#{patient_visit_date}'")
+      if patient_check.blank?
+        #insert
+        Connection.execute <<EOF
+INSERT INTO flat_table2 (patient_id, visit_date, tb_status, tb_status_enc_id)
+VALUES('#{patient['person_id']}', DATE('#{patient_visit_date}'), '#{tb_status_value}', '#{patient['encounter_id']}') ;
+EOF
+       else #else visit blank
+         #update
+         if patient['voided'] == "0"
+           Connection.execute <<EOF
+UPDATE flat_table2
+SET  tb_status = '#{tb_status_value}', tb_status_enc_id = '#{patient['encounter_id']}'
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+         else #else voided
+           Connection.execute <<EOF
+UPDATE flat_table2
+SET  tb_status = NULL, tb_status_enc_id = NULL
+WHERE flat_table2.id = '#{patient_check['ID']}';
+EOF
+        end #end voided
+      end #end visit blank
+#-------------------------------------------------------------------------------------------------------------
       case patient['value_coded']
       when tb_status_tb_not_suspected
         patient_check = []
@@ -10566,7 +10811,7 @@ end
 
 def get_drug_list
   drug_hash = {}
-  drug_list = Drug.find_by_sql("SELECT drug_id, name FROM #{@source_db}.drug")
+  drug_list = Drug.find_by_sql("SELECT drug_id, name FROM drug")
   drug_list.each do |drug|
     drug_hash[:"#{drug.drug_id}"] = drug.name
   end
