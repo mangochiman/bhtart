@@ -1510,9 +1510,49 @@ EOF
     end
 
     render :text => {
-      :gender => person.gender, 
+      :gender => person.gender, :age => person.age,
       :name => "#{names.given_name} #{middle_name} #{names.family_name}".squish,
       :birthdate => PatientService.birthdate_formatted(person)}.to_json
+  end
+
+  def get_initial_vital_signs
+    patient_id = params[:patient_id]
+    vitals = EncounterType.find_by_name('Vitals')
+    vital_reading = Encounter.find(:first, 
+      :conditions =>["encounter_type = ? AND patient_id = ?",
+      vitals.id, patient_id],:select =>"MIN(encounter_datetime) AS date, encounter_id")
+
+    begin 
+      date = vital_reading['date'].to_date
+      encounter_id = vital_reading['encounter_id'].to_i
+
+      obs = Observation.find(:all, :conditions =>["person_id = ? 
+        AND encounter_id = ? AND obs_datetime BETWEEN ? AND ?", 
+        patient_id, encounter_id, date.strftime('%Y-%m-%d 00:00:00'), 
+        date.strftime('%Y-%m-%d 23:59:59')])
+    rescue
+      obs = []
+    end
+
+    weight  = nil
+    height  = nil
+    bmi     = nil
+
+    (obs || []).each do |ob|
+      name = ob.concept.fullname
+      if name.match(/weight/i) and weight.blank?
+        weight = ob.value_numeric.to_f rescue nil
+      elsif name.match(/height/i) and height.blank?
+        height = ob.value_numeric.to_f rescue nil
+      end
+    end
+
+    if not weight.blank? and not height.blank?
+      bmi = (weight.to_f/(height.to_f*height.to_f)*10000).round(1)
+    end
+
+    render :text => {
+      :weight => weight,:height => height, :bmi => bmi}.to_json
   end
 
   def get_patient_identifiers
@@ -1583,6 +1623,18 @@ EOF
     }.to_json
   end
 
+  def get_transfer_in
+    patient_id = params[:patient_id]
+    transfer_in_date = Person.find(patient_id).observations.recent(1).\
+    question("ART start date").all.\
+    collect{|o| o.value_datetime }.last.to_date rescue []
+
+    render :text => {
+      :transfer_in => transfer_in = (transfer_in_date.blank? == true ? 'No' : 'Yes'),
+      :transfer_in_date => transfer_in_date
+    }.to_json
+  end
+
   def get_patient_current_regimen
     patient_id = params[:patient_id]
     current_reg = Patient.find_by_sql("SELECT patient_current_regimen(#{patient_id}, current_date()) AS regimen;")
@@ -1594,12 +1646,15 @@ EOF
   def get_current_address
     patient_id = params[:patient_id]
     begin
-      address = PersonAddress.find_last_by_person_id(patient_id).city_village
+      address = PersonAddress.find_last_by_person_id(patient_id)
+      phaddress = address.city_village
+      landmark = address.address1
     rescue
       address = 'Unknown'
+      landmark = 'Unknown'
     end
 
-    render :text => {:current_residence => address}.to_json 
+    render :text => {:current_residence => phaddress, :landmark => landmark}.to_json 
   end
 
   def get_current_outcome
@@ -1610,6 +1665,131 @@ EOF
     }.to_json
   end
 
+  def get_occupation
+    patient_id = params[:patient_id]
+    person_attribute_type = PersonAttributeType.find_by_name('Occupation')
+
+    occupation = PersonAttribute.find(:last,
+      :conditions => ["person_attribute_type_id = ? AND person_id = ?",
+      person_attribute_type.id, patient_id]).value rescue nil
+
+    render :text => {:occupation =>occupation}.to_json
+  end
+
+  def get_guardian
+    patient_id = params[:patient_id]
+    relationship = Relationship.find(:last,:conditions =>["person_a = ?", patient_id])
+    unless relationship.blank?
+      names = PersonName.find_last_by_person_id(relationship.person_b)
+      begin
+        middle_name = names.middle_name unless names.middle_name.match(/N\/A|Unknown/i)
+      rescue
+        middle_name = nil
+      end
+      
+      begin
+        name = "#{names.given_name} #{middle_name} #{names.family_name}".squish
+      rescue
+        name = nil
+      end
+      
+      type = RelationshipType.find(relationship.relationship).b_is_to_a rescue nil
+      name = "#{name} (#{type})" unless type.blank? 
+    end
+    
+    render :text => {:guardian_name => name}.to_json
+  end
+
+  def get_agrees_to_followup
+    patient_id = params[:patient_id]
+    agrees_to_followup = ConceptName.find_by_name('Agrees to followup').concept_id
+
+    obs = Observation.find(:last,
+      :conditions =>["person_id = ? AND concept_id = ?",
+      patient_id, agrees_to_followup]).answer_string rescue nil
+
+    render :text => {:agrees_to_followup => obs}.to_json
+  end
+
+
+  def get_tb_stats
+    patient_id = params[:patient_id]
+    tb_stats = []
+    tb_stats  << ConceptName.find_by_name('Pulmonary tuberculosis within the last 2 years').concept_id
+    tb_stats  << ConceptName.find_by_name('Extrapulmonary tuberculosis (EPTB)').concept_id
+    tb_stats  << ConceptName.find_by_name('Pulmonary tuberculosis (current)').concept_id
+    tb_stats  << ConceptName.find_by_name("Kaposis sarcoma").concept_id
+
+    hiv_staging_type = EncounterType.find_by_name('HIV staging').id
+
+    hiv_staging = Encounter.find(:last,
+      :conditions =>["patient_id = ? AND encounter_type = ?",
+      patient_id, hiv_staging_type], 
+      :select =>"DATE(MAX(encounter_datetime)) AS encounter_date, encounter_id")
+
+    last_2_yrs  = 'N/A'
+    eptb        = 'N/A'
+    tb_current  = 'N/A'
+    ks          = 'N/A'
+
+    unless hiv_staging.blank?
+      last_2_yrs  = 'No'
+      eptb        = 'No'
+      tb_current  = 'No'
+      ks          = 'No'
+
+      obs = Observation.find(:all,
+        :conditions =>["person_id = ? AND concept_id IN(?) AND encounter_id = ?",
+        patient_id, tb_stats, hiv_staging['encounter_id']])
+    
+      (obs || []).each do |ob|
+        name = ob.concept.fullname
+        if name.match(/last/i)
+          last_2_yrs = ob.answer_string
+        elsif name.match(/eptb/i)
+          eptb = ob.answer_string
+        elsif name.match(/current/i)
+          tb_current = ob.answer_string
+        elsif name.match(/kapos/i)
+          ks = ob.answer_string
+        end
+      end  
+    end
+
+    render :text => {:ks => ks, :eptb => eptb, 
+      :last_2_yrs => last_2_yrs, :tb_current => tb_current}.to_json
+  end
+
+  def get_date_place_of_pos_hiv_test
+    patient_id = params[:patient_id]
+    test_date = ConceptName.find_by_name('Confirmatory HIV test date').concept_id
+    test_location = ConceptName.find_by_name('Confirmatory HIV test location').concept_id
+
+    test_date = Observation.find(:last,
+      :conditions =>["person_id = ? AND concept_id = ?",
+      patient_id, test_date]).value_datetime.to_date.strftime('%d/%b/%Y') rescue 'N/A'
+
+    test_location = Observation.find(:last,
+      :conditions =>["person_id = ? AND concept_id = ?",
+      patient_id, test_location]).value_text rescue nil
+
+    render :text => {:test_date => test_date, :test_location => test_location}.to_json
+  end
+ 
+  def get_date_of_first_line
+    patient_id = params[:patient_id]
+    reg_category = ConceptName.find_by_name('Regimen Category').concept_id
+    regimens = ['5A','6A','4P','4A','3P','3A','2A','2P','1A','1P','0A','0P']
+
+    latest_date = Observation.find(:first,
+      :conditions =>["person_id = ? AND concept_id = ? AND value_text IN(?)",
+      patient_id, reg_category, regimens], :select =>"MIN(obs_datetime) AS date_of_first_line")
+
+    first_line_date = latest_date['date_of_first_line'].to_date.strftime('%d/%b/%Y') rescue nil
+
+    render :text => {:first_line_date => first_line_date}.to_json
+  end
+   
   def get_patient_weight_trail
     patient_id = params[:patient_id]
 
