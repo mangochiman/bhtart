@@ -2891,7 +2891,13 @@
       </td>
       <td colspan="2" class="number side_effects_class">
           <a href="javascript:drillDown('total_patients_without_side_effects');" class="side_effects">
-              <%= @cohort.total_patients_without_side_effects.count %>
+              <%=
+                 if @cohort.total_patients_without_side_effects.blank?
+                   @cohort.total_patients_without_side_effects = [].count
+                 else
+                   @cohort.total_patients_without_side_effects.count
+                 end
+              %>
           </a>
       </td>
   </tr>
@@ -2929,7 +2935,13 @@
       </td>
       <td colspan="2" class="number side_effects_class">
           <a href="javascript:drillDown('unknown_side_effects');" class="side_effects">
-              <%= @cohort.unknown_side_effects.count %>
+              <%=
+                 if @cohort.unknown_side_effects.blank?
+                   @cohort.unknown_side_effects = [].count
+                 else
+                   @cohort.unknown_side_effects.count
+                 end
+              %>
           </a>
       </td>
   </tr>
@@ -3437,8 +3449,6 @@
     total_dead += parseInt(dead[i].innerHTML);
 
   }
-
-  // alert(died_total);
 
   if(total_dead !== died_total){
 
