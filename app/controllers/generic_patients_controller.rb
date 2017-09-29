@@ -644,60 +644,8 @@ EOF
   end
 
   def mastercard
-    @type = params[:type]
-
-    if session[:from_report].to_s == "true"
-      @from_report = true
-      session[:from_report] = false
-    end
-    
-
-    session[:mastercard_ids] = [] if session[:mastercard_ids].blank?
-    session_date = session[:datetime].blank? ? Date.today : session[:datetime].to_date
-    #the parameter are used to re-construct the url when the mastercard is called from a Data cleaning report
-    @quarter = params[:quarter]
-    @arv_start_number = params[:arv_start_number]
-    @arv_end_number = params[:arv_end_number]
-    @active_patient = Patient.find(session[:active_patient_id]) rescue ""
-    @active_patient_age = PatientService.get_patient(@active_patient.person, session_date).age rescue ""
-    child_parent_raltionship_type = RelationshipType.find(:first, :conditions => ["a_is_to_b =? AND b_is_to_a =?",
-        'Child', 'Parent']).relationship_type_id
-    @guardian_id = @active_patient.relationships.find(:last, :conditions => ["relationship =?",
-        child_parent_raltionship_type]).person_b rescue nil
-
-    if params[:show_mastercard_counter].to_s == "true" && !params[:current].blank?
-      @show_mastercard_counter = true
-      session[:mastercard_counter] = params[:current].to_i - 1
-      @patient_id = session[:mastercard_ids][session[:mastercard_counter]]
-
-      @prev_button_class = "yellow"
-      @next_button_class = "yellow"
-
-      if params[:current].to_i ==  1
-        @prev_button_class = "gray"
-      elsif params[:current].to_i ==  session[:mastercard_ids].length
-        @next_button_class = "gray"
-      end
-
-    elsif params[:patient_id].blank?
-      @patient_id = session[:mastercard_ids][session[:mastercard_counter]]
-
-    elsif session[:mastercard_ids].length.to_i != 0
-      @patient_id = params[:patient_id]
-
-    else
-      @patient_id = params[:patient_id]
-
-    end
-
-    unless params.include?("source")
-      @source = params[:source] rescue nil
-    else
-      @source = nil
-    end
-
+    ######################################
     render :layout => "menu"
-
   end
 
   def mastercard_printable
