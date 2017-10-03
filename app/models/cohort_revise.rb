@@ -1862,6 +1862,7 @@ EOF
 
       if obs_group.blank?
         unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
+          next if no_side_effects_concept_id == row['value_coded'].to_i
           results << row
           patient_id_of_those_with_side_effects << row['patient_id'].to_i
         end
