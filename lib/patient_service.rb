@@ -961,6 +961,7 @@ module PatientService
     demographics = {"person" => {
         "date_changed" => person_obj.date_changed.to_s,
         "gender" => person_obj.gender,
+				"birthdate" => person_obj.birthdate, 
         "birth_year" => person_obj.birthdate.year || nil,
         "birth_month" => birth_month,
         "birth_day" => birth_day,
