@@ -262,10 +262,11 @@ class GenericEncountersController < ApplicationController
 
 	def observations
 		# We could eventually include more here, maybe using a scope with includes
-		encounter = Encounter.find(params[:id], :include => [:observations])
+		encounter = Encounter.find(params[:id], :include => [:observations]) rescue []
+
 		@child_obs = {}
 		@observations = []
-		encounter.observations.map do |obs|
+		(encounter.observations || []).map do |obs|
 			next if !obs.obs_group_id.blank?
       next if ConceptName.find_by_concept_id(obs.concept_id).name.match(/patient tracking state/i)
 			if ConceptName.find_by_concept_id(obs.concept_id).name.match(/location/)
@@ -278,7 +279,7 @@ class GenericEncountersController < ApplicationController
 			if child_obs
 				@child_obs[obs.obs_id] = child_obs
 			end
-		end
+		end unless encounter.blank?
 
 		render :layout => false
 	end
@@ -324,54 +325,45 @@ class GenericEncountersController < ApplicationController
       if ! void_prog.blank?
         void_prog.void
       end
+    
       current_identifier = PatientIdentifier.find(:first, :conditions => ['patient_id = ? AND identifier_type = ?',
           @encounter.patient_id, patient_identifier_type_id], :order => "date_created DESC")
+      
       if ! current_identifier.blank?
         current_identifier.void
       end
 
     end
+    
     state = Encounter.find_by_sql("
         SELECT * FROM obs WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = 'PATIENT TRACKING STATE')
         AND encounter_id = #{params[:id]}").first rescue []
+    
     if not state.blank?
       voided_state  = PatientState.find_by_sql(
         "SELECT * FROM patient_state WHERE patient_state_id = #{state.value_numeric}").first
       voided_state.void
     end
+    
     if @encounter.name.upcase == 'ART ADHERENCE'
-      art_adherence = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
-      hiv_clinic_consultation = Encounter.find(:first,
-        :conditions => ["patient_id = ? AND encounter_datetime >= ? AND 
-        encounter_datetime <= ? AND encounter_type = ?",@encounter.patient_id,
-          @encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00"),
-          @encounter.encounter_datetime.strftime("%Y-%m-%d 23:59:59"),
-          art_adherence],:order => "encounter_datetime DESC")
+      (@encounter.observations || []).each do |o|
+        o.void('Voided from app')
+      end
+    end
 
-      (hiv_clinic_consultation.observations || []).each do |ob|
-        ob.void_reason = 'Voided ART Adherence'
-        obs_name = ob.to_s
-        if obs_name.match(/Refer to ART clinician/i)
-          ob.voided = 1
-          ob.save
-        elsif obs_name.match(/Prescribe drugs/i)
-          ob.voided = 1
-          ob.save
-        elsif obs_name.match(/sulphur/i)
-          ob.voided = 1
-          ob.save
-        end
-      end if hiv_clinic_consultation
+    if (encounter.type.name.match(/TREATMENT/i))
+      #We don't want to have a dispensation encounter without treatment encounter
+      #Void dispensation encounter soon after voiding treatment
+      (@encounter.orders || []).each do |o|
+        o.void('Voided from app')
+      end
+
+      (@encounter.observations || []).each do |o|
+        o.void('Voided from app')
+      end
     end
 
 		@encounter.void
-    if (encounter.type.name.match(/TREATMENT/i))
-      dispensing_enc = Encounter.find(:last, :conditions => ["patient_id =? AND encounter_type =?
-        AND DATE(encounter_datetime) =?", patient_id, dispensing_enc_type, current_day])
-      dispensing_enc.void unless dispensing_enc.blank?
-      #We don't want to have a dispensation encounter without treatment encounter
-      #Void dispensation encounter soon after voiding treatment
-    end
 		head :ok
 	end
 
@@ -1752,6 +1744,24 @@ class GenericEncountersController < ApplicationController
       :patient_id => patient_id,
       :encounter_datetime => encounter_datetime
     )
+
+
+    observations = []
+    (params[:observations] || []).each do |observation|
+      if observation['concept_name'].upcase == 'WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER'
+        #observation['value_numeric'] = observation['value_text'] rescue nil
+        observation['value_coded_or_text'] =  observation['value_coded_or_text'] + "%"
+        observation['value_text'] =  observation['value_coded_or_text'] 
+      end
+
+      if observation['concept_name'].upcase == 'MISSED HIV DRUG CONSTRUCT'
+        observation['value_numeric'] = observation['value_coded_or_text'] rescue nil
+      end
+      observations << observation
+    end
+    
+    params[:observations] = observations
+
     create_obs(encounter ,  params)
     url = next_task(encounter.patient)
 
