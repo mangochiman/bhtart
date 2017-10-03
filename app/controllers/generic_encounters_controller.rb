@@ -1595,9 +1595,13 @@ class GenericEncountersController < ApplicationController
     encounter_type = EncounterType.find_by_name('APPOINTMENT')
     patient_id = params[:encounter]["patient_id"].to_i
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      unless params[:encounter]['encounter_datetime'].blank?
+        encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      else
+        encounter_datetime = Time.now.strftime('%Y-%m-%d %H:%M:%S') 
+      end
     end
 
     encounter = Encounter.find(:last, :conditions => ["patient_id = ? AND encounter_type = ?
@@ -1607,7 +1611,7 @@ class GenericEncountersController < ApplicationController
 
     (encounter.observations || []).each do |o|
       o.void("Setting a new appointment date")
-    end
+    end unless encounter.blank?
 
     encounter = Encounter.create(:patient_id => patient_id,
       :encounter_datetime => encounter_datetime, 
