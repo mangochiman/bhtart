@@ -937,6 +937,7 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
       #determining if the patient have side effects that visit
       new_malawi_side_effects_saved =  Encounter.find_by_sql("SELECT person_id, concept_id, value_coded from obs
                                           WHERE encounter_id = #{obs.encounter_id}
+                                          AND obs_group_id IS NOT NULL
                                           AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 1066, 2148, 2150, 3681, 5953, 6408, 9242, 9440)")
 
       if new_malawi_side_effects_saved.blank?
@@ -955,7 +956,8 @@ def process_hiv_clinic_consultation_encounter(encounter, type = 0) #type 0 norma
       else
         new_malawi_side_effects_saved =  Encounter.find_by_sql("SELECT person_id, concept_id, value_coded from obs
                                             WHERE encounter_id = #{obs.encounter_id}
-                                            AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 1066, 2148, 2150, 3681, 5953, 6408, 9242, 9440)
+                                            AND concept_id IN (215, 3, 1458, 5945, 151, 868, 107, 16, 7952, 5980, 29, 219, 512, 821, 877, 2148, 2150, 3681, 5953, 6408, 9242, 9440)
+                                            AND obs_group_id IS NOT NULL
                                             AND value_coded NOT IN (1066, 1107)")
         unless new_malawi_side_effects_saved.blank?
           a_hash[:side_effects_present] = 'Yes'

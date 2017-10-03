@@ -177,6 +177,35 @@ class PeopleController < GenericPeopleController
 
     render :layout => 'menu'
   end
-  
+
+  def search_person
+    people = PatientService.person_search(params)
+    @html = ''
+    @lims_npid = params['identifier'];
+    @tracking_number = params['tracking_number'];
+    people.each do |person|
+      patient = person.patient
+      next if patient.blank?
+      next if person.addresses.blank?
+      bean = PatientService.get_patient(patient.person)
+      date_of_birth = person.birthdate.strftime('%d/%b/%Y') rescue nil
+      person = {:name => bean.name,
+                :gender => person.gender,
+                :birthdate => date_of_birth,
+                :age => person.age,
+                :home_address => bean.traditional_authority,
+                :home_district => bean.home_district,
+                :residence => bean.current_residence,
+                :national_id => bean.national_id,
+                :lims_npid => @lims_npid,
+                :tracking_number => @tracking_number}
+      @html+= <<EOF
+        <li onclick='viewPatient(#{person.to_json})'>#{bean.name.upcase || '&nbsp;'}</li>
+EOF
+    end
+
+    render :text => (people.blank? ? "<span id='no_results'>No results found!</span>" : @html)
+  end
+
 end
  
