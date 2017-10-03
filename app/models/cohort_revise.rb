@@ -1813,14 +1813,8 @@ EOF
   end
 
   def self.total_patients_with_side_effects(cohort, patients_alive_and_on_art, start_date, end_date)
-    patient_ids = []; results = []; patients_with_unknown_side_effects = []
-    results = []
-=begin
-    (self.unknown_side_effects(patients_alive_and_on_art, start_date, end_date) || []).each do |aPatient|
-      patients_with_unknown_side_effects << aPatient['person_id'].to_i
-    end
-    patients_with_unknown_side_effects = [0] if patients_with_unknown_side_effects.blank?
-=end
+    patient_ids = []; patients_with_unknown_side_effects = []; results = []
+    patient_id_of_those_without_side_effects = []
 
     (patients_alive_and_on_art || []).each do |row|
       patient_ids << row['patient_id'].to_i
@@ -1879,10 +1873,11 @@ EOF
     end
 
     patient_id_of_those_with_unknown_side_effects = (patient_ids) -\
-     (patient_id_of_those_with_side_effects + patient_id_of_those_without_side_effects)
+ (patient_id_of_those_with_side_effects + patient_id_of_those_without_side_effects)
 
     cohort.total_patients_without_side_effects = patient_id_of_those_without_side_effects
     cohort.unknown_side_effects = patient_id_of_those_with_unknown_side_effects
+
     return results
   end
 
