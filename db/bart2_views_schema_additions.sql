@@ -120,12 +120,24 @@ CREATE FUNCTION date_antiretrovirals_started(set_patient_id INT, min_state_date 
 BEGIN
 
 DECLARE date_started DATE;
+DECLARE estimated_art_date DATE;
+DECLARE estimated_art_date_months  VARCHAR(45);
+
 
 SET date_started = (SELECT LEFT(value_datetime,10) FROM obs WHERE concept_id = 2516 AND person_id = set_patient_id AND voided = 0 LIMIT 1);
 
-if date_started is NULL then
-SET date_started = min_state_date;
-end if;
+IF date_started IS NULL then
+  SET estimated_art_date_months = (SELECT value_text FROM obs WHERE concept_id = 2516 AND person_id = set_patient_id AND voided = 0 LIMIT 1);
+
+  IF estimated_art_date_months = "6 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 6 MONTH));
+  ELSEIF estimated_art_date_months = "12 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 12 MONTH));
+  ELSEIF estimated_art_date_months = "18 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 18 MONTH));
+  ELSEIF estimated_art_date_months = "24 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 24 MONTH));
+  ELSEIF estimated_art_date_months = "48 months" THEN set date_started = (SELECT DATE_SUB(min_state_date, INTERVAL 48 MONTH));
+  ELSE
+    SET date_started = min_state_date;
+  END IF;
+END IF;
 
 RETURN date_started;
 END$$
