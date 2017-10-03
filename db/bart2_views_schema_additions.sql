@@ -619,6 +619,7 @@ DECLARE set_outcome varchar(25);
 DECLARE set_date_started date;
 DECLARE set_patient_state_died INT;
 DECLARE set_died_concept_id INT;
+DECLARE set_timestamp DATETIME;
 
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
@@ -661,7 +662,7 @@ IF set_patient_state = 6 THEN
 END IF;
 
 IF set_patient_state = 7 THEN
-  SET set_patient_state = current_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -673,7 +674,7 @@ IF set_patient_state = 7 THEN
 END IF;
 
 IF set_outcome IS NULL THEN
-  SET set_patient_state = current_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
