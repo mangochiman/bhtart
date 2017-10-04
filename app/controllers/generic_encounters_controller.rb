@@ -1158,30 +1158,7 @@ class GenericEncountersController < ApplicationController
       :encounter_datetime => encounter_datetime, 
       :encounter_type => encounter_type.id)
 
-    guardian_present  = ConceptName.find_by_name('GUARDIAN PRESENT')
-    patient_present   = ConceptName.find_by_name('PATIENT PRESENT')
-
-    (params[:observations] || []).each do |ob|
-      concept_name = ob["concept_name"].squish.upcase rescue nil
-      next if concept_name.blank?
-      obs_datetime = encounter_datetime
-      value_text  = ob["value_text"].squish
-      value_text  = ob["value_coded_or_text"].squish if value_text.blank?
-
-      if concept_name == patient_present.name.upcase 
-        concept_id = patient_present.concept_id
-      elsif concept_name == guardian_present.name.upcase
-        concept_id = guardian_present.concept_id
-      else
-        next
-      end
-
-      Observation.create(
-        :person_id => patient_id, :encounter_id => encounter.id,
-        :obs_datetime => obs_datetime, :concept_id => concept_id,
-        :value_coded => ConceptName.find_by_name(value_text).concept_id
-      )
-    end
+    create_obs(encounter, params)
 
     #when the patient has been assigned ARV number
     unless params[:identifiers].blank?
