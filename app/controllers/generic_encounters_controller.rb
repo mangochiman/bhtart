@@ -1164,7 +1164,7 @@ class GenericEncountersController < ApplicationController
     (params[:observations] || []).each do |ob|
       concept_name = ob["concept_name"].squish.upcase rescue nil
       next if concept_name.blank?
-      obs_datetime = ob["obs_datetime"].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      obs_datetime = encounter_datetime
       value_text  = ob["value_text"].squish
       value_text  = ob["value_coded_or_text"].squish if value_text.blank?
 
@@ -1511,7 +1511,11 @@ class GenericEncountersController < ApplicationController
     #raise params.inspect
     encounter_type = EncounterType.find_by_name('VITALS')
     patient_id = params[:encounter]["patient_id"].to_i
-    encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+    end
 
     encounter = Encounter.create(:patient_id => patient_id,
       :encounter_datetime => encounter_datetime, 
@@ -1520,7 +1524,7 @@ class GenericEncountersController < ApplicationController
     (params[:observations] || []).each do |ob|
       next if ob['value_numeric'].blank?
       next if ob['concept_name'].squish.match(/BODY MASS INDEX, MEASURE/i)
-      obs_datetime = ob["obs_datetime"].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      obs_datetime = encounter_datetime
 
       Observation.create(
         :person_id => patient_id, :encounter_id => encounter.id,
@@ -1611,12 +1615,8 @@ class GenericEncountersController < ApplicationController
 
     (params[:observations] || []).each do |ob|
       next unless ob['concept_name'].squish.match(/Appointment date/i)
-      begin
-        obs_datetime = ob["obs_datetime"].to_time.strftime('%Y-%m-%d %H:%M:%S')
-      rescue
-        obs_datetime = encounter.encounter_datetime
-      end
-
+      
+      obs_datetime = encounter.encounter_datetime
       time = Time.now.strftime('%H:%M:%S')
       Observation.create(
         :person_id => patient_id, :encounter_id => encounter.id,
