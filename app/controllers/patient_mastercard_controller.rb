@@ -149,7 +149,7 @@ class PatientMastercardController < ApplicationController
         next if drug_order.blank?
         
         adherence_rate = adherence.value_text
-        if not adherence_rate.blank? and not adherence_rate.match(/%/)
+        if not adherence_rate.blank? and not adherence_rate.match(/\%/)
           adherence_rate = "#{adherence.value_text}%"
         end
           
@@ -157,7 +157,7 @@ class PatientMastercardController < ApplicationController
         art_adherences << {
           :name       =>  (drug_order.drug.name rescue nil),
           :short_name =>  (drug_order.drug.concept.shortname rescue nil),
-          :adherence   =>  adherence.value_text
+          :adherence   =>  adherence_rate
         }
       end
     end

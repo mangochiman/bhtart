@@ -7,7 +7,11 @@ class ReportingReportDesignResource < ActiveRecord::Base
 	def self.save_cohort_attributes(cohort_year,cohort_quarter,cohort_attributes)
 		report_design = ReportingReportDesign.find_by_name("Q#{cohort_quarter} #{cohort_year}")
 		if report_design.blank?
-      report_def = SerializedObject.find_by_name('Cohort report trail')
+      begin
+        report_def = SerializedObject.find_by_name('Cohort report trail') 
+      rescue
+        report_def = nil
+      end
 
       if report_def.blank?
         report_def = SerializedObject.new()
