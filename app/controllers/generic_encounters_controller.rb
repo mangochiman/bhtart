@@ -1497,20 +1497,8 @@ class GenericEncountersController < ApplicationController
     encounter = Encounter.create(:patient_id => patient_id,
       :encounter_datetime => encounter_datetime, 
       :encounter_type => encounter_type.id)
-
-    (params[:observations] || []).each do |ob|
-      next if ob['value_numeric'].blank?
-      next if ob['concept_name'].squish.match(/BODY MASS INDEX, MEASURE/i)
-      obs_datetime = encounter_datetime
-
-      Observation.create(
-        :person_id => patient_id, :encounter_id => encounter.id,
-        :obs_datetime => obs_datetime, 
-        :concept_id => ConceptName.find_by_name(ob['concept_name']).concept_id,
-        :value_numeric => ob['value_numeric'].to_f
-      )
-    end
     
+    create_obs(encounter, params) 
     return next_task(encounter.patient)
   end
 
