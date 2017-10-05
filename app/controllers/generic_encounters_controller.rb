@@ -1149,10 +1149,14 @@ class GenericEncountersController < ApplicationController
     encounter_type = EncounterType.find_by_name('HIV RECEPTION')
     patient_id = params[:encounter]["patient_id"].to_i
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
       params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
     end
 
     encounter = Encounter.create(:patient_id => patient_id,
@@ -1185,10 +1189,14 @@ class GenericEncountersController < ApplicationController
 
   def create_hiv_registration_encounter(params, session)
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
       params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
     end
     session_date = encounter_datetime.to_date
 
@@ -1496,10 +1504,14 @@ class GenericEncountersController < ApplicationController
     encounter_type = EncounterType.find_by_name('VITALS')
     patient_id = params[:encounter]["patient_id"].to_i
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
       params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
     end
 
 
@@ -1547,10 +1559,14 @@ class GenericEncountersController < ApplicationController
     encounter_type = EncounterType.find_by_name('HIV CLINIC CONSULTATION')
     patient_id = params[:encounter]["patient_id"].to_i
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
       params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
     end
 
     encounter = Encounter.create(:patient_id => patient_id,
@@ -1567,11 +1583,12 @@ class GenericEncountersController < ApplicationController
     patient_id = params[:encounter]["patient_id"].to_i
     begin
       encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      unless params[:encounter]['encounter_datetime'].blank?
-        encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
-      else
-        encounter_datetime = Time.now.strftime('%Y-%m-%d %H:%M:%S') 
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
       end
     end
 
@@ -1606,10 +1623,14 @@ class GenericEncountersController < ApplicationController
 
   def create_hiv_staging_encounter(params, session)
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
       params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
     end
 
     observations = []
@@ -1715,10 +1736,14 @@ class GenericEncountersController < ApplicationController
     encounter_type = EncounterType.find_by_name('ART ADHERENCE')
     patient_id = params[:encounter]["patient_id"].to_i
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
       params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
     end
 
     encounter = Encounter.create(
@@ -1768,9 +1793,14 @@ class GenericEncountersController < ApplicationController
     encounter_type = EncounterType.find_by_name('TB RECEPTION')
     patient_id = params[:encounter]["patient_id"].to_i
     begin
-      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
-      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
     end
 
     encounter = Encounter.create(:patient_id => patient_id,
