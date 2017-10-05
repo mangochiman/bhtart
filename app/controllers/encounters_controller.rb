@@ -3,7 +3,7 @@ class EncountersController < GenericEncountersController
 		#raise params.to_yaml
 		session_date = session[:datetime].to_date rescue Date.today
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
-		@patient_bean = PatientService.get_patient(@patient.person)
+		@patient_bean = PatientService.get_patient(@patient.person, session_date)
     
     if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
