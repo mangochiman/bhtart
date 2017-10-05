@@ -1150,6 +1150,7 @@ class GenericEncountersController < ApplicationController
     patient_id = params[:encounter]["patient_id"].to_i
     begin
       encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
       encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
     end
@@ -1183,7 +1184,13 @@ class GenericEncountersController < ApplicationController
   end
 
   def create_hiv_registration_encounter(params, session)
-    session_date = session[:datetime].to_date rescue Date.today
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    end
 
     has_tranfer_letter = false
     (params["observations"]).each do |ob|
@@ -1595,6 +1602,13 @@ class GenericEncountersController < ApplicationController
   end
 
   def create_hiv_staging_encounter(params, session)
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+    end
+
     observations = []
     (params[:observations] || []).each do |observation|
       if observation['concept_name'].upcase == 'CD4 COUNT' or observation['concept_name'].upcase == "LYMPHOCYTE COUNT"
