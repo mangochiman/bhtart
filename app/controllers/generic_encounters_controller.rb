@@ -1190,6 +1190,7 @@ class GenericEncountersController < ApplicationController
     rescue
       encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
     end
+    session_date = encounter_datetime.to_date
 
     has_tranfer_letter = false
     (params["observations"]).each do |ob|
