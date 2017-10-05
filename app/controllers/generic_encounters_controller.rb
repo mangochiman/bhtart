@@ -1189,7 +1189,6 @@ class GenericEncountersController < ApplicationController
       params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
       encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
-      params[:encounter]['encounter_datetime'] = encounter_datetime
     end
 
     has_tranfer_letter = false
@@ -1497,9 +1496,11 @@ class GenericEncountersController < ApplicationController
     patient_id = params[:encounter]["patient_id"].to_i
     begin
       encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
       encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
     end
+
 
     encounter = Encounter.create(:patient_id => patient_id,
       :encounter_datetime => encounter_datetime, 
@@ -1546,6 +1547,7 @@ class GenericEncountersController < ApplicationController
     patient_id = params[:encounter]["patient_id"].to_i
     begin
       encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
       encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
     end
@@ -1713,10 +1715,10 @@ class GenericEncountersController < ApplicationController
     patient_id = params[:encounter]["patient_id"].to_i
     begin
       encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+      params[:encounter]['encounter_datetime'] = encounter_datetime
     rescue
       encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
     end
-
 
     encounter = Encounter.create(
       :encounter_type => encounter_type.id,
