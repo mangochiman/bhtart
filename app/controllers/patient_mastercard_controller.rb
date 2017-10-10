@@ -147,11 +147,17 @@ class PatientMastercardController < ApplicationController
       (adherences || []).each do |adherence|
         drug_order = Order.find(adherence.order_id).drug_order rescue []
         next if drug_order.blank?
+        
+        adherence_rate = adherence.value_text
+        if not adherence_rate.blank? and not adherence_rate.match(/\%/)
+          adherence_rate = "#{adherence.value_text}%"
+        end
+          
         name = drug_order.drug.name rescue ''
         art_adherences << {
           :name       =>  (drug_order.drug.name rescue nil),
           :short_name =>  (drug_order.drug.concept.shortname rescue nil),
-          :adherence   =>  "#{adherence.value_text}%"
+          :adherence   =>  adherence_rate
         }
       end
     end
