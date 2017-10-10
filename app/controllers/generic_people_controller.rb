@@ -1720,6 +1720,7 @@ EOF
     tb_stats  << ConceptName.find_by_name('Pulmonary tuberculosis (current)').concept_id
     tb_stats  << ConceptName.find_by_name("Kaposis sarcoma").concept_id
 
+    who_stage_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     hiv_staging_type = EncounterType.find_by_name('HIV staging').id
 
     hiv_staging = Encounter.find(:last,
@@ -1739,19 +1740,24 @@ EOF
       ks          = 'No'
 
       obs = Observation.find(:all,
-        :conditions =>["person_id = ? AND concept_id IN(?) AND encounter_id = ?",
-        patient_id, tb_stats, hiv_staging['encounter_id']])
+        :joins => "INNER JOIN concept_name n ON n.concept_id = obs.value_coded AND n.voided = 0",
+        :conditions =>["person_id = ? AND obs.concept_id = ? AND encounter_id = ?",
+        patient_id, who_stage_criteria, hiv_staging['encounter_id']],
+        :select => "n.name tb_stat, obs_datetime, value_text answer")
     
       (obs || []).each do |ob|
-        name = ob.concept.fullname
+        name = ob['tb_stat']
+        answer = ob['answer']
+        next if answer.match(/No/i)
+
         if name.match(/last/i)
-          last_2_yrs = ob.answer_string
+          last_2_yrs = 'Yes'
         elsif name.match(/eptb/i)
-          eptb = ob.answer_string
+          eptb = 'Yes'
         elsif name.match(/current/i)
-          tb_current = ob.answer_string
+          tb_current = 'Yes'
         elsif name.match(/kapos/i)
-          ks = ob.answer_string
+          ks = 'Yes'
         end
       end  
     end
