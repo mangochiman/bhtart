@@ -3097,7 +3097,7 @@ clinicalConsultation['refer_to_clinician']
 
 function goToNextPage() {
   jQuery.ajax({
-    type: "POST",
+    type: "GET",
     url: "/encounters/get_next_task",
     data: "patient_id=" + patient_id,
     success: function(result){
