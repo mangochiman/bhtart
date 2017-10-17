@@ -2535,7 +2535,11 @@ function buildSummaryPage() {
 }
 
 function referToClinician() {
-  clinicalConsultation['refer_to_clinician'] = $('refer_to_clinician').getAttribute('value');
+  try {
+    clinicalConsultation['refer_to_clinician'] = $('refer_to_clinician').getAttribute('value');
+  }catch(e) { 
+    return;
+  };
 }
 
 function tbSymptoms() {
