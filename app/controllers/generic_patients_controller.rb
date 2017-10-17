@@ -610,9 +610,14 @@ EOF
   end
 
   def specific_patient_visit_date_label
-    session_date = params[:session_date].to_date rescue Date.today
-    print_string = patient_visit_label(@patient, session_date) rescue (raise "Unable to find patient (#{params[:patient_id]}) or generate a visit label for that patient")
-    send_data(print_string,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl", :disposition => "inline")
+    session_date = params[:session_date].to_date 
+    print_string = patient_visit_label(Patient.find(params[:patient_id]), session_date) 
+
+    send_data(print_string, 
+      :type =>"application/label; charset=utf-8", 
+      :stream=> false, 
+      :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl", 
+      :disposition => "inline")
   end
 
   def mastercard_record_label
