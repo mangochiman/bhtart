@@ -2391,9 +2391,9 @@ EOF
           :obs_datetime => encounter.encounter_datetime,
           :person_id => encounter.patient_id,
           :concept_id =>  ConceptName.find_by_name(ob['value_coded_text']).concept_id,
-          :value_coded => ConceptName.find_by_name(ob['obs_group_text']).concept_id)
+          :value_coded => ConceptName.find_by_name(ob['obs_group_text']).concept_id,
+          :obs_group_id => observation.id)
 
-        observation.update_attributes(:obs_group_id => obs_group.id)
       end
 
     end
