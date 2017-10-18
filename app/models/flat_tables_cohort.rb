@@ -1,30 +1,26 @@
 class FlatTablesCohort
 
 
-
   def self.get_indicators(start_date, end_date)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-=begin
+
     ActiveRecord::Base.connection.execute <<EOF
-      DROP TABLE IF EXISTS `temp_earliest_start_date`;
+      DROP TABLE IF EXISTS `temp_patient_pregnant`;
 EOF
 
 
     ActiveRecord::Base.connection.execute <<EOF
-      CREATE TABLE temp_earliest_start_date
-        select
-            `patient_id` AS `patient_id`,
-            `gender` AS `gender`,
-            `birthdate`,
-            `earliest_start_date`,
-            `date_enrolled`,
-            `death_date` AS `death_date`,
-            `age_at_initiation`,
-            `age_in_days`
-        from flat_cohort_table
-        group by `patient_id`;
+      CREATE TABLE temp_patient_pregnant
+        SELECT `patient_id`, `patient_pregnant`, `patient_pregnant_v_date` AS `visit_date`
+        FROM `flat_table1` 
+        WHERE `patient_pregnant` IS NOT NULL
+        UNION ALL
+        SELECT `patient_id`, `patient_pregnant`, `visit_date` AS `visit_date`
+        FROM `flat_table2`
+        WHERE `patient_pregnant` IS NOT NULL
+        ORDER BY `patient_id`, `visit_date`;
 EOF
-=end
+
 
 ActiveRecord::Base.connection.execute <<EOF
   DROP FUNCTION IF EXISTS `last_text_for_obs`;
@@ -1581,7 +1577,8 @@ EOF
       SELECT * FROM flat_cohort_table t
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND date_enrolled <> '0000-00-00'
-      AND reason_for_starting like '%HIV PCR%' GROUP BY patient_id;
+      AND (reason_for_starting LIKE '%HIV PCR%' OR reason_for_starting LIKE '%HIV DNA%')
+      GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -1673,7 +1670,7 @@ EOF
     registered = [] ; pregnant_women_ids = []
 
     (pregnant_women || []).each do |patient|
-      pregnant_women_ids << patient[:patient_id]
+      pregnant_women_ids << patient
     end
     pregnant_women_ids = [0] if pregnant_women_ids.blank?
 
@@ -1700,14 +1697,16 @@ EOF
     registered = ActiveRecord::Base.connection.select_all <<EOF
                     SELECT ft2.patient_id, fct.date_enrolled, ft2.visit_date, ft2.patient_pregnant
                     FROM flat_cohort_table fct
-                      INNER JOIN flat_table2 ft2 ON ft2.patient_id = fct.patient_id
+                      INNER JOIN temp_patient_pregnant ft2 ON ft2.patient_id = fct.patient_id
                     WHERE ft2.patient_pregnant = 'Yes' AND fct.gender = 'F'
                     AND fct.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
                     AND ft2.visit_date = (SELECT min(f2.visit_date) FROM flat_table2 f2
-                                 WHERE  f2.patient_id = ft2.patient_id
-                                 AND f2.patient_pregnant IS NOT NULL
-                                 AND f2.visit_date BETWEEN '#{start_date}' AND '#{end_date}');
+                                WHERE  f2.patient_id = ft2.patient_id
+                                AND f2.patient_pregnant IS NOT NULL
+                                AND f2.visit_date BETWEEN '#{start_date}' AND '#{end_date}')
+                    GROUP BY fct.patient_id;
 EOF
+
     pregnant_at_initiation = ActiveRecord::Base.connection.select_all <<EOF
                     SELECT patient_id, date_enrolled, earliest_start_date, reason_for_starting
                     FROM flat_cohort_table
