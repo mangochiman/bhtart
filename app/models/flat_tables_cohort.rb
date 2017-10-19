@@ -197,9 +197,13 @@ BEGIN
 
     IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
 
+      IF my_daily_dose = 0 OR LENGTH(my_daily_dose) < 1 OR my_daily_dose IS NULL THEN
+        SET my_daily_dose = 1;
+      END IF;
+
             SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
 
-            SET @expiry_date = ADDDATE(my_start_date, ((my_quantity + my_pill_count)/my_daily_dose));
+            SET @expiry_date = ADDDATE(DATE_SUB(my_start_date, INTERVAL 2 DAY), ((my_quantity + my_pill_count)/my_daily_dose));
 
       IF my_expiry_date IS NULL THEN
         SET my_expiry_date = @expiry_date;
@@ -211,11 +215,83 @@ BEGIN
         END IF;
     END LOOP;
 
-    IF TIMESTAMPDIFF(month, my_expiry_date, my_end_date) > 1 THEN
+    IF TIMESTAMPDIFF(day, my_expiry_date, my_end_date) > 60 THEN
         SET flag = 1;
     END IF;
 
   RETURN flag;
+END;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+      DROP FUNCTION IF EXISTS `current_defaulter_date`;
+EOF
+
+    ActiveRecord::Base.connection.execute <<EOF
+CREATE FUNCTION current_defaulter_date(my_patient_id INT, my_end_date date) RETURNS varchar(25)
+DETERMINISTIC
+BEGIN
+DECLARE done INT DEFAULT FALSE;
+  DECLARE my_start_date, my_expiry_date, my_obs_datetime, my_defaulted_date DATETIME;
+  DECLARE my_daily_dose, my_quantity, my_pill_count, my_total_text, my_total_numeric DECIMAL;
+  DECLARE my_drug_id, flag INT;
+
+  DECLARE cur1 CURSOR FOR SELECT d.drug_inventory_id, o.start_date, d.equivalent_daily_dose daily_dose, d.quantity, o.start_date FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+  SELECT MAX(o.start_date) INTO @obs_datetime FROM drug_order d
+    INNER JOIN arv_drug ad ON d.drug_inventory_id = ad.drug_id
+    INNER JOIN orders o ON d.order_id = o.order_id
+      AND d.quantity > 0
+      AND o.voided = 0
+      AND o.start_date <= my_end_date
+      AND o.patient_id = my_patient_id
+    GROUP BY o.patient_id;
+
+  OPEN cur1;
+
+  SET flag = 0;
+
+  read_loop: LOOP
+    FETCH cur1 INTO my_drug_id, my_start_date, my_daily_dose, my_quantity, my_obs_datetime;
+
+    IF done THEN
+      CLOSE cur1;
+      LEAVE read_loop;
+    END IF;
+
+    IF DATE(my_obs_datetime) = DATE(@obs_datetime) THEN
+
+      IF my_daily_dose = 0 OR my_daily_dose IS NULL OR LENGTH(my_daily_dose) < 1 THEN
+        SET my_daily_dose = 1;
+      END IF;
+
+      SET my_pill_count = drug_pill_count(my_patient_id, my_drug_id, my_obs_datetime);
+
+      SET @expiry_date = ADDDATE(my_start_date, ((my_quantity + my_pill_count)/my_daily_dose));
+
+      IF my_expiry_date IS NULL THEN
+        SET my_expiry_date = @expiry_date;
+      END IF;
+
+      IF @expiry_date < my_expiry_date THEN
+        SET my_expiry_date = @expiry_date;
+        END IF;
+      END IF;
+    END LOOP;
+
+    IF DATEDIFF(my_end_date, my_expiry_date) > 60 THEN
+      SET my_defaulted_date = ADDDATE(my_expiry_date, 60);
+    END IF;
+
+  RETURN my_defaulted_date;
 END;
 EOF
 
@@ -225,16 +301,18 @@ EOF
 EOF
 
     ActiveRecord::Base.connection.execute <<EOF
-CREATE FUNCTION patient_outcome(patient_id INT, visit_date datetime) RETURNS varchar(25)
+CREATE FUNCTION patient_outcome(patient_id INT, visit_date DATETIME) RETURNS varchar(25)
 DETERMINISTIC
 BEGIN
 DECLARE set_program_id INT;
 DECLARE set_patient_state INT;
 DECLARE set_outcome varchar(25);
+DECLARE set_timestamp DATETIME;
 
+SET set_timestamp = DATE_FORMAT(visit_date, '%Y-%m-%d 23:59:59');
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
-SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND start_date <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
 
 
 IF set_patient_state = 1 THEN
@@ -254,7 +332,7 @@ IF set_patient_state = 6 THEN
 END IF;
 
 IF set_patient_state = 7 THEN
-  SET set_patient_state = current_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -266,7 +344,7 @@ IF set_patient_state = 7 THEN
 END IF;
 
 IF set_outcome IS NULL THEN
-  SET set_patient_state = current_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -818,7 +896,7 @@ EOF
 
     total_pregnant_females = []
     (total_pregnant_women(patients_list, end_date) || []).each do |person|
-      total_pregnant_females << person['person_id'].to_i
+      total_pregnant_females << person['patient_id'].to_i
     end
 
     return [] if total_pregnant_females.blank?
@@ -827,13 +905,14 @@ EOF
               SELECT fct.patient_id, ft2.visit_date, ft2.patient_breastfeeding
               FROM flat_cohort_table fct
                 INNER JOIN flat_table2 ft2  ON ft2.patient_id = fct.patient_id
-              WHERE ft2.patient_breastfeeding = 'Yes'
+              WHERE ft2.patient_breastfeeding = 'Yes' AND ft2.patient_breastfeeding IS NOT NULL
               AND (ft2.visit_date <= '#{end_date}')
               AND fct.patient_id IN (#{patient_ids.join(',')})
               AND fct.patient_id NOT IN (#{total_pregnant_females.join(',')})
               AND ft2.visit_date = (SELECT max(visit_date) from flat_table2 f2
-              					  WHERE f2.patient_id = ft2.patient_id
-              					  AND f2.visit_date <= '#{end_date}')
+              					  WHERE f2.patient_id = fct.patient_id
+              					  AND f2.visit_date <= '#{end_date}'
+                          AND f2.patient_breastfeeding IS NOT NULL)
               GROUP BY fct.patient_id;
 EOF
     return results
@@ -852,12 +931,13 @@ EOF
                 SELECT fct.patient_id, ft2.visit_date, ft2.patient_pregnant
                 FROM flat_cohort_table fct
                   INNER JOIN flat_table2 ft2 ON ft2.patient_id = fct.patient_id
-                WHERE ft2.patient_pregnant = 'Yes'
+                WHERE ft2.patient_pregnant = 'Yes' AND ft2.patient_pregnant IS NOT NULL
                 AND (ft2.visit_date <= '#{end_date}')
                 AND fct.patient_id IN (#{patient_ids.join(',')})
                 AND ft2.visit_date = (SELECT max(visit_date) from flat_table2 f2
                             WHERE f2.patient_id = ft2.patient_id
-                            AND f2.visit_date <= '#{end_date}')
+                            AND f2.visit_date <= '#{end_date}'
+                            AND f2.patient_pregnant IS NOT NULL)
                 GROUP BY fct.patient_id;
 EOF
     return results
@@ -892,15 +972,13 @@ EOF
 
     adherence = ActiveRecord::Base.connection.select_all <<EOF
                   SELECT fct.patient_id, visit_date, ft2.what_was_the_patient_adherence_for_this_drug1 AS adherence
-                  FROM
-                      flat_cohort_table fct
-                          INNER JOIN
-                      flat_table2 ft2 ON ft2.patient_id = fct.patient_id
+                  FROM flat_cohort_table fct
+                    INNER JOIN flat_table2 ft2 ON ft2.patient_id = fct.patient_id
                   WHERE ft2.visit_date <= '#{end_date}'
                   AND fct.patient_id IN (#{patient_ids.join(',')})
                   AND ft2.visit_date = (SELECT MAX(visit_date) FROM flat_table2
                                         WHERE patient_id = fct.patient_id
-                                        AND visit_date < '#{end_date}'
+                                        AND visit_date <= '#{end_date}'
                                         AND ((what_was_the_patient_adherence_for_this_drug1 IS NOT NULL AND what_was_the_patient_adherence_for_this_drug1 != '')))
                   GROUP BY fct.patient_id;
 EOF
@@ -1113,9 +1191,10 @@ EOF
           SELECT ft2.patient_id, ft2.visit_date, ft2.side_effects_present, ft2.side_effects_present_enc_id
           FROM flat_table2 ft2
           WHERE ft2.side_effects_present = 'Yes'
-          AND (ft2.patient_id IN (#{patient_ids.join(',')}) AND ft2.patient_id NOT IN (#{patients_with_unknown_side_effects.join(',')}))
+          AND (ft2.patient_id IN (#{patient_ids.join(',')}) 
+          AND ft2.patient_id NOT IN (#{patients_with_unknown_side_effects.join(',')}))
           AND ft2.visit_date <= '#{end_date}'
-          AND ft2.visit_date = (SELECT max(f2.visit_date) FROM flat_table2 f2
+          AND ft2.visit_date != (SELECT min(f2.visit_date) FROM flat_table2 f2
                             WHERE f2.side_effects_present IS NOT NULL
                             AND f2.patient_id = ft2.patient_id
                             AND f2.visit_date <= '#{end_date}');
@@ -1136,7 +1215,7 @@ EOF
 
     #get all patients with side effects
     (patients_with_side_effects || []).each do |row|
-      with_side_effects << row['person_id'].to_i
+      with_side_effects << row['patient_id'].to_i
     end
 
     #get all patients with unknown_side_effects
@@ -1154,20 +1233,16 @@ EOF
     end
 
     return [] if patient_ids.blank?
-=begin
-    dispensing_encounter_id = EncounterType.find_by_name("DISPENSING").id
-    regimen_category = ConceptName.find_by_name("REGIMEN CATEGORY").concept_id
-    regimem_given_concept = ConceptName.find_by_name('ARV REGIMENS RECEIVED ABSTRACTED CONSTRUCT').concept_id
-    unknown_regimen_given = ConceptName.find_by_name('UNKNOWN ANTIRETROVIRAL DRUG').concept_id
-=end
+
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT t.patient_id, regimen_category_dispensed
-      FROM flat_cohort_table t
-      WHERE t.patient_id IN (#{patient_ids.join(', ')}) GROUP BY patient_id;
+      SELECT t.patient_id, regimen_category_dispensed, regimen_category_treatment as regimen_category, visit_date
+      FROM flat_table2 t
+      WHERE t.patient_id IN (#{patient_ids.join(', ')})
+      AND t.visit_date = (SELECT max(visit_date) FROM flat_table2 f where t.patient_id = f.patient_id AND DATE(f.visit_date) <= '#{end_date}' AND regimen_category_treatment IS NOT NULL);
 EOF
 
     (data || []).each do |regimen_attr|
-        regimen = regimen_attr['regimen_category_dispensed']
+        regimen = regimen_attr['regimen_category']
         regimen = 'unknown_regimen' if regimen.blank? || regimen == 'Unknown'
         regimens << {
           :patient_id => regimen_attr['patient_id'].to_i,
@@ -1321,6 +1396,7 @@ EOF
       WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND date_enrolled <> '0000-00-00'
       AND (who_stages_criteria_present = 'Kaposis sarcoma' OR kaposis_sarcoma = 'Yes')
+      AND DATE(kaposis_sarcoma_v_date) <= DATE(date_enrolled)
       GROUP BY patient_id;
 EOF
 
@@ -1341,6 +1417,7 @@ EOF
       AND (pulmonary_tuberculosis = 'Yes'
           OR extrapulmonary_tuberculosis = 'Yes'
           OR who_stages_criteria_present IN ('EXTRAPULMONARY TUBERCULOSIS (EPTB)', 'PULMONARY TUBERCULOSIS', 'PULMONARY TUBERCULOSIS (CURRENT)'))
+      AND (DATE(pulmonary_tuberculosis_v_date) <= DATE(date_enrolled) OR DATE(extrapulmonary_tuberculosis_v_date) <= DATE(date_enrolled))
      GROUP BY patient_id;
 EOF
 
@@ -1359,6 +1436,7 @@ EOF
       AND date_enrolled <> '0000-00-00'
       AND (pulmonary_tuberculosis_last_2_years = 'Yes'
           OR who_stages_criteria_present IN ('Pulmonary tuberculosis within the last 2 years', 'Ptb within the past two years'))
+      AND (DATE(pulmonary_tuberculosis_last_2_years_v_date) <= DATE(date_enrolled) OR DATE(who_stages_criteria_present_v_date) <= DATE(date_enrolled))
      GROUP BY patient_id;
 EOF
 
