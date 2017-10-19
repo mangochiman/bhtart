@@ -149,18 +149,31 @@ class GenericClinicController < ApplicationController
     @data['less_than_1000_given'] = []
     @data['more_than_1000_not_given'] = []
     @data['more_than_1000_given'] = []
-
+    counter =1
+    check = 1
     (data['completed'] || []).each do |order|
       results = (order['results']['Viral Load'] || order['results']['Viral load'] || order['results']['VL'])
-      timestamp = results.keys.sort.last
-      result = results[timestamp]['results']
-      vl = (result['Viral Load'] || result['Viral load'] || result['VL']).strip
-      if (vl.match(/\</) && vl.scan(/\d+/).last.to_i <= 1000)
-        @data['less_than_1000_not_given'] << order
-      elsif (vl.match(/\d+/))
-        @data['more_than_1000_not_given'] << order
-      end
-    end
+      counter = results.length
+     if !results.blank?
+  	timestamp = results.keys.sort.last
+              
+        if !results[timestamp]['results'].blank?
+
+          result = results[timestamp]['results']
+     
+          vl = (result['Viral Load'] || result['Viral load'] || result['VL']).strip
+		  if (vl.match(/\</) && vl.scan(/\d+/).last.to_i <= 1000)
+                    @data['less_than_1000_not_given'] << order
+                  elsif (vl.match(/\d+/))
+                    @data['more_than_1000_not_given'] << order
+                  end
+        end
+
+     end
+
+     end
+    
+    
 
     (data['reviewed'] || []).each do |order|
       results = (order['results']['Viral load'] || order['results']['Viral Load'] || order['results']['VL'])
