@@ -1825,56 +1825,87 @@ EOF
   end
 
   def get_latest_vl_result
+
     patient_id = params[:patient_id]
-    patient = Patient.find(patient_id)
-    patient_identifiers = LabController.new.id_identifiers(patient)
-    results_available = "true"
-    results = Lab.latest_result_by_test_type(patient, 'HIV_viral_load', patient_identifiers) rescue nil
-    results_available = "false" if results.blank?
-    vl_latest_date = results[0].split('::')[0].to_date.strftime("%d-%b-%Y") rescue nil
-    vl_latest_result = results[1]["TestValue"] rescue nil
-    vl_modifier = results[1]["Range"] rescue nil
+    @patient = Patient.find(patient_id)
+    @patient_identifiers = LabController.new.id_identifiers(@patient)
+    results_available = 'false'
+    @data = {}
 
-    vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
-        patient.patient_id, Concept.find_by_name("Viral load").concept_id]).answer_string.squish.upcase rescue nil
 
-    repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
-                AND value_text =?", patient.patient_id, Concept.find_by_name("Viral load").concept_id,
-        "Repeat"]).answer_string.squish.upcase rescue nil
+    if national_lims_activated
+        settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+        url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{@patient_identifiers}&test_status=verified__reviewed"
 
-    date_vl_result_given = Observation.find(:last, :conditions => ["
-          person_id =? AND concept_id =? AND value_text REGEXP ?", patient.patient_id,
-        Concept.find_by_name("Viral load").concept_id, 'Result given to patient']).value_datetime.strftime("%d-%b-%Y") rescue nil
+        data = JSON.parse(RestClient.get(url)) rescue []
 
-    data = {}
-    if vl_latest_result.blank?
-      if vl_request == "YES" || repeat_vl_request == "REPEAT"
-        vl_result = "<span style='font-weight: bold; color: red;'>(Requested)</span>"
-      else
-        vl_result = "<span style='font-weight: bold; color: red;'>(Not requested)</span>"
-      end
+        results_available = 'true' if ((!data.blank? && data.last[2].downcase == 'verified') rescue false)
+
+        vl_latest_date = data.last[0].to_date rescue nil
+        vl_result = data.last[1]["Viral Load"] rescue nil
+
+        vl_result = 'Rejected' if (data.last[1]['Viral Load'] rescue nil) == 'Rejected'
+
+        date_vl_result_given = nil
+        if ((data.last[2].downcase == 'reviewed') rescue false)
+          date_vl_result_given = Observation.find(:last, :conditions => ['person_id =? AND concept_id =? AND value_text
+                                                                         REGEXP ? AND DATE(obs_datetime) = ?',@patient.id,
+                                                                          Concept.find_by_name('Viral load').concept_id,
+                                                                          'Result given to patient', data.last[3].to_date]
+          ).value_datetime rescue nil
+
+          date_vl_result_given = data.last[3].to_date if date_vl_result_given.blank?
+        end
     else
-      high_vl = true
-      if (vl_latest_result.to_i < 1000)
-        high_vl = false
-      end
 
-      if (vl_latest_result.to_i == 1000)
-        if (vl_modifier == '<')
+      results = Lab.latest_result_by_test_type(@patient, 'HIV_viral_load', @patient_identifiers) rescue nil
+      results_available = 'true' if !results.blank?
+      vl_latest_date = results[0].split('::')[0].to_date.strftime("%d-%b-%Y") rescue nil
+      vl_latest_result = results[1]["TestValue"] rescue nil
+      vl_modifier = results[1]["Range"] rescue nil
+
+      vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ? AND value_coded IS NOT NULL",
+                                                           @patient.patient_id,
+                                                           Concept.find_by_name("Viral load").concept_id]).answer_string.squish.upcase rescue nil
+
+      repeat_vl_request = Observation.find(:last, :conditions => ["person_id = ? AND concept_id = ?
+                AND value_text =?", @patient.patient_id, Concept.find_by_name("Viral load").concept_id,
+                                                                  "Repeat"]).answer_string.squish.upcase rescue nil
+
+      date_vl_result_given = Observation.find(:last, :conditions => ["person_id =? AND concept_id =? AND value_text REGEXP ?",
+                                                                     @patient.patient_id, Concept.find_by_name("Viral load").concept_id,
+                                                                     'Result given to patient']).value_datetime.strftime("%d-%b-%Y") rescue nil
+
+      data = {}
+      if vl_latest_result.blank?
+        if vl_request == "YES" || repeat_vl_request == "REPEAT"
+          vl_result = "<span style='font-weight: bold; color: red;'>(Requested)</span>"
+        else
+          vl_result = "<span style='font-weight: bold; color: red;'>(Not requested)</span>"
+        end
+      else
+        high_vl = true
+        if (vl_latest_result.to_i < 1000)
           high_vl = false
         end
+
+        if (vl_latest_result.to_i == 1000)
+          if (vl_modifier == '<')
+            high_vl = false
+          end
+        end
+        vl_result =  vl_modifier.to_s + vl_latest_result.to_s
+        if high_vl
+          vl_result = "<span style='color: red; font-weight: bolder;'>#{vl_result}</span>"
+        end
       end
-      vl_result =  vl_modifier.to_s + vl_latest_result.to_s
-      if high_vl
-        vl_result = "<span style='color: red; font-weight: bolder;'>#{vl_result}</span>"
-      end
+
     end
-    
-    data["vl_result"] = vl_result
-    data["vl_date"] = vl_latest_date
-    data["vl_date_given"] = date_vl_result_given
-    data["results_available"] = results_available
-    render :text => data.to_json and return
+    @data["vl_result"] = vl_result
+    @data["vl_date"] = vl_latest_date
+    @data["vl_date_given"] = date_vl_result_given
+    @data["results_available"] = results_available
+    render :text => @data.to_json and return
   end
   
   def get_reason_for_starting_art
