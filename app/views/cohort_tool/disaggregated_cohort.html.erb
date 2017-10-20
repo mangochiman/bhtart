@@ -167,6 +167,9 @@ table tr:hover td {
     <th>&nbsp;</th>
     <th>Quarter</th>
     <td><%=@quarter.split(' ')[0]%></td>
+    <%
+      file_name_ex = "#{@quarter.split(' ')[0]}_#{@quarter.split(' ')[1]}".squish rescue Time.now().strftime('%Y_%b_%d_%H_%M_%S')
+    %>
   </tr>
 
   <tr>
@@ -194,7 +197,7 @@ table tr:hover td {
   <tbody>
 
   <%
-  file = "#{Rails.root.to_s}/public/data/disaggregated_cohort/disaggregated_cohort" + "_#{Location.current_health_center.name.gsub(' ','_')}" + ".csv"
+  file = "#{Rails.root.to_s}/public/data/disaggregated_cohort/disaggregated_cohort" + "_#{Location.current_health_center.name.gsub(' ','_')}" + "_#{file_name_ex}.csv"
   rows = []
 
   hr_sep = 'Male'
