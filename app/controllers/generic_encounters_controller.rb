@@ -308,10 +308,14 @@ class GenericEncountersController < ApplicationController
         program_workflow_state = patient_hiv_program.patient_states.current.last.program_workflow_state
 
         if (program_workflow_state.concept.shortname.upcase == "ON ARVS")
-          ActiveRecord::Base.transaction do
-            current_state.void
-            previous_state.end_date = nil
-            previous_state.save
+          begin
+            ActiveRecord::Base.transaction do
+              current_state.void
+              previous_state.end_date = nil
+              previous_state.save
+            end
+          rescue
+            nil
           end
         end
         
