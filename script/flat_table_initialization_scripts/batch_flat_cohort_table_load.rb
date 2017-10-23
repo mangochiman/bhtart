@@ -221,7 +221,7 @@ def process_flat_table_1(flat_table_1_data, type = 0) #type 0 normal encounter, 
       a_hash[:pulmonary_tuberculosis_v_date] = patient.pulmonary_tuberculosis_v_date
       a_hash[:pulmonary_tuberculosis_last_2_years_v_date] = patient.pulmonary_tuberculosis_last_2_years_v_date
       a_hash[:kaposis_sarcoma_v_date] = patient.kaposis_sarcoma_v_date
-      a_hash[:reason_for_eligibility_v_date] = patient.reason_for_eligibility_v_date
+      a_hash[:reason_for_starting_v_date] = patient.reason_for_eligibility_v_date
       a_hash[:ever_registered_at_art_clinic_v_date] = patient.ever_registered_at_art_clinic_v_date
       a_hash[:date_art_last_taken_v_date] = patient.date_art_last_taken_v_date
       a_hash[:taken_art_in_last_two_months_v_date] = patient.taken_art_in_last_two_months_v_date
@@ -365,7 +365,6 @@ def process_flat_table_2(flat_table_2_data, type = 0) #type 0 normal encounter, 
       a_hash[:drug_auto_expire_date3_v_date] = patient['visit_date']
       a_hash[:drug_auto_expire_date4_v_date] = patient['visit_date']
       a_hash[:drug_auto_expire_date5_v_date] = patient['visit_date']
-
 
 
    end
