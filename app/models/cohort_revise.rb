@@ -2444,7 +2444,7 @@ EOF
               AND (gender = 'F' OR gender = 'Female')
               AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
               AND (gender = 'F' OR gender = 'Female')
-              AND o.obs_datetime = (SELECT MIN(obs.obs_datetime) FROM obs obs
+              AND o.obs_datetime = (SELECT MAX(obs.obs_datetime) FROM obs obs
                                     WHERE obs.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
                                     AND obs.person_id = o.person_id
                                     AND obs.voided = 0
