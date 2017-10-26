@@ -189,6 +189,16 @@
 
 <div id="tab" style="">
     <div id="table_div" style="height: 50px">
+    <span class="stat" style="color: darkslategray; cursor: pointer;text-decoration: underline;">
+     <%= @total_count %> 
+
+      <span style="font-size: 1em" >
+        <% settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+          url = settings['new_order_ip'] + "/user/ext?intent=dispatch&username=#{User.current.username}&return_path=#{request.referrer}&name=#{User.current.name}&location=#{Location.current_location.name}&tk=#{User.current.authentication_token}".gsub(/\s+/, '%20') %>
+        <a style="color: darkslategray;" href ="<%= url %>" target="_parent"> Undispatched Samples </a>
+      </span>
+    </span>
+
 
       <span class="stat" onclick="view('pending')" style="color: darkslategray; cursor: pointer;text-decoration: underline;"> <%= @data["pending"].length %> <span style="font-size: 1em">Pending Results</span></span>
 
@@ -219,6 +229,12 @@
         document.getElementById('view_panel').innerHTML = "";
         document.getElementById("search_popup").style.display = "none";
     }
+
+    function direct_to_dispatching()
+    {
+      document.location("http://192.168.5.89:3001/");
+    }
+
 
     function view(category){
 
