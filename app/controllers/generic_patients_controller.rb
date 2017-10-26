@@ -288,7 +288,7 @@ The following block of code should be replaced by a more cleaner function
 		lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip']+"/user/ext"
 			npid = patient.patient_identifiers.find_by_identifier_type(3).identifier
 			lims_link += "?intent=new_order&username=#{User.current.username}&return_path=#{request.referrer}&name=#{User.current.name}&location=#{Location.current_location.name}&identifier=#{npid}&tk=#{User.current.authentication_token}".gsub(/\s+/, '%20')
-		else 
+	 	else 
 		  lims_ip = "http://localhost:3001"
 			lims_link = "#{lims_ip}/user/login"
 		end

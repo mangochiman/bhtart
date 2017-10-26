@@ -134,9 +134,17 @@ class GenericClinicController < ApplicationController
     if national_lims_activated
       settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
       url = settings['lims_national_dashboard_ip'] + "/api/viral_load_stats"
+      url_undispatched_vl = settings['lims_national_dashboard_ip'] + "/api/undispatched_viral_load"
     end
+    undispatched_viral_load = JSON.parse(RestClient.get(url_undispatched_vl)) rescue {}
+
     data = JSON.parse(RestClient.get(url)) rescue {}
-		data.keys.each do |category|
+    
+    if !undispatched_viral_load.blank?
+      @total_count = undispatched_viral_load.length
+		end
+
+    data.keys.each do |category|
 			data[category].each do |order|
 					order['date_time'] = order['date_time'].to_date.strftime("%d-%b-%Y") if (order['date_time'] rescue false)
 			end
