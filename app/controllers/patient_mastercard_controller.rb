@@ -79,7 +79,8 @@ class PatientMastercardController < ApplicationController
 
         if not height_obs.blank? and not weight.blank?
           begin
-            bmi = (weight.to_f/(height_obs.value_numeric.to_f*height_obs.value_numeric.to_f)*10000).round(1)
+            previous_height = height_obs.value_numeric.blank? ? height_obs.value_text : height_obs.value_numeric
+            bmi = (weight.to_f/(previous_height.to_f*previous_height.to_f)*10000).round(1)
           rescue
             bmi = nil
           end
