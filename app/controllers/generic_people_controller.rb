@@ -1784,14 +1784,22 @@ EOF
  
   def get_date_of_first_line
     patient_id = params[:patient_id]
-    reg_category = ConceptName.find_by_name('Regimen Category').concept_id
-    regimens = ['5A','6A','4P','4A','3P','3A','2A','2P','1A','1P','0A','0P']
 
-    latest_date = Observation.find(:first,
-      :conditions =>["person_id = ? AND concept_id = ? AND value_text IN(?)",
-      patient_id, reg_category, regimens], :select =>"MIN(obs_datetime) AS date_of_first_line")
+    begin
+      concept_id = ConceptName.find_by_name('ART START DATE').concept_id
+      art_start_date = Observation.find(:last,
+        :conditions =>["person_id = ? AND concept_id = ?",
+        patient_id, concept_id], :select =>"value_datetime AS date_of_first_line")
+        first_line_date = art_start_date['date_of_first_line'].to_date.strftime('%d/%b/%Y')
+    rescue
+      reg_category = ConceptName.find_by_name('Regimen Category').concept_id
+      regimens = ['5A','6A','4P','4A','3P','3A','2A','2P','1A','1P','0A','0P']
 
-    first_line_date = latest_date['date_of_first_line'].to_date.strftime('%d/%b/%Y') rescue nil
+      latest_date = Observation.find(:first,
+        :conditions =>["person_id = ? AND concept_id = ? AND value_text IN(?)",
+        patient_id, reg_category, regimens], :select =>"MIN(obs_datetime) AS date_of_first_line")
+        first_line_date = latest_date['date_of_first_line'].to_date.strftime('%d/%b/%Y') rescue nil
+    end
 
     render :text => {:first_line_date => first_line_date}.to_json
   end
