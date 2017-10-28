@@ -1774,7 +1774,6 @@ class GenericEncountersController < ApplicationController
     params[:observations] = observations
 
     create_obs(encounter ,  params)
-    url = next_task(encounter.patient)
 
     unless previous_hiv_clinic_consultation_observations.blank?
       session_date = session[:datetime].to_date rescue Date.today
@@ -1790,6 +1789,8 @@ class GenericEncountersController < ApplicationController
       end
     end
 
+    patient = Patient.find(patient_id)
+    url = next_task(patient)
     return url
   end
 
