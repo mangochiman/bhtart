@@ -311,7 +311,7 @@ The following block of code should be replaced by a more cleaner function
 
     if use_filing_number and PatientService.get_patient_identifier(patient, 'Filing Number').blank?
       if PatientService.get_patient_identifier(patient, 'Archived filing number').blank?
-        @links << ["Filing Number (Create)","/people/redirections?person_id=#{patient.id}"]
+        @links << ["Filing Number (Create)",""]
       end
     end
 
@@ -2038,6 +2038,15 @@ EOF
     label.draw_text("Filing area #{file_type}",75, 150, 0, 2, 2, 2, false)
     label.draw_text("Version number: #{version_number}",75, 200, 0, 2, 2, 2, false)
     label.print(num)
+  end
+
+  def create_dormant_filing_number
+    filing_number = PatientIdentifier.next_filing_number('Archived filing number')
+    PatientIdentifier.create(:patient_id => params[:id],
+      :identifier => filing_number, 
+      :identifier_type => PatientIdentifierType.find_by_name('Archived filing number').id)
+
+    redirect_to :action => 'print_archive_filing_number', :id => params[:id] and return 
   end
 
   def patient_visit_label(patient, date = Date.today)

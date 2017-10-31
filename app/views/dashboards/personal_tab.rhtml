@@ -41,7 +41,18 @@
 <script>
   function setInnerHtmlData(id,result,path) {
     td = document.getElementById(id);
-    td.innerHTML = "<a href =" + path + ">" +  result + "</a>"
+    if(result == 'Filing Number (Create)'){
+      var link = document.createElement('a');
+      link.setAttribute('onmousedown',"filingNumberPrint();");
+      link.innerHTML = result;
+      td.appendChild(link);
+    }else{
+      td.innerHTML = "<a href =" + path + ">" +  result + "</a>";
+    }
+  }
+
+  function filingNumberPrint() {
+    window.parent.showAlertPopup();
   }
 </script>
 
@@ -76,4 +87,7 @@
   <%end%>
 
 </div>
+
+
 </base>
+

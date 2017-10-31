@@ -875,7 +875,6 @@ EOF
 
       @archived_patient = PatientService.set_patient_filing_number(person.patient)
 
-      #if not @archived_patient.patient_id == person.person_id
       if @archived_patient.blank?
         redirect_to "/patients/assign_filing_number_manually?patient_id=#{person.id}" and return
       else
@@ -888,10 +887,12 @@ EOF
         print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
       end
 =end
-      print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
+      print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient)) && return
     else
-      print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
+      print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient)) && return
     end
+
+    redirect_to "/patients/show/#{person.id}"
   end
 
   def assign_filing_number_manually
