@@ -1153,7 +1153,7 @@ class GenericRegimensController < ApplicationController
     end
 
     if prescribe_ipt_set == true
-      pyridoxine_ipt_drug_names = ['INH or H (Isoniazid 100mg tablet)', 'Pyridoxine (50mg)']
+      pyridoxine_ipt_drug_names = ['INH or H (Isoniazid 100mg tablet)', 'Pyridoxine (25mg)']
       pyridoxine_ipt_drugs = Drug.find(:all, :conditions => ["name IN (?)", pyridoxine_ipt_drug_names])
       pyridoxine_ipt_drugs.each do |drug|
         medications << drug
@@ -1194,7 +1194,7 @@ class GenericRegimensController < ApplicationController
     end
 
     if prescribe_ipt_set == true
-      pyridoxine_ipt_drug_names = ['INH or H (Isoniazid 100mg tablet)', 'Pyridoxine (50mg)']
+      pyridoxine_ipt_drug_names = ['INH or H (Isoniazid 100mg tablet)', 'Pyridoxine (25mg)']
       pyridoxine_ipt_drugs = Drug.find(:all, :conditions => ["name IN (?)", pyridoxine_ipt_drug_names])
       pyridoxine_ipt_drugs.each do |drug|
         medications << drug
@@ -1273,16 +1273,16 @@ class GenericRegimensController < ApplicationController
             dose = MedicationService.other_medications('Isoniazid', current_weight)
             regimen_medications = (regimen_medications + dose) unless dose.blank?
             category = regimen_medications.last[:category] rescue nil
-            drug = Drug.find_by_name('Pyridoxine (50mg)')
+            drug = Drug.find_by_name('Pyridoxine (25mg)')
 
             pyridoxine_dose = [{
-                :drug_name => 'Pyridoxine (50mg)',
+                :drug_name => 'Pyridoxine (25mg)',
                 :am => '0',
-                :pm => '1',
+                :pm => '0.5',
                 :units => 'Tab(s)',
                 :drug_id => drug.drug_id,
                 :regimen_index => nil,
-                :category => category
+                :category => 'A'
               }]
             regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
 
@@ -1312,16 +1312,16 @@ class GenericRegimensController < ApplicationController
         regimen_medications = (regimen_medications + dose)
       end
       category = regimen_medications.last[:category] rescue nil
-      drug = Drug.find_by_name('Pyridoxine (50mg)')
+      drug = Drug.find_by_name('Pyridoxine (25mg)')
       
       pyridoxine_dose = [{
-          :drug_name => 'Pyridoxine (50mg)',
+          :drug_name => 'Pyridoxine (25mg)',
           :am => '0',
-          :pm => '1',
+          :pm => '0.5',
           :units => 'Tab(s)',
           :drug_id => drug.drug_id,
           :regimen_index => nil,
-          :category => category
+          :category => 'A'
         }]
 
       regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
@@ -1360,10 +1360,10 @@ class GenericRegimensController < ApplicationController
       dose = MedicationService.other_medications('Isoniazid', current_weight)
       regimen_medications = (regimen_medications + dose) unless dose.blank?
       category = regimen_medications.last[:category] rescue nil
-      drug = Drug.find_by_name('Pyridoxine (50mg)')
+      drug = Drug.find_by_name('Pyridoxine (25mg)')
 
       pyridoxine_dose = [{
-          :drug_name => 'Pyridoxine (50mg)',
+          :drug_name => 'Pyridoxine (25mg)',
           :am => '0',
           :pm => '1',
           :units => 'Tab(s)',
