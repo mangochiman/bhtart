@@ -39,6 +39,8 @@
   }
 </style>
 
+<body onload="setBtn()">
+
 <h1><%=Location.current_health_center.name %><br />clinic holidays (<%= Date.today.year%>)</h1>
 <div class = 'user_info'>
 <!--table class = 'userdata'>
@@ -70,3 +72,16 @@
 <!--button id="edit" class="silver" style="margin-top:10px;" onmousedown="document.location = '/user/edit/<%=  -%>'"><span>Edit user</span></button--> 
 </div>
 
+</body>
+
+<script>
+function setBtn() {
+  ///properties/set_clinic_holidays
+  buttons = document.getElementById('buttons');
+  btn = document.createElement('button');
+  btn.setAttribute('class','button navButton blue');
+  btn.setAttribute('onmousedown', 'window.location = "/properties/set_clinic_holidays";');
+  btn.innerHTML = "<span>Set clinic holiday(s)</span>";
+  buttons.appendChild(btn);
+}
+</script>
