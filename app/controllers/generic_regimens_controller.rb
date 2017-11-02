@@ -1275,17 +1275,22 @@ class GenericRegimensController < ApplicationController
             category = regimen_medications.last[:category] rescue nil
             drug = Drug.find_by_name('Pyridoxine (25mg)')
 
-            pyridoxine_dose = [{
-                :drug_name => 'Pyridoxine (25mg)',
-                :am => '0',
-                :pm => '0.5',
-                :units => 'Tab(s)',
-                :drug_id => drug.drug_id,
-                :regimen_index => nil,
-                :category => 'A'
-              }]
-            regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+            pyridoxine_regimen_drug_order = RegimenDrugOrder.find(:all, 
+              :conditions => ["drug_inventory_id = ?", drug.id])
 
+            (pyridoxine_regimen_drug_order || []).each do |r|
+              next unless current_weight.to_f >= r.regimen.min_weight.to_f && r.regimen.max_weight.to_f <= current_weight.to_f
+              pyridoxine_dose = [{
+                  :drug_name => r.drug.name,
+                  :am => 0,
+                  :pm => r.dose,
+                  :units => 'Tab(s)',
+                  :drug_id => r.drug.id,
+                  :regimen_index => nil,
+                  :category => 'A'
+                }]
+              regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+            end
           end
         end
       end
@@ -1314,17 +1319,22 @@ class GenericRegimensController < ApplicationController
       category = regimen_medications.last[:category] rescue nil
       drug = Drug.find_by_name('Pyridoxine (25mg)')
       
-      pyridoxine_dose = [{
-          :drug_name => 'Pyridoxine (25mg)',
-          :am => '0',
-          :pm => '0.5',
-          :units => 'Tab(s)',
-          :drug_id => drug.drug_id,
-          :regimen_index => nil,
-          :category => 'A'
-        }]
+      pyridoxine_regimen_drug_orders = RegimenDrugOrder.find(:all, 
+        :conditions => ["drug_inventory_id = ?", drug.id])
 
-      regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+      (pyridoxine_regimen_drug_orders || []).each do |r|
+        next unless current_weight.to_f >= r.regimen.min_weight.to_f && current_weight.to_f <= r.regimen.max_weight.to_f
+        pyridoxine_dose = [{
+            :drug_name => drug.name,
+            :am => 0,
+            :pm => r.dose,
+            :units => 'Tab(s)',
+            :drug_id => drug.id,
+            :regimen_index => nil,
+            :category => 'A'
+          }]
+        regimen_medications = (regimen_medications + pyridoxine_dose) #Prescribe pyridoxine when IPT is selected
+      end
       
     end
     ################################################################################################################
