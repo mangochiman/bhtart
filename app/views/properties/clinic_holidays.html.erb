@@ -39,7 +39,7 @@
   }
 </style>
 
-<h1><%=Location.current_health_center.name %><br />clinic holidays</h1>
+<h1><%=Location.current_health_center.name %><br />clinic holidays (<%= Date.today.year%>)</h1>
 <div class = 'user_info'>
 <!--table class = 'userdata'>
   <tr>
@@ -59,10 +59,10 @@
   %>
   <tr>
     <!--th class='blue'>Username:&nbsp;</th-->
-    <td class=<%#=row_class%>><%#=date.strftime('%A')%></td>
+    <td class=<%=row_class%>><%=date.strftime('%A')%></td>
     <td class=<%=row_class%>><%=date.strftime('%d')%></td>
     <td class=<%=row_class%>><%=date.strftime('%B')%></td>
-    <!--td class=<%#=row_class%>><%#=date.strftime('%Y')%></td-->
+    <td class=<%=row_class%>><%=date.strftime('%Y')%></td>
   </tr>
   <% end %>
 </table>
