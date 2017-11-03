@@ -6,6 +6,7 @@
 <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
 <%= javascript_include_tag "Highcharts/js/highcharts" %>
 <%= javascript_include_tag "vitals_trail" %>
+<%= javascript_include_tag "notification_tracker" %>
 
 <link rel="stylesheet" href="/stylesheets/yes_no_btn.css" type="text/css"/>
 
@@ -2025,7 +2026,7 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
       </center>
     </span>
     <div style="padding-top: 65px;">
-      <span id="safe-family-planning-yes" onclick="hideSafeFamillyPlanningPopup();" class="tb-treatment-my_button" style="position: relative;">Ok</span>
+      <span id="safe-family-planning-yes" onclick="recordNotification('Recommendation (family planning method)','OK');hideSafeFamillyPlanningPopup();" class="tb-treatment-my_button" style="position: relative;">Ok</span>
     </div>
   </div>
 </div>
@@ -2185,8 +2186,10 @@ tb_symptoms_array = tb_symptoms_set.map{|item|
     </span>
     <div style="padding-top: 65px;">
 
-      <span id="regimen-change-yes" onclick="continueWithRegimenChange();" class="regimen-change-my_button">Confirm weight loss</span>
-      <span id="regimen-change-no" onclick="hideRegimenChangePopup();" class="regimen-change-my_button">Recheck Height / Weight</span>
+      <span id="regimen-change-yes" onclick="recordNotification('BMI notice','Confirm width loss');continueWithRegimenChange();" 
+        class="regimen-change-my_button">Confirm weight loss</span>
+      <span id="regimen-change-no" onclick="recordNotification('BMI notice','Recheck weight');hideRegimenChangePopup();" 
+        class="regimen-change-my_button">Recheck Height / Weight</span>
     </div>
   </div>
 </div>
