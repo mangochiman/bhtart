@@ -460,6 +460,7 @@ function contraindicators(){
         cancelButton.style.color = 'white';
     
         cancelButton.onclick = function(){
+            recordNotification('Contraindications (medication induced)','Select other regimens');
             hideLibPopup();
         }
     
@@ -514,6 +515,7 @@ function contraindicators(){
         nextButton.style.borderColor = '#00688B';
         nextButton.style.color = 'white';
         nextButton.onclick = function(){
+            recordNotification('Contraindications (medication induced)','Keep selected regimen');
             hideLibPopup();
             //gotoNextPage();
             checkIFstartpackNeed();
