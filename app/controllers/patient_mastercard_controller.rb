@@ -99,7 +99,7 @@ class PatientMastercardController < ApplicationController
       :pills_gave      => gave,
       :cpt             => cpt,
       :outcome         => get_outcome(patient_id, visit_date),
-      :visit_date      => visit_date
+      :visit_date      => visit_date.to_date.strftime('%Y-%m-%d')
     }.to_json 
   end
 
