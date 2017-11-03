@@ -13,7 +13,26 @@ class EncountersController < GenericEncountersController
 			@suggested_appointment_date = suggest_appointment_date(@max_date)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 
-      @appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
+      begin
+        @appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i 
+        if @appointment_limit.blank? || @appointment_limit == 0
+          @appointment_limit = 100
+        end
+      rescue 
+        @appointment_limit = 100
+      end
+
+      clinic_holidays = CoreService.get_global_property_value('clinic.holidays')  
+      @set_clinic_holidays = []
+
+      (clinic_holidays.split(',') || []).map do |day|
+        @set_clinic_holidays << day.to_date
+      end
+
+      if @set_clinic_holidays.blank?
+        @set_clinic_holidays = ["#{Date.today.year}-01-01", "#{Date.today.year}-12-25","#{Date.today.year}-03-03"]
+      end
+
       render :action => params[:encounter_type] and return
 		end
 

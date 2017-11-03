@@ -1,4 +1,5 @@
 
+<%= javascript_include_tag 'notification_tracker'%>
 <%= javascript_include_tag 'miscellaneous.js'%>
 <%=  stylesheet_link_tag  'miscellaneous.css'%>
 
@@ -14,11 +15,12 @@
       <span id='initiation_type' style="color: green; padding-left: 20px;"></span>&nbsp;<span id='selected_starter_pack'></span>
     </span>
     <div style="padding-top: 65px;">
-      <span id="confirmatory-test-yes" onclick="hideConfirmatoryTestPopup();resetRegimen();gotoNextPage();" 
+      <span id="confirmatory-test-yes" 
+        onclick="recordNotification('Starter pack needed for 14 days','Yes');hideConfirmatoryTestPopup();resetRegimen();gotoNextPage();" 
             class="confirmatory-test-my_button"
             style="position: relative;">Prescribe starter pack</span>
 
-      <span id="confirmatory-test-no" onclick="hideConfirmatoryTestPopup();"
+      <span id="confirmatory-test-no" onclick="recordNotification('Starter pack needed for 14 days','Cancel');hideConfirmatoryTestPopup();"
             class="confirmatory-test-my_button"
             style="position: relative;">Cancel</span>
     </div>
@@ -3656,8 +3658,10 @@ $("pyridoxine").value == "YES" || prescribeHypertensionDrugs())',
     </span>
     <div style="padding-top: 65px;">
 
-      <span id="regimen-change-yes" onclick="continueWithRegimenChange();" class="regimen-change-my_button">Yes, Am sure</span>
-      <span id="regimen-change-no" onclick="hideRegimenChangePopup();" class="regimen-change-my_button">No, Am not sure</span>
+      <span id="regimen-change-yes" onclick="recordNotification('Confirm regimen change','continue with regimen change');continueWithRegimenChange();" 
+        class="regimen-change-my_button">Yes, Am sure</span>
+      <span id="regimen-change-no" onclick="recordNotification('Confirm regimen change','Cancel regimen change');hideRegimenChangePopup();" 
+        class="regimen-change-my_button">No, Am not sure</span>
     </div>
   </div>
 </div>
