@@ -5,6 +5,7 @@ class CreateNotificationTrackers < ActiveRecord::Migration
       t.text      :description
       t.string    :notification_response, :null => false
       t.datetime  :notification_datetime, :null => false
+      t.integer   :patient_id,            :null => false
       t.integer   :user_id,               :null => false
     end
   end
