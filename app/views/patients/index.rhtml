@@ -624,27 +624,56 @@ function setValidationRules() {
     var finishBtn = window.document.getElementById('btnNext');
     finishBtn.setAttribute('onmousedown','checkIfAllTaskDone();');
     finishBtn.setAttribute('onclick','');
-    <%(User.current.activities || []).each do |activitie|%>
-      user_activities.push("<%=activitie%>");
-    <%end%>
+    <%(User.current.activities || []).each do |activitie|
+      if activitie.match(/Dispensations/i)%>
+        user_activities.push("Dispensing");
+      <%else%>
+        user_activities.push("<%=activitie%>");
+    <%end
+    end%>
   }catch(e) {
     recallSetValidationRules();
   }
 }
+
+<%next_task_url = nil%>
 
 function checkIfAllTaskDone() {
   var tabTask = window.document.getElementById('tab5');
   var nextTask = tab5.innerHTML.replace("NEXT TASK: ",'');
   for(var i = 0; i < user_activities.length; i++){
     re = new RegExp(nextTask, 'gi')
-    //alert(re)
     if(user_activities[i].match(re)){
       document.getElementById('selected_ativity').innerHTML = user_activities[i];
       document.getElementById('next_task').innerHTML = nextTask;
+      <%next_task_url = next_task(@patient) %>;
       alertIncompleteVisit();
       return;
     }
   }
+
+  <%if current_program_location.match(/HIV/i) %>
+     var appointment_not_done = <%= Encounter.find(:first, 
+      :conditions => ["patient_id = ? AND encounter_type = ?
+      AND encounter_datetime BETWEEN ? AND ?",
+      params[:id],EncounterType.find_by_name('Appointment').id,
+      session_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+      session_date.to_date.strftime('%Y-%m-%d 23:59:59')]).blank? == true%>
+
+    if(nextTask.match(/None/i) && appointment_not_done) {
+      for(var i = 0; i < user_activities.length; i++){
+        if(user_activities[i].match(/appointment/gi)){
+          document.getElementById('selected_ativity').innerHTML = user_activities[i];
+          document.getElementById('next_task').innerHTML = user_activities[i];
+          <%next_task_url = "/encounters/new/appointment?action=show"
+          next_task_url += "&controller=encounter_types&encounter_type=";
+          next_task_url += "Appointment&id=show&patient_id=#{params[:id]}" %>
+          alertIncompleteVisit();
+          return;
+        }
+      }
+    }
+  <%end%>
   document.location = '/';
 }
 
@@ -670,7 +699,8 @@ function alertIncompleteVisit() {
 
 
   <div style="padding-top: 65px;">
-    <span id="YesBtn" onclick="recordNotification('Incomplete visit','Go to next task');hideAlertPopup();window.location='<%= next_task(@patient)%>'" 
+    <span id="YesBtn" 
+      onclick="recordNotification('Incomplete visit','Go to next task');hideAlertPopup();window.location='<%= next_task_url%>'" 
           class="popupBtn"
           style="position: relative;">Go to next task</span>
 
