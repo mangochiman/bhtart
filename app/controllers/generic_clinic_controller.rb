@@ -267,7 +267,7 @@ class GenericClinicController < ApplicationController
       if create_from_dde_server
         merge_patients_url = '/patients/dde_duplicates'
       else  
-        merge_patients_url = '/patients/patient_merge'
+        merge_patients_url = '/patients/merge_menu'
       end
       @reports =  [
         ['/clinic/users_tab','User Accounts/Settings'],
@@ -277,9 +277,6 @@ class GenericClinicController < ApplicationController
         [merge_patients_url,'Merge Patients']
 
       ]
-      #if create_from_dde_server
-        #@reports << ['/patients/dde_duplicates','Merge Patients']
-      #end
 
       if current_user.admin?
         @reports << ['/clinic/management_tab','Drug Management']
