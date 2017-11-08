@@ -363,7 +363,6 @@
         <table id="table_id" width="99%">
             <thead>
             <tr>
-                <th style="padding-left: 10px; text-align: left;">Fuchia ID</th>
                 <th style="padding-left: 10px; text-align: left;">ARV number</th>
                 <th>Earliest start date</th>
                 <th>Date enrolled</th>
@@ -379,7 +378,6 @@
 
             <% (  @sorted_list || []).each do |patient_id, data| %>
                 <tr>
-                    <td style="padding-left: 10px;"><%= data[:fuchia_id] %></td>
                     <td style="padding-left: 10px;"><%= data[:arv_number] %></td>
                     <td style="text-align: center;"><%= data[:earliest_start_date] %></td>
                     <td style="text-align: center;"><%= data[:date_enrolled] %></td>

@@ -22,7 +22,21 @@ class GenericPropertiesController < ApplicationController
 
   def clinic_holidays
     @holidays = CoreService.get_global_property_value('clinic.holidays') rescue []
-    @holidays = @holidays.split(',').collect{|date|date.to_date}.sort unless @holidays.blank?
+    
+    #deleting all holidays that do not belong in the current year.
+    current_year_holidays = []
+    (@holidays.split(',')).each do |holiday|
+      next unless holiday.to_date.year >= Date.today.year
+      current_year_holidays << holiday
+    end unless @holidays.blank?
+
+
+    unless current_year_holidays.blank?
+      global_property = GlobalProperty.find_by_property('clinic.holidays')
+      global_property.update_attributes(:property_value => current_year_holidays.join(','))
+    end 
+
+    @holidays = current_year_holidays.collect{|date|date.to_date}.sort rescue []
     render :layout => "menu"
   end
 

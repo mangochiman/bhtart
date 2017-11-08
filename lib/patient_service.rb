@@ -2018,7 +2018,7 @@ EOF
       duplicate_identifiers << "'#{i['identifier']}'"
     end
   
-    duplicate_identifiers = ['F'] if duplicate_identifiers.blank?
+    duplicate_identifiers = [] if duplicate_identifiers.blank?
    
     #here we remove all ids that have any encounter today.
     patient_ids_with_todays_encounters = Encounter.find_by_sql("
@@ -2049,6 +2049,11 @@ EOF
     no_patient_ids = patient_ids_with_future_app.map{|ad| ad['person_id'].to_i }
     no_patient_ids = [0] if patient_ids_with_future_app.blank?
 
+    unless duplicate_identifiers.blank?
+      sql_path = "AND i.identifier NOT IN (#{duplicate_identifiers.join(',')})"
+    else
+      sql_path = ''
+    end
 
     outcomes = ActiveRecord::Base.connection.select_all <<EOF
 SELECT p.patient_id,state,start_date,end_date FROM patient_state s
@@ -2057,7 +2062,7 @@ INNER JOIN patient_identifier i ON p.patient_id = i.patient_id
 AND i.identifier_type = #{filing_number_identifier_type} AND i.voided = 0
 WHERE p.patient_id IN(#{patient_ids.join(',')}) 
 AND p.patient_id NOT IN (#{no_patient_ids.join(',')})
-AND i.identifier NOT IN (#{duplicate_identifiers.join(',')})
+#{sql_path}
 AND state IN (2, 3, 4, 5, 6, 8)
   AND state != 7
   AND start_date = (SELECT max(start_date) FROM patient_state t

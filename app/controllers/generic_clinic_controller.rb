@@ -285,19 +285,19 @@ class GenericClinicController < ApplicationController
     if role.include?("Pharmacist")
       @reports = [['/clinic/management_tab','Drug Management']]
     else
+      if create_from_dde_server
+        merge_patients_url = '/patients/dde_duplicates'
+      else  
+        merge_patients_url = '/patients/merge_menu'
+      end
       @reports =  [
         ['/clinic/users_tab','User Accounts/Settings'],
         ['/clinic/location_management_tab','Location Management'],
         ['/people/tranfer_patient_in','Transfer Patient in'],
-        #['/patients/patient_merge','Merge Patients'],
-        #['/patients/merge_menu','Merge Patients (Local)'],
         ['/patients/duplicate_menu','Possible patient duplicates'],
-        ['/patients/dde_duplicates','Merge Patients']
+        [merge_patients_url,'Merge Patients']
 
       ]
-      #if create_from_dde_server
-        #@reports << ['/patients/dde_duplicates','Merge Patients']
-      #end
 
       if current_user.admin?
         @reports << ['/clinic/management_tab','Drug Management']

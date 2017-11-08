@@ -1,10 +1,15 @@
 class ReportController < GenericReportController
 
 	def set_appointments
+    begin
+      @select_date = params[:observations][0]['value_datetime'].to_date
+    rescue
+      @select_date = Date.today
+    end
+
     @logo = CoreService.get_global_property_value('logo').to_s rescue ''
     @current_location_name = Location.current_health_center.name
     @report_name = 'Appointments Report' #find means of making the report name dynamic
-		@select_date = params[:user_selected_date].to_date rescue Date.today
     @formatted_appointment_date = @select_date.strftime('%A, %d - %b - %Y')
 		@patients = appointments_for_the_day(@select_date)
 		render :layout => 'report'

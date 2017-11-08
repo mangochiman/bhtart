@@ -638,13 +638,15 @@ DECLARE set_outcome varchar(25);
 DECLARE set_date_started date;
 DECLARE set_patient_state_died INT;
 DECLARE set_died_concept_id INT;
+DECLARE set_timestamp DATETIME;
 
+SET set_timestamp = DATE_FORMAT(visit_date, '%Y-%m-%d 23:59:59');
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
 SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
 
 IF set_patient_state = 1 THEN
-  SET set_patient_state = current_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -680,7 +682,7 @@ IF set_patient_state = 6 THEN
 END IF;
 
 IF set_patient_state = 7 THEN
-  SET set_patient_state = current_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -692,7 +694,7 @@ IF set_patient_state = 7 THEN
 END IF;
 
 IF set_outcome IS NULL THEN
-  SET set_patient_state = current_defaulter(patient_id, visit_date);
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
 
   IF set_patient_state = 1 THEN
     SET set_outcome = 'Defaulted';
@@ -1856,6 +1858,7 @@ EOF
 
       if obs_group.blank?
         unless patient_id_of_those_with_side_effects.include?(row['patient_id'].to_i)
+          next if no_side_effects_concept_id == row['value_coded'].to_i
           results << row
           patient_id_of_those_with_side_effects << row['patient_id'].to_i
         end
@@ -2441,9 +2444,10 @@ EOF
               AND (gender = 'F' OR gender = 'Female')
               AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
               AND (gender = 'F' OR gender = 'Female')
-              AND o.obs_datetime = (SELECT MIN(obs.obs_datetime) FROM obs obs
+              AND o.obs_datetime = (SELECT MAX(obs.obs_datetime) FROM obs obs
                                     WHERE obs.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
                                     AND obs.person_id = o.person_id
+                                    AND obs.voided = 0
                                     AND DATE(obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}')
               GROUP BY patient_id
               HAVING value_coded = #{yes_concept_id};

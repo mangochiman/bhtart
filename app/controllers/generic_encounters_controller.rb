@@ -1,408 +1,71 @@
 class GenericEncountersController < ApplicationController
   def create(params=params, session=session)
-    #A hack to set concept: Prescribe drugs to No/Yes if Medication orders include any of: ARVs/CPT/IPT
-    if params[:encounter]['encounter_type_name'].match(/HIV CLINIC CONSULTATION|ART ADHERENCE/i) 
-      set_prescribe_drugs_yes = true
-      params[:observations].each do |ob|
-        if ob[:concept_name] == 'Medication orders'
-          ipt_index = ob['value_coded_or_text_multiple'].find_index('IPT') rescue nil
-          ob['value_coded_or_text_multiple'][ipt_index] = 'Isoniazid' unless ipt_index.blank?
-          options_selected = ob['value_coded_or_text_multiple'].join(',') unless ob['value_coded_or_text_multiple'].blank?
-          if options_selected.blank?
-            params[:observations] -= [ob]
-            next
-          end
-
-          if options_selected.match(/None/i)
-            set_prescribe_drugs_yes = false
-            break
-          end
-        end
-      end
-
-      params[:observations].each do |ob|
-        if ob[:concept_name] == 'Prescribe drugs'
-          if (set_prescribe_drugs_yes == true)
-            ob['value_coded_or_text'] = 'Yes'
-          else
-            ob['value_coded_or_text'] = 'NO'
-          end
-          
-          break
-        end
-      end
-
+    
+    if params[:encounter]["encounter_type_name"].squish.upcase == "HIV RECEPTION"
+      url = create_reception_encounter(params, session)
+      redirect_to url and return
     end
-    ##########3 hack ends here ######
 
-    xpertassay = false
-    if params[:change_appointment_date] == "true"
-      session_date = session[:datetime].to_date rescue Date.today
-      type = EncounterType.find_by_name("APPOINTMENT")                            
-      appointment_encounter = Observation.find(:first,                            
-				:order => "encounter_datetime DESC,encounter.date_created DESC",
-				:joins => "INNER JOIN encounter ON obs.encounter_id = encounter.encounter_id",
-				:conditions => ["concept_id = ? AND encounter_type = ? AND patient_id = ?
-      AND encounter_datetime >= ? AND encounter_datetime <= ?",
-					ConceptName.find_by_name('Appointment date').concept_id,
-					type.id, params[:encounter]["patient_id"],session_date.strftime("%Y-%m-%d 00:00:00"),
-					session_date.strftime("%Y-%m-%d 23:59:59")]).encounter rescue nil
-      appointment_encounter.void("Given a new appointment date") unless appointment_encounter.blank?
+    if params[:encounter]["encounter_type_name"].squish.upcase == 'HIV CLINIC REGISTRATION'
+      url = create_hiv_registration_encounter(params, session)
+      redirect_to url and return
     end
-    	
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == 'VITALS'
+      url = create_vitals_encounter(params, session)
+      redirect_to url and return
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == 'HIV CLINIC CONSULTATION'
+      url = create_hiv_clinic_consultation_encounter(params, session)
+      redirect_to url and return
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == 'APPOINTMENT'
+      url = create_appointment_date_encounter(params, session)
+      patient_id = params[:encounter]["patient_id"]
+      print_and_redirect("/patients/dashboard_print_visit/#{patient_id}","/patients/show/#{patient_id}")
+      #redirect_to url and return
+      return
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == 'HIV STAGING'
+      url = create_hiv_staging_encounter(params, session)
+      redirect_to url and return
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == 'ART ADHERENCE'
+      url = create_art_adherence_encounter(params, session)
+      redirect_to url and return
+    end
+
+    #TB encounters ................................................................
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "TB RECEPTION"
+      url = create_tb_reception_encounter(params, session)
+      redirect_to url and return
+    end
+
     if params['encounter']['encounter_type_name'] == 'TB_INITIAL'
       (params[:observations] || []).each do |observation|
         if observation['concept_name'].upcase == 'TRANSFER IN' and observation['value_coded_or_text'] == "YES"
           params[:observations] << {"concept_name" => "TB STATUS","value_coded_or_text" => "Confirmed TB on treatment"}
         end
       end
+      create_tb_encounter(params, session)
     end
 
-    if params['encounter']['encounter_type_name'] == 'HIV CLINIC REGISTRATION'
-      session_date = session[:datetime].to_date rescue Date.today
 
-      has_tranfer_letter = false
-      (params["observations"]).each do |ob|
-        if ob["concept_name"] == "HAS TRANSFER LETTER" 
-          has_tranfer_letter = (ob["value_coded_or_text"].upcase == "YES")
-          break
-        end
-      end
-          
-      observations = []
-      
-      (params[:observations] || []).each do |obs|
-        if obs['concept_name'].upcase == 'EVER RECEIVED ART' and obs['value_coded_or_text'].upcase == 'NO'
-          (params[:observations] || []).each do |observation|
-            next if observation['concept_name'].upcase == 'HAS TRANSFER LETTER'
-            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-            next if observation['concept_name'].upcase == 'ART NUMBER AT PREVIOUS LOCATION'
-            next if observation['concept_name'].upcase == 'DATE ART LAST TAKEN'
-            next if observation['concept_name'].upcase == 'LAST ART DRUGS TAKEN'
-            next if observation['concept_name'].upcase == 'TRANSFER IN'
-            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-            observations << observation
-          end
-        elsif obs['concept_name'].upcase == 'Date antiretrovirals started'.upcase 
-          date_art_started = obs['value_datetime'].to_date rescue nil
-          art_start_date_estimation = params[:art_start_date_estimation]
-          if date_art_started.blank? and not art_start_date_estimation.blank?
-            case art_start_date_estimation
-            when '6 months ago'
-              obs[:value_datetime] = session_date - 6.months
-              obs[:value_modifier] = '='
-            when '12 months ago'
-              obs[:value_datetime] = session_date - 12.months
-              obs[:value_modifier] = '='
-            when '18 months ago'
-              obs[:value_datetime] = session_date - 18.months
-              obs[:value_modifier] = '='
-            when '24 months'
-              obs[:value_datetime] = session_date - 24.months
-              obs[:value_modifier] = '='
-            when 'Over 2 years ago'
-              obs[:value_datetime] = session_date - 24.months
-              obs[:value_modifier] = '>'
-            end
-            obs[:value_text] = art_start_date_estimation
-          end
-        elsif obs['concept_name'].upcase == 'DATE ART LAST TAKEN' 
-          new_patient = false
-          (params[:observations] || []).each do |observation|
-            if observation['concept_name'].upcase == 'EVER RECEIVED ART' and observation['value_coded_or_text'].upcase == 'NO'
-              new_patient = true
-              break
-            end
-          end
-          next if new_patient == true
-
-          date_art_last_taken = obs['value_datetime'].to_date rescue nil
-          observations = []
-          (params[:observations] || []).each do |observation|
-            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
-            next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
-            observations << observation
-          end unless date_art_last_taken.blank?
-          
-          if date_art_last_taken.blank?
-            last_month = false ; last_week = false
-            (params[:observations] || []).each do |observation|
-              if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS' and  observation['value_coded_or_text'].upcase == 'YES'
-                last_week = true
-              elsif observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' and  observation['value_coded_or_text'].upcase == 'YES'
-                last_month = true
-              end
-            end 
-           
-            if last_week == true
-              obs[:value_datetime] = (session_date - 2.weeks)
-            elsif last_month == true
-              obs[:value_datetime] = (session_date.to_date - 2.months)
-            else
-              year_art_last_taken = params['year_art_last_taken'].to_i
-              month_art_last_taken = params['month_art_last_taken']
-              day_art_last_taken = params['day_art_last_taken'].to_i
-              if year_art_last_taken > 1 and month_art_last_taken == 'Unknown'
-                obs[:value_datetime] = "#{year_art_last_taken}/July/01".to_date
-              elsif year_art_last_taken > 1 and month_art_last_taken != 'Unknown' and day_art_last_taken < 1
-                obs[:value_datetime] = "#{year_art_last_taken}/#{month_art_last_taken}/15".to_date
-              elsif last_month == false and last_week == false
-                obs[:value_datetime] = (session_date.to_date - 3.months)
-              end
-            end
-            obs[:value_text] ='Estimated'
-          end
-        end
-      end
-
-      params[:observations] = observations unless observations.blank?
-
-      observations = []
-      (params[:observations] || []).each do |observation|
-        if observation['concept_name'].upcase == 'LOCATION OF ART INITIATION' or observation['concept_name'].upcase == 'CONFIRMATORY HIV TEST LOCATION'
-          observation['value_numeric'] = observation['value_coded_or_text'] rescue nil
-          observation['value_text'] = Location.find(observation['value_coded_or_text']).name.to_s rescue ""
-          observation['value_coded_or_text'] = ""
-        end
-        observations << observation
-      end
-
-      params[:observations] = observations unless observations.blank?
-
-      observations = []
-      vitals_observations = []
-      initial_observations = []
-      (params[:observations] || []).each do |observation|
-        if observation['concept_name'].upcase == 'WHO STAGES CRITERIA PRESENT'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'WHO STAGES CRITERIA PRESENT'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'CD4 COUNT LOCATION'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'CD4 COUNT DATETIME'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'CD4 COUNT'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'CD4 COUNT LESS THAN OR EQUAL TO 250'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'CD4 COUNT LESS THAN OR EQUAL TO 350'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'CD4 PERCENT'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'CD4 PERCENT LESS THAN 25'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'REASON FOR ART ELIGIBILITY'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'WHO STAGE'
-          observations << observation
-        elsif observation['concept_name'].upcase == 'BODY MASS INDEX, MEASURED'
-          bmi = nil
-          (params["observations"]).each do |ob|
-            if ob["concept_name"] == "BODY MASS INDEX, MEASURED" 
-              bmi = ob["value_numeric"]
-              break
-            end
-          end
-          next if bmi.blank? 
-          vitals_observations << observation
-        elsif observation['concept_name'].upcase == 'WEIGHT (KG)'
-          weight = 0
-          (params["observations"]).each do |ob|
-            if ob["concept_name"] == "WEIGHT (KG)" 
-              weight = ob["value_numeric"].to_f rescue 0
-              break
-            end
-          end
-          next if weight.blank? or weight < 1
-          vitals_observations << observation
-        elsif observation['concept_name'].upcase == 'HEIGHT (CM)'
-          height = 0
-          (params["observations"]).each do |ob|
-            if ob["concept_name"] == "HEIGHT (CM)" 
-              height = ob["value_numeric"].to_i rescue 0
-              break
-            end
-          end
-          next if height.blank? or height < 1
-          vitals_observations << observation
-        else
-          initial_observations << observation
-        end
-      end if has_tranfer_letter
-
-      date_started_art = nil
-      (initial_observations || []).each do |ob|
-        if ob['concept_name'].upcase == 'DATE ANTIRETROVIRALS STARTED'
-          date_started_art = ob["value_datetime"].to_date rescue nil
-          if date_started_art.blank?
-            date_started_art = ob["value_coded_or_text"].to_date rescue nil
-            if date_started_art.blank?
-              year_started_art = params[:year_started_art].to_i 
-              month_started_art = params[:month_started_art]
-              day_started_art = params[:day_started_art].to_i 
-              if year_started_art > 1 and month_started_art == 'Unknown'
-                ob[:value_datetime] = "#{year_started_art}/July/01".to_date 
-                ob[:value_text] = 'Estimated'
-              elsif year_started_art > 1 and month_started_art != 'Unknown' and day_started_art < 1
-                ob[:value_datetime] = "#{year_started_art}/#{month_started_art}/15".to_date 
-                ob[:value_text] = 'Estimated'
-              end
-            end
-          end
-        end
-      end
-      
-          
-      unless vitals_observations.blank?
-        encounter = Encounter.new()
-        encounter.encounter_type = EncounterType.find_by_name("VITALS").id
-        encounter.patient_id = params['encounter']['patient_id']
-        encounter.encounter_datetime = date_started_art
- 
-        unless params['encounter']['creator'].blank?
-          #Hack for API for simulating patients visit. By mangochiman
-          encounter.creator = params['encounter']['creator']
-          User.current = User.find(params['encounter']['creator'])
-        end
-
-        if encounter.encounter_datetime.blank?                                                                        
-          encounter.encounter_datetime = params['encounter']['encounter_datetime']  
-        end 
-        if params[:filter] and !params[:filter][:provider].blank?
-          user_person_id = User.find_by_username(params[:filter][:provider]).person_id
-        else
-          user_person_id = User.find_by_user_id(params['encounter']['provider_id']).person_id
-        end
-        encounter.provider_id = user_person_id
-        encounter.save   
-        params[:observations] = vitals_observations
-        create_obs(encounter , params)
-      end
- 
-      unless observations.blank? 
-        encounter = Encounter.new()
-        encounter.encounter_type = EncounterType.find_by_name("HIV STAGING").id
-        encounter.patient_id = params['encounter']['patient_id']
-        encounter.encounter_datetime = date_started_art 
-        if encounter.encounter_datetime.blank?                                                                        
-          encounter.encounter_datetime = params['encounter']['encounter_datetime']  
-        end 
-        if params[:filter] and !params[:filter][:provider].blank?
-          user_person_id = User.find_by_username(params[:filter][:provider]).person_id
-        else
-          user_person_id = User.find_by_user_id(params['encounter']['provider_id']).person_id
-        end
-        encounter.provider_id = user_person_id
-        encounter.save 
-          
-        params[:observations] = observations 
-
-        (params[:observations] || []).each do |observation|
-          if observation['concept_name'].upcase == 'CD4 COUNT' or observation['concept_name'].upcase == "LYMPHOCYTE COUNT"
-            observation['value_modifier'] = observation['value_numeric'].match(/=|>|</i)[0] rescue nil
-            observation['value_numeric'] = observation['value_numeric'].match(/[0-9](.*)/i)[0] rescue nil
-          end
-        end
-        create_obs(encounter , params)
-      end
-      params[:observations] = initial_observations if has_tranfer_letter  
-    end
-
-    if params['encounter']['encounter_type_name'].upcase == 'HIV STAGING'
-      observations = []
-      (params[:observations] || []).each do |observation|
-        if observation['concept_name'].upcase == 'CD4 COUNT' or observation['concept_name'].upcase == "LYMPHOCYTE COUNT"
-          observation['value_modifier'] = observation['value_numeric'].match(/=|>|</i)[0] rescue nil
-          observation['value_numeric'] = observation['value_numeric'].match(/[0-9](.*)/i)[0] rescue nil
-        end
-        if observation['concept_name'].upcase == 'CD4 COUNT LOCATION' or observation['concept_name'].upcase == 'LYMPHOCYTE COUNT LOCATION'
-          observation['value_numeric'] = observation['value_coded_or_text'] rescue nil
-          observation['value_text'] = Location.find(observation['value_coded_or_text']).name.to_s rescue ""
-          observation['value_coded_or_text'] = ""
-        end
-        if observation['concept_name'].upcase == 'CD4 PERCENT LOCATION'
-          observation['value_numeric'] = observation['value_coded_or_text'] rescue nil
-          observation['value_text'] = Location.find(observation['value_coded_or_text']).name.to_s rescue ""
-          observation['value_coded_or_text'] = ""
-        end
-
-        observations << observation
-      end
-      
-      params[:observations] = observations unless observations.blank?
-    end
     if params['encounter']['encounter_type_name'].upcase == 'TB CLINIC VISIT'
       (params[:observations] || []).each do |observation|
         if observation['concept_name'].upcase == 'FURTHER EXAMINATION FOR TB REQUIRED' and observation['value_coded_or_text'] == "GeneXpert"
           xpertassay = true
         end
       end
-    end
-    if params['encounter']['encounter_type_name'].upcase == 'ART ADHERENCE'
-      previous_hiv_clinic_consultation_observations = []
-      art_adherence_observations = []
-      (params[:observations] || []).each do |observation|
-        if observation['concept_name'].upcase == 'REFER TO ART CLINICIAN'
-          previous_hiv_clinic_consultation_observations << observation
-        elsif observation['concept_name'].upcase == 'PRESCRIBE DRUGS'
-          previous_hiv_clinic_consultation_observations << observation
-        elsif observation['concept_name'].upcase == 'ALLERGIC TO SULPHUR'
-          previous_hiv_clinic_consultation_observations << observation
-        else
-          art_adherence_observations << observation
-        end
-      end
-
-      unless previous_hiv_clinic_consultation_observations.blank?
-        #if "REFER TO ART CLINICIAN","PRESCRIBE DRUGS" and "ALLERGIC TO SULPHUR" has
-        #already been asked during HIV CLINIC CONSULTATION - we append the observations to the latest 
-        #HIV CLINIC CONSULTATION encounter done on that day
-
-        session_date = session[:datetime].to_date rescue Date.today
-        encounter_type = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
-        encounter = Encounter.find(:first,:order =>"encounter_datetime DESC,date_created DESC",
-          :conditions =>["encounter_type=? AND patient_id=? AND encounter_datetime >= ?
-          AND encounter_datetime <= ?",encounter_type.id,params['encounter']['patient_id'],
-						session_date.strftime("%Y-%m-%d 00:00:00"),session_date.strftime("%Y-%m-%d 23:59:59")])
-        if encounter.blank?
-          encounter = Encounter.new()
-          encounter.encounter_type = encounter_type.id
-          encounter.patient_id = params['encounter']['patient_id']
-          encounter.encounter_datetime = session_date.strftime("%Y-%m-%d 00:00:01")
-          if params[:filter] and !params[:filter][:provider].blank?
-            user_person_id = User.find_by_username(params[:filter][:provider]).person_id
-          else
-            user_person_id = User.find_by_user_id(params['encounter']['provider_id']).person_id
-          end
-          encounter.provider_id = user_person_id
-          encounter.save   
-        end
-
-        params[:observations] = previous_hiv_clinic_consultation_observations
-        create_obs(encounter , params)
-      end
-
-      params[:observations] = art_adherence_observations
-
-      observations = []
-      (params[:observations] || []).each do |observation|
-        if observation['concept_name'].upcase == 'WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER'
-          observation['value_numeric'] = observation['value_text'] rescue nil
-          observation['value_text'] =  ""
-        end
-
-        if observation['concept_name'].upcase == 'MISSED HIV DRUG CONSTRUCT'
-          observation['value_numeric'] = observation['value_coded_or_text'] rescue nil
-          observation['value_coded_or_text'] = ""
-        end
-        observations << observation
-      end
-      params[:observations] = observations unless observations.blank?
+      create_tb_encounter(params, session)
     end
 
-		if params['encounter']['encounter_type_name'].upcase == 'REFER PATIENT OUT?'
+    if params['encounter']['encounter_type_name'].upcase == 'REFER PATIENT OUT?'
       observations = []
       (params[:observations] || []).each do |observation|
         if observation['concept_name'].upcase == 'REFERRAL CLINIC IF REFERRED'
@@ -410,303 +73,78 @@ class GenericEncountersController < ApplicationController
           observation['value_text'] = Location.find(observation['value_coded_or_text']).name.to_s rescue ""
           observation['value_coded_or_text'] = ""
         end
-
         observations << observation
       end
-
       params[:observations] = observations unless observations.blank?
+      create_tb_encounter(params, session)
     end
 
-    @patient = Patient.find(params[:encounter][:patient_id]) rescue nil
-    if ! params[:location].blank?
-      if @patient.nil?
-        @patient = Patient.find_with_voided(params[:encounter][:patient_id])
-      end
-
-      Person.migrated_datetime = params['encounter']['date_created']
-      Person.migrated_creator  = params['encounter']['creator'] rescue nil
-
-      # set current location via params if given
-      Location.current_location = Location.find(params[:location])
-      User.current = User.find(params['encounter']['creator'])
-    end
-    
-    if params['encounter']['encounter_type_name'].to_s.upcase == "APPOINTMENT" && !params[:report_url].nil? && !params[:report_url].match(/report/).nil?
-			concept_id = ConceptName.find_by_name("RETURN VISIT DATE").concept_id
-			encounter_id_s = Observation.find_by_sql("SELECT encounter_id
-                       FROM obs
-                       WHERE concept_id = #{concept_id} AND person_id = #{@patient.id}
-                            AND DATE(value_datetime) = DATE('#{params[:old_appointment]}') AND voided = 0
-				").map{|obs| obs.encounter_id}.each do |encounter_id|
-				Encounter.find(encounter_id).void
-			end
+    if params['encounter']['encounter_type_name'] == 'SOURCE OF REFERRAL'
+      create_tb_encounter(params, session)
     end
 
-    # Encounter handling
-		encounter = Encounter.new(params[:encounter])
-		if params[:location].blank?
-		  encounter.encounter_datetime = session[:datetime] unless session[:datetime].blank?
-		else
-		  encounter.encounter_datetime = params['encounter']['encounter_datetime']
-		end
-
-		if params[:filter] and !params[:filter][:provider].blank?
-		  user_person_id = User.find_by_username(params[:filter][:provider]).person_id
-		elsif params[:location] # Migration
-		  user_person_id = encounter[:provider_id]
-		else
-		  user_person_id = User.find_by_user_id(encounter[:provider_id]).person_id 
-		end rescue user_person_id = current_user.id
-    
-		encounter.provider_id = user_person_id
-
-		encounter.save
-
-    #create observations for the just created encounter
-    create_obs(encounter , params)
-
-		if !params[:recalculate_bmi].blank? && params[:recalculate_bmi] == "true"
-			weight = 0
-			height = 0
-
-			weight_concept_id  = ConceptName.find_by_name("Weight (kg)").concept_id
-			height_concept_id  = ConceptName.find_by_name("Height (cm)").concept_id
-			bmi_concept_id = ConceptName.find_by_name("Body mass index, measured").concept_id
-			work_station_concept_id = ConceptName.find_by_name("Workstation location").concept_id
-				
-			vitals_encounter_id = EncounterType.find_by_name("VITALS").encounter_type_id
-			enc = Encounter.find(:all, :conditions => ["encounter_type = ? AND patient_id = ?
-											AND voided=0", vitals_encounter_id, @patient.id])
-
-			encounter.observations.each do |o|
-				height = o.answer_string.squish if o.concept_id == height_concept_id
-			end
-								
-			enc.each do |e|
-				obs_created = false
-				weight = nil
-						
-				e.observations.each do |o|
-					next if o.concept_id == work_station_concept_id
-							
-					if o.concept_id == weight_concept_id
-						weight = o.answer_string.squish.to_i
-					elsif o.concept_id == height_concept_id || o.concept_id == bmi_concept_id
-						o.voided = 1
-						o.date_voided = Time.now
-						o.voided_by = encounter.creator
-						o.void_reason = "Back data entry recalculation"
-						o.save
-					end
-				end
-
-				bmi = (weight.to_f/(height.to_f*height.to_f)*10000).round(1) rescue "Unknown"
-
-				field = :value_numeric
-				field = :value_text and height = 'Unknown' if height == 'Unknown' || height.to_i == 0
-
-				height_obs = Observation.new(
-					:concept_name => "Height (cm)",
-					:person_id => @patient.id,
-					:encounter_id => e.id,
-					field => height,
-					:obs_datetime => e.encounter_datetime)
-
-				height_obs.save
-						
-				field = :value_numeric
-				field = :value_text and bmi = 'Unknown' if bmi == 'Unknown' || bmi.to_i == 0
-												
-				bmi_obs = Observation.new(
-					:concept_name => "Body mass index, measured",
-					:person_id => @patient.id,
-					:encounter_id => e.id,
-					field => bmi,
-					:obs_datetime => e.encounter_datetime)
-
-				bmi_obs.save
-			end
-		end
-		
-    # Program handling
-    date_enrolled = params[:programs][0]['date_enrolled'].to_time rescue nil
-    date_enrolled = session[:datetime] || Time.now() if date_enrolled.blank?
-    (params[:programs] || []).each do |program|
-      if params['encounter']['encounter_type_name'] == 'HIV CLINIC REGISTRATION'
-        next if not @patient.patient_programs.in_programs("HIV PROGRAM").blank?
-      end
-      # Look up the program if the program id is set      
-      @patient_program = PatientProgram.find(program[:patient_program_id]) unless program[:patient_program_id].blank?
-
-      #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      #if params[:location] is not blank == migration params
-      if ! params[:location].blank?
-        next if not @patient.patient_programs.in_programs("HIV PROGRAM").blank?
-      end
-      #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-      # If it wasn't set, we need to create it
-      unless (@patient_program)
-        @patient_program = @patient.patient_programs.create(
-          :program_id => program[:program_id],
-          :date_enrolled => date_enrolled)          
-      end
-      # Lots of states bub
-      unless program[:states].blank?
-        #adding program_state start date
-        program[:states][0]['start_date'] = date_enrolled
-      end
-      (program[:states] || []).each {|state| @patient_program.transition(state) }
+    if params['encounter']['encounter_type_name'] == 'UPDATE HIV STATUS'
+      create_tb_encounter(params, session)
     end
 
-    # Identifier handling
-    arv_number_identifier_type = PatientIdentifierType.find_by_name('ARV Number').id
-    hcc_identifier_type = PatientIdentifierType.find_by_name('HCC Number').id
-    (params[:identifiers] || []).each do |identifier|
-      # Look up the identifier if the patient_identfier_id is set      
-      @patient_identifier = PatientIdentifier.find(identifier[:patient_identifier_id]) unless identifier[:patient_identifier_id].blank?
-      # Create or update
-      type = identifier[:identifier_type].to_i rescue nil
-      unless (arv_number_identifier_type != type) and @patient_identifier
-        arv_number = identifier[:identifier].strip
-        if arv_number.match(/(.*)[A-Z]/i).blank?
-          if params['encounter']['encounter_type_name'] == 'TB REGISTRATION'
-						
-            if PatientIdentifier.site_prefix == "MPC"
-							prefix = "LL-TB"
-							tb_identifier = identifier[:identifier].to_i
-							identifier[:identifier] = "LL-TB  #{session[:datetime].to_date.strftime('%Y')} #{tb_identifier}" rescue  "LL-TB #{Date.today.strftime('%Y')} #{tb_identifier}"
-						else
-							prefix = "#{PatientIdentifier.site_prefix}-TB"
-							tb_identifier = identifier[:identifier].to_i
-							identifier[:identifier] = "#{PatientIdentifier.site_prefix}-TB #{session[:datetime].to_date.strftime('%Y')} #{tb_identifier}" rescue  "#{PatientIdentifier.site_prefix}-TB #{Date.today.strftime('%Y')} #{tb_identifier}"
-						end
-						#raise identifier[:identifier].to_yaml
-						#PatientIdentifier.find_by_identifier(identifier[:identifier])
-						#if ! PatientIdentifier.find_by_identifier(identifier[:identifier]).blank?
-						#	redirect_to "/encounters/new/tb_registration?action=show&patient_id=#{@patient.id}" and return
-						#end
-          else
-            identifier[:identifier] = "#{PatientIdentifier.site_prefix}-ARV-#{arv_number}"
-            if (type.to_i == hcc_identifier_type.to_i)
-              identifier[:identifier] = "#{PatientIdentifier.site_prefix}-HCC-#{arv_number}"
-            end
-          end
-        end
-      end
-			
-      if @patient_identifier
-        @patient_identifier.update_attributes(identifier)      
+    if params[:encounter]["encounter_type_name"].squish.upcase == "LAB ORDERS"
+      create_tb_encounter(params, session)
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "TB REGISTRATION"
+      create_tb_encounter(params, session)
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "TB VISIT"
+      create_tb_encounter(params, session)
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "TB ADHERENCE"
+      create_tb_encounter(params, session)
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "TB CLINIC VISIT"
+      create_tb_encounter(params, session)
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "SPUTUM SUBMISSION"
+      create_tb_encounter(params, session)
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "LAB RESULTS"
+      create_tb_encounter(params, session)
+    end
+
+    if params[:encounter]["encounter_type_name"].squish.upcase == "GIVE LAB RESULTS"
+      create_tb_encounter(params, session)
+    end
+
+    patient = Patient.find(params[:encounter]['patient_id'])
+    url = next_task(patient) 
+
+    if params['encounter']['encounter_type_name'].upcase == 'GIVE LAB RESULTS'
+      if patient.person.observations.to_s.match(/results given to patient:  Yes/i)
+        print_and_redirect("/encounters/lab_results_print/?id=#{patient.id}", next_task(patient))
+        return
       else
-        @patient_identifier = @patient.patient_identifiers.create(identifier)
-				#raise @patient_identifier.to_yaml
+        redirect_to url
+        return
       end
-    end
-    
-    # person attribute handling
-    (params[:person] || []).each do | type , attribute |
-      # Look up the attribute if the person_attribute_id is set  
-
-      #person_attribute_id = person_attribute[:person_attribute_id].to_i rescue nil    
-      @person_attribute = nil #PersonAttribute.find(person_attribute_id) unless person_attribute_id.blank?
-      # Create or update
-
-      if not @person_attribute.blank?
-        @patient_identifier.update_attributes(person_attribute)      
-      else
-        case type
-				when 'agrees_to_be_visited_for_TB_therapy'
-					@person_attribute = @patient.person.person_attributes.create(
-            :person_attribute_type_id => PersonAttributeType.find_by_name("Agrees to be visited at home for TB therapy").person_attribute_type_id,
-            :value => attribute)
-				when 'agrees_phone_text_for_TB_therapy'
-					@person_attribute = @patient.person.person_attributes.create(
-            :person_attribute_type_id => PersonAttributeType.find_by_name("Agrees to phone text for TB therapy").person_attribute_type_id,
-            :value => attribute)
-        end
-      end
-    end
-
-    if params[:identifiers]
-      if create_from_dde_server
-        #Updating the demographics to dde
-        PatientService.update_dde_patient(@patient.person, session[:dde_token]) rescue nil
-      end
-    end
-=begin
-    if params['encounter']['encounter_type_name'] == "HIV CLINIC CONSULTATION" && patient_present(@patient.id,(session[:datetime] || Date.today)) && htn_client?(@patient)
-      bp = @patient.current_bp((session[:datetime] || Time.now()))
-
-      if !bp.blank? && ((!bp[0].blank? && bp[0] > 140) || (!bp[1].blank?  && bp[1] > 90))
-       redirect_to "/htn_encounter/bp_alert?patient_id=#{@patient.id}" and return
-      end
-
-			if @patient.programs.map{|x| x.name}.include?("HYPERTENSION PROGRAM")
-	      htn_program_id = Program.find_by_name("HYPERTENSION PROGRAM").id
-	      program = PatientProgram.find(:last,:conditions => ["patient_id = ? AND program_id = ? AND date_enrolled <= ?", 
-																						@patient.id,htn_program_id, (session[:datetime] || Time.now())])
-				unless program.blank?
-  		    state = PatientState.find(:last, :conditions => ["patient_program_id = ? AND start_date <= ? ", program.id, (session[:datetime].to_date rescue Time.now().to_date)]) rescue nil
-
-          current_state = ConceptName.find_by_concept_id(state.program_workflow_state.concept_id).name rescue ""
-
-					if current_state.upcase == "ON TREATMENT"
-			       redirect_to "/htn_encounter/bp_management?patient_id=#{@patient.id}" and return
-					end
-				end
-			end
-    end
-=end
-    # if params['encounter']['encounter_type_name'] == "APPOINTMENT"
-    #  redirect_to "/patients/treatment_dashboard/#{@patient.id}" and return
-    # else
-		# Go to the dashboard if this is a non-encounter
-		# redirect_to "/patients/show/#{@patient.id}" unless params[:encounter]
-		# redirect_to next_task(@patient)
-    # end
-
-    # Go to the next task in the workflow (or dashboard)
-    # only redirect to next task if location parameter has not been provided
-   
-		#if xpertassay == true
-    # redirect_to"/encounters/new/expertassy/?patient_id=#{@patient.id}" and return
-    #end
-    if params[:location].blank?
-			#find a way of printing the lab_orders labels
-			if params['encounter']['encounter_type_name'].upcase == 'GIVE LAB RESULTS'
-				if @patient.person.observations.to_s.match(/results given to patient:  Yes/i)
-					print_and_redirect("/encounters/lab_results_print/?id=#{@patient.id}", next_task(@patient))
-				else
-					redirect_to next_task(@patient)
-				end
-			elsif	params['encounter']['encounter_type_name'] == "LAB ORDERS"
-				redirect_to"/patients/print_lab_orders/?patient_id=#{@patient.id}"
-			elsif params['encounter']['encounter_type_name'] == "TB suspect source of referral" && !params[:gender].empty? && !params[:family_name].empty? && !params[:given_name].empty?
-				redirect_to"/encounters/new/tb_suspect_source_of_referral/?patient_id=#{@patient.id}&gender=#{params[:gender]}&family_name=#{params[:family_name]}&given_name=#{params[:given_name]}"
-			else
-				if params['encounter']['encounter_type_name'].to_s.upcase == "APPOINTMENT" && !params[:report_url].nil? && !params[:report_url].match(/report/).nil?
-					redirect_to  params[:report_url].to_s and return
-				elsif params['encounter']['encounter_type_name'].upcase == 'APPOINTMENT'
-					print_and_redirect("/patients/dashboard_print_visit/#{params[:encounter]['patient_id']}","/patients/show/#{params[:encounter]['patient_id']}")
-					return
-				end
-				redirect_to next_task(@patient)
-			end
+    elsif params['encounter']['encounter_type_name'] == "LAB ORDERS"
+      redirect_to "/patients/print_lab_orders/?patient_id=#{patient.id}"
+      return
+    elsif params['encounter']['encounter_type_name'].upcase == "TB suspect source of referral" && !params[:gender].empty? && !params[:family_name].empty? && !params[:given_name].empty?
+      redirect_to "/encounters/new/tb_suspect_source_of_referral/?patient_id=#{patient.id}&gender=#{params[:gender]}&family_name=#{params[:family_name]}&given_name=#{params[:given_name]}" 
+      return
     else
-      if params[:voided]
-        encounter.void(params[:void_reason],
-					params[:date_voided],
-					params[:voided_by])
-      end
-      #redirect_to "/patients/show/#{params[:encounter]['patient_id']}"
-      #made restful the default due to time
-
-      render :text => encounter.encounter_id.to_s and return
-      
-      #return encounter.id.to_s  # support non-RESTful creation of encounters
+      redirect_to url
+      return
     end
-    
+
+
+    #raise
   end
+  ###################################################################################################
 
 	def new	
 		@patient = Patient.find(params[:patient_id] || session[:patient_id])
@@ -824,10 +262,11 @@ class GenericEncountersController < ApplicationController
 
 	def observations
 		# We could eventually include more here, maybe using a scope with includes
-		encounter = Encounter.find(params[:id], :include => [:observations])
+		encounter = Encounter.find(params[:id], :include => [:observations]) rescue []
+
 		@child_obs = {}
 		@observations = []
-		encounter.observations.map do |obs|
+		(encounter.observations || []).map do |obs|
 			next if !obs.obs_group_id.blank?
       next if ConceptName.find_by_concept_id(obs.concept_id).name.match(/patient tracking state/i)
 			if ConceptName.find_by_concept_id(obs.concept_id).name.match(/location/)
@@ -840,7 +279,7 @@ class GenericEncountersController < ApplicationController
 			if child_obs
 				@child_obs[obs.obs_id] = child_obs
 			end
-		end
+		end unless encounter.blank?
 
 		render :layout => false
 	end
@@ -869,10 +308,14 @@ class GenericEncountersController < ApplicationController
         program_workflow_state = patient_hiv_program.patient_states.current.last.program_workflow_state
 
         if (program_workflow_state.concept.shortname.upcase == "ON ARVS")
-          ActiveRecord::Base.transaction do
-            current_state.void
-            previous_state.end_date = nil
-            previous_state.save
+          begin
+            ActiveRecord::Base.transaction do
+              current_state.void
+              previous_state.end_date = nil
+              previous_state.save
+            end
+          rescue
+            nil
           end
         end
         
@@ -886,54 +329,45 @@ class GenericEncountersController < ApplicationController
       if ! void_prog.blank?
         void_prog.void
       end
+    
       current_identifier = PatientIdentifier.find(:first, :conditions => ['patient_id = ? AND identifier_type = ?',
           @encounter.patient_id, patient_identifier_type_id], :order => "date_created DESC")
+      
       if ! current_identifier.blank?
         current_identifier.void
       end
 
     end
+    
     state = Encounter.find_by_sql("
         SELECT * FROM obs WHERE concept_id = (SELECT concept_id FROM concept_name WHERE name = 'PATIENT TRACKING STATE')
         AND encounter_id = #{params[:id]}").first rescue []
+    
     if not state.blank?
       voided_state  = PatientState.find_by_sql(
         "SELECT * FROM patient_state WHERE patient_state_id = #{state.value_numeric}").first
       voided_state.void
     end
+    
     if @encounter.name.upcase == 'ART ADHERENCE'
-      art_adherence = EncounterType.find_by_name('HIV CLINIC CONSULTATION').id
-      hiv_clinic_consultation = Encounter.find(:first,
-        :conditions => ["patient_id = ? AND encounter_datetime >= ? AND 
-        encounter_datetime <= ? AND encounter_type = ?",@encounter.patient_id,
-          @encounter.encounter_datetime.strftime("%Y-%m-%d 00:00:00"),
-          @encounter.encounter_datetime.strftime("%Y-%m-%d 23:59:59"),
-          art_adherence],:order => "encounter_datetime DESC")
+      (@encounter.observations || []).each do |o|
+        o.void('Voided from app')
+      end
+    end
 
-      (hiv_clinic_consultation.observations || []).each do |ob|
-        ob.void_reason = 'Voided ART Adherence'
-        obs_name = ob.to_s
-        if obs_name.match(/Refer to ART clinician/i)
-          ob.voided = 1
-          ob.save
-        elsif obs_name.match(/Prescribe drugs/i)
-          ob.voided = 1
-          ob.save
-        elsif obs_name.match(/sulphur/i)
-          ob.voided = 1
-          ob.save
-        end
-      end if hiv_clinic_consultation
+    if (encounter.type.name.match(/TREATMENT/i))
+      #We don't want to have a dispensation encounter without treatment encounter
+      #Void dispensation encounter soon after voiding treatment
+      (@encounter.orders || []).each do |o|
+        o.void('Voided from app')
+      end
+
+      (@encounter.observations || []).each do |o|
+        o.void('Voided from app')
+      end
     end
 
 		@encounter.void
-    if (encounter.type.name.match(/TREATMENT/i))
-      dispensing_enc = Encounter.find(:last, :conditions => ["patient_id =? AND encounter_type =?
-        AND DATE(encounter_datetime) =?", patient_id, dispensing_enc_type, current_day])
-      dispensing_enc.void unless dispensing_enc.blank?
-      #We don't want to have a dispensation encounter without treatment encounter
-      #Void dispensation encounter soon after voiding treatment
-    end
 		head :ok
 	end
 
@@ -1711,4 +1145,711 @@ class GenericEncountersController < ApplicationController
 			return 1
     end
 	end
+
+
+  ################################### create encounter/obs section ####################################
+
+  def create_reception_encounter(params, session)
+    encounter_type = EncounterType.find_by_name('HIV RECEPTION')
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+    encounter = Encounter.create(:patient_id => patient_id,
+      :encounter_datetime => encounter_datetime, 
+      :encounter_type => encounter_type.id)
+
+    create_obs(encounter, params)
+
+    #when the patient has been assigned ARV number
+    unless params[:identifiers].blank?
+      hcc_identifier_type = PatientIdentifierType.find_by_name('HCC Number')
+      arv_identifier_type = PatientIdentifierType.find_by_name('ARV Number')
+
+      (params[:identifiers] || []).each do |i|
+        identifier_type = i["identifier_type"].to_i
+        number = i["identifier"]
+        if identifier_type == arv_identifier_type.id
+          identifier = "#{PatientIdentifier.site_prefix}-ARV-#{number}"
+        elsif identifier_type == hcc_identifier_type.id
+          identifier = "#{PatientIdentifier.site_prefix}-HCC-#{number}"
+        end
+
+        PatientIdentifier.create(:patient_id => patient_id,
+          :identifier_type => identifier_type, :identifier => identifier) 
+      end
+    end
+
+    return next_task(encounter.patient)
+  end
+
+  def create_hiv_registration_encounter(params, session)
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+    session_date = encounter_datetime.to_date
+
+    has_tranfer_letter = false
+    (params["observations"]).each do |ob|
+      if ob["concept_name"] == "HAS TRANSFER LETTER" 
+        has_tranfer_letter = (ob["value_coded_or_text"].upcase == "YES")
+        break
+      end
+    end
+        
+    observations = []
+    
+    (params[:observations] || []).each do |obs|
+      if obs['concept_name'].upcase == 'EVER RECEIVED ART' and obs['value_coded_or_text'].upcase == 'NO'
+        (params[:observations] || []).each do |observation|
+          next if observation['concept_name'].upcase == 'HAS TRANSFER LETTER'
+          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+          next if observation['concept_name'].upcase == 'ART NUMBER AT PREVIOUS LOCATION'
+          next if observation['concept_name'].upcase == 'DATE ART LAST TAKEN'
+          next if observation['concept_name'].upcase == 'LAST ART DRUGS TAKEN'
+          next if observation['concept_name'].upcase == 'TRANSFER IN'
+          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+          observations << observation
+        end
+      elsif obs['concept_name'].upcase == 'Date antiretrovirals started'.upcase || obs['concept_name'].upcase == 'ART START DATE'
+        date_art_started = obs['value_datetime'].to_date rescue nil
+        art_start_date_estimation = params[:art_start_date_estimation]
+        if date_art_started.blank? and not art_start_date_estimation.blank?
+          case art_start_date_estimation
+          when '6 months ago'
+            obs[:value_datetime] = session_date - 6.months
+            obs[:value_modifier] = '='
+          when '12 months ago'
+            obs[:value_datetime] = session_date - 12.months
+            obs[:value_modifier] = '='
+          when '18 months ago'
+            obs[:value_datetime] = session_date - 18.months
+            obs[:value_modifier] = '='
+          when '24 months'
+            obs[:value_datetime] = session_date - 24.months
+            obs[:value_modifier] = '='
+          when 'Over 2 years'
+            obs[:value_datetime] = session_date - 24.months
+            obs[:value_modifier] = '>'
+          end
+          obs[:value_text] = art_start_date_estimation
+        end
+      elsif obs['concept_name'].upcase == 'DATE ART LAST TAKEN' 
+        new_patient = false
+        (params[:observations] || []).each do |observation|
+          if observation['concept_name'].upcase == 'EVER RECEIVED ART' && observation['value_coded_or_text'].upcase == 'NO'
+            new_patient = true
+            break
+          end
+        end
+        next if new_patient == true
+
+        date_art_last_taken = obs['value_datetime'].to_date rescue nil
+        observations = []
+        (params[:observations] || []).each do |observation|
+          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS'
+          next if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS'
+          observations << observation
+        end unless date_art_last_taken.blank?
+        
+        if date_art_last_taken.blank?
+          last_month = false ; last_week = false
+          (params[:observations] || []).each do |observation|
+            if observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO WEEKS' && observation['value_coded_or_text'].upcase == 'YES'
+              last_week = true
+            elsif observation['concept_name'].upcase == 'HAS THE PATIENT TAKEN ART IN THE LAST TWO MONTHS' && observation['value_coded_or_text'].upcase == 'YES'
+              last_month = true
+            end
+          end 
+         
+          if last_week == true
+            obs[:value_datetime] = (session_date - 2.weeks)
+          elsif last_month == true
+            obs[:value_datetime] = (session_date.to_date - 2.months)
+          else
+            year_art_last_taken = params['year_art_last_taken'].to_i
+            month_art_last_taken = params['month_art_last_taken']
+            day_art_last_taken = params['day_art_last_taken'].to_i
+            if year_art_last_taken > 1 and month_art_last_taken == 'Unknown'
+              obs[:value_datetime] = "#{year_art_last_taken}/July/01".to_date
+            elsif year_art_last_taken > 1 and month_art_last_taken != 'Unknown' && day_art_last_taken < 1
+              obs[:value_datetime] = "#{year_art_last_taken}/#{month_art_last_taken}/15".to_date
+            elsif last_month == false and last_week == false
+              obs[:value_datetime] = (session_date.to_date - 3.months)
+            end
+          end
+          obs[:value_text] ='Estimated'
+        end
+      end
+    end
+
+    params[:observations] = observations unless observations.blank?
+
+    observations = []
+    (params[:observations] || []).each do |observation|
+      if observation['concept_name'].upcase == 'LOCATION OF ART INITIATION' or observation['concept_name'].upcase == 'CONFIRMATORY HIV TEST LOCATION'
+        observation['value_numeric'] = observation['value_coded_or_text'] rescue nil
+        observation['value_text'] = Location.find(observation['value_coded_or_text']).name.to_s rescue ""
+        observation['value_coded_or_text'] = ""
+      end
+      observations << observation
+    end
+
+    params[:observations] = observations unless observations.blank?
+
+    observations = []
+    vitals_observations = []
+    initial_observations = []
+    (params[:observations] || []).each do |observation|
+      if observation['concept_name'].upcase == 'WHO STAGES CRITERIA PRESENT'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'WHO STAGES CRITERIA PRESENT'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'CD4 COUNT LOCATION'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'CD4 COUNT DATETIME'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'CD4 COUNT'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'CD4 COUNT LESS THAN OR EQUAL TO 250'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'CD4 COUNT LESS THAN OR EQUAL TO 350'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'CD4 PERCENT'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'CD4 PERCENT LESS THAN 25'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'REASON FOR ART ELIGIBILITY'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'WHO STAGE'
+        observations << observation
+      elsif observation['concept_name'].upcase == 'BODY MASS INDEX, MEASURED'
+        bmi = nil
+        (params["observations"]).each do |ob|
+          if ob["concept_name"] == "BODY MASS INDEX, MEASURED" 
+            bmi = ob["value_numeric"]
+            break
+          end
+        end
+        next if bmi.blank? 
+        vitals_observations << observation
+      elsif observation['concept_name'].upcase == 'WEIGHT (KG)'
+        weight = 0
+        (params["observations"]).each do |ob|
+          if ob["concept_name"] == "WEIGHT (KG)" 
+            weight = ob["value_numeric"].to_f rescue 0
+            break
+          end
+        end
+        next if weight.blank? or weight < 1
+        vitals_observations << observation
+      elsif observation['concept_name'].upcase == 'HEIGHT (CM)'
+        height = 0
+        (params["observations"]).each do |ob|
+          if ob["concept_name"] == "HEIGHT (CM)" 
+            height = ob["value_numeric"].to_i rescue 0
+            break
+          end
+        end
+        next if height.blank? or height < 1
+        vitals_observations << observation
+      else
+        initial_observations << observation
+      end
+    end if has_tranfer_letter
+
+    date_started_art = nil
+    (initial_observations || []).each do |ob|
+      if ob['concept_name'].upcase == 'DATE ANTIRETROVIRALS STARTED'
+        date_started_art = ob["value_datetime"].to_date rescue nil
+        if date_started_art.blank?
+          date_started_art = ob["value_coded_or_text"].to_date rescue nil
+          if date_started_art.blank?
+            year_started_art = params[:year_started_art].to_i 
+            month_started_art = params[:month_started_art]
+            day_started_art = params[:day_started_art].to_i 
+            if year_started_art > 1 and month_started_art == 'Unknown'
+              ob[:value_datetime] = "#{year_started_art}/July/01".to_date 
+              ob[:value_text] = 'Estimated'
+            elsif year_started_art > 1 and month_started_art != 'Unknown' and day_started_art < 1
+              ob[:value_datetime] = "#{year_started_art}/#{month_started_art}/15".to_date 
+              ob[:value_text] = 'Estimated'
+            end
+          end
+        end
+      end
+    end
+    
+        
+    unless vitals_observations.blank?
+      encounter = Encounter.new()
+      encounter.encounter_type = EncounterType.find_by_name("VITALS").id
+      encounter.patient_id = params['encounter']['patient_id']
+      encounter.encounter_datetime = date_started_art
+
+      unless params['encounter']['creator'].blank?
+        #Hack for API for simulating patients visit. By mangochiman
+        encounter.creator = params['encounter']['creator']
+        User.current = User.find(params['encounter']['creator'])
+      end
+
+      if encounter.encounter_datetime.blank?                                                                        
+        encounter.encounter_datetime = params['encounter']['encounter_datetime']  
+      end 
+      if params[:filter] and !params[:filter][:provider].blank?
+        user_person_id = User.find_by_username(params[:filter][:provider]).person_id
+      else
+        user_person_id = User.find_by_user_id(params['encounter']['provider_id']).person_id
+      end
+      encounter.provider_id = user_person_id
+      encounter.save   
+      params[:observations] = vitals_observations
+      create_obs(encounter , params)
+    end
+
+    unless observations.blank? 
+      encounter = Encounter.new()
+      encounter.encounter_type = EncounterType.find_by_name("HIV STAGING").id
+      encounter.patient_id = params['encounter']['patient_id']
+      encounter.encounter_datetime = date_started_art 
+      if encounter.encounter_datetime.blank?                                                                        
+        encounter.encounter_datetime = params['encounter']['encounter_datetime']  
+      end 
+      if params[:filter] and !params[:filter][:provider].blank?
+        user_person_id = User.find_by_username(params[:filter][:provider]).person_id
+      else
+        user_person_id = User.find_by_user_id(params['encounter']['provider_id']).person_id
+      end
+      encounter.provider_id = user_person_id
+      encounter.save 
+        
+      params[:observations] = observations 
+
+      (params[:observations] || []).each do |observation|
+        if observation['concept_name'].upcase == 'CD4 COUNT' or observation['concept_name'].upcase == "LYMPHOCYTE COUNT"
+          observation['value_modifier'] = observation['value_numeric'].match(/=|>|</i)[0] rescue nil
+          observation['value_numeric'] = observation['value_numeric'].match(/[0-9](.*)/i)[0] rescue nil
+        end
+      end
+      create_obs(encounter , params)
+    end
+    params[:observations] = initial_observations if has_tranfer_letter  
+    encounter_type = EncounterType.find_by_name('HIV CLINIC REGISTRATION')
+    patient_id = params[:encounter]["patient_id"].to_i
+    encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    encounter = Encounter.create(
+      :encounter_type => encounter_type.id,
+      :patient_id => patient_id,
+      :encounter_datetime => encounter_datetime
+    )
+    
+
+
+
+    # Program handling ################################################################
+    date_enrolled = encounter.encounter_datetime
+    patient = encounter.patient
+
+    (params[:programs] || []).each do |program|
+      if params['encounter']['encounter_type_name'] == 'HIV CLINIC REGISTRATION'
+        next if not patient.patient_programs.in_programs("HIV PROGRAM").blank?
+      end
+      # Look up the program if the program id is set      
+      patient_program = PatientProgram.find(program[:patient_program_id]) unless program[:patient_program_id].blank?
+
+      if ! params[:location].blank?
+        next if not patient.patient_programs.in_programs("HIV PROGRAM").blank?
+      end
+
+      # If it wasn't set, we need to create it
+      unless (@patient_program)
+        @patient_program = patient.patient_programs.create(
+          :program_id => program[:program_id],
+          :date_enrolled => date_enrolled)          
+      end
+      # Lots of states bub
+      unless program[:states].blank?
+        #adding program_state start date
+        program[:states][0]['start_date'] = date_enrolled
+      end
+      (program[:states] || []).each {|state| @patient_program.transition(state) }
+    end
+    ####################################################################################
+
+
+
+
+
+    create_obs(encounter ,  params)
+    return next_task(encounter.patient)
+
+  end
+
+  def create_vitals_encounter(params, session)
+    #raise params.inspect
+    encounter_type = EncounterType.find_by_name('VITALS')
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+
+    encounter = Encounter.create(:patient_id => patient_id,
+      :encounter_datetime => encounter_datetime, 
+      :encounter_type => encounter_type.id)
+    
+    create_obs(encounter, params) 
+    return next_task(encounter.patient)
+  end
+
+  def create_hiv_clinic_consultation_encounter(params, session)
+    #A hack to set concept: Prescribe drugs to No/Yes if Medication orders include any of: ARVs/CPT/IPT
+    set_prescribe_drugs_yes = true
+    (params[:observations] || []).each do |ob|
+      if ob[:concept_name] == 'Medication orders'
+        ipt_index = ob['value_coded_or_text_multiple'].find_index('IPT') rescue nil
+        ob['value_coded_or_text_multiple'][ipt_index] = 'Isoniazid' unless ipt_index.blank?
+        options_selected = ob['value_coded_or_text_multiple'].join(',') unless ob['value_coded_or_text_multiple'].blank?
+        if options_selected.blank?
+          params[:observations] -= [ob]
+          next
+        end
+
+        if options_selected.match(/None/i)
+          set_prescribe_drugs_yes = false
+          break
+        end
+      end
+    end
+
+    (params[:observations] || []).each do |ob|
+      if ob[:concept_name] == 'Prescribe drugs'
+        if (set_prescribe_drugs_yes == true)
+          ob['value_coded_or_text'] = 'Yes'
+        else
+          ob['value_coded_or_text'] = 'NO'
+        end
+        
+        break
+      end
+    end
+
+    ##########3 hack ends here ######
+    encounter_type = EncounterType.find_by_name('HIV CLINIC CONSULTATION')
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+    encounter = Encounter.create(:patient_id => patient_id,
+      :encounter_datetime => encounter_datetime, 
+      :encounter_type => encounter_type.id)
+
+    create_obs(encounter ,  params)
+    return next_task(encounter.patient)
+  end
+
+  def create_appointment_date_encounter(params, session)
+    #raise session.inspect
+    encounter_type = EncounterType.find_by_name('APPOINTMENT')
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+    encounter = Encounter.find(:last, :conditions => ["patient_id = ? AND encounter_type = ?
+      AND encounter_datetime BETWEEN ? AND ?", patient_id, encounter_type.id,
+      encounter_datetime.to_time.strftime('%Y-%m-%d 00:00:00'),
+      encounter_datetime.to_time.strftime('%Y-%m-%d 23:59:59')])
+
+    (encounter.observations || []).each do |o|
+      o.void("Setting a new appointment date")
+    end unless encounter.blank?
+
+    encounter = Encounter.create(:patient_id => patient_id,
+      :encounter_datetime => encounter_datetime, 
+      :encounter_type => encounter_type.id) if encounter.blank?
+
+    (params[:observations] || []).each do |ob|
+      next unless ob['concept_name'].squish.match(/Appointment date/i)
+      
+      obs_datetime = encounter.encounter_datetime
+      time = Time.now.strftime('%H:%M:%S')
+      Observation.create(
+        :person_id => patient_id, :encounter_id => encounter.id,
+        :obs_datetime => obs_datetime, 
+        :concept_id => ConceptName.find_by_name('Appointment date').concept_id,
+        :value_datetime => ob['value_datetime'].to_date.strftime("%Y-%m-%d #{time}")
+      )
+    end
+
+    return next_task(encounter.patient)
+  end
+
+  def create_hiv_staging_encounter(params, session)
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+    observations = []
+    (params[:observations] || []).each do |observation|
+      if observation['concept_name'].upcase == 'CD4 COUNT' or observation['concept_name'].upcase == "LYMPHOCYTE COUNT"
+        observation['value_modifier'] = observation['value_numeric'].match(/=|>|</i)[0] rescue nil
+        observation['value_numeric'] = observation['value_numeric'].match(/[0-9](.*)/i)[0] rescue nil
+      end
+
+      if observation['concept_name'].upcase == 'CD4 COUNT LOCATION' or observation['concept_name'].upcase == 'LYMPHOCYTE COUNT LOCATION'
+        location = Location.find(observation['value_coded_or_text']) rescue nil
+
+        unless location.blank?
+          observation['value_numeric'] = location.id
+          observation['value_text'] = location.name
+        else
+          observation['value_text'] =  observation['value_coded_or_text']
+        end
+        observation['value_coded_or_text'] = ""
+      end
+
+      if observation['concept_name'].upcase == 'CD4 PERCENT LOCATION'
+        location = Location.find(observation['value_coded_or_text']) rescue nil
+
+        unless location.blank?
+          observation['value_numeric'] = location.id
+          observation['value_text'] = location.name
+        else
+          observation['value_text'] =  observation['value_coded_or_text']
+        end
+        observation['value_coded_or_text'] = ""
+      end
+
+      observations << observation
+    end
+    
+    params[:observations] = observations
+    encounter_type = EncounterType.find_by_name('HIV STAGING')
+    patient_id = params[:encounter]["patient_id"].to_i
+    encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    encounter = Encounter.create(
+      :encounter_type => encounter_type.id,
+      :patient_id => patient_id,
+      :encounter_datetime => encounter_datetime
+    )
+    create_obs(encounter ,  params)
+    return next_task(encounter.patient)
+  end
+
+  def create_art_adherence_encounter(params, session)
+
+
+    #A hack to set concept: Prescribe drugs to No/Yes if Medication orders include any of: ARVs/CPT/IPT
+    set_prescribe_drugs_yes = true
+    (params[:observations] || []).each do |ob|
+      if ob[:concept_name] == 'Medication orders'
+        ipt_index = ob['value_coded_or_text_multiple'].find_index('IPT') rescue nil
+        ob['value_coded_or_text_multiple'][ipt_index] = 'Isoniazid' unless ipt_index.blank?
+        options_selected = ob['value_coded_or_text_multiple'].join(',') unless ob['value_coded_or_text_multiple'].blank?
+        if options_selected.blank?
+          params[:observations] -= [ob]
+          next
+        end
+
+        if options_selected.match(/None/i)
+          set_prescribe_drugs_yes = false
+          break
+        end
+      end
+    end
+
+    (params[:observations] || []).each do |ob|
+      if ob[:concept_name] == 'Prescribe drugs'
+        if (set_prescribe_drugs_yes == true)
+          ob['value_coded_or_text'] = 'Yes'
+        else
+          ob['value_coded_or_text'] = 'NO'
+        end
+        
+        break
+      end
+    end
+    ##########3 hack ends here ######
+
+
+    previous_hiv_clinic_consultation_observations = []
+    art_adherence_observations = []
+    (params[:observations] || []).each do |observation|
+      if observation['concept_name'].upcase == 'REFER TO ART CLINICIAN'
+        previous_hiv_clinic_consultation_observations << observation
+      elsif observation['concept_name'].upcase == 'PRESCRIBE DRUGS'
+        previous_hiv_clinic_consultation_observations << observation
+      elsif observation['concept_name'].upcase == 'ALLERGIC TO SULPHUR'
+        previous_hiv_clinic_consultation_observations << observation
+      else
+        art_adherence_observations << observation
+      end
+    end
+
+    params[:observations] = art_adherence_observations
+
+    encounter_type = EncounterType.find_by_name('ART ADHERENCE')
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+    encounter = Encounter.create(
+      :encounter_type => encounter_type.id,
+      :patient_id => patient_id,
+      :encounter_datetime => encounter_datetime
+    )
+
+
+    observations = []
+    (params[:observations] || []).each do |observation|
+      if observation['concept_name'].upcase == 'WHAT WAS THE PATIENTS ADHERENCE FOR THIS DRUG ORDER'
+        #observation['value_numeric'] = observation['value_text'] rescue nil
+        observation['value_coded_or_text'] =  observation['value_coded_or_text'] + "%"
+        observation['value_text'] =  observation['value_coded_or_text'] 
+      end
+
+      if observation['concept_name'].upcase == 'MISSED HIV DRUG CONSTRUCT'
+        observation['value_numeric'] = observation['value_coded_or_text'] rescue nil
+      end
+      observations << observation
+    end
+    
+    params[:observations] = observations
+
+    create_obs(encounter ,  params)
+    url = next_task(encounter.patient)
+
+    unless previous_hiv_clinic_consultation_observations.blank?
+      session_date = session[:datetime].to_date rescue Date.today
+      encounter_type = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
+      encounter = Encounter.find(:first,:order =>"encounter_datetime DESC,date_created DESC",
+          :conditions =>["encounter_type = ? AND patient_id = ? AND encounter_datetime >= ?
+          AND encounter_datetime <= ?",encounter_type.id, patient_id,
+            session_date.strftime("%Y-%m-%d 00:00:00"),session_date.strftime("%Y-%m-%d 23:59:59")])
+
+      unless encounter.blank?
+        params[:observations] = previous_hiv_clinic_consultation_observations
+        create_obs(encounter , params)
+      end
+    end
+
+    return url
+  end
+
+  def create_tb_reception_encounter(params, session)
+    encounter_type = EncounterType.find_by_name('TB RECEPTION')
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+    encounter = Encounter.create(:patient_id => patient_id,
+      :encounter_datetime => encounter_datetime, 
+      :encounter_type => encounter_type.id)
+
+    create_obs(encounter, params)
+ 
+    #when the patient has been assigned ARV number
+    unless params[:identifiers].blank?
+      hcc_identifier_type = PatientIdentifierType.find_by_name('HCC Number')
+      arv_identifier_type = PatientIdentifierType.find_by_name('ARV Number')
+
+      (params[:identifiers] || []).each do |i|
+        identifier_type = i["identifier_type"].to_i
+        number = i["identifier"]
+        if identifier_type == arv_identifier_type.id
+          identifier = "#{PatientIdentifier.site_prefix}-ARV-#{number}"
+        elsif identifier_type == hcc_identifier_type.id
+          identifier = "#{PatientIdentifier.site_prefix}-HCC-#{number}"
+        end
+
+        PatientIdentifier.create(:patient_id => patient_id,
+          :identifier_type => identifier_type, :identifier => identifier) 
+      end
+    end
+
+    return next_task(encounter.patient)
+  end
+
+  def create_tb_encounter(params, session)
+    encounter_type = EncounterType.find_by_name(params[:encounter]['encounter_type_name'])
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') rescue nil
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S')
+    end
+
+    encounter = Encounter.create(:patient_id => patient_id,
+      :encounter_datetime => encounter_datetime, 
+      :encounter_type => encounter_type.id)
+
+
+    create_obs(encounter, params)
+  end
+
 end

@@ -79,7 +79,8 @@ class PatientMastercardController < ApplicationController
 
         if not height_obs.blank? and not weight.blank?
           begin
-            bmi = (weight.to_f/(height_obs.value_numeric.to_f*height_obs.value_numeric.to_f)*10000).round(1)
+            previous_height = height_obs.value_numeric.blank? ? height_obs.value_text : height_obs.value_numeric
+            bmi = (weight.to_f/(previous_height.to_f*previous_height.to_f)*10000).round(1)
           rescue
             bmi = nil
           end
@@ -98,7 +99,7 @@ class PatientMastercardController < ApplicationController
       :pills_gave      => gave,
       :cpt             => cpt,
       :outcome         => get_outcome(patient_id, visit_date),
-      :visit_date      => visit_date
+      :visit_date      => visit_date.to_date.strftime('%Y-%m-%d')
     }.to_json 
   end
 
@@ -147,11 +148,17 @@ class PatientMastercardController < ApplicationController
       (adherences || []).each do |adherence|
         drug_order = Order.find(adherence.order_id).drug_order rescue []
         next if drug_order.blank?
+        
+        adherence_rate = adherence.value_text
+        if not adherence_rate.blank? and not adherence_rate.match(/\%/)
+          adherence_rate = "#{adherence.value_text}%"
+        end
+          
         name = drug_order.drug.name rescue ''
         art_adherences << {
           :name       =>  (drug_order.drug.name rescue nil),
           :short_name =>  (drug_order.drug.concept.shortname rescue nil),
-          :adherence   =>  "#{adherence.value_text}%"
+          :adherence   =>  adherence_rate
         }
       end
     end

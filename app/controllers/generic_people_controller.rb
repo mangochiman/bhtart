@@ -875,7 +875,6 @@ EOF
 
       @archived_patient = PatientService.set_patient_filing_number(person.patient)
 
-      #if not @archived_patient.patient_id == person.person_id
       if @archived_patient.blank?
         redirect_to "/patients/assign_filing_number_manually?patient_id=#{person.id}" and return
       else
@@ -888,10 +887,12 @@ EOF
         print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
       end
 =end
-      print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient))
+      print_and_redirect("/patients/filing_number_and_national_id?patient_id=#{person.id}", next_task(person.patient)) && return
     else
-      print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient))
+      print_and_redirect("/patients/national_id_label?patient_id=#{person.id}", next_task(person.patient)) && return
     end
+
+    redirect_to "/patients/show/#{person.id}"
   end
 
   def assign_filing_number_manually
@@ -1720,6 +1721,7 @@ EOF
     tb_stats  << ConceptName.find_by_name('Pulmonary tuberculosis (current)').concept_id
     tb_stats  << ConceptName.find_by_name("Kaposis sarcoma").concept_id
 
+    who_stage_criteria = ConceptName.find_by_name('Who stages criteria present').concept_id
     hiv_staging_type = EncounterType.find_by_name('HIV staging').id
 
     hiv_staging = Encounter.find(:last,
@@ -1739,19 +1741,24 @@ EOF
       ks          = 'No'
 
       obs = Observation.find(:all,
-        :conditions =>["person_id = ? AND concept_id IN(?) AND encounter_id = ?",
-        patient_id, tb_stats, hiv_staging['encounter_id']])
+        :joins => "INNER JOIN concept_name n ON n.concept_id = obs.value_coded AND n.voided = 0",
+        :conditions =>["person_id = ? AND obs.concept_id = ? AND encounter_id = ?",
+        patient_id, who_stage_criteria, hiv_staging['encounter_id']],
+        :select => "n.name tb_stat, obs_datetime, value_text answer")
     
       (obs || []).each do |ob|
-        name = ob.concept.fullname
+        name = ob['tb_stat']
+        answer = ob['answer']
+        next if answer.match(/No/i)
+
         if name.match(/last/i)
-          last_2_yrs = ob.answer_string
+          last_2_yrs = 'Yes'
         elsif name.match(/eptb/i)
-          eptb = ob.answer_string
+          eptb = 'Yes'
         elsif name.match(/current/i)
-          tb_current = ob.answer_string
+          tb_current = 'Yes'
         elsif name.match(/kapos/i)
-          ks = ob.answer_string
+          ks = 'Yes'
         end
       end  
     end
@@ -1778,14 +1785,22 @@ EOF
  
   def get_date_of_first_line
     patient_id = params[:patient_id]
-    reg_category = ConceptName.find_by_name('Regimen Category').concept_id
-    regimens = ['5A','6A','4P','4A','3P','3A','2A','2P','1A','1P','0A','0P']
 
-    latest_date = Observation.find(:first,
-      :conditions =>["person_id = ? AND concept_id = ? AND value_text IN(?)",
-      patient_id, reg_category, regimens], :select =>"MIN(obs_datetime) AS date_of_first_line")
+    begin
+      concept_id = ConceptName.find_by_name('ART START DATE').concept_id
+      art_start_date = Observation.find(:last,
+        :conditions =>["person_id = ? AND concept_id = ?",
+        patient_id, concept_id], :select =>"value_datetime AS date_of_first_line")
+        first_line_date = art_start_date['date_of_first_line'].to_date.strftime('%d/%b/%Y')
+    rescue
+      reg_category = ConceptName.find_by_name('Regimen Category').concept_id
+      regimens = ['5A','6A','4P','4A','3P','3A','2A','2P','1A','1P','0A','0P']
 
-    first_line_date = latest_date['date_of_first_line'].to_date.strftime('%d/%b/%Y') rescue nil
+      latest_date = Observation.find(:first,
+        :conditions =>["person_id = ? AND concept_id = ? AND value_text IN(?)",
+        patient_id, reg_category, regimens], :select =>"MIN(obs_datetime) AS date_of_first_line")
+        first_line_date = latest_date['date_of_first_line'].to_date.strftime('%d/%b/%Y') rescue nil
+    end
 
     render :text => {:first_line_date => first_line_date}.to_json
   end
