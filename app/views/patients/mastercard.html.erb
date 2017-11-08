@@ -178,7 +178,14 @@
 
     <div class="drow data demographics">
       <div class="dcell separator-data" style="width: 48%;" id="first_line_date">&nbsp;</div>
-      <div class="dcell separator-data" id="reason_for_starting_art">&nbsp;</div>
+      <div class="dcell separator-data">
+        <%if User.current.admin?%>
+          <a href="/patients/change_reason_for_starting_art?patient_id=<%=params[:patient_id]%>">
+            <span id="reason_for_starting_art">&nbsp;</a></span>
+        <%else%>
+            <span id="reason_for_starting_art">&nbsp;</span>
+        <%end%>
+      </div>
     </div>
   </div>
 

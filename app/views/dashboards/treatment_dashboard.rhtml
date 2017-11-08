@@ -10,6 +10,7 @@
 
     <%= javascript_include_tag "Highcharts/js/jquery.min.js" %>
     <%= javascript_include_tag "Highcharts/js/highcharts" %>
+    <%= javascript_include_tag "notification_tracker" %>
 
     <script type="text/javascript" language="javascript" src="/touchscreentoolkit/lib/javascripts/standard.js" defer="true"></script>
     <meta http-equiv='content-type' content='text/html;charset=UTF-8' />
@@ -168,8 +169,10 @@
     <div style="padding-top: 65px;">
 
       <!--span id="continue-to-dashboard" onclick="continueToDashboard();" class="my_button">Continue to dashboard</span-->
-      <span id="dispense-more" onclick="hidePopup();" class="my_button">Dispense more</span>
-      <span id="adjust-visit-date" onclick="adjustAppointDate();" class="my_button">Review / Adjust next visit date</span>
+      <span id="dispense-more" onclick="recordNotification('Insufficient dispensation','Dispense more');hidePopup();" 
+        class="my_button">Dispense more</span>
+      <span id="adjust-visit-date" onclick="recordNotification('Insufficient dispensation','Review');adjustAppointDate();" 
+        class="my_button">Review / Adjust next visit date</span>
     </div>
   </div>
 </div>

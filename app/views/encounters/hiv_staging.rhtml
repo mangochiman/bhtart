@@ -1,4 +1,6 @@
 <%= javascript_include_tag "prototype" %>
+<%= javascript_include_tag "notification_tracker" %>
+
 <style>
   .tt_controls_clinical_notes_optional #space { display:inline; }
 
@@ -1063,8 +1065,10 @@ end %>
       </center>
     </span-->
     <div style="padding-top: 65px;">
-      <span id="yes" onclick="continueProcess();" class="my_button" style="position: relative;">Keep &quot;Asymptomatic&quot;</span>
-      <span id="no" onclick="hidePopup();" class="my_button" style=" position: relative; right: 20px;">Keep &quot;Other&quot; conditions</span>
+      <span id="yes" onclick="recordNotification('CONTRADICTING STAGE DEFINING CONDITIONS','Keep Asymptomatic');continueProcess();" 
+        class="my_button" style="position: relative;">Keep &quot;Asymptomatic&quot;</span>
+      <span id="no" onclick="recordNotification('CONTRADICTING STAGE DEFINING CONDITIONS','Keep other conditions');hidePopup();" 
+        class="my_button" style=" position: relative; right: 20px;">Keep &quot;Other&quot; conditions</span>
     </div>
   </div>
 </div>

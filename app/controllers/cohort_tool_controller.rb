@@ -1931,40 +1931,39 @@ EOF
 	end
 
 	def list_more_details
-		@patient_ids = params[:patient_ids]
+		patient_ids = params[:patient_ids]
     @report_name = params[:indicator].upcase.gsub('_', ' ')
 		@logo = CoreService.get_global_property_value('logo').to_s
-		@site_code = ActiveRecord::Base.connection.select_one <<EOF
-		select * from global_property where property = 'site_prefix';
+
+    patient_ids = '0' if patient_ids.blank?
+		identifier_type_arv_number = PatientIdentifierType.find_by_name('ARV Number').id
+
+    records = ActiveRecord::Base.connection.select_all <<EOF
+      SELECT e.patient_id, n.given_name,n.middle_name, n.family_name, 
+        i.identifier arv_number, e.*, o.cum_outcome,
+        patient_reason_for_starting_art_text(e.patient_id) reason_for_art
+      FROM temp_earliest_start_date e
+      RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
+      RIGHT JOIN patient_identifier i ON i.patient_id = e.patient_id 
+      AND i.identifier_type = #{identifier_type_arv_number} AND i.voided = 0
+      RIGHT JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
+      WHERE e.patient_id IN(#{patient_ids})
+      GROUP BY e.patient_id ORDER BY n.person_id DESC;
 EOF
+
+
     @people = {}
-    (@patient_ids.split(',') || []).each do |patient_id|
-      names =  PersonName.find(:first,
-        :conditions =>["person_id = ?", patient_id.to_i],
-        :order => "date_created DESC")
 
-      patient = Patient.find(patient_id.to_i)
-      temp_earliest = ActiveRecord::Base.connection.select_one <<EOF
-        Select e.*, o.cum_outcome From temp_earliest_start_date e
-        RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-        Where e.patient_id = #{patient_id.to_i};
-EOF
-
-      fuchia_id = PatientService.get_patient_identifier(patient, 'FUCHIA ID') rescue ''
-
-			arv_number = PatientService.get_patient_identifier(patient, 'ARV Number')
-		  arv_number = "" if arv_number.blank?
-
-			@people[patient_id.to_i] = {
-        :arv_number => arv_number,
-        :fuchia_id => fuchia_id,
-        :name => "#{names.given_name rescue 'N/A'} #{names.family_name rescue 'N/A'}",
-        :gender => (temp_earliest['gender'] rescue 'Unknown'),
-        :birthdate => temp_earliest['birthdate'],
-        :date_enrolled => temp_earliest['date_enrolled'],
-        :earliest_start_date => temp_earliest['earliest_start_date'],
-        :reason_for_starting => PatientService.reason_for_art_eligibility(patient),
-        :outcome => temp_earliest['cum_outcome']
+    (records || []).each do |r|
+			@people[r['patient_id'].to_i] = {
+        :arv_number => r['arv_number'],
+        :name => "#{r['given_name']} #{r['middle_name']} #{r['family_name']}".squish,
+        :gender => (r['gender'] rescue 'Unknown'),
+        :birthdate => r['birthdate'],
+        :date_enrolled => r['date_enrolled'],
+        :earliest_start_date => r['earliest_start_date'],
+        :reason_for_starting => r['reason_for_art'],
+        :outcome => r['cum_outcome']
       }
     end
 

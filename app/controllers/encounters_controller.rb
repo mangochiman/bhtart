@@ -3,7 +3,7 @@ class EncountersController < GenericEncountersController
 		#raise params.to_yaml
 		session_date = session[:datetime].to_date rescue Date.today
 		@patient = Patient.find(params[:patient_id] || session[:patient_id] || params[:id])
-		@patient_bean = PatientService.get_patient(@patient.person)
+		@patient_bean = PatientService.get_patient(@patient.person, session_date)
     
     if (params[:encounter_type].upcase rescue '') == 'APPOINTMENT'
 			@todays_date = session_date
@@ -13,7 +13,26 @@ class EncountersController < GenericEncountersController
 			@suggested_appointment_date = suggest_appointment_date(@max_date)
 			logger.info('========================== Completed suggesting appointment date =================================== @ '  + Time.now.to_s)
 
-      @appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i rescue 100
+      begin
+        @appointment_limit = CoreService.get_global_property_value('clinic.appointment.limit').to_i 
+        if @appointment_limit.blank? || @appointment_limit == 0
+          @appointment_limit = 100
+        end
+      rescue 
+        @appointment_limit = 100
+      end
+
+      clinic_holidays = CoreService.get_global_property_value('clinic.holidays')  
+      @set_clinic_holidays = []
+
+      (clinic_holidays.split(',') || []).map do |day|
+        @set_clinic_holidays << day.to_date
+      end
+
+      if @set_clinic_holidays.blank?
+        @set_clinic_holidays = ["#{Date.today.year}-01-01", "#{Date.today.year}-12-25","#{Date.today.year}-03-03"]
+      end
+
       render :action => params[:encounter_type] and return
 		end
 
@@ -2358,7 +2377,53 @@ EOF
     
     render :text => true and return
   end
-  
+
+  def create_encounter_ajax
+    session_date = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01').to_time rescue Time.now
+    encounter_type = EncounterType.find_by_name(params[:encounter_type])
+
+    encounter = Encounter.create(:patient_id => params[:patient_id],
+      :encounter_type => encounter_type.id,
+      :encounter_datetime => session_date.strftime('%Y-%m-%d %H:%M:%S'))
+
+    render :text => {:encounter_id => encounter.id, 
+      :datetime => encounter.encounter_datetime}.to_json and return
+  end
+
+  def create_obs_ajax
+    obs = JSON.parse(params[:obs][0])
+    encounter = Encounter.find(params[:encounter_id])
+
+    (obs || []).each do |ob|
+      observation = Observation.create(:encounter_id => encounter.id,
+        :obs_datetime => encounter.encounter_datetime,
+        :person_id => encounter.patient_id,
+        :concept_id =>  ConceptName.find_by_name(ob['concept_name']).concept_id)
+
+      unless ob['value_coded_text'].blank?
+        concept_id = ConceptName.find_by_name(ob['value_coded_text']).concept_id
+        observation.update_attributes(:value_coded => concept_id)
+      end
+
+      unless ob['obs_group_text'].blank?
+        obs_group = Observation.create(:encounter_id => encounter.id,
+          :obs_datetime => encounter.encounter_datetime,
+          :person_id => encounter.patient_id,
+          :concept_id =>  ConceptName.find_by_name(ob['value_coded_text']).concept_id,
+          :value_coded => ConceptName.find_by_name(ob['obs_group_text']).concept_id,
+          :obs_group_id => observation.id)
+
+      end
+
+    end
+
+    render :text => (encounter).to_json and return
+  end
+
+  def get_next_task
+    render :text => next_task(Patient.find(params[:patient_id])).to_json and return
+  end
+
   protected
 
   def number_of_booked_patients(date)

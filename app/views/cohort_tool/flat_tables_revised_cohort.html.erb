@@ -2982,7 +2982,8 @@
             <% end %>
                 break;
             case 'unknown_side_effects':
-            <% (@cohort.unknown_side_effects || []).each do |patient_id| %>
+            <% unknown_side_effects = [0] if @cohort.unknown_side_effects == 0 %>
+            <% (unknown_side_effects || []).each do |patient_id| %>
                 patient_ids.push(<%= patient_id %>);
             <% end %>
                 break;

@@ -68,7 +68,6 @@ class ClinicController < GenericClinicController
 		["Set Clinic Days","/properties/clinic_days"],
 		["View Clinic Holidays","/properties/clinic_holidays"],
 		["Ask Pills remaining at home","/properties/creation?value=ask_pills_remaining_at_home"],
-		["Set Clinic Holidays","/properties/set_clinic_holidays"],
 		["Set Site Code", "/properties/site_code"],
 		["Manage Roles", "/properties/set_role_privileges"],
 		["Staging Format", "/properties/staging_properties"],

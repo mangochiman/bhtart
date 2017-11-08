@@ -350,7 +350,7 @@ class GenericDrugController < ApplicationController
     relocation_date = params[:relocation_date].to_date
     relocation_facility = params[:relocation_facility]
     params[:obs].each { |ob_variations|
-      drug_id = Drug.find_by_name(ob_variations[0]).id rescue (raise "Missing drug #{ob_variations[0]}".to_s)
+      drug = Drug.find_by_name(ob_variations[0]) rescue (raise "Missing drug #{ob_variations[0]}".to_s)
 
       ob_variations[1].each { |ob|
         reason = ob[:reason]
@@ -368,7 +368,7 @@ class GenericDrugController < ApplicationController
 
         number_of_pills = (number_of_tins * number_of_pills_per_tin)
         next if number_of_pills == 0
-        Pharmacy.alter(drug_id, number_of_pills, relocation_date, 'Relocation', authorisation_code, relocation_facility)
+        Pharmacy.alter(drug, number_of_pills, relocation_date, 'Relocation', authorisation_code, relocation_facility)
       }
     }
     redirect_to "/clinic"

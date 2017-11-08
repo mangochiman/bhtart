@@ -585,4 +585,59 @@ EOF
     render :text => @vl_result_hash.to_json and return
   end
 
+  def change_reason_for_starting_art
+    if request.post?
+      encounter_type = EncounterType.find_by_name('HIV STAGING')
+      encounter = Encounter.find(:last, 
+        :conditions =>["patient_id = ? AND encounter_type = ?",
+        params[:patient_id], encounter_type.id])
+
+      if encounter.blank?
+        redirect_to "/patients/mastercard?patient_id=#{params[:patient_id]}" and return
+      else
+        reason_for_starting = ConceptName.find_by_name('Reason for ART eligibility').concept_id
+        (encounter.observations || []).each do |ob|
+          next unless ob.concept_id == reason_for_starting
+          ob.void('Given another reason for starting')
+        end
+      
+        value_coded = params[:observations][0]['value_coded_or_text']
+
+        Observation.create(:concept_id => reason_for_starting,
+          :person_id => encounter.patient_id, :encounter_id => encounter.id,
+          :obs_datetime => encounter.encounter_datetime, :value_coded => value_coded)
+        
+        redirect_to "/patients/mastercard?patient_id=#{encounter.patient_id}" and return
+      end
+    else
+      @patient = Patient.find(params[:patient_id])
+      @reasons_for_starting_art = []
+      
+      reasons_for_starting_art = ['HIV DNA polymerase chain reaction',
+        'Unknown','None','HIV infected','Patient pregnant',
+        'Asymptomatic', 'Currently breastfeeding child',
+        'WHO stage II adult','WHO stage III adult',
+        'WHO stage IV adult', 'WHO stage I peds',
+        'WHO stage II peds','WHO stage III peds',
+        'WHO stage IV peds', 'Lymphocyte count below threshold with who stage 2',
+        'WHO stage I adult','Presumed severe HIV criteria in infants',
+        'CD4 count <= 350', 'CD4 count <= 750',
+        'CD4 count less than or equal to 250',
+        'Presumed Severe HIV',
+        'Lymphocyte count below threshold with who stage 1',
+        'CD4 count less than or equal to 500']
+
+      concepts = ConceptName.find(:all, 
+        :conditions => ["name IN(?)", reasons_for_starting_art],
+        :group => "name")
+
+      (concepts).each do |c|
+        @reasons_for_starting_art << [c.name.gsub('<=',' less than or equal to '), c.concept_id]
+      end
+
+      @reasons_for_starting_art = @reasons_for_starting_art.sort_by{|x,y|x}
+
+    end
+  end
+
 end

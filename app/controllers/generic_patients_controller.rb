@@ -311,7 +311,7 @@ The following block of code should be replaced by a more cleaner function
 
     if use_filing_number and PatientService.get_patient_identifier(patient, 'Filing Number').blank?
       if PatientService.get_patient_identifier(patient, 'Archived filing number').blank?
-        @links << ["Filing Number (Create)","/people/redirections?person_id=#{patient.id}"]
+        @links << ["Filing Number (Create)",""]
       end
     end
 
@@ -610,9 +610,14 @@ EOF
   end
 
   def specific_patient_visit_date_label
-    session_date = params[:session_date].to_date rescue Date.today
-    print_string = patient_visit_label(@patient, session_date) rescue (raise "Unable to find patient (#{params[:patient_id]}) or generate a visit label for that patient")
-    send_data(print_string,:type=>"application/label; charset=utf-8", :stream=> false, :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl", :disposition => "inline")
+    session_date = params[:session_date].to_date 
+    print_string = patient_visit_label(Patient.find(params[:patient_id]), session_date) 
+
+    send_data(print_string, 
+      :type =>"application/label; charset=utf-8", 
+      :stream=> false, 
+      :filename=>"#{params[:patient_id]}#{rand(10000)}.lbl", 
+      :disposition => "inline")
   end
 
   def mastercard_record_label
@@ -1143,17 +1148,17 @@ EOF
   def number_of_booked_patients
     params[:date] = Date.today if params[:date].blank?
     date = params[:date].to_date
-    encounter_type = EncounterType.find_by_name('APPOINTMENT')
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
 
     start_date = date.strftime('%Y-%m-%d 00:00:00')
     end_date = date.strftime('%Y-%m-%d 23:59:59')
 
-    appointments = Observation.find_by_sql("SELECT count(*) AS count FROM obs
-      INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
-      AND encounter_type = #{encounter_type.id} AND value_datetime >= '#{start_date}'
-      AND value_datetime <= '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime")
-    count = appointments.first.count unless appointments.blank?
+    appointments = Observation.find(:all,
+      :conditions =>["obs.concept_id = ? AND value_datetime >= ? AND value_datetime <=?",
+        concept_id, start_date, end_date], 
+    :order => "obs.obs_datetime DESC")
+
+    count = appointments.length unless appointments.blank?
     count = '0' if count.blank?
 
     render :text => (count.to_i >= 0 ? {params[:date] => count}.to_json : 0)
@@ -2033,6 +2038,15 @@ EOF
     label.draw_text("Filing area #{file_type}",75, 150, 0, 2, 2, 2, false)
     label.draw_text("Version number: #{version_number}",75, 200, 0, 2, 2, 2, false)
     label.print(num)
+  end
+
+  def create_dormant_filing_number
+    filing_number = PatientIdentifier.next_filing_number('Archived filing number')
+    PatientIdentifier.create(:patient_id => params[:id],
+      :identifier => filing_number, 
+      :identifier_type => PatientIdentifierType.find_by_name('Archived filing number').id)
+
+    redirect_to :action => 'print_archive_filing_number', :id => params[:id] and return 
   end
 
   def patient_visit_label(patient, date = Date.today)
