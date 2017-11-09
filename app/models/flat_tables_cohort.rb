@@ -315,6 +315,7 @@ SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" L
 SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
 
 
+
 IF set_patient_state = 1 THEN
   SET set_outcome = 'Pre-ART (Continue)';
 END IF;
@@ -1771,18 +1772,27 @@ EOF
   def self.pregnant_females_all_ages(start_date, end_date)
     registered = [] ; patient_id_plus_date_enrolled = []
 
+    all_females_patients =  ActiveRecord::Base.connection.select_all <<EOF
+               SELECT * FROM flat_cohort_table t
+                WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+                AND (gender = 'F' OR gender = 'Female')
+                AND date_enrolled <> '0000-00-00'
+                GROUP BY patient_id;
+EOF
+    female_patients = []
+    (all_females_patients || []).each do |patient|
+      female_patients << patient['patient_id'].to_i
+    end
+
     #(patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
     registered = ActiveRecord::Base.connection.select_all <<EOF
-                    SELECT ft2.patient_id, fct.date_enrolled, ft2.visit_date, ft2.patient_pregnant
-                    FROM flat_cohort_table fct
-                      INNER JOIN temp_patient_pregnant ft2 ON ft2.patient_id = fct.patient_id
-                    WHERE ft2.patient_pregnant = 'Yes' AND fct.gender = 'F'
-                    AND fct.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-                    AND ft2.visit_date = (SELECT min(f2.visit_date) FROM flat_table2 f2
-                                WHERE  f2.patient_id = ft2.patient_id
-                                AND f2.patient_pregnant IS NOT NULL
-                                AND f2.visit_date BETWEEN '#{start_date}' AND '#{end_date}')
-                    GROUP BY fct.patient_id;
+              SELECT * FROM temp_patient_pregnant t
+              WHERE t.patient_id IN (#{female_patients.join(',')})
+              AND t.visit_date BETWEEN '#{start_date}' AND '#{end_date}'
+              AND t.patient_pregnant = 'Yes'
+              AND t.visit_date = (SELECT max(p.visit_date) FROM temp_patient_pregnant p
+                                  WHERE p.patient_id = t.patient_id
+                                  AND p.visit_date  BETWEEN '#{start_date}' AND '#{end_date}');
 EOF
 
     pregnant_at_initiation = ActiveRecord::Base.connection.select_all <<EOF
