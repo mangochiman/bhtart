@@ -113,6 +113,22 @@
     border-bottom: 1px solid black;
     border-top: 1px solid black;
   }
+  #msg-div{
+    position: absolute;
+    right: 2%;
+    top: 3%;
+    font-weight: bold;
+    background: lightgreen;
+    z-index: 5000;
+    width: 300px;
+    padding: 8px;
+    font-size: 1.3em;
+    height: 5%;
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 3px;
+    color: darkslategray;
+  }
 
 </style>
 
@@ -427,18 +443,47 @@ function printNextTask() {
         results_available = vl_data["results_available"];
 
         give_result_button = document.getElementById("give_result_button");
-        if (results_available == "false"){
+        console.log(results_available);
+        if (results_available === "false"){
           if (give_result_button){
             //give_result_button.style.backgroundColor = "#FEE0C6";
             //give_result_button.setAttribute("onclick", "");
             //give_result_button.style.color = 'gray';
           }
+        }else {
+          function hideMsg(div){
+            setTimeout(function(){fade(div, 1);}, 2500);
+          }
+
+          function fade(div, opacity){
+            document.getElementById(div).style.opacity = opacity;
+            if (opacity >= 0){
+              opacity = opacity - 0.01;
+              setTimeout(function(){fade(div, opacity)}, 20)
+            }
+          }
+
+          jQuery( document ).ready(function() {
+            setTimeout(function() {
+              var msgDiv = document.createElement("div");
+              msgDiv.id = "msg-div";
+              msgDiv.innerHTML = "<span>Viral Load Results Available</span>";
+              document.getElementById("content").appendChild(msgDiv);
+
+//              setTimeout(function () {
+//                hideMsg("msg-div");
+//              }, 500);
+            }, 2500)
+          });
         }
         document.getElementById('vl_result').innerHTML = vl_result;
         document.getElementById('vl_date_of_sample').innerHTML = vl_date;
         document.getElementById('vl_date_given').innerHTML = vl_date_given;
         document.getElementById('update_span').style.display = "inline";
         document.getElementById('lab_trail_span').style.display = "inline"
+      },
+      error : function(e){
+        console.log(e);
       }
     });
   }
@@ -589,6 +634,9 @@ function printNextTask() {
           result_given = vl_data[i]["result_given"];
           date_result_given = vl_data[i]["date_result_given"];
           switched_to_second_line = vl_data[i]["switched_to_second_line"];
+          if (date_result_given == null || date_result_given == ""){
+            date_result_given = "-------";
+          }
 
           tr = '<tr style="line-height: 3em;" class="vl_tbody">';
           tr += '<td style="border-left: 1px solid black;"><span><center>' + date_of_sample + '</center></span></td>';
@@ -600,6 +648,9 @@ function printNextTask() {
           vl_tbody.innerHTML += tr;
         }
         
+      },
+      error: function(e){
+        console.log(e);
       }
 
     });

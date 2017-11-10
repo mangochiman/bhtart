@@ -492,27 +492,97 @@ EOF
   end
 
   def get_patient_vl_trail
-    vl_result_hash = Patient.vl_result_hash(Patient.find(params[:patient_id]))
-    vl_data = {}
+    patient = Patient.find(params[:patient_id])
 
-    vl_result_hash.each do |accession_num, values|
-      vl_data[accession_num] = {}
-      range = values["range"]
-      date_of_sample = values["date_of_sample"].strftime("%d-%b-%Y") rescue values["date_of_sample"]
-      result = range.to_s + " " + values["result"]
-      result_given = values["date_result_given"].strftime("%d-%b-%Y") rescue values["date_result_given"]
-      date_result_given = values["date_result_given"]
-      switched_to_second_line = values["second_line_switch"]
+    if national_lims_activated
+      settings = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]
+      national_id_type = PatientIdentifierType.find_by_name("National id").id
+      npid = patient.patient_identifiers.find_by_identifier_type(national_id_type).identifier
+      url = settings['lims_national_dashboard_ip'] + "/api/vl_result_by_npid?npid=#{npid}&test_status=verified__reviewed"
+      trail_url = settings['lims_national_dashboard_ip'] + "/api/patient_lab_trail?npid=#{npid}"
 
-      vl_data[accession_num]["date_of_sample"] = date_of_sample
-      vl_data[accession_num]["result"] = result
-      vl_data[accession_num]["result_given"] = result_given
-      vl_data[accession_num]["date_result_given"] = date_result_given
-      vl_data[accession_num]["switched_to_second_line"] = switched_to_second_line
+      data = JSON.parse(RestClient.get(url)) rescue []
+      @latest_date = data.last[0].to_date rescue nil
+      @latest_result = data.last[1]["Viral Load"] rescue nil
+
+      @latest_result = "Rejected" if (data.last[1]["Viral Load"] rescue nil) == "Rejected"
+
+      @modifier = '' #data.last[1]["Viral Load"].strip.scan(/\<\=|\=\>|\=|\<|\>/).first rescue
+
+      @date_vl_result_given = nil
+      if ((data.last[2].downcase == "reviewed") rescue false)
+        @date_vl_result_given = Observation.find(:last, :conditions => ["
+          person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
+                                                                        Concept.find_by_name("Viral load").concept_id, 'Result given to patient', data.last[3].to_date]).value_datetime rescue nil
+
+        @date_vl_result_given = data.last[3].to_date if @date_vl_result_given.blank?
+      end
+
+      #[["97426", {"result_given"=>"no", "result"=>"253522", "date_result_given"=>"", "date_of_sample"=>Sun, 17 Aug 2014, "second_line_switch"=>"no"}]]
+      trail = JSON.parse(RestClient.get(trail_url)) rescue []
+
+      @vl_result_hash = {}
+      (trail || []).each do |order|
+        results = order['results']['Viral Load']
+        if (order['sample_status'] || order['status']).match(/rejected|voided/i)
+          @vl_result_hash[order['_id']] = {"result_given" =>  'no',
+                                             "result" => (order['sample_status'] || order['status']).humanize,
+                                             "date_of_sample" => order['date_time'].to_date,
+                                             "date_result_given" => "",
+                                             "switched_to_second_line" => '?'
+          }
+          next
+        end
+
+        next if results.blank?
+        timestamp = results.keys.sort.last rescue nil
+        next if (!(order['sample_status'] || order['status']).match(/rejected|voided/)) && (!['verified', 'reviewed'].include?(results[timestamp]['test_status'].downcase.strip) rescue true)
+        result = results[timestamp]['results']
+
+        date_given = nil
+        if ((results[timestamp]['test_status'].downcase.strip == "reviewed") rescue false)
+          date_given = Observation.find(:last, :conditions => ["
+                    person_id =? AND concept_id =? AND value_text REGEXP ? AND DATE(obs_datetime) = ?", patient.id,
+                                                               Concept.find_by_name("Viral load").concept_id, 'Result given to patient', timestamp.to_date]).value_datetime rescue nil
+          date_given = date_given.to_date.strftime('%d-%b-%Y');
+
+          date_given = timestamp.to_date.to_date if date_given.blank?
+        end
+
+        @vl_result_hash[order['_id']] = {"result_given" => (results[timestamp]['test_status'].downcase.strip == 'reviewed' ? 'yes' : 'no'),
+                                           "result" => (result["Viral Load"] rescue nil),
+                                           "date_of_sample" => order['date_time'].to_date.strftime('%d-%b-%Y'),
+                                           "date_result_given" => date_given,
+                                           "switched_to_second_line" => '?'
+        }
+
+      end
+
+    else
+
+      vl_result_hash = Patient.vl_result_hash(Patient.find(params[:patient_id]))
+      vl_data = {}
+
+      vl_result_hash.each do |accession_num, values|
+        vl_data[accession_num] = {}
+        range = values["range"]
+        date_of_sample = values["date_of_sample"].strftime("%d-%b-%Y") rescue values["date_of_sample"]
+        result = range.to_s + " " + values["result"]
+        result_given = values["date_result_given"].strftime("%d-%b-%Y") rescue values["date_result_given"]
+        date_result_given = values["date_result_given"]
+        switched_to_second_line = values["second_line_switch"]
+
+        vl_data[accession_num]["date_of_sample"] = date_of_sample
+        vl_data[accession_num]["result"] = result
+        vl_data[accession_num]["result_given"] = result_given
+        vl_data[accession_num]["date_result_given"] = date_result_given
+        vl_data[accession_num]["switched_to_second_line"] = switched_to_second_line
+
+      end
 
     end
-    
-    render :text => vl_data.to_json and return
+
+    render :text => @vl_result_hash.to_json and return
   end
 
   def change_reason_for_starting_art
