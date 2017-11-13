@@ -624,6 +624,7 @@ function setValidationRules() {
     var finishBtn = window.document.getElementById('btnNext');
     finishBtn.setAttribute('onmousedown','checkIfAllTaskDone();');
     finishBtn.setAttribute('onclick','');
+    document.getElementById("alert-cover").style.display = 'none';
     <%(User.current.activities || []).each do |activitie|
       if activitie.match(/Dispensations/i)%>
         user_activities.push("Dispensing");
@@ -636,17 +637,18 @@ function setValidationRules() {
   }
 }
 
-<%next_task_url = nil%>
+var next_task_url = null;
 
 function checkIfAllTaskDone() {
   var tabTask = window.document.getElementById('tab5');
   var nextTask = tab5.innerHTML.replace("NEXT TASK: ",'');
+
   for(var i = 0; i < user_activities.length; i++){
     re = new RegExp(nextTask, 'gi')
     if(user_activities[i].match(re)){
       document.getElementById('selected_ativity').innerHTML = user_activities[i];
       document.getElementById('next_task').innerHTML = nextTask;
-      <%next_task_url = next_task(@patient) %>;
+      next_task_url = "<%= next_task(@patient) %>";
       alertIncompleteVisit();
       return;
     }
@@ -665,9 +667,9 @@ function checkIfAllTaskDone() {
         if(user_activities[i].match(/appointment/gi)){
           document.getElementById('selected_ativity').innerHTML = user_activities[i];
           document.getElementById('next_task').innerHTML = user_activities[i];
-          <%next_task_url = "/encounters/new/appointment?action=show"
+          next_task_url = "/encounters/new/appointment?action=show"
           next_task_url += "&controller=encounter_types&encounter_type=";
-          next_task_url += "Appointment&id=show&patient_id=#{params[:id]}" %>
+          next_task_url += '<%= "Appointment&id=show&patient_id=#{params[:id]}" %>';
           alertIncompleteVisit();
           return;
         }
@@ -678,6 +680,7 @@ function checkIfAllTaskDone() {
 }
 
 function recallSetValidationRules() {
+  document.getElementById("alert-cover").style.display = 'inline';
   setTimeout("setValidationRules()", 1000);
 }
 
@@ -685,6 +688,12 @@ function alertIncompleteVisit() {
   document.getElementById("alert-cover").style.display = 'inline';
   document.getElementById("alert-popup-div2").style.display = 'inline';
 }
+
+function goToNextTask() {
+  alert(next_task_url)
+  window.location = next_task_url;
+}
+
 </script>
 
 <div id="alert-popup-div2">
@@ -700,7 +709,7 @@ function alertIncompleteVisit() {
 
   <div style="padding-top: 65px;">
     <span id="YesBtn" 
-      onclick="recordNotification('Incomplete visit','Go to next task');hideAlertPopup();window.location='<%= next_task_url%>'" 
+      onclick="recordNotification('Incomplete visit','Go to next task');hideAlertPopup();goToNextTask();" 
           class="popupBtn"
           style="position: relative;">Go to next task</span>
 
