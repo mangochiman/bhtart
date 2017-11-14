@@ -379,6 +379,16 @@ class GenericUserController < ApplicationController
       end
     end
 
+    selected_activities = params[:user]['activities']
+    selected_activities_string = []
+    (selected_activities || []).each do |selected_activity|
+      selected_activities_string << selected_activity
+    end
+
+    unless selected_activities_string.blank?
+      NotificationTrackerUserActivities.create_selected_activity(selected_activities_string)
+    end
+
     activities = params[:user][:activities]
     current_user.activities = params[:user][:activities]
     if params[:id]
