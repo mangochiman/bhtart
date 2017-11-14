@@ -247,7 +247,9 @@
 
     var vDate           = fetchedVisit['visit_date'];
 
-    vDate = "<a href=\"/patients/specific_patient_visit_date_label?session_date=" + vDate + "&patient_id=26\" class=\"rounded\" style=\"text-decoration:none;\"><span>" + vDate + "</span></a>"
+    add_str = vDate + "&patient_id=" + patientID + '"';  
+
+    vDate = "<a href=\"/patients/specific_patient_visit_date_label?session_date=" + add_str + " class=\"rounded\" style=\"text-decoration:none;\"><span>" + vDate + "</span></a>"
 
 
     var height          = fetchedVisit['height'];
