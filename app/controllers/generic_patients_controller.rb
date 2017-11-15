@@ -1154,7 +1154,7 @@ EOF
     end_date = date.strftime('%Y-%m-%d 23:59:59')
 
     appointments = Observation.find(:all,
-      :conditions =>["obs.concept_id = ? AND value_datetime >= ? AND value_datetime <=?",
+      :conditions =>["obs.concept_id = ? AND value_datetime BETWEEN ? AND ?",
         concept_id, start_date, end_date], 
     :order => "obs.obs_datetime DESC")
 
@@ -3680,18 +3680,18 @@ EOF
 
   def dashboard_display_number_of_booked_patients
     date = (params[:date].sub("Next appointment:","").sub(/\((.*)/,"")).to_date
-    encounter_type = EncounterType.find_by_name('APPOINTMENT')
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
 
     start_date = date.strftime('%Y-%m-%d 00:00:00')
     end_date = date.strftime('%Y-%m-%d 23:59:59')
 
-    appointments = Observation.find_by_sql("SELECT count(value_datetime) AS count FROM obs
-      INNER JOIN encounter e USING(encounter_id) WHERE concept_id = #{concept_id}
-      AND encounter_type = #{encounter_type.id} AND value_datetime >= '#{start_date}'
-      AND value_datetime <= '#{end_date}' AND obs.voided = 0 GROUP BY value_datetime")
-    count = appointments.first.count unless appointments.blank?
-    count = '0' if count.blank?
+    appointments = Observation.find(:all,
+      :conditions =>["obs.concept_id = ? AND value_datetime BETWEEN ? AND ?",
+        concept_id, start_date, end_date],
+    :order => "obs.obs_datetime DESC")
+
+    count = appointments.length unless appointments.blank?
+    count = '0' if count.blank? 
 
     render :text => "Next appointment: #{date.strftime('%d/%b/%Y')} (Booked: #{count})"
   end
