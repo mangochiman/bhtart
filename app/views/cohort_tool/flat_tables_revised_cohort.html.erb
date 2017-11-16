@@ -585,7 +585,7 @@
         break;
       case 'total_patients_with_side_effects':
       <% (@cohort.total_patients_with_side_effects || []).each do |data| %>
-        patient_ids.push(<%= data['person_id'] %>);
+        patient_ids.push(<%= data[:patient_id] %>);
       <% end %>
         break;
       case 'unknown_side_effects':
@@ -651,7 +651,7 @@
       default:
 
     }
-
+    console.log(patient_ids);
     document.getElementById('patient_ids').value = patient_ids.join(',');
     document.getElementById('indicator').value = indicator;
 
@@ -1416,7 +1416,7 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
+        <td class="number cum_patients_on_art">
             <a href="javascript:drillDown('cum_re_initiated_on_art');">
                 <%= @cohort.cum_re_initiated_on_art.count %>
             </a>
@@ -2182,8 +2182,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('died_within_the_1st_month_of_art_initiation');">
+        <td class="number dead_class">
+            <a href="javascript:drillDown('died_within_the_1st_month_of_art_initiation');" class="dead">
                 <%= @cohort.died_within_the_1st_month_of_art_initiation.count %>
             </a>
         </td>
@@ -2204,8 +2204,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('died_within_the_2nd_month_of_art_initiation');">
+        <td class="number dead_class">
+            <a href="javascript:drillDown('died_within_the_2nd_month_of_art_initiation');" class="dead">
                 <%= @cohort.died_within_the_2nd_month_of_art_initiation.count %>
             </a>
         </td>
@@ -2226,8 +2226,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('died_within_the_3rd_month_of_art_initiation');">
+        <td class="number dead_class">
+            <a href="javascript:drillDown('died_within_the_3rd_month_of_art_initiation');" class="dead">
                 <%= @cohort.died_within_the_3rd_month_of_art_initiation.count %>
             </a>
         </td>
@@ -2248,8 +2248,8 @@
         <td class="column-break">
             &nbsp;
         </td>
-        <td class="number">
-            <a href="javascript:drillDown('died_after_the_3rd_month_of_art_initiation');">
+        <td class="number dead_class">
+            <a href="javascript:drillDown('died_after_the_3rd_month_of_art_initiation');" class="dead">
                 <%= @cohort.died_after_the_3rd_month_of_art_initiation.count %>
             </a>
         </td>
@@ -2952,8 +2952,8 @@
         <td colspan="2" class="border-bottom-dotted border-null-top border-null-left">
             <b>Unk</b>nown (not circled)
         </td>
-        <td colspan="2" class="number">
-            <a href="javascript:drillDown('patients_with_unknown_adhrence');">
+        <td colspan="2" class="number adherence_class">
+            <a href="javascript:drillDown('patients_with_unknown_adhrence');" class="adherence">
                 <%= @cohort.patients_with_unknown_adhrence.count %>
             </a>
         </td>
@@ -3599,6 +3599,7 @@
     total_adherence += parseInt(adherence[i].innerHTML);
 
   }
+  console.log(total_adherence);
 
   if(total_adherence !== total_alive_and_on_art){
 
@@ -4145,13 +4146,14 @@ end
                 break;
             case 'total_patients_without_side_effects':
             <% (@cohort.total_patients_without_side_effects || []).each do |patient_id| %>
-                patient_ids.push(<%= patient_id %>);
+                patient_ids.push(<%= patient_id[:patient_id] %>);
             <% end %>
                 break;
             case 'total_patients_with_side_effects':
             <% (@cohort.total_patients_with_side_effects || []).each do |data| %>
-                patient_ids.push(<%= data['person_id'] %>);
+                patient_ids.push(<%= data[:patient_id] %>);
             <% end %>
+                console.log(patient_ids);
                 break;
             case 'unknown_side_effects':
             <% (@cohort.unknown_side_effects || []).each do |patient_id| %>
