@@ -1227,7 +1227,7 @@ EOF
 
 
     (malawi_art_side_effects || []).each do |row|
-      results << row
+      results << row['patient_id']
     end
     return results
   end
