@@ -1833,7 +1833,8 @@ EOF
 
   def get_patient_next_task
     patient_id = params[:patient_id]
-    task = main_next_task(Location.current_location, Patient.find(patient_id))
+    session_date = session[:datetime].to_date rescue Date.today
+    task = main_next_task(Location.current_location, Patient.find(patient_id), session_date)
     render :text => {
       :task => task.encounter_type, :url => task.url
     }.to_json
