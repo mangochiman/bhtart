@@ -1,6 +1,7 @@
 class CreatePatientDefaultedDates < ActiveRecord::Migration
   def self.up
-    create_table :patient_defaulted_dates do |t|
+    create_table :patient_defaulted_dates, :id => false do |t|
+      t.integer :id, :null => false
       t.integer :patient_id                              
       t.integer :order_id
       t.integer :drug_id
@@ -13,6 +14,7 @@ class CreatePatientDefaultedDates < ActiveRecord::Migration
 
       t.date :date_created, :default => Date.today
     end
+    execute "ALTER TABLE `patient_defaulted_dates` CHANGE COLUMN `id` `id` INT(11) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (`id`);"
   end
 
   def self.down
