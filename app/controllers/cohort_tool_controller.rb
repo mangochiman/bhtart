@@ -439,6 +439,7 @@ EOF
   end
 
   def reports
+  #raise 'am here'
     session[:list_of_patients] = nil
 
     if params[:report]
@@ -494,6 +495,12 @@ EOF
 				redirect_to :action       => "patients_with_multiple_start_reasons",
 					:quarter      => params[:report],
 					:report_type  => params[:report_type]
+        return
+
+      when "patients_with_multiple_obs_per_day"
+        redirect_to :action       => "patients_with_multiple_same_obs_per_day",
+          :quarter      => params[:report],
+          :report_type  => params[:report_type]
         return
 
 			when "dispensations_without_prescriptions"
@@ -1077,6 +1084,7 @@ EOF
 		render :layout => 'report'
   end
 
+
   def  patients_with_multiple_start_reasons
 		include_url_params_for_back_button
     @logo = CoreService.get_global_property_value('logo').to_s rescue nil
@@ -1087,6 +1095,17 @@ EOF
 		@report     = report_patients_with_multiple_start_reasons(start_date , end_date)
 
 		render :layout => 'report'
+  end
+
+  def  patients_with_multiple_same_obs_per_day
+    include_url_params_for_back_button
+    @logo = CoreService.get_global_property_value('logo').to_s rescue nil
+    @current_location = Location.current_health_center.name
+    date_range  = Report.generate_cohort_date_range(params[:quarter])
+    start_date  = date_range.first.beginning_of_day.strftime("%Y-%m-%d %H:%M:%S")
+    end_date    = date_range.last.end_of_day.strftime("%Y-%m-%d %H:%M:%S")
+    @report     = report_patients_with_multiple_same_obs_per_day(start_date , end_date)
+    render :layout => 'report'
   end
 
   def void_multiple_start_reasons
@@ -1909,6 +1928,7 @@ EOF
 		logger.info("cohort")
 		render :layout => false
 	end
+  
 
 	def revised_women_cohort_survival_analysis_to_print
 		@logo = CoreService.get_global_property_value('logo').to_s
@@ -2075,6 +2095,49 @@ EOF
 		end
 		render :layout => 'report'
 		return
+  end
+
+  def report_patients_with_multiple_same_obs_per_day(start_date, end_date)
+
+    patient_ids = []
+    Patient.find_by_sql("select p.patient_id AS patient_id, pe.gender AS gender, pe.birthdate, date_antiretrovirals_started(p.patient_id, min(s.start_date)) AS earliest_start_date,
+                                 cast(patient_date_enrolled(p.patient_id) as date) AS date_enrolled, person.death_date AS death_date,
+                                 (select timestampdiff(year, pe.birthdate, min(s.start_date))) AS age_at_initiation,
+                                 (select timestampdiff(day, pe.birthdate, min(s.start_date))) AS age_in_days
+                          from ((patient_program p
+                             left join person pe ON ((pe.person_id = p.patient_id))
+                             left join patient_state s ON ((p.patient_program_id = s.patient_program_id)))
+                             left join person ON ((person.person_id = p.patient_id)))
+                          where ((p.voided = 0) and (s.voided = 0) and (p.program_id = 1) and (s.state = 7))
+                          group by p.patient_id").each do |patient|
+      patient_ids << patient['patient_id'].to_i
+  end
+
+    patients = Encounter.find_by_sql("select person_id, DATE(obs_datetime) as obs_datetime, o.concept_id, e.encounter_type, count(*) as num 
+                      from obs o
+                        inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0
+                      where o.voided = 0 and e.encounter_type IN (51, 52, 53, 77, 119)
+                      and o.person_id IN (#{patient_ids.join(', ')})
+                      and o.concept_id NOT IN (7759,7755, 8259)
+                      group by person_id, DATE(obs_datetime), o.concept_id, e.encounter_type
+                      having num > 1")
+
+    patients_data  = []
+    patients.each do |patient_data_row|
+      person = Person.find(patient_data_row[:person_id].to_i)
+      patient_bean = PatientService.get_patient(person)
+      concept_name = ConceptName.find_by_concept_id(patient_data_row[:concept_id].to_i).name
+      patients_data <<{ :patient_id => person.id,
+        :arv_number => patient_bean.arv_number,
+        :name => patient_bean.name,
+        :national_id => patient_bean.national_id,
+        :age => patient_bean.age,
+        :birthdate => patient_bean.birth_date,
+        :obs_name => concept_name,
+        :date_created => patient_data_row[:obs_datetime]
+      }
+    end
+    patients_data
   end
 
   def report_patients_with_multiple_start_reasons(start_date , end_date)
