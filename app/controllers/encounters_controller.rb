@@ -22,17 +22,18 @@ class EncountersController < GenericEncountersController
         @appointment_limit = 100
       end
 
-      clinic_holidays = CoreService.get_global_property_value('clinic.holidays')  
+      clinic_holidays = CoreService.get_global_property_value('clinic.holidays')
       @set_clinic_holidays = []
 
-      (clinic_holidays.split(',') || []).map do |day|
-        @set_clinic_holidays << day.to_date
+      unless clinic_holidays.blank?
+        (clinic_holidays.split(',') || []).map do |day|
+          @set_clinic_holidays << day.to_date
+        end
       end
 
       if @set_clinic_holidays.blank?
         @set_clinic_holidays = ["#{Date.today.year}-01-01", "#{Date.today.year}-12-25","#{Date.today.year}-03-03"]
       end
-
       render :action => params[:encounter_type] and return
 		end
 
