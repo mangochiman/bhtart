@@ -169,8 +169,9 @@ EOF
 
       person_address = PersonAddress.find(:first, :conditions =>["person_id = ?", 
         d['patient_id'].to_i], :order => "date_created DESC, person_address_id DESC")
-      district = person_address.state_province
-      village = person_address.city_village
+      district = person_address.state_province rescue 'Unknown'
+      village = person_address.city_village rescue 'Unknown'
+      landmark = person_address.address1 rescue 'Unknown'
 
       patient_data[d['patient_id'].to_i] = {
         :arv_number => d['arv_number'],
@@ -185,7 +186,7 @@ EOF
         :first_name => first_name,
         :district => district,
         :village => village,
-        :landmark => person_address.address1,
+        :landmark => landmark,
         :latest_defaulted_date => defaulted_date,
         :last_visit_date => (last_visit_date.strftime('%d/%b/%Y') rescue nil)
       }
