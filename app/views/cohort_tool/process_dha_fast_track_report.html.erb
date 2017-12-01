@@ -1,0 +1,44 @@
+<style type="text/css">
+  #loader{
+    display: none;
+    position: absolute;
+    left: 40%;
+  }
+</style>
+<%= image_tag(@logo, :class => "logo")%>
+<br />
+<div style="padding-left: 50px; position: absolute; left: 10%; top: 50px;">
+  <b><%= @location_name %></b><br />
+  <b>FAST Track Report</b><br />
+  <b>From: <%=@start_date.strftime("%d-%m-%Y")%> </b><br />
+  <b>To: <%=@end_date.strftime("%d-%m-%Y")%></b><br />
+</div>
+<hr />
+
+<div id="loader">
+  <h3>Loading data. Please wait.............</h3>
+</div>
+
+<script type="text/javascript">
+  var start_date = "<%= @start_date %> ";
+  var end_date = "<%= @end_date %>";
+  
+  window.onload = function(){
+    jQuery.ajax({
+      type: "POST",
+      url: "/report/get_dha_fast_track_data",
+      data: "start_date=" + start_date + "&end_date=" + end_date,
+      beforeSend: function(){
+        jQuery("#loader").show();
+      },
+      success: function(result){
+        //jQuery(".medical-history-loader").hide();
+        //medical_history = JSON.parse(result);
+
+        //jQuery("#medical-history").html(html);
+
+      }
+
+    })
+  }
+</script>

@@ -9,18 +9,18 @@ class Encounter < ActiveRecord::Base
   belongs_to :provider, :class_name => "Person", :foreign_key => :provider_id, :conditions => {:voided => 0}
   belongs_to :patient, :conditions => {:voided => 0}
 
-  # TODO, this needs to account for current visit, which needs to account for possible retrospective entry
-  named_scope :current, :conditions => 'DATE(encounter.encounter_datetime) = CURRENT_DATE()'
-
-  def before_save
-    self.provider = User.current.person if self.provider.blank?
-    # TODO, this needs to account for current visit, which needs to account for possible retrospective entry
-    self.encounter_datetime = Time.now if self.encounter_datetime.blank?
-  end
-
-  def after_save
-    self.add_location_obs
-  end
+#  # TODO, this needs to account for current visit, which needs to account for possible retrospective entry
+#  named_scope :current, :conditions => 'DATE(encounter.encounter_datetime) = CURRENT_DATE()'
+#
+#  def before_save
+#    self.provider = User.current.person if self.provider.blank?
+#    # TODO, this needs to account for current visit, which needs to account for possible retrospective entry
+#    self.encounter_datetime = Time.now if self.encounter_datetime.blank?
+#  end
+#
+#  def after_save
+#    self.add_location_obs
+#  end
 
   def after_void(reason = nil)
     unless self.name.upcase == 'ART ADHERENCE'
@@ -84,4 +84,15 @@ EOF
       return rows.inject({}) {|result, row| result[encounter_types_hash[row['encounter_type']]] = row['number']; result }
     end     
   end
+
+  def self.fast_track_patient_encounters(start_date, end_date)
+    fast_track_concept_id = Concept.find_by_name("FAST").concept_id
+    yes_concept_id = Concept.find_by_name("YES").concept_id
+    fast_track_encounters = Encounter.find(:all, :joins => [:observations],
+      :conditions =>["DATE(encounter_datetime) >= ? AND
+        DATE(encounter_datetime) <= ? AND concept_id =? AND value_coded =?",
+        start_date.to_date, end_date.to_date, fast_track_concept_id, yes_concept_id], :group => "patient_id")
+    return fast_track_encounters
+  end
+  
 end

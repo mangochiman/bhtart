@@ -646,4 +646,28 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return data
   end
 
+  def tb_status(encounter_datetime)
+
+  end
+
+  def regimen(encounter_datetime)
+
+  end
+
+  def vl_result(encounter_datetime)
+
+  end
+
+  def adherence(encounter_datetime)
+
+  end
+
+  def side_effects(encounter_datetime)
+
+  end
+
+  def hypertension(encounter_datetime)
+
+  end
+  
 end
