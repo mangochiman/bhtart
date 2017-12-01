@@ -677,7 +677,7 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
         WHERE s.patientid IN (?)
         AND short_name = ?
         AND s.deleteyn = 0
-        AND DATE(s.TESTDATE) = '#{encounter_datetime.to_date}'
+        AND DATE(s.TESTDATE) <= '#{encounter_datetime.to_date}'
         AND s.attribute = 'pass'", national_ids, 'HIV_viral_load'
       ]).collect{ | result |result.Range.to_s + " " + result.TESTVALUE.to_s}
     

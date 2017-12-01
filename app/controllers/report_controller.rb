@@ -262,19 +262,33 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
 
   def get_dha_fast_track_data
     data = {}
-    fast_track_patient_encounters = Encounter.fast_track_patient_encounters(params[:start_date], params[:end_date])
+    data["patients"] = {}
+    data["summaries"] = {}
+    fast_track_patient_encounters = Encounter.fast_track_patient_encounters(params[:start_date], params[:end_date], params[:page])
+
+    total_entries = fast_track_patient_encounters.total_entries
+    current_page = fast_track_patient_encounters.current_page
+
+    data["summaries"]["current_page"] = current_page
+    data["summaries"]["total_entries"] = total_entries
+
     fast_track_patient_encounters.each do |encounter|
       patient = encounter.patient
       encounter_datetime = encounter.encounter_datetime.to_date rescue Date.today
       age = PatientService.age(patient.person, encounter_datetime)
-      data["age"] = age
-      data["tb_status"] = patient.tb_status(encounter_datetime)
-      data["regimen"] = patient.regimen(encounter_datetime)
-      data["vl_result"] = patient.vl_result(encounter_datetime)
-      data["adherence"] = patient.adherence(encounter_datetime)
-      data["side_effects"] = patient.side_effects(encounter_datetime)
-      data["hypertension"] = patient.hypertension(encounter_datetime)
+      encounter_id = encounter.encounter_id
+ 
+      data["patients"][encounter_id] = {}
+      data["patients"][encounter_id]["age"] = age
+      data["patients"][encounter_id]["tb_status"] = patient.tb_status(encounter_datetime)
+      data["patients"][encounter_id]["regimen"] = patient.regimen(encounter_datetime)
+      data["patients"][encounter_id]["vl_result"] = patient.vl_result(encounter_datetime)
+      data["patients"][encounter_id]["adherence"] = patient.adherence(encounter_datetime)
+      data["patients"][encounter_id]["side_effects"] = patient.side_effects(encounter_datetime)
+      data["patients"][encounter_id]["hypertension"] = patient.hypertension(encounter_datetime)
     end
+
+    render :text => data.to_json and return
   end
   
 end

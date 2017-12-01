@@ -3,6 +3,32 @@
     display: none;
     position: absolute;
     left: 40%;
+    color: green;
+    position: absolute;
+    top: 25%;
+  }
+
+  .fast-track{
+    height: 480px;
+    overflow: auto;
+  }
+
+  .right{
+    text-align: right;
+
+  }
+  .center{
+    text-align: center;
+  }
+
+  #summary{
+    width: 60%;
+    margin-left: 85%;
+    display: none;
+  }
+
+  .page-number, .total-pages{
+    font-weight: bold;
   }
 </style>
 <%= image_tag(@logo, :class => "logo")%>
@@ -15,30 +41,103 @@
 </div>
 <hr />
 
-<div id="loader">
+<div id="summary">
+  Displaying page <span class="page-number">&nbsp;</span> of <span class="total-pages">&nbsp;</span>
+  <br />
+</div>
+
+<div class="fast-track">
+  <table class="display" style="width: 100%;">
+    <thead>
+      <tr>
+        <th>Age</th>
+        <th>TB status</th>
+        <th>Regimen</th>
+        <th>VL Result</th>
+        <th>Adherence</th>
+        <th>Side Effects</th>
+        <th>Hypertension</th>
+      </tr>
+    </thead>
+    <tbody id="fast-track-data">
+
+    </tbody>
+  </table>
+</div>
+<hr />
+
+<div id="loader" class="blink">
   <h3>Loading data. Please wait.............</h3>
 </div>
 
 <script type="text/javascript">
   var start_date = "<%= @start_date %> ";
   var end_date = "<%= @end_date %>";
-  
+  var current_page = 1;
+
   window.onload = function(){
     jQuery.ajax({
       type: "POST",
       url: "/report/get_dha_fast_track_data",
-      data: "start_date=" + start_date + "&end_date=" + end_date,
+      data: "start_date=" + start_date + "&end_date=" + end_date + "&page=" + current_page,
       beforeSend: function(){
         jQuery("#loader").show();
+        jQuery('.blink').each(function() {
+          var elem = $(this);
+          setInterval(function() {
+            if (elem.css('visibility') == 'hidden') {
+              elem.css('visibility', 'visible');
+            } else {
+              elem.css('visibility', 'hidden');
+            }
+          }, 500);
+        });
       },
       success: function(result){
-        //jQuery(".medical-history-loader").hide();
-        //medical_history = JSON.parse(result);
+        result = JSON.parse(result);
+        summaries = result["summaries"];
 
-        //jQuery("#medical-history").html(html);
+        current_page = summaries["current_page"];
+        total_entries = summaries["total_entries"];
+
+        html = "";
+        for (var encounterID in result["patients"]){
+          age = result["patients"][encounterID]["age"];
+          tb_status = result["patients"][encounterID]["tb_status"];
+          regimen = result["patients"][encounterID]["regimen"];
+          vl_result = result["patients"][encounterID]["vl_result"];
+          adherence = result["patients"][encounterID]["adherence"];
+          side_effects = result["patients"][encounterID]["side_effects"];
+          hypertension = result["patients"][encounterID]["hypertension"];
+
+          html += "<tr>";
+          html += "<td class='right'>" + age + "</td>";
+          html += "<td class='center'>" + tb_status + "</td>";
+          html += "<td class='center'>" + regimen + "</td>";
+          html += "<td class='center'>" + vl_result + "</td>";
+          html += "<td class='right'>" + adherence + "</td>";
+          html += "<td>" + side_effects + "</td>";
+          html += "<td class='center'>" + hypertension + "</td>";
+          html += "</tr>";
+
+        }
+        jQuery('.blink').remove();
+        jQuery(".page-number").html(current_page);
+        jQuery(".total-pages").html(total_entries);
+        jQuery("#summary").show();
+
+        jQuery("#fast-track-data").html(html);
+
 
       }
 
     })
+  }
+
+  function addNavigationButtons(){
+    nextPageButton = '<button id="nextPage" class="green left" style="position :relative; " onmousedown="showNextpage();"><span> >> Next Page </span></button>';
+    prevPageButton = '<button id="prevPage" class="green left" style="position :relative;" onmousedown="showPrevpage();"><span> << Prev Page </span></button>';
+    jQuery(".buttons").append(nextPageButton);
+    jQuery(".buttons").append(prevPageButton);
   }
 </script>

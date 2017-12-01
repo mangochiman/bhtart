@@ -1,3 +1,4 @@
+require "will_paginate"
 class Encounter < ActiveRecord::Base
   set_table_name :encounter
   set_primary_key :encounter_id
@@ -85,13 +86,15 @@ EOF
     end     
   end
 
-  def self.fast_track_patient_encounters(start_date, end_date)
+  def self.fast_track_patient_encounters(start_date, end_date, page_number)
     fast_track_concept_id = Concept.find_by_name("FAST").concept_id
     yes_concept_id = Concept.find_by_name("YES").concept_id
-    fast_track_encounters = Encounter.find(:all, :joins => [:observations],
+    fast_track_encounters = Encounter.paginate(:joins => [:observations],
       :conditions =>["DATE(encounter_datetime) >= ? AND
         DATE(encounter_datetime) <= ? AND concept_id =? AND value_coded =?",
-        start_date.to_date, end_date.to_date, fast_track_concept_id, yes_concept_id], :group => "patient_id")
+        start_date.to_date, end_date.to_date, fast_track_concept_id, yes_concept_id],
+      :page => page_number, :per_page => 20,
+      :group => "patient_id")
     return fast_track_encounters
   end
   
