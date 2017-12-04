@@ -272,7 +272,8 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
       data["regimen"] = patient.regimen(encounter_datetime)
       data["vl_result"] = patient.vl_result(encounter_datetime)
       data["adherence"] = patient.adherence(encounter_datetime)
-      data["side_effects"] = patient.hypertension(encounter_datetime)
+      data["side_effects"] = patient.side_effects(encounter_datetime)
+      data["hypertension"] = patient.hypertension(encounter_datetime)
     end
   end
   
