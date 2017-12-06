@@ -1939,7 +1939,7 @@ EOF
 		identifier_type_arv_number = PatientIdentifierType.find_by_name('ARV Number').id
 
     records = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT e.patient_id, n.given_name,n.middle_name, n.family_name, 
+      SELECT e.patient_id, n.given_name, n.middle_name, n.family_name, 
         i.identifier arv_number, e.*, o.cum_outcome,
         patient_reason_for_starting_art_text(e.patient_id) reason_for_art
       FROM temp_earliest_start_date e
@@ -1955,9 +1955,21 @@ EOF
     @people = {}
 
     (records || []).each do |r|
+      if r['middle_name'] == "n/a"
+        middle_name = ""
+      elsif r['middle_name'] == 'Unknown'
+        middle_name = ""
+      elsif r['middle_name'] == 'unknown'
+        middle_name = ""
+      elsif r['middle_name'] == 'N/A'
+        middle_name = ""
+      else
+        middle_name = r['middle_name']
+      end
+
 			@people[r['patient_id'].to_i] = {
         :arv_number => r['arv_number'],
-        :name => "#{r['given_name']} #{r['middle_name']} #{r['family_name']}".squish,
+        :name => "#{r['given_name']} #{middle_name} #{r['family_name']}".squish,
         :gender => (r['gender'] rescue 'Unknown'),
         :birthdate => r['birthdate'],
         :date_enrolled => r['date_enrolled'],
