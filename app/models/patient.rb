@@ -650,7 +650,7 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
     tb_obs = Observation.find(:last, :joins => [:encounter], :conditions => ["concept_id =? AND
         DATE(encounter_datetime) =? AND patient_id =?", tb_status_concept_id, encounter_datetime.to_date, self.patient_id])
-    answer_string = tb_obs.answer_string.squish
+    answer_string = tb_obs.answer_string.squish rescue ""
     return answer_string
   end
 
@@ -660,7 +660,7 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     regimen_obs = Observation.find(:last, :joins => [:encounter], :conditions => ["concept_id =? AND
         DATE(encounter_datetime) =? AND patient_id =?", regimen_category_concept_id, encounter_datetime.to_date, self.patient_id]
     )
-    answer_string = regimen_obs.answer_string.squish
+    answer_string = regimen_obs.answer_string.squish rescue ""
     return answer_string
   end
 
@@ -690,7 +690,7 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     regimen_obs = Observation.find(:last, :joins => [:encounter], :conditions => ["concept_id =? AND
         DATE(encounter_datetime) =? AND patient_id =?", drug_order_adherence_concept_id, encounter_datetime.to_date, self.patient_id]
     )
-    answer_string = regimen_obs.answer_string.squish
+    answer_string = regimen_obs.answer_string.squish rescue ""
     return answer_string
   end
 
