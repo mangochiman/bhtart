@@ -15,7 +15,7 @@ class CreateDrugCms < ActiveRecord::Migration
       t.string :void_reason, :limit => 225
       t.timestamps
     end
-    execute "ALTER TABLE drug_cms ADD PRIMARY KEY (drug_inventory_id)"
+    execute "ALTER TABLE `drug_cms` CHANGE COLUMN `drug_inventory_id` `drug_inventory_id` INT(11) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (`drug_inventory_id`);"
   end
 
   def self.down

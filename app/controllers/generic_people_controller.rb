@@ -1009,6 +1009,13 @@ EOF
     end
   end
 
+  def find_by_filing_number
+    if request.post?
+      redirect_to :action => 'search' ,
+        :identifier => "#{params[:prefix]}#{params[:filing_number]}" and return
+    end
+  end
+
   def find_by_tb_number
     if request.post?
       numbers_array = params[:tb_number].gsub(/\s+/, "").chars.each_slice(4).map(&:join)
@@ -1490,9 +1497,15 @@ EOF
 
   def find_by_menu
     @select_options = ["ARV Number", "HCC Number"]
+    if use_filing_number
+      @select_options << "Filing number (active)"
+      @select_options << "Filing number (dormant)"
+    end
+
     if request.post?
       redirect_to("/people/find_by_hcc_number") and return if (params[:find_by].match(/HCC/i))
       redirect_to("/people/find_by_arv_number") and return if (params[:find_by].match(/ARV/i))
+      redirect_to("/people/find_by_filing_number/#{params[:find_by]}") and return if (params[:find_by].match(/filing/i))
     end
 
     #render :layout => "application"
@@ -1833,7 +1846,8 @@ EOF
 
   def get_patient_next_task
     patient_id = params[:patient_id]
-    task = main_next_task(Location.current_location, Patient.find(patient_id))
+    session_date = session[:datetime].to_date rescue Date.today
+    task = main_next_task(Location.current_location, Patient.find(patient_id), session_date)
     render :text => {
       :task => task.encounter_type, :url => task.url
     }.to_json

@@ -319,6 +319,10 @@ The following block of code should be replaced by a more cleaner function
       @links << ["Change User Activities","/user/activities/#{current_user.id}?patient_id=#{patient.id}"]
     end
 
+    if use_filing_number 
+      @links << ["View past filing numbers", "/patients/past_filing_numbers/#{patient.id}"]
+    end
+
     if show_lab_results
 			if national_lims_activated
 				lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip'] + "/user/ext"

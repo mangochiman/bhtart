@@ -683,8 +683,10 @@ function checkIfAllTaskDone() {
 }
 
 function recallSetValidationRules() {
-  document.getElementById("alert-cover").style.display = 'inline';
-  setTimeout("setValidationRules()", 1000);
+  <%if @encounters.blank? != true %>
+    document.getElementById("alert-cover").style.display = 'inline';
+    setTimeout("setValidationRules()", 1000);
+  <%end%>
 }
 
 function alertIncompleteVisit() {

@@ -640,4 +640,13 @@ EOF
     end
   end
 
+  def past_filing_numbers
+    @patient_identifiers = ActiveRecord::Base.connection.select_all <<EOF
+    SELECT identifier, date_created FROM patient_identifier WHERE patient_id = #{params[:id]}
+    AND identifier_type IN(17,18);
+EOF
+ 
+    render :layout => 'menu'
+  end
+
 end
