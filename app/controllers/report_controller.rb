@@ -268,9 +268,11 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
 
     total_entries = fast_track_patient_encounters.total_entries
     current_page = fast_track_patient_encounters.current_page
+    total_pages = fast_track_patient_encounters.total_pages
 
     data["summaries"]["current_page"] = current_page
     data["summaries"]["total_entries"] = total_entries
+    data["summaries"]["total_pages"] = total_pages
 
     fast_track_patient_encounters.each do |encounter|
       patient = encounter.patient
@@ -282,7 +284,7 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
       data["patients"][encounter_id]["age"] = age
       data["patients"][encounter_id]["tb_status"] = patient.tb_status(encounter_datetime)
       data["patients"][encounter_id]["regimen"] = patient.regimen(encounter_datetime)
-      data["patients"][encounter_id]["vl_result"] = patient.vl_result(encounter_datetime)
+      data["patients"][encounter_id]["vl_result"] = patient.vl_result(encounter_datetime).join(", ")
       data["patients"][encounter_id]["adherence"] = patient.adherence(encounter_datetime)
       data["patients"][encounter_id]["side_effects"] = patient.side_effects(encounter_datetime)
       data["patients"][encounter_id]["hypertension"] = patient.hypertension(encounter_datetime)

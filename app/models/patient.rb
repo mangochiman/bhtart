@@ -677,7 +677,6 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
         WHERE s.patientid IN (?)
         AND short_name = ?
         AND s.deleteyn = 0
-        AND DATE(s.TESTDATE) <= '#{encounter_datetime.to_date}'
         AND s.attribute = 'pass'", national_ids, 'HIV_viral_load'
       ]).collect{ | result |result.Range.to_s + " " + result.TESTVALUE.to_s}
     
@@ -702,10 +701,12 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
       :conditions => ["concept_id IN (?) AND DATE(encounter_datetime) =?",
         [side_effects_concept_id, symptom_present_conept_id], encounter_datetime.to_date]
     )
+
     side_effects = []
     side_effects_observations.each do |obs|
       next if !obs.obs_group_id.blank?
       child_obs = Observation.find(:last, :conditions => ["obs_group_id = ?", obs.obs_id])
+
       unless child_obs.blank?
         answer_string = child_obs.answer_string.squish
         next if answer_string.match(/NO/i)
