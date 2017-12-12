@@ -1,6 +1,6 @@
 User.current = User.first
 
-Session_date = '2017-12-01'.to_date
+Session_date = '2017-10-09'.to_date
 StartDate = Session_date.strftime('%Y-%m-%d 00:00:00')
 EndDate = Session_date.strftime('%Y-%m-%d 23:59:59')
 
