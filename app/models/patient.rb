@@ -646,4 +646,81 @@ side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concep
     return data
   end
 
+  def tb_status(encounter_datetime)
+    tb_status_concept_id = ConceptName.find_by_name('TB STATUS').concept_id
+    tb_obs = Observation.find(:last, :joins => [:encounter], :conditions => ["concept_id =? AND
+        DATE(encounter_datetime) =? AND patient_id =?", tb_status_concept_id, encounter_datetime.to_date, self.patient_id])
+    answer_string = tb_obs.answer_string.squish rescue ""
+    return answer_string
+  end
+
+  def regimen(encounter_datetime)
+    regimen_category_concept_id = Concept.find_by_name("Regimen Category").concept_id
+
+    regimen_obs = Observation.find(:last, :joins => [:encounter], :conditions => ["concept_id =? AND
+        DATE(encounter_datetime) =? AND patient_id =?", regimen_category_concept_id, encounter_datetime.to_date, self.patient_id]
+    )
+    answer_string = regimen_obs.answer_string.squish rescue ""
+    return answer_string
+  end
+
+  def vl_result(encounter_datetime)
+    identifiers = LabController.new.id_identifiers(self)
+    national_ids = identifiers
+
+
+    results = Lab.find_by_sql(["
+        SELECT * FROM Lab_Sample s
+        INNER JOIN Lab_Parameter p ON p.sample_id = s.sample_id
+        INNER JOIN codes_TestType c ON p.testtype = c.testtype
+        INNER JOIN (SELECT DISTINCT rec_id, short_name FROM map_lab_panel) m ON c.panel_id = m.rec_id
+        WHERE s.patientid IN (?)
+        AND short_name = ?
+        AND s.deleteyn = 0
+        AND s.attribute = 'pass'", national_ids, 'HIV_viral_load'
+      ]).collect{ | result |result.Range.to_s + " " + result.TESTVALUE.to_s}
+    
+    return results
+  end
+
+  def adherence(encounter_datetime)
+    drug_order_adherence_concept_id = Concept.find_by_name("DRUG ORDER ADHERENCE").concept_id
+
+    regimen_obs = Observation.find(:last, :joins => [:encounter], :conditions => ["concept_id =? AND
+        DATE(encounter_datetime) =? AND patient_id =?", drug_order_adherence_concept_id, encounter_datetime.to_date, self.patient_id]
+    )
+    answer_string = regimen_obs.answer_string.squish rescue ""
+    return answer_string
+  end
+
+  def side_effects(encounter_datetime)
+    side_effects_concept_id = Concept.find_by_name("MALAWI ART SIDE EFFECTS").concept_id
+    symptom_present_conept_id = Concept.find_by_name("SYMPTOM PRESENT").concept_id
+
+    side_effects_observations = self.person.observations.find(:all, :joins => [:encounter],
+      :conditions => ["concept_id IN (?) AND DATE(encounter_datetime) =?",
+        [side_effects_concept_id, symptom_present_conept_id], encounter_datetime.to_date]
+    )
+
+    side_effects = []
+    side_effects_observations.each do |obs|
+      next if !obs.obs_group_id.blank?
+      child_obs = Observation.find(:last, :conditions => ["obs_group_id = ?", obs.obs_id])
+
+      unless child_obs.blank?
+        answer_string = child_obs.answer_string.squish
+        next if answer_string.match(/NO/i)
+        side_effects << child_obs.concept.fullname
+      end
+    end
+
+    return side_effects.join(", ")
+  end
+
+  def hypertension(encounter_datetime)
+    bp = self.current_bp(encounter_datetime.to_date)
+    return "" if bp.blank?
+    return bp[0].to_s + "/" + bp[1].to_s
+  end
+  
 end

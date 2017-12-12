@@ -218,7 +218,8 @@ class GenericClinicController < ApplicationController
       ["Avg ART clinic duration for patients", "/report/avg_waiting_time_for_art_patients"],
       ["Flat tables reports", "/cohort_tool/flat_tables_revised_cohort_menu"],
       ["HTN Reports", "/cohort_tool/select_htn_date"],
-      ["Fast Track Reports", "/cohort_tool/select_fast_track_date"]
+      #["Fast Track Reports", "/cohort_tool/select_fast_track_date"],
+      ["DHA-Fast Track Reports", "/cohort_tool/select_dha_fast_track_date"]
     ]
 
 

@@ -16,7 +16,7 @@ class ReportController < GenericReportController
 	end
 
 	def appointments_for_the_day(date = Date.today, identifier_type = 'Filing number')
-    	concept_id = ConceptName.find_by_name("Appointment date").concept_id
+    concept_id = ConceptName.find_by_name("Appointment date").concept_id
 
 		records = Observation.find(:all,
 			:conditions =>["obs.concept_id = ? AND value_datetime >= ? AND value_datetime <=?",
@@ -27,12 +27,12 @@ class ReportController < GenericReportController
 		(records || []).each do |r|
 			patient = PatientService.get_patient(Person.find(r.person_id))
 			demographics[r.obs_id] = {	:first_name => patient.first_name,
-										:last_name => patient.last_name,
-										:gender => patient.sex,
-										:birthdate => patient.birth_date,
-										:visit_date => r.obs_datetime,
-										:patient_id => r.person_id,
-										:identifier => patient.filing_number || patient.arv_number }
+        :last_name => patient.last_name,
+        :gender => patient.sex,
+        :birthdate => patient.birth_date,
+        :visit_date => r.obs_datetime,
+        :patient_id => r.person_id,
+        :identifier => patient.filing_number || patient.arv_number }
 		end
 		return demographics
 	end
@@ -79,7 +79,7 @@ class ReportController < GenericReportController
     
     drug_order_id = OrderType.find_by_name('Drug Order').id
     #orders = Order.find(:all, :conditions => ["DATE(date_created) >= ? and DATE(date_created) <= ?
-       #AND order_type_id =?",start_date, end_date, drug_order_id])
+    #AND order_type_id =?",start_date, end_date, drug_order_id])
     orders = Order.find_by_sql(["SELECT * FROM orders WHERE DATE(date_created) >= ? AND
                                  DATE(date_created) <= ? AND order_type_id =? AND voided = 0",start_date, end_date, drug_order_id])
     orders.each do |order|
@@ -108,7 +108,7 @@ class ReportController < GenericReportController
       end
 
       #observations = Observation.find(:all,:conditions => ["DATE(date_created) >= ? and DATE(date_created) <= ?
-       #and value_drug =?" ,start_date, end_date, order.drug_order.drug_inventory_id] )
+      #and value_drug =?" ,start_date, end_date, order.drug_order.drug_inventory_id] )
       observations = Observation.find_by_sql(["SELECT * FROM obs WHERE DATE(date_created) >= ? AND
  DATE(date_created) <= ? AND value_drug =?  AND voided = 0" ,start_date, end_date, order.drug_order.drug_inventory_id])
       unless (observations == [])
@@ -123,8 +123,8 @@ class ReportController < GenericReportController
         @drugs[order.drug_order.drug.name][:amount_dispensed] = 0
       end
     end
-	@drugs
-  render:layout=>"report"
+    @drugs
+    render:layout=>"report"
   end
 
   def art_register
@@ -145,15 +145,15 @@ class ReportController < GenericReportController
         start_date = patient.patient_states.last.start_date.strftime('%d/%b/%Y') rescue " "
 
         detail = {
-            'name' => det_patient.name,
-            'gender' => det_patient.person.gender,
-            'age' => PatientService.cul_age(det_patient.person.birthdate , det_patient.person.birthdate_estimated ),
-            'reg_date' => patient.date_enrolled.to_date.strftime('%d/%b/%Y'),
-            'start_reason' =>PatientService.reason_for_art_eligibility(det_patient)  ,
-            'outcome' => state.nil? ? " ": state,
-            'outcome_date' => start_date,
-            'occupation' => PatientService.get_attribute(det_patient , 'Occupation'),
-            'formulation' => drug.nil? ? " " : drug
+          'name' => det_patient.name,
+          'gender' => det_patient.person.gender,
+          'age' => PatientService.cul_age(det_patient.person.birthdate , det_patient.person.birthdate_estimated ),
+          'reg_date' => patient.date_enrolled.to_date.strftime('%d/%b/%Y'),
+          'start_reason' =>PatientService.reason_for_art_eligibility(det_patient)  ,
+          'outcome' => state.nil? ? " ": state,
+          'outcome_date' => start_date,
+          'occupation' => PatientService.get_attribute(det_patient , 'Occupation'),
+          'formulation' => drug.nil? ? " " : drug
         }
         @data << detail
       end
@@ -260,4 +260,37 @@ AND '#{@end_date.strftime('%Y-%m-%d 23:59:59')}' GROUP BY t.person_id, DATE(t.ob
     render :layout => "application"
   end
 
+  def get_dha_fast_track_data
+    data = {}
+    data["patients"] = {}
+    data["summaries"] = {}
+    fast_track_patient_encounters = Encounter.fast_track_patient_encounters(params[:start_date], params[:end_date], params[:page])
+
+    total_entries = fast_track_patient_encounters.total_entries
+    current_page = fast_track_patient_encounters.current_page
+    total_pages = fast_track_patient_encounters.total_pages
+
+    data["summaries"]["current_page"] = current_page
+    data["summaries"]["total_entries"] = total_entries
+    data["summaries"]["total_pages"] = total_pages
+
+    fast_track_patient_encounters.each do |encounter|
+      patient = encounter.patient
+      encounter_datetime = encounter.encounter_datetime.to_date rescue Date.today
+      age = PatientService.age(patient.person, encounter_datetime)
+      encounter_id = encounter.encounter_id
+ 
+      data["patients"][encounter_id] = {}
+      data["patients"][encounter_id]["age"] = age
+      data["patients"][encounter_id]["tb_status"] = patient.tb_status(encounter_datetime)
+      data["patients"][encounter_id]["regimen"] = patient.regimen(encounter_datetime)
+      data["patients"][encounter_id]["vl_result"] = patient.vl_result(encounter_datetime).join(", ")
+      data["patients"][encounter_id]["adherence"] = patient.adherence(encounter_datetime)
+      data["patients"][encounter_id]["side_effects"] = patient.side_effects(encounter_datetime)
+      data["patients"][encounter_id]["hypertension"] = patient.hypertension(encounter_datetime)
+    end
+
+    render :text => data.to_json and return
+  end
+  
 end

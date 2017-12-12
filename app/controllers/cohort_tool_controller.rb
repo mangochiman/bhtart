@@ -81,7 +81,7 @@ EOF
     @start_date,@end_date = Report.generate_cohort_date_range(@quarter)
     encounters = Encounter.find(:all, :conditions => ["encounter_type = ? AND
     encounter_datetime >= ? AND encounter_datetime <= ?",
-    EncounterType.find_by_name("tb registration").id, @start_date, @end_date])
+        EncounterType.find_by_name("tb registration").id, @start_date, @end_date])
     tbtype = ConceptName.find_by_name("TB classification").concept_id
     patienttype = ConceptName.find_by_name("TB patient category").concept_id
 		@variables["count"] = encounters.length
@@ -2217,7 +2217,7 @@ EOF
     patient_died_concept    = ConceptName.find_by_name('PATIENT DIED').concept_id
     program_id = Program.find_by_name('HIV program').id
     died_state_ids = ProgramWorkflowState.find(:all, :conditions =>["concept_id = ?",
-      patient_died_concept]).map(&:program_workflow_state_id)
+        patient_died_concept]).map(&:program_workflow_state_id)
 =begin
     all_dead_patients_with_visits = "SELECT *
     FROM (SELECT observation.person_id AS patient_id, DATE(p.death_date) AS date_of_death, DATE(observation.obs_datetime) AS date_started
@@ -3327,6 +3327,14 @@ EOF
     render :layout => "report"
   end
 
+  def process_dha_fast_track_report
+    @logo = CoreService.get_global_property_value('logo') rescue nil
+    @location_name = Location.current_health_center.name rescue nil
+    @start_date = (params[:start_day] + '-' + params[:start_month] + '-' + params[:start_year]).to_date
+    @end_date = (params[:end_day] + '-' + params[:end_month] + '-' + params[:end_year]).to_date
+    render :layout => "report"
+  end
+  
   def process_fast_track_report
     @logo = CoreService.get_global_property_value('logo') rescue nil
     @location_name = Location.current_health_center.name rescue nil
@@ -3609,16 +3617,16 @@ EOF
     @patient_ids = patient_ids.uniq
 
     @fast_track_data = {
-          "ft_above_18_years_hash" => ft_above_18_years_hash,
-          "ft_on_first_line_art_hash" => ft_on_first_line_art_hash,
-          "ft_good_adherence_hash" => ft_good_adherence_hash,
-          "ft_last_vl_less_than_1000_hash" => ft_last_vl_less_than_1000_hash,
-          "ft_doesnt_have_signs_of_tb_hash" => ft_doesnt_have_signs_of_tb_hash,
-          "ft_on_art_for_more_than_12_months_hash" => ft_on_art_for_more_than_12_months_hash,
-          "ft_not_on_ipt_for_more_than_6_months_hash" => ft_not_on_ipt_for_more_than_6_months_hash,
-          "ft_not_on_hypertension_diabetic_treatment_hash" => ft_not_on_hypertension_diabetic_treatment_hash,
-          "ft_doesnt_have_drug_side_effect_or_oi_hash" => ft_doesnt_have_drug_side_effect_or_oi_hash,
-          "ft_not_pregnant_or_breast_feeding_hash" => ft_not_pregnant_or_breast_feeding_hash
+      "ft_above_18_years_hash" => ft_above_18_years_hash,
+      "ft_on_first_line_art_hash" => ft_on_first_line_art_hash,
+      "ft_good_adherence_hash" => ft_good_adherence_hash,
+      "ft_last_vl_less_than_1000_hash" => ft_last_vl_less_than_1000_hash,
+      "ft_doesnt_have_signs_of_tb_hash" => ft_doesnt_have_signs_of_tb_hash,
+      "ft_on_art_for_more_than_12_months_hash" => ft_on_art_for_more_than_12_months_hash,
+      "ft_not_on_ipt_for_more_than_6_months_hash" => ft_not_on_ipt_for_more_than_6_months_hash,
+      "ft_not_on_hypertension_diabetic_treatment_hash" => ft_not_on_hypertension_diabetic_treatment_hash,
+      "ft_doesnt_have_drug_side_effect_or_oi_hash" => ft_doesnt_have_drug_side_effect_or_oi_hash,
+      "ft_not_pregnant_or_breast_feeding_hash" => ft_not_pregnant_or_breast_feeding_hash
     }
 
     #raise @fast_track_data.to_yaml
