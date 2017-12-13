@@ -1990,7 +1990,7 @@ EOF
 
   def download_pdf
     quarter = params[:quarter]
-    raise quarter.inspect
+    #raise quarter.inspect
     zoom = 0.8
     file_directory = params[:file_directory]
     file_name = params[:file_name]

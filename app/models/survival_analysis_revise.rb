@@ -2,29 +2,10 @@ class SurvivalAnalysisRevise
 
   def self.get_indicators(start_date, end_date, quarter_type)
   time_started = Time.now().strftime('%Y-%m-%d %H:%M:%S')
-=begin
-    ActiveRecord::Base.connection.execute <<EOF
-      DROP TABLE IF EXISTS `temp_earliest_start_date`;
-EOF
-
-
-    ActiveRecord::Base.connection.execute <<EOF
-      CREATE TABLE temp_earliest_start_date
-select
-        `p`.`patient_id` AS `patient_id`,
-        `p`.`gender` AS `gender`,
-        `p`.`birthdate`,
-        `p`.`earliest_start_date` AS `earliest_start_date`,
-        cast(`pf`.`encounter_datetime` as date) AS `date_enrolled`,
-        `p`.`death_date` AS `death_date`,
-        (select timestampdiff(year, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_at_initiation`,
-        (select timestampdiff(day, `p`.`birthdate`, `p`.`earliest_start_date`)) AS `age_in_days`
-    from
-        (`patients_on_arvs` `p`
-        join `patient_first_arv_amount_dispensed` `pf` ON ((`pf`.`patient_id` = `p`.`patient_id`)))
-    group by `p`.`patient_id`
-EOF
-=end
+#=begin
+  CohortRevise.create_temp_earliest_start_date_table(end_date)
+  CohortRevise.update_cum_outcome(end_date)
+#=end
     #Get earliest date enrolled
     cum_start_date = self.get_cum_start_date
     survival_start_date = start_date.to_date
@@ -189,11 +170,11 @@ EOF
     number_transferred_out = []; number_unknown =[]
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
-      WHERE earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}'
-      AND date_enrolled <= '#{end_date}'
-      AND age_at_initiation BETWEEN "#{min_age}" AND "#{max_age}"
-      GROUP BY patient_id;
+      SELECT e.*, o.cum_outcome cum_outcome FROM temp_earliest_start_date e
+      RIGHT JOIN temp_patient_outcomes o 
+      ON o.patient_id = e.patient_id
+      WHERE e.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+      AND date_enrolled <= '#{end_date}' GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
@@ -202,9 +183,7 @@ EOF
 
     data = [] if data.blank?
 
-    outcomes = self.get_survival_analysis_outcome(data, start_date, end_date)
-
-    (outcomes || []).each do |row|
+    (total_registered || []).each do |row|
       #raise row['cum_outcome'].inspect
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
@@ -239,8 +218,10 @@ EOF
     number_transferred_out = []; number_unknown =[]
 
     total_registered = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date
-      WHERE earliest_start_date BETWEEN '#{start_date}' AND '#{end_date}'
+      SELECT e.*, o.cum_outcome cum_outcome FROM temp_earliest_start_date e
+      RIGHT JOIN temp_patient_outcomes o 
+      ON o.patient_id = e.patient_id
+      WHERE e.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
       AND date_enrolled <= '#{end_date}' GROUP BY patient_id;
 EOF
 
@@ -250,8 +231,7 @@ EOF
 
     data = [] if data.blank?
 
-    outcomes = self.get_survival_analysis_outcome(data, start_date, end_date)
-    (outcomes || []).each do |row|
+    (total_registered || []).each do |row|
       if row['cum_outcome'] == 'On antiretrovirals'
         number_alive_and_on_arvs << row
       elsif row['cum_outcome'] == 'Defaulted'
