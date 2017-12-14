@@ -706,30 +706,59 @@ DELIMITER ;;
 /*!50003 CREATE*/ /*!50020 */ /*!50003 FUNCTION `age`(birthdate varchar(10),visit_date varchar(10),date_created varchar(10),est int) RETURNS int(11)
     DETERMINISTIC
 BEGIN
-DECLARE n INT;
+DECLARE year_when_patient_created INT;
+DECLARE cul_age INT;
 
+DECLARE birth_year INT;
 DECLARE birth_month INT;
 DECLARE birth_day INT;
 
-DECLARE year_when_patient_created INT;
-
-DECLARE cur_month INT;
 DECLARE cur_year INT;
+DECLARE cur_month INT;
+DECLARE cur_day INT;
 
+
+DECLARE visit_year INT;
+DECLARE visit_month INT;
+DECLARE visit_day INT;
+
+DECLARE cul_year INT;
+DECLARE cul_month INT;
+DECLARE cul_day INT;
+
+SET year_when_patient_created = (SELECT YEAR(FROM_DAYS(TO_DAYS(date_created))));
+
+set birth_year = (SELECT YEAR(FROM_DAYS(TO_DAYS(birthdate))));
 set birth_month = (SELECT MONTH(FROM_DAYS(TO_DAYS(birthdate))));
 set birth_day = (SELECT DAY(FROM_DAYS(TO_DAYS(birthdate))));
 
-set cur_month = (SELECT MONTH(CURDATE()));
 set cur_year = (SELECT YEAR(CURDATE()));
+set cur_month = (SELECT MONTH(CURDATE()));
+set cur_day = (SELECT DAY(CURDATE()));
 
-set year_when_patient_created = (SELECT YEAR(FROM_DAYS(TO_DAYS(date_created))));
+set visit_year = (SELECT YEAR(FROM_DAYS(TO_DAYS(visit_date))));
+set visit_month = (SELECT MONTH(FROM_DAYS(TO_DAYS(visit_date))));
+set visit_day = (SELECT DAY(FROM_DAYS(TO_DAYS(visit_date))));
 
-set n =  (SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(visit_date)-TO_DAYS(DATE(birthdate))), '%Y')+0);
+SET cul_year 	= (visit_year - birth_year);
+SET cul_month = (visit_month - birth_month);
+SET cul_day 	=	(visit_day - birth_day);
 
-if birth_month = 7 and birth_day = 1 and est = 1 and cur_month < birth_month and year_when_patient_created = cur_year then set n=(n + 1);
-end if;
 
-RETURN n;
+IF ((cul_day < 0) = 1) THEN SET cul_day = -1;
+ELSEIF ((cul_day < 0) = 0) THEN SET cul_day = 0;
+END IF;
+
+SET cul_month = (cul_month + cul_day);
+
+IF ((cul_month < 0) = 1) THEN SET cul_month = -1;
+ELSEIF ((cul_month < 0) = 0) THEN SET cul_month = 0;
+END IF;
+
+SET cul_age = (cul_year + cul_month);
+SET cul_age = ( (cul_age + (est + birth_month = 7 + birth_day = 1 + visit_month < birth_month + year_when_patient_created = visit_year))  );
+
+RETURN cul_age;
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
