@@ -541,4 +541,9 @@ class GenericUserController < ApplicationController
   	
     redirect_to '/clinic' and return
   end
+
+  def feedback_alert
+    render :layout => false
+  end
+
 end

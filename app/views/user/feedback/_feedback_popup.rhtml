@@ -1,0 +1,100 @@
+<style>
+
+
+.table-main {
+  display: table;
+}
+
+.table-row {
+  display: table-row;
+}
+
+.table-cell {
+  display: table-cell;
+}
+
+.table-div {
+	width: 100%;
+}
+
+.charts {
+	width: 40%;
+}
+
+.stats-numbers {
+	width: 65%;
+  vertical-align: top;
+}
+
+.control-div {
+  bottom: 10px;
+  position: absolute;
+	width: 99%;
+  height: 120px;
+  border-style: solid;
+  border-width: 0px;
+}
+
+.control-div a {
+	color: white;
+	border-radius: 4px;
+	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+	height: 60px;
+	float: right;
+	font-size: 20px;
+  text-align: center;
+  text-decoration: none;
+  padding:20px 10px 10px 10px;
+  vertical-align: bottom;
+  width: 320px;
+}
+
+.success {
+	background: rgb(28, 184, 65); /* this is a green */
+	margin-right: 10px;
+}
+
+.general {
+	background: rgb(66, 184, 221); /* this is a light blue */
+	margin-right: 20px;
+}
+
+.controls {
+  vertical-align:middle;
+}
+
+</style>
+
+<%start_date = '2017-12-01'.to_date%>
+<script>
+  var startDate = "<%=(start_date)%>";
+  var startDateDisplay = "<%=(start_date).strftime('%d/%b/%Y')%>";
+</script>
+
+<div class="main-container-alert">
+
+  <div class="table-main table-div">
+    <div class="table-row">
+      <div class="table-cell charts" style="border-style: solid;
+        border-width: 1px 0px 1px 1px;">
+        <%= render :partial => "user/feedback/pie" %>
+      </div>
+      
+			<div class="table-cell stats-numbers" style="border-style: solid; 
+        border-width: 1px 1px 1px 0px;">
+        <%= render :partial => "user/feedback/table" %>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="table-main control-div">
+  <div class="table-row">
+    <div class="table-cell controls">
+      <a href="#" class="success" onmousedown="viewIndividualStats()">Individual performance stats<br /> 
+      (<%=(start_date).to_date.strftime('%d/%b/%Y') %>)</a>
+			<a href="#" class="general" onmousedown="hideFeedback()">Show main<br />dashboard</a>
+    </div>
+  </div>
+</div>

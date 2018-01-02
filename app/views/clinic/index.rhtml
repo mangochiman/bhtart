@@ -242,7 +242,8 @@
       tt_cancel_show = '/people/search';
     </script>
   </head>
-  <body><div id='content'>
+  <body onload="showFeedback();">
+    <div id='content'>
       <div id='description' style='color:#777;position:absolute;margin-top:-70px;'></div><center>
         <form id = 'home' action=''>
           <table cellpadding=10>
@@ -333,3 +334,62 @@ on the rest of the stations %>
     </div>
   </body>
 </html>
+
+<script>
+function hideFeedback() {
+  document.getElementById("feedback-popup").style.display = 'none';
+  document.getElementById("alert-cover").style.display = 'none';
+}
+
+function showFeedback() {
+  var show_feedback = <%= GlobalProperty.find_by_property('show.user.feedback').property_value == 'true' rescue false %>;
+  if(!show_feedback)
+    return;
+
+  document.getElementById("alert-cover").style.display = 'inline';
+  document.getElementById("feedback-popup").style.display = 'inline';
+}
+
+function viewIndividualStats() {
+  document.location = '/notification_tracker/individual_feedback'
+}
+</script>
+
+
+<div id="alert-cover"></div>
+<div id="feedback-popup">
+  <%= render :partial => "user/feedback/feedback_popup" %>
+</div>
+
+<style>
+
+#alert-cover{
+  display: none;
+  position: absolute;
+  background-color: black;
+  width: 100%;
+  height: 102%;
+  left: 0%;
+  top: 0%;
+  z-index: 990;
+  opacity: 0.65;
+}
+
+#feedback-popup {
+  display: none;
+  background-color: #F4F4F4;
+  border: 2px solid #E0E0E0;
+  border-radius: 15px;
+  padding: 5px;
+  position: absolute;
+  margin-top: 10px;
+  /*height: 220px;
+  width: 530px; */
+  /*margin-left: 430px;*/
+  left: 1%;
+  z-index: 991;
+  height: 90%;
+  width: 95%;
+}
+
+</style>
