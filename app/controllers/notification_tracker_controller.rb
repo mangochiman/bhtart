@@ -47,7 +47,7 @@ EOF
         :user_id => User.current.id)
     end
 
-		@main_date =  '2017-12-01'.to_date #(Date.today - 1.day)
+		@main_date =  (Date.today - 1.day)
     start_date 	= @main_date.strftime('%Y-%m-%d 00:00:00') 
     end_date 		= @main_date.strftime('%Y-%m-%d 23:59:59') 
 
@@ -104,7 +104,7 @@ EOF
   end
 
   def individual_feedback_clinical_assessment
-    date        = params[:session_date].to_date #rescue (Date.today - 1.day)
+    date        = params[:session_date].to_date rescue (Date.today - 1.day)
     user_id     = User.current.id
 
     recommendations = ActiveRecord::Base.connection.select_all <<EOF

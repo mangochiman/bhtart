@@ -65,7 +65,8 @@
 
 </style>
 
-<%start_date = '2017-12-01'.to_date%>
+<%start_date = (Date.today - 1.day)%>
+
 <script>
   var startDate = "<%=(start_date)%>";
   var startDateDisplay = "<%=(start_date).strftime('%d/%b/%Y')%>";
