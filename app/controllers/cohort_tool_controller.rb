@@ -1934,7 +1934,6 @@ EOF
 		patient_ids = params[:patient_ids]
     @report_name = params[:indicator].upcase.gsub('_', ' ')
 		@logo = CoreService.get_global_property_value('logo').to_s
-
     patient_ids = '0' if patient_ids.blank?
 		identifier_type_arv_number = PatientIdentifierType.find_by_name('ARV Number').id
 
@@ -1944,7 +1943,7 @@ EOF
         patient_reason_for_starting_art_text(e.patient_id) reason_for_art
       FROM temp_earliest_start_date e
       RIGHT JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-      RIGHT JOIN patient_identifier i ON i.patient_id = e.patient_id 
+      LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id 
       AND i.identifier_type = #{identifier_type_arv_number} AND i.voided = 0
       RIGHT JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
       WHERE e.patient_id IN(#{patient_ids})
@@ -1967,8 +1966,14 @@ EOF
         middle_name = r['middle_name']
       end
 
+      if r['arv_number'].blank?
+        arv_number = ""
+      else
+        arv_number = r['arv_number']
+      end  
+
 			@people[r['patient_id'].to_i] = {
-        :arv_number => r['arv_number'],
+        :arv_number => arv_number,
         :name => "#{r['given_name']} #{middle_name} #{r['family_name']}".squish,
         :gender => (r['gender'] rescue 'Unknown'),
         :birthdate => r['birthdate'],
@@ -1980,7 +1985,6 @@ EOF
     end
 
 		@sorted_list = @people.sort_by{|patient_id, data| data[:arv_number].split('-').last.to_i}
-
 		render :layout => false
 	end
 
@@ -1990,8 +1994,7 @@ EOF
 
   def download_pdf
     quarter = params[:quarter]
-    #raise quarter.inspect
-    zoom = 0.8
+     zoom = 0.8
     file_directory = params[:file_directory]
     file_name = params[:file_name]
     output = "#{file_name}.pdf"
