@@ -348,6 +348,16 @@ function showFeedback() {
 
   document.getElementById("alert-cover").style.display = 'inline';
   document.getElementById("feedback-popup").style.display = 'inline';
+  /*
+  jQuery.ajax({
+  	type: "POST",
+  	url: "/notification_tracker/shown",
+  	data: "" ,
+  	success: function(result){
+   		return; 
+  	}
+	}); 
+  */
 }
 
 function viewIndividualStats() {
