@@ -33,6 +33,20 @@ EOF
   end
 
   def individual_feedback
+    if request.post?
+      NotificationTracker.create(:notification_name => 'Individual summary shown (all reports)',
+        :notification_response => 'Yes', :patient_id => 0,
+        :notification_datetime => Time.now(), 
+        :user_id => User.current.id)
+
+      redirect_to '/' and return
+    else
+      NotificationTracker.create(:notification_name => 'Individual summary shown',
+        :notification_response => 'Yes', :patient_id => 0,
+        :notification_datetime => Time.now(), 
+        :user_id => User.current.id)
+    end
+
 		@main_date =  '2017-12-01'.to_date #(Date.today - 1.day)
     start_date 	= @main_date.strftime('%Y-%m-%d 00:00:00') 
     end_date 		= @main_date.strftime('%Y-%m-%d 23:59:59') 
@@ -131,6 +145,15 @@ EOF
     end
 
     render :text => responses.to_json 
+  end
+
+  def shown
+    noti = NotificationTracker.create(:notification_name => 'Daily summary shown',
+      :notification_response => 'Yes', :patient_id => 0,
+      :notification_datetime => Time.now(), 
+      :user_id => User.current.id)
+
+    render :text => noti.to_json 
   end
 
 	private

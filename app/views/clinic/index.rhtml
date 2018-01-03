@@ -346,9 +346,17 @@ function showFeedback() {
   if(!show_feedback)
     return;
 
+  var shown_already = <%=  NotificationTracker.find(:first,
+    :conditions =>["notification_name = 'Daily summary shown'
+    AND DATE(notification_datetime) = ? AND user_id = ?", 
+    Date.today, User.current.id]).blank? != true  %>;
+
+  if(shown_already)
+    return;
+
   document.getElementById("alert-cover").style.display = 'inline';
   document.getElementById("feedback-popup").style.display = 'inline';
-  /*
+  
   jQuery.ajax({
   	type: "POST",
   	url: "/notification_tracker/shown",
@@ -357,7 +365,7 @@ function showFeedback() {
    		return; 
   	}
 	}); 
-  */
+  
 }
 
 function viewIndividualStats() {
