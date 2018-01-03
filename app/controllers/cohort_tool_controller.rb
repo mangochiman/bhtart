@@ -1932,7 +1932,6 @@ EOF
 
 	def list_more_details
 		patient_ids = params[:patient_ids]
-    raise patient_ids.inspect
     @report_name = params[:indicator].upcase.gsub('_', ' ')
 		@logo = CoreService.get_global_property_value('logo').to_s
     patient_ids = '0' if patient_ids.blank?
