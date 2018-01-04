@@ -1134,29 +1134,29 @@ EOF
 =begin
   Pregnant and breastfeeding status during Consultaiton
 =end
-    cohort.total_pregnant_women = self.total_pregnant_women(cohort.total_alive_and_on_art, end_date)
-    cohort.total_breastfeeding_women = self.total_breastfeeding_women(cohort.total_alive_and_on_art, end_date)
+    cohort.total_pregnant_women = self.total_pregnant_women(cohort.total_alive_and_on_art, start_date, end_date)
+    cohort.total_breastfeeding_women = self.total_breastfeeding_women(cohort.total_alive_and_on_art, start_date, end_date)
     cohort.total_other_patients = self.total_other_patients(cohort.total_alive_and_on_art, cohort.total_breastfeeding_women, cohort.total_pregnant_women)
 
 =begin
     Patients with CPT dispensed at least once before end of quarter and on ARVs
 =end
-    cohort.total_patients_on_arvs_and_cpt = self.total_patients_on_arvs_and_cpt(cohort.total_alive_and_on_art, end_date)
+    cohort.total_patients_on_arvs_and_cpt = self.total_patients_on_arvs_and_cpt(cohort.total_alive_and_on_art, start_date, end_date)
 
 =begin
     Patients with IPT dispensed at least once before end of quarter and on ARVS
 =end
-    cohort.total_patients_on_arvs_and_ipt = self.total_patients_on_arvs_and_ipt(cohort.total_alive_and_on_art, end_date)
+    cohort.total_patients_on_arvs_and_ipt = self.total_patients_on_arvs_and_ipt(cohort.total_alive_and_on_art,  start_date, end_date)
 
 =begin
     Patients on family planning methods at least once before end of quarter and on ARVs
 =end
-    cohort.total_patients_on_family_planning = self.total_patients_on_family_planning(cohort.total_alive_and_on_art, end_date)
+    cohort.total_patients_on_family_planning = self.total_patients_on_family_planning(cohort.total_alive_and_on_art, start_date, end_date)
 
 =begin
     Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
 =end
-    cohort.total_patients_with_screened_bp = self.total_patients_with_screened_bp(cohort.total_alive_and_on_art, end_date)
+    cohort.total_patients_with_screened_bp = self.total_patients_with_screened_bp(cohort.total_alive_and_on_art, start_date, end_date)
 
     puts "Started at: #{time_started}. Finished at: #{Time.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return cohort
@@ -1465,7 +1465,7 @@ EOF
 
   private
 
-  def self.total_patients_with_screened_bp(patients_list, end_date)
+  def self.total_patients_with_screened_bp(patients_list, start_date, end_date)
     patient_ids = []
     (patients_list || []).each do |row|
       patient_ids << row['patient_id'].to_i
@@ -1494,7 +1494,7 @@ EOF
     return total_percent
   end
 
-  def self.total_patients_on_family_planning(patients_list, end_date)
+  def self.total_patients_on_family_planning(patients_list, start_date, end_date)
 
     patient_ids = []; patient_list = []
 
@@ -1508,7 +1508,7 @@ EOF
     all_women = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date
       WHERE (gender = 'F' OR gender = 'Female') AND patient_id IN  (#{patient_ids.join(',')})
-      AND date_enrolled <= '#{end_date}'
+      AND date_enrolled BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       GROUP BY patient_id;
 EOF
 
@@ -1529,11 +1529,11 @@ EOF
       WHERE o.voided = 0 AND e.voided = 0
       AND (o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}) AND o.value_coded NOT IN (#{none_concept_id.join(',')}))
       AND o.person_id IN (#{patient_ids.join(',')})
-      AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
                                   WHERE obs.voided = 0
                     							AND (obs.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}))
-                    							AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+                    							AND obs.obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
@@ -1542,7 +1542,7 @@ EOF
     return total_percent
   end
 
-  def self.total_patients_on_arvs_and_ipt(patients_list, end_date)
+  def self.total_patients_on_arvs_and_ipt(patients_list, start_date, end_date)
     isoniazid_concept_id = ConceptName.find_by_name("Isoniazid").concept_id
     pyridoxine_concept_id = ConceptName.find_by_name("Pyridoxine").concept_id
 
@@ -1560,13 +1560,13 @@ EOF
       WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
       AND dos.quantity IS NOT NULL
       AND ods.patient_id in (#{patient_ids.join(',')})
-      AND ods.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND ods.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                     							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
                     							WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
                                   AND o.patient_id = ods.patient_id
                                   AND d.quantity IS NOT NULL
-                                  AND o.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+                                  AND o.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
 
       GROUP BY ods.patient_id;
 EOF
@@ -1575,7 +1575,7 @@ EOF
     return total_percent
   end
 
-  def self.total_patients_on_arvs_and_cpt(patients_list, end_date)
+  def self.total_patients_on_arvs_and_cpt(patients_list, start_date, end_date)
     cpt_concept_id = ConceptName.find_by_name("Cotrimoxazole").concept_id
 
     patient_ids = []
@@ -1592,13 +1592,13 @@ EOF
       WHERE ods.concept_id = #{cpt_concept_id}
       AND dos.quantity IS NOT NULL
       AND ods.patient_id in (#{patient_ids.join(',')})
-      AND ods.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND ods.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                     							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
                     							WHERE o.concept_id =  #{cpt_concept_id}
                                   AND d.quantity IS NOT NULL
                                   AND o.patient_id = ods.patient_id
-                                  AND o.start_date <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+                                  AND o.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
 
       GROUP BY ods.patient_id;
 EOF
@@ -1606,7 +1606,7 @@ EOF
     return total_percent
   end
 
-  def self.total_breastfeeding_women(patients_list, end_date)
+  def self.total_breastfeeding_women(patients_list, start_date, end_date)
     patient_ids = []
     (patients_list || []).each do |row|
       patient_ids << row['patient_id'].to_i
@@ -1616,7 +1616,7 @@ EOF
     result = []
 
     total_pregnant_females = []
-    (total_pregnant_women(patients_list, end_date) || []).each do |person|
+    (total_pregnant_women(patients_list, start_date, end_date) || []).each do |person|
       total_pregnant_females << person['person_id'].to_i
     end
 
@@ -1634,14 +1634,14 @@ EOF
       AND obs.voided = 0 AND enc.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       AND DATE(obs.obs_datetime) = (SELECT MAX(DATE(o.obs_datetime)) FROM obs o
       							WHERE o.concept_id = #{breastfeeding_concept_id} AND voided = 0
-      							AND o.person_id = obs.person_id AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+      							AND o.person_id = obs.person_id AND o.obs_datetime <='#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
       GROUP BY obs.person_id;
 EOF
 
     return results
   end
 
-  def self.total_pregnant_women(patients_list, end_date)
+  def self.total_pregnant_women(patients_list, start_date, end_date)
     patient_ids = []
     (patients_list || []).each do |row|
       patient_ids << row['patient_id'].to_i
@@ -2444,11 +2444,7 @@ EOF
               AND (gender = 'F' OR gender = 'Female')
               AND o.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
               AND (gender = 'F' OR gender = 'Female')
-              AND o.obs_datetime = (SELECT MAX(obs.obs_datetime) FROM obs obs
-                                    WHERE obs.concept_id IN (#{preg_concept_id} , #{patient_preg_concept_id}, #{preg_at_initiation_concept_id})
-                                    AND obs.person_id = o.person_id
-                                    AND obs.voided = 0
-                                    AND DATE(obs.obs_datetime) BETWEEN '#{start_date}' AND '#{end_date}')
+              AND DATE(o.obs_datetime) = DATE(t.earliest_start_date)
               GROUP BY patient_id
               HAVING value_coded = #{yes_concept_id};
 EOF
