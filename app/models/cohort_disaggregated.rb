@@ -58,7 +58,7 @@ class CohortDisaggregated
   and earliest start date of the 'ON ARVs' state within the quarter
   and having a REASON FOR ELIGIBILITY observation with an answer as PATIENT PREGNANT
 =end
-    cohort.total_pregnant_women = CohortRevise.total_pregnant_women(cohort.total_alive_and_on_art, end_date)
+    cohort.total_pregnant_women = CohortRevise.total_pregnant_women(cohort.total_alive_and_on_art, cum_start_date, end_date)
 
 =begin
     Breastfeeding mothers
@@ -67,7 +67,7 @@ class CohortDisaggregated
     ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
     and having a REASON FOR ELIGIBILITY observation with an answer as BREASTFEEDING
 =end
-    cohort.total_breastfeeding_women = CohortRevise.total_breastfeeding_women(cohort.total_alive_and_on_art, end_date)
+    cohort.total_breastfeeding_women = CohortRevise.total_breastfeeding_women(cohort.total_alive_and_on_art, cum_start_date, end_date)
 
       #Non-pregnant females (all ages)
 =begin

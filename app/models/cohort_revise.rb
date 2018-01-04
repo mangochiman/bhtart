@@ -1528,7 +1528,7 @@ EOF
        inner join encounter e on e.encounter_id = o.encounter_id AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
       WHERE o.voided = 0 AND e.voided = 0
       AND (o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}) AND o.value_coded NOT IN (#{none_concept_id.join(',')}))
-      AND o.person_id IN (#{patient_ids.join(',')})
+      AND o.person_id IN (#{patient_list.join(',')})
       AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
                                   WHERE obs.voided = 0
