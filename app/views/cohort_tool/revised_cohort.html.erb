@@ -3774,7 +3774,11 @@ EOF
 
   (cohort_attr || []).each do |cohort_number|
     c_attr = cohort_number[1..-2].sub("@cohort[:",'').sub(']','')
-      print_pdf_attr_ruby[c_attr] = @cohort.send(c_attr).count rescue 0 rescue @cohort.send(c_attr)
+     if c_attr.match(/total_patients_on_arvs_and_cpt|total_patients_on_arvs_and_ipt|total_patients_on_family_planning|total_patients_with_screened_bp/i)
+        print_pdf_attr_ruby[c_attr] = @cohort.send(c_attr)
+     else
+        print_pdf_attr_ruby[c_attr] = @cohort.send(c_attr).count rescue 0 rescue @cohort.send(c_attr)
+     end
   end
 
   (print_pdf_attr_ruby || {}).each do |name, count|%>
