@@ -156,6 +156,26 @@ EOF
     render :text => noti.to_json 
   end
 
+  def missed_encounters
+		session_date = params[:session_date].to_date 
+
+   	encounters = ActiveRecord::Base.connection.select_all <<EOF
+		SELECT missed_encounter_type_id FROM encounters_missed e
+		INNER JOIN provider_patient_interactions p ON e.ppi_id = p.ppi_id
+		INNER JOIN providers_who_interacted_with_patients x on x.pi_id = p.pi_id
+		WHERE user_id = #{User.current.id} AND visit_date = '#{session_date}'
+EOF
+
+		missed_encounters_hash = Hash.new(0)
+
+		(encounters || []).each do |e|
+			encounter_type = EncounterType.find(e['missed_encounter_type_id'].to_i)
+			missed_encounters_hash[encounter_type.name] += 1
+		end
+    
+    render :text => missed_encounters_hash.to_json 
+  end
+
 	private
 
   def get_user_response_on_family_planning_methods(user_id, patient_id, notification_datetime)

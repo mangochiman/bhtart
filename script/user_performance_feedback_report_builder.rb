@@ -1,6 +1,6 @@
 User.current = User.first
 
-Session_date = (Date.today) #'2017-12-31'.to_date
+Session_date = (Date.today - 1.day) 
 @start_date = Session_date.strftime('%Y-%m-%d 00:00:00')
 @end_date = Session_date.strftime('%Y-%m-%d 23:59:59')
 
@@ -53,7 +53,7 @@ def start
   build_temp_tables
 
   #dates = (1.week.ago.to_date..(Date.today - 1.day)).map{ |date| date }
-  dates = ((Session_date - 1.week).to_date..(Session_date - 1.day)).map{ |date| date }
+  dates = ((Session_date - 1.week).to_date..(Session_date)).map{ |date| date }
 
   (dates).each do |d|
     @start_date = d.strftime('%Y-%m-%d 00:00:00')

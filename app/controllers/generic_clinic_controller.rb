@@ -222,7 +222,10 @@ class GenericClinicController < ApplicationController
       ["DHA-Fast Track Reports", "/cohort_tool/select_dha_fast_track_date"]
     ]
 
-
+    show_user_feedback = GlobalProperty.find_by_property('show.user.feedback').property_value == 'true' rescue false
+    if show_user_feedback 
+      @reports << ["Individual performance stats", "/notification_tracker/individual_feedback"]
+    end
 
   	if what_app? == 'TB-ART'
   		@reports <<  ["Case Findings", "/cohort_tool/case_findings_quarter"] << ["TB Register","/cohort_tool/report_duration?report_name=tb_register"] #<< ["Laboratory Register","/cohort_tool/report_duration?report_name=lab_register"]

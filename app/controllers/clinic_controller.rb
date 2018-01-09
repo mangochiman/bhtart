@@ -90,7 +90,8 @@ class ClinicController < GenericClinicController
 		["Activate Fast track", "/properties/creation?value=enable_fast_track"],
     ["Show Swap Button", "/properties/creation?value=show_swap_button"],
     ["DDE Properties", "/properties/dde_properties_menu"],
-    ["DDE code map", "/properties/dde_code_map"]
+    ["DDE code map", "/properties/dde_code_map"],
+    ["Activate user feedback summary reports", "/properties/creation?value=show_user_feedback"]
 	  ]
 	else
 	  @settings = []
