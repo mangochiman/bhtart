@@ -1490,6 +1490,7 @@ EOF
                                   AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
+
     total_percent = (((results.count).to_f / (patient_ids.count).to_f) * 100).to_i
     return total_percent
   end
@@ -1508,14 +1509,15 @@ EOF
     all_women = ActiveRecord::Base.connection.select_all <<EOF
       SELECT * FROM temp_earliest_start_date
       WHERE (gender = 'F' OR gender = 'Female') AND patient_id IN  (#{patient_ids.join(',')})
-      AND date_enrolled BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
       GROUP BY patient_id;
 EOF
 
     (all_women || []).each do |patient|
         patient_list << patient['patient_id'].to_i
     end
-    patient_list = [] if patient_list.blank?
+    
+    return 0 if patient_list.blank?
 
     hiv_clinic_consultation_encounter_type_id = EncounterType.find_by_name('HIV CLINIC CONSULTATION').encounter_type_id
     method_of_family_planning_concept_id = ConceptName.find_by_name("Method of family planning").concept_id
@@ -1529,12 +1531,14 @@ EOF
       WHERE o.voided = 0 AND e.voided = 0
       AND (o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}) AND o.value_coded NOT IN (#{none_concept_id.join(',')}))
       AND o.person_id IN (#{patient_list.join(',')})
-      AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND o.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
-                                  WHERE obs.voided = 0
-                    							AND (obs.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}))
-                    							AND obs.obs_datetime BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-                                  AND obs.person_id = o.person_id)
+        WHERE obs.voided = 0
+        AND (obs.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}))
+        AND obs.obs_datetime BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+        AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+        AND obs.person_id = o.person_id)
       GROUP BY o.person_id;
 EOF
 
@@ -1560,13 +1564,15 @@ EOF
       WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
       AND dos.quantity IS NOT NULL
       AND ods.patient_id in (#{patient_ids.join(',')})
-      AND ods.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND ods.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                     							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
                     							WHERE o.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id})
                                   AND o.patient_id = ods.patient_id
                                   AND d.quantity IS NOT NULL
-                                  AND o.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+                                  AND o.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+                                  AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
 
       GROUP BY ods.patient_id;
 EOF
@@ -1592,13 +1598,15 @@ EOF
       WHERE ods.concept_id = #{cpt_concept_id}
       AND dos.quantity IS NOT NULL
       AND ods.patient_id in (#{patient_ids.join(',')})
-      AND ods.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND ods.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+      AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND DATE(ods.start_date) = (SELECT MAX(DATE(o.start_date)) FROM orders o
                     							 INNER JOIN drug_order d ON o.order_id = d.order_id AND o.voided = 0
                     							WHERE o.concept_id =  #{cpt_concept_id}
                                   AND d.quantity IS NOT NULL
                                   AND o.patient_id = ods.patient_id
-                                  AND o.start_date BETWEEN '#{start_date}' AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
+                                  AND o.start_date BETWEEN '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' 
+                                  AND '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')
 
       GROUP BY ods.patient_id;
 EOF
