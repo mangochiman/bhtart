@@ -977,7 +977,7 @@ EOF
         ORDER BY date_created DESC;
 EOF
 
-        @creator_name[id] = "(#{user_name['name']})"
+        @creator_name[id] = "(#{user_name['name']} (retired))"
       end
     end
 
