@@ -290,7 +290,8 @@ EOF
           defaulted_date = ActiveRecord::Base.connection.select_value "
             SELECT current_defaulter_date(#{disp_date.person_id}, '#{previous_date}')"
 
-          outcome_dates << defaulted_date.to_date if !defaulted_dates.include?(defaulted_date.to_date)
+          #Assumption that the patient started taking the dose the first day of receiving
+          outcome_dates << (defaulted_date.to_date - 1.day) if !defaulted_dates.include?(defaulted_date.to_date)
         end
       else
         previous_date = prev_dispenation_date.to_date
@@ -302,7 +303,8 @@ EOF
           defaulted_date = ActiveRecord::Base.connection.select_value "
             SELECT current_defaulter_date(#{disp_date.person_id}, '#{previous_date}')"
 
-          outcome_dates << defaulted_date.to_date if !defaulted_dates.include?(defaulted_date.to_date)
+          #Assumption that the patient started taking the dose the first day of receiving
+          outcome_dates << (defaulted_date.to_date - 1.day) if !defaulted_dates.include?(defaulted_date.to_date)
         end
       end
 
