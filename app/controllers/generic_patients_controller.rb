@@ -955,21 +955,30 @@ EOF
     @creator_name = {}
     @encounters.each do |encounter|
       id = encounter.creator
-      user_name = User.find(id).person.names.first
-      #@creator_name[id] = '(' + user_name.given_name.first + '. ' + user_name.family_name + ')'
-      if user_name.given_name.blank?
-        given_name = ""
-      else
-        given_name = user_name.given_name.first
-      end
+      begin
+        user_name = User.find(id).person.names.first
+        #@creator_name[id] = '(' + user_name.given_name.first + '. ' + user_name.family_name + ')'
+        if user_name.given_name.blank?
+          given_name = ""
+        else
+          given_name = user_name.given_name.first
+        end
 
-      if user_name.family_name.blank?
-        family_name = ""
-      else
-        family_name = user_name.family_name
-      end
+        if user_name.family_name.blank?
+          family_name = ""
+        else
+          family_name = user_name.family_name
+        end
+        @creator_name[id] = '(' + given_name.to_s + '. ' + family_name.to_s + ')'
+      rescue
+        user_name = ActiveRecord::Base.connection.select_one <<EOF
+        SELECT concat(given_name," ", family_name) name FROM person_name 
+        WHERE person_id = (SELECT person_id FROM users WHERE user_id = #{id} LIMIT 1)
+        ORDER BY date_created DESC;
+EOF
 
-      @creator_name[id] = '(' + given_name.to_s + '. ' + family_name.to_s + ')'
+        @creator_name[id] = "(#{user_name['name']})"
+      end
     end
 
     @prescriptions = @patient.orders.unfinished.prescriptions.all
