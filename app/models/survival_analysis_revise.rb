@@ -100,34 +100,25 @@ EOF
                   ConceptName.find_by_name('PATIENT PREGNANT').concept_id,
                   ConceptName.find_by_name('PREGNANT AT INITIATION?').concept_id]
 
-    pregnant_women = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT * FROM temp_earliest_start_date t
-        INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
-      WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND (o.concept_id IN (#{pregnant_concept_ids.join(', ')}) AND o.value_coded = #{yes_concept_id})
-      AND (gender = 'F' OR gender = 'Female') GROUP BY patient_id;
+     pregnant_women = ActiveRecord::Base.connection.select_all <<EOF
+              SELECT t.* , o.value_coded FROM temp_earliest_start_date t
+                INNER JOIN obs o ON o.person_id = t.patient_id AND o.voided = 0
+              WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+              AND (gender = 'F' OR gender = 'Female')
+              AND o.concept_id IN (#{pregnant_concept_ids.join(', ')})
+              AND (gender = 'F' OR gender = 'Female')
+              AND DATE(o.obs_datetime) = DATE(t.earliest_start_date)
+              GROUP BY patient_id
+              HAVING value_coded = #{yes_concept_id};
 EOF
 
     (pregnant_women || []).each do |patient|
       patient_id_plus_date_enrolled << [patient['patient_id'].to_i, patient['date_enrolled'].to_date]
     end
 
-    (patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
-      result = ActiveRecord::Base.connection.select_value <<EOF
-        SELECT * FROM obs
-        WHERE obs_datetime BETWEEN '#{date_enrolled.strftime('%Y-%m-%d 00:00:00')}'
-        AND '#{(date_enrolled.to_date + 30.days).strftime('%Y-%m-%d 23:59:59')}'
-        AND person_id = #{patient_id}
-        AND value_coded = #{yes_concept_id}
-        AND concept_id IN (#{pregnant_concept_ids.join(', ')})
-        AND voided = 0 GROUP BY person_id;
-EOF
-      patient_details << {:patient_id => patient_id, :date_enrolled => date_enrolled } unless result.blank?
-    end
-
     patient_ids = []
-    (patient_details || []).each do |row|
-      patient_ids << row[:patient_id].to_i
+    (patient_id_plus_date_enrolled || []).each do |patient_id, patient_date_enrolled|
+      patient_ids << patient_id.to_i
     end
 
     (breastfeeding_women || []).each do |aRow|
@@ -174,7 +165,7 @@ EOF
       RIGHT JOIN temp_patient_outcomes o 
       ON o.patient_id = e.patient_id
       WHERE e.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-      AND date_enrolled <= '#{end_date}' GROUP BY patient_id;
+      AND e.age_at_initiation <= '#{max_age}' GROUP BY patient_id;
 EOF
 
     (total_registered || []).each do |patient|
