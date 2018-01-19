@@ -307,25 +307,47 @@ BEGIN
 DECLARE set_program_id INT;
 DECLARE set_patient_state INT;
 DECLARE set_outcome varchar(25);
+DECLARE set_date_started date;
+DECLARE set_patient_state_died INT;
+DECLARE set_died_concept_id INT;
 DECLARE set_timestamp DATETIME;
 
 SET set_timestamp = DATE_FORMAT(visit_date, '%Y-%m-%d 23:59:59');
 SET set_program_id = (SELECT program_id FROM program WHERE name ="HIV PROGRAM" LIMIT 1);
 
-SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.date_created DESC LIMIT 1);
-
+SET set_patient_state = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) ORDER BY start_date DESC, patient_state.patient_state_id DESC, patient_state.date_created DESC LIMIT 1);
 
 IF set_patient_state = 1 THEN
-  SET set_outcome = 'Pre-ART (Continue)';
+  SET set_patient_state = current_defaulter(patient_id, set_timestamp);
+
+  IF set_patient_state = 1 THEN
+    SET set_outcome = 'Defaulted';
+  ELSE
+    SET set_outcome = 'Pre-ART (Continue)';
+  END IF;
 END IF;
 
 IF set_patient_state = 2   THEN
   SET set_outcome = 'Patient transferred out';
 END IF;
 
-IF set_patient_state = 3 THEN
+IF set_patient_state = 3 OR set_patient_state = 127 THEN
   SET set_outcome = 'Patient died';
 END IF;
+
+/* ............... This block of code checks if the patient has any state that is "died" */
+IF set_patient_state != 3 AND set_patient_state != 127 THEN
+  SET set_patient_state_died = (SELECT state FROM `patient_state` INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id AND p.program_id = set_program_id WHERE (patient_state.voided = 0 AND p.voided = 0 AND p.program_id = program_id AND DATE(start_date) <= visit_date AND p.patient_id = patient_id) AND (patient_state.voided = 0) AND state = 3 ORDER BY patient_state.patient_state_id DESC, patient_state.date_created DESC, start_date DESC LIMIT 1);
+
+  SET set_died_concept_id = (SELECT concept_id FROM concept_name WHERE name = 'Patient died' LIMIT 1);
+
+  IF set_patient_state_died IN(SELECT program_workflow_state_id FROM program_workflow_state WHERE concept_id = set_died_concept_id AND retired = 0) THEN
+    SET set_outcome = 'Patient died';
+    SET set_patient_state = 3;
+  END IF;
+END IF;
+/* ....................  ends here .................... */
+
 
 IF set_patient_state = 6 THEN
   SET set_outcome = 'Treatment stopped';
@@ -351,7 +373,7 @@ IF set_outcome IS NULL THEN
   END IF;
 
   IF set_outcome IS NULL THEN
-    SET set_outcome = 'On antiretrovirals';
+    SET set_outcome = 'Unknown';
   END IF;
 
 END IF;
@@ -1194,14 +1216,18 @@ EOF
           AND (ft2.patient_id IN (#{patient_ids.join(',')}) 
           AND ft2.patient_id NOT IN (#{patients_with_unknown_side_effects.join(',')}))
           AND ft2.visit_date <= '#{end_date}'
-          AND ft2.visit_date != (SELECT min(f2.visit_date) FROM flat_table2 f2
+          AND ft2.visit_date = (SELECT max(f2.visit_date) FROM flat_table2 f2
                             WHERE f2.side_effects_present IS NOT NULL
                             AND f2.patient_id = ft2.patient_id
                             AND f2.visit_date <= '#{end_date}');
 EOF
 
+
+
+
+
     (malawi_art_side_effects || []).each do |row|
-      results << row
+      results << row['patient_id']
     end
     return results
   end
@@ -1235,10 +1261,11 @@ EOF
     return [] if patient_ids.blank?
 
     data = ActiveRecord::Base.connection.select_all <<EOF
-      SELECT t.patient_id, regimen_category_dispensed, regimen_category_treatment as regimen_category, visit_date
+      SELECT t.patient_id, regimen_category_dispensed, ifnull(regimen_category_treatment, regimen_category) as regimen_category, visit_date
       FROM flat_table2 t
       WHERE t.patient_id IN (#{patient_ids.join(', ')})
-      AND t.visit_date = (SELECT max(visit_date) FROM flat_table2 f where t.patient_id = f.patient_id AND DATE(f.visit_date) <= '#{end_date}' AND regimen_category_treatment IS NOT NULL);
+      AND t.visit_date = (SELECT max(visit_date) FROM flat_table2 f where t.patient_id = f.patient_id AND DATE(f.visit_date) <= '#{end_date}' 
+                           AND (regimen_category_treatment IS NOT NULL OR regimen_category_dispensed IS NOT NULL));
 EOF
 
     (data || []).each do |regimen_attr|
@@ -1525,7 +1552,7 @@ EOF
 
       other_uknown_reason_patients = ActiveRecord::Base.connection.select_all <<EOF
         SELECT * FROM flat_cohort_table
-        WHERE reason_for_starting IN ('WHO stage II adults', 'WHO stage II peds', 'WHO stage 2', 'WHO stage I adult', 'WHO stage I peds', 'WHO stage 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2', 'LYMPHOCYTES')
+        WHERE reason_for_starting IN ('WHO stage II adult', 'WHO stage II adults', 'WHO stage II peds', 'WHO stage 2', 'WHO stage I adult', 'WHO stage I peds', 'WHO stage 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2', 'LYMPHOCYTES')
         AND date_enrolled <> '0000-00-00'
         AND date_enrolled BETWEEN '#{start_date}' AND '#{end_date}' GROUP BY patient_id;
 EOF
@@ -1623,7 +1650,7 @@ EOF
     other_asymptomatic_patients = ActiveRecord::Base.connection.select_all <<EOF
           SELECT patient_id, date_enrolled, reason_for_starting
           FROM flat_cohort_table
-          WHERE reason_for_starting IN ('WHO stage II adults', 'WHO stage II peds', 'WHO stage 2', 'WHO stage I adult', 'WHO stage I peds', 'WHO stage 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2', 'LYMPHOCYTES')
+          WHERE reason_for_starting IN ('WHO stage II adult', 'WHO stage II adults', 'WHO stage II peds', 'WHO stage 2', 'WHO stage I adult', 'WHO stage I peds', 'WHO stage 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 1', 'LYMPHOCYTE COUNT BELOW THRESHOLD WITH WHO STAGE 2', 'LYMPHOCYTES')
           AND date_enrolled <> '0000-00-00'
           AND date_enrolled BETWEEN '#{start_date}' and '#{end_date}' GROUP BY patient_id;
 EOF
@@ -1771,18 +1798,27 @@ EOF
   def self.pregnant_females_all_ages(start_date, end_date)
     registered = [] ; patient_id_plus_date_enrolled = []
 
+    all_females_patients =  ActiveRecord::Base.connection.select_all <<EOF
+               SELECT * FROM flat_cohort_table t
+                WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+                AND (gender = 'F' OR gender = 'Female')
+                AND date_enrolled <> '0000-00-00'
+                GROUP BY patient_id;
+EOF
+    female_patients = []
+    (all_females_patients || []).each do |patient|
+      female_patients << patient['patient_id'].to_i
+    end
+
     #(patient_id_plus_date_enrolled || []).each do |patient_id, date_enrolled|
     registered = ActiveRecord::Base.connection.select_all <<EOF
-                    SELECT ft2.patient_id, fct.date_enrolled, ft2.visit_date, ft2.patient_pregnant
-                    FROM flat_cohort_table fct
-                      INNER JOIN temp_patient_pregnant ft2 ON ft2.patient_id = fct.patient_id
-                    WHERE ft2.patient_pregnant = 'Yes' AND fct.gender = 'F'
-                    AND fct.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-                    AND ft2.visit_date = (SELECT min(f2.visit_date) FROM flat_table2 f2
-                                WHERE  f2.patient_id = ft2.patient_id
-                                AND f2.patient_pregnant IS NOT NULL
-                                AND f2.visit_date BETWEEN '#{start_date}' AND '#{end_date}')
-                    GROUP BY fct.patient_id;
+              SELECT * FROM temp_patient_pregnant t
+              WHERE t.patient_id IN (#{female_patients.join(',')})
+              AND t.visit_date BETWEEN '#{start_date}' AND '#{end_date}'
+              AND t.patient_pregnant = 'Yes'
+              AND t.visit_date = (SELECT max(p.visit_date) FROM temp_patient_pregnant p
+                                  WHERE p.patient_id = t.patient_id
+                                  AND p.visit_date  BETWEEN '#{start_date}' AND '#{end_date}');
 EOF
 
     pregnant_at_initiation = ActiveRecord::Base.connection.select_all <<EOF
