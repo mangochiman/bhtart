@@ -230,7 +230,7 @@ EOF
   def get_visit_status_trends(param_date)
     visit_dates = ActiveRecord::Base.connection.select_all <<EOF
     SELECT DISTINCT(visit_date) visit_date 
-    FROM openmrs_qech.patient_seen e 
+    FROM patient_seen e 
     WHERE visit_date BETWEEN '#{param_date - 6.day}'
     AND '#{param_date}'
     ORDER BY visit_date; 
