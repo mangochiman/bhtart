@@ -1984,6 +1984,8 @@ EOF
         Where e.patient_id = #{patient_id.to_i};
 EOF
 
+    end
+
     (records || []).each do |r|
       if r['middle_name'] == "n/a"
         middle_name = ""
