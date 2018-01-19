@@ -1160,7 +1160,12 @@ EOF
 
   def number_of_booked_patients
     params[:date] = Date.today if params[:date].blank?
-    date = params[:date].to_date
+    begin
+      date = params[:date].to_date
+    rescue
+      date = params[:date][0..9].to_date
+    end
+
     concept_id = ConceptName.find_by_name('APPOINTMENT DATE').concept_id
 
     start_date = date.strftime('%Y-%m-%d 00:00:00')
