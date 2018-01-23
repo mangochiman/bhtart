@@ -1,6 +1,6 @@
 User.current = User.first
 
-Session_date = (Date.today - 1.day) 
+Session_date = (Date.today) 
 @start_date = Session_date.strftime('%Y-%m-%d 00:00:00')
 @end_date = Session_date.strftime('%Y-%m-%d 23:59:59')
 
