@@ -29,6 +29,11 @@
   font-size: 12px;
 }
 
+.bar-chart {
+  font-size: 12px;
+  font-family: "Times New Roman", Times, serif;
+}
+
 </style>
 <%=javascript_include_tag "Highcharts/jquery.1.8.2.min"%>
 
@@ -59,8 +64,8 @@ $(function () {
         },
         plotOptions: {
             pie: {
-                innerSize: 90,
-                depth: 75,
+                innerSize: 60,
+                depth: 35,
 						dataLabels: {
                 enabled: true
             },
@@ -100,9 +105,9 @@ $(function () {
 <%=javascript_include_tag "Highcharts/js/highcharts-3d"%>
 <%=javascript_include_tag "Highcharts/js/modules/exporting"%>
 
-<div id="container-pie" style="height: 500px; margin-top: 5px;"></div>
+<div id="container-pie" style="height: 500px; font-size: 12px;"></div>
 
-<div class="stats">
+<div class="stats bar-chart">
 
   
   <div class="stats-row">

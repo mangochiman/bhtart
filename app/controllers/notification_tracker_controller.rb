@@ -256,7 +256,7 @@ EOF
       complete    = (total_seen - incomplete)
 
       trends << { :total_seen => total_seen, :incomplete => incomplete,
-        :complete => complete, :visit_date => visit_date.strftime('%d/%b/%Y') }
+        :complete => complete, :visit_date => visit_date.strftime('%d/%b/%y') }
 
     end
 

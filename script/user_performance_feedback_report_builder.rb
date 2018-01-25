@@ -52,7 +52,7 @@ def start
 
   build_temp_tables
 
-  dates = ((Session_date - 6.day).to_date..(Session_date)).map{ |date| date }
+  dates = ((Session_date - 4.day).to_date..(Session_date)).map{ |date| date }
 
   (dates).each do |d|
     @start_date = d.strftime('%Y-%m-%d 00:00:00')
