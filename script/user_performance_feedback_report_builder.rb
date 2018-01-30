@@ -1,6 +1,6 @@
 User.current = User.first
 
-Session_date = (Date.today - 1.day) 
+Session_date = (Date.today) 
 @start_date = Session_date.strftime('%Y-%m-%d 00:00:00')
 @end_date = Session_date.strftime('%Y-%m-%d 23:59:59')
 
@@ -52,8 +52,7 @@ def start
 
   build_temp_tables
 
-  #dates = (1.week.ago.to_date..(Date.today - 1.day)).map{ |date| date }
-  dates = ((Session_date - 1.week).to_date..(Session_date)).map{ |date| date }
+  dates = ((Session_date - 4.day).to_date..(Session_date)).map{ |date| date }
 
   (dates).each do |d|
     @start_date = d.strftime('%Y-%m-%d 00:00:00')
@@ -294,7 +293,7 @@ def check_visit_completeness(patient_id, check_all_encounters = false)
 
 	fast_track_patient = false
 	unless latest_fast_track_answer_obs.blank?
-		latest_fast_track_answer = latest_fast_track_answer_obs.question("FAST").first.answer_string.squish.upcase 
+		latest_fast_track_answer = latest_fast_track_answer_obs.to_s.split(':')[1].squish.upcase 
 		fast_track_patient = true if latest_fast_track_answer == 'YES'
 	end
 	############################### chacking for fast track end ##################

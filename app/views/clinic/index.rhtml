@@ -376,7 +376,11 @@ function viewIndividualStats() {
 
 <div id="alert-cover"></div>
 <div id="feedback-popup">
+  <%show_feedback = GlobalProperty.find_by_property('show.user.feedback').property_value == 'true' rescue false 
+    if show_feedback
+  %>
   <%= render :partial => "user/feedback/feedback_popup" %>
+  <%end%>
 </div>
 
 <style>
