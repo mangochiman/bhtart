@@ -119,7 +119,7 @@ EOF
     responses = []
     (recommendations || []).each do |r|
       next unless r['notification_name'].match(/weight loss|family planning method|booking|medication induced/i)
-      next if r['notification_response'].match(/Confirm weight loss|Look for another date|Select other regimens/i)
+      next unless r['notification_response'].match(/Confirm weight loss|Look for another date|Select other regimens/i)
       description = get_notification_description(r['notification_name'])
       patient_id = r['patient_id'].to_i
 
