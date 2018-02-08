@@ -59,12 +59,9 @@ EOF
       :conditions =>["name IN(?)", hiv_encounter_types]).map(&:id)
 
 	  patients_seen = ActiveRecord::Base.connection.select_all <<EOF
-		SELECT count(e.patient_id) patient_id FROM encounter e
-		RIGHT JOIN obs ON e.patient_id = obs.person_id
-		RIGHT JOIN orders o ON o.encounter_id = e.encounter_id
+		SELECT count(e.patient_id), e.patient_id FROM encounter e
 		WHERE encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-		AND obs.voided = 0 AND e.voided = 0 AND o.voided = 0 
-		AND e.creator = #{User.current.id}
+		AND e.voided = 0 AND e.creator = #{User.current.id}
 		AND encounter_type IN(#{hiv_encounter_type_ids.join(',')}) 
 		GROUP BY e.patient_id;
 EOF
@@ -280,12 +277,9 @@ EOF
 			end_date 		= vdate.strftime('%Y-%m-%d 23:59:59') 
 
 			patients_seen = ActiveRecord::Base.connection.select_all <<EOF
-			SELECT count(e.patient_id) patient_id FROM encounter e
-			RIGHT JOIN obs ON e.patient_id = obs.person_id
-			RIGHT JOIN orders o ON o.encounter_id = e.encounter_id
+			SELECT count(e.patient_id), e.patient_id FROM encounter e
 			WHERE encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}'
-			AND obs.voided = 0 AND e.voided = 0 AND o.voided = 0 
-			AND e.creator = #{User.current.id}
+			AND e.voided = 0 AND e.creator = #{User.current.id}
 			AND encounter_type IN(#{hiv_encounter_type_ids.join(',')}) 
 			GROUP BY e.patient_id;
 EOF
