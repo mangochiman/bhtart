@@ -380,6 +380,9 @@
             </thead>
             <tbody>
             <% (@data || []).each do |patient_id, data| 
+              date_defaulted = data[:latest_defaulted_date].to_date
+              next unless date_defaulted >= @start_date && date_defaulted <= @end_date
+
               address = ''
               address += "District: #{data[:district] rescue ''}"
               address += '<br />' 
@@ -393,7 +396,7 @@
                     <td style="text-align: center;"><%= data[:first_name] %></td>
                     <td style="text-align: center;"><%= data[:last_name] %></td>
                     <td style="text-align: center;"><%= data[:last_visit_date] %></td>
-                    <td style="padding-left: 10px;"><%= (data[:latest_defaulted_date].to_date.strftime('%d/%b/%Y') rescue nil) %></td>
+                    <td style="padding-left: 10px;"><%= date_defaulted.strftime('%d/%b/%Y') %></td>
                     <td style="text-align: left;"><%= address %></td>
                     <td style="padding-left: 10px;"><%= data[:phone_number] %></td>
                     <td align='center' class="create_button">

@@ -24,7 +24,7 @@
   <% end %>
   <% month_names = month_name_options.gsub('<option value="Unknown">Unknown</option>', '') %>
 
-<% if params[:type] == "missed" %>
+<% if params[:type] == "missed" || params[:type] == 'defaulter' %>
   <%= text_field_tag "start_year", nil,
                      {:helpText => 'Start Year',
                       :field_type => 'number',
