@@ -1,5 +1,5 @@
 <%=javascript_include_tag "Highcharts/js/jquery.min"%>
-<%=javascript_include_tag "Highcharts/js/highcharts"%>
+<%=javascript_include_tag "Highcharts/js/stock.highcharts"%>
 
 <style type="text/css">
 
@@ -172,7 +172,7 @@
 
     data = [{data: expiry_stocks.data}, {data: stock_level.data}];
     return data;
-    return [{name: 'Month(s) of stock', showInLegend: false, data: correctedWeights, pointWidth: 20}];
+    //return [{name: 'Month(s) of stock', showInLegend: false, data: correctedWeights, pointWidth: 20}];
   }
 
 </script>
