@@ -742,7 +742,7 @@ EOF
       @patient_id = params[:id]
       @patient = Patient.find(params[:id])
       @edit_page = edit_mastercard_attribute(params[:field].to_s)
-
+      @military_ranks = military_ranks
       if @edit_page == "guardian"
         @guardian = {}
         @patient.person.relationships.map{|r| @guardian[art_guardian(@patient)] = Person.find(r.person_b).id.to_s;'' }

@@ -7,6 +7,7 @@ class GenericPeopleController < ApplicationController
 
 	def new
 		@occupations = occupations
+    @military_ranks = military_ranks
 	end
 
 	def identifiers
@@ -1312,9 +1313,12 @@ EOF
   end
 
   def occupations
-    ['','Driver','Housewife','Messenger','Business','Farmer','Salesperson','Teacher',
-			'Student','Security guard','Domestic worker', 'Police','Office worker',
-			'Preschool child','Mechanic','Prisoner','Craftsman','Healthcare Worker','Soldier'].sort.concat(["Other","Unknown"])
+    occupations = ["MDF Active", "MDF Reserve", "MDF Retired", "Civilian"]
+    return occupations
+    #['','Driver','Housewife','Messenger','Business','Farmer','Salesperson','Teacher',
+			#'Student','Security guard','Domestic worker', 'Police','Office worker',
+			#'Preschool child','Mechanic','Prisoner','Craftsman','Healthcare Worker','Soldier'].sort.concat(["Other","Unknown"])
+
   end
 
   def edit

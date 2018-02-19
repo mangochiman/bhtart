@@ -1778,6 +1778,9 @@ EOF
     patient.cell_phone_number = get_attribute(person, 'Cell phone number')
     patient.office_phone_number = get_attribute(person, 'Office phone number')
     patient.home_phone_number = get_attribute(person, 'Home phone number')
+    patient.regiment_id = get_attribute(person, 'Regiment ID')
+    patient.date_joined_military = get_attribute(person, 'Date Joined Military')
+    patient.military_rank = get_attribute(person, 'Military Rank')
     patient.guardian = art_guardian(person.patient) rescue nil
     patient
   end
@@ -2157,7 +2160,7 @@ EOF
 		address_params = params["addresses"]
 		names_params = params["names"]
 		patient_params = params["patient"]
-		params_to_process = params.reject{|key,value| key.match(/addresses|patient|names|relation|cell_phone_number|home_phone_number|office_phone_number|agrees_to_be_visited_for_TB_therapy|agrees_phone_text_for_TB_therapy/) }
+		params_to_process = params.reject{|key,value| key.match(/addresses|patient|names|relation|cell_phone_number|home_phone_number|office_phone_number|agrees_to_be_visited_for_TB_therapy|agrees_phone_text_for_TB_therapy|regiment_id|date_joined_military|military_rank/) }
 		birthday_params = params_to_process.reject{|key,value| key.match(/gender/) }
 		person_params = params_to_process.reject{|key,value| key.match(/birth_|age_estimate|occupation|identifiers/) }
 
@@ -2202,6 +2205,20 @@ EOF
 		  :person_attribute_type_id => PersonAttributeType.find_by_name("Home Phone Number").person_attribute_type_id,
 		  :value => params["home_phone_number"]) unless params["home_phone_number"].blank? rescue nil
 
+    ##### MILITARY START #####
+    person.person_attributes.create(
+		  :person_attribute_type_id => PersonAttributeType.find_by_name("Regiment ID").person_attribute_type_id,
+		  :value => params["regiment_id"]) unless params["regiment_id"].blank? rescue nil
+
+    person.person_attributes.create(
+		  :person_attribute_type_id => PersonAttributeType.find_by_name("Date Joined Military").person_attribute_type_id,
+		  :value => params["date_joined_military"]) unless params["date_joined_military"].blank? rescue nil
+    
+    person.person_attributes.create(
+		  :person_attribute_type_id => PersonAttributeType.find_by_name("Military Rank").person_attribute_type_id,
+		  :value => params["military_rank"]) unless params["military_rank"].blank? rescue nil
+
+    ##### MILITARY END #####
     # TODO handle the birthplace attribute
 
 		if (!patient_params.nil?)

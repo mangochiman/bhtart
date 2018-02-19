@@ -1988,4 +1988,11 @@ class ApplicationController < GenericApplicationController
     return false
   end
 
+  def military_ranks
+    ranks = ["Second Lieutenant", "First Lieutenant", "Captain", "Major", "Lieutenant Colonel",
+      "Colonel", "Brigadier General", "Major General", "Lieutenant General", "General"
+    ]
+    return ranks
+  end
+  
 end

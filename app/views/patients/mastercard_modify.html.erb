@@ -1,11 +1,11 @@
 <script>
-  <%if params[:source].to_s == "opd" %>
+<%if params[:source].to_s == "opd" %>
     var tt_cancel_destination = "/patients/opdcard/" + "<%=@patient_id%>"
-  <%elsif params[:from_demo].to_s == "true" %>
+<%elsif params[:from_demo].to_s == "true" %>
     var tt_cancel_destination = "/people/demographics/" + "<%=@patient_id%>"
-  <%else%>
+<%else%>
     var tt_cancel_destination = "/patients/mastercard?patient_id=" + "<%=@patient_id%>"
-  <%end%>
+<%end%>
 </script>
 <form action = "mastercard_modify" method = "post">
   <% if @edit_page == "arv_number" %>
@@ -23,6 +23,21 @@
   <% if @edit_page == "sex" %>
     <%= render(:partial => "/patients/mastercard_modify_sex" ) %>
   <% end %>
+
+
+  <% if @edit_page == "regiment_id" %>
+    <%= render(:partial => "/patients/mastercard_modify_regiment_id" ) %>
+  <% end %>
+
+  <% if @edit_page == "date_joined_military" %>
+    <%= render(:partial => "/patients/mastercard_modify_date_joined_military" ) %>
+  <% end %>
+
+  <% if @edit_page == "military_rank" %>
+    <%= render(:partial => "/patients/mastercard_modify_military_rank" ) %>
+  <% end %>
+
+
 
   <% if @edit_page == "location" %>
     <%= render(:partial => "/patients/mastercard_modify_location" ) %>

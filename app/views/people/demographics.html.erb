@@ -60,16 +60,43 @@
       <th>Name</th>
       <td class="data"><%=@patient_bean.name%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=name&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=name&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
 
     <tr>
       <th>Gender</th>
-      <td><%=@patient_bean.sex%></td>
-      <td class="data"><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=sex&id=#{@person.id}&from_demo=true", 
+      <td class="data"><%=@patient_bean.sex%></td>
+      <td><%= link_to "Edit", 
+          "/patients/mastercard_modify?field=sex&id=#{@person.id}&from_demo=true",
+          :class => "anchor_class" %>
+      </td>
+    </tr>
+
+    <tr>
+      <th>Regiment ID</th>
+      <td class="data"><%=@patient_bean.regiment_id%></td>
+      <td><%= link_to "Edit",
+          "/patients/mastercard_modify?field=regiment_id&id=#{@person.id}&from_demo=true",
+          :class => "anchor_class" %>
+      </td>
+    </tr>
+
+    <tr>
+      <th>Date Joined Military</th>
+      <td class="data"><%=@patient_bean.date_joined_military %></td>
+      <td><%= link_to "Edit",
+          "/patients/mastercard_modify?field=date_joined_military&id=#{@person.id}&from_demo=true",
+          :class => "anchor_class" %>
+      </td>
+    </tr>
+
+    <tr>
+      <th>Military Rank</th>
+      <td class="data"><%=@patient_bean.military_rank %></td>
+      <td><%= link_to "Edit",
+          "/patients/mastercard_modify?field=military_rank&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
@@ -78,14 +105,14 @@
       <th>Date of birth</th>
       <td class="data"><%=@patient_bean.birth_date%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=age&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=age&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
 
     <tr>
       <th>Home district</th>
-	  <td class="data"><%=@patient_bean.home_district%></td>
+      <td class="data"><%=@patient_bean.home_district%></td>
       <td><%= link_to "Edit", "/patients/mastercard_modify?field=home_district&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
@@ -95,7 +122,7 @@
       <th>Traditional authority</th>
       <td class="data"><%=@patient_bean.traditional_authority%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=ta&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=ta&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
@@ -104,7 +131,7 @@
       <th>Occupation</th>
       <td class="data"><%=@patient_bean.occupation%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=occupation&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=occupation&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
@@ -113,7 +140,7 @@
       <th>Area of residence</th>
       <td class="data"><%=@patient_bean.current_residence%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=location&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=location&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
@@ -122,7 +149,7 @@
       <th>Land mark</th>
       <td class="data"><%=@patient_bean.landmark%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=address&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=address&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
@@ -131,7 +158,7 @@
       <th>Cell phone number</th>
       <td class="data"><%=@patient_bean.cell_phone_number%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=cell_phone_number&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=cell_phone_number&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
@@ -140,7 +167,7 @@
       <th>Office phone number</th>
       <td class="data"><%=@patient_bean.office_phone_number%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=office_phone_number&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=office_phone_number&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>
@@ -149,7 +176,7 @@
       <th>Home phone number</th>
       <td class="data"><%=@patient_bean.home_phone_number%></td>
       <td><%= link_to "Edit", 
-          "/patients/mastercard_modify?field=home_phone_number&id=#{@person.id}&from_demo=true", 
+          "/patients/mastercard_modify?field=home_phone_number&id=#{@person.id}&from_demo=true",
           :class => "anchor_class" %>
       </td>
     </tr>

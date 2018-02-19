@@ -65,42 +65,42 @@
           url: "/patients/repeat_viral_load_request",
           data: "patient_id=<%=@patient.id %>",
           success: function(){
-              jQuery.ajax({
-                  url: "/lims?json=true&id=<%= @patient.id%>&location_id=<%= session[:location_id]%>&user_id=<%= session['warden.user.user.key']%>",
-                  success: function(data){
-                       var json = JSON.parse(data);
-                       window.location = "/lims/lims_barcode?patient_id=<%= @patient.id%>&tracking_number=" + json['tracking_number']
-                  },
-                  error: function(e){
-                      window.location="/patients/show/<%=@patient.id%>";
-                  }
-              });
+            jQuery.ajax({
+              url: "/lims?json=true&id=<%= @patient.id%>&location_id=<%= session[:location_id]%>&user_id=<%= session['warden.user.user.key']%>",
+              success: function(data){
+                var json = JSON.parse(data);
+                window.location = "/lims/lims_barcode?patient_id=<%= @patient.id%>&tracking_number=" + json['tracking_number']
+              },
+              error: function(e){
+                window.location="/patients/show/<%=@patient.id%>";
+              }
+            });
 
           },
           error: function(e){
-              window.location="/patients/show/<%=@patient.id%>";
+            window.location="/patients/show/<%=@patient.id%>";
           }
         });
       }
 
     </script>
     <style>
-        #msg-div{
-            position: absolute;
-            right: 2%;
-            top: 32%;
-            font-weight: bold;
-            background: lightgreen;
-            z-index: 5000;
-            width: 300px;
-            padding: 10px;
-            font-size: 1.3em;
-            height: 5%;
-            text-align: center;
-            vertical-align: middle;
-            border-radius: 3px;
-            color: darkslategray;
-        }
+      #msg-div{
+        position: absolute;
+        right: 2%;
+        top: 32%;
+        font-weight: bold;
+        background: lightgreen;
+        z-index: 5000;
+        width: 300px;
+        padding: 10px;
+        font-size: 1.3em;
+        height: 5%;
+        text-align: center;
+        vertical-align: middle;
+        border-radius: 3px;
+        color: darkslategray;
+      }
       #tab6 {
         background-color: white;
         border: 0 none;
@@ -303,6 +303,7 @@
             <span id='patient_name'><%= @patient_bean.name rescue "" %></span>
             <span id='patient_id'><%= @patient_bean.national_id_with_dashes rescue "" %></span>
             <span id='patient_residence'><%= @patient_bean.current_residence rescue "" %></span>
+
             <% @patient_age = @patient_bean.age rescue 0 %>
             <% if @patient_age < 2 %>
               <span id='patient_age'><%= "#{@patient_bean.age_in_months} Months" rescue "" %></span>
@@ -314,6 +315,20 @@
 
             <div id="patient_card">
               <% session_date = session[:datetime].to_date rescue Date.today %>
+
+              <% unless @patient_bean.regiment_id.blank? %>
+                <span value="<%= "#{@patient_bean.regiment_id}" %>"> Regiment ID</span>
+              <% end %>
+
+              <% unless @patient_bean.date_joined_military.blank? %>
+                <% date_joined_military = @patient_bean.date_joined_military.to_date.strftime('%b, %Y') rescue @patient_bean.date_joined_military%>
+                <span value="<%= "#{date_joined_military}" %>"> Date Joined Military</span>
+              <% end %>
+
+              <% unless @patient_bean.military_rank.blank? %>
+                <span value="<%= "#{@patient_bean.military_rank}" %>"> Military Rank</span>
+              <% end %>
+
               <% if !@art_start_date.blank?  %>
                 <span value="<%= "#{PatientService.period_on_treatment(@art_start_date, session_date).to_i} month(s)" %>"> Period on ART </span>
               <% end %>
@@ -343,10 +358,10 @@
               <% end %>
 
               <!--<% if (@hiv_status rescue nil) != nil && (@hiv_status) != "" %>
-                <span value="<%= @hiv_status rescue "" %>">HIV Status</span>
+                        <span value="<%= @hiv_status rescue "" %>">HIV Status</span>
               <% end %>-->
 
-               <% if (@confirmatory_hiv_test_type rescue nil) != nil && (@confirmatory_hiv_test_type) != "" %>
+              <% if (@confirmatory_hiv_test_type rescue nil) != nil && (@confirmatory_hiv_test_type) != "" %>
                 <span value="<%= @confirmatory_hiv_test_type rescue "" %>">HIV Confirmatory Test</span>
               <% end %>
 
@@ -440,31 +455,31 @@
 </html>
 
 <script>
-    <%if @vl_results_ready %>
+<%if @vl_results_ready %>
 
-        function hideMsg(div){
-            setTimeout(function(){fade(div, 1);}, 2500);
-        }
+    function hideMsg(div){
+      setTimeout(function(){fade(div, 1);}, 2500);
+    }
 
-        function fade(div, opacity){
-            __$(div).style.opacity = opacity;
-            if (opacity >= 0){
-                opacity = opacity - 0.01;
-                setTimeout(function(){fade(div, opacity)}, 20)
-            }
-        }
+    function fade(div, opacity){
+      __$(div).style.opacity = opacity;
+      if (opacity >= 0){
+        opacity = opacity - 0.01;
+        setTimeout(function(){fade(div, opacity)}, 20)
+      }
+    }
 
-        jQuery( document ).ready(function() {
-            var msgDiv = document.createElement("div");
-            msgDiv.id = "msg-div";
-            msgDiv.innerHTML = "<span>Viral Load Results Available</span>";
-            document.body.appendChild(msgDiv);
+    jQuery( document ).ready(function() {
+      var msgDiv = document.createElement("div");
+      msgDiv.id = "msg-div";
+      msgDiv.innerHTML = "<span>Viral Load Results Available</span>";
+      document.body.appendChild(msgDiv);
 
-//            setTimeout(function(){
-//                hideMsg("msg-div");
-//            }, 2500);
-        });
-    <%end%>
+      //            setTimeout(function(){
+      //                hideMsg("msg-div");
+      //            }, 2500);
+    });
+<%end%>
 </script>
 
 
@@ -476,90 +491,90 @@
 <!-- New code --------------------- -->
 
 <style>
-#alert-cover{
-  display: none;
-  position: absolute;
-  background-color: black;
-  width: 100%;
-  height: 102%;
-  left: 0%;
-  top: 0%;
-  z-index: 990;
-  opacity: 0.65;
-}
+  #alert-cover{
+    display: none;
+    position: absolute;
+    background-color: black;
+    width: 100%;
+    height: 102%;
+    left: 0%;
+    top: 0%;
+    z-index: 990;
+    opacity: 0.65;
+  }
 
-#alert-popup-div {
-  display: none;
-  background-color: #F4F4F4;
-  border: 2px solid #E0E0E0;
-  border-radius: 15px;
-  height: 220px;
-  padding: 5px;
-  position: absolute;
-  margin-top: 100px;
-  width: 530px;
-  /*margin-left: 430px;*/
-  left: 25%;
-  z-index: 991;
-}
+  #alert-popup-div {
+    display: none;
+    background-color: #F4F4F4;
+    border: 2px solid #E0E0E0;
+    border-radius: 15px;
+    height: 220px;
+    padding: 5px;
+    position: absolute;
+    margin-top: 100px;
+    width: 530px;
+    /*margin-left: 430px;*/
+    left: 25%;
+    z-index: 991;
+  }
 
-#YesBtn {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  bottom: 0px;
-  margin-right: 10px;
-}
+  #YesBtn {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+    margin-right: 10px;
+  }
 
-#NoBtn {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  bottom: 0px;
-  background-color: #ff0000;
-  margin-right: 40px;
-}
+  #NoBtn {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    bottom: 0px;
+    background-color: #ff0000;
+    margin-right: 40px;
+  }
 
-.popupBtn {
-  -moz-user-select: none;
-  background-image: none;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  display: inline-block;
-  font-size: 16px;
-  font-weight: bolder;
-  line-height: 2.29;
-  margin-bottom: 0;
-  padding: 6px 56px;
-  text-align: center;
-  vertical-align: middle;
-  white-space: nowrap;
-  background-color: #337ab7;
-  border-color: #2e6da4;
-  color: #fff;
-  float: right;
-  margin-top: -5px;
-}
+  .popupBtn {
+    -moz-user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bolder;
+    line-height: 2.29;
+    margin-bottom: 0;
+    padding: 6px 56px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    color: #fff;
+    float: right;
+    margin-top: -5px;
+  }
 
-#alert-popup-div2 {
-  display: none;
-  background-color: #F4F4F4;
-  border: 2px solid #E0E0E0;
-  border-radius: 15px;
-  height: 220px;
-  padding: 5px;
-  position: absolute;
-  margin-top: 100px;
-  width: 590px;
-  /*margin-left: 430px;*/
-  left: 25%;
-  z-index: 991;
-}
+  #alert-popup-div2 {
+    display: none;
+    background-color: #F4F4F4;
+    border: 2px solid #E0E0E0;
+    border-radius: 15px;
+    height: 220px;
+    padding: 5px;
+    position: absolute;
+    margin-top: 100px;
+    width: 590px;
+    /*margin-left: 430px;*/
+    left: 25%;
+    z-index: 991;
+  }
 
-.continue_to_dashboard {
-  left: 5% !important;
-}
+  .continue_to_dashboard {
+    left: 5% !important;
+  }
 
 </style>
 
@@ -576,7 +591,7 @@
 
   <div>
     <p>You can choose between creating<b>&nbsp;Active filing number</b>&nbsp;or&nbsp;  
-       <b>Dormant filing number&nbsp;</b></p>
+      <b>Dormant filing number&nbsp;</b></p>
   </div>
 
 
@@ -588,115 +603,115 @@
     <span id="NoBtn" onclick="hideAlertPopup();printFilingNumber('dormant');"
           class="popupBtn"
           style="position: relative;">Dormant number</span>
-    
+
   </div>
 
 </div>
 
 <script>
 
-function showAlertPopup(){
-  document.getElementById("alert-cover").style.display = 'inline';
-  document.getElementById("alert-popup-div").style.display = 'inline';
-}
-
-function hideAlertPopup(){
-  document.getElementById("alert-cover").style.display = 'none';
-  document.getElementById("alert-popup-div").style.display = 'none';
-  document.getElementById("alert-popup-div2").style.display = 'none';
-}
-
-function printFilingNumber(fnumber) {
-  if(fnumber == 'Active') {
-    document.location = "/people/redirections?person_id=<%=params[:id]%>";
-  }else{
-    document.location = "/patients/create_dormant_filing_number?id=<%=params[:id]%>";
+  function showAlertPopup(){
+    document.getElementById("alert-cover").style.display = 'inline';
+    document.getElementById("alert-popup-div").style.display = 'inline';
   }
-}
 
-function pringFilingNumber() {
-}
-
-var user_activities = [];
-
-function setValidationRules() {
-  try {
-    var finishBtn = window.document.getElementById('btnNext');
-    finishBtn.setAttribute('onmousedown','checkIfAllTaskDone();');
-    finishBtn.setAttribute('onclick','');
+  function hideAlertPopup(){
     document.getElementById("alert-cover").style.display = 'none';
-    <%(User.current.activities || []).each do |activitie|
-      if activitie.match(/Dispensations/i)%>
-        user_activities.push("Dispensing");
-      <%elsif activitie.match(/Manage HIV first visits/i)%>
-        user_activities.push("HIV CLINIC REGISTRATION");
-      <%else%>
-        user_activities.push("<%=activitie%>");
-    <%end
-    end%>
-  }catch(e) {
-    recallSetValidationRules();
+    document.getElementById("alert-popup-div").style.display = 'none';
+    document.getElementById("alert-popup-div2").style.display = 'none';
   }
-}
 
-var next_task_url = null;
-
-function checkIfAllTaskDone() {
-  var tasksTabContainer = window.document.getElementById('tabContainer');
-  var lastTab = tasksTabContainer.children[tasksTabContainer.children.length - 1];
-  var nextTask = lastTab.innerHTML.replace("NEXT TASK: ",'');
-
-  for(var i = 0; i < user_activities.length; i++){
-    re = new RegExp(nextTask, 'gi')
-    if(user_activities[i].match(re)){
-      document.getElementById('selected_ativity').innerHTML = user_activities[i];
-      document.getElementById('next_task').innerHTML = nextTask;
-      next_task_url = "<%= next_task(@patient) %>";
-      alertIncompleteVisit();
-      return;
+  function printFilingNumber(fnumber) {
+    if(fnumber == 'Active') {
+      document.location = "/people/redirections?person_id=<%=params[:id]%>";
+    }else{
+      document.location = "/patients/create_dormant_filing_number?id=<%=params[:id]%>";
     }
   }
 
-  <%if current_program_location.match(/HIV/i) %>
-     var appointment_not_done = <%= Encounter.find(:first, 
-      :conditions => ["patient_id = ? AND encounter_type = ?
+  function pringFilingNumber() {
+  }
+
+  var user_activities = [];
+
+  function setValidationRules() {
+    try {
+      var finishBtn = window.document.getElementById('btnNext');
+      finishBtn.setAttribute('onmousedown','checkIfAllTaskDone();');
+      finishBtn.setAttribute('onclick','');
+      document.getElementById("alert-cover").style.display = 'none';
+<%(User.current.activities || []).each do |activitie|
+  if activitie.match(/Dispensations/i)%>
+          user_activities.push("Dispensing");
+  <%elsif activitie.match(/Manage HIV first visits/i)%>
+          user_activities.push("HIV CLINIC REGISTRATION");
+  <%else%>
+          user_activities.push("<%=activitie%>");
+  <%end
+end%>
+    }catch(e) {
+      recallSetValidationRules();
+    }
+  }
+
+  var next_task_url = null;
+
+  function checkIfAllTaskDone() {
+    var tasksTabContainer = window.document.getElementById('tabContainer');
+    var lastTab = tasksTabContainer.children[tasksTabContainer.children.length - 1];
+    var nextTask = lastTab.innerHTML.replace("NEXT TASK: ",'');
+
+    for(var i = 0; i < user_activities.length; i++){
+      re = new RegExp(nextTask, 'gi')
+      if(user_activities[i].match(re)){
+        document.getElementById('selected_ativity').innerHTML = user_activities[i];
+        document.getElementById('next_task').innerHTML = nextTask;
+        next_task_url = "<%= next_task(@patient) %>";
+        alertIncompleteVisit();
+        return;
+      }
+    }
+
+<%if current_program_location.match(/HIV/i) %>
+      var appointment_not_done = <%= Encounter.find(:first,
+    :conditions => ["patient_id = ? AND encounter_type = ?
       AND encounter_datetime BETWEEN ? AND ?",
       params[:id],EncounterType.find_by_name('Appointment').id,
       session_date.to_date.strftime('%Y-%m-%d 00:00:00'),
       session_date.to_date.strftime('%Y-%m-%d 23:59:59')]).blank? == true%>
 
-    if(nextTask.match(/None/i) && appointment_not_done) {
-      for(var i = 0; i < user_activities.length; i++){
-        if(user_activities[i].match(/appointment/gi)){
-          document.getElementById('selected_ativity').innerHTML = user_activities[i];
-          document.getElementById('next_task').innerHTML = user_activities[i];
-          next_task_url = "/encounters/new/appointment?action=show"
-          next_task_url += "&controller=encounter_types&encounter_type=";
-          next_task_url += '<%= "Appointment&id=show&patient_id=#{params[:id]}" %>';
-          alertIncompleteVisit();
-          return;
+      if(nextTask.match(/None/i) && appointment_not_done) {
+        for(var i = 0; i < user_activities.length; i++){
+          if(user_activities[i].match(/appointment/gi)){
+            document.getElementById('selected_ativity').innerHTML = user_activities[i];
+            document.getElementById('next_task').innerHTML = user_activities[i];
+            next_task_url = "/encounters/new/appointment?action=show"
+            next_task_url += "&controller=encounter_types&encounter_type=";
+            next_task_url += '<%= "Appointment&id=show&patient_id=#{params[:id]}" %>';
+            alertIncompleteVisit();
+            return;
+          }
         }
       }
-    }
-  <%end%>
-  document.location = '/';
-}
+<%end%>
+    document.location = '/';
+  }
 
-function recallSetValidationRules() {
-  <%if @encounters.blank? != true %>
+  function recallSetValidationRules() {
+<%if @encounters.blank? != true %>
+      document.getElementById("alert-cover").style.display = 'inline';
+      setTimeout("setValidationRules()", 1000);
+<%end%>
+  }
+
+  function alertIncompleteVisit() {
     document.getElementById("alert-cover").style.display = 'inline';
-    setTimeout("setValidationRules()", 1000);
-  <%end%>
-}
+    document.getElementById("alert-popup-div2").style.display = 'inline';
+  }
 
-function alertIncompleteVisit() {
-  document.getElementById("alert-cover").style.display = 'inline';
-  document.getElementById("alert-popup-div2").style.display = 'inline';
-}
-
-function goToNextTask() {
-  window.location = next_task_url;
-}
+  function goToNextTask() {
+    window.location = next_task_url;
+  }
 
 </script>
 
@@ -707,20 +722,20 @@ function goToNextTask() {
 
   <div>
     <p>You have&nbsp;<b><span id="selected_ativity"></span></b>
-    &nbsp;as one of your task(s) and the next task is:&nbsp;<b><span id="next_task"></span></b>.</p>
+      &nbsp;as one of your task(s) and the next task is:&nbsp;<b><span id="next_task"></span></b>.</p>
   </div>
 
 
   <div style="padding-top: 65px;">
     <span id="YesBtn" 
-      onclick="recordNotification('Incomplete visit','Go to next task');hideAlertPopup();goToNextTask();" 
+          onclick="recordNotification('Incomplete visit','Go to next task');hideAlertPopup();goToNextTask();"
           class="popupBtn"
           style="position: relative;">Go to next task</span>
 
     <span id="NoBtn" onclick="recordNotification('Incomplete visit','Continue to dashboard');location='/';"
           class="popupBtn continue_to_dashboard"
           style="position: relative;">Continue to dashboard</span>
-    
+
   </div>
 
 </div>
