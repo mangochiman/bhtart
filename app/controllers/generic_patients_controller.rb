@@ -285,7 +285,7 @@ The following block of code should be replaced by a more cleaner function
     con = YAML.load_file("#{Rails.root}/config/application.yml")
 		lims_link = nil
 		if national_lims_activated
-		lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip']+"/user/ext"
+      lims_link = YAML.load_file("#{Rails.root}/config/lims.yml")[Rails.env]['new_order_ip']+"/user/ext"
 			npid = patient.patient_identifiers.find_by_identifier_type(3).identifier
 			lims_link += "?intent=new_order&username=#{User.current.username}&return_path=#{request.referrer}&name=#{User.current.name}&location=#{Location.current_location.name}&identifier=#{npid}&tk=#{User.current.authentication_token}".gsub(/\s+/, '%20')
 	 	else 
@@ -1174,7 +1174,7 @@ EOF
     appointments = Observation.find(:all,
       :conditions =>["obs.concept_id = ? AND value_datetime BETWEEN ? AND ?",
         concept_id, start_date, end_date], 
-    :order => "obs.obs_datetime DESC")
+      :order => "obs.obs_datetime DESC")
 
     count = appointments.length unless appointments.blank?
     count = '0' if count.blank?
@@ -3039,7 +3039,47 @@ EOF
       else
         person_attribute.update_attributes({'value' => params[:person]["home_phone_number"]})
       end
+
+      ############### MILITARY START
+    when "military_rank"
+      attribute_type = PersonAttributeType.find_by_name("Military Rank").id
+      person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
+      if person_attribute.blank?
+        attribute = {'value' => params[:person]["military_rank"],
+          'person_attribute_type_id' => attribute_type,
+          'person_id' => patient.id}
+        PersonAttribute.create(attribute)
+      else
+        person_attribute.update_attributes({'value' => params[:person]["military_rank"]})
+      end
+
+    when "date_joined_military"
+      attribute_type = PersonAttributeType.find_by_name("Date Joined Military").id
+      person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
+      if person_attribute.blank?
+        attribute = {'value' => params[:person]["date_joined_military"],
+          'person_attribute_type_id' => attribute_type,
+          'person_id' => patient.id}
+        PersonAttribute.create(attribute)
+      else
+        person_attribute.update_attributes({'value' => params[:person]["date_joined_military"]})
+      end
+
+    when "regiment_id"
+      attribute_type = PersonAttributeType.find_by_name("Regiment ID").id
+      person_attribute = patient.person.person_attributes.find_by_person_attribute_type_id(attribute_type)
+      if person_attribute.blank?
+        attribute = {'value' => params[:person]["regiment_id"],
+          'person_attribute_type_id' => attribute_type,
+          'person_id' => patient.id}
+        PersonAttribute.create(attribute)
+      else
+        person_attribute.update_attributes({'value' => params[:person]["regiment_id"]})
+      end
+
+      ########## MILITARY END
     end
+
     if create_from_dde_server
       #Updating the demographics to dde
       PatientService.update_dde_patient(patient.person, session[:dde_token])
@@ -3706,7 +3746,7 @@ EOF
     appointments = Observation.find(:all,
       :conditions =>["obs.concept_id = ? AND value_datetime BETWEEN ? AND ?",
         concept_id, start_date, end_date],
-    :order => "obs.obs_datetime DESC")
+      :order => "obs.obs_datetime DESC")
 
     count = appointments.length unless appointments.blank?
     count = '0' if count.blank? 
