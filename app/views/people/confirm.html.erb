@@ -196,8 +196,8 @@
     </div>
 
     <div class="drow">
-      <div class="dcell table-head">&nbsp;</div>
-      <div class="dcell table-data">&nbsp;</div>
+      <div class="dcell table-head">Military Rank</div>
+      <div class="dcell table-data" id="rank">&nbsp;</div>
       <!--<div class="dcell table-head"><span id="update_span">Update VL</span></div>
       <div class="dcell table-data"><span id="lab_trail_span"><span>VL Trail</span></span></div>-->
       <div class="dcell table-head">Residence:</div>
@@ -428,6 +428,17 @@ function printNextTask() {
       next_url = JSON.parse(result)['url'];
     }
  });    
+}
+
+function printMilitaryRank(){
+ jQuery.ajax({
+    type: "POST",
+    url: "/people/get_military_rank",
+    data: "patient_id=" + patientID,
+    success: function(result){
+      document.getElementById('rank').innerHTML = result;
+    }
+ });
 }
 
   function printLatestVLResult(){
@@ -854,6 +865,7 @@ getWeight();
 <%if vl_routine_check_activated %>
   printLatestVLResult();
 <%end%>
+printMilitaryRank();
 
 if(use_filing_number)
   var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';

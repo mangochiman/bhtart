@@ -316,14 +316,14 @@
             <div id="patient_card">
               <% session_date = session[:datetime].to_date rescue Date.today %>
 
-              <% unless @patient_bean.regiment_id.blank? %>
+              <!--<% unless @patient_bean.regiment_id.blank? %>
                 <span value="<%= "#{@patient_bean.regiment_id}" %>"> Regiment ID</span>
               <% end %>
 
               <% unless @patient_bean.date_joined_military.blank? %>
                 <% date_joined_military = @patient_bean.date_joined_military.to_date.strftime('%b, %Y') rescue @patient_bean.date_joined_military%>
                 <span value="<%= "#{date_joined_military}" %>"> Date Joined Military</span>
-              <% end %>
+              <% end %>-->
 
               <% unless @patient_bean.military_rank.blank? %>
                 <span value="<%= "#{@patient_bean.military_rank}" %>"> Military Rank</span>

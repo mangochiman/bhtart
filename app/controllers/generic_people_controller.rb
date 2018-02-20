@@ -1951,6 +1951,14 @@ EOF
     }.to_json
   end
 
+  def get_military_rank
+    person = Person.find(params[:patient_id])
+    attribute_type = PersonAttributeType.find_by_name("Military Rank").id rescue ""
+    person_attribute = person.person_attributes.find_by_person_attribute_type_id(attribute_type)
+    value = person_attribute.value rescue ""
+    render :text => value and return
+  end
+
 	private
 
 	def search_complete_url(found_person_id, primary_person_id)
