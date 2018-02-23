@@ -1981,8 +1981,8 @@ EOF
 
   def get_person_address
     person_address = PersonAddress.find(:last, :conditions => ["person_id =?", params[:patient_id]])
-    city_village = person_address.city_village
-    state_province = person_address.state_province
+    city_village = person_address.city_village rescue nil
+    state_province = person_address.state_province rescue nil
     data = {"city_village" => city_village, "state_province" => state_province}
     render :text => data.to_json and return
   end
