@@ -49,4 +49,8 @@ class Person < ActiveRecord::Base
     (years * 12) + months
   end
 
+  def self.update_date_changed(person_id, today = Date.today)
+    ActiveRecord::Base.connection.execute("UPDATE person SET date_changed = \"#{today}\" WHERE person_id = #{person_id}")
+  end
+
 end
