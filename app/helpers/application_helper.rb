@@ -62,6 +62,10 @@ module ApplicationHelper
     get_global_property_value("demographics.home_village").to_s == "true" rescue false
   end
 
+  def military_site?
+    get_global_property_value("military.site").to_s == "true" rescue false
+  end
+
   def site_prefix
     site_prefix = Location.current_health_center.neighborhood_cell
     return site_prefix

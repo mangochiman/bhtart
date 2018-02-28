@@ -92,7 +92,8 @@ class ClinicController < GenericClinicController
     ["Show Swap Button", "/properties/creation?value=show_swap_button"],
     ["DDE Properties", "/properties/dde_properties_menu"],
     ["DDE code map", "/properties/dde_code_map"],
-    ["Activate user feedback summary reports", "/properties/creation?value=show_user_feedback"]
+    ["Activate user feedback summary reports", "/properties/creation?value=show_user_feedback"],
+    ["Is this a military site?", "/properties/creation?value=military_site"]
 	  ]
 	else
 	  @settings = []

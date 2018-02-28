@@ -325,32 +325,34 @@
 
   <%#= select_tag("person[occupation]", options_for_select([" ", "Housewife", "Farmer", "Police", "Soldier", "Business", "Teacher", "Student", "Healthcare Worker"].sort.concat(["Other"]) ,params[:occupation]),:helpText =>"Occupation",:allowFreeText => true, :tt_onLoad => 'seen(tstCurrentPage);')%>
 
-  <%= select_tag("person[occupation]", options_for_select(@occupations ,params[:occupation]),
-    :helpText =>"Occupation",
-    :id => "occupation",
-    :allowFreeText => false,
-    :tt_onLoad => "seen(tstCurrentPage);__$('keyboard').style.display = 'none'",
-    :ttMatchFromBeginning => "true")%>
+  <% if military_site? %>
+    <%= select_tag("person[occupation]", options_for_select(@occupations ,params[:occupation]),
+      :helpText =>"Occupation",
+      :id => "occupation",
+      :allowFreeText => false,
+      :tt_onLoad => "seen(tstCurrentPage);__$('keyboard').style.display = 'none'",
+      :ttMatchFromBeginning => "true")%>
 
-  <%= text_field_tag "person[regiment_id]",  nil, {
-    :field_type => 'number',
-    :tt_onLoad => "__$('Unknown').style.display = 'none';",
-    :helpText => 'Regiment ID',
-    :condition => "__$('occupation').value.match(/MDF/i)"
-  } %>
+    <%= text_field_tag "person[regiment_id]",  nil, {
+      :field_type => 'number',
+      :tt_onLoad => "__$('Unknown').style.display = 'none';",
+      :helpText => 'Regiment ID',
+      :condition => "__$('occupation').value.match(/MDF/i)"
+    } %>
 
-  <%= text_field_tag "person[date_joined_military]",  nil, {
-    :field_type => 'date',
-    :tt_onLoad => "__$('Unknown').style.display = 'none';",
-    :helpText => 'Date Joined MDF',
-    :condition => "__$('occupation').value.match(/MDF/i)"
-  } %>
+    <%= text_field_tag "person[date_joined_military]",  nil, {
+      :field_type => 'date',
+      :tt_onLoad => "__$('Unknown').style.display = 'none';",
+      :helpText => 'Date Joined MDF',
+      :condition => "__$('occupation').value.match(/MDF/i)"
+    } %>
 
-  <%= select_tag("person[military_rank]", options_for_select(@military_ranks),
-    :helpText =>"Rank",
-    :id => "rank",
-    :allowFreeText => false,
-    :condition => "__$('occupation').value.match(/MDF/i)")%>
+    <%= select_tag("person[military_rank]", options_for_select(@military_ranks),
+      :helpText =>"Rank",
+      :id => "rank",
+      :allowFreeText => false,
+      :condition => "__$('occupation').value.match(/MDF/i)")%>
+  <% end %>
 
   <% if params[:relation].blank? %>
     <%= select_tag("guardian_present", options_for_select([['Yes','YES'],['No','NO']]),
