@@ -196,8 +196,8 @@
       </div>
 
       <div class="drow">
-        <div class="dcell table-head">Military Rank</div>
-        <div class="dcell table-data" id="rank">&nbsp;</div>
+        <div class="dcell table-head rank">Military Rank</div>
+        <div class="dcell table-data rank" id="rank">&nbsp;</div>
         <!--<div class="dcell table-head"><span id="update_span">Update VL</span></div>
         <div class="dcell table-data"><span id="lab_trail_span"><span>VL Trail</span></span></div>-->
         <div class="dcell table-head">Residence:</div>
@@ -283,6 +283,7 @@
 <script type="text/javascript">
   var patientID = "<%=params[:found_person_id]%>";
   var years_elapsed_since_last_update;
+  var military_status = "<%= @military_site_status %>";
 
   function initData() {
 
@@ -880,6 +881,7 @@
   printMilitaryRank();
   getPersonAddress();
   getYearsSinceAddressUpdate();
+  checkIfMilitarySite();
 
   if(use_filing_number)
     var filing_number_prefix = '<%= CoreService.get_global_property_value("filing.number.prefix") %>';
@@ -907,8 +909,10 @@
         results = JSON.parse(results)
         city_village = results["city_village"];
         state_province = results["state_province"];
+        township_division = results["township_division"];
+
         jQuery("#c-district").html(state_province);
-        jQuery("#c-ta").html('??');
+        jQuery("#c-ta").html(township_division);
         jQuery("#c-village").html(city_village);
       }
     });
@@ -941,6 +945,12 @@
 
   function updateAddress(){
     window.location = "/people/update_person_address?patient_id=" + patientID;
+  }
+
+  function checkIfMilitarySite(){
+    if (military_status == "false"){
+      jQuery(".rank").hide();
+    }
   }
 
 </script>
@@ -1377,7 +1387,7 @@
     <hr />
   </div>
 
-
+  <p style="text-align: center; font-weight: bold; color: #0000CD;">Is the address still valid?</p>
   <div style="padding-top: 20px;">
     <span id="validBtn" onclick="addressStillValid();" class="valid-btn addressBtn" style="position: relative; float: left;">Address still valid</span>
     <span id="NotValidBtn" onclick="updateAddress();" class="not-valid-btn addressBtn" style="position: relative;">Update Address</span>
@@ -1497,6 +1507,6 @@
     border-color: #2e6da4;
     color: #fff;
     float: right;
-    margin-top: -5px;
+    margin-top: -30px;
   }
 </style>

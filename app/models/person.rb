@@ -50,7 +50,19 @@ class Person < ActiveRecord::Base
   end
 
   def self.update_date_changed(person_id, today = Date.today)
-    ActiveRecord::Base.connection.execute("UPDATE person SET date_changed = \"#{today}\" WHERE person_id = #{person_id}")
+    ActiveRecord::Base.connection.execute("UPDATE person_address SET date_voided = \"#{today}\" WHERE person_id = #{person_id}")
+  end
+
+  def date_addressed_changed
+    last_person_address = self.addresses.last
+    unless last_person_address.blank?
+      date_changed = last_person_address.date_voided
+      if date_changed.blank?
+        date_created = last_person_address.date_created
+        return date_created
+      end
+      return date_changed
+    end
   end
 
 end

@@ -417,7 +417,7 @@ class GenericPeopleController < ApplicationController
 		@relation = params[:relation]
 		@person = Person.find(@found_person_id) rescue nil
 		patient = @person.patient
-    
+    @military_site_status = CoreService.get_global_property_value("military.site").to_s == "true" rescue false
     hiv_session = false
     if current_program_location == "HIV program"
       hiv_session = true
@@ -1962,7 +1962,6 @@ EOF
   def update_person_address
     @patient = Patient.find(params[:patient_id])
     if request.post?
-      raise params.inspect
       person_address = PersonAddress.find(:last, :conditions => ["person_id =?", params[:patient_id]])
       if person_address.blank?
         person_address = PersonAddress.new
@@ -1970,6 +1969,7 @@ EOF
       end
       person_address.city_village = params[:person][:addresses][:city_village]
       person_address.state_province = params[:person][:addresses][:state_province]
+      person_address.township_division = params[:person][:addresses][:township_division]
       person_address.save
 
       Person.update_date_changed(params[:patient_id])
@@ -1983,7 +1983,9 @@ EOF
     person_address = PersonAddress.find(:last, :conditions => ["person_id =?", params[:patient_id]])
     city_village = person_address.city_village rescue nil
     state_province = person_address.state_province rescue nil
-    data = {"city_village" => city_village, "state_province" => state_province}
+    township_division = person_address.township_division rescue nil
+
+    data = {"city_village" => city_village, "state_province" => state_province, "township_division" => township_division}
     render :text => data.to_json and return
   end
 
@@ -1996,7 +1998,7 @@ EOF
 
   def get_years_since_address_update
     patient = Patient.find(params[:patient_id])
-    date_changed = patient.person.date_changed.to_date
+    date_changed = patient.person.date_addressed_changed.to_date
     today = Date.today
     years = ((today - date_changed) / 365).to_i
     render :text => years and return
