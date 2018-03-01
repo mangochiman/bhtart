@@ -148,10 +148,11 @@ EOF
     'DISPENSING','HIV CLINIC CONSULTATION','TREATMENT','ART ADHERENCE','APPOINTMENT']
 
     hiv_encounter_type_ids = EncounterType.find(:all, :conditions =>["name IN(?)", 
-      hiv_encounter_types]).map(&:id)
+    hiv_encounter_types]).map(&:id)
 
     (data || []).each do |d|
       defaulted_date = PatientDefaultedDate.get_latest_defaulted_date(d['patient_id'].to_i, end_date.to_date)
+
       next if defaulted_date.to_date > end_date.to_date 
       
       last_visit_date = Encounter.find(:first, :select => ("MAX(encounter_datetime) AS ldate"),
@@ -159,8 +160,8 @@ EOF
         end_date.to_date.strftime('%Y-%m-%d 23:59:59'), 
         d['patient_id'].to_i, hiv_encounter_type_ids])['ldate'].to_date rescue nil
 
-      next if last_visit_date > end_date.to_date
-      next if defaulted_date.to_date < last_visit_date
+      #next if last_visit_date > end_date.to_date
+      #next if defaulted_date.to_date < last_visit_date
 
       names = PersonName.find(:first, :conditions =>["person_id = ?", 
         d['patient_id'].to_i], :order => "date_created DESC, person_name_id DESC")
@@ -191,8 +192,8 @@ EOF
         :last_visit_date => (last_visit_date.strftime('%d/%b/%Y') rescue nil)
       }
     end
- 
-		return patient_data
+
+    return patient_data
 	end
 
   def self.get_phone(patient_id)

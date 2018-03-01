@@ -57,21 +57,15 @@ EOF
       SELECT 
         ADDDATE(ADDDATE(ord.start_date,
           IFNULL((IFNULL(ad.quantity, 0) / IFNULL(ad.equivalent_daily_dose, 2)), 28)), 56) AS defaulted_date
-      FROM
-        obs o
-            INNER JOIN
-        orders ord ON ord.order_id = o.order_id
-            INNER JOIN
-        drug_order ad ON ord.order_id = ad.order_id
-            INNER JOIN
-        arv_drug av ON av.drug_id = ad.drug_inventory_id
-      WHERE
-        o.person_id = #{patient_id}
-            AND o.concept_id = 2834
-            AND o.voided = 0
-      GROUP BY o.order_id, ad.drug_inventory_id;
+      FROM obs o
+        INNER JOIN orders ord ON ord.order_id = o.order_id
+        INNER JOIN drug_order ad ON ord.order_id = ad.order_id
+        INNER JOIN arv_drug av ON av.drug_id = ad.drug_inventory_id
+      WHERE o.person_id = #{patient_id} AND o.concept_id = 2834 AND o.voided = 0
+      AND DATE(o.obs_datetime) <= '#{cut_off_date}'
+      GROUP BY ord.order_id, ad.drug_inventory_id
+      HAVING defaulted_date <=  '#{cut_off_date}';
 EOF
-
         return defaulted_dates.\
           map{ |x| x['defaulted_date'].to_date}\
             .uniq.sort.last rescue nil
