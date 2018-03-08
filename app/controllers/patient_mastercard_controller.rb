@@ -303,6 +303,8 @@ EOF
           defaulted_date = ActiveRecord::Base.connection.select_value "
             SELECT current_defaulter_date(#{disp_date.person_id}, '#{previous_date}')"
 
+
+	  next if defaulted_date.blank?
           #Assumption that the patient started taking the dose the first day of receiving
           outcome_dates << (defaulted_date.to_date - 1.day) if !defaulted_dates.include?(defaulted_date.to_date)
         end
