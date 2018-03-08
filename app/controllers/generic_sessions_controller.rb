@@ -20,13 +20,13 @@ class GenericSessionsController < ApplicationController
 			#User.find_for_authentication_token()
 			#self.current_user = user
       #if create_from_dde_server
-        #dde_authentication_token_result = PatientService.dde_authentication_token
-        #dde_token_status = dde_authentication_token_result["status"]
-        #if (dde_token_status.to_s == "200")
-          #session[:dde_token] = dde_authentication_token_result["data"]["token"]
-        #else
-          #session[:dde_token] = nil
-        #end
+      #dde_authentication_token_result = PatientService.dde_authentication_token
+      #dde_token_status = dde_authentication_token_result["status"]
+      #if (dde_token_status.to_s == "200")
+      #session[:dde_token] = dde_authentication_token_result["data"]["token"]
+      #else
+      #session[:dde_token] = nil
+      #end
       #end
 
 			redirect_to '/clinic'
@@ -257,8 +257,20 @@ class GenericSessionsController < ApplicationController
 	def destroy
 		sign_out(current_user) if !current_user.blank?
 		self.current_location = nil
-		flash[:notice] = "You have been logged out."
-		redirect_back_or_default('/')
+
+    portal_status = CoreService.get_global_property_value("portal.status").to_s.squish.upcase rescue ""
+    portal_address = CoreService.get_global_property_value("portal.address").to_s rescue ""
+    portal_port = CoreService.get_global_property_value("portal.port").to_s rescue ""
+
+
+    if portal_status == 'ON'
+      uri = "http://#{portal_address}:#{portal_port}"
+      redirect_to(uri) and return
+    else
+      flash[:notice] = "You have been logged out."
+      redirect_back_or_default('/') and return
+    end
+		
 	end
 
 	protected

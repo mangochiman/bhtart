@@ -123,6 +123,17 @@ module ApplicationHelper
    get_global_property_value('activate.htn.enhancement').to_s == "true" rescue false
   end
 
+  def portal_activated
+   get_global_property_value('portal.status').to_s.upcase == "ON" rescue false
+  end
+
+  def portal_uri
+    ip_address = get_global_property_value('portal.address')
+    portal = get_global_property_value('portal.port')
+    address = {"ip_address" => ip_address, "portal" => portal}
+    return address
+  end
+
 
   def show_swap_button
     get_global_property_value("show.swap.button").to_s == "true" rescue false

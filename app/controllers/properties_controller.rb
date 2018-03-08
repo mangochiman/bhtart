@@ -223,6 +223,14 @@ class PropertiesController < GenericPropertiesController
     @dde_password = GlobalProperty.find_by_property('dde.password').property_value rescue ""
   end
 
+  def portal_properties_menu
+    @portal_status = GlobalProperty.find_by_property('portal.status').property_value rescue ""
+    @portal_status = 'Yes' if @portal_status.match(/ON/i)
+    @portal_status = 'No' if @portal_status.match(/OFF/i)
+    @portal_address = GlobalProperty.find_by_property('portal.address').property_value rescue ""
+    @portal_port = GlobalProperty.find_by_property('portal.port').property_value rescue ""
+  end
+
   def create_dde_properties
     dde_status = params[:dde_status]
     if dde_status.squish.downcase == 'yes'
@@ -278,6 +286,38 @@ class PropertiesController < GenericPropertiesController
       session[:dde_token] = dde_token unless dde_token.blank?
     end
     
+    redirect_to("/clinic") and return
+  end
+
+  def create_portal_properties
+    portal_status = params[:portal_status]
+    
+    if portal_status.squish.downcase == 'yes'
+      portal_status = 'ON'
+    else
+      portal_status = 'OFF'
+    end
+
+    ActiveRecord::Base.transaction do
+      global_property_portal_status = GlobalProperty.find_by_property('portal.status') || GlobalProperty.new()
+      global_property_portal_status.property = 'portal.status'
+      global_property_portal_status.property_value = portal_status
+      global_property_portal_status.save
+
+      if (portal_status == 'ON') #Do this part only when PORTAL is activated
+        global_property_portal_address = GlobalProperty.find_by_property('portal.address') || GlobalProperty.new()
+        global_property_portal_address.property = 'portal.address'
+        global_property_portal_address.property_value = params[:portal_address]
+        global_property_portal_address.save
+
+        global_property_portal_port = GlobalProperty.find_by_property('portal.port') || GlobalProperty.new()
+        global_property_portal_port.property = 'portal.port'
+        global_property_portal_port.property_value = params[:portal_port]
+        global_property_portal_port.save
+      end
+
+    end
+
     redirect_to("/clinic") and return
   end
 
