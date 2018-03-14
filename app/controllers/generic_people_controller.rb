@@ -182,6 +182,17 @@ class GenericPeopleController < ApplicationController
 		render :text => result.to_json
 	end
 
+  def search_remote_people
+		# Search people by demographics that were passed in and then return demographics
+		people = PatientService.find_person_by_demographics(params)
+    results = []
+    people.each do |person|
+      results << PatientService.demographics(person)
+    end
+		
+		render :text => results.to_json
+	end
+
 	def art_information
 		national_id = params["person"]["patient"]["identifiers"]["National id"] rescue nil
     national_id = params["person"]["value"] if national_id.blank? rescue nil
