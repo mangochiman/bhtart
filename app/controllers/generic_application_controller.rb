@@ -34,7 +34,7 @@ class GenericApplicationController < ActionController::Base
                                                    'find_person_from_dmht', 'reassign_remote_identifier',
                                                    'revised_cohort_to_print', 'revised_cohort_survival_analysis_to_print',
                                                    'revised_women_cohort_survival_analysis_to_print',
-                                                   'revised_children_cohort_survival_analysis_to_print', 'create', 'render_date_enrolled_in_art'
+                                                   'revised_children_cohort_survival_analysis_to_print', 'create', 'render_date_enrolled_in_art', 'search_remote_people'
                                           ]
 
     before_filter :set_current_user, :except => ['login', 'logout','remote_demographics','art_stock_info',
@@ -48,7 +48,7 @@ class GenericApplicationController < ActionController::Base
                                                  'reassign_remote_identifier','revised_cohort_to_print',
                                                  'revised_cohort_survival_analysis_to_print',
                                                  'revised_women_cohort_survival_analysis_to_print',
-                                                 'revised_children_cohort_survival_analysis_to_print', 'render_date_enrolled_in_art'
+                                                 'revised_children_cohort_survival_analysis_to_print', 'render_date_enrolled_in_art', 'search_remote_people'
                                           ]
 
 	before_filter :location_required, :except => ['patients_without_any_encs','login', 'logout', 'location',
@@ -63,11 +63,11 @@ class GenericApplicationController < ActionController::Base
                                                   'find_person_from_dmht', 'reassign_remote_identifier',
                                                   'revised_cohort_to_print', 'revised_cohort_survival_analysis_to_print',
                                                   'revised_women_cohort_survival_analysis_to_print',
-                                                  'revised_children_cohort_survival_analysis_to_print', 'render_date_enrolled_in_art'
+                                                  'revised_children_cohort_survival_analysis_to_print', 'render_date_enrolled_in_art', 'search_remote_people'
                                             ]
 
 	before_filter :set_return_uri, :except => ['create_person_from_anc', 'create_person_from_dmht',
-	                                           'find_person_from_dmht', 'reassign_remote_identifier', 'create', 'render_date_enrolled_in_art']
+	                                           'find_person_from_dmht', 'reassign_remote_identifier', 'create', 'render_date_enrolled_in_art', 'search_remote_people']
 
   before_filter :set_dde_token
 
