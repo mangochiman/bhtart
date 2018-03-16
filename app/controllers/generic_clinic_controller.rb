@@ -1,7 +1,6 @@
 class GenericClinicController < ApplicationController
   require 'rest-client'
   def index
-
     return_uri = session[:return_uri]
     if !return_uri.blank?
       session[:return_uri] = []
@@ -25,6 +24,12 @@ class GenericClinicController < ApplicationController
 
     @roles = current_user.user_roles.collect{|r| r.role} rescue []
     session[:stage_patient] = ""
+
+    portal_status = CoreService.get_global_property_value("portal.status").to_s.squish.upcase rescue ""
+    portal_address = CoreService.get_global_property_value("portal.address").to_s rescue ""
+    portal_port = CoreService.get_global_property_value("portal.port").to_s rescue ""
+    @portal_uri = "http://#{portal_address}:#{portal_port}" rescue ""
+    
     render :template => 'clinic/index', :layout => false
   end
 
