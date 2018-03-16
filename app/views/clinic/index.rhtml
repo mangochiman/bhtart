@@ -316,11 +316,13 @@ on the rest of the stations %>
                 <% if show_swap_button %>
                   <option value='/location?from=clinic' ttSize="100px">Swap Desk</option>
                 <% end %>
-                
+
                 <option value='<%= ((session[:datetime].to_date rescue '') != '' ?
                             "/people/reset_datetime" : "/people/set_datetime") %>'  ttSize="100px">
                   <%= ((session[:datetime].to_date rescue '') != '' ? "Reset Date" : "Set Date") %></option>
-                <option value='<%= @portal_uri %>' link='#' ttSize="265px" id="portal">Portal</option>
+                <% if portal_activated %>
+                  <option value='<%= @portal_uri %>' link='#' ttSize="265px" id="portal">Portal</option>
+                <% end %>
                 <!--option link='regimen.html'>Regimen</option-->
               <% end %>
             </select>
