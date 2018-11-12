@@ -39,6 +39,13 @@ class GenericEncountersController < ApplicationController
       redirect_to url and return
     end
 
+    if params[:encounter]["encounter_type_name"].squish.upcase == 'CERVICAL CANCER SCREENING'
+      url = create_cervical_cancer_screening_encounter(params, session)
+      redirect_to url and return
+    end
+
+    
+
     #TB encounters ................................................................
 
     if params[:encounter]["encounter_type_name"].squish.upcase == "TB RECEPTION"
@@ -1191,6 +1198,29 @@ class GenericEncountersController < ApplicationController
     return next_task(encounter.patient)
   end
 
+  def create_cervical_cancer_screening_encounter(params, session)
+    encounter_type = EncounterType.find_by_name('CERVICAL CANCER SCREENING')
+    patient_id = params[:encounter]["patient_id"].to_i
+    begin
+      encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01')
+      params[:encounter]['encounter_datetime'] = encounter_datetime
+    rescue
+      encounter_datetime = params[:encounter]['encounter_datetime'].to_time.strftime('%Y-%m-%d %H:%M:%S') rescue nil
+      if encounter_datetime.blank?
+        encounter_datetime = Time.now().strftime('%Y-%m-%d %H:%M:%S')
+        params[:encounter]['encounter_datetime'] = encounter_datetime
+      end
+    end
+
+    encounter = Encounter.create(:patient_id => patient_id,
+      :encounter_datetime => encounter_datetime,
+      :encounter_type => encounter_type.id)
+
+    create_obs(encounter, params)
+
+    return next_task(encounter.patient)
+  end
+  
   def create_hiv_registration_encounter(params, session)
     begin
       encounter_datetime = session[:datetime].to_date.strftime('%Y-%m-%d 00:00:01') 
@@ -1598,8 +1628,8 @@ class GenericEncountersController < ApplicationController
 
     encounter = Encounter.find(:last, :conditions => ["patient_id = ? AND encounter_type = ?
       AND encounter_datetime BETWEEN ? AND ?", patient_id, encounter_type.id,
-      encounter_datetime.to_time.strftime('%Y-%m-%d 00:00:00'),
-      encounter_datetime.to_time.strftime('%Y-%m-%d 23:59:59')])
+        encounter_datetime.to_time.strftime('%Y-%m-%d 00:00:00'),
+        encounter_datetime.to_time.strftime('%Y-%m-%d 23:59:59')])
 
     (encounter.observations || []).each do |o|
       o.void("Setting a new appointment date")
@@ -1780,9 +1810,9 @@ class GenericEncountersController < ApplicationController
       session_date = session[:datetime].to_date rescue Date.today
       encounter_type = EncounterType.find_by_name("HIV CLINIC CONSULTATION")
       encounter = Encounter.find(:first,:order =>"encounter_datetime DESC,date_created DESC",
-          :conditions =>["encounter_type = ? AND patient_id = ? AND encounter_datetime >= ?
+        :conditions =>["encounter_type = ? AND patient_id = ? AND encounter_datetime >= ?
           AND encounter_datetime <= ?",encounter_type.id, patient_id,
-            session_date.strftime("%Y-%m-%d 00:00:00"),session_date.strftime("%Y-%m-%d 23:59:59")])
+          session_date.strftime("%Y-%m-%d 00:00:00"),session_date.strftime("%Y-%m-%d 23:59:59")])
 
       unless encounter.blank?
         params[:observations] = previous_hiv_clinic_consultation_observations

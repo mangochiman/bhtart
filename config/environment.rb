@@ -82,5 +82,5 @@ ActionMailer::Base.smtp_settings = {
   :authentication => :plain
 }
 
-
+ require File.expand_path('../initializers/mysql2_adapter', __FILE__)
 
