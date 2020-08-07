@@ -488,6 +488,8 @@ class EncountersController < GenericEncountersController
     @has_via_results = false
     @remaining_days = 0
     @terminal = false
+    @lesion_size_too_big = false
+
     terminal_referral_outcomes = ["PRE/CANCER TREATED", "CANCER UNTREATABLE"]
     
     cervical_cancer_screening_encounter_type_id = EncounterType.find_by_name("CERVICAL CANCER SCREENING").encounter_type_id
@@ -538,7 +540,11 @@ class EncountersController < GenericEncountersController
       if cryo_result_answer == "CRYO DELAYED"
         @has_via_results = false
       end
+      if cryo_result_answer == "LESION SIZE TOO BIG"
+        @lesion_size_too_big = true
+      end
     end
+
     ############################################################################
 
     three_years = 365 * 3

@@ -3,7 +3,8 @@
   var viaReferred = '<%= @via_referred %>';
   var patientHasviaResults = '<%= @has_via_results %>';
   var patientID = '<%=@patient.id%>';
- 
+  var lesionSizeTooBig = '<%= @lesion_size_too_big %>';
+
   function patientReferredAndHasNoresults(){
     if (viaReferred == 'true' && patientHasviaResults == 'false'){
       return true;
@@ -60,7 +61,7 @@
 
 </script>
 
-<% if @via_referred && @has_via_results %>
+<% if @via_referred && @has_via_results && !@lesion_size_too_big%>
   <style>
     #helpText0{
       position: absolute;
@@ -169,7 +170,7 @@
     <%= select_tag "referral_outcome", options_for_select(['','Yes', 'No']),
       {
       :id => "referral_outcome",
-      :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i)",
+      :condition => "__$('via_results').value.match(/Suspect Cancer/i) || __$('positive_cryo').value.match(/Lesion Size too big/i) || __$('lesion_size_too_big').value.match(/TRUE/i)",
       :helpText => "Do you want to capture Referral outcomes today?"
     } %>
 
@@ -182,5 +183,10 @@
 
     <%= touch_hidden_tag("CRYO DONE DATE", @patient, "", {:id => 'cryo_done_date'}) %>
 
+    <% if @lesion_size_too_big == true%>
+      <%= hidden_field_tag("lesion_size_too_big", "true", {:id => 'lesion_size_too_big'}) %>
+    <% else %>
+      <%= hidden_field_tag("lesion_size_too_big", "false", {:id => 'lesion_size_too_big'}) %>
+    <% end %>
   </form>
 <% end %>
